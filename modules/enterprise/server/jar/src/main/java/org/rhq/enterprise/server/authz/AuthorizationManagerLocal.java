@@ -26,6 +26,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.Group;
 
@@ -189,6 +190,16 @@ public interface AuthorizationManagerLocal {
      * @return the set of permissions that the current user possesses for the specified {@link Bundle} - never null
      */
     Set<Permission> getBundlePermissions(Subject subject, int bundleId);
+
+    /**
+     * Gets the set of permissions that the current user explicitly possesses for the specified {@link BundleGroup}.
+     *
+     * @param  subject    the current subject or caller
+     * @param  bundleId   the id of some BundleGroup to check permissions against
+     *
+     * @return the set of permissions that the current user possesses for the specified {@link BundleGroup} - never null
+     */
+    Set<Permission> getBundleGroupPermissions(Subject subject, int bundleGroupId);
 
     /**
      * Returns true if the current user possesses the specified bundle permission for the specified bundle group.

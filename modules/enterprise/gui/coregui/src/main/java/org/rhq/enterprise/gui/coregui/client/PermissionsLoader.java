@@ -116,6 +116,21 @@ public class PermissionsLoader {
         });
     }
 
+    public void loadBundleGroupPermissions(final int bundleGroupId, final PermissionsLoadedListener callback) {
+        GWTServiceLookup.getAuthorizationService().getBundleGroupPermissions(bundleGroupId,
+            new AsyncCallback<Set<Permission>>() {
+
+                public void onSuccess(Set<Permission> result) {
+                    callback.onPermissionsLoaded(result);
+                }
+
+                public void onFailure(Throwable caught) {
+                    processFailure(MSG.util_userPerm_loadFailBundle(String.valueOf(bundleGroupId)), caught);
+                    callback.onPermissionsLoaded(null); // indicate an error by passing in null
+                }
+            });
+    }
+
     protected void processFailure(String msg, Throwable caught) {
         this.lastError = caught;
         EnumSet<Option> options = EnumSet.of(Message.Option.BackgroundJobResult);

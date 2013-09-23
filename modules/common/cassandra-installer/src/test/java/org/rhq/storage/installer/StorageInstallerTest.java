@@ -12,11 +12,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Properties;
+
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.exec.Executor;
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -45,6 +50,7 @@ public class StorageInstallerTest {
 
     @BeforeMethod
     public void initDirs(Method test) throws Exception {
+        System.out.println("BEGIN " + test);
         digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
         File dir = new File(getClass().getResource(".").toURI());
@@ -65,11 +71,212 @@ public class StorageInstallerTest {
         installer = new StorageInstaller();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void shutdownStorageNode() throws Exception {
+        System.out.println("END");
         if (FileUtils.getFile(storageDir, "bin", "cassandra.pid").exists()) {
             CassandraClusterManager ccm = new CassandraClusterManager();
             ccm.killNode(storageDir);
+            Thread.sleep(1000);
+        }
+    }
+
+    @Test
+    public void performDefaultInstall() throws Exception {
+        CommandLineParser parser = new PosixParser();
+        CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {});
+
+        int status = installer.run(cmdLine);
+
+        String address = InetAddress.getLocalHost().getHostAddress();
+
+        assertEquals(status, 0, "Expected to get back a status code of 0 for a successful default install");
+        assertNodeIsRunning();
+        assertRhqServerPropsUpdated(address);
+
+        File binDir = new File(storageDir, "bin");
+        assertTrue(binDir.exists(), "Expected to find bin directory at " + binDir);
+
+        File confDir = new File(storageDir, "conf");
+        assertTrue(confDir.exists(), "Expected to find conf directory at " + confDir);
+
+        File libDir = new File(storageDir, "lib");
+        assertTrue(libDir.exists(), "Expected to find lib directory at " + libDir);
+
+        File baseDataDir = new File(basedir, "rhq-data");
+
+        File commitLogDir = new File(baseDataDir, "commit_log");
+        assertTrue(commitLogDir.exists(), "Expected to find commit_log directory at " + commitLogDir);
+
+        File dataDir = new File(baseDataDir, "data");
+        assertTrue(dataDir.exists(), "Expected to find data directory at " + dataDir);
+
+        File savedCachesDir = new File(baseDataDir, "saved_caches");
+        assertTrue(savedCachesDir.exists(), "Expected to find saved_caches directory at " + savedCachesDir);
+
+        File log4jFile = new File(confDir, "log4j-server.properties");
+        assertTrue(log4jFile.exists(), log4jFile + " does not exist");
+
+        File logsDir = new File(serverDir, "logs");
+        File logFile = new File(logsDir, "rhq-storage.log");
+
+        Properties log4jProps = new Properties();
+        log4jProps.load(new FileInputStream(log4jFile));
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+            "The log file is wrong");
+
+        File yamlFile = new File(confDir, "cassandra.yaml");
+        ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+        yamlEditor.load();
+
+        assertEquals(yamlEditor.getInternodeAuthenticator(), "org.rhq.cassandra.auth.RhqInternodeAuthenticator",
+            "Failed to set the internode_authenticator property in " + yamlFile);
+        assertEquals(yamlEditor.getAuthenticator(), "org.apache.cassandra.auth.PasswordAuthenticator",
+            "The authenticator property is wrong");
+        assertEquals(yamlEditor.getListenAddress(), address, "The listen_address property is wrong");
+        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142,  "The native_transport_port property is wrong");
+        assertEquals(yamlEditor.getRpcAddress(), address, "The rpc_address property is wrong");
+        assertEquals(yamlEditor.getStoragePort(), (Integer) 7100, "The storage_port property is wrong");
+
+        File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(cassandraJvmPropsFile));
+
+        assertEquals(properties.getProperty("jmx_port"), "7299", "The jmx_port property is wrong");
+        assertEquals(properties.getProperty("heap_min"), "-Xms512M", "The heap_min property is wrong");
+        assertEquals(properties.getProperty("heap_max"), "-Xmx512M", "The heap_max property is wrong");
+        assertEquals(properties.getProperty("heap_new"), "-Xmn128M", "The heap_new property is wrong");
+        assertEquals(properties.getProperty("thread_stack_size"), "-Xss256k", "The thread_stack_size property is wrong");
+    }
+
+    @Test(dependsOnMethods = "performDefaultInstall")
+    public void upgradeFromDefaultInstall() throws Exception {
+        CommandLineParser parser = new PosixParser();
+        File defaultInstallDir = new File(basedir.getParentFile(), "performDefaultInstall");
+        File upgradeFromServerDir = new File(defaultInstallDir, "rhq-server");
+        String[] args = {"--upgrade", upgradeFromServerDir.getAbsolutePath()};
+        CommandLine cmdLine = parser.parse(installer.getOptions(), args);
+
+        int status = installer.run(cmdLine);
+        assertEquals(status, 0, "Expected to get back a status code of 0 for a successful default upgrade");
+
+        String address = InetAddress.getLocalHost().getHostAddress();
+        assertNodeIsRunning();
+        assertRhqServerPropsUpdated(address);
+
+        File binDir = new File(storageDir, "bin");
+        assertTrue(binDir.exists(), "Expected to find bin directory at " + binDir);
+
+        File confDir = new File(storageDir, "conf");
+        assertTrue(confDir.exists(), "Expected to find conf directory at " + confDir);
+
+        File libDir = new File(storageDir, "lib");
+        assertTrue(libDir.exists(), "Expected to find lib directory at " + libDir);
+
+        File baseDataDir = new File(defaultInstallDir, "rhq-data");
+
+        File commitLogDir = new File(baseDataDir, "commit_log");
+        assertTrue(commitLogDir.exists(), "Expected to find commit_log directory at " + commitLogDir);
+
+        File dataDir = new File(baseDataDir, "data");
+        assertTrue(dataDir.exists(), "Expected to find data directory at " + dataDir);
+
+        File savedCachesDir = new File(baseDataDir, "saved_caches");
+        assertTrue(savedCachesDir.exists(), "Expected to find saved_caches directory at " + savedCachesDir);
+
+        File log4jFile = new File(confDir, "log4j-server.properties");
+        assertTrue(log4jFile.exists(), log4jFile + " does not exist");
+
+        File logsDir = new File(serverDir, "logs");
+        File logFile = new File(logsDir, "rhq-storage.log");
+
+        Properties log4jProps = new Properties();
+        log4jProps.load(new FileInputStream(log4jFile));
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+            "The log file is wrong");
+
+        File yamlFile = new File(confDir, "cassandra.yaml");
+        ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+        yamlEditor.load();
+
+        assertEquals(yamlEditor.getInternodeAuthenticator(), "org.rhq.cassandra.auth.RhqInternodeAuthenticator",
+            "Failed to set the internode_authenticator property in " + yamlFile);
+        assertEquals(yamlEditor.getAuthenticator(), "org.apache.cassandra.auth.PasswordAuthenticator",
+            "The authenticator property is wrong");
+        assertEquals(yamlEditor.getListenAddress(), address, "The listen_address property is wrong");
+        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142,  "The native_transport_port property is wrong");
+        assertEquals(yamlEditor.getRpcAddress(), address, "The rpc_address property is wrong");
+        assertEquals(yamlEditor.getStoragePort(), (Integer) 7100, "The storage_port property is wrong");
+
+        File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(cassandraJvmPropsFile));
+
+        assertEquals(properties.getProperty("jmx_port"), "7299", "The jmx_port property is wrong");
+        assertEquals(properties.getProperty("heap_min"), "-Xms512M", "The heap_min property is wrong");
+        assertEquals(properties.getProperty("heap_max"), "-Xmx512M", "The heap_max property is wrong");
+        assertEquals(properties.getProperty("heap_new"), "-Xmn128M", "The heap_new property is wrong");
+        assertEquals(properties.getProperty("thread_stack_size"), "-Xss256k", "The thread_stack_size property is wrong");
+    }
+
+    @Test
+    public void performValidInstallWithOutputToStderr() throws Exception {
+        installer = new StorageInstaller() {
+            @Override
+            protected void exec(Executor executor, org.apache.commons.exec.CommandLine cmdLine) throws IOException {
+                executor.execute(cmdLine, ImmutableMap.of("JAVA_TOOL_OPTIONS", "-Dfile.encoding=UTF8"));
+            }
+        };
+
+        System.setProperty("-Dfile.encoding", "UTF8");
+
+        CommandLineParser parser = new PosixParser();
+        CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {});
+
+        int status = installer.run(cmdLine);
+
+        assertEquals(status, 0, "A zero status code should be returned even when the storage node writes to stderr.");
+    }
+
+    @Test
+    public void installWithJMXPortConflict() throws Exception {
+        ServerSocket serverSocket = null;
+        try {
+            String address = InetAddress.getLocalHost().getHostAddress();
+            serverSocket = new ServerSocket();
+            serverSocket.bind(new InetSocketAddress(address, 7799));
+
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {"--jmx-port", "7799"});
+
+            int status = installer.run(cmdLine);
+
+            assertEquals(status, StorageInstaller.STATUS_JMX_PORT_CONFLICT, "The status code is wrong");
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+        }
+    }
+
+    @Test
+    public void installWithCQLPortConflict() throws Exception {
+        ServerSocket serverSocket = null;
+        try {
+            String address = InetAddress.getLocalHost().getHostAddress();
+            serverSocket = new ServerSocket();
+            serverSocket.bind(new InetSocketAddress(address, 9342));
+
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {"--client-port", "9342"});
+
+            int status = installer.run(cmdLine);
+
+            assertEquals(status, StorageInstaller.STATUS_CQL_PORT_CONFLICT, "The status code is wrong");
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         }
     }
 
@@ -298,14 +505,6 @@ public class StorageInstallerTest {
 
         assertEquals(properties.getProperty("rhq.storage.nodes"), address);
         assertEquals(properties.getProperty("rhq.storage.cql-port"), "9142");
-    }
-
-    private String sha256(File file) {
-        try {
-            return digestGenerator.calcDigestString(file);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to calculate SHA-256 hash for " + file.getPath(), e);
-        }
     }
 
 }

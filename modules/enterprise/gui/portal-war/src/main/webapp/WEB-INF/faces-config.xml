@@ -20,6 +20,14 @@
       <el-resolver>org.rhq.enterprise.gui.common.paging.PageControlELResolver</el-resolver>
    </application>
 
+  <render-kit>
+      <renderer>
+         <component-family>org.richfaces.component.FileUpload</component-family>
+         <renderer-type>org.richfaces.renderkit.html.FileUploadRenderer</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.upload.UploadRichFacesRenderer</renderer-class>
+      </renderer>
+  </render-kit>
+
    <lifecycle>
       <phase-listener>org.rhq.enterprise.gui.common.framework.FacesMessagePropogationPhaseListener</phase-listener>
       <phase-listener>org.rhq.enterprise.gui.common.framework.PhaseTracker</phase-listener>

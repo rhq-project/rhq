@@ -226,7 +226,7 @@ public class DashboardLinkUtility {
 
     private static void addNewMetric(String id, String selectedView, String resourceGraphElements) {
         //construct portal.war url to access
-        String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+        String baseUrl = "/portal/resource/common/monitor/visibility/IndicatorCharts.do";
         baseUrl += "?id=" + id;
         baseUrl += "&view=" + selectedView;
         baseUrl += "&action=addChart&metric=" + resourceGraphElements;

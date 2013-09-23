@@ -50,6 +50,9 @@
       <module name="org.codehaus.jackson.jackson-core-asl" export="true"/>
       <module name="org.codehaus.jackson.jackson-jaxrs" export="true"/>
       <module name="org.codehaus.jackson.jackson-mapper-asl" export="true"/>
+      
+      <!-- rss4j (which we include in /lib and is used in some server plugins) directly uses Xerces, so we have to make it visible -->
+      <module name="org.apache.xerces" export="true"/>
     </dependencies>
   </sub-deployment>
 

@@ -70,13 +70,13 @@ public abstract class ControlCommand {
     protected final Log log = LogFactory.getLog(getClass().getName());
 
     private File basedir;
-    private File binDir;
+    private File binDir; // where the internal startup scripts are
 
     private PropertiesConfiguration rhqctlConfig;
 
     public ControlCommand() {
         basedir = new File(System.getProperty("rhq.server.basedir"));
-        binDir = new File(basedir, "bin");
+        binDir = new File(basedir, "bin/internal");
 
         File rhqctlPropertiesFile = getRhqCtlProperties();
         try {
@@ -249,7 +249,7 @@ public abstract class ControlCommand {
         if (isWindows()) {
             result = new org.apache.commons.exec.CommandLine("cmd.exe");
             result.addArgument("/C");
-            result.addArgument(scriptName + ".bat");
+            result.addArgument(scriptName.replace('/', '\\') + ".bat");
 
         } else {
             result = new org.apache.commons.exec.CommandLine("./" + (addShExt ? scriptName + ".sh" : scriptName));
@@ -264,7 +264,7 @@ public abstract class ControlCommand {
 
     protected String getScript(String scriptName) {
         if (isWindows()) {
-            return scriptName + ".bat";
+            return scriptName.replace('/', '\\') + ".bat";
         }
 
         return "./" + scriptName + ".sh";

@@ -127,7 +127,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
     @Override
     protected Canvas buildResultsSection(ResourceOperationHistory operationHistory) {
         OperationRequestStatus status = operationHistory.getStatus();
-        if (status == OperationRequestStatus.SUCCESS) {
+        if (status == OperationRequestStatus.SUCCESS || status == OperationRequestStatus.FAILURE) {
             EnhancedVLayout resultsSection = new EnhancedVLayout();
 
             Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_results() + "</h4>");

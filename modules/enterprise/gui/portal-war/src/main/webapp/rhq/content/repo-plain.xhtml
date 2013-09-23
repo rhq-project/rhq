@@ -646,7 +646,7 @@
       </a4j:region>  
      </h:form>
      
-     <h:form rendered="#{not RepoDetailsUIBean.hasContentSources and RepoDetailsUIBean.editable}">  
+     <h:form rendered="#{not RepoDetailsUIBean.hasContentSources and RepoDetailsUIBean.editable}" id="formFoo">  
            <rich:panel >
                 <f:facet name="header">
                     <h:outputText value="Upload New Package"/>
@@ -661,7 +661,7 @@
                   <input type="button"
                          class="buttonmed"
                          value="UPLOAD FILE..."
-                         onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+                         onclick="javascript:open('/portal/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
                   <rich:spacer width="5" />
                   <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
                                 value="File Uploaded: #{UploadNewPackageUIBean.fileItem.fileName}"/>
@@ -892,6 +892,16 @@
         </rich:panel>
       </a4j:region>
     </h:form>
+
+<script>
+  document.getElementById('repoDetailsForm').setAttribute('action', 'repo-plain.xhtml');
+  document.getElementById('repoContentProvidersListForm').setAttribute('action', 'repo-plain.xhtml');
+  document.getElementById('repoResourcesListForm').setAttribute('action', 'repo-plain.xhtml');
+  document.getElementById('repoPackageVersionsListForm').setAttribute('action', 'repo-plain.xhtml');
+  document.getElementById('formFoo').setAttribute('action', 'repo-plain.xhtml');
+  document.getElementById('repoDistributionListForm').setAttribute('action', 'repo-plain.xhtml');
+  document.getElementById('repoAdvisoryListForm').setAttribute('action', 'repo-plain.xhtml');
+</script>
 
   </ui:define>
 </ui:composition>

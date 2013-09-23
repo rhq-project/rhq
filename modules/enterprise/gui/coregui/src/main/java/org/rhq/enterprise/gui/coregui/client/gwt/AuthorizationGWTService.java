@@ -96,6 +96,15 @@ public interface AuthorizationGWTService extends RemoteService {
     Set<Permission> getBundlePermissions(int bundleId) throws RuntimeException;
 
     /**
+     * Gets the set of permissions that the current user explicitly possesses for the specified {@link org.rhq.core.domain.bundle.BundleGroup}.
+     *
+     * @param  bundleGroupId the id of some BundleGroup to check permissions against
+     *
+     * @return the set of permissions that the current user possesses for the specified {@link org.rhq.core.domain.bundle.BundleGroup} - never null
+     */
+    Set<Permission> getBundleGroupPermissions(int bundleGroupId) throws RuntimeException;
+
+    /**
      * Returns true if the current user possesses either: 1) the specified bundle permission for *all* of the
      * specified bundles, or 2) is a system superuser which, by definition, gives full access to all bundles
      * NOTE: The size of the collection must be less than or equal to 1000 (due to an Oracle limitation).

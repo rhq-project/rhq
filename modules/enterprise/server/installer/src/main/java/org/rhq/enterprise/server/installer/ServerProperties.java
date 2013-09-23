@@ -27,6 +27,8 @@ import java.util.Set;
  * @author John Mazzitelli
  */
 public class ServerProperties {
+    public static final String PROP_FILENAME = "rhq-server.properties";
+
     public static final String PROP_DATABASE_TYPE = "rhq.server.database.type-mapping";
     public static final String PROP_DATABASE_CONNECTION_URL = "rhq.server.database.connection-url";
     public static final String PROP_DATABASE_USERNAME = "rhq.server.database.user-name";
@@ -116,6 +118,12 @@ public class ServerProperties {
 
     public static final String PROP_MGMT_USER_PASSWORD = "rhq.server.management.password";
 
+    public static final String PROP_STORAGE_USERNAME = "rhq.storage.username";
+    public static final String PROP_STORAGE_PASSWORD = "rhq.storage.password";
+    public static final String PROP_STORAGE_NODES = "rhq.storage.nodes";
+    public static final String PROP_STORAGE_CQL_PORT = "rhq.storage.cql-port";
+    public static final String PROP_STORAGE_GOSSIP_PORT = "rhq.storage.gossip-port";
+
     // this list contains all the properties that are to have boolean values (true | false)
     public static final Set<String> BOOLEAN_PROPERTIES;
     static {
@@ -145,6 +153,8 @@ public class ServerProperties {
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_WEBCONNS);
         INTEGER_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_PORT);
+        INTEGER_PROPERTIES.add(PROP_STORAGE_CQL_PORT);
+        INTEGER_PROPERTIES.add(PROP_STORAGE_GOSSIP_PORT);
     }
 
     // this list contains all the properties that are to have non-empty string values
@@ -152,7 +162,6 @@ public class ServerProperties {
     static {
         STRING_PROPERTIES = new HashSet<String>();
         STRING_PROPERTIES.add(PROP_JBOSS_BIND_ADDRESS);
-        STRING_PROPERTIES.add(PROP_MGMT_USER_PASSWORD);
     }
 
     public static final Set<String> CLIENT_AUTH_MODES;

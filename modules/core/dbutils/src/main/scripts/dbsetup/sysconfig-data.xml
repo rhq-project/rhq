@@ -143,10 +143,14 @@
               PROPERTY_VALUE="true" DEFAULT_PROPERTY_VALUE="true"
               FREAD_ONLY="TRUE"/>
 
-      <!-- STORAGE_CQL_PORT and STORAGE_GOSSIP_PORT will get updated by the installer -->
+      <!-- STORAGE_USERNAME, STORAGE_PASSWORD, STORAGE_CQL_PORT and STORAGE_GOSSIP_PORT will get updated by the installer -->
       <data ID="61" PROPERTY_KEY="STORAGE_CQL_PORT" FREAD_ONLY="TRUE"/>
 
       <data ID="62" PROPERTY_KEY="STORAGE_GOSSIP_PORT" FREAD_ONLY="TRUE"/>
+
+      <data ID="63" PROPERTY_KEY="STORAGE_USERNAME" FREAD_ONLY="TRUE"/>
+
+      <data ID="64" PROPERTY_KEY="STORAGE_PASSWORD" FREAD_ONLY="TRUE"/>
 
     </table>
 

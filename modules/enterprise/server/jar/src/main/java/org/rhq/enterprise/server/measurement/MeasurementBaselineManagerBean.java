@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -46,6 +47,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -233,8 +235,10 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> getSchedulesWithoutBaselines() {
+        Connection connection = null;
         try {
-            DatabaseType databaseType = DatabaseTypeFactory.getDatabaseType(rhqDs.getConnection());
+            connection = rhqDs.getConnection();
+            DatabaseType databaseType = DatabaseTypeFactory.getDatabaseType(connection);
             final String sql =
                 "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id " +
                 "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = " +
@@ -249,6 +253,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         } catch (Exception e) {
             throw new RuntimeException("An unexpected error occurred while trying to retrieve schedules without baselines",
                 e);
+        } finally {
+            JDBCUtil.safeClose(connection);
         }
     }
 

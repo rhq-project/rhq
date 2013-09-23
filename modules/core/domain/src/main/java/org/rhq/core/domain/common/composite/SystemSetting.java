@@ -113,11 +113,13 @@ public enum SystemSetting {
     /**
      * The STORAGE settings are all read-only and deal with shared, cluster-wide settings
      * among storage nodes. They are read-only because they should only be updated through
-     * the storage subsystem.
+     * the storage subsystem. The username and password should not be updated at all.
      */
     STORAGE_CQL_PORT("STORAGE_CQL_PORT", PropertySimpleType.INTEGER, true, true),
     STORAGE_GOSSIP_PORT("STORAGE_GOSSIP_PORT", PropertySimpleType.INTEGER, true, true),
     STORAGE_AUTOMATIC_DEPLOYMENT("STORAGE_AUTOMATIC_DEPLOYMENT", PropertySimpleType.BOOLEAN, true, true),
+    STORAGE_USERNAME("STORAGE_USERNAME", PropertySimpleType.STRING, true, true),
+    STORAGE_PASSWORD("STORAGE_PASSWORD", PropertySimpleType.STRING, true, true),
 
     //these seem to be unused yet still present in the database...
     @Deprecated

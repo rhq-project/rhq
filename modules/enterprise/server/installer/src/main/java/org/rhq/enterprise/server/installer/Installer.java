@@ -21,13 +21,12 @@ package org.rhq.enterprise.server.installer;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.installer.InstallerService.AlreadyInstalledException;
@@ -147,19 +146,17 @@ public class Installer {
         usage.append("\t--force, -f: force the installer to try to install everything").append("\n");
         usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
         usage.append("\t--setupdb, -b: only perform database schema creation or update").append("\n");
-        usage.append("\t--dbpassword, -d: (deprecated, use --encodepassword)").append("\n");
-        usage.append("\t--encodepassword, -e: encodes a password for rhq-server.properties (edit file manually)");
+        usage.append("\t--encodepassword, -e: prompts for password to encode for editing rhq-server.properties");
         usage.append("\n");
         LOG.info(usage);
     }
 
     private WhatToDo[] processArguments(String[] args) throws Exception {
-        String sopts = "-:HD:h:p:d:bflt";
+        String sopts = "-:HD:h:p:e:bflt";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
-            new LongOpt("dbpassword", LongOpt.REQUIRED_ARGUMENT, null, 'd'),
-            new LongOpt("encodepassword", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
+            new LongOpt("encodepassword", LongOpt.NO_ARGUMENT, null, 'e'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f'), new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
@@ -230,19 +227,16 @@ public class Installer {
                 break;
             }
 
-            case 'd': {
-                passwordToEncode = getopt.getOptarg();
-                if (passwordToEncode == null) {
-                    throw new IllegalArgumentException("Missing password");
-                }
-                break;
-            }
-
             case 'e': {
-                passwordToEncode = getopt.getOptarg();
-                if (passwordToEncode == null) {
-                    throw new IllegalArgumentException("Missing password");
+                // prompt for the password. we don't use a command line option because then the plain text password
+                // could get captured in command history.
+                Console console = System.console();
+                if (null != console) {
+                    passwordToEncode = String.valueOf(console.readLine("%s", "Password: "));
+                } else {
+                    LOG.error("NO CONSOLE!");
                 }
+
                 break;
             }
 
@@ -268,16 +262,13 @@ public class Installer {
             }
         }
 
-        // if a password was asked to be obfuscated, that's all we do on the execution
+        // if a password was asked to be encoded, that's all we do on the execution
         if (passwordToEncode != null) {
-            String obfuscatedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(passwordToEncode);
-            LOG.info("*** Encoded password properties for rhq-server.properties:");
-            LOG.info("***     rhq.server.database.password=" + obfuscatedPassword);
-            LOG.info("***             rhq.storage.password=" + obfuscatedPassword);
+            String encodedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
+                .valueOf(passwordToEncode));
+            LOG.info("*** Encoded password for rhq-server.properties:");
+            LOG.info("***     rhq.server.database.password=" + encodedPassword);
 
-            obfuscatedPassword = new UsernamePasswordHashUtil().generateHashedHexURP("rhqadmin", "ManagementRealm",
-                passwordToEncode.toCharArray());
-            LOG.info("***   rhq.server.management.password=" + obfuscatedPassword);
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }
 

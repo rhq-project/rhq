@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,12 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.bindings.client;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -28,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javassist.ClassPool;
 import javassist.util.proxy.MethodHandler;
 
@@ -39,7 +40,6 @@ import org.rhq.bindings.util.ClassPoolFactory;
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
 import org.rhq.bindings.util.ResourceTypeFingerprint;
-import org.rhq.bindings.util.ScriptUtil;
 import org.rhq.bindings.util.ShortOutput;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -69,6 +69,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
@@ -463,6 +464,7 @@ public class ResourceClientProxy {
 
     public static class ClientProxyMethodHandler implements MethodHandler, ContentBackedResource, PluginConfigurable,
         ResourceConfigurable {
+        private static final int SIZE_32K = 1024 * 32;
 
         ResourceClientProxy resourceClientProxy;
         RhqFacade remoteClient;
@@ -542,10 +544,9 @@ public class ResourceClientProxy {
                 throw new IllegalArgumentException("File expected, found directory: " + file.getAbsolutePath());
             }
 
-            byte[] fileContents = new ScriptUtil(remoteClient).getFileBytes(filename);
             String sha = null;
             try {
-                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileContents);
+                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
             } catch (Exception e) {
                 //do nothing because the sha will remain null.
                 LOG.error("Message digest for the package bits failed.", e);
@@ -557,10 +558,29 @@ public class ResourceClientProxy {
 
             ContentManagerRemote contentManager = remoteClient.getProxy(ContentManagerRemote.class);
 
+            // We will send the file in fragments because sending the whole file at once is memory hungry
+            // Bug 955363 - Uploading of file content using remote API/CLI requires many times more heap then file size
+            // https://bugzilla.redhat.com/show_bug.cgi?id=955363
+            String temporaryContentHandle = contentManager.createTemporaryContentHandle();
+            FileInputStream fileInputStream = null;
+            try {
+                fileInputStream = new FileInputStream(file);
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream, SIZE_32K);
+                int len;
+                byte[] bytes = new byte[SIZE_32K];
+                while ((len = bufferedInputStream.read(bytes, 0, bytes.length)) != -1) {
+                    contentManager.uploadContentFragment(temporaryContentHandle, bytes, 0, len);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Could not upload content fragment", e);
+            } finally {
+                StreamUtil.safeClose(fileInputStream);
+            }
+
             PackageVersion pv = contentManager.createPackageVersionWithDisplayVersion(remoteClient.getSubject(),
                 oldPackage.getPackageVersion().getGeneralPackage().getName(), oldPackage.getPackageVersion()
                     .getGeneralPackage().getPackageType().getId(), packageVersion, displayVersion, oldPackage
-                    .getPackageVersion().getArchitecture().getId(), fileContents);
+                    .getPackageVersion().getArchitecture().getId(), temporaryContentHandle);
 
             contentManager.deployPackagesWithNote(remoteClient.getSubject(), new int[] { resourceClientProxy.getId() },
                 new int[] { pv.getId() }, "CLI deployment request");

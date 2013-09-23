@@ -53,16 +53,16 @@
             String icon = null;
             switch (entry.getStatus()) {
                 case SUCCESS:
-                    icon = "/images/icn_create_child_success.png";
+                    icon = "/portal/images/icn_create_child_success.png";
                     break;
                 case FAILURE:
-                    icon = "/images/icn_create_child_failed.png";
+                    icon = "/portal/images/icn_create_child_failed.png";
                     break;
                 case IN_PROGRESS:
-                    icon = "/images/icn_create_child.png";
+                    icon = "/portal/images/icn_create_child.png";
                     break;
                 default:
-                    icon = "/images/icn_create_child.png"; // TODO
+                    icon = "/portal/images/icn_create_child.png"; // TODO
             }
 
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId  + "/Inventory/ChildHistory";
@@ -91,16 +91,16 @@
             String icon = null;
             switch (entry.getStatus()) {
                 case SUCCESS:
-                    icon = "/images/icn_delete_child_success.png";
+                    icon = "/portal/images/icn_delete_child_success.png";
                     break;
                 case FAILURE:
-                    icon = "/images/icn_delete_child_failed.png";
+                    icon = "/portal/images/icn_delete_child_failed.png";
                     break;
                 case IN_PROGRESS:
-                    icon = "/images/icn_delete_child.png";
+                    icon = "/portal/images/icn_delete_child.png";
                     break;
                 default:
-                    icon = "/images/icn_delete_child.png"; // TODO
+                    icon = "/portal/images/icn_delete_child.png"; // TODO
             }
 
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Inventory/ChildHistory";

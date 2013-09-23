@@ -70,22 +70,25 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
 public class MetricsTableView extends Table<MetricsViewDataSource> implements Refreshable {
 
     private final Resource resource;
-    private boolean rendered = false;
     private final AbstractD3GraphListView abstractD3GraphListView;
-
     private final MeasurementUserPreferences measurementUserPrefs;
     private final AddToDashboardComponent addToDashboardComponent;
+    Set<Integer> expandedRows;
+    private boolean rendered = false;
     private MetricsTableListGrid metricsTableListGrid;
 
-    Set<Integer> expandedRows = new HashSet<Integer>();
-
-    public MetricsTableView(Resource resource, AbstractD3GraphListView abstractD3GraphListView) {
+    public MetricsTableView(Resource resource, AbstractD3GraphListView abstractD3GraphListView, Set<Integer> expandedRows) {
         super();
         this.resource = resource;
         this.abstractD3GraphListView = abstractD3GraphListView;
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
         setDataSource(new MetricsViewDataSource(resource));
         addToDashboardComponent = new AddToDashboardComponent(resource);
+        if(null == expandedRows){
+           this.expandedRows = new HashSet<Integer>();
+        }else {
+            this.expandedRows = expandedRows;
+        }
     }
 
     /**
@@ -105,11 +108,10 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
 
-        if(!rendered){
+        if (!rendered) {
             addTableAction(MSG.view_measureTable_getLive(), new TableAction() {
                 @Override
                 public boolean isEnabled(ListGridRecord[] selection) {
-                    //return selection != null && selection.length != 0;
                     return true;
                 }
 
@@ -135,13 +137,12 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         }
     }
 
-
     @Override
     /**
      * Redraw Graphs in this context means to refresh the table and redraw open graphs.
      */
     public void refreshData() {
-        Log.debug("MetricsView.redrawGraphs.");
+        Log.debug("MetricsView.refreshData()");
         new Timer() {
 
             @Override
@@ -152,13 +153,12 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
     }
 
-
     public class MetricsTableListGrid extends ListGrid {
 
         private static final int TREEVIEW_DETAIL_CHART_HEIGHT = 205;
         private static final int NUM_METRIC_POINTS = 60;
-        private Resource resource;
         final MetricsTableView metricsTableView;
+        private Resource resource;
 
         public MetricsTableListGrid(final MetricsTableView metricsTableView, final Resource resource) {
             super();
@@ -198,28 +198,34 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                     refreshData();
                 }
             });
+
             addDataArrivedHandler(new DataArrivedHandler() {
                 @Override
                 public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                    int startRow = dataArrivedEvent.getStartRow();
-                    int endRow = dataArrivedEvent.getEndRow();
-
-                    for (int i = startRow; i < endRow; i++) {
-                        ListGridRecord listGridRecord = getRecord(i);
-                        if (null != listGridRecord) {
-                            int metricDefinitionId = listGridRecord
-                                .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
-                            if (null != metricsTableView && metricsTableView.expandedRows.contains(metricDefinitionId)) {
-                                expandRecord(listGridRecord);
-                            }
-                        }
-                    }
+                    expandOpenedRows(dataArrivedEvent.getStartRow(), dataArrivedEvent.getEndRow(), metricsTableView);
                 }
             });
 
         }
 
+        private void expandOpenedRows(int startRow, int endRow, MetricsTableView metricsTableView) {
+
+            for (int i = startRow; i < endRow; i++) {
+                ListGridRecord listGridRecord = getRecord(i);
+                if (null != listGridRecord) {
+                    int metricDefinitionId = listGridRecord
+                        .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
+                    if (null != metricsTableView && null != metricsTableView.expandedRows && metricsTableView.expandedRows.contains(metricDefinitionId)) {
+                        expandRecord(listGridRecord);
+                    }
+                }
+            }
+        }
+
         @Override
+        /**
+         * If you expand a grid row then create a graph.
+         */
         protected Canvas getExpansionComponent(final ListGridRecord record) {
             final Integer definitionId = record.getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
             final Integer resourceId = record.getAttributeAsInt(MetricsViewDataSource.FIELD_RESOURCE_ID);
@@ -270,7 +276,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                                 public void run() {
                                     graphView.drawJsniChart();
                                     BrowserUtility.graphSparkLines();
-
                                 }
                             }.schedule(150);
 

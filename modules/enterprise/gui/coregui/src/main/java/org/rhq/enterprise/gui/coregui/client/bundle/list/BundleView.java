@@ -294,7 +294,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         canTag = globalPermissions.contains(Permission.CREATE_BUNDLES);
 
         // If the user has global perms to enable/render any of the views then proceed, otherwise, we
-        // need to see what group level perms he has.
+        // need to see what bundle level perms he has.
         if (canDelete && canDeploy && canTag) {
             authorizedRenderView(bundleId, viewPath);
 

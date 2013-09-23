@@ -340,7 +340,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected void stopServer(File serverBasedir) throws Exception {
 
-        File serverBinDir = new File(serverBasedir, "bin");
+        File serverBinDir = new File(serverBasedir, "bin/internal");
         if (!serverBinDir.exists()) {
             throw new IllegalArgumentException("No Server found for base directory [" + serverBasedir.getPath() + "]");
         }
@@ -517,7 +517,15 @@ public abstract class AbstractInstall extends ControlCommand {
 
     private Properties loadStorageProperties(String path) throws IOException {
         Properties properties = new Properties();
-        properties.load(new FileInputStream(new File(path)));
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(new File(path));
+            properties.load(fis);
+        } finally {
+            if (null != fis) {
+                fis.close();
+            }
+        }
 
         return properties;
     }

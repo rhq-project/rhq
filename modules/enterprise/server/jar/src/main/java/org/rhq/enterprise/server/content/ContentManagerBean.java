@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,15 +13,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.content;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -122,6 +124,8 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class ContentManagerBean implements ContentManagerLocal, ContentManagerRemote {
+    private static final Log LOG = LogFactory.getLog(ContentManagerBean.class);
+
     // Constants  --------------------------------------------
 
     /**
@@ -129,7 +133,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
      */
     private static final int REQUEST_TIMEOUT = 1000 * 60 * 60;
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final String TMP_FILE_PREFIX = "rhq-content-";
+
+    private static final String TMP_FILE_SUFFIX = ".bin";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -165,13 +171,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // For performance tracking
         long start = System.currentTimeMillis();
 
-        log.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id [" + resourceId
-            + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Merging [" + report.getDeployedPackages().size() + "] packages for Resource with id ["
+                + resourceId + "]...");
+        }
 
         // Load the resource and its installed packages
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
-            log.error("Invalid resource ID specified for merge. Resource ID: " + resourceId);
+            LOG.error("Invalid resource ID specified for merge. Resource ID: " + resourceId);
             return;
         }
 
@@ -247,7 +255,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 try {
                     packageArchitecture = (Architecture) architectureQuery.getSingleResult();
                 } catch (Exception e) {
-                    log.warn("Could not load architecture for architecture name ["
+                    LOG.warn("Could not load architecture for architecture name ["
                         + discoveredPackage.getArchitectureName() + "] for package [" + discoveredPackage.getName()
                         + "]. Cause: " + ThrowableUtil.getAllMessages(e));
                     continue;
@@ -282,8 +290,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 List<InstalledPackage> installedPackageList = installedPackageQuery.getResultList();
 
                 if (installedPackageList.size() > 0) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Discovered package is already known to the inventory "
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Discovered package is already known to the inventory "
                             + installedPackageList.iterator().next());
                     }
 
@@ -344,8 +352,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         }
 
-        log.debug("Finished merging [" + report.getDeployedPackages().size() + "] packages in "
-            + (System.currentTimeMillis() - start) + "ms");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Finished merging [" + report.getDeployedPackages().size() + "] packages in "
+                + (System.currentTimeMillis() - start) + "ms");
+        }
     }
 
     public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds) {
@@ -375,7 +385,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             throw new IllegalArgumentException("packages cannot be null");
         }
 
-        log.info("Deploying " + packages.size() + " packages on resource ID [" + resourceId + "]");
+        LOG.info("Deploying " + packages.size() + " packages on resource ID [" + resourceId + "]");
 
         if (packages.size() == 0) {
             return;
@@ -406,7 +416,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ContentAgentService agentService = agentClient.getContentAgentService();
             agentService.deployPackages(transferRequest);
         } catch (RuntimeException e) {
-            log.error("Error while sending deploy request to agent", e);
+            LOG.error("Error while sending deploy request to agent", e);
 
             // Update the request with the failure
             contentManager.failRequest(persistedRequest.getId(), e);
@@ -460,7 +470,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @SuppressWarnings("unchecked")
     public void completeDeployPackageRequest(DeployPackagesResponse response) {
-        log.info("Completing deploy package response: " + response);
+        LOG.info("Completing deploy package response: " + response);
 
         // Load persisted request
         Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
@@ -590,7 +600,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             throw new IllegalArgumentException("installedPackages cannot be null");
         }
 
-        log.info("Deleting " + installedPackageIds.length + " from resource ID [" + resourceId + "]");
+        LOG.info("Deleting " + installedPackageIds.length + " from resource ID [" + resourceId + "]");
 
         if (installedPackageIds.length == 0) {
             return;
@@ -632,7 +642,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ContentAgentService agentService = agentClient.getContentAgentService();
             agentService.deletePackages(transferRequest);
         } catch (RuntimeException e) {
-            log.error("Error while sending deploy request to agent", e);
+            LOG.error("Error while sending deploy request to agent", e);
 
             // Update the request with the failure
             contentManager.failRequest(persistedRequest.getId(), e);
@@ -683,7 +693,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public void completeDeletePackageRequest(RemovePackagesResponse response) {
-        log.info("Completing delete package response: " + response);
+        LOG.info("Completing delete package response: " + response);
 
         // Load persisted request
         Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
@@ -779,7 +789,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId) {
-        log.info("Retrieving bits for package [" + installedPackageId + "] on resource ID [" + resourceId + "]");
+        LOG.info("Retrieving bits for package [" + installedPackageId + "] on resource ID [" + resourceId + "]");
 
         // Check permissions first
         if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
@@ -807,7 +817,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ContentAgentService agentService = agentClient.getContentAgentService();
             agentService.retrievePackageBits(transferRequest);
         } catch (RuntimeException e) {
-            log.error("Error while sending deploy request to agent", e);
+            LOG.error("Error while sending deploy request to agent", e);
 
             // Update the request with the failure
             contentManager.failRequest(persistedRequest.getId(), e);
@@ -860,7 +870,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
         throws Exception {
-        log.info("Retrieving installation steps for package [" + packageDetails + "]");
+        LOG.info("Retrieving installation steps for package [" + packageDetails + "]");
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
@@ -872,7 +882,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ContentAgentService agentService = agentClient.getContentAgentService();
             packageStepList = agentService.translateInstallationSteps(resourceId, packageDetails);
         } catch (PluginContainerException e) {
-            log.error("Error while sending deploy request to agent", e);
+            LOG.error("Error while sending deploy request to agent", e);
 
             // Throw so caller knows an error happened
             throw e;
@@ -913,7 +923,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @TransactionTimeout(45 * 60)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream) {
-        log.info("Completing retrieve package bits response: " + response);
+        LOG.info("Completing retrieve package bits response: " + response);
 
         // Load persisted request
         ContentServiceRequest persistedRequest = entityManager.find(ContentServiceRequest.class, response
@@ -921,7 +931,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (persistedRequest == null) {
-            log
+            LOG
                 .error("Attempting to complete a request that was not found in the database: "
                     + response.getRequestId());
             return;
@@ -934,7 +944,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if (response.getStatus() == ContentRequestStatus.SUCCESS) {
             // Read the stream from the agent and store in the package version
             try {
-                log.debug("Saving content for response: " + response);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Saving content for response: " + response);
+                }
 
                 PackageBits packageBits = initializePackageBits(null);
 
@@ -970,7 +982,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                         try {
                             ps.close();
                         } catch (Exception e) {
-                            log.warn("Failed to close prepared statement for package version [" + packageVersion + "]");
+                            LOG.warn("Failed to close prepared statement for package version [" + packageVersion + "]");
                         }
                     }
 
@@ -978,13 +990,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                         try {
                             conn.close();
                         } catch (Exception e) {
-                            log.warn("Failed to close connection for package version [" + packageVersion + "]");
+                            LOG.warn("Failed to close connection for package version [" + packageVersion + "]");
                         }
                     }
                 }
 
             } catch (Exception e) {
-                log.error("Error while reading content from agent stream", e);
+                LOG.error("Error while reading content from agent stream", e);
                 // TODO: don't want to throw exception here? does the tx rollback automatically anyway?
             }
         }
@@ -1018,7 +1030,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // There is some inconsistency if the request is not in the database
         if (persistedRequest == null) {
-            log.error("Could not find request with ID: " + requestId);
+            LOG.error("Could not find request with ID: " + requestId);
             return dependencies;
         }
 
@@ -1045,7 +1057,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
 
             if (persistedPackageList.size() != 1) {
-                log.error("Multiple packages found. Found: " + persistedPackageList.size() + " for key: " + key);
+                LOG.error("Multiple packages found. Found: " + persistedPackageList.size() + " for key: " + key);
             }
 
             // Convert to transfer object to be sent to the agent
@@ -1149,7 +1161,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             return results.get(0);
         } else {
             String message = "2 or more package types with name '" + packageTypeName + "' found on the resource type with id " + resourceTypeId + ". This is a bug in the database.";
-            log.error(message);
+            LOG.error(message);
             throw new IllegalStateException(message);
         }
     }
@@ -1168,7 +1180,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
         } catch (Exception e) {
             //well, this shouldn't happen but is not crucial in this case
-            log.info("Failed to obtain the behavior of package type '" + packageTypeName + "'.", e);
+            LOG.info("Failed to obtain the behavior of package type '" + packageTypeName + "'.", e);
         }
         
         return new PackageTypeAndVersionFormatComposite(type, format);
@@ -1177,8 +1189,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {
         if (!authorizationManager.isOverlord(subject)) {
-            log.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutRequests; "
-                + "only the overlord may execute this system operation");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutRequests; "
+                    + "only the overlord may execute this system operation");
+            }
             return;
         }
 
@@ -1198,7 +1212,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
                 // If the duration exceeds the timeout threshold, mark it as timed out
                 if (duration > REQUEST_TIMEOUT) {
-                    log.debug("Timing out request after duration: " + duration + " Request: " + request);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Timing out request after duration: " + duration + " Request: " + request);
+                    }
 
                     request.setErrorMessage("Request with duration " + duration + " exceeded the timeout threshold of "
                         + REQUEST_TIMEOUT);
@@ -1229,7 +1245,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                             break;
 
                         default:
-                            log.warn("Found a history entry on the request with an unexpected status. Id: "
+                            LOG.warn("Found a history entry on the request with an unexpected status. Id: "
                                 + history.getId() + ", Status: " + packageStatus);
                             break;
 
@@ -1238,7 +1254,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 }
             }
         } catch (Throwable e) {
-            log.error("Error while processing timed out requests", e);
+            LOG.error("Error while processing timed out requests", e);
         }
     }
 
@@ -1303,7 +1319,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (PackageDetailsValidationException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to get the package type plugin container. This is a bug.", e);
+            LOG.error("Failed to get the package type plugin container. This is a bug.", e);
             throw new IllegalStateException("Failed to get the package type plugin container.", e);
         }
         
@@ -1403,7 +1419,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             persisted = entityManager.merge(pv);
 
             if (error != null) {
-                log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
+                LOG.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
                     + "you can normally ignore that. We detected that a package version was already created when we"
                     + " tried to do it also - we will ignore this and just use the new package version that was "
                     + "created in the other thread", new Throwable("Stack Trace:"));
@@ -1462,7 +1478,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             persisted = entityManager.merge(pkg);
 
             if (error != null) {
-                log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
+                LOG.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
                     + "you can normally ignore that. We detected that a package was already created when we"
                     + " tried to do it also - we will ignore this and just use the new package that was "
                     + "created in the other thread");
@@ -1718,7 +1734,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (PackageDetailsValidationException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to get the package type plugin container. This is a bug.", e);
+            LOG.error("Failed to get the package type plugin container. This is a bug.", e);
             throw new IllegalStateException("Failed to get the package type plugin container.", e);
         }
         
@@ -1971,7 +1987,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ps.close();
             conn.close();
         } catch (Exception e) {
-            log.error("An error occurred while updating Blob with stream for PackageBits[" + bits.getId() + "], "
+            LOG.error("An error occurred while updating Blob with stream for PackageBits[" + bits.getId() + "], "
                 + e.getMessage());
             e.printStackTrace();
         } finally {
@@ -1979,7 +1995,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 try {
                     ps.close();
                 } catch (Exception e) {
-                    log.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
+                    LOG.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
                 }
             }
 
@@ -1987,7 +2003,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 try {
                     ps2.close();
                 } catch (Exception e) {
-                    log.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
+                    LOG.warn("Failed to close prepared statement for package bits [" + bits.getId() + "]");
                 }
             }
 
@@ -1995,14 +2011,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 try {
                     conn.close();
                 } catch (Exception e) {
-                    log.warn("Failed to close connection for package bits [" + bits.getId() + "]");
+                    LOG.warn("Failed to close connection for package bits [" + bits.getId() + "]");
                 }
             }
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (Exception e) {
-                    log.warn("Failed to close stream to package bits located at [" + +bits.getId() + "]");
+                    LOG.warn("Failed to close stream to package bits located at [" + +bits.getId() + "]");
                 }
             }
         }
@@ -2056,13 +2072,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 try {
                     output.close();
                 } catch (IOException ioe2) {
-                    log.warn("Streams could not be closed", ioe2);
+                    LOG.warn("Streams could not be closed", ioe2);
                 }
 
                 try {
                     input.close();
                 } catch (IOException ioe2) {
-                    log.warn("Streams could not be closed", ioe2);
+                    LOG.warn("Streams could not be closed", ioe2);
                 }
             }
         }
@@ -2083,7 +2099,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
         if ((bits == null) || (bits.getId() <= 0)) {
             //then PackageBits instance passed in is insufficiently initialized.
-            log.warn("PackageBits insufficiently initialized. No data to write out.");
+            LOG.warn("PackageBits insufficiently initialized. No data to write out.");
             return;
         }
         try {
@@ -2109,8 +2125,66 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 ps.close();
             }
         } catch (Exception ex) {
-            log.error("An error occurred while writing Blob contents out to stream :" + ex.getMessage());
+            LOG.error("An error occurred while writing Blob contents out to stream :" + ex.getMessage());
             ex.printStackTrace();
         }
+    }
+
+    @Override
+    public String createTemporaryContentHandle() {
+        try {
+            return File.createTempFile(TMP_FILE_PREFIX, TMP_FILE_SUFFIX, getTempDirectory()).getName();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private File getTempDirectory() {
+        String tempDirectoryPath = System.getProperty("java.io.tmpdir");
+        return new File(tempDirectoryPath);
+    }
+
+    @Override
+    public void uploadContentFragment(String temporaryContentHandle, byte[] fragment, int off, int len) {
+        File temporaryContentFile = getTemporaryContentFile(temporaryContentHandle);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(fragment, off, len);
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileOutputStream = new FileOutputStream(temporaryContentFile, true); // append == true
+            StreamUtil.copy(inputStream, new BufferedOutputStream(fileOutputStream, 1024 * 32));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } finally {
+            StreamUtil.safeClose(fileOutputStream);
+        }
+    }
+
+    @Override
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version, String displayVersion, Integer architectureId, String temporaryContentHandle) {
+        // Check permissions first
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to create package versions");
+        }
+        FileInputStream fileInputStream = null;
+        try {
+            fileInputStream = new FileInputStream(getTemporaryContentFile(temporaryContentHandle));
+            return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, displayVersion,
+                    (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileInputStream);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } finally {
+            StreamUtil.safeClose(fileInputStream);
+        }
+    }
+
+    private File getTemporaryContentFile(String handle) {
+        File tempDirectory = getTempDirectory();
+        File file = new File(tempDirectory, handle);
+        if (!file.isFile()) {
+            throw new RuntimeException("handle [" + handle + "] does not denote a file");
+        }
+        return file;
     }
 }

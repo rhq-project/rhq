@@ -142,4 +142,22 @@ public class SessionAccessServlet extends HttpServlet {
         }
     }
 
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/plain");
+        response.addHeader("Pragma", "no-cache");
+        response.addHeader("Cache-Control", "no-cache");
+        response.addHeader("Cache-Control", "no-store");
+        response.addHeader("Cache-Control", "must-revalidate");
+        // some date in the past
+        response.addHeader("Expires", "Mon, 8 Aug 2006 10:00:00 GMT");
+        boolean serverInitialized;
+        try {
+            serverInitialized = LookupUtil.getStartupLocal().isInitialized();
+        } catch (Throwable t) {
+            serverInitialized = false; // this probably means we are still starting up and app server hasn't made EJBs available yet
+        }
+        PrintWriter out = response.getWriter();
+        out.println(serverInitialized);
+    }
 }

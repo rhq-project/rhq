@@ -147,7 +147,9 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             log.debug("Cannot perform process scan - not supported on this platform. (" + systemInfo.getClass() + ")");
         }
         long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("Retrieval of process table took " + elapsedTime + " ms.");
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieval of process table took " + elapsedTime + " ms.");
+        }
         return processInfos;
     }
 

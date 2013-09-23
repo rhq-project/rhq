@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -33,7 +34,6 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
@@ -49,61 +49,44 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
  *
  * @author Mike Thompson
  */
-public class MetricsResourceView extends AbstractD3GraphListView implements AbstractTwoLevelTabSetView.ViewRenderedListener{
+public class MetricsResourceView extends AbstractD3GraphListView implements
+    AbstractTwoLevelTabSetView.ViewRenderedListener {
 
     private static final String COLLAPSED_TOOLTIP = MSG.chart_metrics_collapse_tooltip();
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
 
     private final Resource resource;
-    private Img expandCollapseArrow;
-    private final MetricsTableView metricsTableView;
-    private final ResourceMetricAvailabilityView availabilityDetails;
-    private Timer refreshTimer;
+    private EnhancedHLayout expandCollapseHLayout;
+    private MetricsTableView metricsTableView;
+    private Set<Integer> expandedRows;
 
-
-    public MetricsResourceView(Resource resource) {
+    public MetricsResourceView(Resource resource, Set<Integer> expandedRows) {
         super();
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
         this.resource = resource;
-        metricsTableView = new MetricsTableView(resource, this);
-        availabilityDetails = new ResourceMetricAvailabilityView(resource);
-        startRefreshCycle();
-
-    }
-
-
-    public void refreshData() {
-        this.onDraw();
-    }
-
-    public void refreshGraphs(){
-        new Timer() {
-            @Override
-            public void run() {
-                availabilityGraph.drawJsniChart();
-                BrowserUtility.graphSparkLines();
-            }
-        }.schedule(150);
+        this.expandedRows = expandedRows;
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
-        Log.debug("MetricResourceView.onDraw() for: " + resource.getName() + " id: " + resource.getId());
-        destroyMembers();
+    public void onInit() {
+        super.onInit();
 
+        updateTimeRangeToNow();
 
-        addMember(buttonBarDateTimeRangeEditor);
+        final ResourceMetricAvailabilityView availabilityDetails = new ResourceMetricAvailabilityView(resource);
+        availabilityDetails.hide();
+
+        metricsTableView = new MetricsTableView(resource, this, expandedRows);
+        metricsTableView.setHeight100();
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
-                new AvailabilityOverUnderGraphType(resource.getId()));
+            new AvailabilityOverUnderGraphType(resource.getId()));
 
-        EnhancedHLayout expandCollapseHLayout = new EnhancedHLayout();
-
+        expandCollapseHLayout = new EnhancedHLayout();
         //add expand/collapse icon
-        expandCollapseArrow = new Img(IconEnum.COLLAPSED_ICON.getIcon16x16Path(), 16, 16);
+        final Img expandCollapseArrow = new Img(IconEnum.COLLAPSED_ICON.getIcon16x16Path(), 16, 16);
         expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
         expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
         expandCollapseArrow.addClickHandler(new ClickHandler() {
@@ -122,64 +105,84 @@ public class MetricsResourceView extends AbstractD3GraphListView implements Abst
                     availabilityDetails.show();
 
                 }
-                refreshGraphs();
+                drawGraphs();
             }
         });
-
-
         expandCollapseHLayout.addMember(expandCollapseArrow);
         expandCollapseHLayout.addMember(availabilityGraph);
+
+        addMember(buttonBarDateTimeRangeEditor);
         addMember(expandCollapseHLayout);
-
-        availabilityDetails.hide();
         addMember(availabilityDetails);
-
-        metricsTableView.setHeight100();
         addMember(metricsTableView);
 
-
         queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-                buttonBarDateTimeRangeEditor.getEndTime(), null);
+            buttonBarDateTimeRangeEditor.getEndTime(), null);
     }
 
+    public void refreshData() {
+        Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
+        addAvailabilityGraph();
+        metricsTableView.refresh();
+    }
+
+    private void addAvailabilityGraph() {
+        expandCollapseHLayout.removeMember(availabilityGraph);
+        availabilityGraph.destroy();
+
+        availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
+            new AvailabilityOverUnderGraphType(resource.getId()));
+
+        expandCollapseHLayout.addMember(availabilityGraph);
+
+        queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
+            buttonBarDateTimeRangeEditor.getEndTime(), null);
+    }
+
+
     @Override
-    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed ) {
+    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
         GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
-            endTime, new AsyncCallback<List<Availability>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                }
+                endTime, new AsyncCallback<List<Availability>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+            }
 
-                @Override
-                public void onSuccess(List<Availability> availList) {
-                    Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
+            @Override
+            public void onSuccess(List<Availability> availList) {
+                Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
                         + " ms.");
-                    availabilityGraph.setAvailabilityList(availList);
-                    new Timer() {
-                        @Override
-                        public void run() {
-                            availabilityGraph.drawJsniChart();
+                availabilityGraph.setAvailabilityList(availList);
+                new Timer() {
+                    @Override
+                    public void run() {
+                        availabilityGraph.drawJsniChart();
 
-                        }
-                    }.schedule(150);
-                }
-            });
+                    }
+                }.schedule(150);
+            }
+        });
     }
 
-    @Override
-    public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
+    private void drawGraphs() {
+        new Timer() {
+            @Override
+            public void run() {
+                availabilityGraph.drawJsniChart();
+                BrowserUtility.graphSparkLines();
+            }
+        }.schedule(150);
     }
 
     @Override
     public void onViewRendered() {
 
         // refresh the graphs on subtab nav because we are a cached view not new
-        refreshGraphs();
+        drawGraphs();
     }
 }

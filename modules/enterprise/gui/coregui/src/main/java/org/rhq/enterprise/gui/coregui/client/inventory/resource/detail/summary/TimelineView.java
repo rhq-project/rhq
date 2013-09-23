@@ -44,7 +44,7 @@ public class TimelineView extends EnhancedVLayout {
     @Override
     protected void onDraw() {
         //TODO: replace with GWT version
-        final FullHTMLPane timelinePane = new FullHTMLPane("/resource/common/monitor/events/EventsView.jsp?id="
+        final FullHTMLPane timelinePane = new FullHTMLPane("/portal/resource/common/monitor/events/EventsView.jsp?id="
             + resourceComposite.getResource().getId());
 
         // we create a simple subclass because we need to know when a new range has been set in order to refresh the timeline

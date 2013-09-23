@@ -125,4 +125,16 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public Set<Permission> getBundleGroupPermissions(int bundleGroupId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                new HashSet<Permission>(authorizationManager.getBundleGroupPermissions(getSessionSubject(),
+                    bundleGroupId)), "AuthorizationManager.getBundleGroupPermissions");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

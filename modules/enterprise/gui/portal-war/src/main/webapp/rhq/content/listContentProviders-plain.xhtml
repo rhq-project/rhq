@@ -23,9 +23,7 @@
    </ui:define>
 
    <ui:define name="content">
-
       <h:form id="contentProvidersListForm">
-         
          <rich:panel>
 
             <h:panelGrid columns="1" width="100%">
@@ -161,6 +159,10 @@
             
          </rich:panel>
       </h:form>
+<script>
+document.getElementById('contentProvidersListForm').setAttribute('action', 'listContentProviders-plain.xhtml');
+</script>
+
    </ui:define>
 
 </ui:composition>

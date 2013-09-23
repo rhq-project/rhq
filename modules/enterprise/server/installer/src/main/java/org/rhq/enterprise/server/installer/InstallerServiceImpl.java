@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,6 +44,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
@@ -258,15 +260,38 @@ public class InstallerServiceImpl implements InstallerService {
             }
         }
 
-        prepareDatabase(serverProperties, serverDetails, existingSchemaOption);
-
         String appServerConfigDir = getAppServerConfigDir();
 
         // create an rhqadmin management user so when discovered, the AS7 plugin can immediately
-        // connect to the RHQ Server. Note that if the installer sets rhq.server.management.user to
-        // anything other than our recommended default, the connection properties will need to be updated
-        // before the plugin can connect, because the default creds in the plugin will be wrong.
-        ServerInstallUtil.createDefaultManagementUser(serverProperties, serverDetails, appServerConfigDir);
+        // connect to the RHQ Server.  The password is generated as we try to make the RHQ server manageable by
+        // the plugin without the user having to get involved.
+        Random random = new Random();
+        String managementPassword = Obfuscator.generateString(random, null, 8);
+        ServerInstallUtil.createDefaultManagementUser(managementPassword, serverDetails, appServerConfigDir);
+
+        // Doing this prior to prepareDatabase sets the property before they are validated and saved.
+        // The generated password is encoded and then saved as rhq.server.management.password.  This value can then
+        // be picked up agent-side by the discovery component, decoded, and set in the connection properties. If all
+        // works well no dolphins will be harmed, the rhq server will be protected, and the user sleeps through it.
+        String encodedManagementPassword = Obfuscator.encode(managementPassword);
+        serverProperties.put(ServerProperties.PROP_MGMT_USER_PASSWORD, encodedManagementPassword);
+
+        // Similarly generate a storage username and password, and encode the password. If already set, don't
+        // override. This allows for canned values in a dev env, or user override in a prod env.
+        String storageUsername = serverProperties.get(ServerProperties.PROP_STORAGE_USERNAME);
+        String storagePassword = serverProperties.get(ServerProperties.PROP_STORAGE_PASSWORD);
+        if (ServerInstallUtil.isEmpty(storageUsername)) {
+            // note, limit to alpha usernames to ensure we don't violate cassandra identifier rules
+            storageUsername = Obfuscator.generateString(random, "abcdefghijklmnopqrstuvwxyz", 8);
+            serverProperties.put(ServerProperties.PROP_STORAGE_USERNAME, storageUsername);
+        }
+        if (ServerInstallUtil.isEmpty(storagePassword)) {
+            storagePassword = Obfuscator.generateString(random, null, 8);
+            String encodedStoragePassword = PicketBoxObfuscator.encode(storagePassword);
+            serverProperties.put(ServerProperties.PROP_STORAGE_PASSWORD, encodedStoragePassword);
+        }
+
+        prepareDatabase(serverProperties, serverDetails, existingSchemaOption);
 
         // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;
@@ -421,7 +446,7 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         // test the connection to make sure everything is OK - note that if we are in auto-install mode,
-        // the password will have been obfuscated, so we need to de-obfucate it in order to use it.
+        // the password will have been obfuscated, so we need to de-obfuscate it in order to use it.
         // make sure the server properties map itself has an obfuscated password
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
@@ -479,6 +504,19 @@ public class InstallerServiceImpl implements InstallerService {
             }
         } catch (Exception e) {
             throw new Exception("Could not complete the database schema installation", e);
+        }
+
+        // if the storage cluster credentials are already set (typically an HA install), override
+        // what's currently in the server properties file, and then continue with storage schema setup
+        Map<String, String> storageProperties = ServerInstallUtil.fetchStorageClusterSettings(serverProperties,
+            clearTextDbPassword);
+        String storageUsernameSetting = storageProperties.get(ServerProperties.PROP_STORAGE_USERNAME);
+        String storagePasswordSetting = storageProperties.get(ServerProperties.PROP_STORAGE_PASSWORD);
+        if (null != storageUsernameSetting) {
+            serverProperties.put(ServerProperties.PROP_STORAGE_USERNAME, storageUsernameSetting);
+        }
+        if (null != storagePasswordSetting) {
+            serverProperties.put(ServerProperties.PROP_STORAGE_PASSWORD, storagePasswordSetting);
         }
 
         SchemaManager storageNodeSchemaManager = null;
@@ -1089,8 +1127,8 @@ public class InstallerServiceImpl implements InstallerService {
             // setup the email service
             ServerInstallUtil.setupMailService(mcc, serverProperties);
 
-            // we don't want to the JBossAS welcome screen; turn it off
-            new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
+            // we use the welcome root webapp for indicating the state of installation
+            // new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
 
             // we don't want users to access the admin console
             new CoreJBossASClient(mcc).setEnableAdminConsole(false);
@@ -1165,8 +1203,8 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private List<StorageNode> parseNodeInformation(HashMap<String, String> serverProps) {
-        String[] nodes = serverProps.get("rhq.storage.nodes").split(",");
-        String cqlPort = serverProps.get("rhq.storage.cql-port");
+        String[] nodes = serverProps.get(ServerProperties.PROP_STORAGE_NODES).split(",");
+        String cqlPort = serverProps.get(ServerProperties.PROP_STORAGE_CQL_PORT);
 
         List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
         for (String node : nodes) {
@@ -1180,8 +1218,8 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private SchemaManager createStorageNodeSchemaManager(HashMap<String, String> serverProps) {
-        String username = serverProps.get("rhq.storage.username");
-        String password = serverProps.get("rhq.storage.password");
+        String username = serverProps.get(ServerProperties.PROP_STORAGE_USERNAME);
+        String password = serverProps.get(ServerProperties.PROP_STORAGE_PASSWORD);
 
         List<StorageNode> storageNodes = this.parseNodeInformation(serverProps);
         String[] nodes = new String[storageNodes.size()];

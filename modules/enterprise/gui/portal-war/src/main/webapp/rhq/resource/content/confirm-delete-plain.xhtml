@@ -18,7 +18,7 @@
    <ui:param name="selectedTabName" value="Content.Deployed"/>
    <ui:define name="content">
 
-      <h:form>
+      <h:form id="confirmDeleteForm">
          <input type="hidden" name="id" value="${param.id}"/>
 
          <rich:panel>
@@ -63,6 +63,9 @@
          </rich:panel>
 
       </h:form>
+<script>
+document.getElementById('confirmDeleteForm').setAttribute('action', 'confirm-delete-plain.xhtml');
+</script>
 
    </ui:define>
 </ui:composition>

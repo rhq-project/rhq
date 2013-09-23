@@ -21,6 +21,10 @@
 
             <h:panelGrid columns="1" width="100%">
                 <h:form id="fileUploadForm" enctype="multipart/form-data">
+                <script>
+                  document.getElementById('fileUploadForm').setAttribute('action', 'fileUpload.xhtml');
+                </script>
+
                     <rich:fileUpload
                             fileUploadListener="#{fileUploadUIBean.fileUploadListener}"
                             listHeight="60px"
@@ -28,7 +32,8 @@
                             immediateUpload="false"
                             autoclear="false"
                             onuploadcomplete="javascript:window.opener.location.reload();window.close()"
-                            allowFlash="false">
+                            allowFlash="false"
+                            id="fileUploadComponent">
                     </rich:fileUpload>
                 </h:form>
             </h:panelGrid>

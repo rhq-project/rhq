@@ -40,6 +40,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.util.ClusterBuilder;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
  * @author Stefan Negrea
@@ -53,12 +54,7 @@ abstract class AbstractManager {
     private final Log log = LogFactory.getLog(AbstractManager.class);
 
     enum Query {
-        USER_EXISTS,
-        SCHEMA_EXISTS,
-        VERSION_COLUMNFAMILY_EXISTS,
-        VERSION,
-        REPLICATION_FACTOR,
-        INSERT_SCHEMA_VERSION;
+        USER_EXISTS, SCHEMA_EXISTS, VERSION_COLUMNFAMILY_EXISTS, VERSION, REPLICATION_FACTOR, INSERT_SCHEMA_VERSION;
 
         @Override
         public String toString() {
@@ -295,7 +291,6 @@ abstract class AbstractManager {
         return execute(queryString);
     }
 
-
     /**
      * Execute all the queries in an update file as returned by @link {@link UpdateFile#getOrderedSteps()}.
      *
@@ -334,12 +329,27 @@ abstract class AbstractManager {
 
         log.info("Applying update file: " + updateFile);
         for (String step : updateFile.getOrderedSteps(properties)) {
-            log.info("Statement: \n" + step);
+            if (step.toUpperCase().contains("CREATE USER")) {
+                // the task file must not contain plain text passwords, so assume it needs to be decoded
+                step = replaceEncodedPassword(step);
+                log.debug("Statement: \n" + step);
+            } else {
+                log.info("Statement: \n" + step);
+            }
             results.add(execute(step));
         }
         log.info("Applied update file: " + updateFile);
 
         return results;
+    }
+
+    private String replaceEncodedPassword(String step) {
+        int firstQuoteIndex = step.indexOf("'");
+        int lastQuoteIndex = step.lastIndexOf("'");
+        String encodedPassword = step.substring(++firstQuoteIndex, lastQuoteIndex);
+        String decodedPassword = PicketBoxObfuscator.decode(encodedPassword);
+        String decodedStep = step.replace(encodedPassword, decodedPassword);
+        return decodedStep;
     }
 
     /**

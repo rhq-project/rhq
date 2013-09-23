@@ -228,7 +228,7 @@ public class GroupPkgHistoryPortlet extends EnhancedVLayout implements CustomSet
                         StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
                             "subsystems/content/Package_16.png", null);
                         String title = history.getPackageVersion().getFileName() + ":";
-                        //String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                        //String destination = "/portal/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
                         //   + "&selectedHistoryId=" + history.getId();
                         //spinder 4/27/11: disabling links as they point into portal.war content pages
                         //                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
@@ -241,7 +241,7 @@ public class GroupPkgHistoryPortlet extends EnhancedVLayout implements CustomSet
                     }
                     //                    //insert see more link
                     //                    DynamicForm row = new DynamicForm();
-                    //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
+                    //                    String destination = "/portal/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
                     //                    addSeeMoreLink(row, destination, column);
                 } else {
                     DynamicForm row = AbstractActivityView.createEmptyDisplayRow(MSG.view_portlet_results_empty());

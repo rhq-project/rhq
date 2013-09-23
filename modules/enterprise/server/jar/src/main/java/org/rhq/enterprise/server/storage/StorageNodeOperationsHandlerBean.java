@@ -86,18 +86,34 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Announcing " + storageNode + " to storage node cluster.");
         }
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
-        List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
-        allNodes.add(storageNode);
+        try {
+            storageNode.setOperationMode(StorageNode.OperationMode.ANNOUNCE);
+            List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+                StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
+            List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
+            allNodes.add(storageNode);
 
-        for (StorageNode clusterNode : clusterNodes) {
-            clusterNode.setMaintenancePending(true);
+            for (StorageNode clusterNode : clusterNodes) {
+                clusterNode.setMaintenancePending(true);
+            }
+
+            announceStorageNode(subject, storageNode, clusterNodes.get(0), createPropertyListOfAddresses("addresses",
+                allNodes));
+        } catch (IndexOutOfBoundsException e) {
+            String msg = "Aborting storage node deployment due to unexpected error while announcing storage node at " +
+                storageNode.getAddress();
+            log.error(msg, e);
+            log.error("If this error occurred with a storage node that was deployed prior to installing the server, " +
+                "then this may indicate that the rhq.storage.nodes property in rhq-server.properties was not set " +
+                "correctly. All nodes deployed prior to server installation should be listed in the " +
+                "rhq.storage.nodes property. Please review the deployment documentation for additional details.");
+            logError(StorageNode.OperationMode.ANNOUNCE, msg, e);
+        } catch (Exception e) {
+            String msg = "Aborting storage node deployment due to unexpected error while announcing storage node at " +
+                storageNode.getAddress();
+            log.error(msg, e);
+            logError(StorageNode.OperationMode.ANNOUNCE, msg, e);
         }
-
-        announceStorageNode(subject, storageNode, clusterNodes.get(0), createPropertyListOfAddresses("addresses",
-            allNodes));
-
     }
 
     private void announceStorageNode(Subject subject, StorageNode newStorageNode, StorageNode clusterNode,
@@ -190,30 +206,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void performAddNodeMaintenanceIfNecessary(InetAddress storageNodeAddress) {
-        try {
-            StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(storageNodeAddress);
-
-            if (storageNode.getOperationMode() == StorageNode.OperationMode.BOOTSTRAP) {
-                // TODO need to add support for HA deployments
-                // If multiple RHQ servers are running, they will all receive the event
-                // notification that the node is up and will all wind up calling this method.
-                // We can probably handle this with optimistic locking, adding a version field
-                // to the StorageNode class. Then only one writer would succeed in updating
-                // the operation mode.
-                storageNode = storageNodeOperationsHandler.setMode(storageNode,
-                    StorageNode.OperationMode.ADD_MAINTENANCE);
-                storageNodeOperationsHandler.performAddMaintenance(subjectManager.getOverlord(), storageNode);
-            }
-        } catch (Exception e) {
-            String msg = "Aborting storage node deployment due to unexpected error while performing add node " +
-                "maintenance.";
-            log.error(msg, e);
-            storageNodeOperationsHandler.logError(StorageNode.OperationMode.ADD_MAINTENANCE, msg, e);
-        }
-    }
-
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void performAddNodeMaintenance(Subject subject, StorageNode storageNode) {
@@ -254,33 +246,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
         scheduleOperation(subject, storageNode, params, "addNodeMaintenance",
             Hours.EIGHT.toStandardSeconds().getSeconds());
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void performRemoveNodeMaintenanceIfNecessary(InetAddress storageNodeAddress) {
-        try {
-            StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(storageNodeAddress);
-
-            if (storageNode.getOperationMode() == StorageNode.OperationMode.DECOMMISSION) {
-                // TODO need to add support for HA deployments
-                // If multiple RHQ servers are running, they will all receive the event
-                // notification that the node is up and will all wind up calling this method.
-                // We can probably handle this with optimistic locking, adding a version field
-                // to the StorageNode class. Then only one writer would succeed in updating
-                // the operation mode.
-                storageNode = storageNodeOperationsHandler.setMode(storageNode,
-                    StorageNode.OperationMode.REMOVE_MAINTENANCE);
-                storageNodeOperationsHandler.performRemoveMaintenance(subjectManager.getOverlord(), storageNode);
-            } else {
-                log.info("Remove node maintenance has already been run for " + storageNode);
-            }
-        } catch (Exception e) {
-            String msg = "Aborting undeployment due to unexpected error while performing remove node maintenance for " +
-                storageNodeAddress.getHostAddress();
-            log.error(msg, e);
-            storageNodeOperationsHandler.logError(StorageNode.OperationMode.REMOVE_MAINTENANCE, msg, e);
-        }
     }
 
     @Override
@@ -473,48 +438,24 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void handlePrepareForBootstrap(ResourceOperationHistory resourceOperationHistory) {
-        StorageNode newStorageNode = findStorageNode(resourceOperationHistory.getResource());
-        switch (resourceOperationHistory.getStatus()) {
+    public void handlePrepareForBootstrap(ResourceOperationHistory operationHistory) {
+        StorageNode newStorageNode = findStorageNode(operationHistory.getResource());
+        switch (operationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 return;
             case CANCELED:
-                // TODO Verify whether or not the node has been bootstrapped
-                // If the operation is canceled the plugin will get an InterruptedException.
-                // The actual bootstrapping may very well complete so we need to add in some
-                // checks to find out if the node is up and part of the cluster.
-                deploymentOperationCanceled(newStorageNode, resourceOperationHistory);
+                deploymentOperationCanceled(newStorageNode, operationHistory);
                 return;
             case FAILURE:
-                deploymentOperationFailed(newStorageNode, resourceOperationHistory);
+                deploymentOperationFailed(newStorageNode, operationHistory);
                 return;
             default:  // SUCCESS
-                try {
-                    log.info("The prepare for bootstrap operation completed successfully for " + newStorageNode);
-                    // 30 seconds is more than a sufficient amount of time to wait for the
-                    // event notification from storage session especially considering that
-                    // nodes gossip every second.
-                    Thread.sleep(1000 * 30);
-                    entityManager.refresh(newStorageNode);
-                    if (newStorageNode.getOperationMode() == StorageNode.OperationMode.BOOTSTRAP) {
-                        InetAddress address = InetAddress.getByName(newStorageNode.getAddress());
-                        if (isPartOfCluster(address)) {
-                            log.warn("We have missed the event notification about " + newStorageNode + " joining the " +
-                                "cluster. The next phase of deployment will be started.");
-                            storageNodeOperationsHandler.performAddNodeMaintenanceIfNecessary(address);
-                        } else {
-                            newStorageNode.setErrorMessage("The prepare for bootstrap operation completed " +
-                                "successfully but it appears that " + newStorageNode + " is not yet part of the " +
-                                "ring.");
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Interrupted while waiting to verify that " + newStorageNode +
-                        " has joined the cluster", e);
-                } catch (UnknownHostException e) {
-                    throw new RuntimeException("Failed to parse address for " + newStorageNode, e);
-                }
+                log.info("The prepare for bootstrap operation completed successfully for " + newStorageNode);
+                newStorageNode = storageNodeOperationsHandler.setMode(newStorageNode,
+                    StorageNode.OperationMode.ADD_MAINTENANCE);
+                Subject subject = getSubject(operationHistory);
+                performAddMaintenance(subject, newStorageNode);
         }
     }
 
@@ -673,32 +614,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 break;
             default:  // SUCCESS
                 log.info("Successfully decommissioned " + storageNode);
-                try {
-                    // 30 seconds is more than a sufficient amount of time to wait for the
-                    // event notification from storage session especially considering that
-                    // nodes gossip every second.
-                    Thread.sleep(1000 * 30);
-                    entityManager.refresh(storageNode);
-                    if (storageNode.getOperationMode() == StorageNode.OperationMode.DECOMMISSION) {
-                        InetAddress address = InetAddress.getByName(storageNode.getAddress());
-                        if (isPartOfCluster(address)) {
-                            storageNode.setErrorMessage("The decommission operation completed successfully but it " +
-                                "appears that " + storageNode + " is still part of ring.");
-                        } else {
-                            log.warn("We have missed the event notification about " + storageNode + " leaving the " +
-                                "cluster. The next phase of undeployment will be started.");
-                            storageNodeOperationsHandler.performRemoveNodeMaintenanceIfNecessary(address);
-                        }
-                    }
-                } catch (EntityNotFoundException e) {
-                    // We can hit this if the storage node entity has already been deleted
-                    // from the database. It can be ignored.
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Interrupted while waiting to verify that " + storageNode +
-                        " has been decommissioned and removed from the cluster", e);
-                } catch (UnknownHostException e) {
-                    throw new RuntimeException("Failed to parse address for " + storageNode, e);
-                }
+                storageNode = storageNodeOperationsHandler.setMode(storageNode,
+                    StorageNode.OperationMode.REMOVE_MAINTENANCE);
+                Subject subject = getSubject(operationHistory);
+                performRemoveMaintenance(subject, storageNode);
         }
     }
 

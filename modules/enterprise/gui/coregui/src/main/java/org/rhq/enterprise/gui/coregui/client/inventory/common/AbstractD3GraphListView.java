@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  * Provide the shared stuff for create GraphListViews like Availability graphs
  * and User Preferences pickers for the date range.
  */
-public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh,Refreshable {
+public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh, Refreshable {
     protected final static int SINGLE_CHART_HEIGHT = 225;
     protected final static int MULTI_CHART_HEIGHT = 210;
     protected static final Label loadingLabel = new Label(MSG.common_msg_loading());
@@ -53,11 +53,12 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     protected boolean showAvailabilityGraph = false;
     protected final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     protected Timer refreshTimer;
+    protected boolean isRefreshing;
 
     public AbstractD3GraphListView() {
         super();
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs, this);
         startRefreshCycle();
     }
 
@@ -66,7 +67,6 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     protected abstract void queryAvailability(final EntityContext context, Long startTime, Long endTime,
         final CountDownLatch countDownLatch);
 
-
     @Override
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
@@ -74,28 +74,37 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
 
     @Override
     protected void onDestroy() {
-        AutoRefreshUtil.onDestroy( refreshTimer);
+        AutoRefreshUtil.onDestroy(refreshTimer);
 
         super.onDestroy();
     }
 
     @Override
     public boolean isRefreshing() {
-        return false;
+        return isRefreshing;
     }
 
     //Custom refresh operation as we are not directly extending Table
     @Override
     public void refresh() {
         if (isVisible() && !isRefreshing()) {
-            Date now = new Date();
-            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
-            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
-            Date newStartDate = new Date(now.getTime() - timeRange);
-            buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
-            buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
-
-            refreshData();
+            isRefreshing = true;
+            try {
+                updateTimeRangeToNow();
+                refreshData();
+            } finally {
+                isRefreshing = false;
+            }
         }
+    }
+
+    protected void updateTimeRangeToNow() {
+        Date now = new Date();
+        AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPrefs
+            .getMetricRangePreferences();
+        long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+        Date newStartDate = new Date(now.getTime() - timeRange);
+        buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
+        buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
     }
 }

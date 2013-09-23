@@ -528,7 +528,7 @@ public class LoginView extends Canvas {
         loginButton.setDisabled(true);
 
         try {
-            RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
+            RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, "/portal/j_security_check.do");
             requestBuilder.setHeader("Content-Type", "application/x-www-form-urlencoded");
             // URL-encode the username and password in case they contain URL special characters ('?', '&', '%', '+',
             // etc.), which would corrupt the request if not encoded.

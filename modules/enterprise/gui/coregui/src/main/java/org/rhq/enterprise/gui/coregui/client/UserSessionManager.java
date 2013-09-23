@@ -653,7 +653,7 @@ public class UserSessionManager {
     }
 
     private static RequestBuilder createSessionAccessRequestBuilder() {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/portal/sessionAccess");
         b.setHeader("Accept", "text/plain");
         return b;
     }

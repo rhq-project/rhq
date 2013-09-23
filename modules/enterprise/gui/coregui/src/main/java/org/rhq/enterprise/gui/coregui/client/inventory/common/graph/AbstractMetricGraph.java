@@ -211,11 +211,11 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
     /**
-     * Whenever we make a change to the date range save it here so it gets propogated to
+     * Whenever we make a change to the date range save it here so it gets propagated to
      * the correct places.
      *
-     * @param startTime double because JSNI doesnt support long
-     * @param endTime   double because JSNI doesnt support long
+     * @param startTime double because JSNI doesn't support long
+     * @param endTime   double because JSNI doesn't support long
      */
     public void saveDateRange(double startTime, double endTime) {
         MeasurementUserPreferences measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());

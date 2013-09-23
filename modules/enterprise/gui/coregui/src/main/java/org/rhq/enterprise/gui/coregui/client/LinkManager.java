@@ -41,7 +41,7 @@ public class LinkManager {
         if (GWT) {
             return "#Resource/" + resourceId;
         } else {
-            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+            return "/portal/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }
     }
 
@@ -49,7 +49,7 @@ public class LinkManager {
         if (GWT) {
             return "#Resource/" + resourceId + "/" + tabName + ((null == subTabName) ? "" : ("/" + subTabName));
         } else {
-            return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
+            return "/portal/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }
     }
 
@@ -57,7 +57,7 @@ public class LinkManager {
         if (GWT) {
             return "#ResourceGroup/" + groupId;
         } else {
-            return "/rhq/group/inventory/view.xhtml?groupId=" + groupId;
+            return "/portal/rhq/group/inventory/view.xhtml?groupId=" + groupId;
         }
     }
 
@@ -70,7 +70,7 @@ public class LinkManager {
             return "#Resource/AutoGroup/" + autoGroupId + "/" + tabName
                 + ((null == subTabName) ? "" : ("/" + subTabName));
         } else {
-            return "/rhq/group/inventory/view.xhtml?groupId=" + autoGroupId;
+            return "/portal/rhq/group/inventory/view.xhtml?groupId=" + autoGroupId;
         }
     }
 
@@ -83,7 +83,7 @@ public class LinkManager {
             return "#ResourceGroup/AutoCluster/" + autoClusterGroupId + "/" + tabName
                 + ((null == subTabName) ? "" : ("/" + subTabName));
         } else {
-            return "/rhq/group/inventory/view.xhtml?groupId=" + autoClusterGroupId;
+            return "/portal/rhq/group/inventory/view.xhtml?groupId=" + autoClusterGroupId;
         }
     }
 
@@ -96,7 +96,7 @@ public class LinkManager {
             return "#ResourceGroup/" + resourceGroupId + "/" + tabName
                 + ((null == subTabName) ? "" : ("/" + subTabName));
         } else {
-            return "/rhq/group/inventory/view.xhtml?groupId=" + resourceGroupId;
+            return "/portal/rhq/group/inventory/view.xhtml?groupId=" + resourceGroupId;
         }
     }
 
@@ -199,7 +199,7 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;
         } else {
-            return "/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
+            return "/portal/rhq/definition/group/view.xhtml?groupDefinitionId=" + groupDefinitionId;
         }
     }
 
@@ -207,7 +207,7 @@ public class LinkManager {
         if (GWT) {
             return "#" + UsersView.VIEW_PATH + "/" + subjectId;
         } else {
-            return "/admin/user/UserAdmin.do?mode=view&u=" + subjectId;
+            return "/portal/admin/user/UserAdmin.do?mode=view&u=" + subjectId;
         }
     }
 
@@ -215,16 +215,16 @@ public class LinkManager {
         if (GWT) {
             return "#" + RolesView.VIEW_PATH + "/" + roleId;
         } else {
-            return "/admin/role/RoleAdmin.do?mode=view&r=" + roleId;
+            return "/portal/admin/role/RoleAdmin.do?mode=view&r=" + roleId;
         }
     }
 
     public static String getSubsystemConfigurationLink() {
-        return "/rhq/subsystem/configurationUpdate.xhtml";
+        return "/portal/rhq/subsystem/configurationUpdate.xhtml";
     }
 
     public static String getSubsystemSuspectMetricsLink() {
-        return "/rhq/subsystem/oobHistory.xhtml";
+        return "/portal/rhq/subsystem/oobHistory.xhtml";
     }
 
     public static String getSubsystemResourceOperationHistoryLink(int resourceId, int opHistoryId) {
@@ -232,7 +232,7 @@ public class LinkManager {
         if (GWT) {
             link = "#Resource/" + resourceId + "/Operations/History/" + opHistoryId;
         } else {
-            link = "/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml?id=" + resourceId + "&opId="
+            link = "/portal/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml?id=" + resourceId + "&opId="
                 + opHistoryId;
         }
         return link;
@@ -243,7 +243,7 @@ public class LinkManager {
         if (GWT) {
             link = "#Resource/" + resourceId + "/Operations/Schedules/" + opScheduleId;
         } else {
-            link = "/rhq/resource/operation/resourceOperationScheduleDetails-plain.xhtml?id=" + resourceId + "&opId="
+            link = "/portal/rhq/resource/operation/resourceOperationScheduleDetails-plain.xhtml?id=" + resourceId + "&opId="
                 + opScheduleId;
 
         }
@@ -271,7 +271,7 @@ public class LinkManager {
         if (GWT) {
             link = "#Resource/" + resourceId + "/Alerts/Definitions/" + alertDefinitionId;
         } else {
-            link = "/rhq/subsystem/alertDefinitions.xhtml";
+            link = "/portal/rhq/subsystem/alertDefinitions.xhtml";
         }
 
         return link;
@@ -285,7 +285,7 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory/Resources/AutodiscoveryQueue";
         } else {
-            return "/rhq/discovery/queue.xhtml";
+            return "/portal/rhq/discovery/queue.xhtml";
         }
     }
 
@@ -293,7 +293,7 @@ public class LinkManager {
         if (GWT) {
             return "#Dashboards";
         } else {
-            return "/Dashboard.do";
+            return "/portal/Dashboard.do";
         }
     }
 
@@ -301,7 +301,7 @@ public class LinkManager {
         if (GWT) {
             return "#Dashboards/" + dashboardId;
         } else {
-            return "/Dashboard.do";
+            return "/portal/Dashboard.do";
         }
     }
 
@@ -309,7 +309,7 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory";
         } else {
-            return "/rhq/inventory/browseResources.xhtml?subtab=all";
+            return "/portal/rhq/inventory/browseResources.xhtml?subtab=all";
         }
     }
 
@@ -317,7 +317,7 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory/Platforms";
         } else {
-            return "/rhq/inventory/browseResources.xhtml?subtab=platform";
+            return "/portal/rhq/inventory/browseResources.xhtml?subtab=platform";
         }
     }
 
@@ -325,7 +325,7 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory/Servers";
         } else {
-            return "/rhq/inventory/browseResources.xhtml?subtab=server";
+            return "/portal/rhq/inventory/browseResources.xhtml?subtab=server";
         }
     }
 
@@ -333,16 +333,16 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory/Services";
         } else {
-            return "/rhq/inventory/browseResources.xhtml?subtab=service";
+            return "/portal/rhq/inventory/browseResources.xhtml?subtab=service";
         }
     }
 
     public static String getSavedSearchLink(int searchId) {
-        return "/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=" + searchId;
+        return "/portal/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=" + searchId;
     }
 
     public static String getHubAllGroupsLink() {
-        return "/rhq/inventory/browseGroups.xhtml?subtab=all";
+        return "/portal/rhq/inventory/browseGroups.xhtml?subtab=all";
     }
 
     public static String getHubCompatibleGroupsLink() {
@@ -357,23 +357,23 @@ public class LinkManager {
         if (GWT) {
             return "#Inventory/Groups/DynagroupDefinitions";
         } else {
-            return "/rhq/definition/group/list.xhtml";
+            return "/portal/rhq/definition/group/list.xhtml";
         }
     }
 
     public static String getHubNewGroupLink() {
-        return "/resource/group/Inventory.do?mode=new";
+        return "/portal/resource/group/Inventory.do?mode=new";
     }
 
     public static String getHubNewGroupDefLink() {
-        return "/rhq/definition/group/new.xhtml";
+        return "/portal/rhq/definition/group/new.xhtml";
     }
 
     public static String getAdminUsersLink() {
         if (GWT) {
             return "#Administration/Security/Users";
         } else {
-            return "/admin/user/UserAdmin.do?mode=list";
+            return "/portal/admin/user/UserAdmin.do?mode=list";
         }
     }
 
@@ -381,7 +381,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Security/Roles";
         } else {
-            return "/admin/role/RoleAdmin.do?mode=list";
+            return "/portal/admin/role/RoleAdmin.do?mode=list";
         }
     }
 
@@ -389,7 +389,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Configuration/SystemSettings";
         } else {
-            return "/admin/config/Config.do?mode=edit";
+            return "/portal/admin/config/Config.do?mode=edit";
         }
     }
 
@@ -397,7 +397,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Configuration/Plugins";
         } else {
-            return "/rhq/admin/plugin/plugin-list.xhtml";
+            return "/portal/rhq/admin/plugin/plugin-list.xhtml";
         }
     }
 
@@ -405,7 +405,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Configuration/" + viewName;
         } else {
-            return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+            return "/portal/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
         }
     }
 
@@ -413,27 +413,27 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Configuration/" + viewName + "/" + typeId;
         } else {
-            return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+            return "/portal/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
         }
     }
 
     public static String getAdminAlertNotifTemplatesLink() {
-        return "/rhq/admin/alert/template/notification/list.xhtml";
+        return "/portal/rhq/admin/alert/template/notification/list.xhtml";
     }
 
     public static String getAdminContentProvidersLink() {
-        return "/rhq/content/listContentProviders.xhtml";
+        return "/portal/rhq/content/listContentProviders.xhtml";
     }
 
     public static String getAdminContentReposLink() {
-        return "/rhq/content/listRepos.xhtml";
+        return "/portal/rhq/content/listRepos.xhtml";
     }
 
     public static String getHAServersLink() {
         if (GWT) {
             return "#Administration/Cluster/Servers";
         } else {
-            return "/rhq/ha/listServers.xhtml";
+            return "/portal/rhq/ha/listServers.xhtml";
         }
     }
 
@@ -441,7 +441,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Cluster/Agents";
         } else {
-            return "/rhq/ha/listAgents.xhtml";
+            return "/portal/rhq/ha/listAgents.xhtml";
         }
     }
 
@@ -449,7 +449,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Cluster/Affinity Groups";
         } else {
-            return "/rhq/ha/listAffinityGroups.xhtml";
+            return "/portal/rhq/ha/listAffinityGroups.xhtml";
         }
     }
 
@@ -457,7 +457,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Cluster/Partition Events";
         } else {
-            return "/rhq/ha/listPartitionEvents.xhtml";
+            return "/portal/rhq/ha/listPartitionEvents.xhtml";
         }
     }
 
@@ -465,7 +465,7 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Reports/Inventory Summary";
         } else {
-            return "/rhq/admin/report/resourceInstallReport.xhtml";
+            return "/portal/rhq/admin/report/resourceInstallReport.xhtml";
         }
     }
 
@@ -473,28 +473,28 @@ public class LinkManager {
         if (GWT) {
             return "#Administration/Configuration/Downloads";
         } else {
-            return "/rhq/admin/downloads.xhtml";
+            return "/portal/rhq/admin/downloads.xhtml";
         }
     }
 
     public static String getDebugSqlLink() {
-        return "/admin/test/sql.jsp";
+        return "/portal/admin/test/sql.jsp";
     }
 
     public static String getDebugHibernateLink() {
-        return "/admin/test/hibernate.jsp";
+        return "/portal/admin/test/hibernate.jsp";
     }
 
     public static String getDebugBrowserLink() {
-        return "/admin/test/browser.jsp";
+        return "/portal/admin/test/browser.jsp";
     }
 
     public static String getUserPrefsLink(int subjectId) {
-        return "/admin/user/UserAdmin.do?mode=edit&amp;u=" + subjectId;
+        return "/portal/admin/user/UserAdmin.do?mode=edit&amp;u=" + subjectId;
     }
 
     public static String getUserPasswordLink(int subjectId) {
-        return "/admin/user/UserAdmin.do?mode=editPass&amp;u=" + subjectId;
+        return "/portal/admin/user/UserAdmin.do?mode=editPass&amp;u=" + subjectId;
     }
 
     public static String getTagLink(String tag) {

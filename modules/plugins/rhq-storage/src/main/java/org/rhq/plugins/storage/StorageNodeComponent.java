@@ -278,11 +278,19 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             EmsAttribute operationModeAttr = storageService.getAttribute("OperationMode");
             String operationMode = (String) operationModeAttr.refresh();
             if (operationMode.equals("DECOMMISSIONED")) {
-                log.info("The storage node at " + getResourceContext().getResourceKey() + " is already decommissioned.");
+                log.info("The storage node " + getHost() + " is already decommissioned.");
             } else {
                 Class<?>[] emptyParams = new Class<?>[0];
                 EmsOperation operation = storageService.getOperation("decommission", emptyParams);
                 operation.invoke((Object[]) emptyParams);
+
+                operationMode = (String) operationModeAttr.refresh();
+                if (!operationMode.equals("DECOMMISSIONED")) {
+                    result.setErrorMessage("Failed to decommission storage node " + getHost() + ". The " +
+                        "StorageService is reporting " + operationMode + " for its operation mode but it should be " +
+                        "reporting DECOMMISSIONED. The StorageService operation mode is not to be confused with the " +
+                        "Storage Node operation mode.");
+                }
             }
         } catch (EmsInvocationException e) {
             result.setErrorMessage("Decommission operation failed: " + ThrowableUtil.getAllMessages(e));
@@ -435,6 +443,17 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
                         "agent logs for more details");
                 }
             }
+
+            EmsConnection emsConnection = getEmsConnection();
+            EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
+            EmsAttribute attribute = storageService.getAttribute("OperationMode");
+            String operationMode = (String) attribute.refresh();
+
+            if (!operationMode.equals("NORMAL")) {
+                result.setErrorMessage("Bootstrapping " + getHost() + " failed. The StorageService is reporting " +
+                    operationMode + " for its operation mode but it should be reporting NORMAL. The StorageService " +
+                    "operation mode is not to be confused with the Storage Node operation mode.");
+            }
             return result;
         } catch (InternodeAuthConfUpdateException e) {
             File authFile = getInternodeAuthConfFile();
@@ -469,6 +488,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             log.error("An error occurred while trying to update " + authFile, e);
             throw new InternodeAuthConfUpdateException("An error occurred while trying to update " + authFile, e);
         }
+    }
+
+    String getOperationMode() {
+        EmsConnection emsConnection = getEmsConnection();
+        EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
+        EmsAttribute attribute = storageService.getAttribute("OperationMode");
+
+        return (String) attribute.refresh();
     }
 
     private OperationResult nodeAdded(Configuration params) {

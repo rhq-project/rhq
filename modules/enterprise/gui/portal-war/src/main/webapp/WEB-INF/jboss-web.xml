@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 
 <jboss-web>
-   <context-root>/</context-root>
+   <context-root>portal</context-root>
 </jboss-web>

@@ -21,19 +21,19 @@
 <head>
     <base target="_top"/>
     <script type="text/javascript">
-        SimileAjax_urlPrefix = "/js/timeline/ajax/api/";
+        SimileAjax_urlPrefix = "/portal/js/timeline/ajax/api/";
     </script> 
-    <script src="/js/timeline/ajax/api/simile-ajax-api.js" type="text/javascript"></script>
-    <script src="/js/timeline/api/timeline-api.js" type="text/javascript"></script>
-    <script src="/js/timeline/examples/examples.js" type="text/javascript"></script>
+    <script src="/portal/js/timeline/ajax/api/simile-ajax-api.js" type="text/javascript"></script>
+    <script src="/portal/js/timeline/api/timeline-api.js" type="text/javascript"></script>
+    <script src="/portal/js/timeline/examples/examples.js" type="text/javascript"></script>
     <title></title>
 
     <style type="text/css">
         .timeline-band-layer-inner { font-size: smaller; }
         .table-start-label { font-size: smaller; }
     </style>
-  <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
-  <link rel="stylesheet" type="text/css" media="screen" href="/css/form-style.css"/>
+  <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/win.css"/>
+  <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/form-style.css"/>
 </head>
 <%
     int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);
@@ -53,7 +53,7 @@
 %>
 
 <body onload="onLoad();" onresize="onResize();">
-<div id="loading" style="position: absolute; left:40%; top: 40%;z-index: 10"><img src="/images/LoadingEvents.png" alt="Loading..."/></div>
+<div id="loading" style="position: absolute; left:40%; top: 40%;z-index: 10"><img src="/portal/images/LoadingEvents.png" alt="Loading..."/></div>
 
 <script type="text/javascript">
 
@@ -176,7 +176,7 @@ function onLoad() {
         toLoad--;
         if (toLoad == 0) {
             if (eventSource.getCount() == 0) {
-                document.getElementById("loading").innerHTML = '<img src="/images/NoEvents.png" alt="Loading events"/>';
+                document.getElementById("loading").innerHTML = '<img src="/portal/images/NoEvents.png" alt="Loading events"/>';
             } else {
                 document.getElementById("loading").style.display = "none";
             }
@@ -184,7 +184,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].configurations.checked) {
-        var link = "/resource/common/monitor/events/EventConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        var link = "/portal/resource/common/monitor/events/EventConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -193,7 +193,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].configurations.checked) {
-        link = "/resource/common/monitor/events/EventPluginConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventPluginConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -202,7 +202,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].inventory.checked) {
-        link = "/resource/common/monitor/events/EventCreateDeleteChildJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventCreateDeleteChildJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -211,7 +211,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].inventory.checked) {
-        link = "/resource/common/monitor/events/EventInventoryJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventInventoryJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -220,7 +220,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].alerts.checked) {
-        link = "/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -229,7 +229,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].operations.checked) {
-        link = "/resource/common/monitor/events/EventOperationsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventOperationsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -238,7 +238,7 @@ function onLoad() {
     }
 
     if (document.forms['show']['events'].checked) {
-        link = "/resource/common/monitor/events/EventEventsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventEventsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -247,7 +247,7 @@ function onLoad() {
     }
 
     if (document.forms['show'].drift.checked) {
-        link = "/resource/common/monitor/events/EventDriftJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventDriftJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -256,7 +256,7 @@ function onLoad() {
     }
 
     if (document.forms['show']['content'].checked) {
-        link = "/resource/common/monitor/events/EventContentJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        link = "/portal/resource/common/monitor/events/EventContentJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
             document.getElementById("event-count").innerHTML = eventSource.getCount();
@@ -285,25 +285,25 @@ function onResize() {
 <table><tr>
 <td>
   <input type="checkbox" name="inventory" checked="checked" onchange="onLoad()" id="inventoryField"/>
-  <label for="inventoryField"><img src="/images/icons/Inventory_grey_16.png"/> Inventory Changes</label>
+  <label for="inventoryField"><img src="/portal/images/icons/Inventory_grey_16.png"/> Inventory Changes</label>
 </td><td>
   <input type="checkbox" name="alerts" checked="checked" onchange="onLoad()" id="alertsField"/>
-  <label for="alertsField"><img src="/images/icons/Alert_grey_16.png"/> Alerts</label>
+  <label for="alertsField"><img src="/portal/images/icons/Alert_grey_16.png"/> Alerts</label>
 </td><td>
   <input type="checkbox" name="events" checked="checked" onchange="onLoad()" id="eventsField"/>
-  <label for="eventsField"><img src="/images/icons/Events_grey_16.png"/> Events</label>
+  <label for="eventsField"><img src="/portal/images/icons/Events_grey_16.png"/> Events</label>
 </td><td>
   <input type="checkbox" name="configurations" checked="checked" onchange="onLoad()" id="configurationsField"/>
-  <label for="configurationsField"><img src="/images/icons/Configure_grey_16.png"/> Configuration Changes</label>
+  <label for="configurationsField"><img src="/portal/images/icons/Configure_grey_16.png"/> Configuration Changes</label>
 </td></tr><tr><td>
   <input type="checkbox" name="operations" checked="checked" onchange="onLoad()" id="operationsField"/>
-  <label for="operationsField"><img src="/images/icons/Operation_grey_16.png"/> Operations</label>
+  <label for="operationsField"><img src="/portal/images/icons/Operation_grey_16.png"/> Operations</label>
 </td><td>
   <input type="checkbox" name="drift" checked="checked" onchange="onLoad()" id="driftField"/>
-  <label for="driftField"><img src="/images/icons/Drift_16.png"/> Drift</label>
+  <label for="driftField"><img src="/portal/images/icons/Drift_16.png"/> Drift</label>
 </td><td>
   <input type="checkbox" name="content" checked="checked" onchange="onLoad()" id="contentField"/>
-  <label for="contentField"><img src="/images/icons/Content_grey_16.png"/> Content Changes</label>
+  <label for="contentField"><img src="/portal/images/icons/Content_grey_16.png"/> Content Changes</label>
 </td>
 </tr></table>
 </form>

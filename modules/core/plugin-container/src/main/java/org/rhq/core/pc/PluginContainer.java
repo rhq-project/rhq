@@ -24,10 +24,10 @@ package org.rhq.core.pc;
 
 import java.beans.Introspector;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -146,8 +146,8 @@ public class PluginContainer {
     // this is to prevent race conditions on startup between components from all the different managers
     private ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private Map<String, InitializationListener> initListeners = new HashMap<String, InitializationListener>();
-    private Map<String, ShutdownListener> shutdownListeners = new HashMap<String, ShutdownListener>();
+    private List<InitializationListener> initListeners = new ArrayList<InitializationListener>();
+    private List<ShutdownListener> shutdownListeners = new ArrayList<ShutdownListener>();
     private Object initListenersLock = new Object();
     private Object shutdownListenersLock = new Object();
     private boolean shuttingDown;
@@ -344,7 +344,7 @@ public class PluginContainer {
 
         synchronized (initListenersLock) {
             if (started) {
-                for (InitializationListener listener : initListeners.values()) {
+                for (InitializationListener listener : initListeners) {
                     listener.initialized();
                 }
             }
@@ -454,7 +454,7 @@ public class PluginContainer {
 
         synchronized (shutdownListenersLock) {
             if (!started) {
-                for (ShutdownListener listener : shutdownListeners.values()) {
+                for (ShutdownListener listener : shutdownListeners) {
                     listener.shutdown();
                 }
             }
@@ -741,13 +741,12 @@ public class PluginContainer {
      * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
      * the PC is already initialized, then <code>listener</code> will be invoked immediately.
      *
-     * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
      * will be replaced with the newly supplied listner.
      */
-    public void addInitializationListener(String name, InitializationListener listener) {
+    public void addInitializationListener(InitializationListener listener) {
         synchronized (initListenersLock) {
-            initListeners.put(name, listener);
+            initListeners.add(listener);
 
             if (started) {
                 listener.initialized();
@@ -760,13 +759,12 @@ public class PluginContainer {
      * {@link #addInitializationListener(String, InitializationListener)} the <code>listener</code> will
      * not be invoked immediately if the PC is already shutdown.  It will only be invoked on future shutdowns.
      *
-     * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
      * will be replaced with the newly supplied listener.
      */
     public void addShutdownListener(String name, ShutdownListener listener) {
         synchronized (shutdownListenersLock) {
-            shutdownListeners.put(name, listener);
+            shutdownListeners.add(listener);
         }
     }
 

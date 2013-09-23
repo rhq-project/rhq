@@ -10,6 +10,10 @@
     plugin="JBossAS7"
     useClasses="true" /> <!-- we only need this if we need access to AS7 parent component -->
 
+  <discovery-callbacks>
+     <type-callback plugin="JBossAS7" type="JBossAS7 Standalone Server" callbackClass="DiscoveryCallbackImpl" />
+  </discovery-callbacks>
+  
   <service
     name="RHQ Server Subsystem Services"
     discovery="JBossAS7JMXDiscoveryComponent"

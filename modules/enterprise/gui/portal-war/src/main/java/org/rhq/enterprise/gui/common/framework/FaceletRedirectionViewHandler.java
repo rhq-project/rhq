@@ -86,7 +86,7 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
     protected void handleRenderException(FacesContext context, Exception ex) throws IOException, ELException,
         FacesException {
         try {
-            if (context.getViewRoot().getViewId().equals("/rhq/common/error.xhtml")) {
+            if (context.getViewRoot().getViewId().equals("/portal/rhq/common/error.xhtml")) {
                 /*
                  * This is to protect from infinite redirects if the error page itself 
                  * has an error; in this case, revert to the default error handling, 
@@ -103,7 +103,7 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
             Map<String, Object> sessionMap = externalContext.getSessionMap();
             sessionMap.put("GLOBAL_RENDER_ERROR", ex);
 
-            FacesContextUtility.getResponse().sendRedirect("/rhq/common/error.xhtml");
+            FacesContextUtility.getResponse().sendRedirect("/portal/rhq/common/error.xhtml");
         } catch (IOException ioe) {
             log.fatal("Could not process redirect to handle application error", ioe);
         }

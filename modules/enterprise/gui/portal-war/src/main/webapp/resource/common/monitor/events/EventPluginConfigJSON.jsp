@@ -49,13 +49,13 @@
             String icon = null;
             switch (configUpdate.getStatus()) {
                 case SUCCESS:
-                    icon = "/images/icons/Connection_ok_16.png";
+                    icon = "/portal/images/icons/Connection_ok_16.png";
                     break;
                 case FAILURE:
-                    icon = "/images/icons/Connection_failed_16.png";
+                    icon = "/portal/images/icons/Connection_failed_16.png";
                     break;
                 case INPROGRESS:
-                    icon = "/images/icons/Connection_16.png";
+                    icon = "/portal/images/icons/Connection_16.png";
                     break;
             }
 

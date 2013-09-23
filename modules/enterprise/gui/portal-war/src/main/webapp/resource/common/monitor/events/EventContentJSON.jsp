@@ -64,7 +64,7 @@
                     extra = "";
             }
 
-            String icon = "/images/icons/Content_" + extra + "16.png";
+            String icon = "/portal/images/icons/Content_" + extra + "16.png";
 
             String link = "#Resource/" + resourceId + "/Content/Deployed"; 
             // "/rhq/resource/content/installed_package_details.xhtml?id=" + resourceId + "&currentPackageId=" + installedPackage.getId();

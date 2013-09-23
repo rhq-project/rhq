@@ -50,6 +50,18 @@ public class UserPreferences {
     protected static final String PREF_LIST_DELIM = "|";
     protected static final String PREF_LIST_DELIM_REGEX = "\\|";
 
+    // when these preferences change, they should not trigger a refresh.
+    private static ArrayList<String> preferencesThatShouldNeverCauseRefresh;
+    static {
+        preferencesThatShouldNeverCauseRefresh = new ArrayList<String>();
+        // this is auto-set while navigating around and does not affect the current page
+        preferencesThatShouldNeverCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCES);
+        // this is auto-set while navigating around and does not affect the current page        
+        preferencesThatShouldNeverCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
+        // this update is already applied to current portlets by the dashboard impl
+        preferencesThatShouldNeverCauseRefresh.add(UserPreferenceNames.PAGE_REFRESH_PERIOD);
+    }
+
     private Subject subject;
     private Configuration userConfiguration;
     private SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
@@ -59,19 +71,7 @@ public class UserPreferences {
     private ArrayList<UserPreferenceChangeListener> changeListeners = new ArrayList<UserPreferenceChangeListener>();
 
     private HashSet<String> changedPreferenceKeys = new HashSet<String>();
-    
-    // when these preferences change, they should not trigger a refresh.
-    private static ArrayList<String> preferencesThatShouldNotCauseRefresh;
-    static {
-        preferencesThatShouldNotCauseRefresh = new ArrayList<String>();
-        // this is auto-set while navigating around and does not affect the current page
-        preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCES);
-        // this is auto-set while navigating around and does not affect the current page        
-        preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
-        // this update is already applied to current portlets by the dashboard impl
-        preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.PAGE_REFRESH_PERIOD);
-    }
-    
+
     public UserPreferences(Subject subject) {
         this.subject = subject;
         this.userConfiguration = subject.getUserConfiguration();
@@ -115,7 +115,8 @@ public class UserPreferences {
                                 // Don't announce anything to message center, this should happen under the covers - just refresh the current page.
                                 // But we should not blindly refresh - if we are changing preferences that should not affect the current
                                 // page, don't refresh as this could cause additional and unnecessary server-side hits (BZ 680167)
-                                if (!preferencesThatShouldNotCauseRefresh.contains(event.getName())) {
+                                if (event.isAllowRefresh()
+                                    && !preferencesThatShouldNeverCauseRefresh.contains(event.getName())) {
                                     CoreGUI.refresh();
                                 }
                             }
@@ -243,11 +244,16 @@ public class UserPreferences {
         return value;
     }
 
-    protected void setPreference(String name, Collection<?> value) {
-        setPreference(name, value, null);
+    protected void setPreference(String name, Collection<?> value, boolean allowRefresh) {
+        setPreference(name, value, allowRefresh, null);
     }
 
     protected void setPreference(String name, Collection<?> value, AsyncCallback<Subject> persistCallback) {
+        setPreference(name, value, true, persistCallback);
+    }
+
+    protected void setPreference(String name, Collection<?> value, boolean allowRefresh,
+        AsyncCallback<Subject> persistCallback) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;
         for (Object item : value) {
@@ -258,14 +264,22 @@ public class UserPreferences {
             }
             buffer.append(item);
         }
-        setPreference(name, buffer.toString(), persistCallback);
+        setPreference(name, buffer.toString(), allowRefresh, persistCallback);
     }
 
     protected void setPreference(String name, String value) {
         setPreference(name, value, null);
     }
 
+    protected void setPreference(String name, String value, boolean allowRefresh) {
+        setPreference(name, value, allowRefresh, null);
+    }
+
     protected void setPreference(String name, String value, AsyncCallback<Subject> persistCallback) {
+        setPreference(name, value, true, persistCallback);
+    }
+
+    protected void setPreference(String name, String value, boolean allowRefresh, AsyncCallback<Subject> persistCallback) {
         PropertySimple prop = this.userConfiguration.getSimple(name);
         String oldValue = null;
         if (prop == null) {
@@ -276,30 +290,36 @@ public class UserPreferences {
         }
 
         changedPreferenceKeys.add(name);
-        
-        UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, value, oldValue, persistCallback);
+
+        UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, value, oldValue, allowRefresh,
+            persistCallback);
         for (UserPreferenceChangeListener listener : changeListeners) {
             listener.onPreferenceChange(event);
         }
     }
 
     protected void unsetPreference(String name) {
-        unsetPreference(name, null);
+        unsetPreference(name, true, null);
     }
 
     protected void unsetPreference(String name, AsyncCallback<Subject> persistCallback) {
+        unsetPreference(name, true, persistCallback);
+    }
+
+    protected void unsetPreference(String name, boolean allowRefresh, AsyncCallback<Subject> persistCallback) {
         PropertySimple doomedProp = this.userConfiguration.getSimple(name);
 
         // it's possible property was already removed, and thus this operation becomes a no-op
         if (doomedProp != null) {
             String oldValue = doomedProp.getStringValue();
             this.userConfiguration.remove(name);
-            UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, null, oldValue, persistCallback);
+            UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, null, oldValue, allowRefresh,
+                persistCallback);
             for (UserPreferenceChangeListener listener : changeListeners) {
                 listener.onPreferenceRemove(event);
             }
         }
-        
+
         changedPreferenceKeys.add(name);
     }
 
@@ -393,8 +413,13 @@ public class UserPreferences {
 
         public AutoPersistAwareChangeEvent(String name, String newValue, String oldValue,
             AsyncCallback<Subject> persistCallback) {
+            this(name, newValue, oldValue, true, persistCallback);
+        }
 
-            super(name, newValue, oldValue);
+        public AutoPersistAwareChangeEvent(String name, String newValue, String oldValue, boolean allowRefresh,
+            AsyncCallback<Subject> persistCallback) {
+
+            super(name, newValue, oldValue, allowRefresh);
             this.persistCallback = persistCallback;
         }
 

@@ -98,6 +98,8 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     private BugzillaConnector bzConnector = new BugzillaConnector();
     private final Map<Integer, Long> bugLogTimestamps = new HashMap<Integer, Long>();
     private final Map<String, String> names = new HashMap<String, String>();
+    private final Map<String, String> ptoCache = new HashMap<String, String>();
+    private final Map<String, String> supportCache = new HashMap<String, String>();
     private final Pattern commandPattern;
 
     public RhqIrcBotListener(String server, String channel) {
@@ -305,6 +307,10 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         }
         String month = monthFormat.format(new Date());
         String dayInMonth = dayInMonthFormat.format(new Date());
+        String cachedValue = ptoCache.get(month + "#" + dayInMonth);
+        if (cachedValue != null) {
+            return cachedValue;
+        }
         int dayInMonthInt = Integer.parseInt(dayInMonth);
         try {
             boolean monthFound = false;
@@ -317,12 +323,16 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
                 if (cellText.startsWith(month.toLowerCase())) {
                     monthFound = true;
                     if (cellText.substring(cellText.length() - 1, cellText.length()).equals(dayInMonth)) {
-                        return doNotNotify(cell.firstElementSibling().text() + " is on support this week");
+                        String value = doNotNotify(cell.firstElementSibling().text() + " is on support this week");
+                        ptoCache.put(month + "#" + dayInMonth, value);
+                        return value;
                     }
                     continue;
                 }
                 if (monthFound && cellText.equals(dayInMonth)) {
-                    return doNotNotify(cell.firstElementSibling().text() + " is on support this week");
+                    String value = doNotNotify(cell.firstElementSibling().text() + " is on support this week");
+                    ptoCache.put(month + "#" + dayInMonth, value);
+                    return value;
                 } else if (monthFound) {
                     if (cell.equals(cell.firstElementSibling()) || cell.equals(cell.lastElementSibling())) {
                         continue; //the first row with name or the last row with a comment
@@ -331,7 +341,9 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
                     try {
                         day = Integer.parseInt(cellText);
                         if (day > dayInMonthInt) {
-                            return doNotNotify(cell.parent().previousElementSibling().child(0).text() + " is on support this week");
+                            String value = doNotNotify(cell.parent().previousElementSibling().child(0).text() + " is on support this week");
+                            ptoCache.put(month + "#" + dayInMonth, value);
+                            return value;
                         }
                     } catch (NumberFormatException nfe) {
                         break; // next month
@@ -347,6 +359,12 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     }
     
     private String whoIsOnPto(String link) {
+        String month = monthFormat.format(new Date());
+        String dayInMonth = dayInMonthFormat.format(new Date());
+        String cachedValue = supportCache.get(month + "#" + dayInMonth);
+        if (cachedValue != null) {
+            return cachedValue;
+        }
         try {
             String onPto = "";
             Document doc = Jsoup.connect(link).ignoreContentType(true).get();
@@ -355,7 +373,9 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
                 onPto += doNotNotify(title.text()) + ", ";
             }
             if (!onPto.isEmpty()) {
-                return doNotNotify(onPto.substring(0, onPto.length() - 2));
+                String value = doNotNotify(onPto.substring(0, onPto.length() - 2));
+                supportCache.put(month + "#" + dayInMonth, value);
+                return value;
             }
         } catch (IOException e) {
             e.printStackTrace();

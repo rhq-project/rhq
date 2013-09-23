@@ -317,19 +317,15 @@ public class ASConnection {
                 .toString(httpResponseEntity);
             if (statusLine.getStatusCode() >= 400) {
                 if (verbose) {
-                    LOG.debug(operation + " failed with " + statusAsString(statusLine) + " - response body was ["
-                        + responseBody + "].");
-                }
-
-                if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
-                    || responseBody.contains("JBAS014792") || responseBody.contains("JBAS014793")) {
-                    // management resource not found or not readable or no known child-type
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Requested management resource not found: " + operation.getAddress().getPath());
+                    if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
+                        || responseBody.contains("JBAS014792") || responseBody.contains("JBAS014793")
+                        || responseBody.contains("JBAS014739")) {
+                        // management resource not found or not readable or no known child-type
+                        LOG.info("Requested management resource not found: " + operation.getAddress().getPath());
+                    } else {
+                        LOG.warn(operation + " failed with " + statusAsString(statusLine) + " - response body was ["
+                            + responseBody + "].");
                     }
-                } else {
-                    LOG.warn("Received " + statusAsString(statusLine) + " response to " + operation
-                        + " - response body was [" + responseBody + "].");
                 }
             }
 

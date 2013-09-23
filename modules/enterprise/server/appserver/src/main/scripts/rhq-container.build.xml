@@ -21,11 +21,12 @@
 
     <property name="default.rhq.server.drift.binary.content" value="false"/>
 
+    <property name="default.rhq.storage.username" value=""/>
+    <property name="default.rhq.storage.password" value=""/>
+
 	<property name="default.jboss.bind.address" value=""/>
 
-	<property name="default.rhq.server.management.password" value=""/>
-
-    <target name="set-predeploy-prop">
+	<target name="set-predeploy-prop">
         <condition property="predeploy" value="true">
             <or>
                 <equals arg1="${dev.profile.active}" arg2="true" />
@@ -48,9 +49,11 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${rhq.dev.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${rhq.dev.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
-        <!-- these two are only set explicitly in dev envs, prod envs must set these manually for security -->
+        <!-- these are only set explicitly in dev envs, prod envs generate these at install time -->
+        <property name="rhq.storage.username"                  value="rhqadmin"/>
+        <property name="rhq.storage.password"                  value="1eeb2f255e832171df8592078de921bc"/>
+        <!-- this is only set explicitly in dev envs, prod envs must set these manually for security -->
         <property name="jboss.bind.address"                    value="0.0.0.0"/>
-        <property name="rhq.server.management.password"        value="35c160c1f841a889d4cda53f0bfc94b6"/>
     </target>
 
     <target name="set-default-server-props" unless="predeploy">
@@ -67,9 +70,11 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${default.rhq.server.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${default.rhq.server.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
-        <!-- these two are only set by default in dev envs, prod envs must set these manually for security -->
+        <!-- these are only set explicitly in dev envs, prod envs generate these at install time -->
+        <property name="rhq.storage.username"                  value="${default.rhq.storage.username}"/>
+        <property name="rhq.storage.password"                  value="${default.rhq.storage.password}"/>
+        <!-- this is only set by default in dev envs, prod envs must set these manually for security -->
         <property name="jboss.bind.address"                    value="${default.jboss.bind.address}"/>
-        <property name="rhq.server.management.password"        value="${default.rhq.server.management.password}"/>
     </target>
 
     <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -346,6 +351,8 @@
         <echo>Delete domain files - we only start in standalone mode</echo>
         <delete dir="${jboss.home}/domain" />
 
+        <antcall target="prepare-welcome-content" />
+
         <!-- TODO: setup our own welcome-content that points to our app -->
         <!--
         <echo>Setup welcome content</echo>
@@ -400,6 +407,47 @@
 
     </target>
 
+    <target name="prepare-welcome-content">
+      <echo>Changing the default welcome content</echo>
+      <!-- Simple redirect script written in EcmaScript checking if the server has fully started -->
+      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;body&gt;' replace='
+        &lt;body>&#xA;
+        &lt;script type="text/JavaScript">&#xA;
+          &lt;!--&#xA;
+          function httpGet() {&#xA;
+            var url = "/portal/sessionAccess";&#xA;
+            var xmlHttp = null;&#xA;
+            xmlHttp = new XMLHttpRequest();&#xA;
+            xmlHttp.open("GET", url, false);&#xA;
+            xmlHttp.send(null);&#xA;
+            return xmlHttp.responseText;&#xA;
+          }&#xA;
+          function checkIfRunning() {&#xA;
+            var response = httpGet();&#xA;
+            if (response.trim() === "true") {&#xA;
+              location.href = "/coregui";&#xA;
+            } else {&#xA;
+              var el = document.getElementById("progress");
+              if (el != null) {&#xA;
+                el.innerHTML= el.innerHTML.trim() + ".";&#xA;
+              }&#xA;
+              setTimeout("checkIfRunning();", 4000);&#xA;
+            }&#xA;
+          }&#xA;
+          checkIfRunning();&#xA;
+          -->&#xA;
+        &lt;/script>'/>
+
+      <!-- Changing the default content of the welcome page -->
+      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;div class="section">(.*?)&lt;/div>' replace='
+        &lt;div class="section">&#xA;
+          &lt;h1>EAP 6 Notification&lt;/h1>&#xA;
+          &lt;h3>Your RHQ Server is being started, please wait.&lt;/h3>&#xA;
+          &lt;p class="WarnBlock" id="progress">Starting..&lt;/p>&#xA;
+          &lt;sub>You will be automatically redirected once the RHQ server is up and running. If this takes more than 10 minutes, please check the server log for possible issues.&lt;/sub>&#xA;
+        &lt;/div>'/>
+    </target>
+
     <target name="package-connectors">
         <echo>Packaging the response-time (RT) servlet filter connectors ...</echo>
         <delete file="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip" />
@@ -423,10 +471,10 @@
     <target name="prepare-bin-dir">
         <echo>*** Preparing bin dir ***</echo>
 
-      <loadproperties>
-        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
+        <loadproperties>
+          <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
                   name="cassandra.properties"/>
-      </loadproperties>
+        </loadproperties>
 
         <echo>Connection URL is ${rhq.server.database.connection-url}</echo>
 
@@ -475,8 +523,8 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 #############################################################################
 # Server Settings
 # ---------------
-# INSTALLATION ACTION REQUIRED! The following property must be explicitly set:
-#   rhq.server.management.password
+# UPGRADE ACTION REQUIRED! The following property must be explicitly set:
+#   rhq.server.high-availability.name
 #
 # These are miscellaneous settings that the server will use to customize itself
 # to the environment in which it is running. These are settings you usually
@@ -490,16 +538,6 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 # NOTE! If you are upgrading an existing server, this must be the same name
 # as the server being upgraded.
 rhq.server.high-availability.name=
-
-# The installer will create a default EAP management user named 'rhqadmin'.
-# The password is obfuscated and specified here. If set to the commented
-# value the RHQ Agent will be able to monitor the RHQ Server resource
-# automatically. If set to a different value the same password value will
-# need to be supplied in the connection properties for the RHQ Server
-# resource. See the installation documentation for more information on how
-# to generate an obfuscated password value.
-# rhq.server.management.password=35c160c1f841a889d4cda53f0bfc94b6
-rhq.server.management.password=${rhq.server.management.password}
 
 # Email settings used to connect to an SMTP server to send alert emails.
 rhq.server.email.smtp-host=localhost
@@ -700,6 +738,11 @@ rhq.sync.endpoint-address=false
 # files that are not known binary types.
 #rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
 
+# The installer will create a default EAP management user named 'rhqadmin'.
+# The password is generated and obfuscated and specified here.  This should
+# not be edited.
+rhq.server.management.password=
+
 #############################################
 # Cassandra cluster configuration settings
 #############################################
@@ -826,6 +869,7 @@ rhq.server.agent-update.nonstrict-version-check=true
     <target name="fix-perms">
         <echo>Make sure shell scripts are readable and executable.</echo>
         <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh,rhqctl" perm="ug+x" verbose="true" />
+        <chmod dir="${project.build.outputDirectory}/bin/internal" includes="*.sh" perm="ug+x" verbose="true" />
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     </target>
 

@@ -17,24 +17,24 @@
 
     <ui:insert name="metaHeaders"></ui:insert>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/form-style.css"/>
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/win.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/form-style.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/menu.css"/>
 
-    <script type="text/javascript" src="/js/functions.js"></script>
-    <script type="text/javascript" src="/js/prototype.js"></script>
-    <script type="text/javascript" src="/js/window.js"></script>
-    <script type="text/javascript" src="/js/effects.js"></script>
-    <!--<script type="text/javascript" src="/js/debug.js"></script>-->
-    <script type="text/javascript" src="/js/formValues.js"></script>
-    <script type="text/javascript" src="/js/rhq.js"></script>
-    <script type="text/javascript" src="/js/popup.js"></script>
-    <link href="/css/theme/default.css" rel="stylesheet" type="text/css"/>
-    <link href="/css/theme/alphacube.css" rel="stylesheet" type="text/css"/>
-    <link href="/css/theme/debug.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src="/portal/js/functions.js"></script>
+    <script type="text/javascript" src="/portal/js/prototype.js"></script>
+    <script type="text/javascript" src="/portal/js/window.js"></script>
+    <script type="text/javascript" src="/portal/js/effects.js"></script>
+    <!--<script type="text/javascript" src="/portal/js/debug.js"></script>-->
+    <script type="text/javascript" src="/portal/js/formValues.js"></script>
+    <script type="text/javascript" src="/portal/js/rhq.js"></script>
+    <script type="text/javascript" src="/portal/js/popup.js"></script>
+    <link href="/portal/css/theme/default.css" rel="stylesheet" type="text/css"/>
+    <link href="/portal/css/theme/alphacube.css" rel="stylesheet" type="text/css"/>
+    <link href="/portal/css/theme/debug.css" rel="stylesheet" type="text/css"/>
 
-    <link rel="icon" type="image/png" href="/images/favicon.png"/>
-    <link rel="apple-touch-icon" href="/images/favicon.png"/>
+    <link rel="icon" type="image/png" href="/portal/images/favicon.png"/>
+    <link rel="apple-touch-icon" href="/portal/images/favicon.png"/>
 
     <!-- Trims up the headers of RF toggle panel headers -->
     <style type="text/css">
@@ -198,11 +198,11 @@
 
 
 
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/tabular.css"/>
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/layout.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/tabular.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/portal/css/layout.css"/>
 
     <script type="text/javascript">
-        var imagePath = "/images/";
+        var imagePath = "/portal/images/";
     </script>
 
 </head>
@@ -252,7 +252,7 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
     <!--<![endif]-->
 
         <c:if test="${empty param.nomenu and empty disableMenu}">
-            <ui:include  src="/rhq/common/menu/menu.xhtml"/>
+            <ui:include  src="/portal/rhq/common/menu/menu.xhtml"/>
         </c:if>
 
         <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->

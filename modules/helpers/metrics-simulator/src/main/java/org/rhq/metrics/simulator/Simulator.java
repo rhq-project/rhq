@@ -79,14 +79,14 @@ public class Simulator implements ShutdownManager {
         initCluster(plan);
         createSchema();
 
-        Session session;
-        if (plan.getClientCompression() == null) {
-            session = createSession();
-        } else {
-            ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
-                plan.getClientCompression().toUpperCase());
-            session = createSession(compression);
-        }
+        Session session = createSession();
+//        if (plan.getClientCompression() == null) {
+//            session = createSession();
+//        } else {
+//            ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
+//                plan.getClientCompression().toUpperCase());
+//            session = createSession(compression);
+//        }
 
         StorageSession storageSession = new StorageSession(session);
 
@@ -208,7 +208,7 @@ public class Simulator implements ShutdownManager {
     private void createSchema() {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", ccm.getNodes(), ccm.getCqlPort());
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", ccm.getNodes(), ccm.getCqlPort());
             schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);

@@ -256,6 +256,22 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
     @Override
     public void updateResourceConfiguration(final ConfigurationUpdateReport configurationUpdateReport) {
+        ReadAttribute readEnabledAttributeOperation = new ReadAttribute(address, ENABLED_ATTRIBUTE);
+        Result readEnabledAttributeResult = getASConnection().execute(readEnabledAttributeOperation);
+        if (!readEnabledAttributeResult.isSuccess()) {
+            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
+            configurationUpdateReport.setErrorMessage("Could not determine if the datasource is currently enabled: "
+                + readEnabledAttributeResult.getFailureDescription());
+            return;
+        }
+        Boolean datasourceEnabled = (Boolean) readEnabledAttributeResult.getResult();
+        if (datasourceEnabled == Boolean.TRUE) {
+            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
+            configurationUpdateReport.setErrorMessage("You must disable the datasource "
+                + "before editing its configuration");
+            return;
+        }
+
         Configuration config = configurationUpdateReport.getConfiguration();
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
 

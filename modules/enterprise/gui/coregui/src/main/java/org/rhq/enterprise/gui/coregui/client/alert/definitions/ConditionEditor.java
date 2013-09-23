@@ -915,8 +915,7 @@ public class ConditionEditor extends EnhancedVLayout {
         StaticTextItem helpItem = buildHelpTextItem("availabilityHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem selection = new SortedSelectItem(AVAILABILITY_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_availability_value());
+        SelectItem selection = new SortedSelectItem(AVAILABILITY_ITEMNAME, MSG.common_title_availability());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
         avails.put(AlertConditionOperator.AVAIL_GOES_DOWN.name(),
             MSG.view_alert_definition_condition_editor_operator_availability_goesDown());

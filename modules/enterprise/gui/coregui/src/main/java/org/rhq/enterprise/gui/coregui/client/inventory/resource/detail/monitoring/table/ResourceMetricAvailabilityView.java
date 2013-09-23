@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
@@ -87,27 +88,27 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
         currentField.setColSpan(4);
 
         // row 2
-        availField = new StaticTextItem("avail", MSG.view_resource_monitor_availability_availability());
+        availField = new StaticTextItem("avail", MSG.common_title_availability());
         availField.setWrapTitle(false);
-        prepareTooltip(availField, MSG.view_resource_monitor_availability_availability_tooltip());
+        prepareTooltip(availField, MSG.view_resource_monitor_availability_tooltip_up());
 
         availTimeField = new StaticTextItem("availTime", MSG.view_resource_monitor_availability_uptime());
         availTimeField.setWrapTitle(false);
         prepareTooltip(availTimeField, MSG.view_resource_monitor_availability_uptime_tooltip());
 
         // row 3
-        downField = new StaticTextItem("down", MSG.view_resource_monitor_availability_down());
+        downField = new StaticTextItem("down", MSG.common_status_avail_down_lower());
         downField.setWrapTitle(false);
-        prepareTooltip(downField, MSG.view_resource_monitor_availability_down_tooltip());
+        prepareTooltip(downField, MSG.view_resource_monitor_availability_tooltip_down());
 
         downTimeField = new StaticTextItem("downTime", MSG.view_resource_monitor_availability_downtime());
         downTimeField.setWrapTitle(false);
         prepareTooltip(downTimeField, MSG.view_resource_monitor_availability_downtime_tooltip());
 
         // row 4
-        disabledField = new StaticTextItem("disabled", MSG.view_resource_monitor_availability_disabled());
+        disabledField = new StaticTextItem("disabled", MSG.common_status_avail_disabled_lower());
         disabledField.setWrapTitle(false);
-        prepareTooltip(disabledField, MSG.view_resource_monitor_availability_disabled_tooltip());
+        prepareTooltip(disabledField, MSG.view_resource_monitor_availability_tooltip_disabled());
 
         disabledTimeField = new StaticTextItem("disabledTime", MSG.view_resource_monitor_availability_disabledTime());
         disabledTimeField.setWrapTitle(false);
@@ -144,8 +145,8 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
         currentTimeField.setShowTitle(false);
 
         form.setItems(currentField, availField, availTimeField, downField, downTimeField, disabledField,
-                disabledTimeField, failureCountField, disabledCountField, mtbfField, mttrField, unknownField,
-                currentTimeField);
+            disabledTimeField, failureCountField, disabledCountField, mtbfField, mttrField, unknownField,
+            currentTimeField);
 
         reloadSummaryData();
 
@@ -154,50 +155,65 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
     private void reloadSummaryData() {
         GWTServiceLookup.getResourceService().getResourceAvailabilitySummary(resource.getId(),
-                new AsyncCallback<ResourceAvailabilitySummary>() {
+            new AsyncCallback<ResourceAvailabilitySummary>() {
 
-                    @Override
-                    public void onSuccess(ResourceAvailabilitySummary result) {
+                @Override
+                public void onSuccess(ResourceAvailabilitySummary result) {
 
-                        currentField.setValue(MSG.view_resource_monitor_availability_currentStatus_value(result
-                                .getCurrent().getName(), TimestampCellFormatter.format(result.getLastChange().getTime())));
-                        availField.setValue(MeasurementConverterClient.format(result.getUpPercentage(),
-                                MeasurementUnits.PERCENTAGE, true));
-                        availTimeField.setValue(MeasurementConverterClient.format((double) result.getUpTime(),
-                                MeasurementUnits.MILLISECONDS, true));
-                        downField.setValue(MeasurementConverterClient.format(result.getDownPercentage(),
-                                MeasurementUnits.PERCENTAGE, true));
-                        downTimeField.setValue(MeasurementConverterClient.format((double) result.getDownTime(),
-                                MeasurementUnits.MILLISECONDS, true));
-                        disabledField.setValue(MeasurementConverterClient.format(result.getDisabledPercentage(),
-                                MeasurementUnits.PERCENTAGE, true));
-                        disabledTimeField.setValue(MeasurementConverterClient.format((double) result.getDisabledTime(),
-                                MeasurementUnits.MILLISECONDS, true));
-                        failureCountField.setValue(result.getFailures());
-                        disabledCountField.setValue(result.getDisabled());
-                        mtbfField.setValue(MeasurementConverterClient.format((double) result.getMTBF(),
-                                MeasurementUnits.MILLISECONDS, true));
-                        mttrField.setValue(MeasurementConverterClient.format((double) result.getMTTR(),
-                                MeasurementUnits.MILLISECONDS, true));
+                    currentField.setValue(MSG.view_resource_monitor_availability_currentStatus_value(
+                        getAvailabilityTypeMessage(result.getCurrent()),
+                        TimestampCellFormatter.format(result.getLastChange().getTime())));
+                    availField.setValue(MeasurementConverterClient.format(result.getUpPercentage(),
+                        MeasurementUnits.PERCENTAGE, true));
+                    availTimeField.setValue(MeasurementConverterClient.format((double) result.getUpTime(),
+                        MeasurementUnits.MILLISECONDS, true));
+                    downField.setValue(MeasurementConverterClient.format(result.getDownPercentage(),
+                        MeasurementUnits.PERCENTAGE, true));
+                    downTimeField.setValue(MeasurementConverterClient.format((double) result.getDownTime(),
+                        MeasurementUnits.MILLISECONDS, true));
+                    disabledField.setValue(MeasurementConverterClient.format(result.getDisabledPercentage(),
+                        MeasurementUnits.PERCENTAGE, true));
+                    disabledTimeField.setValue(MeasurementConverterClient.format((double) result.getDisabledTime(),
+                        MeasurementUnits.MILLISECONDS, true));
+                    failureCountField.setValue(result.getFailures());
+                    disabledCountField.setValue(result.getDisabled());
+                    mtbfField.setValue(MeasurementConverterClient.format((double) result.getMTBF(),
+                        MeasurementUnits.MILLISECONDS, true));
+                    mttrField.setValue(MeasurementConverterClient.format((double) result.getMTTR(),
+                        MeasurementUnits.MILLISECONDS, true));
 
-                        if (result.getUnknownTime() > 0L) {
-                            unknownField.setValue(MSG.view_resource_monitor_availability_unknown(MeasurementConverterClient
-                                    .format((double) result.getUnknownTime(), MeasurementUnits.MILLISECONDS, true)));
-                        } else {
-                            unknownField.setValue("");
-                        }
-
-                        currentTimeField.setValue(MSG.view_resource_monitor_availability_currentAsOf(TimestampCellFormatter
-                                .format(result.getCurrentTime())));
+                    if (result.getUnknownTime() > 0L) {
+                        unknownField.setValue(MSG.view_resource_monitor_availability_unknown(MeasurementConverterClient
+                            .format((double) result.getUnknownTime(), MeasurementUnits.MILLISECONDS, true)));
+                    } else {
+                        unknownField.setValue("");
                     }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        currentField.setValue(MSG.common_label_error());
-                        CoreGUI.getErrorHandler()
-                                .handleError(MSG.view_resource_monitor_availability_summaryError(), caught);
-                    }
-                });
+                    currentTimeField.setValue(MSG.view_resource_monitor_availability_currentAsOf(TimestampCellFormatter
+                        .format(result.getCurrentTime())));
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    currentField.setValue(MSG.common_label_error());
+                    CoreGUI.getErrorHandler()
+                        .handleError(MSG.view_resource_monitor_availability_summaryError(), caught);
+                }
+            });
+    }
+
+    private String getAvailabilityTypeMessage(AvailabilityType availabilityType) {
+        switch (availabilityType) {
+        case UP:
+            return MSG.common_status_avail_up();
+        case DOWN:
+            return MSG.common_status_avail_down();
+        case DISABLED:
+            return MSG.common_status_avail_disabled();
+        case UNKNOWN:
+        default:
+            return MSG.common_status_avail_unknown();
+        }
     }
 
     private void prepareTooltip(FormItem item, String tooltip) {

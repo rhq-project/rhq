@@ -42,6 +42,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.RHQControlException;
 
@@ -273,13 +274,20 @@ public class Install extends AbstractInstall {
         }
     }
 
-    private void installAgent(File agentBasedir) throws IOException {
+    private void installAgent(final File agentBasedir) throws IOException {
         try {
             log.info("Installing RHQ agent");
 
             File agentInstallerJar = getAgentInstaller();
 
             putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+
+            // if the install fails, we will completely delete any agent that might have been "half" installed
+            addUndoTask(new Runnable() {
+                public void run() {
+                    FileUtil.purge(agentBasedir, true);
+                }
+            });
 
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())

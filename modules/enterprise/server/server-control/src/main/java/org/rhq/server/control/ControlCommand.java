@@ -30,6 +30,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -73,6 +74,25 @@ public abstract class ControlCommand {
     private File binDir; // where the internal startup scripts are
 
     private PropertiesConfiguration rhqctlConfig;
+
+    private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
+
+    protected void undo() {
+        Collections.reverse(undoTasks); // do the undo tasks in the reverse order in which they were added to the list
+        for (Runnable undoTask : undoTasks) {
+            try {
+                undoTask.run();
+            } catch (Throwable t) {
+                log.error("Failed to invoke undo task [" + undoTask
+                    + "], will keep going but system may be in an indeterminate state");
+            }
+        }
+        return;
+    }
+
+    protected void addUndoTask(Runnable r) {
+        undoTasks.add(r);
+    }
 
     public ControlCommand() {
         basedir = new File(System.getProperty("rhq.server.basedir"));
@@ -161,9 +181,12 @@ public abstract class ControlCommand {
         return isServerInstalled(getBaseDir());
     }
 
-    protected boolean isServerInstalled(File baseDir) {
-        File markerFile = new File(baseDir, "jbossas/standalone/data/rhq.installed");
+    protected File getServerInstalledMarkerFile(File baseDir) {
+        return new File(baseDir, "jbossas/standalone/data/rhq.installed");
+    }
 
+    protected boolean isServerInstalled(File baseDir) {
+        File markerFile = getServerInstalledMarkerFile(baseDir);
         return markerFile.exists();
     }
 

@@ -240,9 +240,15 @@ public class Upgrade extends AbstractInstall {
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
         if (isRhq48OrLater(rhqctlCommandLine)) {
             try {
-                // We need to be sure the storage is really stopped (long enough)
-                // to not get a port conflict
+                // We need to be sure the storage is really stopped (long enough) to not get a port conflict
                 waitForProcessToStop(getStoragePid());
+
+                // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again later
+                addUndoTask(new Runnable() {
+                    public void run() {
+                        FileUtil.purge(getStorageBasedir(), true);
+                    }
+                });
 
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
@@ -576,7 +582,7 @@ public class Upgrade extends AbstractInstall {
 
             log.info("Upgrading RHQ agent located at: " + oldAgentDir.getAbsolutePath());
 
-            File agentBasedir = getAgentBasedir();
+            final File agentBasedir = getAgentBasedir();
             File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
@@ -600,6 +606,12 @@ public class Upgrade extends AbstractInstall {
                     FileUtil.copyDirectory(oldAgentDir, agentBasedir);
                 }
             }
+
+            addUndoTask(new Runnable() {
+                public void run() {
+                    FileUtil.purge(agentBasedir, true);
+                }
+            });
 
             log.info("The agent has been upgraded and placed in: " + agentBasedir);
 

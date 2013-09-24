@@ -56,12 +56,14 @@ public class RHQControl {
     }
 
     public void exec(String[] args) {
+        ControlCommand command = null;
+        boolean undo = false;
         try {
             if (args.length == 0) {
                 printUsage();
             } else {
                 String commandName = findCommand(commands, args);
-                ControlCommand command = commands.get(commandName);
+                command = commands.get(commandName);
 
                 // perform any up front validation we can at this point.  Not that after this point we
                 // lose stdin due to the use of ProcessExecutions.
@@ -84,8 +86,23 @@ public class RHQControl {
         } catch (UsageException e) {
             printUsage();
         } catch (RHQControlException e) {
-            log.error(e.getMessage() + " [Cause: " + e.getCause() + "]");
+            log.error(e.getMessage() + " [Cause: " + e.getCause() + "]", e);
+            undo = true;
+        } catch (Throwable t) {
+            log.error(t);
+            undo = true;
         }
+
+        if (undo && command != null) {
+            try {
+                command.undo();
+            } catch (Throwable t) {
+                log.warn("An attempt to clean up after the failed installation was unsuccessful. "
+                    + "You may have to clean up some things before attempting to install again", t);
+            }
+        }
+
+        return;
     }
 
     private String findCommand(Commands commands, String[] args) throws RHQControlException {

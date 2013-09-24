@@ -34,6 +34,9 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
@@ -44,6 +47,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -198,7 +202,6 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    @SuppressWarnings("resource")
     protected boolean isRHQServerInitialized() throws IOException {
 
         BufferedReader reader = null;
@@ -259,7 +262,7 @@ public abstract class AbstractInstall extends ControlCommand {
         startAgent(agentBasedir, false);
     }
 
-    protected void startAgent(File agentBasedir, boolean updateWindowsService) throws Exception {
+    protected void startAgent(final File agentBasedir, boolean updateWindowsService) throws Exception {
         try {
             File agentBinDir = new File(agentBasedir, "bin");
             if (!agentBinDir.exists()) {
@@ -298,6 +301,17 @@ public abstract class AbstractInstall extends ControlCommand {
             // For *nix, just start the server in the background, for Win, now that the service is installed, start it
             commandLine = getCommandLine("rhq-agent-wrapper", "start");
             executor.execute(commandLine);
+
+            // if any errors occur after now, we need to stop the agent
+            addUndoTask(new Runnable() {
+                public void run() {
+                    try {
+                        stopAgent(agentBasedir);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
 
             log.info("The agent has started up");
         } catch (IOException e) {
@@ -399,6 +413,8 @@ public abstract class AbstractInstall extends ControlCommand {
                 executor.execute(commandLine, new DefaultExecuteResultHandler());
             }
 
+            addUndoTaskToStopComponent("--server"); // if any errors occur after now, we need to stop the server
+
             // Wait for the server to complete it's startup
             log.info("Waiting for the RHQ Server to start in preparation of running the server installer...");
             commandLine = getCommandLine("rhq-installer", "--test");
@@ -437,6 +453,13 @@ public abstract class AbstractInstall extends ControlCommand {
         try {
             log.info("Installing RHQ server");
 
+            // if the install fails, we will remove the install marker file allowing the installer to be able to run again
+            addUndoTask(new Runnable() {
+                public void run() {
+                    getServerInstalledMarkerFile(getBaseDir()).delete();
+                }
+            });
+
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(getBinDir());
@@ -450,7 +473,7 @@ public abstract class AbstractInstall extends ControlCommand {
     }
 
     private class StorageDataDirectories {
-        public File basedir; // the other three will be under this base directory
+        public File basedir; // the other three will typically be under this base directory
         public File dataDir;
         public File commitlogDir;
         public File savedcachesDir;
@@ -463,18 +486,46 @@ public abstract class AbstractInstall extends ControlCommand {
             storageDataDirs = new StorageDataDirectories();
             storageDataDirs.basedir = new File(commandLine.getOptionValue(STORAGE_DATA_ROOT_DIR));
             storageDataDirs.dataDir = new File(storageDataDirs.basedir, "data");
-            storageDataDirs.commitlogDir = new File(storageDataDirs.basedir, "commitlog");
+            storageDataDirs.commitlogDir = new File(storageDataDirs.basedir, "commit_log");
             storageDataDirs.savedcachesDir = new File(storageDataDirs.basedir, "saved_caches");
         }
 
         return storageDataDirs;
     }
 
-    protected int installStorageNode(File storageBasedir, CommandLine rhqctlCommandLine) throws IOException {
+    private StorageDataDirectories getStorageDataDirectoriesFromProperties(Properties storageProperties) {
+        File basedirForData = new File(getBaseDir().getParentFile(), "rhq-data");
+
+        // check that the data directories are set and convert to absolute dirs
+        File dataDirProp = new File(storageProperties.getProperty("data", "data"));
+        File commitlogDirProp = new File(storageProperties.getProperty("commitlog", "commit_log"));
+        File savedcachesDirProp = new File(storageProperties.getProperty("saved-caches", "saved_caches"));
+
+        if (!dataDirProp.isAbsolute()) {
+            dataDirProp = new File(basedirForData, dataDirProp.getPath());
+        }
+        if (!commitlogDirProp.isAbsolute()) {
+            commitlogDirProp = new File(basedirForData, commitlogDirProp.getPath());
+        }
+        if (!savedcachesDirProp.isAbsolute()) {
+            savedcachesDirProp = new File(basedirForData, savedcachesDirProp.getPath());
+        }
+
+        StorageDataDirectories storageDataDirs = new StorageDataDirectories();
+        storageDataDirs.basedir = basedirForData;
+        storageDataDirs.dataDir = dataDirProp;
+        storageDataDirs.commitlogDir = commitlogDirProp;
+        storageDataDirs.savedcachesDir = savedcachesDirProp;
+        return storageDataDirs;
+    }
+
+    protected int installStorageNode(final File storageBasedir, CommandLine rhqctlCommandLine) throws IOException {
         try {
             log.info("Preparing to install RHQ storage node.");
 
             putProperty(RHQ_STORAGE_BASEDIR_PROP, storageBasedir.getAbsolutePath());
+
+            final Properties storageProperties = loadStorageProperties();
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
                 storageBasedir.getAbsolutePath());
@@ -482,21 +533,38 @@ public abstract class AbstractInstall extends ControlCommand {
             if (rhqctlCommandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 StorageDataDirectories dataDirs;
                 dataDirs = getCustomStorageDataDirectories(rhqctlCommandLine);
-                commandLine.addArguments(new String[] { "--data", dataDirs.dataDir.getAbsolutePath() });
-                commandLine.addArguments(new String[] { "--commitlog", dataDirs.commitlogDir.getAbsolutePath() });
-                commandLine.addArguments(new String[] { "--saved-caches", dataDirs.savedcachesDir.getAbsolutePath() });
+                storageProperties.setProperty("data", dataDirs.dataDir.getAbsolutePath());
+                storageProperties.setProperty("commitlog", dataDirs.commitlogDir.getAbsolutePath());
+                storageProperties.setProperty("saved-caches", dataDirs.savedcachesDir.getAbsolutePath());
             }
 
             // add the properties set in rhq-storage.properties to the command line
-            String[] args = toArray(loadStorageProperties());
+            String[] args = toArray(storageProperties);
             commandLine.addArguments(args);
 
+            // if the install fails, we need to delete the data directories that were created and
+            // purge the rhq-storage install directory that might have a "half" installed storage node in it.
+            addUndoTask(new Runnable() {
+                public void run() {
+                    StorageDataDirectories dataDirs = getStorageDataDirectoriesFromProperties(storageProperties);
+                    FileUtil.purge(dataDirs.dataDir, true);
+                    FileUtil.purge(dataDirs.commitlogDir, true);
+                    FileUtil.purge(dataDirs.savedcachesDir, true);
+
+                    FileUtil.purge(storageBasedir, true);
+                }
+            });
+
+            // execute the storage installer now
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
-
             int exitCode = executor.execute(commandLine);
             log.info("The storage node installer has finished with an exit value of " + exitCode);
+
+            // the storage node is installed AND running now so, if we fail later, we need to shut the storage node down
+            addUndoTaskToStopComponent("--storage");
+
             return exitCode;
         } catch (IOException e) {
             log.error("An error occurred while running the storage installer: " + e.getMessage());
@@ -506,6 +574,22 @@ public abstract class AbstractInstall extends ControlCommand {
             }
             throw e;
         }
+    }
+
+    protected void addUndoTaskToStopComponent(final String componentArgument) {
+        // component argument must be one of --storage, --server, --agent (a valid argument to the Stop command)
+        addUndoTask(new Runnable() {
+            public void run() {
+                try {
+                    Stop stopCommand = new Stop();
+                    CommandLineParser parser = new PosixParser();
+                    CommandLine cmdLine = parser.parse(stopCommand.getOptions(), new String[] { componentArgument });
+                    stopCommand.exec(cmdLine);
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     private Properties loadStorageProperties() throws IOException {

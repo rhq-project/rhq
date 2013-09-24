@@ -23,7 +23,7 @@
  * You can also run the setup for additional storage nodes after you have already built
  * your dev-container by executing
  *
- *   $ mvn -o groovy:execute -Pdev -Dsource=src/main/script/storage_setup.groovy -Drhq.storage.num-nodes=4
+ *   $ mvn -o groovy:execute -Pdev -Dsource=src/main/scripts/storage_setup.groovy -Drhq.storage.num-nodes=4
  *
  * The script will detect that you already have rhq-server-2 and rhq-server-3 setup; so, it
  * will only set up rhq-server-4.

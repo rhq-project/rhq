@@ -152,7 +152,9 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                             String cqlPortString = System.getProperty("rhq.storage.cql-port", "9042");
                             cqlPort = Integer.parseInt(cqlPortString);
 
-                            //jmxPorts = parseNodeJmxPorts(seed);
+                            String jmxPortString = System.getProperty("rhq.storage.jmx-port", "7299");
+                            jmxPorts = new int[] { Integer.parseInt(jmxPortString) };
+
                             schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, cqlPort);
 
                         } catch (Exception e) {

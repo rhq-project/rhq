@@ -54,10 +54,7 @@ import org.rhq.server.control.RHQControlException;
  */
 public abstract class AbstractInstall extends ControlCommand {
 
-    protected final String STORAGE_CONFIG_OPTION = "storage-config";
     protected final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
-
-    protected final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
     protected void installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
         throws Exception {
@@ -490,13 +487,9 @@ public abstract class AbstractInstall extends ControlCommand {
                 commandLine.addArguments(new String[] { "--saved-caches", dataDirs.savedcachesDir.getAbsolutePath() });
             }
 
-            if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
-                String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
-                commandLine.addArguments(args);
-            } else if (hasProperty(STORAGE_CONFIG_PROP)) {
-                String[] args = toArray(loadStorageProperties(getProperty(STORAGE_CONFIG_PROP)));
-                commandLine.addArguments(args);
-            }
+            // add the properties set in rhq-storage.properties to the command line
+            String[] args = toArray(loadStorageProperties());
+            commandLine.addArguments(args);
 
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(getBinDir());
@@ -515,11 +508,11 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    private Properties loadStorageProperties(String path) throws IOException {
+    private Properties loadStorageProperties() throws IOException {
         Properties properties = new Properties();
         FileInputStream fis = null;
         try {
-            fis = new FileInputStream(new File(path));
+            fis = new FileInputStream(new File("bin/rhq-storage.properties"));
             properties.load(fis);
         } finally {
             if (null != fis) {

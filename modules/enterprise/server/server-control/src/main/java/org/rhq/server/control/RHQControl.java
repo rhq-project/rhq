@@ -25,6 +25,7 @@
 
 package org.rhq.server.control;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -61,6 +62,22 @@ public class RHQControl {
             } else {
                 String commandName = findCommand(commands, args);
                 ControlCommand command = commands.get(commandName);
+
+                // perform any up front validation we can at this point.  Not that after this point we
+                // lose stdin due to the use of ProcessExecutions.
+                if ("install".equalsIgnoreCase(command.getName())) {
+                    File serverProperties = new File("bin/rhq-server.properties");
+                    File storageProperties = new File("bin/rhq-storage.properties");
+
+                    if (!serverProperties.isFile()) {
+                        throw new RHQControlException("Missing required configuration file, can not continue: ["
+                            + serverProperties.getAbsolutePath() + "]");
+                    }
+                    if (!storageProperties.isFile()) {
+                        throw new RHQControlException("Missing required configuration file, can not continue: ["
+                            + storageProperties.getAbsolutePath() + "]");
+                    }
+                }
 
                 command.exec(getCommandLine(commandName, args));
             }

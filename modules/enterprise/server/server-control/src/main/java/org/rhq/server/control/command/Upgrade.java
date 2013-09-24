@@ -94,13 +94,6 @@ public class Upgrade extends AbstractInstall {
                     + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
             .addOption(
                 null,
-                STORAGE_CONFIG_OPTION,
-                true,
-                "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify non-default storage "
-                    + "installer options. It is the path to a properties file with keys that correspond to option names of the "
-                    + "storage installer. Each property will be translated into an option that is passed to the storage installer.")
-            .addOption(
-                null,
                 RUN_DATA_MIGRATION,
                 true,
                 "This option is valid only when upgrading from older systems that did not have storage nodes. The existing metric data needs to migrate to "
@@ -251,8 +244,7 @@ public class Upgrade extends AbstractInstall {
                 // to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
-                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer",
-                    "--upgrade",
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
                 Executor executor = new DefaultExecutor();
                 executor.setWorkingDirectory(getBinDir());
@@ -651,11 +643,6 @@ public class Upgrade extends AbstractInstall {
         if (isRhq48OrLater(commandLine)) {
             if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 errors.add("The option --" + STORAGE_DATA_ROOT_DIR
-                    + " is valid only for upgrades from older systems that did not have storage nodes.");
-            }
-
-            if (commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
-                errors.add("The option --" + STORAGE_CONFIG_OPTION
                     + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
 

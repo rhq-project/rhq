@@ -2,8 +2,9 @@
 
 <project name="rhq-appserver-container" basedir=".">
 
-    <property name="default.rhq.server.database.hibernate-dialect" value="org.hibernate.dialect.PostgreSQLDialect" />
-    <property name="default.rhq.server.database.connection-url"    value="jdbc:postgresql://127.0.0.1:5432/rhq" />
+    <!-- rhq-server.properties defaults -->
+    <property name="default.rhq.server.database.hibernate-dialect"  value="org.hibernate.dialect.PostgreSQLDialect" />
+    <property name="default.rhq.server.database.connection-url"     value="jdbc:postgresql://127.0.0.1:5432/rhq" />
     <property name="default.rhq.server.database.user-name"          value="rhqadmin" />
     <property name="default.rhq.server.database.password"           value="rhqadmin" />
     <property name="default.rhq.server.database.password.encrypted" value="1eeb2f255e832171df8592078de921bc" />
@@ -17,14 +18,22 @@
     <property name="default.rhq.server.quartz.selectWithLockSQL"    value="SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE" />
     <property name="default.rhq.server.quartz.lockHandlerClass"     value="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore" />
 
-    <property name="rhq.sync.endpoint-address" value="false"/>
+    <property name="default.rhq.server.drift.binary.content"        value="false"/>
 
-    <property name="default.rhq.server.drift.binary.content" value="false"/>
-
-    <property name="default.rhq.storage.username" value=""/>
-    <property name="default.rhq.storage.password" value=""/>
+    <property name="default.rhq.storage.username"                   value=""/>
+    <property name="default.rhq.storage.password"                   value=""/>
 
 	<property name="default.jboss.bind.address" value=""/>
+
+    <property name="default.rhq.storage.commitlog"                 value=""/>
+    <property name="default.rhq.storage.data"                      value=""/>
+    <property name="default.rhq.storage.saved-caches"              value=""/>
+    <property name="default.rhq.storage.heap-size"                 value=""/>
+    <property name="default.rhq.storage.heap-new-size"             value=""/>
+    <property name="default.rhq.storage.hostname"                  value=""/>
+    <property name="default.rhq.storage.jmx-port"                  value=""/>
+    <property name="default.rhq.storage.seeds"                     value=""/>
+    <property name="default.rhq.storage.verify-data-dirs-empty"    value=""/>
 
 	<target name="set-predeploy-prop">
         <condition property="predeploy" value="true">
@@ -36,7 +45,7 @@
     </target>
 
     <target name="set-dev-server-props" if="predeploy">
-        <echo>*** Using dev database settings in rhq-server.properties...</echo>
+        <echo>*** Using dev settings in rhq-server.properties...</echo>
         <property name="rhq.server.database.hibernate-dialect" value="${rhq.dev.ds.hibernate-dialect}" />
         <property name="rhq.server.database.connection-url"    value="${rhq.dev.ds.connection-url}" />
         <property name="rhq.server.database.user-name"         value="${rhq.dev.ds.user-name}" />
@@ -54,10 +63,22 @@
         <property name="rhq.storage.password"                  value="1eeb2f255e832171df8592078de921bc"/>
         <!-- this is only set explicitly in dev envs, prod envs must set these manually for security -->
         <property name="jboss.bind.address"                    value="0.0.0.0"/>
+
+        <echo>*** Using dev settings in rhq-storage.properties...</echo>
+        <property name="rhq.storage.commitlog"                 value="${rhq.rootDir}/rhq-data/storage-1/commitlog"/>
+        <property name="rhq.storage.data"                      value="${rhq.rootDir}/rhq-data/storage-1/data"/>
+        <property name="rhq.storage.saved-caches"              value="${rhq.rootDir}/rhq-data/storage-1/saved_caches"/>
+        <property name="rhq.storage.heap-size"                 value="256M"/>
+        <property name="rhq.storage.heap-new-size"             value="64M"/>
+        <property name="rhq.storage.hostname"                  value="127.0.0.1"/>
+        <property name="rhq.storage.jmx-port"                  value="7299"/>
+        <property name="rhq.storage.seeds"                     value="127.0.0.1"/>
+        <property name="rhq.storage.verify-data-dirs-empty"    value="false"/>
+        <property name="comment"                               value=""/>
     </target>
 
     <target name="set-default-server-props" unless="predeploy">
-        <echo>*** Using default database settings in rhq-server.properties...</echo>
+        <echo>*** Using default settings in rhq-server.properties...</echo>
         <property name="rhq.server.database.hibernate-dialect" value="${default.rhq.server.database.hibernate-dialect}" />
         <property name="rhq.server.database.connection-url"    value="${default.rhq.server.database.connection-url}" />
         <property name="rhq.server.database.user-name"         value="${default.rhq.server.database.user-name}" />
@@ -75,6 +96,18 @@
         <property name="rhq.storage.password"                  value="${default.rhq.storage.password}"/>
         <!-- this is only set by default in dev envs, prod envs must set these manually for security -->
         <property name="jboss.bind.address"                    value="${default.jboss.bind.address}"/>
+
+        <echo>*** Using default settings in rhq-storage.properties...</echo>
+        <property name="rhq.storage.commitlog"                 value="${default.rhq.storage.commitlog}"/>
+        <property name="rhq.storage.data"                      value="${default.rhq.storage.data}"/>
+        <property name="rhq.storage.saved-caches"              value="${default.rhq.storage.saved-caches}"/>
+        <property name="rhq.storage.heap-size"                 value="${default.rhq.storage.heap-size}"/>
+        <property name="rhq.storage.heap-new-size"             value="${default.rhq.storage.heap-new-size}"/>
+        <property name="rhq.storage.hostname"                  value="${default.rhq.storage.hostname}"/>
+        <property name="rhq.storage.jmx-port"                  value="${default.rhq.storage.jmx-port}"/>
+        <property name="rhq.storage.seeds"                     value="${default.rhq.storage.seeds}"/>
+        <property name="rhq.storage.verify-data-dirs-empty"    value="${default.rhq.storage.verify-data-dirs-empty}"/>    	
+        <property name="comment"                               value="#"/>
     </target>
 
     <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -471,6 +504,8 @@
     <target name="prepare-bin-dir">
         <echo>*** Preparing bin dir ***</echo>
 
+        <!-- TODO: This should likely go away and the storage props should be defined at the top of this file like
+                   the other props. -->
         <loadproperties>
           <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
                   name="cassandra.properties"/>
@@ -785,6 +820,108 @@ rhq.storage.gossip-port=${rhq.cassandra.storage.port}
 # rhq.cassandra.client.compression-enabled=false
 </echo>
 
+        <echo file="${rhq.bin.dir}/rhq-storage.properties">#################### RHQ Storage Configuration Properties ####################
+
+#############################################################################
+# Storage Node Installation Options
+#
+# The following settings are all OPTIONAL.  Defaults are described below for
+# each property.
+#############################################################################
+
+#############################################################################
+# Data Directory Settings
+# -----------------
+# Note, the RHQ_HOME directory as used below is the parent directory
+# of the RHQ server installation.  It is recommended that RHQ be installed
+# under an umbrella "rhq" directory.  For example, if using a home directory
+# of /opt/rhq then the default installation structure would be:
+#   /opt/rhq
+#   /opt/rhq/rhq-server-RHQ-VERSION
+#   /opt/rhq/rhq-server-RHQ-VERSION/rhq-storage
+#   /opt/rhq/rhq-agent
+#   /opt/rhq/rhq-data/
+#   /opt/rhq/rhq-data/storage/commitlog
+#   /opt/rhq/rhq-data/storage/data
+#   /opt/rhq/rhq-data/storage/saved_caches
+#
+# commitlog      The directory where the storage node keeps commit log files.
+#                  Defaults to: RHQ_HOME/rhq-data/storage/commitlog
+# data           The directory where the storage node keeps data files.
+#                  Defaults to: RHQ_HOME/rhq-data/storage/data
+# saved-caches   The directory where the storage node keeps saved cache files.
+#                  Defaults to: RHQ_HOME/rhq-data/storage/saved_caches
+#############################################################################
+${comment}commitlog=${rhq.storage.commitlog}
+${comment}data=${rhq.storage.data}
+${comment}saved-caches=${rhq.storage.saved-caches}
+
+#############################################################################
+# Heap/Memory Settings
+# -----------------
+#
+# heap-size      The value to use for both the min and max heap. This value is
+#       	     passed directly to the -Xms and -Xmx options of the Java
+#       	     executable.
+#                  Defaults to 512M.
+# heap-new-size  The value to use for the new generation of the heap. This
+#                value is passed directly to the -Xmn option of the Java
+#                executable.
+#                  Defaults to 256M.
+# stack-size     The value to use for the thread stack size. This value is
+#                passed directly to the -Xss option of the Java executable.
+#                  Defaults to 256k.
+#############################################################################
+${comment}heap-size=${rhq.storage.heap-size}
+${comment}heap-new-size=${rhq.storage.heap-new-size}
+#stack-size=
+
+#############################################################################
+# Port Settings
+# -----------------
+#
+# client-port      The port on which to listen for client requests.
+#                    Defaults to 9142
+# jmx-port         The port on which to listen for JMX connections.
+#                    Defaults to 7299.
+# storage-port     The port on which to listen for requests from other nodes.
+#                    Defaults to 7100
+# ssl-storage-port The port on which to listen for encrypted requests from
+#                  other nodes. Only used when encryption is enabled.
+#                    Defaults to 7101
+#############################################################################
+#client-port=
+${comment}jmx-port=${rhq.storage.jmx-port}
+#storage-port=
+#ssl-storage-port=
+
+#############################################################################
+# Address/Host Settings
+# -----------------
+#
+# hostname         The hostname or IP address on which the node will listen
+#                  for requests.
+#                    Defaults to the hostname for localhost.
+# seeds            A comma-delimited list of hostnames or IP addresses that
+#                  serve as contact points. Nodes use this list to find each
+#                  other and to learn the cluster topology. It does not need
+#                  to specify all nodes in the cluster.
+#                    Defaults to this node's hostname.
+#############################################################################
+${comment}hostname=${rhq.storage.hostname}
+${comment}seeds=${rhq.storage.seeds}
+
+#############################################################################
+# Advanced Settings
+# -----------------
+#
+# verify-data-dirs-empty If true then allow installation only when the data
+#                        directories are empty.  Only upgrade is allowed.
+#                          Defaults to true.
+#############################################################################
+${comment}verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empty}
+</echo>
+
     </target>
 
     <target name="unzip-jboss" unless="jboss.uptodate">
@@ -837,17 +974,6 @@ rhq.server.agent-update.nonstrict-version-check=true
   <pathelement location="${rhq.dev.data.dir}" />
 </path>
 <pathconvert targetos="unix" property="safe.datadir" refid="path.datadir"/>
-
-<!--<echo file="${project.build.outputDirectory}/bin/rhq-storage.properties" append="true"># storage installer options for dev deployment-->
-<!--commitlog=${safe.datadir}/storage/commit_log-->
-<!--data=${safe.datadir}/storage/data-->
-<!--saved-caches=${safe.datadir}/storage/saved_caches-->
-<!--heap-size=256M-->
-<!--heap-new-size=64M-->
-<!--hostname=127.0.0.1-->
-<!--</echo>-->
-
-<!--<echo file="${project.build.outputDirectory}/bin/rhqctl.properties" append="true">rhqctl.install.storage-config=bin/rhq-storage.properties</echo>-->
 
     </target>
 

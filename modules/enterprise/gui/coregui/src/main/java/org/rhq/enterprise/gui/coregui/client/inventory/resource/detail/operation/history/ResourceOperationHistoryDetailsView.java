@@ -73,7 +73,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         List<FormItem> items = super.createFields(operationHistory);
 
         if (this.showResourceField) {
-            StaticTextItem resourceItem = new StaticTextItem(ResourceOperationHistoryDataSource.Field.RESOURCE,
+            StaticTextItem resourceItem = new StaticTextItem(ResourceOpsHistoryDataSource.Field.RESOURCE,
                 "Resource");
             resourceItem.setValue(this.disambiguatedResourceName);
             items.add(1, resourceItem);
@@ -82,7 +82,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         GroupOperationHistory groupOperationHistory = operationHistory.getGroupOperationHistory();
         if (groupOperationHistory != null) {
             StaticTextItem groupOperationHistoryItem = new StaticTextItem(
-                ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
+                ResourceOpsHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
             String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(
                 groupOperationHistory.getGroup(), groupOperationHistory.getId());
             String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId()

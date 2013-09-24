@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.operation.OpsHistoryDS;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public abstract class AbstractOperationHistoryListView<T extends AbstractOperationHistoryDataSource> extends
+public abstract class AbstractOperationHistoryListView<T extends AbstractOpsHistoryDataSource> extends
     TableSection<T> {
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
@@ -87,7 +87,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         // explicitly sort on started time so the user can see the last operation at the top and is sorted descendingly
-        SortSpecifier sortSpec = new SortSpecifier(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
+        SortSpecifier sortSpec = new SortSpecifier(AbstractOpsHistoryDataSource.Field.STARTED_TIME,
             SortDirection.DESCENDING);
         getListGrid().setSort(new SortSpecifier[] { sortSpec });
 
@@ -101,7 +101,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 int count = selection.length;
                 for (ListGridRecord item : selection) {
                     if (!OperationRequestStatus.INPROGRESS.name().equals(
-                        item.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
+                        item.getAttribute(AbstractOpsHistoryDataSource.Field.STATUS))) {
                         count--; // one selected item was not in-progress, it doesn't count
                     }
                 }
@@ -114,9 +114,9 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 for (ListGridRecord toBeCanceled : selection) {
                     // only cancel those selected operations that are currently in progress
                     if (OperationRequestStatus.INPROGRESS.name().equals(
-                        toBeCanceled.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
+                        toBeCanceled.getAttribute(AbstractOpsHistoryDataSource.Field.STATUS))) {
                         numCancelRequestsSubmitted++;
-                        final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                        final int historyId = toBeCanceled.getAttributeAsInt(OpsHistoryDS.Field.ID);
                         opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
                             public void onSuccess(Void result) {
                                 Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
@@ -171,15 +171,15 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID);
+        ListGridField idField = new ListGridField(AbstractOpsHistoryDataSource.Field.ID);
         idField.setWidth(38);
         fields.add(idField);
 
-        ListGridField opNameField = new ListGridField(AbstractOperationHistoryDataSource.Field.OPERATION_NAME);
+        ListGridField opNameField = new ListGridField(AbstractOpsHistoryDataSource.Field.OPERATION_NAME);
         opNameField.setWidth("34%");
         fields.add(opNameField);
 
-        ListGridField subjectField = new ListGridField(AbstractOperationHistoryDataSource.Field.SUBJECT);
+        ListGridField subjectField = new ListGridField(AbstractOpsHistoryDataSource.Field.SUBJECT);
         subjectField.setWidth("33%");
         fields.add(subjectField);
 
@@ -194,7 +194,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     }
 
     protected ListGridField createStartedTimeField() {
-        ListGridField startedTimeField = new ListGridField(AbstractOperationHistoryDataSource.Field.STARTED_TIME);
+        ListGridField startedTimeField = new ListGridField(AbstractOpsHistoryDataSource.Field.STARTED_TIME);
         startedTimeField.setAlign(Alignment.LEFT);
         startedTimeField.setCellAlign(Alignment.LEFT);
         startedTimeField.setCellFormatter(new TimestampCellFormatter() {
@@ -208,20 +208,20 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         });
         startedTimeField.setShowHover(true);
         startedTimeField.setHoverCustomizer(TimestampCellFormatter
-            .getHoverCustomizer(AbstractOperationHistoryDataSource.Field.STARTED_TIME));
+            .getHoverCustomizer(AbstractOpsHistoryDataSource.Field.STARTED_TIME));
 
         return startedTimeField;
     }
 
     protected ListGridField createStatusField() {
-        ListGridField statusField = new ListGridField(AbstractOperationHistoryDataSource.Field.STATUS);
+        ListGridField statusField = new ListGridField(AbstractOpsHistoryDataSource.Field.STATUS);
         statusField.setAlign(Alignment.CENTER);
         statusField.setCellAlign(Alignment.CENTER);
         statusField.setShowHover(true);
         statusField.setHoverCustomizer(new HoverCustomizer() {
             @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
+                String statusStr = record.getAttribute(AbstractOpsHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
                 case SUCCESS: {
@@ -252,7 +252,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             @Override
             public void onRecordClick(RecordClickEvent event) {
                 Record record = event.getRecord();
-                String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
+                String statusStr = record.getAttribute(AbstractOpsHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 if (status == OperationRequestStatus.FAILURE) {
                     final Window winModal = new Window();
@@ -278,7 +278,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
                     htmlPane.setDefaultHeight(400);
-                    String errorMsg = record.getAttribute(AbstractOperationHistoryDataSource.Field.ERROR_MESSAGE);
+                    String errorMsg = record.getAttribute(AbstractOpsHistoryDataSource.Field.ERROR_MESSAGE);
                     if (errorMsg == null) {
                         errorMsg = MSG.common_status_failed();
                     }
@@ -324,7 +324,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
         Boolean forceValue = (requestProperties != null && requestProperties
-            .getAttributeAsBoolean(AbstractOperationHistoryDataSource.RequestAttribute.FORCE));
+            .getAttributeAsBoolean(AbstractOpsHistoryDataSource.RequestAttribute.FORCE));
         boolean force = ((forceValue != null) && forceValue);
         final List<Integer> successIds = new ArrayList<Integer>();
         final List<Integer> failureIds = new ArrayList<Integer>();
@@ -366,7 +366,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     @Override
     protected String getDetailsLinkColumnName() {
-        return AbstractOperationHistoryDataSource.Field.OPERATION_NAME;
+        return AbstractOpsHistoryDataSource.Field.OPERATION_NAME;
     }
 
 }

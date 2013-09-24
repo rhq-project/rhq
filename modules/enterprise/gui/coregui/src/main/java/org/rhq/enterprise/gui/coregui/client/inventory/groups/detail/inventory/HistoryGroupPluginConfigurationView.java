@@ -75,7 +75,7 @@ public class HistoryGroupPluginConfigurationView extends EnhancedVLayout impleme
             if (configView) {
                 detailsCanvas = new HistoryGroupPluginConfigurationSettings(this.groupComposite, groupHistoryId);
             } else {
-                detailsCanvas = new HistoryGroupPluginConfigurationMembers(this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistGrpPluginConfigMembers(this.groupComposite, groupHistoryId);
             }
             addMember(detailsCanvas);
             setVisibleMember(detailsCanvas);

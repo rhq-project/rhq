@@ -50,7 +50,7 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinat
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -73,7 +73,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     private final BundleDeployWizard wizard;
     private VLayout form;
     DynamicForm valForm = new DynamicForm();
-    private SingleCompatibleResourceGroupSelector selector;
+    private SingleCompatibleResGroupSelector selector;
     private BundleDestination destination = new BundleDestination();
     private boolean createInProgress = false;
     private RadioGroupItem destBaseDirItem;
@@ -152,7 +152,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group());
+            this.selector = new SingleCompatibleResGroupSelector("group", MSG.common_title_resource_group());
             this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
@@ -219,7 +219,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_9(), caught);
-                        // try anyway and potentially fail again from there 
+                        // try anyway and potentially fail again from there
                         createDestination();
                     }
                 });
@@ -230,7 +230,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         return false;
     }
 
-    // this will advance or decrement the step depending on creation success or failure 
+    // this will advance or decrement the step depending on creation success or failure
     private void createDestination() {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
@@ -264,7 +264,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         destBaseDirItem.clearValue();
         destBaseDirItem.setValueMap((String[]) null);
 
-        // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search) 
+        // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search)
         if (selectedGroupId != null) {
             bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
                 new AsyncCallback<ResourceTypeBundleConfiguration>() {
@@ -309,10 +309,10 @@ public class GetDestinationStep extends AbstractWizardStep {
     }
 
     private class QuickGroupCreateWizard extends AbstractGroupCreateWizard {
-        private SingleCompatibleResourceGroupSelector groupSelector;
+        private SingleCompatibleResGroupSelector groupSelector;
         private HandlerRegistration handlerRegistrar;
 
-        public QuickGroupCreateWizard(SingleCompatibleResourceGroupSelector theSelector) {
+        public QuickGroupCreateWizard(SingleCompatibleResGroupSelector theSelector) {
             super();
             this.groupSelector = theSelector;
         }

@@ -56,7 +56,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -189,7 +189,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
         EnhancedVLayout page = new EnhancedVLayout();
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+        final CustomConfigMeasRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         //submit handler

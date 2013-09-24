@@ -64,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OpsHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -228,7 +228,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
 
                 // If re-selecting a Dashboard, make sure it, and its portlets, are up to date
                 if (selectedDashboardView.isDrawn()) {
-                    // I think this should work with markForRedraw but for some reason it does not                    
+                    // I think this should work with markForRedraw but for some reason it does not
                     selectedDashboardView.redraw();
                 }
             }
@@ -280,7 +280,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         dashboard.setName(MSG.common_title_default());
         dashboard.setCategory(DashboardCategory.INVENTORY);
         dashboard.setColumns(2);
-        // only leftmost column width is currently settable, the rest are equally divided        
+        // only leftmost column width is currently settable, the rest are equally divided
         dashboard.setColumnWidths("32%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
@@ -328,7 +328,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
                 ProblemResourcesPortlet.defaultShowHours));
         dashboard.addPortlet(problemResources, columnIndex, rowIndex++);
 
-        DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY,
+        DashboardPortlet operations = new DashboardPortlet(OpsHistoryPortlet.NAME, OpsHistoryPortlet.KEY,
             200);
         dashboard.addPortlet(operations, columnIndex, rowIndex++);
 

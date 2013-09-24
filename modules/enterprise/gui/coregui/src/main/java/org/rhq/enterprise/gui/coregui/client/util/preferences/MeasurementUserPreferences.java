@@ -22,13 +22,14 @@ package org.rhq.enterprise.gui.coregui.client.util.preferences;
 import java.util.Arrays;
 import java.util.List;
 
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor.MetricRangePreferences;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasRangeEditor.MetricRangePreferences;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * This wraps a UserPreferences object to obtain measurement specific preferences.
- * 
+ *
  * @author John Mazzitelli
  */
 public class MeasurementUserPreferences {

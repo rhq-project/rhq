@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -222,11 +222,11 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
             dashboard.addPortlet(ops, colRight, rowRight++);
             groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
         }
-        if (groupKeyNameMap.containsKey(GroupConfigurationUpdatesPortlet.KEY)) {//operations if available
-            DashboardPortlet ops = new DashboardPortlet(GroupConfigurationUpdatesPortlet.NAME,
-                GroupConfigurationUpdatesPortlet.KEY, 220);
+        if (groupKeyNameMap.containsKey(GroupConfigUpdatesPortlet.KEY)) {//operations if available
+            DashboardPortlet ops = new DashboardPortlet(GroupConfigUpdatesPortlet.NAME,
+                GroupConfigUpdatesPortlet.KEY, 220);
             dashboard.addPortlet(ops, colRight, rowRight++);
-            groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+            groupKeyNameMap.remove(GroupConfigUpdatesPortlet.KEY);
         }
 
         //Fill out left column(typically smaller portlets) then alternate cols with remaining
@@ -235,10 +235,10 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         return dashboard;
     }
 
-    /**Iterates list of new portlets and updates the dashboard reference with these new portlets. 
+    /**Iterates list of new portlets and updates the dashboard reference with these new portlets.
      * Attempts to fill the spaces around the remaining larger portlets if already installed, then alternates
      * adding to left and right columns. Assumes dashboard has only two columns.
-     * 
+     *
      * @param keyNameMap portlet key|name map
      * @param dashboard dasboard instance to update
      */

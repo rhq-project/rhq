@@ -140,17 +140,17 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         OperationRequestStatus status = operationHistory.getStatus();
 
-        StaticTextItem idItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.ID, "Execution ID");
+        StaticTextItem idItem = new StaticTextItem(AbstractOpsHistoryDataSource.Field.ID, "Execution ID");
         idItem.setValue(operationHistory.getId());
         items.add(idItem);
 
-        StaticTextItem operationItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.OPERATION_NAME,
+        StaticTextItem operationItem = new StaticTextItem(AbstractOpsHistoryDataSource.Field.OPERATION_NAME,
             MSG.view_operationHistoryDetails_operation());
         OperationDefinition operationDefinition = operationHistory.getOperationDefinition();
         operationItem.setValue(operationDefinition.getDisplayName());
         items.add(operationItem);
 
-        StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
+        StaticTextItem submittedItem = new StaticTextItem(AbstractOpsHistoryDataSource.Field.STARTED_TIME,
             MSG.view_operationHistoryDetails_dateSubmitted());
         if (operationHistory.getStartedTime() == 0) {
             // must have executed serially, halt-on-error was true and a previous resource op failed, thus this never even got submitted to the agent for invocation
@@ -171,14 +171,14 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         }
         items.add(completedItem);
 
-        StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT,
+        StaticTextItem requesterItem = new StaticTextItem(AbstractOpsHistoryDataSource.Field.SUBJECT,
             MSG.view_operationHistoryDetails_requestor());
 
         requesterItem.setEscapeHTML(true);
         requesterItem.setValue(operationHistory.getSubjectName());
         items.add(requesterItem);
 
-        StaticTextItem statusItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STATUS,
+        StaticTextItem statusItem = new StaticTextItem(AbstractOpsHistoryDataSource.Field.STATUS,
             MSG.view_operationHistoryDetails_status());
         String icon = ImageManager.getFullImagePath(ImageManager.getOperationResultsIcon(status));
         statusItem.setValue("<img src='" + icon + "'/>");

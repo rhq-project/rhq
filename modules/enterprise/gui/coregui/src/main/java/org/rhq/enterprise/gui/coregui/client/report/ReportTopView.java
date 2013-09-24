@@ -42,10 +42,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.alert.SubsystemRecentAlertsView;
-import org.rhq.enterprise.gui.coregui.client.report.configuration.SubsystemConfigurationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.report.configuration.SubsystemConfigHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.inventory.DriftComplianceReport;
 import org.rhq.enterprise.gui.coregui.client.report.inventory.ResourceInstallReport;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
@@ -112,9 +112,9 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         });
 
         NavigationItem recentConfigurationChangesItem = new NavigationItem(
-            ResourceConfigurationHistoryListView.VIEW_ID, new ViewFactory() {
+            ResourceConfigHistoryListView.VIEW_ID, new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemConfigurationHistoryListView(getGlobalPermissions().contains(
+                    return new SubsystemConfigHistoryListView(getGlobalPermissions().contains(
                         Permission.MANAGE_INVENTORY));
                 }
             });

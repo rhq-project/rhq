@@ -50,7 +50,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     private ReorderableList memberExecutionOrderer;
 
     public GroupOperationScheduleDetailsView(ResourceGroupComposite groupComposite, int scheduleId) {
-        super(new GroupOperationScheduleDataSource(groupComposite),
+        super(new GroupOperationScheduleDS(groupComposite),
             groupComposite.getResourceGroup().getResourceType(), scheduleId);
         this.groupComposite = groupComposite;
     }
@@ -111,7 +111,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         executionModeItem.setDefaultValue(EXECUTION_ORDER_PARALLEL);
         executionModeItem.setShowTitle(true);
 
-        final CheckboxItem haltOnFailureItem = new CheckboxItem(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE,
+        final CheckboxItem haltOnFailureItem = new CheckboxItem(GroupOperationScheduleDS.Field.HALT_ON_FAILURE,
             MSG.view_group_operationScheduleDetails_field_haltOnFailure());
         haltOnFailureItem.setDefaultValue(false);
         haltOnFailureItem.setVisible(false);
@@ -159,7 +159,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     @Override
     protected void editExistingRecord(final Record record) {
         List<Resource> executionOrder = (List<Resource>) record
-            .getAttributeAsObject(GroupOperationScheduleDataSource.Field.EXECUTION_ORDER);
+            .getAttributeAsObject(GroupOperationScheduleDS.Field.EXECUTION_ORDER);
 
         if (executionOrder != null) {
             Integer[] resourceIds = new Integer[executionOrder.size()];
@@ -188,8 +188,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
                     memberExecutionOrderer.show();
 
                     FormItem haltOnFailureItem = executionModeForm
-                        .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
-                    Object haltOnFailure = getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+                        .getField(GroupOperationScheduleDS.Field.HALT_ON_FAILURE);
+                    Object haltOnFailure = getForm().getValue(GroupOperationScheduleDS.Field.HALT_ON_FAILURE);
                     haltOnFailureItem.setValue(haltOnFailure);
                     haltOnFailureItem.show();
 
@@ -199,9 +199,9 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         } else {
             this.executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_PARALLEL);
 
-            Object haltOnFailure = getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+            Object haltOnFailure = getForm().getValue(GroupOperationScheduleDS.Field.HALT_ON_FAILURE);
             FormItem haltOnFailureItem = this.executionModeForm
-                .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+                .getField(GroupOperationScheduleDS.Field.HALT_ON_FAILURE);
             haltOnFailureItem.setValue(haltOnFailure);
 
             super.editExistingRecord(record);
@@ -222,11 +222,11 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
             executionOrder = null;
         }
         requestProperties
-            .setAttribute(GroupOperationScheduleDataSource.RequestProperty.EXECUTION_ORDER, executionOrder);
+            .setAttribute(GroupOperationScheduleDS.RequestProperty.EXECUTION_ORDER, executionOrder);
 
         Boolean haltOnFailure = (Boolean) this.executionModeForm
-            .getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
-        getForm().setValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE, haltOnFailure);
+            .getValue(GroupOperationScheduleDS.Field.HALT_ON_FAILURE);
+        getForm().setValue(GroupOperationScheduleDS.Field.HALT_ON_FAILURE, haltOnFailure);
 
         super.save(requestProperties);
     }

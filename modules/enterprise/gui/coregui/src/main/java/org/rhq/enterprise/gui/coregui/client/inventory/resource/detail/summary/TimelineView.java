@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -48,7 +48,7 @@ public class TimelineView extends EnhancedVLayout {
             + resourceComposite.getResource().getId());
 
         // we create a simple subclass because we need to know when a new range has been set in order to refresh the timeline
-        class RangeEditor extends UserPreferencesMeasurementRangeEditor {
+        class RangeEditor extends UserPreferencesMeasRangeEditor {
             RangeEditor() {
                 super();
             }
@@ -61,7 +61,7 @@ public class TimelineView extends EnhancedVLayout {
         }
 
         RangeEditor range = new RangeEditor();
-        addMember(range); // put it at the top above the timeline's filters 
+        addMember(range); // put it at the top above the timeline's filters
         addMember(timelinePane);
     }
 }

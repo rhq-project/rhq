@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
@@ -177,7 +177,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
 
         // range selector
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+        final CustomConfigMeasRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         filterForm.setItems(alertPrioritySelector, resultCountSelector);
@@ -228,12 +228,12 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
      * @param measurementRangeEditor metric range editor widget
      * @param portletConfig - the config to be updated
      */
-    private void saveMeasurementRangeEditorSettings(final CustomConfigMeasurementRangeEditor measurementRangeEditor,
+    private void saveMeasurementRangeEditorSettings(final CustomConfigMeasRangeEditor measurementRangeEditor,
         Configuration portletConfig) {
         String selectedValue;
         if ((measurementRangeEditor != null) && (portletConfig != null)) {
             //time range filter. Check for enabled and then persist property. Dealing with compound widget.
-            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasRangeEditor.ENABLE_RANGE_ITEM);
             CheckboxItem itemC = (CheckboxItem) item;
             boolean persistTimeRangeSettings = itemC.getValueAsBoolean();
             if (persistTimeRangeSettings) {//retrieve values and persist

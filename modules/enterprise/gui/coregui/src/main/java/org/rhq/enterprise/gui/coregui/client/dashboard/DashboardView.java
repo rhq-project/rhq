@@ -63,13 +63,13 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.ColorButtonItem;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
@@ -122,7 +122,7 @@ public class DashboardView extends EnhancedVLayout {
 
     /**
      * Convenience constructor for subsystem context.
-     * 
+     *
      * @param dashboardContainer
      * @param storedDashboard
      */
@@ -475,7 +475,7 @@ public class DashboardView extends EnhancedVLayout {
                 }
                 // Configuration related portlets
                 if (!facets.contains(ResourceTypeFacet.CONFIGURATION)) {
-                    resourceMenuMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
+                    resourceMenuMap.remove(ResourceConfigUpdatesPortlet.KEY);
                 }
                 // Bundle related portlets
                 if (!facets.contains(ResourceTypeFacet.BUNDLE)) {
@@ -506,7 +506,7 @@ public class DashboardView extends EnhancedVLayout {
                 groupMenuMap.remove(GroupMetricsPortlet.KEY);
                 groupMenuMap.remove(GroupOobsPortlet.KEY);
                 groupMenuMap.remove(GroupPkgHistoryPortlet.KEY);
-                groupMenuMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+                groupMenuMap.remove(GroupConfigUpdatesPortlet.KEY);
                 groupMenuMap.remove(GroupBundleDeploymentsPortlet.KEY);
 
             } else {
@@ -527,7 +527,7 @@ public class DashboardView extends EnhancedVLayout {
                     }
                     // CONFIGURATION related portlets(CONFIGURATION)
                     if (!facets.contains(ResourceTypeFacet.CONFIGURATION)) {
-                        groupMenuMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+                        groupMenuMap.remove(GroupConfigUpdatesPortlet.KEY);
                     }
                     // BUNDLE related portlets(BUNDLE)
                     if (!facets.contains(ResourceTypeFacet.BUNDLE)) {
@@ -695,13 +695,13 @@ public class DashboardView extends EnhancedVLayout {
      * a portlet may have been associated with its window prior to being persisted. In this case we can consider
      * it equal if it is associated with the same dashboard(1) and has the same positioning. Note that key-name pairing
      * can not be used for equality as a dashboard is allowed to have the same portlet multiple times, with a default
-     * name.  But they can not hold the same position. 
+     * name.  But they can not hold the same position.
      * <pre>
      *   (1) Even the dashboard comparison has been made flexible. To allow for lazy persist of the dashboard (to
      *       allow for the default group or resource dashboard to not be persisted) we allow the dash comparison
      *       to be done by name if an entity id is 0.  This should be safe as dashboard names are set prior to
-     *       persist, and should be unique for the session user. 
-     * 
+     *       persist, and should be unique for the session user.
+     *
      * @param storedPortlet
      * @param updatedPortlet
      * @return

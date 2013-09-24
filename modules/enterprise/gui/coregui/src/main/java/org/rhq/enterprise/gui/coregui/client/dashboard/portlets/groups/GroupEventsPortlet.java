@@ -38,7 +38,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -163,7 +163,7 @@ public class GroupEventsPortlet extends EnhancedVLayout implements CustomSetting
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
         //add range selector
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+        final CustomConfigMeasRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         //submit handler

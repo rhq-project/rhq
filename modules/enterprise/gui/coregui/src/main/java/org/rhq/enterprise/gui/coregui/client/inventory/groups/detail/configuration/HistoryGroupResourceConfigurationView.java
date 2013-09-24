@@ -75,7 +75,7 @@ public class HistoryGroupResourceConfigurationView extends EnhancedVLayout imple
             if (configView) {
                 detailsCanvas = new HistoryGroupResourceConfigurationSettings(this.groupComposite, groupHistoryId);
             } else {
-                detailsCanvas = new HistoryGroupResourceConfigurationMembers(this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistGrpResConfMembers(this.groupComposite, groupHistoryId);
             }
             addMember(detailsCanvas);
             setVisibleMember(detailsCanvas);

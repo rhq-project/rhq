@@ -39,7 +39,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -64,7 +64,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private Label dateRangeLabel;
     private static final DateTimeFormat fmt = DateTimeFormat.getFormat(MSG.common_buttonbar_datetime_format());
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
-    private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
+    private AbstractMeasRangeEditor.MetricRangePreferences prefs;
     final private ButtonBarDateTimeRangeEditor self;
     private RefreshIntervalMenu refreshIntervalMenu;
     private boolean allowPreferenceUpdateRefresh;

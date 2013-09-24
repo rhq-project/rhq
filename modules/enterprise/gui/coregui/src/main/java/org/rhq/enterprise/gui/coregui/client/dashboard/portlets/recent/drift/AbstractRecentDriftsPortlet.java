@@ -32,7 +32,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -47,8 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * A base class for deriving recent drift portlets for different entity contexts.  In this way the
  * basic plumbing is shared, giving a consistent behavior and configuration for the concrete portlets.
- *  
- * @author Jay Shaughnessy 
+ *
+ * @author Jay Shaughnessy
  */
 public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView implements CustomSettingsPortlet,
     AutoRefreshPortlet {
@@ -56,7 +56,7 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
     private static final String DRIFT_CATEGORY = "DRIFT_CATEGORY";
     private static final String DRIFT_CATEGORY_DEFAULT = ""; // all categories
 
-    // set on initial configuration, the window for this portlet view. 
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
     private DriftsPortletDataSource dataSource;
@@ -185,7 +185,7 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
 
         // range selector
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+        final CustomConfigMeasRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         filterForm.setItems(driftCategorySelector, resultCountSelector);
@@ -229,19 +229,19 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
         return customSettingsForm;
     }
 
-    /** 
+    /**
      * Takes the current value of the widget and persists it into the configuration object passed in.
     *
     * @param measurementRangeEditor
     * @param portletConfig
     * returns populated configuration object.
     */
-    private void saveMeasurementRangeEditorSettings(final CustomConfigMeasurementRangeEditor measurementRangeEditor,
+    private void saveMeasurementRangeEditorSettings(final CustomConfigMeasRangeEditor measurementRangeEditor,
         Configuration portletConfig) {
         String selectedValue = null;
         if ((measurementRangeEditor != null) && (portletConfig != null)) {
             //time range filter. Check for enabled and then persist property. Dealing with compound widget.
-            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasRangeEditor.ENABLE_RANGE_ITEM);
             CheckboxItem itemC = (CheckboxItem) item;
             boolean persistTimeRangeSettings = itemC.getValueAsBoolean();
             if (persistTimeRangeSettings) {//retrieve values and persist

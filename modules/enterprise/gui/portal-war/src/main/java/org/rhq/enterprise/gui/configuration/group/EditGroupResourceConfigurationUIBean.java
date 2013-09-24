@@ -63,7 +63,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
             FacesContextUtility
                 .addMessage(FacesMessage.SEVERITY_INFO, "Group Resource Configuration update scheduled.");
             //Conversation.instance().endBeforeRedirect();
-            viewId = GroupResourceConfigurationHistoryUIBean.VIEW_ID;
+            viewId = GroupResourceConfigHistoryUIBean.VIEW_ID;
         } catch (ConfigurationUpdateStillInProgressException updateException) {
             FacesContextUtility
                 .addMessage(FacesMessage.SEVERITY_WARN,

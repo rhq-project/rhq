@@ -13,24 +13,24 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOpsHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOpsHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 
 /**
  * @author Ian Springer
  */
 public class GroupMemberResourceOperationHistoryListView extends
-    AbstractOperationHistoryListView<ResourceOperationHistoryDataSource> {
+    AbstractOperationHistoryListView<ResourceOpsHistoryDataSource> {
 
     private ResourceGroupComposite groupComposite;
 
     public GroupMemberResourceOperationHistoryListView(ResourceGroupComposite groupComposite,
         int groupOperationHistoryId) {
-        super(new ResourceOperationHistoryDataSource(), null, new Criteria(
-            ResourceOperationHistoryDataSource.CriteriaField.GROUP_OPERATION_HISTORY_ID,
+        super(new ResourceOpsHistoryDataSource(), null, new Criteria(
+            ResourceOpsHistoryDataSource.CriteriaField.GROUP_OPERATION_HISTORY_ID,
             String.valueOf(groupOperationHistoryId)));
         this.groupComposite = groupComposite;
     }
@@ -39,7 +39,7 @@ public class GroupMemberResourceOperationHistoryListView extends
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ListGridField idField = new ListGridField(AbstractOperationHistoryDataSource.Field.ID);
+        ListGridField idField = new ListGridField(AbstractOpsHistoryDataSource.Field.ID);
         idField.setWidth(38);
         fields.add(idField);
 
@@ -90,7 +90,7 @@ public class GroupMemberResourceOperationHistoryListView extends
         }
 
         int resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-        int opHistoryId = record.getAttributeAsInt(ResourceOperationHistoryDataSource.Field.ID);
+        int opHistoryId = record.getAttributeAsInt(ResourceOpsHistoryDataSource.Field.ID);
 
         if (resourceId > 0 && opHistoryId > 0) {
             CoreGUI.goToView(LinkManager.getSubsystemResourceOperationHistoryLink(resourceId, opHistoryId));

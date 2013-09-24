@@ -27,7 +27,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -222,7 +222,7 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
 
         Log.debug("Saving Date range: "+new Date((long)startTime) +  " - "+ new Date((long)endTime));
         final boolean advanced = true;
-        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPrefs.getMetricRangePreferences();
+        AbstractMeasRangeEditor.MetricRangePreferences prefs = measurementUserPrefs.getMetricRangePreferences();
         prefs.explicitBeginEnd = advanced;
         prefs.begin = (long) startTime;
         prefs.end = (long) endTime;

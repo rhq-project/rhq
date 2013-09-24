@@ -67,7 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDS;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
@@ -80,7 +80,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public abstract class AbstractOperationScheduleDetailsView extends
-    AbstractRecordEditor<AbstractOperationScheduleDataSource<? extends OperationSchedule>> {
+    AbstractRecordEditor<AbstractOperationScheduleDS<? extends OperationSchedule>> {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
@@ -101,7 +101,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private ViewPath viewPath;
     private boolean isImmediateExecution;
 
-    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDataSource<? extends OperationSchedule> dataSource,
+    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDS<? extends OperationSchedule> dataSource,
         ResourceType resourceType, int scheduleId) {
         super(dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
@@ -168,7 +168,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         // If the operationDefId has been seeded then treat it as a user-initiated change to
         // update associated widgets and button enablement.
         if (this.operationDefinitionId != null) {
-            FormItem nameField = this.getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+            FormItem nameField = this.getForm().getField(AbstractOperationScheduleDS.Field.OPERATION_NAME);
             nameField.setValue(this.operationIdToNameMap.get(this.operationDefinitionId));
             handleOperationNameChange();
             getForm().rememberValues();
@@ -190,11 +190,11 @@ public abstract class AbstractOperationScheduleDetailsView extends
         List<FormItem> items = new ArrayList<FormItem>();
 
         if (!isNewRecord()) {
-            StaticTextItem idItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.ID);
+            StaticTextItem idItem = new StaticTextItem(AbstractOperationScheduleDS.Field.ID);
             items.add(idItem);
         }
 
-        SelectItem operationNameItem = new SortedSelectItem(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+        SelectItem operationNameItem = new SortedSelectItem(AbstractOperationScheduleDS.Field.OPERATION_NAME);
         operationNameItem.setShowTitle(true);
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {
@@ -267,7 +267,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         supportedUnits.add(TimeUnit.SECONDS);
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
-        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
+        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDS.Field.TIMEOUT,
             MSG.view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly());
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout(productInfo.getShortName()));
@@ -275,12 +275,12 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
         if (!isNewRecord()) {
             StaticTextItem nextFireTimeItem = new StaticTextItem(
-                AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
+                AbstractOperationScheduleDS.Field.NEXT_FIRE_TIME,
                 MSG.dataSource_operationSchedule_field_nextFireTime());
             notesFields.add(nextFireTimeItem);
         }
 
-        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION,
+        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDS.Field.DESCRIPTION,
             MSG.dataSource_operationSchedule_field_description());
         notesItem.setWidth(450);
         notesItem.setHeight(60);
@@ -308,7 +308,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
     @Override
     protected String getTitleFieldName() {
-        return ResourceOperationScheduleDataSource.Field.OPERATION_DISPLAY_NAME;
+        return ResourceOperationScheduleDS.Field.OPERATION_DISPLAY_NAME;
     }
 
     @Override
@@ -316,8 +316,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
         Record record = super.createNewRecord();
 
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, sessionSubject.getName());
-        record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT_ID, sessionSubject.getId());
+        record.setAttribute(ResourceOperationScheduleDS.Field.SUBJECT, sessionSubject.getName());
+        record.setAttribute(ResourceOperationScheduleDS.Field.SUBJECT_ID, sessionSubject.getId());
 
         return record;
     }
@@ -333,32 +333,32 @@ public abstract class AbstractOperationScheduleDetailsView extends
     @Override
     protected void editExistingRecord(Record record) {
         JavaScriptObject jobTriggerJavaScriptObject = (JavaScriptObject) getForm().getValue(
-            AbstractOperationScheduleDataSource.Field.JOB_TRIGGER);
+            AbstractOperationScheduleDS.Field.JOB_TRIGGER);
         Record jobTriggerRecord = new ListGridRecord(jobTriggerJavaScriptObject);
         JobTrigger jobTrigger = getDataSource().createJobTrigger(jobTriggerRecord);
         this.triggerEditor.setJobTrigger(jobTrigger);
 
-        FormItem nextFireTimeItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
-        nextFireTimeItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
+        FormItem nextFireTimeItem = this.notesForm.getField(AbstractOperationScheduleDS.Field.NEXT_FIRE_TIME);
+        nextFireTimeItem.setValue(getForm().getValue(AbstractOperationScheduleDS.Field.NEXT_FIRE_TIME));
 
         DurationItem timeoutItem = (DurationItem) this.notesForm
-            .getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
-        Object value = getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+            .getField(AbstractOperationScheduleDS.Field.TIMEOUT);
+        Object value = getForm().getValue(AbstractOperationScheduleDS.Field.TIMEOUT);
         Integer integerValue = TypeConversionUtility.toInteger(value);
         timeoutItem.setValue(integerValue, UnitType.TIME);
 
         StaticTextItem notesItem = (StaticTextItem) this.notesForm
-            .getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+            .getField(AbstractOperationScheduleDS.Field.DESCRIPTION);
         // Notes field is user-editable, so escape HTML to prevent an XSS attack. Unless empty, then don't to prevent
         // displaying &nbsp; as the value.
-        String notesValue = getForm().getValueAsString(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        String notesValue = getForm().getValueAsString(AbstractOperationScheduleDS.Field.DESCRIPTION);
         if (null != notesValue && !notesValue.isEmpty()) {
             notesItem.setEscapeHTML(true);
         }
         notesItem.setValue(notesValue);
 
         this.operationParameters = (Configuration) record
-            .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
+            .getAttributeAsObject(AbstractOperationScheduleDS.Field.PARAMETERS);
         super.editExistingRecord(record);
     }
 
@@ -375,7 +375,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
             }
         }
 
-        requestProperties.setAttribute(AbstractOperationScheduleDataSource.RequestProperty.PARAMETERS,
+        requestProperties.setAttribute(AbstractOperationScheduleDS.RequestProperty.PARAMETERS,
             this.operationParameters);
 
         EnhancedDynamicForm form = getForm();
@@ -384,33 +384,33 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
         Date startTime = this.triggerEditor.getStartTime();
         isImmediateExecution = startTime == null;
-        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.START_TIME, startTime);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDS.Field.START_TIME, startTime);
 
         Date endTime = this.triggerEditor.getEndTime();
-        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.END_TIME, endTime);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDS.Field.END_TIME, endTime);
 
         Integer repeatCount = this.triggerEditor.getRepeatCount();
-        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.REPEAT_COUNT, repeatCount);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDS.Field.REPEAT_COUNT, repeatCount);
 
         Long repeatInterval = this.triggerEditor.getRepeatInterval();
-        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.REPEAT_INTERVAL, repeatInterval);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDS.Field.REPEAT_INTERVAL, repeatInterval);
 
         String cronExpression = this.triggerEditor.getCronExpression();
-        jobTriggerRecord.setAttribute(AbstractOperationScheduleDataSource.Field.CRON_EXPRESSION, cronExpression);
+        jobTriggerRecord.setAttribute(AbstractOperationScheduleDS.Field.CRON_EXPRESSION, cronExpression);
 
-        form.setValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER, jobTriggerRecord);
+        form.setValue(AbstractOperationScheduleDS.Field.JOB_TRIGGER, jobTriggerRecord);
 
         DurationItem timeoutItem = (DurationItem) this.notesForm
-            .getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+            .getItem(AbstractOperationScheduleDS.Field.TIMEOUT);
         Long timeout = timeoutItem.getValueAsLong();
         if (timeout != null) {
-            form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeout);
+            form.setValue(AbstractOperationScheduleDS.Field.TIMEOUT, timeout);
         } else {
-            form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, (String) null);
+            form.setValue(AbstractOperationScheduleDS.Field.TIMEOUT, (String) null);
         }
 
-        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
-        form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String) notesItem.getValue());
+        FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDS.Field.DESCRIPTION);
+        form.setValue(AbstractOperationScheduleDS.Field.DESCRIPTION, (String) notesItem.getValue());
 
         super.save(requestProperties);
     }
@@ -491,7 +491,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     }
 
     private String getSelectedOperationName() {
-        FormItem operationNameItem = getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+        FormItem operationNameItem = getForm().getField(AbstractOperationScheduleDS.Field.OPERATION_NAME);
         return (String) operationNameItem.getValue();
     }
 

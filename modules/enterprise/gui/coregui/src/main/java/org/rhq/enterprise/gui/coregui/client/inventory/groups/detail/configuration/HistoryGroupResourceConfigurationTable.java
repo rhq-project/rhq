@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceConfigurationDataSource> {
+public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceConfigDS> {
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
 
@@ -63,20 +63,20 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
 
-        setDataSource(new GroupResourceConfigurationDataSource(this.group.getId()));
+        setDataSource(new GroupResourceConfigDS(this.group.getId()));
     }
 
     @Override
     protected void configureTable() {
-        ListGridField fieldId = new ListGridField(GroupResourceConfigurationDataSource.Field.ID,
+        ListGridField fieldId = new ListGridField(GroupResourceConfigDS.Field.ID,
             MSG.common_title_version());
-        ListGridField fieldDateCreated = new ListGridField(GroupResourceConfigurationDataSource.Field.DATECREATED,
+        ListGridField fieldDateCreated = new ListGridField(GroupResourceConfigDS.Field.DATECREATED,
             MSG.common_title_dateCreated());
-        ListGridField fieldLastUpdated = new ListGridField(GroupResourceConfigurationDataSource.Field.LASTUPDATED,
+        ListGridField fieldLastUpdated = new ListGridField(GroupResourceConfigDS.Field.LASTUPDATED,
             MSG.common_title_lastUpdated());
-        ListGridField fieldStatus = new ListGridField(GroupResourceConfigurationDataSource.Field.STATUS,
+        ListGridField fieldStatus = new ListGridField(GroupResourceConfigDS.Field.STATUS,
             MSG.common_title_status());
-        ListGridField fieldUser = new ListGridField(GroupResourceConfigurationDataSource.Field.USER,
+        ListGridField fieldUser = new ListGridField(GroupResourceConfigDS.Field.USER,
             MSG.common_title_user());
 
         TimestampCellFormatter.prepareDateField(fieldDateCreated);
@@ -132,7 +132,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                     Integer[] updateIds = new Integer[selection.length];
                     int i = 0;
                     for (ListGridRecord record : selection) {
-                        updateIds[i++] = record.getAttributeAsInt(GroupResourceConfigurationDataSource.Field.ID);
+                        updateIds[i++] = record.getAttributeAsInt(GroupResourceConfigDS.Field.ID);
                     }
 
                     service.deleteGroupResourceConfigurationUpdate(groupId, updateIds, new AsyncCallback<Void>() {
@@ -161,7 +161,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
                     EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
-                    + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
+                    + "/" + selection[0].getAttribute(GroupResourceConfigDS.Field.ID) + "/Settings");
                 refreshTableInfo();
             }
         });
@@ -172,7 +172,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
                     EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
-                    + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
+                    + "/" + selection[0].getAttribute(GroupResourceConfigDS.Field.ID) + "/Members");
                 refreshTableInfo();
             }
         });
@@ -182,7 +182,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
     private String getStatusHtmlString(Record record) {
         String html = null;
         AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record
-            .getAttributeAsObject(GroupResourceConfigurationDataSource.Field.OBJECT);
+            .getAttributeAsObject(GroupResourceConfigDS.Field.OBJECT);
         switch (obj.getStatus()) {
         case SUCCESS: {
             html = MSG.view_group_resConfig_table_statusSuccess();

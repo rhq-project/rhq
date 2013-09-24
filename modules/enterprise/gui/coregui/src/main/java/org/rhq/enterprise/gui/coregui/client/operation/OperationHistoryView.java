@@ -57,11 +57,11 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
  * Group operation history is (currently) handled separately as the view is comprised of group operation history
- * entities, not [resource] operation history entities. 
+ * entities, not [resource] operation history entities.
  (
  * @author Jay Shaughnessy
  */
-public class OperationHistoryView extends TableSection<OperationHistoryDataSource> implements HasViewName {
+public class OperationHistoryView extends TableSection<OpsHistoryDS> implements HasViewName {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentOperations",
         MSG.common_title_recent_operations(), IconEnum.RECENT_OPERATIONS);
@@ -69,7 +69,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
-        OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
+        OpsHistoryDS.Field.CREATED_TIME, SortDirection.DESCENDING);
 
     protected SelectItem statusFilter;
     protected DateFilterItem startDateFilter;
@@ -77,7 +77,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     EntityContext context;
     boolean hasControlPermission;
-    OperationHistoryDataSource dataSource;
+    OpsHistoryDS dataSource;
 
     static {
         OperationRequestStatus[] statusValues = OperationRequestStatus.values();
@@ -87,7 +87,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             statusNames[i++] = s.name();
         }
 
-        INITIAL_CRITERIA.addCriteria(OperationHistoryDataSource.Field.STATUS, statusNames);
+        INITIAL_CRITERIA.addCriteria(OpsHistoryDS.Field.STATUS, statusNames);
     }
 
     // for subsystem views
@@ -113,9 +113,9 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     @Override
-    public OperationHistoryDataSource getDataSource() {
+    public OpsHistoryDS getDataSource() {
         if (null == this.dataSource) {
-            this.dataSource = new OperationHistoryDataSource(context);
+            this.dataSource = new OpsHistoryDS(context);
         }
         return this.dataSource;
     }
@@ -137,7 +137,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusIcons.put(OperationRequestStatus.FAILURE.name(),
             ImageManager.getOperationResultsIcon(OperationRequestStatus.FAILURE));
 
-        statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS, MSG.common_title_operation_status(),
+        statusFilter = new EnumSelectItem(OpsHistoryDS.Field.STATUS, MSG.common_title_operation_status(),
             OperationRequestStatus.class, statusValues, statusIcons);
 
         startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
@@ -172,7 +172,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                 int count = selection.length;
                 for (ListGridRecord item : selection) {
                     if (!OperationRequestStatus.INPROGRESS.name().equals(
-                        item.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                        item.getAttribute(OpsHistoryDS.Field.STATUS))) {
                         count--; // one selected item was not in-progress, it doesn't count
                     }
                 }
@@ -185,9 +185,9 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                 for (ListGridRecord toBeCanceled : selection) {
                     // only cancel those selected operations that are currently in progress
                     if (OperationRequestStatus.INPROGRESS.name().equals(
-                        toBeCanceled.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                        toBeCanceled.getAttribute(OpsHistoryDS.Field.STATUS))) {
                         numCancelRequestsSubmitted++;
-                        final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                        final int historyId = toBeCanceled.getAttributeAsInt(OpsHistoryDS.Field.ID);
                         opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
                             public void onSuccess(Void result) {
                                 Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
@@ -246,7 +246,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         final List<Integer> successIds = new ArrayList<Integer>();
         final List<Integer> failureIds = new ArrayList<Integer>();
         for (ListGridRecord record : recordsToBeDeleted) {
-            final ResourceOperationHistory operationHistoryToRemove = new OperationHistoryDataSource()
+            final ResourceOperationHistory operationHistoryToRemove = new OpsHistoryDS()
                 .copyValues(record);
             GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
                 new AsyncCallback<Void>() {
@@ -292,7 +292,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     protected String getTitleFieldName() {
-        return OperationHistoryDataSource.Field.OPERATION_NAME;
+        return OpsHistoryDS.Field.OPERATION_NAME;
     }
 
     @Override

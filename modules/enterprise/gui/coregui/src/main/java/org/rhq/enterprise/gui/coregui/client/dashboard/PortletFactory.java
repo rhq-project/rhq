@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.FavoriteGroupsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
@@ -45,12 +45,12 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resour
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OpsHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationSchedulePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
@@ -71,10 +71,10 @@ public class PortletFactory {
 
     private static final HashMap<String, PortletViewFactory> globalPortletFactoryMap;
     // although portlet names are I18N, they are assumed to be unique. This  maps portlet names to portlet keys,
-    // and the keyset is sorted for convenient display.  
+    // and the keyset is sorted for convenient display.
     private static final TreeMap<String, String> globalPortletNameMap;
     // although portlet names are I18N, they are assumed to be unique. This maps portlet keys to portlet names,
-    // and is suitable for a sorted Menu value map.  
+    // and is suitable for a sorted Menu value map.
     private static final LinkedHashMap<String, String> globalPortletMenuMap;
 
     //Group portlet registrations, diff from default portlets as only applicable for specific group
@@ -109,7 +109,7 @@ public class PortletFactory {
         globalPortletFactoryMap.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
-        globalPortletFactoryMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(OpsHistoryPortlet.KEY, OpsHistoryPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.Factory.INSTANCE);
 
         // sorted map of portlet names to portlet keys
@@ -130,7 +130,7 @@ public class PortletFactory {
         globalPortletNameMap.put(MashupPortlet.NAME, MashupPortlet.KEY);
         globalPortletNameMap.put(MessagePortlet.NAME, MessagePortlet.KEY);
         globalPortletNameMap.put(ProblemResourcesPortlet.NAME, ProblemResourcesPortlet.KEY);
-        globalPortletNameMap.put(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY);
+        globalPortletNameMap.put(OpsHistoryPortlet.NAME, OpsHistoryPortlet.KEY);
         globalPortletNameMap.put(OperationSchedulePortlet.NAME, OperationSchedulePortlet.KEY);
 
         globalPortletMenuMap = new LinkedHashMap<String, String>(globalPortletNameMap.size());
@@ -140,7 +140,7 @@ public class PortletFactory {
 
         // GROUP Portlets
 
-        // Map portlet keys to portlet factories        
+        // Map portlet keys to portlet factories
         groupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
         groupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
         groupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
@@ -149,8 +149,8 @@ public class PortletFactory {
         groupPortletFactoryMap.put(GroupOperationsPortlet.KEY, GroupOperationsPortlet.Factory.INSTANCE);
         groupPortletFactoryMap.put(GroupPkgHistoryPortlet.KEY, GroupPkgHistoryPortlet.Factory.INSTANCE);
         groupPortletFactoryMap.put(GroupBundleDeploymentsPortlet.KEY, GroupBundleDeploymentsPortlet.Factory.INSTANCE);
-        groupPortletFactoryMap.put(GroupConfigurationUpdatesPortlet.KEY,
-            GroupConfigurationUpdatesPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupConfigUpdatesPortlet.KEY,
+            GroupConfigUpdatesPortlet.Factory.INSTANCE);
 
         // sorted map of portlet names to portlet keys
         groupPortletNameMap = new TreeMap<String, String>();
@@ -161,7 +161,7 @@ public class PortletFactory {
         groupPortletNameMap.put(GroupOperationsPortlet.NAME, GroupOperationsPortlet.KEY);
         groupPortletNameMap.put(GroupPkgHistoryPortlet.NAME, GroupPkgHistoryPortlet.KEY);
         groupPortletNameMap.put(GroupBundleDeploymentsPortlet.NAME, GroupBundleDeploymentsPortlet.KEY);
-        groupPortletNameMap.put(GroupConfigurationUpdatesPortlet.NAME, GroupConfigurationUpdatesPortlet.KEY);
+        groupPortletNameMap.put(GroupConfigUpdatesPortlet.NAME, GroupConfigUpdatesPortlet.KEY);
 
         groupPortletMenuMap = new LinkedHashMap<String, String>(groupPortletNameMap.size());
         for (String portletName : groupPortletNameMap.keySet()) {
@@ -170,7 +170,7 @@ public class PortletFactory {
 
         // Resource Portlets
 
-        // Map portlet keys to portlet factories        
+        // Map portlet keys to portlet factories
         resourcePortletFactoryMap = new HashMap<String, PortletViewFactory>();
         resourcePortletFactoryMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.Factory.INSTANCE);
         resourcePortletFactoryMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.Factory.INSTANCE);
@@ -180,8 +180,8 @@ public class PortletFactory {
         resourcePortletFactoryMap.put(ResourcePkgHistoryPortlet.KEY, ResourcePkgHistoryPortlet.Factory.INSTANCE);
         resourcePortletFactoryMap.put(ResourceBundleDeploymentsPortlet.KEY,
             ResourceBundleDeploymentsPortlet.Factory.INSTANCE);
-        resourcePortletFactoryMap.put(ResourceConfigurationUpdatesPortlet.KEY,
-            ResourceConfigurationUpdatesPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourceConfigUpdatesPortlet.KEY,
+            ResourceConfigUpdatesPortlet.Factory.INSTANCE);
 
         // sorted map of portlet names to portlet keys
         resourcePortletNameMap = new TreeMap<String, String>();
@@ -192,7 +192,7 @@ public class PortletFactory {
         resourcePortletNameMap.put(ResourcePkgHistoryPortlet.NAME, ResourcePkgHistoryPortlet.KEY);
         resourcePortletNameMap.put(ResourceAlertsPortlet.NAME, ResourceAlertsPortlet.KEY);
         resourcePortletNameMap.put(ResourceBundleDeploymentsPortlet.NAME, ResourceBundleDeploymentsPortlet.KEY);
-        resourcePortletNameMap.put(ResourceConfigurationUpdatesPortlet.NAME, ResourceConfigurationUpdatesPortlet.KEY);
+        resourcePortletNameMap.put(ResourceConfigUpdatesPortlet.NAME, ResourceConfigUpdatesPortlet.KEY);
 
         resourcePortletMenuMap = new LinkedHashMap<String, String>(resourcePortletNameMap.size());
         for (String portletName : resourcePortletNameMap.keySet()) {
@@ -216,8 +216,8 @@ public class PortletFactory {
         portletIconMap.put(ResourcePkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
         portletIconMap.put(GroupBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
         portletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
-        portletIconMap.put(GroupConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
-        portletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+        portletIconMap.put(GroupConfigUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+        portletIconMap.put(ResourceConfigUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
     }
 
     private PortletFactory() {

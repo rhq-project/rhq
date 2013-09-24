@@ -59,10 +59,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwo
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
@@ -199,7 +199,7 @@ public class ResourceDetailView extends
             MSG.view_tabs_common_child_history()), null);
         SubTab inventoryConn = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.CONNECTION_SETTINGS,
             MSG.view_tabs_common_connectionSettings()), null);
-        SubTab inventoryConnHistory = new SubTab(inventoryTab, PluginConfigurationHistoryListView.VIEW_ID, null);
+        SubTab inventoryConnHistory = new SubTab(inventoryTab, PluginConfigHistoryListView.VIEW_ID, null);
         SubTab inventoryGroups = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.GROUPS,
             MSG.view_tabs_common_groups()), null);
         SubTab inventoryAgent = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.AGENT,
@@ -383,7 +383,7 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new PluginConfigurationHistoryListView(resourceComposite.getResourcePermission().isInventory(),
+                return new PluginConfigHistoryListView(resourceComposite.getResourcePermission().isInventory(),
                     resourceComposite.getResource().getId());
             }
         };
@@ -532,7 +532,7 @@ public class ResourceDetailView extends
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(resourceComposite.getResourcePermission()
+                    return new ResourceConfigHistoryListView(resourceComposite.getResourcePermission()
                         .isConfigureWrite(), resource.getId());
                 }
             });
@@ -678,7 +678,7 @@ public class ResourceDetailView extends
                 public static final String CHILDREN = "Children";
                 public static final String CHILD_HISTORY = "ChildHistory";
                 public static final String CONNECTION_SETTINGS = "ConnectionSettings";
-                public static final String CONNECTION_SETTINGS_HISTORY = PluginConfigurationHistoryListView.VIEW_ID
+                public static final String CONNECTION_SETTINGS_HISTORY = PluginConfigHistoryListView.VIEW_ID
                     .getName();
                 public static final String GROUPS = "Groups";
                 public static final String AGENT = "Agent";

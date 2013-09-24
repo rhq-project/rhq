@@ -27,7 +27,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -75,7 +75,7 @@ public class CalltimeView extends TableSection<CalltimeDataSource> implements Ha
     protected void configureTable() {
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
+        addExtraWidget(new UserPreferencesMeasRangeEditor(), true);
 
         super.configureTable();
     }

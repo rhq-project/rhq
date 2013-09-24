@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDS;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -67,7 +67,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
             TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
             supportedUnits.add(TimeUnit.SECONDS);
             supportedUnits.add(TimeUnit.MINUTES);
-            timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
+            timeoutItem = new DurationItem(AbstractOperationScheduleDS.Field.TIMEOUT,
                 MSG.view_operationScheduleDetails_field_timeout(), TimeUnit.MILLISECONDS, supportedUnits, false, false);
             ProductInfo productInfo = CoreGUI.get().getProductInfo();
             timeoutItem.setContextualHelp(MSG.widget_resourceFactoryWizard_timeoutHelp(productInfo.getShortName()));
@@ -80,7 +80,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
 
         // if this is a newCanvas, or if the starting config has changed, create a new config editor. The starting
         // config (i.e. template) may have changed if the user, via the previous button, backed up and changed the
-        // selected template. 
+        // selected template.
         if (newCanvas || this.startingConfig != wizard.getNewResourceStartingConfiguration()) {
 
             final ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();

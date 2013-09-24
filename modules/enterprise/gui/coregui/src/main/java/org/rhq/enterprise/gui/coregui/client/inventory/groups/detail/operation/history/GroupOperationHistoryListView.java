@@ -28,13 +28,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.h
 /**
  * @author Ian Springer
  */
-public class GroupOperationHistoryListView extends AbstractOperationHistoryListView<GroupOperationHistoryDataSource> {
+public class GroupOperationHistoryListView extends AbstractOperationHistoryListView<GroupOpsHistoryDataSource> {
 
     private ResourceGroupComposite groupComposite;
 
     public GroupOperationHistoryListView(ResourceGroupComposite groupComposite) {
-        super(new GroupOperationHistoryDataSource(), null, new Criteria(
-            GroupOperationHistoryDataSource.CriteriaField.GROUP_ID, String.valueOf(groupComposite.getResourceGroup()
+        super(new GroupOpsHistoryDataSource(), null, new Criteria(
+            GroupOpsHistoryDataSource.CriteriaField.GROUP_ID, String.valueOf(groupComposite.getResourceGroup()
                 .getId())));
         this.groupComposite = groupComposite;
     }

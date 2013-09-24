@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -96,7 +96,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
 
                             isInitialized = true;
 
-                            // draw() may be done since onInit finishes asynchronously, if so redraw 
+                            // draw() may be done since onInit finishes asynchronously, if so redraw
                             if (isDrawn()) {
                                 markForRedraw();
                             }
@@ -194,11 +194,11 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
             dashboard.addPortlet(ops, colRight, rowRight++);
             resKeyNameMap.remove(ResourceOperationsPortlet.KEY);
         }
-        if (resKeyNameMap.containsKey(ResourceConfigurationUpdatesPortlet.KEY)) {//configuration if available
-            DashboardPortlet ops = new DashboardPortlet(ResourceConfigurationUpdatesPortlet.NAME,
-                ResourceConfigurationUpdatesPortlet.KEY, 220);
+        if (resKeyNameMap.containsKey(ResourceConfigUpdatesPortlet.KEY)) {//configuration if available
+            DashboardPortlet ops = new DashboardPortlet(ResourceConfigUpdatesPortlet.NAME,
+                ResourceConfigUpdatesPortlet.KEY, 220);
             dashboard.addPortlet(ops, colRight, rowRight++);
-            resKeyNameMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
+            resKeyNameMap.remove(ResourceConfigUpdatesPortlet.KEY);
         }
 
         //Fill out left column(typically smaller portlets) then alternate cols with remaining

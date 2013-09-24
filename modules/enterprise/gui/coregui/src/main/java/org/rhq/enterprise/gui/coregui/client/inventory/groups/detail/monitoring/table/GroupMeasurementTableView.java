@@ -30,7 +30,7 @@ import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
@@ -94,7 +94,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
     public void refresh() {
         if (isVisible() && !isRefreshing()) {
             Date now = new Date();
-            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
+            AbstractMeasRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
             long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
             Date newStartDate = new Date(now.getTime() - timeRange);
             buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);

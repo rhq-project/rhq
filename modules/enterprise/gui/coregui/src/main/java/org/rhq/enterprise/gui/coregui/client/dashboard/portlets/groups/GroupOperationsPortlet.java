@@ -47,7 +47,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOpsHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -164,7 +164,7 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
                         groupComposite = results.get(0);
                         //instantiate view
                         //populated GWT criteria objects
-                        Criteria criteria = new Criteria(GroupOperationHistoryDataSource.CriteriaField.GROUP_ID, String
+                        Criteria criteria = new Criteria(GroupOpsHistoryDataSource.CriteriaField.GROUP_ID, String
                             .valueOf(groupComposite.getResourceGroup().getId()));
 
                         groupOperations = new GroupOperationsCriteriaHistoryListView(
@@ -254,7 +254,7 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
 
         //add range selector
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
+        final CustomConfigMeasRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
         form.setItems(operationStatusSelector, resultCountSelector);
@@ -393,7 +393,7 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
  *
  * @author spinder
  */
-class GroupOperationsCriteriaDataSource extends GroupOperationHistoryDataSource {
+class GroupOperationsCriteriaDataSource extends GroupOpsHistoryDataSource {
 
     private Configuration portletConfig;
 

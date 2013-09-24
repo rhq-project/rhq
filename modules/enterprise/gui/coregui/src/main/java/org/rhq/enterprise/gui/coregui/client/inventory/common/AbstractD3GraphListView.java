@@ -28,7 +28,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
@@ -100,7 +100,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
 
     protected void updateTimeRangeToNow() {
         Date now = new Date();
-        AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPrefs
+        AbstractMeasRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPrefs
             .getMetricRangePreferences();
         long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
         Date newStartDate = new Date(now.getTime() - timeRange);

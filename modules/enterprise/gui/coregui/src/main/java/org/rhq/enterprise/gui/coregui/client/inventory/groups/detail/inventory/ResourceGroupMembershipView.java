@@ -44,7 +44,7 @@ public class ResourceGroupMembershipView extends EnhancedVLayout {
 
     private int resourceGroupId;
     private ResourceGroup resourceGroup;
-    private ResourceGroupResourceSelector selector;
+    private ResGroupResourceSelector selector;
     private ClickHandler saveButtonHandler;
     private ClickHandler cancelButtonHandler;
 
@@ -58,7 +58,7 @@ public class ResourceGroupMembershipView extends EnhancedVLayout {
      * Allows an external component to hook into the save button. The given
      * handler will be invoked when the save button is pressed. If <code>null</code>
      * is given, then no external handler will be called.
-     * 
+     *
      * @param saveButtonHandler
      */
     public void setSaveButtonHandler(ClickHandler saveButtonHandler) {
@@ -69,7 +69,7 @@ public class ResourceGroupMembershipView extends EnhancedVLayout {
      * Allows an external component to hook into the cancel button. The given
      * handler will be invoked when the cancel button is pressed. If <code>null</code>
      * is given, then no external handler will be called.
-     * 
+     *
      * @param cancelButtonHandler
      */
     public void setCancelButtonHandler(ClickHandler cancelButtonHandler) {
@@ -127,7 +127,7 @@ public class ResourceGroupMembershipView extends EnhancedVLayout {
                 public void onSuccess(PageList<ResourceGroup> result) {
                     ResourceGroup group = result.get(0);
                     ResourceGroupMembershipView.this.resourceGroup = group;
-                    ResourceGroupMembershipView.this.selector = new ResourceGroupResourceSelector(
+                    ResourceGroupMembershipView.this.selector = new ResGroupResourceSelector(
                         group.getExplicitResources(),
                         (GroupCategory.COMPATIBLE == ResourceGroupMembershipView.this.resourceGroup.getGroupCategory()) ? group
                             .getResourceType() : null, false);

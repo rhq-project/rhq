@@ -25,8 +25,8 @@ import org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean;
 import org.rhq.enterprise.gui.alert.ListGroupAlertDefinitionsUIBean;
 import org.rhq.enterprise.gui.alert.ListGroupAlertHistoryUIBean;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryDetailsUIBean;
-import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryUIBean;
+import org.rhq.enterprise.gui.configuration.group.GroupResConfigHistoryDetailsUIBean;
+import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigHistoryUIBean;
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.content.AvailableResourceReposUIBean;
@@ -76,23 +76,23 @@ import org.rhq.enterprise.gui.inventory.browse.BrowseGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.browse.BrowseResourcesUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ResourceGroupSummaryUIBean;
-import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
-import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
+import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropDetailsUIBean;
+import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropsHistUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.history.ListAvailabilityHistoryUIBean;
-import org.rhq.enterprise.gui.inventory.resource.history.ListPluginConfigurationUpdateUIBean;
+import org.rhq.enterprise.gui.inventory.resource.history.ListPluginConfigUpdateUIBean;
 import org.rhq.enterprise.gui.measurement.calltime.CallTimeUIBean;
-import org.rhq.enterprise.gui.measurement.schedule.group.ListResourceGroupMeasurementScheduleUIBean;
-import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
+import org.rhq.enterprise.gui.measurement.schedule.group.ListResGroupMeasScheduleUIBean;
+import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.tables.group.ResourceGroupMetricsTableUIBean;
-import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean;
-import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHistoryDetailsUIBean;
-import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPendingHistoryUIBean;
-import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationCompletedHistoryUIBean;
-import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendingHistoryUIBean;
+import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOpsCompletedHistoryUIBean;
+import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOpsHistoryDetailsUIBean;
+import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOpsPendingHistoryUIBean;
+import org.rhq.enterprise.gui.operation.history.resource.ResourceOpsCompletedHistUIBean;
+import org.rhq.enterprise.gui.operation.history.resource.ResourceOpsPendingHistUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemAlertDefinitionUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemAlertHistoryUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemConfigurationUpdateUIBean;
@@ -112,7 +112,7 @@ public enum PageControlView {
     /** */
     ConfigurationHistory(ListConfigurationUpdateUIBean.class),
     /** */
-    PluginConfigurationHistory(ListPluginConfigurationUpdateUIBean.class),
+    PluginConfigurationHistory(ListPluginConfigUpdateUIBean.class),
 
     // Content
 
@@ -188,18 +188,18 @@ public enum PageControlView {
     // Resource Control
 
     /** */
-    ResourceOperationCompletedHistory(ResourceOperationCompletedHistoryUIBean.class),
+    ResourceOperationCompletedHistory(ResourceOpsCompletedHistUIBean.class),
     /** */
-    ResourceOperationPendingHistory(ResourceOperationPendingHistoryUIBean.class),
+    ResourceOperationPendingHistory(ResourceOpsPendingHistUIBean.class),
 
     // Resource Group Control
 
     /** */
-    ResourceGroupOperationCompletedHistory(ResourceGroupOperationCompletedHistoryUIBean.class),
+    ResourceGroupOperationCompletedHistory(ResourceGroupOpsCompletedHistoryUIBean.class),
     /** */
-    ResourceGroupOperationPendingHistory(ResourceGroupOperationPendingHistoryUIBean.class),
+    ResourceGroupOperationPendingHistory(ResourceGroupOpsPendingHistoryUIBean.class),
     /** */
-    ResourceGroupOperationHistoryDetails(ResourceGroupOperationHistoryDetailsUIBean.class),
+    ResourceGroupOperationHistoryDetails(ResourceGroupOpsHistoryDetailsUIBean.class),
 
     // Group Definition
 
@@ -226,17 +226,17 @@ public enum PageControlView {
 
     MiniResourceGroupMemberList(ResourceGroupSummaryUIBean.class),
     /** */
-    GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropertyHistoryUIBean.class),
+    GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropsHistUIBean.class),
     /** */
-    GroupConnectionPropertyUpdateDetails(ViewGroupConnectionPropertyDetailsUIBean.class),
+    GroupConnectionPropertyUpdateDetails(ViewGroupConnectionPropDetailsUIBean.class),
     /** */
     ResourceGroupHealthSummary(ResourceGroupMetricsTableUIBean.class),
 
     // Group Configuration
     /** */
-    GroupResourceConfigurationUpdateHistory(GroupResourceConfigurationHistoryUIBean.class),
+    GroupResourceConfigurationUpdateHistory(GroupResourceConfigHistoryUIBean.class),
     /** */
-    GroupResourceConfigurationUpdateDetails(GroupResourceConfigurationHistoryDetailsUIBean.class),
+    GroupResourceConfigurationUpdateDetails(GroupResConfigHistoryDetailsUIBean.class),
 
     // Auto Discovery
 
@@ -275,11 +275,11 @@ public enum PageControlView {
     // Monitor
 
     /** */
-    AutoGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
+    AutoGroupMeasurementScheduleList(ListResGroupMeasScheduleUIBean.class, true),
     /** */
-    ResourceMeasurementScheduleList(ListResourceMeasurementScheduleUIBean.class, true),
+    ResourceMeasurementScheduleList(ListResourceMeasScheduleUIBean.class, true),
     /** */
-    ResourceGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
+    ResourceGroupMeasurementScheduleList(ListResGroupMeasScheduleUIBean.class, true),
     /** */
     EventsHistoryList(EventHistoryUIBean.class),
     /** */

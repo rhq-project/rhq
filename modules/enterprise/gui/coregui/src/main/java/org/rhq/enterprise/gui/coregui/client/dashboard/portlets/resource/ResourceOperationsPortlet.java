@@ -21,13 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.AbstractOperationHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.AbstractOpsHistoryPortlet;
 
 /**
  * @author Simeon Pinder
- * @author Jay Shaughnessy  
+ * @author Jay Shaughnessy
  */
-public class ResourceOperationsPortlet extends AbstractOperationHistoryPortlet {
+public class ResourceOperationsPortlet extends AbstractOpsHistoryPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceOperations";

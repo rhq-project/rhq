@@ -33,7 +33,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /** Shared portlet configuration component where initial configuration settings
@@ -212,8 +212,8 @@ public class PortletConfigurationEditorComponent {
      * @param portletConfig
      * @return
      */
-    public static CustomConfigMeasurementRangeEditor getMeasurementRangeEditor(Configuration portletConfig) {
-        return new CustomConfigMeasurementRangeEditor(portletConfig);
+    public static CustomConfigMeasRangeEditor getMeasurementRangeEditor(Configuration portletConfig) {
+        return new CustomConfigMeasRangeEditor(portletConfig);
     }
 
     public static SelectItem getOperationStatusEditor(Configuration portletConfig) {

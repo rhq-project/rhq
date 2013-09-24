@@ -13,7 +13,7 @@ public class ResourceOperationScheduleDetailsView extends AbstractOperationSched
     private ResourceComposite resourceComposite;
 
     public ResourceOperationScheduleDetailsView(ResourceComposite resourceComposite, int scheduleId) {
-        super(new ResourceOperationScheduleDataSource(resourceComposite), resourceComposite.getResource()
+        super(new ResourceOperationScheduleDS(resourceComposite), resourceComposite.getResource()
             .getResourceType(), scheduleId);
 
         this.resourceComposite = resourceComposite;

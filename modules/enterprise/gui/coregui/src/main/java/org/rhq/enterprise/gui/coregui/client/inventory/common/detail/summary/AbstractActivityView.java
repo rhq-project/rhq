@@ -60,7 +60,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -530,11 +530,11 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
     * returns populated configuration object.
     */
     public static Configuration saveMeasurementRangeEditorSettings(
-        final CustomConfigMeasurementRangeEditor measurementRangeEditor, Configuration portletConfig) {
+        final CustomConfigMeasRangeEditor measurementRangeEditor, Configuration portletConfig) {
         String selectedValue = null;
         if ((measurementRangeEditor != null) && (portletConfig != null)) {
             //time range filter. Check for enabled and then persist property. Dealing with compound widget.
-            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);
+            FormItem item = measurementRangeEditor.getItem(CustomConfigMeasRangeEditor.ENABLE_RANGE_ITEM);
             CheckboxItem itemC = (CheckboxItem) item;
             boolean persistTimeRangeSettings = itemC.getValueAsBoolean();
             if (persistTimeRangeSettings) {//retrieve values and persist

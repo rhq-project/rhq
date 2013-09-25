@@ -27,6 +27,8 @@ public class StorageSession implements Host.StateListener {
 
     private List<StorageStateListener> listeners = new ArrayList<StorageStateListener>();
 
+    private boolean isClusterAvailable = false;
+
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
@@ -82,17 +84,27 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onAdd(Host host) {
-        log.info(host + " added");
-        for (StorageStateListener listener : listeners) {
-            listener.onStorageNodeUp(host.getAddress());
-        }
+        addOrUp(host, " added");
     }
 
     @Override
     public void onUp(Host host) {
-        log.info(host + " is up");
+        addOrUp(host, " is up");
+    }
+
+    private void addOrUp(Host host, String msg) {
+        log.info(host + msg);
+        if (!isClusterAvailable) {
+            log.info("Storage cluster is up");
+        }
         for (StorageStateListener listener : listeners) {
+            if (!isClusterAvailable) {
+                listener.onStorageClusterUp();
+            }
             listener.onStorageNodeUp(host.getAddress());
+        }
+        if (!isClusterAvailable) {
+            isClusterAvailable = true;
         }
     }
 
@@ -113,6 +125,7 @@ public class StorageSession implements Host.StateListener {
     }
 
     void fireClusterDownEvent(NoHostAvailableException e) {
+        isClusterAvailable = false;
         for (StorageStateListener listener : listeners) {
             listener.onStorageClusterDown(e);
         }

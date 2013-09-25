@@ -38,6 +38,7 @@ import javax.ejb.TransactionAttributeType;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.LoggingRetryPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
@@ -80,18 +81,21 @@ public class StorageClientManagerBean {
     private boolean initialized;
     private StorageClusterMonitor storageClusterMonitor;
 
-    public synchronized void init() {
+    /**
+     * @return true if the storage subsystem is running
+     */
+    public synchronized boolean init() {
         if (initialized) {
             if (log.isDebugEnabled()) {
                 log.debug("Storage client subsystem is already initialized. Skipping initialization.");
             }
-            return;
+            return initialized;
         }
 
         log.info("Initializing storage client subsystem");
 
-        String username = getRequiredStorageProperty(USERNAME_PROP);
-        String password = getRequiredStorageProperty(PASSWORD_PROP);
+        final String username = getRequiredStorageProperty(USERNAME_PROP);
+        final String password = getRequiredStorageProperty(PASSWORD_PROP);
 
         List<StorageNode> storageNodes = new ArrayList<StorageNode>();
         for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
@@ -115,9 +119,15 @@ public class StorageClientManagerBean {
                     + "storage node to fix this issue.");
         }
 
-        checkSchemaCompability(username, password, storageNodes);
-
-
+        try {
+            checkSchemaCompability(username, password, storageNodes);
+        } catch (NoHostAvailableException e) {
+            initialized = false;
+            log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the" +
+                    " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster" +
+                    " as soon as possible.");
+            return initialized;
+        }
         Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);
 
@@ -131,6 +141,7 @@ public class StorageClientManagerBean {
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
+        return initialized;
     }
 
     /**
@@ -150,6 +161,8 @@ public class StorageClientManagerBean {
         SchemaManager schemaManager = new SchemaManager(username, password, nodes, cqlPort);
         try {
             schemaManager.checkCompatibility();
+        } catch (NoHostAvailableException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }

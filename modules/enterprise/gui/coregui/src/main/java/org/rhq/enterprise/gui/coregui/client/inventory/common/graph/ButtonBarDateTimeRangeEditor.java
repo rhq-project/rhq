@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
 import java.util.Date;
 
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -58,11 +57,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     private static final String TIMERANGE = "graphtimerange";
     private static final int BUTTON_WIDTH = 28;
+    public final String DATE_TIME_FORMAT = MSG.common_buttonbar_datetime_format_moment_js();
 
     private MeasurementUserPreferences measurementUserPreferences;
     private Refreshable d3GraphListView;
     private Label dateRangeLabel;
-    private static final DateTimeFormat fmt = DateTimeFormat.getFormat(MSG.common_buttonbar_datetime_format());
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
     final private ButtonBarDateTimeRangeEditor self;
@@ -80,8 +79,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
         prefs = measurementUserPreferences.getMetricRangePreferences();
-        Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: " + new Date(prefs.begin) + " end Date: "
-            + new Date(prefs.end));
 
     }
 
@@ -123,7 +120,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(400);
         dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
-        updateDateTimeRangeDisplay(new Date(prefs.begin), new Date(prefs.end));
+        showUserFriendlyTimeRange(new Date(prefs.begin).getTime(), new Date(prefs.end).getTime());
         toolStrip.addMember(dateRangeLabel);
 
         toolStrip.addSpacer(20);
@@ -151,10 +148,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         createButtons();
     }
 
-    public Label getDateRangeLabel() {
-        return dateRangeLabel;
-    }
-
     public Long getStartTime() {
         return measurementUserPreferences.getMetricRangePreferences().begin;
     }
@@ -175,11 +168,24 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         return new Date(endDate.getTime() - dateTimeOffset);
     }
 
-    public void updateDateTimeRangeDisplay(Date startDate, Date endDate) {
-        String rangeString = fmt.format(startDate) + " - " + fmt.format(endDate);
-        if (null != dateRangeLabel) {
-            dateRangeLabel.setContents(rangeString);
-        }
+    public native void showUserFriendlyTimeRange(double startTime, double endTime) /*-{
+        "use strict";
+        var startDateMoment = $wnd.moment(startTime),
+            endDateMoment = $wnd.moment(endTime),
+            dateTimeFormat = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor::DATE_TIME_FORMAT,
+            formattedDateRange = startDateMoment.format(dateTimeFormat) + '  -  ' + endDateMoment.format(dateTimeFormat),
+        timeRange = endDateMoment.from(startDateMoment,true);
+        $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+' ('+timeRange+')');
+    }-*/;
+
+    public void updateTimeRangeToNow() {
+        Log.debug("Updating timerange to now");
+        Date now = new Date();
+        AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPreferences.getMetricRangePreferences();
+        long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+        Date newStartDate = new Date(now.getTime() - timeRange);
+        showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
+        saveDateRange(newStartDate.getTime(), now.getTime());
     }
 
     /**
@@ -190,8 +196,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      * @param endTime   double because JSNI doesn't support long
      */
     public void saveDateRange(double startTime, double endTime) {
-        final boolean advanced = true;
-        prefs.explicitBeginEnd = advanced;
+        prefs.explicitBeginEnd = true; // default to advanced
         prefs.begin = (long) startTime;
         prefs.end = (long) endTime;
         if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
@@ -208,10 +213,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         public void onClick(ClickEvent clickEvent) {
             IButton button = (IButton) clickEvent.getSource();
             String selectedDateTimeRange = button.getTitle();
-            Date calculatedStartDateTime = calculateStartDate(new Date(), selectedDateTimeRange);
-            saveDateRange(calculatedStartDateTime.getTime(), new Date().getTime());
+            Date now = new Date();
+            Date calculatedStartDateTime = calculateStartDate(now, selectedDateTimeRange);
+            saveDateRange(calculatedStartDateTime.getTime(), now.getTime());
             redrawGraphs();
-            updateDateTimeRangeDisplay(calculatedStartDateTime, new Date());
+            showUserFriendlyTimeRange(calculatedStartDateTime.getTime(), now.getTime());
         }
     }
 
@@ -226,19 +232,10 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         private final String label;
         private final long timeSpanInSeconds;
-        private final ClickHandler clickHandler;
 
         DateTimeButton(String label, long timeSpanInSeconds) {
             this.label = label;
             this.timeSpanInSeconds = timeSpanInSeconds;
-            this.clickHandler = new ClickHandler() {
-                @Override
-                public void onClick(ClickEvent clickEvent) {
-                    IButton button = (IButton) clickEvent.getSource();
-
-                }
-            };
-
         }
 
     }
@@ -307,7 +304,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                         .getMinutes());
                     buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
                     redrawGraphs();
-                    updateDateTimeRangeDisplay(startDateItem.getValueAsDate(), endDateItem.getValueAsDate());
+                    showUserFriendlyTimeRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate().getTime());
                     CustomDateRangeWindow.this.destroy();
                 }
             });

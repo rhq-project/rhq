@@ -97,7 +97,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
             AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
             long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
             Date newStartDate = new Date(now.getTime() - timeRange);
-            buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
+            buttonBarDateTimeRangeEditor.showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
             buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
 
             refreshData();

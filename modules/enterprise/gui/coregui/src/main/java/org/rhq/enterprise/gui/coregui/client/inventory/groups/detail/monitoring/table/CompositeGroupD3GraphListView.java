@@ -103,6 +103,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     }
 
     public void populateData() {
+        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
         ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -142,6 +143,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                                 Log.warn("# of charted graphs: " + measurementForEachResource.size());
                             }
                             drawGraph();
+                            buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                         }
                     });
 

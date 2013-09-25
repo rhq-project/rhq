@@ -31,7 +31,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
     @Override
     public native void drawJsniChart() /*-{
-        console.log("Draw d3 MultiLine jsni chart");
+        //console.log("Draw d3 MultiLine jsni chart");
 
         var MultiLineChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes) {
             "use strict";
@@ -104,7 +104,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
             function determineScale() {
                 var xTicks, xTickSubDivide;
-                console.log("DetermineScale for # resources: "+ chartContext.data.length);
+                //console.log("DetermineScale for # resources: "+ chartContext.data.length);
 
                 if (chartContext.data.length > 0) {
                     xTicks = 8;
@@ -299,16 +299,16 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                 draw: function (chartContext) {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
-                    console.log("multi-resource chart handle:" + chartContext.chartHandle);
+                    //console.log("multi-resource chart handle:" + chartContext.chartHandle);
                     if (chartContext.data.length > 0) {
-                        console.log("Creating MultiLine Chart: " + chartContext.chartSelection + " --> " + chartContext.chartTitle);
+                        //console.log("Creating MultiLine Chart: " + chartContext.chartSelection + " --> " + chartContext.chartTitle);
                         determineScale();
                         createHeader(chartContext.chartTitle);
                         createYAxisGridLines();
                         createMultiLines(chartContext);
                         createXandYAxes();
                         createLegend();
-                        console.log("finished drawing multi-line graph");
+                        //console.log("finished drawing multi-line graph");
                     }
                 }
             }; // end public closure

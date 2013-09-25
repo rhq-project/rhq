@@ -141,6 +141,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
                                 @Override
                                 public void run() {
                                     availabilityGraph.drawJsniChart();
+                                    buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                                 }
                             }.schedule(150);
                         }

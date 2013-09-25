@@ -1,0 +1,90 @@
+diff -urN wrapper_3.3.1_src/build.xml wrapper_3.3.1_src.modified/build.xml
+--- wrapper_3.3.1_src/build.xml	2008-08-17 09:40:02.000000000 +0200
++++ wrapper_3.3.1_src.modified/build.xml	2013-09-24 08:22:54.000000000 +0200
+@@ -52,6 +52,7 @@
+                 <equals arg1="${os.name}" arg2="Windows 2000"/>
+                 <equals arg1="${os.name}" arg2="Windows XP"/>
+                 <equals arg1="${os.name}" arg2="Windows 2003"/>
++                <equals arg1="${os.name}" arg2="Windows Server 2008"/>
+             </or>
+         </condition>
+         <condition property="dist.os" value="linux">
+diff -urN wrapper_3.3.1_src/default.properties wrapper_3.3.1_src.modified/default.properties
+--- wrapper_3.3.1_src/default.properties	2008-08-17 09:40:04.000000000 +0200
++++ wrapper_3.3.1_src.modified/default.properties	2013-09-24 08:21:40.000000000 +0200
+@@ -58,7 +58,7 @@
+ vcvars.v8_32_5=C:\\Program Files\\Microsoft Platform SDK for Windows Server 2003 R2\\SetEnv.Cmd
+ vcvars.v8_32_5.arg.1=/XP32
+ vcvars.v8_32_5.arg.2=/RETAIL
+-vcvars.v8_x86_64_1=c:\\Program Files\\Microsoft Visual Studio 8\\VC\\bin\\amd64\\vcvarsamd64.bat
++vcvars.v8_x86_64_1=c:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\bin\\vcvarsx86_amd64.bat
+ vcvars.v8_x86_64_2=c:\\Program Files\\Microsoft Visual Studio 8\\VC\\bin\\amd64\\vcvarsamd64.bat
+ vcvars.v8_x86_64_3=c:\\Program Files\\Microsoft Platform SDK for Windows Server 2003 R2\\SetEnv.Cmd
+ vcvars.v8_x86_64_3.arg.1=/XP64
+diff -urN wrapper_3.3.1_src/src/c/Makefile-windows-x86-64.nmake wrapper_3.3.1_src.modified/src/c/Makefile-windows-x86-64.nmake
+--- wrapper_3.3.1_src/src/c/Makefile-windows-x86-64.nmake	1970-01-01 01:00:00.000000000 +0100
++++ wrapper_3.3.1_src.modified/src/c/Makefile-windows-x86-64.nmake	2013-09-24 13:07:56.000000000 +0200
+@@ -0,0 +1,63 @@
++# Copyright (c) 1999, 2008 Tanuki Software, Inc.
++# http://www.tanukisoftware.com
++# All rights reserved.
++#
++# This software is the proprietary information of Tanuki Software.
++# You shall use it only in accordance with the terms of the
++# license agreement you entered into with Tanuki Software.
++# http://wrapper.tanukisoftware.org/doc/english/licenseOverview.html
++
++PROJ = wrapper
++
++COMPILE = cl /D "WIN32" /D "NDEBUG" /FD /EHsc /MT /W3 /nologo /c /Zi /errorReport:prompt /D "_CRT_SECURE_NO_DEPRECATE"
++LINK = link /NOLOGO /MANIFEST /DEBUG /MACHINE:AMD64 /ERRORREPORT:PROMPT DelayImp.lib
++RC = rc
++
++# EXE Definitions
++EXE_OUTDIR = $(PROJ)32_VC8__Win64_Release
++EXE_OBJS = $(EXE_OUTDIR)\logger.obj $(EXE_OUTDIR)\property.obj $(EXE_OUTDIR)\wrapper.obj $(EXE_OUTDIR)\wrapper_win.obj $(EXE_OUTDIR)\wrappereventloop.obj $(EXE_OUTDIR)\wrapperinfo.obj
++EXE_LIBS = wsock32.lib shlwapi.lib advapi32.lib user32.lib
++EXE_COMPILE_OPTS = /O2 /GL /D "_CONSOLE" /Wp64
++EXE_LINK_OPTS = /INCREMENTAL:NO /SUBSYSTEM:CONSOLE /MANIFESTFILE:"$(EXE_OUTDIR)\$(PROJ).exe.intermediate.manifest" /PDB:"$(EXE_OUTDIR)\$(PROJ).pdb" /OPT:REF /OPT:ICF /OPT:WIN98 /LTCG 
++
++# DLL Definitions
++DLL_OUTDIR = $(PROJ)JNI32_VC8__Win64_Release
++DLL_OBJS = $(DLL_OUTDIR)\wrapperjni.obj $(DLL_OUTDIR)\wrapperjni_win.obj $(DLL_OUTDIR)\wrapperinfo.obj
++DLL_LIBS = advapi32.lib user32.lib
++DLL_COMPILE_OPTS = /Od  /I "..\" /I ".\" /I "$(JAVA_HOME)\include" /I "$(JAVA_HOME)\include\win32" /D "_WINDOWS" /D "_USRDLL" /D "DECODERJNI_VC8_EXPORTS" /D "_WINDLL"
++DLL_LINK_OPTS = /INCREMENTAL /DLL /SUBSYSTEM:WINDOWS /MANIFESTFILE:"$(DLL_OUTDIR)\$(PROJ).dll.intermediate.manifest" /PDB:"$(DLL_OUTDIR)\$(PROJ).pdb" 
++
++
++all: $(EXE_OUTDIR) $(DLL_OUTDIR) $(PROJ).exe $(PROJ).dll
++
++# Define project specific macros
++
++#----- If OUTDIR does not exist, then create directory
++$(EXE_OUTDIR) :
++    if not exist "$(EXE_OUTDIR)/$(NULL)" mkdir $(EXE_OUTDIR)
++$(DLL_OUTDIR) :
++    if not exist "$(DLL_OUTDIR)/$(NULL)" mkdir $(DLL_OUTDIR)
++
++# Inference rule for updating the object files
++.c{$(EXE_OUTDIR)}.obj:
++    $(COMPILE) $(EXE_COMPILE_OPTS) /Fo"$(EXE_OUTDIR)\\" /Fd"$(EXE_OUTDIR)\\" $**
++.c{$(DLL_OUTDIR)}.obj:
++    $(COMPILE) $(DLL_COMPILE_OPTS) /Fo"$(DLL_OUTDIR)\\" /Fd"$(DLL_OUTDIR)\\" $**
++
++# Build rule for resource file
++$(EXE_OUTDIR)\$(PROJ).res: $(PROJ).rc $(RC_DEP)
++    $(RC) /fo"$(EXE_OUTDIR)/$(PROJ).res" $(PROJ).rc
++$(DLL_OUTDIR)\$(PROJ).res: $(PROJ).rc $(RC_DEP)
++    $(RC) /fo"$(DLL_OUTDIR)/$(PROJ).res" $(PROJ).rc
++
++$(PROJ).exe: $(BASE_OBJS) $(EXE_OBJS) $(EXE_OUTDIR)\$(PROJ).res
++    $(LINK) $(EXE_LINK_OPTS) $(EXE_OBJS) $(EXE_LIBS) $(EXE_OUTDIR)\$(PROJ).res /OUT:"..\..\bin\$(PROJ).exe"
++
++$(PROJ).dll: $(BASE_OBJS) $(DLL_OBJS) $(DLL_OUTDIR)\$(PROJ).res
++    $(LINK) $(DLL_LINK_OPTS) $(DLL_OBJS) $(DLL_LIBS) $(DLL_OUTDIR)\$(PROJ).res /OUT:"..\..\lib\$(PROJ).dll"
++
++clean:
++    if exist $(EXE_OUTDIR)/$(NULL) rd /s /q $(EXE_OUTDIR)
++    if exist $(DLL_OUTDIR)/$(NULL) rd /s /q $(DLL_OUTDIR)
++    if exist ..\..\bin\$(PROJ).exe del /q ..\..\bin\$(PROJ).exe
++    if exist ..\..\lib\$(PROJ).dll del /q ..\..\lib\$(PROJ).dll

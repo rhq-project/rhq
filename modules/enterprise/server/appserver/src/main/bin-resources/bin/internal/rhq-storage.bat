@@ -150,7 +150,14 @@ rem ----------------------------------------------------------------------
 rem The Windows OS platform name is also the wrapper subdirectory name.
 rem ----------------------------------------------------------------------
 
-set RHQ_STORAGE_OS_PLATFORM=windows-x86_32
+set RHQ_STORAGE_OS_PLATFORM=windows-x86_64
+if "%PROCESSOR_ARCHITECTURE%" == "x86" (
+  if NOT DEFINED PROCESSOR_ARCHITEW6432 (
+    set RHQ_STORAGE_OS_PLATFORM=windows-x86_32
+  ) else (
+    echo "ia64 arch is not supported"
+  )
+)
 if defined RHQ_STORAGE_DEBUG echo RHQ_STORAGE_OS_PLATFORM: %RHQ_STORAGE_OS_PLATFORM%
 
 rem ----------------------------------------------------------------------

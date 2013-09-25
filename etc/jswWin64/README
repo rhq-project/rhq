@@ -1,0 +1,29 @@
+Instructions for building Tanuki's Java Service Wrapper (JSW) on Windows 2008 64 bits
+=============
+
+1. Donwload JSW sources
+URL: http://wrapper.tanukisoftware.com/download/3.3.1/wrapper_3.3.1_src.zip
+There is a more recent version but 3.3.1 is the version RHQ is currently using.
+
+2. Patch the sources
+Unzip wrapper_3.3.1_src.zip
+Copy wrapper_3.3.1_src.patch next to wrapper_3.3.1_src directory
+Apply the patch file: patch -p0 < wrapper_3.3.1_src.patch
+
+3. Prepare the Windows 2008 box
+Copy the patched directory somewhere in your Windows 2008 box
+Install a 64 bits JDK (www.oracle.com/technetwork/java/javase/downloads/index.html)
+Install ANT (works with 1.9.2) (http://ant.apache.org/bindownload.cgi)
+Install Visual C++ Express 2010 (http://www.microsoft.com/visualstudio/fra/downloads#d-2010-express)
+Install Windows 2008 SDK (http://www.microsoft.com/en-us/download/details.aspx?id=11310)
+
+4. Build
+Open a command prompt and move to wrapper_3.3.1_src directory
+Run build64.bat
+
+5. Artifacts
+The following artifacts should be built:
+* wrapper_3.3.1_src\bin\wrapper.exe
+* wrapper_3.3.1_src\lib\wrapper.dll
+* wrapper_3.3.1_src\lib\wrapper.jar
+

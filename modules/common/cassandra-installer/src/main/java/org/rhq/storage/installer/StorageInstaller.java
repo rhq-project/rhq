@@ -692,7 +692,7 @@ public class StorageInstaller {
         Executor executor = new DefaultExecutor();
         org.apache.commons.io.output.ByteArrayOutputStream buffer = new org.apache.commons.io.output.ByteArrayOutputStream();
         NullOutputStream nullOs = new NullOutputStream();
-        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), buffer);
+        PumpStreamHandler streamHandler = new PumpStreamHandler(nullOs, buffer);
         executor.setWorkingDirectory(workingDir);
         executor.setStreamHandler(streamHandler);
         String result = "";

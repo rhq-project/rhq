@@ -812,7 +812,8 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 value = determineSecurityAlgorithm(value);
 
                 preferences_node.put(key, value);
-                LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCE_OVERRIDE, key, value);
+                LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCE_OVERRIDE, key,
+                    (key.toLowerCase().contains("password")) ? "***" : value);
             }
         }
 

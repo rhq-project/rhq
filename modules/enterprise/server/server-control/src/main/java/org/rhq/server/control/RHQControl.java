@@ -58,6 +58,8 @@ public class RHQControl {
     public void exec(String[] args) {
         ControlCommand command = null;
         boolean undo = false;
+        AbortHook abortHook = new AbortHook();
+
         try {
             if (args.length == 0) {
                 printUsage();
@@ -81,6 +83,11 @@ public class RHQControl {
                     }
                 }
 
+                // in case the installer gets killed, prepare the shutdown hook to try the undo
+                abortHook.setCommand(command);
+                Runtime.getRuntime().addShutdownHook(abortHook);
+
+                // run the command
                 command.exec(getCommandLine(commandName, args));
             }
         } catch (UsageException e) {
@@ -91,6 +98,9 @@ public class RHQControl {
         } catch (Throwable t) {
             log.error(t);
             undo = true;
+        } finally {
+            abortHook.setCommand(null);
+            Runtime.getRuntime().removeShutdownHook(abortHook);
         }
 
         if (undo && command != null) {
@@ -144,4 +154,27 @@ public class RHQControl {
         }
     }
 
+    private class AbortHook extends Thread {
+        private ControlCommand command = null;
+
+        public AbortHook() {
+            super("Controller Abort Hook");
+        }
+
+        public void setCommand(ControlCommand cmd) {
+            this.command = cmd;
+        }
+
+        @Override
+        public void run() {
+            try {
+                if (this.command != null) {
+                    this.command.undo();
+                }
+            } catch (Throwable t) {
+                log.warn("An attempt to clean up after an aborted installation was unsuccessful. "
+                    + "You may have to clean up some things before attempting to install again", t);
+            }
+        }
+    }
 }

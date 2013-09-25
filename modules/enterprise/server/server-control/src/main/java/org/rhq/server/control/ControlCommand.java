@@ -28,6 +28,7 @@ package org.rhq.server.control;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +47,6 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -341,22 +341,11 @@ public abstract class ControlCommand {
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        org.apache.commons.io.output.ByteArrayOutputStream buffer = new org.apache.commons.io.output.ByteArrayOutputStream();
-        NullOutputStream nullOs = new NullOutputStream();
-        PumpStreamHandler streamHandler = new PumpStreamHandler(nullOs, buffer);
+        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
         executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine;
         commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
-        try {
-            executor.execute(commandLine);
-        } finally {
-            try {
-                nullOs.close();
-                buffer.close();
-            } catch (Throwable t) {
-                // best effort
-            }
-        }
+        executor.execute(commandLine);
     }
 
     protected boolean isUnixPidRunning(String pid) {
@@ -398,5 +387,19 @@ public abstract class ControlCommand {
     	} else {
     		return true;
     	}
+    }
+
+    private class NullOutputStream extends OutputStream {
+        @Override
+        public void write(byte[] b, int off, int len) {
+        }
+
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+        }
     }
 }

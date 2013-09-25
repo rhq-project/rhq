@@ -105,9 +105,13 @@ public class RHQControl {
 
         if (undo && command != null) {
             try {
-                command.undo();
+                if (!Boolean.getBoolean("rhqctl.skip.undo")) {
+                    command.undo();
+                } else {
+                    throw new Exception("Was told by user to skip clean up attempt.");
+                }
             } catch (Throwable t) {
-                log.warn("An attempt to clean up after the failed installation was unsuccessful. "
+                log.warn("Failed to clean up after the failed installation attempt. "
                     + "You may have to clean up some things before attempting to install again", t);
             }
         }

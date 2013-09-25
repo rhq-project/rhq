@@ -352,7 +352,8 @@ public abstract class ControlCommand {
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
+        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
+        executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("/bin/kill")
             .addArgument("-0")
             .addArgument(pid);

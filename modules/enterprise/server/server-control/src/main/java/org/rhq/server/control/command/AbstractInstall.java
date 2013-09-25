@@ -39,7 +39,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
@@ -134,31 +133,6 @@ public abstract class AbstractInstall extends ControlCommand {
             }
         }
 
-    }
-
-    protected boolean isUnixPidRunning(String pid) {
-
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine;
-
-        commandLine = new org.apache.commons.exec.CommandLine("/bin/kill").addArgument("-0").addArgument(pid);
-
-        try {
-            int code = executor.execute(commandLine);
-            if (code != 0) {
-                return false;
-            }
-        } catch (ExecuteException ee) {
-            if (ee.getExitValue() == 1) {
-                // return code 1 means process does not exist
-                return false;
-            }
-        } catch (IOException e) {
-            log.error("Checking for running process failed: " + e.getMessage());
-        }
-        return true;
     }
 
     protected void waitForRHQServerToInitialize() throws Exception {

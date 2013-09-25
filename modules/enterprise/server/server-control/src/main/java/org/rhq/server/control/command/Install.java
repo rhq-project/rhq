@@ -42,6 +42,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.RHQControlException;
@@ -122,6 +123,19 @@ public class Install extends AbstractInstall {
                 log.error("Exiting due to the previous errors");
                 return;
             }
+
+            // If any failures occur, we know we need to reset rhq-server.properties.
+            final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
+            addUndoTask(new Runnable() {
+                public void run() {
+                    try {
+                        serverPropFileReverter.revert();
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                            "Cannot reset rhq-server.properties - you may have to revert settings manually", e);
+                    }
+                }
+            });
 
             // if no options specified, then install whatever is not installed yet
             if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine

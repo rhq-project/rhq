@@ -46,6 +46,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
+import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -183,7 +184,7 @@ public abstract class AbstractInstall extends ControlCommand {
         Properties props = new Properties();
 
         try {
-            File propsFile = new File(getBaseDir(), "bin/rhq-server.properties");
+            File propsFile = getServerPropertiesFile();
             reader = new BufferedReader(new FileReader(propsFile));
             props.load(reader);
 
@@ -427,10 +428,20 @@ public abstract class AbstractInstall extends ControlCommand {
         try {
             log.info("Installing RHQ server");
 
-            // if the install fails, we will remove the install marker file allowing the installer to be able to run again
+            // If the install fails, we will remove the install marker file allowing the installer to be able to run again.
+            // We also need to revert mgmt-users.properties
+            File mgmtUserPropertiesFile = new File(getBaseDir(),
+                "jbossas/standalone/configuration/mgmt-users.properties");
+            final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
             addUndoTask(new Runnable() {
                 public void run() {
                     getServerInstalledMarkerFile(getBaseDir()).delete();
+                    try {
+                        mgmtUserPropertiesReverter.revert();
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                            "Cannot revert mgmt user - you may have to revert settings manually", e);
+                    }
                 }
             });
 
@@ -441,7 +452,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             executor.execute(commandLine, new DefaultExecuteResultHandler());
             log.info("The server installer is running");
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("An error occurred while starting the server installer: " + e.getMessage());
         }
     }

@@ -186,6 +186,10 @@ public abstract class ControlCommand {
         return new File(baseDir, "jbossas/standalone/data/rhq.installed");
     }
 
+    protected File getServerPropertiesFile() {
+        return new File(getBaseDir(), "bin/rhq-server.properties");
+    }
+
     protected boolean isServerInstalled(File baseDir) {
         File markerFile = getServerInstalledMarkerFile(baseDir);
         return markerFile.exists();

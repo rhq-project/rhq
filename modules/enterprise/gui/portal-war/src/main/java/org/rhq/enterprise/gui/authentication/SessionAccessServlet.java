@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.auth.SessionTimeoutException;
+import org.rhq.enterprise.server.core.StartupLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -144,7 +145,7 @@ public class SessionAccessServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/plain");
+        response.setContentType("application/json");
         response.addHeader("Pragma", "no-cache");
         response.addHeader("Cache-Control", "no-cache");
         response.addHeader("Cache-Control", "no-store");
@@ -152,12 +153,18 @@ public class SessionAccessServlet extends HttpServlet {
         // some date in the past
         response.addHeader("Expires", "Mon, 8 Aug 2006 10:00:00 GMT");
         boolean serverInitialized;
+        String startupError = null;
         try {
-            serverInitialized = LookupUtil.getStartupLocal().isInitialized();
+            StartupLocal startupBean = LookupUtil.getStartupLocal();
+            serverInitialized = startupBean.isInitialized();
+            startupError = startupBean.getError();
         } catch (Throwable t) {
             serverInitialized = false; // this probably means we are still starting up and app server hasn't made EJBs available yet
         }
         PrintWriter out = response.getWriter();
-        out.println(serverInitialized);
+        out.println("{");
+        out.println("  \"serverInitialized\": " + serverInitialized + ",");
+        out.println("  \"startupError\": " + (startupError == null ? "null" : "\"" + startupError + "\""));
+        out.println("}");
     }
 }

@@ -112,6 +112,8 @@ public class StartupBean implements StartupLocal {
 
     private volatile boolean initialized = false;
 
+    private String error = "";
+
     @EJB
     private AgentManagerLocal agentManager;
 
@@ -153,6 +155,11 @@ public class StartupBean implements StartupLocal {
         return this.initialized;
     }
 
+    @Override
+    public String getError() {
+        return error;
+    }
+
     /**
      * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
      */
@@ -183,6 +190,7 @@ public class StartupBean implements StartupLocal {
         try {
             resourceTypeManager.reloadResourceFacetsCache();
         } catch (Throwable t) {
+            error += (error.isEmpty() ? "" : ", ") + "reloading facets cache";
             log.error("Could not load ResourceFacets cache.", t);
         }
 
@@ -254,6 +262,7 @@ public class StartupBean implements StartupLocal {
             conn = dataSource.getConnection();
             DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "server";
             log.error("Could not initialize server.", e);
         } finally {
             if (conn != null) {
@@ -329,6 +338,7 @@ public class StartupBean implements StartupLocal {
         try {
             systemManager.enableHibernateStatistics();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "hibernate statistics";
             throw new RuntimeException("Cannot start hibernate statistics monitoring!", e);
         }
     }
@@ -348,6 +358,7 @@ public class StartupBean implements StartupLocal {
             PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
             deployer.startDeployment();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "plugin deployer";
             throw new RuntimeException("Cannot start the agent/server plugin deployer!", e);
         }
     }
@@ -373,6 +384,7 @@ public class StartupBean implements StartupLocal {
             // create a non-persistent periodic timer (we'll reset it ever startup) with the scan period as configured in our scanner object
             timerService.createIntervalTimer(scanPeriod, scanPeriod, new TimerConfig(null, false));
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "plugin scanner";
             throw new RuntimeException("Cannot schedule plugin scanning timer - new plugins will not be detected!", e);
         }
     }
@@ -416,6 +428,7 @@ public class StartupBean implements StartupLocal {
                 iface, false);
             jaas_mbean.upgradeRhqUserSecurityDomainIfNeeded();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "security domain upgrade";
             throw new RuntimeException("Cannot upgrade JAAS login modules!", e);
         }
     }
@@ -431,6 +444,7 @@ public class StartupBean implements StartupLocal {
         try {
             schedulerBean.initQuartzScheduler();
         } catch (SchedulerException e) {
+            error += (error.isEmpty() ? "" : ", ") + "scheduler initialization";
             throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
     }
@@ -442,6 +456,9 @@ public class StartupBean implements StartupLocal {
      */
     private boolean initStorageClient() {
         boolean isStorageRunning = storageClientManager.init();
+        if (!isStorageRunning) {
+            error += (error.isEmpty() ? "" : ", ") + "storage";
+        }
         return isStorageRunning;
     }
 
@@ -457,6 +474,7 @@ public class StartupBean implements StartupLocal {
         try {
             schedulerBean.startQuartzScheduler();
         } catch (SchedulerException e) {
+            error += (error.isEmpty() ? "" : ", ") + "scheduler";
             throw new RuntimeException("Cannot start the scheduler!", e);
         }
     }
@@ -829,6 +847,7 @@ public class StartupBean implements StartupLocal {
             ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             mbean.startMasterPluginContainerWithoutSchedulingJobs();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "server plugin container";
             throw new RuntimeException("Cannot start the master server plugin container!", e);
         }
     }

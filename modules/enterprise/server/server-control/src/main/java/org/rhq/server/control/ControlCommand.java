@@ -46,6 +46,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -340,11 +341,22 @@ public abstract class ControlCommand {
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.io.output.ByteArrayOutputStream buffer = new org.apache.commons.io.output.ByteArrayOutputStream();
+        NullOutputStream nullOs = new NullOutputStream();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(nullOs, buffer);
+        executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine;
-
         commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
-        executor.execute(commandLine);
+        try {
+            executor.execute(commandLine);
+        } finally {
+            try {
+                nullOs.close();
+                buffer.close();
+            } catch (Throwable t) {
+                // best effort
+            }
+        }
     }
 
     protected boolean isUnixPidRunning(String pid) {

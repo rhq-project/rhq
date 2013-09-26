@@ -89,15 +89,15 @@ def createStoragePropertiesFile(basedir, nodeId) {
 
   propsFile.withWriter { writer ->
     writer.write("""# storage installer options for dev deployment
-commitlog=${dataRootDir}/storage-$nodeId/commit_log
-data=${dataRootDir}/storage-$nodeId/data
-saved-caches=${dataRootDir}/storage-$nodeId/saved_caches
-heap-size=${heapSize}
-heap-new-size=${heapNewSize}
-hostname=127.0.0.$nodeId
-jmx-port=${defaultJmxPort + (nodeId - 1)}
-seeds=${seeds}
-verify-data-dirs-empty=false
+rhq.storage.commitlog=${dataRootDir}/storage-$nodeId/commit_log
+rhq.storage.data=${dataRootDir}/storage-$nodeId/data
+rhq.storage.saved-caches=${dataRootDir}/storage-$nodeId/saved_caches
+rhq.storage.heap-size=${heapSize}
+rhq.storage.heap-new-size=${heapNewSize}
+rhq.storage.hostname=127.0.0.$nodeId
+rhq.storage.jmx-port=${defaultJmxPort + (nodeId - 1)}
+rhq.storage.seeds=${seeds}
+rhq.storage.verify-data-dirs-empty=false
 """
     )
   }

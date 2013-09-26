@@ -33,14 +33,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.List;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.stream.StreamUtil;
-
-import difflib.DiffUtils;
-import difflib.Patch;
 
 /**
  * @author John Sanda
@@ -81,7 +81,7 @@ public class DeployerITest {
         assertTrue(binDir.exists(), binDir + " does not exist");
 
         File confDir = new File(deployDir, "conf");
-        assertTrue(confDir.exists(), confDir +  " does not exist");
+        assertTrue(confDir.exists(), confDir + " does not exist");
 
         File libDir = new File(deployDir, "lib");
         assertTrue(libDir.exists(), libDir + " does not exist");
@@ -89,7 +89,14 @@ public class DeployerITest {
 
     @Test(dependsOnMethods = "deploy")
     public void applyConfigChanges() throws Exception {
-        deployer.applyConfigChanges();
+        try {
+            deployer.applyConfigChanges();
+        } catch (DeploymentException e) {
+            // on windows the update will fail when looking for the wrapper file
+            if (!(File.separatorChar == '\\' && e.getMessage().contains("rhq-storage-wrapper.env"))) {
+                throw e;
+            }
+        }
     }
 
     @Test(dependsOnMethods = "applyConfigChanges")
@@ -110,15 +117,15 @@ public class DeployerITest {
     private void assertFileDeployedAndUpdated(String fileName) throws Exception {
         File rhqFile = new File(confDir, "rhq." + fileName);
         File file = new File(confDir, fileName);
-        assertTrue(file.exists(), file  + " does not exist");
+        assertTrue(file.exists(), file + " does not exist");
         assertFalse(rhqFile.exists(), "Failed to delete " + rhqFile);
         assertFileUpdated(file);
     }
 
     private void assertFileUpdated(File actualFile) throws Exception {
         File expectedFile = new File(getClass().getResource("/expected." + actualFile.getName()).toURI());
-        assertTrue(expectedFile.exists(), "Cannot verify that " + actualFile.getName() + " has been updated. There " +
-            "should be a file named expected." + actualFile.getName() + " in the root of the test classpath.");
+        assertTrue(expectedFile.exists(), "Cannot verify that " + actualFile.getName() + " has been updated. There "
+            + "should be a file named expected." + actualFile.getName() + " in the root of the test classpath.");
 
         String actualContents = StreamUtil.slurp(new FileReader(actualFile));
         List<String> actualList = asList(actualContents.split("\\n"));
@@ -127,10 +134,10 @@ public class DeployerITest {
         List<String> expectedList = asList(expectedContents.split("\\n"));
 
         Patch patch = DiffUtils.diff(actualList, expectedList);
-        List<String> diffs = DiffUtils.generateUnifiedDiff(actualFile.getName(), "expected.cassandra.yaml",
-            actualList, patch, 5);
-        assertTrue(patch.getDeltas().isEmpty(), actualFile.getName() + " was not configured correctly. The " +
-            "following differences were found:\n" + StringUtil.listToString(diffs, "\n"));
+        List<String> diffs = DiffUtils.generateUnifiedDiff(actualFile.getName(), "expected.cassandra.yaml", actualList,
+            patch, 5);
+        assertTrue(patch.getDeltas().isEmpty(), actualFile.getName() + " was not configured correctly. The "
+            + "following differences were found:\n" + StringUtil.listToString(diffs, "\n"));
     }
 
 }

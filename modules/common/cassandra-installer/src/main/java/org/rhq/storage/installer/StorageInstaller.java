@@ -105,9 +105,20 @@ public class StorageInstaller {
 
     private final String STORAGE_BASEDIR = "rhq-storage";
 
-    private final Log log = LogFactory.getLog(StorageInstaller.class);
+    private static final String OPTION_HOSTNAME = "rhq.storage.hostname";
+    private static final String OPTION_SEEDS = "rhq.storage.seeds";
+    private static final String OPTION_CQL_PORT = "rhq.storage.cql-port";
+    private static final String OPTION_JMX_PORT = "rhq.storage.jmx-port";
+    private static final String OPTION_GOSSIP_PORT = "rhq.storage.gossip-port";
+    private static final String OPTION_COMMITLOG = "rhq.storage.commitlog";
+    private static final String OPTION_DATA = "rhq.storage.data";
+    private static final String OPTION_SAVED_CACHES = "rhq.storage.saved-caches";
+    private static final String OPTION_HEAP_SIZE = "rhq.storage.heap-size";
+    private static final String OPTION_HEAP_NEW_SIZE = "rhq.storage.heap-new-size";
+    private static final String OPTION_STACK_SIZE = "rhq.storage.stack-size";
+    private static final String OPTION_VERIFY_DATA_DIRS_EMPTY = "rhq.storage.verify-data-dirs-empty";
 
-    private final String VERIFY_DATA_DIRS_EMPTY = "verify-data-dirs-empty";
+    private final Log log = LogFactory.getLog(StorageInstaller.class);
 
     private Options options;
 
@@ -119,11 +130,9 @@ public class StorageInstaller {
 
     private int rpcPort = 9160;
 
-    private int defaultNativeTransportPort = 9142;
+    private int defaultCqlPort = 9142;
 
-    private int defaultStoragePort = 7100;
-
-    private int sslStoragePort = 7101;
+    private int defaultGossipPort = 7100;
 
     private File logDir;
 
@@ -137,28 +146,28 @@ public class StorageInstaller {
         storageBasedir = new File(basedir, STORAGE_BASEDIR);
         logDir = new File(serverBasedir, "logs");
 
-        Option hostname = new Option("n", "hostname", true,
+        Option hostname = new Option("n", OPTION_HOSTNAME, true,
             "The hostname or IP address on which the node will listen for "
-                + "requests. Note that if a hostname is specified, the IP address is used. Defaults to the IP " +
-            "address of the local host (which depending on hostname configuration may not be localhost).");
+                + "requests. Note that if a hostname is specified, the IP address is used. Defaults to the IP "
+                + "address of the local host (which depending on hostname configuration may not be localhost).");
         hostname.setArgName("HOSTNAME");
 
-        Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that "
+        Option seeds = new Option("s", OPTION_SEEDS, true, "A comma-delimited list of hostnames or IP addresses that "
             + "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. "
             + "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
         seeds.setArgName("SEEDS");
 
-        Option jmxPortOption = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. "
-            + "Defaults to " + defaultJmxPort + ".");
+        Option jmxPortOption = new Option("j", OPTION_JMX_PORT, true,
+            "The port on which to listen for JMX connections. " + "Defaults to " + defaultJmxPort + ".");
         jmxPortOption.setArgName("PORT");
 
-        Option nativeTransportPortOption = new Option("c", "client-port", true, "The port on which to "
-            + "listen for client requests. Defaults to " + defaultNativeTransportPort);
-        nativeTransportPortOption.setArgName("PORT");
+        Option cqlPortOption = new Option("c", OPTION_CQL_PORT, true, "The port on which to "
+            + "listen for client requests. Defaults to " + defaultCqlPort);
+        cqlPortOption.setArgName("PORT");
 
-        Option storagePortOption = new Option(null, "storage-port", true, "The port on which to listen for requests "
-            + " from other nodes. Defaults to " + defaultStoragePort);
-        storagePortOption.setArgName("PORT");
+        Option gossipPortOption = new Option(null, OPTION_GOSSIP_PORT, true,
+            "The port on which to listen for requests " + " from other nodes. Defaults to " + defaultGossipPort);
+        gossipPortOption.setArgName("PORT");
 
         Option startOption = new Option(null, "start", true, "Start the storage node after installing it on disk. "
             + "Defaults to true.");
@@ -168,45 +177,49 @@ public class StorageInstaller {
             + "after starting it. This option is ignored if the start option is not set. Defaults to true.");
         checkStatus.setArgName("true|false");
 
-        Option commitLogOption = new Option(null, "commitlog", true, "The directory where the storage node keeps "
+        Option commitLogOption = new Option(null, OPTION_COMMITLOG, true, "The directory where the storage node keeps "
             + "commit log files. Defaults to " + getDefaultCommitLogDir() + ".");
         commitLogOption.setArgName("DIR");
 
-        Option dataDirOption = new Option(null, "data", true, "The directory where the storage node keeps data files. "
-            + "Defaults to " + getDefaultDataDir() + ".");
+        Option dataDirOption = new Option(null, OPTION_DATA, true,
+            "The directory where the storage node keeps data files. " + "Defaults to " + getDefaultDataDir() + ".");
         dataDirOption.setArgName("DIR");
 
-        Option savedCachesDirOption = new Option(null, "saved-caches", true, "The directory where the storage node "
-            + "keeps saved cache files. Defaults to " + getDefaultSavedCachesDir() + ".");
+        Option savedCachesDirOption = new Option(null, OPTION_SAVED_CACHES, true,
+            "The directory where the storage node " + "keeps saved cache files. Defaults to "
+                + getDefaultSavedCachesDir() + ".");
         savedCachesDirOption.setArgName("DIR");
 
         Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed "
             + "The default directory will be " + storageBasedir);
 
-        Option heapSizeOption = new Option(null, "heap-size", true, "The value to use for both the min and max heap. "
-            + "This value is passed directly to the -Xms and -Xmx options of the Java executable. Defaults to "
-            + defaultHeapSize);
+        Option heapSizeOption = new Option(null, OPTION_HEAP_SIZE, true,
+            "The value to use for both the min and max heap. "
+                + "This value is passed directly to the -Xms and -Xmx options of the Java executable. Defaults to "
+                + defaultHeapSize);
 
-        Option heapNewSizeOption = new Option(null, "heap-new-size", true, "The value to use for the new generation "
-            + "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to "
-            + defaultHeapNewSize);
+        Option heapNewSizeOption = new Option(null, OPTION_HEAP_NEW_SIZE, true,
+            "The value to use for the new generation "
+                + "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to "
+                + defaultHeapNewSize);
 
-        Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. "
-            + "This value is passed directly to the -Xss option of the Java executable.");
+        Option stackSizeOption = new Option(null, OPTION_STACK_SIZE, true,
+            "The value to use for the thread stack size. "
+                + "This value is passed directly to the -Xss option of the Java executable.");
 
         Option upgradeOption = new Option(null, "upgrade", true, "Upgrades an existing storage node. The directory "
             + "where the existing RHQ server is installed.");
         upgradeOption.setArgName("RHQ_SERVER_DIR");
 
-        Option verifyDataDirsEmptyOption = new Option(null, VERIFY_DATA_DIRS_EMPTY, true, "Will cause the installer " +
-            "to abort if any of the data directories is not empty. Defaults to true.");
+        Option verifyDataDirsEmptyOption = new Option(null, OPTION_VERIFY_DATA_DIRS_EMPTY, true,
+            "Will cause the installer " + "to abort if any of the data directories is not empty. Defaults to true.");
 
         options = new Options().addOption(new Option("h", "help", false, "Show this message.")).addOption(hostname)
             .addOption(seeds).addOption(jmxPortOption).addOption(startOption).addOption(checkStatus)
             .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
-            .addOption(nativeTransportPortOption).addOption(storagePortOption).addOption(basedirOption)
-            .addOption(heapSizeOption).addOption(heapNewSizeOption).addOption(stackSizeOption)
-            .addOption(upgradeOption).addOption(verifyDataDirsEmptyOption);
+            .addOption(cqlPortOption).addOption(gossipPortOption).addOption(basedirOption).addOption(heapSizeOption)
+            .addOption(heapNewSizeOption).addOption(stackSizeOption).addOption(upgradeOption)
+            .addOption(verifyDataDirsEmptyOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -230,14 +243,14 @@ public class StorageInstaller {
                 log.warn(e.getMessage());
                 log.warn("The storage installer will exit due to previous errors");
                 return e.getErrorCode();
-           }
+            }
 
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             log.info("Updating rhq-server.properties...");
             Properties properties = new Properties();
             properties.setProperty("rhq.storage.nodes", installerInfo.hostname);
-            properties.setProperty("rhq.storage.cql-port", Integer.toString(installerInfo.cqlPort));
-            properties.setProperty("rhq.storage.gossip-port", Integer.toString(installerInfo.gossipPort));
+            properties.setProperty(OPTION_CQL_PORT, Integer.toString(installerInfo.cqlPort));
+            properties.setProperty(OPTION_GOSSIP_PORT, Integer.toString(installerInfo.gossipPort));
 
             serverPropertiesUpdater.update(properties);
 
@@ -257,12 +270,12 @@ public class StorageInstaller {
                     log.warn("The storage node reported the following errors while trying to start:\n\n"
                         + startupErrors + "\n");
                     if (startupErrors.contains("Port already in use: " + installerInfo.jmxPort)) {
-                        log.warn("There is a conflict with the JMX port that prevented the storage node JVM " +
-                            "from starting.");
+                        log.warn("There is a conflict with the JMX port that prevented the storage node JVM "
+                            + "from starting.");
                         File confDir = new File(storageBasedir, "conf");
                         File confFile = new File(confDir, "cassandra-jvm.properties");
-                        log.info("Change the jmx_port property in " + confFile + " to have the storage node listen " +
-                            "on a different port for JMX connections.");
+                        log.info("Change the jmx_port property in " + confFile + " to have the storage node listen "
+                            + "on a different port for JMX connections.");
 
                         return STATUS_JMX_PORT_CONFLICT;
                     }
@@ -283,13 +296,12 @@ public class StorageInstaller {
                     }
                 } else {
                     if (isRunning()) {
-                        log.info("Installation of the storage node is complete. The node should be up and "
-                            + "running");
+                        log.info("Installation of the storage node is complete. The node should be up and " + "running");
                         return STATUS_NO_ERRORS;
                     } else {
                         log.warn("Installation of the storage node is complete, but the node does not appear to "
-                            + "be running. No start up errors were reported.  Check the log file at " +
-                            installerInfo.logFile + " for any other possible errors.");
+                            + "be running. No start up errors were reported.  Check the log file at "
+                            + installerInfo.logFile + " for any other possible errors.");
                         return STATUS_STORAGE_NOT_RUNNING;
                     }
                 }
@@ -322,96 +334,91 @@ public class StorageInstaller {
             deploymentOptions.setListenAddress(installerInfo.hostname);
             deploymentOptions.setRpcAddress(installerInfo.hostname);
 
-            String seeds = cmdLine.getOptionValue("seeds", installerInfo.hostname);
+            String seeds = cmdLine.getOptionValue(OPTION_SEEDS, installerInfo.hostname);
             deploymentOptions.setSeeds(seeds);
 
-            String commitlogDir = cmdLine.getOptionValue("commitlog", getDefaultCommitLogDir().getAbsolutePath());
-            String dataDir = cmdLine.getOptionValue("data", getDefaultDataDir().getAbsolutePath());
-            String savedCachesDir = cmdLine.getOptionValue("saved-caches", getDefaultSavedCachesDir().getAbsolutePath());
+            String commitlogDir = cmdLine.getOptionValue(OPTION_COMMITLOG, getDefaultCommitLogDir().getAbsolutePath());
+            String dataDir = cmdLine.getOptionValue(OPTION_DATA, getDefaultDataDir().getAbsolutePath());
+            String savedCachesDir = cmdLine.getOptionValue(OPTION_SAVED_CACHES, getDefaultSavedCachesDir()
+                .getAbsolutePath());
 
             File commitLogDirFile = new File(commitlogDir);
             File dataDirFile = new File(dataDir);
             File savedCachesDirFile = new File(savedCachesDir);
             installerInfo.logFile = new File(logDir, "rhq-storage.log");
 
-            boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(VERIFY_DATA_DIRS_EMPTY, "true"));
+            boolean verifyDataDirsEmpty = Boolean
+                .valueOf(cmdLine.getOptionValue(OPTION_VERIFY_DATA_DIRS_EMPTY, "true"));
             if (verifyDataDirsEmpty) {
                 // validate the three data directories are empty - if they are not, we are probably stepping on
                 // another storage node
                 if (!isDirectoryEmpty(commitLogDirFile)) {
                     log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
                         + commitLogDirFile.getAbsolutePath() + "]");
-                    throw new StorageInstallerException("Installation cannot proceed. The commit log directory " +
-                        commitLogDirFile + " is not empty", STATUS_DATA_DIR_NOT_EMPTY);
+                    throw new StorageInstallerException("Installation cannot proceed. The commit log directory "
+                        + commitLogDirFile + " is not empty", STATUS_DATA_DIR_NOT_EMPTY);
                 }
                 if (!isDirectoryEmpty(dataDirFile)) {
                     log.error("Data directory is not empty. It should not exist for a new Storage Node ["
                         + dataDirFile.getAbsolutePath() + "]");
-                    throw new StorageInstallerException("Installation cannot proceed. The data directory " + dataDirFile +
-                        " is not empty", STATUS_DATA_DIR_NOT_EMPTY);
+                    throw new StorageInstallerException("Installation cannot proceed. The data directory "
+                        + dataDirFile + " is not empty", STATUS_DATA_DIR_NOT_EMPTY);
                 }
                 if (!isDirectoryEmpty(savedCachesDirFile)) {
                     log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
                         + savedCachesDirFile.getAbsolutePath() + "]");
-                    throw new StorageInstallerException("Installation cannot proceed. The saved caches directory " +
-                        savedCachesDirFile + " is not empty", STATUS_DATA_DIR_NOT_EMPTY);
+                    throw new StorageInstallerException("Installation cannot proceed. The saved caches directory "
+                        + savedCachesDirFile + " is not empty", STATUS_DATA_DIR_NOT_EMPTY);
                 }
             }
 
-            installerInfo.jmxPort = getPort(cmdLine, "jmx-port", defaultJmxPort);
+            installerInfo.jmxPort = getPort(cmdLine, OPTION_JMX_PORT, defaultJmxPort);
             if (isPortBound(installerInfo.hostname, installerInfo.jmxPort, "jmx-port")) {
-                throw new StorageInstallerException("The jmx-port (" + installerInfo.jmxPort + ") is already in use. " +
-                    "Installation cannot proceed.", STATUS_JMX_PORT_CONFLICT);
+                throw new StorageInstallerException("The jmx-port (" + installerInfo.jmxPort + ") is already in use. "
+                    + "Installation cannot proceed.", STATUS_JMX_PORT_CONFLICT);
             }
 
-            installerInfo.cqlPort = getPort(cmdLine, "client-port", defaultNativeTransportPort);
-            if (isPortBound(installerInfo.hostname, installerInfo.cqlPort, "client-port")) {
-                throw new StorageInstallerException("The client-port (" + installerInfo.cqlPort + ") is already in use. " +
-                    "Installation cannot proceed.", STATUS_CQL_PORT_CONFLICT);
+            installerInfo.cqlPort = getPort(cmdLine, OPTION_CQL_PORT, defaultCqlPort);
+            if (isPortBound(installerInfo.hostname, installerInfo.cqlPort, OPTION_CQL_PORT)) {
+                throw new StorageInstallerException("The cql-port (" + installerInfo.cqlPort + ") is already in use. "
+                    + "Installation cannot proceed.", STATUS_CQL_PORT_CONFLICT);
             }
 
-            installerInfo.gossipPort = getPort(cmdLine, "storage-port", defaultStoragePort);
-            if (isPortBound(installerInfo.hostname, installerInfo.gossipPort, "storage-port")) {
-                throw new StorageInstallerException("The storage-port (" + installerInfo.gossipPort + ") is already in use. " +
-                    "Installation cannot proceed.", STATUS_GOSSIP_PORT_CONFLICT);
+            installerInfo.gossipPort = getPort(cmdLine, OPTION_GOSSIP_PORT, defaultGossipPort);
+            if (isPortBound(installerInfo.hostname, installerInfo.gossipPort, OPTION_GOSSIP_PORT)) {
+                throw new StorageInstallerException("The gossip-port (" + installerInfo.gossipPort
+                    + ") is already in use. " + "Installation cannot proceed.", STATUS_GOSSIP_PORT_CONFLICT);
             }
 
             deploymentOptions.setCommitLogDir(commitlogDir);
             // TODO add support for specifying multiple dirs
             deploymentOptions.setDataDir(dataDirFile.getAbsolutePath());
             deploymentOptions.setSavedCachesDir(savedCachesDir);
+
             deploymentOptions.setLogFileName(installerInfo.logFile.getPath());
             deploymentOptions.setLoggingLevel("INFO");
+
             deploymentOptions.setRpcPort(rpcPort);
-            deploymentOptions.setNativeTransportPort(installerInfo.cqlPort);
-            deploymentOptions.setStoragePort(installerInfo.gossipPort);
-            deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
-
+            deploymentOptions.setCqlPort(installerInfo.cqlPort);
+            deploymentOptions.setGossipPort(installerInfo.gossipPort);
             deploymentOptions.setJmxPort(installerInfo.jmxPort);
-            deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size", defaultHeapSize));
-            deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size", defaultHeapNewSize));
-            if (cmdLine.hasOption("stack-size")) {
-                deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));
-            }
 
+            deploymentOptions.setHeapSize(cmdLine.getOptionValue(OPTION_HEAP_SIZE, defaultHeapSize));
+            deploymentOptions.setHeapNewSize(cmdLine.getOptionValue(OPTION_HEAP_NEW_SIZE, defaultHeapNewSize));
+            if (cmdLine.hasOption(OPTION_STACK_SIZE)) {
+                deploymentOptions.setStackSize(cmdLine.getOptionValue(OPTION_STACK_SIZE));
+            }
 
             // The out of box default for native_transport_max_threads is 128. We default
             // to 64 for dev/test environments so we need to update it here.
             deploymentOptions.setNativeTransportMaxThreads(128);
 
-            deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size", defaultHeapSize));
-            deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size", defaultHeapNewSize));
-
-            if (cmdLine.hasOption("stack-size")) {
-                deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));
-            }
-
             deploymentOptions.load();
 
             List<String> errors = new ArrayList<String>();
-            checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
-            checkPerms(options.getOption("commitlog"), commitlogDir, errors);
-            checkPerms(options.getOption("data"), dataDir, errors);
+            checkPerms(options.getOption(OPTION_SAVED_CACHES), savedCachesDir, errors);
+            checkPerms(options.getOption(OPTION_COMMITLOG), commitlogDir, errors);
+            checkPerms(options.getOption(OPTION_DATA), dataDir, errors);
 
             if (!errors.isEmpty()) {
                 log.error("Problems have been detected with one or more of the directories in which the storage "
@@ -419,11 +426,12 @@ public class StorageInstaller {
                 for (String error : errors) {
                     log.error(error);
                 }
-                throw new StorageInstallerException("Installation cannot proceed. There are problems with one or more of " +
-                    "the storage data directories.", STATUS_INVALID_FILE_PERMISSIONS);
+                throw new StorageInstallerException(
+                    "Installation cannot proceed. There are problems with one or more of "
+                        + "the storage data directories.", STATUS_INVALID_FILE_PERMISSIONS);
             }
 
-            Deployer deployer = new Deployer();
+            Deployer deployer = getDeployer();
             deployer.setDeploymentOptions(deploymentOptions);
             storageBasedir.mkdirs();
             deployer.unzipDistro();
@@ -439,9 +447,17 @@ public class StorageInstaller {
             throw new StorageInstallerException("The upgrade cannot proceed. An unexpected I/O error occurred", e,
                 STATUS_IO_ERROR);
         } catch (DeploymentException e) {
-            throw new StorageInstallerException("The installation cannot proceed. An error occurred during storage " +
-                "node deployment.", e, STATUS_DEPLOYMENT_ERROR);
+            throw new StorageInstallerException("The installation cannot proceed. An error occurred during storage "
+                + "node deployment.", e, STATUS_DEPLOYMENT_ERROR);
         }
+    }
+
+    /**
+     * This can be overridden to allow for custom deploy behavior.
+     * @return a Deployer
+     */
+    protected Deployer getDeployer() {
+        return new Deployer();
     }
 
     private InstallerInfo upgrade(File upgradeFromDir) throws StorageInstallerException {
@@ -454,16 +470,16 @@ public class StorageInstaller {
         if (!upgradeFromDir.isDirectory()) {
             log.error("The value passed to the upgrade option is not a directory. The value must be a valid "
                 + "path that points to the base directory of an existing RHQ server installation.");
-            throw new StorageInstallerException("The upgrade cannot proceed. The value passed to the upgrade option " +
-                "is invalid.", STATUS_INVALID_UPGRADE);
+            throw new StorageInstallerException("The upgrade cannot proceed. The value passed to the upgrade option "
+                + "is invalid.", STATUS_INVALID_UPGRADE);
         }
         existingStorageDir = new File(upgradeFromDir, "rhq-storage");
         if (!(existingStorageDir.exists() && existingStorageDir.isDirectory())) {
             log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installation. "
                 + "Check the value that was passed to the upgrade option and make sure it specifies the base "
                 + "directory of an existing RHQ server installation.");
-            throw new StorageInstallerException("The upgrade cannot proceed. " + existingStorageDir + " is not an " +
-                "existing RHQ storage node installation", STATUS_INVALID_UPGRADE);
+            throw new StorageInstallerException("The upgrade cannot proceed. " + existingStorageDir + " is not an "
+                + "existing RHQ storage node installation", STATUS_INVALID_UPGRADE);
         }
 
         try {
@@ -540,8 +556,8 @@ public class StorageInstaller {
 
             return installerInfo;
         } catch (DeploymentException e) {
-            throw new StorageInstallerException("THe upgrade cannot proceed. An error occurred during the storage " +
-                "node deployment", e, STATUS_DEPLOYMENT_ERROR);
+            throw new StorageInstallerException("THe upgrade cannot proceed. An error occurred during the storage "
+                + "node deployment", e, STATUS_DEPLOYMENT_ERROR);
         } catch (IOException e) {
             throw new StorageInstallerException("The upgrade cannot proceed. An unexpected I/O error occurred", e,
                 STATUS_IO_ERROR);
@@ -852,7 +868,7 @@ public class StorageInstaller {
                     throw new RuntimeException("Cannot determine JMX port");
                 }
 
-                jmxPort = jmxPort.replaceAll("\"","");
+                jmxPort = jmxPort.replaceAll("\"", "");
 
                 return Integer.parseInt(jmxPort);
             } catch (IOException e) {
@@ -895,8 +911,8 @@ public class StorageInstaller {
 
     public Options getHelpOptions() {
         Options helpOptions = new Options();
-        for (Option option : (Collection<Option>)options.getOptions()) {
-            if (option.getLongOpt().equals(VERIFY_DATA_DIRS_EMPTY)) {
+        for (Option option : (Collection<Option>) options.getOptions()) {
+            if (option.getLongOpt().equals(OPTION_VERIFY_DATA_DIRS_EMPTY)) {
                 continue;
             }
             helpOptions.addOption(option);

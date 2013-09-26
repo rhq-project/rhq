@@ -144,7 +144,7 @@ public class CassandraClusterManager {
 
         this.nodes = new String[deploymentOptions.getNumNodes()];
         this.jmxPorts = new int[deploymentOptions.getNumNodes()];
-        this.cqlPort = deploymentOptions.getNativeTransportPort();
+        this.cqlPort = deploymentOptions.getCqlPort();
 
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
             File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
@@ -240,7 +240,7 @@ public class CassandraClusterManager {
             this.jmxPorts[i] = deploymentOptions.getJmxPort() + i;
         }
 
-        this.cqlPort = deploymentOptions.getNativeTransportPort();
+        this.cqlPort = deploymentOptions.getCqlPort();
     }
 
     public void startCluster() {

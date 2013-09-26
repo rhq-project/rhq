@@ -56,8 +56,8 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         Method method = invokedMethod.getTestMethod().getConstructorOrMethod().getMethod();
         if (method.isAnnotationPresent(ShutdownCluster.class)) {
             try {
-                Boolean skipShutdown = Boolean.valueOf(
-                    System.getProperty("rhq.cassandra.cluster.skip-shutdown", "false"));
+                Boolean skipShutdown = Boolean
+                    .valueOf(System.getProperty("rhq.storage.cluster.skip-shutdown", "false"));
                 if (!skipShutdown) {
                     shutdownCluster();
                 }
@@ -68,12 +68,12 @@ public class CCMTestNGListener implements IInvokedMethodListener {
     }
 
     private void deployCluster(DeployCluster annotation) throws Exception {
-        boolean deploy = Boolean.valueOf(System.getProperty("rhq.cassandra.cluster.deploy", "true"));
+        boolean deploy = Boolean.valueOf(System.getProperty("rhq.storage.cluster.deploy", "true"));
         if (!deploy) {
             return;
         }
 
-        String clusterDir = System.getProperty("rhq.cassandra.cluster.dir");
+        String clusterDir = System.getProperty("rhq.storage.cluster.dir");
         if (clusterDir == null || clusterDir.isEmpty()) {
             File basedir = new File("target");
             clusterDir = new File(basedir, "cassandra").getAbsolutePath();
@@ -102,7 +102,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         String[] nodes = ccm.getNodes();
         int[] jmxPorts = ccm.getJmxPorts();
 
-        if (System.getProperty("rhq.cassandra.cluster.skip-shutdown") == null) {
+        if (System.getProperty("rhq.storage.cluster.skip-shutdown") == null) {
             for (int index = 0; index < nodes.length; index++) {
                 try {
                     if (clusterInitService.isNativeTransportRunning(nodes[index], jmxPorts[index])) {
@@ -114,7 +114,6 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             }
         }
         ccm.startCluster(false);
-
 
         clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 2000, 20, 10);
 

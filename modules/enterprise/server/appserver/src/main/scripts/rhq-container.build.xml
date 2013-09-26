@@ -818,8 +818,8 @@ rhq.storage.nodes=
 # and used by the RHQ server(s) to communicate with the cluster.
 # Both properties are required.
 #
-rhq.storage.cql-port=${rhq.cassandra.native-transport-port}
-rhq.storage.gossip-port=${rhq.cassandra.storage.port}
+rhq.storage.cql-port=${rhq.storage.cql-port}
+rhq.storage.gossip-port=${rhq.storage.gossip-port}
 
 # If enabled data sent to and from storage nodes will be compressed using
 # snappy (https://code.google.com/p/snappy) compression. Note that this is an
@@ -832,7 +832,7 @@ rhq.storage.gossip-port=${rhq.cassandra.storage.port}
 #
 # Please make sure you do not find the above log statement in your storage logs
 # before you enable client compression.
-# rhq.cassandra.client.compression-enabled=false
+# rhq.storage.client.compression-enabled=false
 </echo>
 
         <echo file="${rhq.bin.dir}/rhq-storage.properties">#################### RHQ Storage Configuration Properties ####################
@@ -847,7 +847,7 @@ rhq.storage.gossip-port=${rhq.cassandra.storage.port}
 #############################################################################
 # Data Directory Settings
 # -----------------
-# Note, the RHQ_HOME directory as used below is the parent directory
+# The RHQ_HOME directory as used below is the parent directory
 # of the RHQ server installation.  It is recommended that RHQ be installed
 # under an umbrella "rhq" directory.  For example, if using a home directory
 # of /opt/rhq then the default installation structure would be:
@@ -860,81 +860,99 @@ rhq.storage.gossip-port=${rhq.cassandra.storage.port}
 #   /opt/rhq/rhq-data/storage/data
 #   /opt/rhq/rhq-data/storage/saved_caches
 #
-# commitlog      The directory where the storage node keeps commit log files.
+# IMPORTANT: Always use forward slashes in the directory path names, even
+#            on Windows!
+#
+# IMPORTANT: If using non-default settings for the data, commitlog, and/or
+#            saved-caches directories, each directory should be unique,
+#            typically under a common parent.
+#
+# rhq.storage.commitlog
+#                The directory where the storage node keeps commit log files.
 #                  Defaults to: RHQ_HOME/rhq-data/storage/commitlog
-# data           The directory where the storage node keeps data files.
+# rhq.storage.data
+#                The directory where the storage node keeps data files.
 #                  Defaults to: RHQ_HOME/rhq-data/storage/data
-# saved-caches   The directory where the storage node keeps saved cache files.
+# rhq.storage.saved-caches
+#                The directory where the storage node keeps saved cache files.
 #                  Defaults to: RHQ_HOME/rhq-data/storage/saved_caches
 #############################################################################
-${comment}commitlog=${rhq.storage.commitlog}
-${comment}data=${rhq.storage.data}
-${comment}saved-caches=${rhq.storage.saved-caches}
+${comment}rhq.storage.commitlog=${rhq.storage.commitlog}
+${comment}rhq.storage.data=${rhq.storage.data}
+${comment}rhq.storage.saved-caches=${rhq.storage.saved-caches}
 
 #############################################################################
 # Heap/Memory Settings
 # -----------------
 #
-# heap-size      The value to use for both the min and max heap. This value is
+# rhq.storage.heap-size
+#                The value to use for both the min and max heap. This value is
 #       	     passed directly to the -Xms and -Xmx options of the Java
 #       	     executable.
 #                  Defaults to 512M.
-# heap-new-size  The value to use for the new generation of the heap. This
+# rhq.storage.heap-new-size
+#                The value to use for the new generation of the heap. This
 #                value is passed directly to the -Xmn option of the Java
 #                executable.
-#                  Defaults to 256M.
-# stack-size     The value to use for the thread stack size. This value is
+#                  Defaults to 128M.
+# rhq.storage.stack-size
+#                The value to use for the thread stack size. This value is
 #                passed directly to the -Xss option of the Java executable.
 #                  Defaults to 256k.
 #############################################################################
-${comment}heap-size=${rhq.storage.heap-size}
-${comment}heap-new-size=${rhq.storage.heap-new-size}
-#stack-size=
+${comment}rhq.storage.heap-size=${rhq.storage.heap-size}
+${comment}rhq.storage.heap-new-size=${rhq.storage.heap-new-size}
+#rhq.storage.stack-size=
 
 #############################################################################
 # Port Settings
 # -----------------
 #
-# client-port      The port on which to listen for client requests.
-#                    Defaults to 9142
-# jmx-port         The port on which to listen for JMX connections.
+# rhq.storage.cql-port
+#                 The port on which to listen for client requests.
+#                    Defaults to 9142.
+# rhq.storage.jmx-port
+#                 The port on which to listen for JMX connections.
 #                    Defaults to 7299.
-# storage-port     The port on which to listen for requests from other nodes.
-#                    Defaults to 7100
-# ssl-storage-port The port on which to listen for encrypted requests from
-#                  other nodes. Only used when encryption is enabled.
-#                    Defaults to 7101
+# rhq.storage.gossip-port
+#                 The port on which to listen for requests from other nodes.
+#                    Defaults to 7100.
 #############################################################################
-#client-port=
-${comment}jmx-port=${rhq.storage.jmx-port}
-#storage-port=
-#ssl-storage-port=
+#rhq.storage.cql-port=
+${comment}rhq.storage.jmx-port=${rhq.storage.jmx-port}
+#rhq.storage.gossip-port=
 
 #############################################################################
 # Address/Host Settings
 # -----------------
 #
-# hostname         The hostname or IP address on which the node will listen
+# rhq.storage.hostname
+#                  The hostname or IP address on which the node will listen
 #                  for requests.
-#                    Defaults to the hostname for localhost.
-# seeds            A comma-delimited list of hostnames or IP addresses that
+#                    Defaults to this node's hostname.
+# rhq.storage.seeds
+#                  A comma-delimited list of hostnames or IP addresses that
 #                  serve as contact points. Nodes use this list to find each
 #                  other and to learn the cluster topology. It does not need
 #                  to specify all nodes in the cluster.
 #                    Defaults to this node's hostname.
 #############################################################################
-${comment}hostname=${rhq.storage.hostname}
-${comment}seeds=${rhq.storage.seeds}
+${comment}rhq.storage.hostname=${rhq.storage.hostname}
+${comment}rhq.storage.seeds=${rhq.storage.seeds}
 
 #############################################################################
 # Advanced Settings
 # -----------------
 #
-# verify-data-dirs-empty If true then allow installation only when the data
-#                        directories are empty.  Only upgrade is allowed.
+# rhq.storage.verify-data-dirs-empty
+#                        If true then allow installation only when the data
+#                        directories are empty.   Typically set true only in
+#                        development environments when it may be useful to
+#                        perform a clean installation while maintaining
+#                        existing data. Defaults to true.
 #                          Defaults to true.
 #############################################################################
-${comment}verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empty}
+${comment}rhq.storage.verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empty}
 </echo>
 
     </target>

@@ -485,6 +485,12 @@ public class Upgrade extends AbstractInstall {
             oldServerProps.setProperty("rhq.storage.cql-port", cqlPort);
         }
 
+        String storageCompression = oldServerProps.getProperty("rhq.cassandra.client.compression-enabled");
+        if (storageCompression != null) {
+            oldServerProps.remove("rhq.cassandra.client.compression-enabled");
+            oldServerProps.setProperty("rhq.storage.client.compression-enabled", storageCompression);
+        }
+
         // copy the old key/truststore files from the old location to the new server configuration directory
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.truststore.file");

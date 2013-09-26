@@ -373,7 +373,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             summary.setCollectionType(collectionType);
 
             if (!narrowed) {
-                MeasurementAggregate compositeHighLow = dataManager.getAggregate(subject, schedule.getId(), begin, end);
+                MeasurementAggregate compositeHighLow = dataManager.getMeasurementAggregate(subject, schedule.getId(), begin, end);
                 if (compositeHighLow.isEmpty()) {
                     summary.setValuesPresent(false);
                 }

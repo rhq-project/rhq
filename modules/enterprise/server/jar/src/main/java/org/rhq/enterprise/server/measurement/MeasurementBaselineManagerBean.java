@@ -480,7 +480,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             throw new BaselineCreationException("Baseline calculation is only valid for a dynamic measurement");
         }
 
-        MeasurementAggregate agg = dataManager.getAggregate(subjectManager.getOverlord(), schedule.getId(), startDate,
+        MeasurementAggregate agg = dataManager.getMeasurementAggregate(subjectManager.getOverlord(), schedule.getId(), startDate,
             endDate);
 
         // attach the entity, so we can find the baseline

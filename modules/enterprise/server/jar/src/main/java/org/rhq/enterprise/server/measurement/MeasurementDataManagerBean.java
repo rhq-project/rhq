@@ -605,9 +605,41 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         log.debug(callingMethod + ": " + stats.toString());
     }
 
+    @Deprecated
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
+    public org.rhq.enterprise.server.measurement.MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterId(scheduleId);
+        criteria.fetchResource(true);
+
+        PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(
+            subjectManager.getOverlord(), criteria);
+        if (schedules.isEmpty()) {
+            throw new MeasurementException("Could not fine MeasurementSchedule with the id[" + scheduleId + "]");
+        }
+        MeasurementSchedule schedule = schedules.get(0);
+
+        if (authorizationManager.canViewResource(subject, schedule.getResource().getId()) == false) {
+            throw new PermissionException("User[" + subject.getName()
+                + "] does not have permission to view schedule[id=" + scheduleId + "]");
+        }
+
+        if (schedule.getDefinition().getDataType() != DataType.MEASUREMENT) {
+            throw new IllegalArgumentException(schedule + " is not about numerical values. Can't compute aggregates");
+        }
+
+        if (startTime > endTime) {
+            throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
+        }
+
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
+        AggregateNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, startTime, endTime);
+
+        return new org.rhq.enterprise.server.measurement.MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
+    }
+
+    public MeasurementAggregate getMeasurementAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
         criteria.addFilterId(scheduleId);
         criteria.fetchResource(true);

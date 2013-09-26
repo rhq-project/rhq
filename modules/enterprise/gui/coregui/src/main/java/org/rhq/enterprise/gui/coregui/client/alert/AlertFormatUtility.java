@@ -28,6 +28,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
@@ -93,9 +94,17 @@ public class AlertFormatUtility {
             }
             str.append(" For ");
 
-            // value is stored in seconds but should be presented in minutes
-            String value = String.valueOf(Integer.valueOf(condition.getOption()) / 60);
-            String formatted = MeasurementConverterClient.format(value, MeasurementUnits.MINUTES);
+            long longValue = Long.valueOf(condition.getOption());
+            MeasurementNumericValueAndUnits valueWithUnits;
+            if (longValue % 3600 == 0) {
+                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.SECONDS,
+                        MeasurementUnits.HOURS, MeasurementUnits.HOURS);
+            } else {
+                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.SECONDS,
+                        MeasurementUnits.MINUTES, MeasurementUnits.MINUTES);
+            }
+            String formatted = MeasurementConverterClient.format(String.valueOf(valueWithUnits.getValue()),
+                valueWithUnits.getUnits());
             str.append(formatted);
             str.append("]");
 

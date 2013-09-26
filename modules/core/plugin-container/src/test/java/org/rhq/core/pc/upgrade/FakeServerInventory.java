@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.core.pc.upgrade;
@@ -186,19 +182,28 @@ public class FakeServerInventory {
                             }
                         }, ID_COMPARATOR);
                         if (resource != null) {
+
+                            ResourceUpgradeResponse resp = new ResourceUpgradeResponse();
+                            resp.setResourceId(resource.getId());
+
                             if (request.getNewDescription() != null) {
                                 resource.setDescription(request.getNewDescription());
+                                resp.setUpgradedResourceDescription(resource.getDescription());
                             }
+
                             if (request.getNewName() != null) {
                                 resource.setName(request.getNewName());
+                                resp.setUpgradedResourceName(resource.getName());
                             }
 
                             if (request.getNewResourceKey() != null) {
                                 resource.setResourceKey(request.getNewResourceKey());
+                                resp.setUpgradedResourceKey(resource.getResourceKey());
                             }
 
                             if (request.getNewPluginConfiguration() != null) {
                                 resource.setPluginConfiguration(request.getNewPluginConfiguration());
+                                resp.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
                             }
 
                             if (request.getUpgradeErrorMessage() != null) {
@@ -208,12 +213,6 @@ public class FakeServerInventory {
                                 resource.getResourceErrors().add(error);
                             }
 
-                            ResourceUpgradeResponse resp = new ResourceUpgradeResponse();
-                            resp.setResourceId(resource.getId());
-                            resp.setUpgradedResourceName(resource.getName());
-                            resp.setUpgradedResourceKey(resource.getResourceKey());
-                            resp.setUpgradedResourceDescription(resource.getDescription());
-                            resp.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
                             responses.add(resp);
                         }
                     }

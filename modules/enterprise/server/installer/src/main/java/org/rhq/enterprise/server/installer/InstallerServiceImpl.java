@@ -50,7 +50,6 @@ import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
 
-
 /**
  * @author John Mazzitelli
  */
@@ -60,6 +59,8 @@ public class InstallerServiceImpl implements InstallerService {
     private static final String RHQ_SUBSYSTEM_NAME = "rhq-startup";
     private static final String EAR_NAME = "rhq.ear";
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";
+
+    private static final String UNSET = "UNSET";
 
     private final Log log = LogFactory.getLog(InstallerServiceImpl.class);
     private final InstallerConfiguration installerConfiguration;
@@ -508,16 +509,16 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Could not complete the database schema installation", e);
         }
 
-        // if the storage cluster credentials are already set (typically an HA install), override
+        // if the storage cluster credentials are already set in the DB (typically an HA install), override
         // what's currently in the server properties file, and then continue with storage schema setup
         Map<String, String> storageProperties = ServerInstallUtil.fetchStorageClusterSettings(serverProperties,
             clearTextDbPassword);
         String storageUsernameSetting = storageProperties.get(ServerProperties.PROP_STORAGE_USERNAME);
         String storagePasswordSetting = storageProperties.get(ServerProperties.PROP_STORAGE_PASSWORD);
-        if (StringUtil.isNotBlank(storageUsernameSetting)) {
+        if (!(StringUtil.isBlank(storageUsernameSetting) || storageUsernameSetting.equals(UNSET))) {
             serverProperties.put(ServerProperties.PROP_STORAGE_USERNAME, storageUsernameSetting);
         }
-        if (StringUtil.isNotBlank(storagePasswordSetting)) {
+        if (!(StringUtil.isBlank(storagePasswordSetting) || storagePasswordSetting.equals(UNSET))) {
             serverProperties.put(ServerProperties.PROP_STORAGE_PASSWORD, storagePasswordSetting);
         }
 

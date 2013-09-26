@@ -793,20 +793,23 @@ rhq.sync.endpoint-address=false
 # not be edited.
 rhq.server.management.password=
 
-#############################################
-# Cassandra cluster configuration settings
-#############################################
-# The username RHQ will use to authenticate against Cassandra.
+# The username RHQ will use to authenticate against the Storage Cluster.
+# The value is generated and should not be edited.
 rhq.storage.username=${rhq.storage.username}
 
-# The password RHQ will use to authenticate against Cassandra.
+# The password RHQ will use to authenticate against the Storage Cluster.
+# The value is generated and obfuscated and should not be edited.
 rhq.storage.password=${rhq.storage.password}
 
-# A comma-delimited list of storage nodes. Each Cassandra node uses this list as
+#############################################
+# Storage cluster configuration settings
+#############################################
+
+# A comma-delimited list of storage nodes. Each Storage node uses this list as
 # contact points to find other nodes in the cluster and learn the ring
 # topology. The RHQ server(s) use this list to connect to the cluster;
-# therefore, this property MUST BE SET in order for RHQ to talk to Cassandra.
-# The of an entry is as follows,
+# therefore, this property MUST BE SET in order for RHQ to talk to the Storage.
+# Cluster. The of an entry is as follows:
 #
 #    hostname1,hostname2
 #

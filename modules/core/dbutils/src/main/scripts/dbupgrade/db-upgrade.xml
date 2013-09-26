@@ -2263,22 +2263,22 @@
               <schema-directSQL>
                 <statement targetDBVendor="postgresql" desc="Adding storage username">
                   INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                  VALUES (63, 'STORAGE_USERNAME', null, null, true)
+                  VALUES (63, 'STORAGE_USERNAME', 'UNSET', 'UNSET', true)
                 </statement>
                 <statement targetDBVendor="oracle" desc="Adding storage username">
                   INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                  VALUES (63, 'STORAGE_USERNAME', null, null, 1)
+                  VALUES (63, 'STORAGE_USERNAME', 'UNSET', 'UNSET', 1)
                 </statement>
               </schema-directSQL>
 
               <schema-directSQL>
                 <statement targetDBVendor="postgresql" desc="Adding storage password">
                   INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                  VALUES (64, 'STORAGE_PASSWORD', null, null, true)
+                  VALUES (64, 'STORAGE_PASSWORD', 'UNSET', 'UNSET', true)
                 </statement>
                 <statement targetDBVendor="oracle" desc="Adding default storage password">
                   INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                  VALUES (64, 'STORAGE_PASSWORD', null, null, 1)
+                  VALUES (64, 'STORAGE_PASSWORD', 'UNSET', 'UNSET', 1)
                 </statement>
               </schema-directSQL>
             </schemaSpec>

@@ -1054,9 +1054,11 @@ public class ServerInstallUtil {
             connection = getDatabaseConnection(dbUrl, userName, password);
             connection.setAutoCommit(false);
 
-            updateClusterSetting = connection.prepareStatement("UPDATE rhq_system_config "
-                + "SET property_value = ?, default_property_value = ? "
-                + "WHERE property_key = ? AND property_value IS NULL AND default_property_value IS NULL");
+            updateClusterSetting = connection.prepareStatement("" //
+                + "UPDATE rhq_system_config " //
+                + "   SET property_value = ?, default_property_value = ? " //
+                + " WHERE property_key = ? " //
+                + "   AND ( property_value IS NULL OR property_value = '' OR property_value = 'UNSET' ) ");
 
             updateClusterSetting.setString(1, serverProperties.get(ServerProperties.PROP_STORAGE_USERNAME));
             updateClusterSetting.setString(2, serverProperties.get(ServerProperties.PROP_STORAGE_USERNAME));

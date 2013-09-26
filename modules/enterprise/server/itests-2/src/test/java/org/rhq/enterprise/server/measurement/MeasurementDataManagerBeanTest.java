@@ -258,7 +258,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         dataManager.mergeMeasurementReport(report);
         waitForRawInserts();
 
-        MeasurementAggregate actual = dataManager.getAggregate(getOverlord(), dynamicSchedule.getId(),
+        MeasurementAggregate actual = dataManager.getMeasurementAggregate(getOverlord(), dynamicSchedule.getId(),
             beginTime.getMillis(), endTime.getMillis());
 
         MeasurementAggregate expected = new MeasurementAggregate(1.1, divide((1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6), 6),

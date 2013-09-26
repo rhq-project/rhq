@@ -162,7 +162,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
-        MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
+        MeasurementAggregate aggr = dataManager.getMeasurementAggregate(caller, scheduleId, startTime, endTime);
         MetricAggregate res = new MetricAggregate(scheduleId, aggr.getMin(),aggr.getAvg(),aggr.getMax());
 
         int definitionId = schedule.getDefinition().getId();
@@ -387,7 +387,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             List<List<MeasurementDataNumericHighLowComposite>> listList =
                 dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,dataPoints);
             if (!listList.isEmpty()) {
-                MeasurementAggregate measurementAggregate = dataManager.getAggregate(caller,scheduleId,startTime,endTime);
+                MeasurementAggregate measurementAggregate = dataManager.getMeasurementAggregate(caller,scheduleId,startTime,endTime);
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
                 MetricAggregate res = new MetricAggregate(scheduleId,measurementAggregate.getMin(),measurementAggregate.getAvg(),measurementAggregate.getMax());
                 boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
@@ -552,7 +552,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         List<MetricAggregate> ret = new ArrayList<MetricAggregate>(schedules.size());
 
         for (MeasurementSchedule schedule: schedules) {
-            MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),startTime,endTime);
+            MeasurementAggregate aggr = dataManager.getMeasurementAggregate(caller,schedule.getId(),startTime,endTime);
             MetricAggregate res = new MetricAggregate(schedule.getId(), aggr.getMin(),aggr.getAvg(),aggr.getMax());
 
             if (includeDataPoints) {

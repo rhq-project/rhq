@@ -42,8 +42,10 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -62,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  *
  * @author  Mike Thompson
  */
-public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer, Refreshable {
+public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer, AutoRefresh, Refreshable {
 
     static protected final Messages MSG = CoreGUI.getMessages();
     // string labels
@@ -89,6 +91,9 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private String chartTitle;
     private Integer chartHeight;
 
+    protected static Timer refreshTimer;
+    protected boolean isRefreshing;
+
     public CompositeGroupD3GraphListView(int groupId, int defId, boolean isAutoGroup) {
         super();
         this.groupId = groupId;
@@ -100,6 +105,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         setHeight100();
         setWidth100();
         setPadding(10);
+        startRefreshCycle();
     }
 
     public void populateData() {
@@ -113,89 +119,89 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
         measurementForEachResource.clear();
         groupService.findResourceGroupCompositesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
-                }
-
-                @Override
-                public void onSuccess(PageList<ResourceGroupComposite> result) {
-                    if (result.isEmpty()) {
-                        return;
+                new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
                     }
 
-                    final ResourceGroup parentGroup = result.get(0).getResourceGroup();
-                    chartTitle = parentGroup.getName();
-                    Log.debug("group name: " + parentGroup.getName());
-                    // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                    final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources()
-                        .size(), new Command() {
-                        @Override
-                        /**
-                         * Do this only after ALL of the metric queries for each resource
-                         */
-                        public void execute() {
-                            if (parentGroup.getExplicitResources().size() != measurementForEachResource.size()) {
-                                Log.warn("Number of graphs doesn't match number of resources");
-                                Log.warn("# of child resources: " + parentGroup.getExplicitResources().size());
-                                Log.warn("# of charted graphs: " + measurementForEachResource.size());
-                            }
-                            drawGraph();
+                    @Override
+                    public void onSuccess(PageList<ResourceGroupComposite> result) {
+                        if (result.isEmpty()) {
+                            return;
                         }
-                    });
 
-                    final Set<Resource> childResources = parentGroup.getExplicitResources();
-                    if (!childResources.isEmpty()) {
-
-                        // resourceType will be the same for all autogroup children so get first
-                        Resource childResource = childResources.iterator().next();
-
-                        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                            childResource.getResourceType().getId(),
-                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                            new ResourceTypeRepository.TypeLoadedCallback() {
-                                @Override
-                                public void onTypesLoaded(final ResourceType type) {
-
-                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                        // only need the one selected measurement
-                                        if (def.getId() == getDefinitionId()) {
-                                            setDefinition(def);
-                                        }
-                                    }
-
-                                    for (final Resource childResource : childResources) {
-                                        Log.debug("Adding child composite: " + childResource.getName()
-                                            + childResource.getId());
-
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(
-                                            childResource.getId(), new int[] { getDefinitionId() },
-                                            buttonBarDateTimeRangeEditor.getStartTime(),
-                                            buttonBarDateTimeRangeEditor.getEndTime(), 60,
-                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                @Override
-                                                public void onFailure(Throwable caught) {
-                                                    CoreGUI.getErrorHandler().handleError(
-                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                    countDownLatch.countDown();
-                                                }
-
-                                                @Override
-                                                public void onSuccess(
-                                                    List<List<MeasurementDataNumericHighLowComposite>> measurements) {
-                                                    addMeasurementForEachResource(childResource.getName(),
-                                                            childResource.getId(), measurements.get(0));
-                                                    countDownLatch.countDown();
-                                                }
-                                            });
-                                    }
+                        final ResourceGroup parentGroup = result.get(0).getResourceGroup();
+                        chartTitle = parentGroup.getName();
+                        Log.debug("group name: " + parentGroup.getName());
+                        // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
+                        final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources()
+                                .size(), new Command() {
+                            @Override
+                            /**
+                             * Do this only after ALL of the metric queries for each resource
+                             */
+                            public void execute() {
+                                if (parentGroup.getExplicitResources().size() != measurementForEachResource.size()) {
+                                    Log.warn("Number of graphs doesn't match number of resources");
+                                    Log.warn("# of child resources: " + parentGroup.getExplicitResources().size());
+                                    Log.warn("# of charted graphs: " + measurementForEachResource.size());
                                 }
-                            });
-                    }
-                }
+                                drawGraph();
+                            }
+                        });
 
-            });
+                        final Set<Resource> childResources = parentGroup.getExplicitResources();
+                        if (!childResources.isEmpty()) {
+
+                            // resourceType will be the same for all autogroup children so get first
+                            Resource childResource = childResources.iterator().next();
+
+                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                                    childResource.getResourceType().getId(),
+                                    EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                                    new ResourceTypeRepository.TypeLoadedCallback() {
+                                        @Override
+                                        public void onTypesLoaded(final ResourceType type) {
+
+                                            for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                                                // only need the one selected measurement
+                                                if (def.getId() == getDefinitionId()) {
+                                                    setDefinition(def);
+                                                }
+                                            }
+
+                                            for (final Resource childResource : childResources) {
+                                                Log.debug("Adding child composite: " + childResource.getName()
+                                                        + childResource.getId());
+
+                                                GWTServiceLookup.getMeasurementDataService().findDataForResource(
+                                                        childResource.getId(), new int[]{getDefinitionId()},
+                                                        buttonBarDateTimeRangeEditor.getStartTime(),
+                                                        buttonBarDateTimeRangeEditor.getEndTime(), 60,
+                                                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                            @Override
+                                                            public void onFailure(Throwable caught) {
+                                                                CoreGUI.getErrorHandler().handleError(
+                                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                                countDownLatch.countDown();
+                                                            }
+
+                                                            @Override
+                                                            public void onSuccess(
+                                                                    List<List<MeasurementDataNumericHighLowComposite>> measurements) {
+                                                                addMeasurementForEachResource(childResource.getName(),
+                                                                        childResource.getId(), measurements.get(0));
+                                                                countDownLatch.countDown();
+                                                            }
+                                                        });
+                                            }
+                                        }
+                                    });
+                        }
+                    }
+
+                });
 
     }
 
@@ -418,6 +424,36 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         return MSG.chart_xaxis_time_format_hours();
     }
 
+    @Override
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshUtil.onDestroy(refreshTimer);
+
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean isRefreshing() {
+        return isRefreshing;
+    }
+
+    //Custom refresh operation as we are not directly extending Table
+    @Override
+    public void refresh() {
+        if (isVisible() && !isRefreshing()) {
+            isRefreshing = true;
+            try {
+                buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
+                refreshData();
+            } finally {
+                isRefreshing = false;
+            }
+        }
+    }
     /**
      * Client can choose which graph types to render.
      */

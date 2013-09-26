@@ -103,7 +103,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     }
 
     public void populateData() {
-        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
         ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -143,7 +142,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                                 Log.warn("# of charted graphs: " + measurementForEachResource.size());
                             }
                             drawGraph();
-                            buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                         }
                     });
 
@@ -284,6 +282,9 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
                 @Override
                 public void run() {
+                    if(!buttonBarDateTimeRangeEditor.isCustomTimeRangeActive()){
+                        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
+                    }
                     drawJsniChart();
                 }
             }.schedule(200);
@@ -357,7 +358,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                 sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
                 MeasurementNumericValueAndUnits dataValue = normalizeUnitsAndValues(measurement.getValue(),
                         definition.getUnits());
-                //sb.append(" \"y\":" + MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits()) + "},");
                 sb.append(" \"y\":" + dataValue.getValue() + "},");
                 adjustedMeasurementUnits = dataValue.getUnits().toString();
             }
@@ -381,8 +381,9 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
             }
             sb.setLength(sb.length() - 1); // delete the last ','
             sb.append("]");
+            Log.debug("Multi-resource Graph size: " + measurementForEachResource.size());
         }
-        Log.debug("Multi-resource Graph json: " + sb.toString());
+        //Log.debug("Multi-resource Graph json: " + sb.toString());
         return sb.toString();
     }
 

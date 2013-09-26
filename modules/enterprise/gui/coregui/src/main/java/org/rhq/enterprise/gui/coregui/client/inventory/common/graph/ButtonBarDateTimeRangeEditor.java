@@ -64,9 +64,12 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private Label dateRangeLabel;
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
+    // just a reference to pass to CustomDateRangeWindow as it must be final
+    // so 'this' won't work
     final private ButtonBarDateTimeRangeEditor self;
     private RefreshIntervalMenu refreshIntervalMenu;
     private boolean allowPreferenceUpdateRefresh;
+    private boolean isCustomDateRangeActive;
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs, Refreshable d3GraphListView) {
         this.self = this;
@@ -110,6 +113,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                 CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow(MSG
                     .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(), self,
                     new Date(prefs.begin), new Date(prefs.end));
+                isCustomDateRangeActive = true;
                 customDateRangeWindow.show();
             }
         });
@@ -128,6 +132,10 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         toolStrip.addMember(refreshIntervalMenu);
 
         addMember(toolStrip);
+    }
+
+    public boolean isCustomTimeRangeActive(){
+        return isCustomDateRangeActive;
     }
 
     public void redrawGraphs() {
@@ -213,6 +221,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         public void onClick(ClickEvent clickEvent) {
             IButton button = (IButton) clickEvent.getSource();
             String selectedDateTimeRange = button.getTitle();
+            isCustomDateRangeActive = false;
             Date now = new Date();
             Date calculatedStartDateTime = calculateStartDate(now, selectedDateTimeRange);
             saveDateRange(calculatedStartDateTime.getTime(), now.getTime());

@@ -19,7 +19,7 @@
 
 package org.rhq.core.pc.inventory;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -147,7 +147,7 @@ public class ResourceContainerTest {
     public void testUninterruptedComponentInvocationContext() throws Exception {
         ResourceContainer resourceContainer = getResourceContainer();
         OperationFacet proxy = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-                FacetLockType.WRITE, 150, true, false, true);
+                FacetLockType.WRITE, SECONDS.toMillis(2), true, false, true);
         try {
             OperationResult op = proxy.invokeOperation("op", new Configuration());
             assertTrue(op.getSimpleResult().equals(MockResourceComponent.OPERATION_RESULT));
@@ -218,8 +218,8 @@ public class ResourceContainerTest {
         public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
             long start = System.nanoTime();
             while (!resourceContext.getComponentInvocationContext().isInterrupted()) {
-                if ((System.nanoTime() - start) > MILLISECONDS.toNanos(100)) {
-                    // Return after 100ms
+                // Return after 1s
+                if ((System.nanoTime() - start) > SECONDS.toNanos(1)) {
                     caughtInterruptedComponentInvocation = false;
                     return new OperationResult(OPERATION_RESULT);
                 }

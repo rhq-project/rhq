@@ -2,7 +2,7 @@
   <parent>
     <artifactId>rhq-plugins-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.7.0.JON</version>
+    <version>4.9.0.JON320ER2</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>

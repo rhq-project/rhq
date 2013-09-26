@@ -43,11 +43,13 @@ import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
+
 
 /**
  * @author John Mazzitelli
@@ -512,10 +514,10 @@ public class InstallerServiceImpl implements InstallerService {
             clearTextDbPassword);
         String storageUsernameSetting = storageProperties.get(ServerProperties.PROP_STORAGE_USERNAME);
         String storagePasswordSetting = storageProperties.get(ServerProperties.PROP_STORAGE_PASSWORD);
-        if (null != storageUsernameSetting) {
+        if (StringUtil.isNotBlank(storageUsernameSetting)) {
             serverProperties.put(ServerProperties.PROP_STORAGE_USERNAME, storageUsernameSetting);
         }
-        if (null != storagePasswordSetting) {
+        if (StringUtil.isNotBlank(storagePasswordSetting)) {
             serverProperties.put(ServerProperties.PROP_STORAGE_PASSWORD, storagePasswordSetting);
         }
 

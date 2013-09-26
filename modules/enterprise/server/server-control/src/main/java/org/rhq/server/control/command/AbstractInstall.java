@@ -482,9 +482,9 @@ public abstract class AbstractInstall extends ControlCommand {
         File basedirForData = new File(getBaseDir().getParentFile(), "rhq-data");
 
         // check that the data directories are set and convert to absolute dirs
-        File dataDirProp = new File(storageProperties.getProperty("data", "data"));
-        File commitlogDirProp = new File(storageProperties.getProperty("commitlog", "commit_log"));
-        File savedcachesDirProp = new File(storageProperties.getProperty("saved-caches", "saved_caches"));
+        File dataDirProp = new File(storageProperties.getProperty("rhq.storage.data", "data"));
+        File commitlogDirProp = new File(storageProperties.getProperty("rhq.storage.commitlog", "commit_log"));
+        File savedcachesDirProp = new File(storageProperties.getProperty("rhq.storage.saved-caches", "saved_caches"));
 
         if (!dataDirProp.isAbsolute()) {
             dataDirProp = new File(basedirForData, dataDirProp.getPath());
@@ -518,9 +518,9 @@ public abstract class AbstractInstall extends ControlCommand {
             if (rhqctlCommandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 StorageDataDirectories dataDirs;
                 dataDirs = getCustomStorageDataDirectories(rhqctlCommandLine);
-                storageProperties.setProperty("data", dataDirs.dataDir.getAbsolutePath());
-                storageProperties.setProperty("commitlog", dataDirs.commitlogDir.getAbsolutePath());
-                storageProperties.setProperty("saved-caches", dataDirs.savedcachesDir.getAbsolutePath());
+                storageProperties.setProperty("rhq.storage.data", dataDirs.dataDir.getAbsolutePath());
+                storageProperties.setProperty("rhq.storage.commitlog", dataDirs.commitlogDir.getAbsolutePath());
+                storageProperties.setProperty("rhq.storage.saved-caches", dataDirs.savedcachesDir.getAbsolutePath());
             }
 
             // add the properties set in rhq-storage.properties to the command line

@@ -208,8 +208,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     public void setStorageClusterSettings(Subject subject, SystemSettings settings) {
         for (SystemSetting setting : settings.keySet()) {
             if (!isStorageSetting(setting)) {
-                throw new IllegalArgumentException(setting + " cannot be updated through this method. This method " +
-                    "only allows updating of storage cluster settings.");
+                throw new IllegalArgumentException(setting + " cannot be updated through this method. This method "
+                    + "only allows updating of storage cluster settings.");
             }
         }
         setSystemSettings(settings, false, true);
@@ -255,12 +255,13 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 String existingValue = transformSystemConfigurationProperty(prop, existingConfig.getPropertyValue(),
                     true);
 
-                if ((existingValue == null && value != null) || !existingValue.equals(value)) {
+                //also for oracle, treat null and empty string as the same.
+                if ((isEmpty(existingValue) && !isEmpty(value))
+                    || (null != existingValue && !existingValue.equals(value))) {
                     //SystemSetting#isReadOnly should be a superset of the "fReadOnly" field in the database
                     //but let's just be super paranoid here...
-                    if ((prop.isReadOnly()
-                        || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue())) &&
-                        !(isStorageSetting(prop) || updateStorageSettings)) {
+                    if ((prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly()
+                        .booleanValue())) && !(isStorageSetting(prop) || updateStorageSettings)) {
                         throw new IllegalArgumentException("The setting [" + prop.getInternalName()
                             + "] is read-only - you cannot change its current value! Current value is ["
                             + existingConfig.getPropertyValue() + "] while the new value was [" + value + "].");
@@ -282,12 +283,20 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         cachedSystemSettings = null;
     }
 
+    private static boolean isEmpty(String string) {
+        return null == string || string.trim().isEmpty();
+    }
+
     private boolean isStorageSetting(SystemSetting setting) {
         switch (setting) {
-            case STORAGE_CQL_PORT: return true;
-            case STORAGE_GOSSIP_PORT: return true;
-            case STORAGE_AUTOMATIC_DEPLOYMENT: return true;
-            default: return false;
+        case STORAGE_CQL_PORT:
+            return true;
+        case STORAGE_GOSSIP_PORT:
+            return true;
+        case STORAGE_AUTOMATIC_DEPLOYMENT:
+            return true;
+        default:
+            return false;
         }
     }
 

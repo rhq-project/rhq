@@ -41,4 +41,19 @@
     <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/measurement/MeasurementDataManagerRemote</className>
+    <differenceType>7006</differenceType>  <!-- method return type changed -->
+    <method>org.rhq.core.domain.measurement.MeasurementAggregate getAggregate(org.rhq.core.domain.auth.Subject, int, long, long)</method>
+    <to>org.rhq.enterprise.server.measurement.MeasurementAggregate</to>
+    <justification>In RHQ 4.8 the MeasurementAggregate class was moved from server jar module to core domain module. This change is not backward compatible with Java clients using the remote EJB API. The breaking change was introduced by commit 2f6e74080e2299 the backward compatible change was introduced by c2a609f48d5f36.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/measurement/MeasurementDataManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.measurement.MeasurementAggregate getMeasurementAggregate(org.rhq.core.domain.auth.Subject, int, long, long)</method>
+    <justification>Adding a method to a remote API interface is safe. This is method is added in order to deprecate the getAggregate. For more details see the previous intentional change.</justification>
+  </difference>
+
 </differences>

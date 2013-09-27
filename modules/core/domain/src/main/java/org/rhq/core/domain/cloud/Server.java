@@ -306,6 +306,15 @@ public class Server implements Serializable {
     }
 
     /**
+     * @deprecated do not use this method as it may corrupt the tracking of the server status. Use the new
+     * {@link #clearStatus(org.rhq.core.domain.cloud.Server.Status)} instead.
+     */
+    @Deprecated
+    public void clearStatus() {
+        this.status = 0;
+    }
+
+    /**
      * If some subsystem makes a change to some data that this server cares about (as summarized
      * by the various {@link Status} elements), then that change should be added via this method.
      * Periodically, a background job will come along, check the status, and possibly perform

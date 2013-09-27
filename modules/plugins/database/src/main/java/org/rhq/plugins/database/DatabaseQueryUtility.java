@@ -44,7 +44,11 @@ public class DatabaseQueryUtility {
 
     private static final Log LOG = LogFactory.getLog(DatabaseQueryUtility.class);
 
-    private DatabaseQueryUtility() {}
+    /**
+     * @deprecated instantiating a static utility class doesn't make sense. Don't do it.
+     */
+    @Deprecated
+    public DatabaseQueryUtility() {}
 
     /**
      * Executes a database update.
@@ -273,5 +277,15 @@ public class DatabaseQueryUtility {
             } catch (SQLException e) {
             }
         }
+    }
+
+    /**
+     * @deprecated This class is not used for anything in the codebase of the database plugin. If you are using it
+     * in some way or another, move it to your own code, because this class will be removed in future.
+     */
+    @Deprecated
+    public static class StatementParameter {
+        private String name;
+        private String value;
     }
 }

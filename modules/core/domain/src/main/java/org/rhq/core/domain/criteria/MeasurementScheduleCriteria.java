@@ -42,9 +42,36 @@ public class MeasurementScheduleCriteria extends Criteria {
     private static final long serialVersionUID = 3L;
 
     // sort fields from the MeasurementSchedule's MeasurementDefinition
+
+    /**
+     * Note that sorting by definition id alone might not produce repeatable results. This depends on the filters
+     * and other sort field applied.
+     */
+    public static final String SORT_FIELD_DEFINITION_ID = "definitionId";
     public static final String SORT_FIELD_NAME = "name";
     public static final String SORT_FIELD_DISPLAY_NAME = "displayName";
     public static final String SORT_FIELD_DATA_TYPE = "dataType";
+
+    /**
+     * @deprecated Sorting by this field has never been supported. This constant has been introduced in error and will
+     * be removed in the next major release.
+     */
+    @Deprecated
+    public static final String SORT_FIELD_ENABLED = "enabled";
+
+    /**
+     * @deprecated Sorting by this field has never been supported. This constant has been introduced in error and will
+     * be removed in the next major release.
+     */
+    @Deprecated
+    public static final String SORT_FIELD_INTERVAL = "interval";
+
+    /**
+     * @deprecated Sorting by this field has never been supported. This constant has been introduced in error and will
+     * be removed in the next major release.
+     */
+    @Deprecated
+    public static final String SORT_FIELD_DESCRIPTION = "description";
 
     // filter fields
     public static final String FILTER_FIELD_DEFINITION_IDS = "definitionIds";
@@ -93,6 +120,7 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "   WHERE parent.id = ? )");
         filterOverrides.put(FILTER_FIELD_RESOURCE_TYPE_ID, "resource.type.id = ?");
 
+        sortOverrides.put(SORT_FIELD_DEFINITION_ID, "definition.id");
         sortOverrides.put(SORT_FIELD_NAME, "definition.name");
         sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "definition.displayName");
         sortOverrides.put(SORT_FIELD_DATA_TYPE, "definition.dataType");

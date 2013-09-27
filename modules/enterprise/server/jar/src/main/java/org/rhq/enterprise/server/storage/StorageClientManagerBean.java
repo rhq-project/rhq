@@ -35,21 +35,17 @@ import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ProtocolOptions;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.policies.DefaultRetryPolicy;
-import com.datastax.driver.core.policies.LoggingRetryPolicy;
-import com.datastax.driver.core.policies.RoundRobinPolicy;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.util.StringUtil;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
@@ -65,12 +61,16 @@ public class StorageClientManagerBean {
 
     private final Log log = LogFactory.getLog(StorageClientManagerBean.class);
 
-    private static final String USERNAME_PROP = "rhq.storage.username";
-    private static final String PASSWORD_PROP = "rhq.storage.password";
     private static final String RHQ_KEYSPACE = "rhq";
 
     @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
     private StorageNodeManagerLocal storageNodeManager;
+
+    @EJB
+    private SystemManagerLocal systemManager;
 
     private Cluster cluster;
     private StorageSession session;
@@ -90,8 +90,10 @@ public class StorageClientManagerBean {
 
         log.info("Initializing storage client subsystem");
 
-        String username = getRequiredStorageProperty(USERNAME_PROP);
-        String password = getRequiredStorageProperty(PASSWORD_PROP);
+        // Always get the creds from the DB, system props may not be up to date at install time
+        SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
+        final String username = settings.get(SystemSetting.STORAGE_USERNAME);
+        final String password = settings.get(SystemSetting.STORAGE_PASSWORD);
 
         List<StorageNode> storageNodes = new ArrayList<StorageNode>();
         for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
@@ -101,9 +103,9 @@ public class StorageClientManagerBean {
             // and REMOVE_MAINTENANCE, but this errors on the side of being safe. Lastly,
             // if a storage node does not have a resource, then that means it was was
             // deployed prior to installing the server.
-            if (storageNode.getOperationMode() == StorageNode.OperationMode.NORMAL ||
-                storageNode.getOperationMode() == StorageNode.OperationMode.MAINTENANCE ||
-                storageNode.getResource() == null) {
+            if (storageNode.getOperationMode() == StorageNode.OperationMode.NORMAL
+                || storageNode.getOperationMode() == StorageNode.OperationMode.MAINTENANCE
+                || storageNode.getResource() == null) {
                 storageNodes.add(storageNode);
             }
         }
@@ -115,9 +117,15 @@ public class StorageClientManagerBean {
                     + "storage node to fix this issue.");
         }
 
-        checkSchemaCompability(username, password, storageNodes);
-
-
+        try {
+            checkSchemaCompability(username, password, storageNodes);
+        } catch (NoHostAvailableException e) {
+            initialized = false;
+            log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
+                + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
+                + " as soon as possible.");
+            return initialized;
+        }
         Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);
 
@@ -218,21 +226,17 @@ public class StorageClientManagerBean {
         ProtocolOptions.Compression compression;
         if (compressionEnabled) {
             compression = ProtocolOptions.Compression.SNAPPY;
-            log.info("Compression has been enabled for the storage client. Be aware that if your storage nodes do " +
-                "not support compression then the client will not be able to connect to the storage cluster.");
+            log.info("Compression has been enabled for the storage client. Be aware that if your storage nodes do "
+                + "not support compression then the client will not be able to connect to the storage cluster.");
         } else {
             compression = ProtocolOptions.Compression.NONE;
             log.debug("Storage client compression is disabled");
         }
 
-        cluster = new ClusterBuilder()
-            .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
-            .withCredentialsObfuscated(username, password)
-            .withPort(port)
+        cluster = new ClusterBuilder().addContactPoints(hostNames.toArray(new String[hostNames.size()]))
+            .withCredentialsObfuscated(username, password).withPort(port)
             .withLoadBalancingPolicy(new RoundRobinPolicy())
-            .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE))
-            .withCompression(compression)
-            .build();
+            .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE)).withCompression(compression).build();
 
         return cluster.connect(RHQ_KEYSPACE);
     }
@@ -249,15 +253,5 @@ public class StorageClientManagerBean {
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
         metricsServer.init();
-    }
-
-    private String getRequiredStorageProperty(String property) {
-        String value = System.getProperty(property);
-        if (StringUtil.isEmpty(property)) {
-            throw new IllegalStateException("The system property [" + property + "] is not set. The RHQ "
-                + "server will not be able connect to the RHQ storage node(s). This property should be defined "
-                + "in rhq-server.properties.");
-        }
-        return value;
     }
 }

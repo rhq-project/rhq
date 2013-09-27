@@ -468,7 +468,8 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Cannot connect to the database: " + testConnectionErrorMessage);
         }
 
-        // write the new properties to the rhq-server.properties file (this ensures the encoded password is written out)
+        // write the new properties to the rhq-server.properties file (this ensures the encoded password is written
+        // out).  Being paranoid, leaving this here despite the fact that we now write it out again, at the bottom.
         saveServerProperties(serverProperties);
 
         // Prepare the db schema.
@@ -548,6 +549,9 @@ public class InstallerServiceImpl implements InstallerService {
         ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
             parseNodeInformation(serverProperties));
         ServerInstallUtil.persistStorageClusterSettingsIfNecessary(serverProperties, clearTextDbPassword);
+
+        // For sanity, make sure the server props file is in sync with the db settings.
+        saveServerProperties(serverProperties);
     }
 
     @Override

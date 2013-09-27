@@ -435,7 +435,9 @@ public class StartupBean implements StartupLocal {
     }
 
     /**
-     * Initalizes the storage client subsystem which is needed for reading/writing metric data.
+     * Initializes the storage client subsystem which is needed for reading/writing metric data.
+     *
+     * @return true if the storage subsystem is running
      */
     private void initStorageClient() {
         storageClientManager.init();

@@ -35,6 +35,14 @@ import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.LoggingRetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -124,7 +132,7 @@ public class StorageClientManagerBean {
             log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                 + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                 + " as soon as possible.");
-            return initialized;
+            return;
         }
         Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);

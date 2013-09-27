@@ -36,8 +36,12 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  */
 public class ConfigurationUtility {
 
-    private ConfigurationUtility() {
-        // Utility class
+    /**
+     * @deprecated do not create instances of this class. It is meant as a static utility class.
+     */
+    @Deprecated
+    public ConfigurationUtility() {
+
     }
 
     /**

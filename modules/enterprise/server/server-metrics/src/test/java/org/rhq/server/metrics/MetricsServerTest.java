@@ -101,6 +101,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             }
             return currentHour;
         }
+
+        @Override
+        protected DateTime currentInterval() {
+            return currentHour;
+        }
     }
 
     @BeforeMethod

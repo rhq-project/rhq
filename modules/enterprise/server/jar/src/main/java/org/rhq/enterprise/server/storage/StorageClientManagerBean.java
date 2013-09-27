@@ -135,7 +135,7 @@ public class StorageClientManagerBean {
             log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                 + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                 + " as soon as possible.");
-            return initialized;
+            return;
         }
         Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);

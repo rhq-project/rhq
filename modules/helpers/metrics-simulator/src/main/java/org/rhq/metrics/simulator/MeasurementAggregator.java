@@ -25,6 +25,8 @@
 
 package org.rhq.metrics.simulator;
 
+import com.codahale.metrics.Timer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -39,20 +41,18 @@ public class MeasurementAggregator implements Runnable {
 
     private MetricsServer metricsServer;
 
+    private Metrics metrics;
+
     private ShutdownManager shutdownManager;
 
-    public void setMetricsServer(MetricsServer metricsServer) {
+    public MeasurementAggregator(MetricsServer metricsServer, ShutdownManager shutdownManager, Metrics metrics) {
         this.metricsServer = metricsServer;
-    }
-
-    public void setShutdownManager(ShutdownManager shutdownManager) {
         this.shutdownManager = shutdownManager;
+        this.metrics = metrics;
     }
 
-    @Override
     public void run() {
-        log.info("Starting metrics aggregation...");
-        long startTime = System.currentTimeMillis();
+        Timer.Context context = metrics.totalAggregationTime.time();
         try {
             metricsServer.calculateAggregates();
         } catch (Exception e) {
@@ -60,8 +60,7 @@ public class MeasurementAggregator implements Runnable {
             log.error("Requesting simulation shutdown...");
             shutdownManager.shutdown(1);
         } finally {
-            long endTime = System.currentTimeMillis();
-            log.info("Finished metrics aggregation in " + (endTime - startTime) + " ms");
+            context.stop();
         }
     }
 }

@@ -47,6 +47,21 @@ public class ServerDetails implements Serializable {
         SERVER_LOCAL_TIME, //
         SERVER_INSTALL_DIR, // where RHQ is installed, the top directory where everything else is
         SERVER_HOME_DIR, // where the RHQ server's JBossAS deployment is; this is under the install dir 
+
+        /**
+         * @deprecated this is no longer used or exposed by the server. The measurements are not stored in the database
+         * anymore.
+         */
+        @Deprecated
+        CURRENT_MEASUREMENT_TABLE, //
+
+        /**
+         * @deprecated this is no longer used or exposed by the server. The measurements are not stored in the database
+         * anymore.
+         */
+        @Deprecated
+        NEXT_MEASUREMENT_TABLE_ROTATION, //
+
         SERVER_IDENTITY;
     };
 

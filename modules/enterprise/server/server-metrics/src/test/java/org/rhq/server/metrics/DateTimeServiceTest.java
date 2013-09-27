@@ -96,6 +96,18 @@ public class DateTimeServiceTest {
     }
 
     @Test
+    public void getMinuteTimeSliceForSixHourData() {
+        configuration = new MetricsConfiguration();
+        configuration.setSixHourTimeSliceDuration(Minutes.minutes(24).toStandardDuration());
+
+        DateTime currentHour = dateTimeService.hour0().plusHours(9).plusMinutes(12).plusSeconds(47);
+        DateTime timeSlice = dateTimeService.getTimeSlice(currentHour, configuration.getSixHourTimeSliceDuration());
+        DateTime expected = dateTimeService.hour0().plusHours(9);
+
+        assertEquals(timeSlice, expected, "The hour time slice for six hour data is wrong");
+    }
+
+    @Test
     public void timestampBefore7DaysShouldBeInRawDataRange() {
         assertTrue(dateTimeService.isInRawDataRange(now().minusHours(1)), "1 hour ago should be in raw data range.");
         assertTrue(dateTimeService.isInRawDataRange(now().minusDays(1)), "1 day ago should be in raw data range.");

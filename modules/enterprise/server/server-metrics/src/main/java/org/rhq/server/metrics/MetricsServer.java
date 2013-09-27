@@ -27,6 +27,7 @@ package org.rhq.server.metrics;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,13 +98,13 @@ public class MetricsServer {
      * purged.
      */
     private void determineMostRecentRawDataSinceLastShutdown() {
-        DateTime previousHour = currentHour().minusHours(1);
+        DateTime previousHour = currentInterval().minus(configuration.getRawTimeSliceDuration());
         DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());
 
         ResultSet resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
         Row row = resultSet.one();
         while (row == null && previousHour.compareTo(oldestRawTime) > 0) {
-            previousHour = previousHour.minusHours(1);
+            previousHour = previousHour.minus(configuration.getRawTimeSliceDuration());
             resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
             row = resultSet.one();
         }
@@ -123,6 +124,10 @@ public class MetricsServer {
                     "next time the aggregation job runs.");
             }
         }
+    }
+
+    protected DateTime currentInterval() {
+        return dateTimeService.getTimeSlice(DateTime.now(), configuration.getRawTimeSliceDuration());
     }
 
     protected DateTime currentHour() {
@@ -380,7 +385,7 @@ public class MetricsServer {
      * for subsequently computing baselines.
      */
     public Iterable<AggregateNumericMetric> calculateAggregates() {
-        DateTime theHour = currentHour();
+        DateTime theHour = currentInterval();
 
         if (pastAggregationMissed) {
             calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());
@@ -394,12 +399,15 @@ public class MetricsServer {
     private Iterable<AggregateNumericMetric> calculateAggregates(long startTime) {
         DateTime dt = new DateTime(startTime);
         DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
-        DateTime lastHour = currentHour.minusHours(1);
+        DateTime lastHour = currentHour.minus(configuration.getRawTimeSliceDuration());
 
         long hourTimeSlice = lastHour.getMillis();
 
         long sixHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getOneHourTimeSliceDuration()).getMillis();
+        if (log.isDebugEnabled()) {
+            log.debug("six hour time slice = " + new Date(sixHourTimeSlice));
+        }
 
         long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getSixHourTimeSliceDuration()).getMillis();
@@ -457,7 +465,7 @@ public class MetricsServer {
 
             for (MetricsIndexEntry indexEntry : indexEntries) {
                 DateTime startTime = indexEntry.getTime();
-                DateTime endTime = startTime.plusMinutes(60);
+                DateTime endTime = startTime.plus(configuration.getRawTimeSliceDuration());
 
                 Iterable<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(),
                     startTime.getMillis(), endTime.getMillis());
@@ -517,7 +525,7 @@ public class MetricsServer {
         try {
             DateTime startTime = new DateTime(timeSlice);
             DateTime endTime = startTime.plus(nextDuration);
-            DateTime currentHour = currentHour();
+            DateTime currentHour = currentInterval();
 
             if (log.isDebugEnabled()) {
                 log.debug("Time slice start time is [" + startTime + "] and the end time is [" + endTime +  "].");
@@ -554,6 +562,9 @@ public class MetricsServer {
                 AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
                 aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
                 toMetrics.add(aggregatedMetric);
+                if (toTable == MetricsTable.TWENTY_FOUR_HOUR) {
+                    log.debug("Calculated 24 hour metric = " + aggregatedMetric);
+                }
             }
 
             switch (toTable) {

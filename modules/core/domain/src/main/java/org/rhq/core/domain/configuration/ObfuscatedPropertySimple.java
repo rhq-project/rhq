@@ -216,7 +216,18 @@ public class ObfuscatedPropertySimple extends PropertySimple {
             throw new IllegalArgumentException("Failed to obfuscate property value: [" + value + "]", e);
         }
     }
-    
+
+    /**
+     * @deprecated do not use this method. It has been superseded by the {@link #deobfuscate(String)} and
+     * {@link #obfuscate(String)} pair. The way the obfuscated value is handled has changed and is fully contained
+     * within this class. You should not worry about it, nor have a need to call any of the obfuscate() methods.
+     * This method is currently no-op and will be removed in future.
+     */
+    @Deprecated
+    protected void obfuscate() {
+
+    }
+
     /**
      * Overriden to not leak the unobfuscated value in the toString() method, output of which
      * might end up in logs, etc.

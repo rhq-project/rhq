@@ -49,6 +49,17 @@ public class AlertConditionAvailabilityCategoryComposite extends AbstractAlertCo
         this.availabilityType = (null != availabilityType) ? availabilityType : AvailabilityType.UNKNOWN;
     }
 
+    /**
+     * @deprecated This constructor will NOT produce a valid instance of this class, because it cannot specify
+     * the required alert definition id. Use {@link #AlertConditionAvailabilityCategoryComposite(
+     * org.rhq.core.domain.alert.AlertCondition, Integer, Integer, org.rhq.core.domain.measurement.AvailabilityType)}
+     * instead.
+     */
+    @Deprecated
+    public AlertConditionAvailabilityCategoryComposite(AlertCondition condition, Integer resourceId, AvailabilityType availabilityType) {
+        this(condition, null, resourceId, availabilityType);
+    }
+
     public Integer getAlertDefinitionId() {
         return alertDefinitionId;
     }

@@ -25,8 +25,6 @@
 
 package org.rhq.server.metrics;
 
-import static org.joda.time.DateTime.now;
-
 import org.joda.time.Chronology;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
@@ -45,10 +43,14 @@ public class DateTimeService {
 
     private DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 
-    private MetricsConfiguration configuration;
+    protected MetricsConfiguration configuration;
 
     public void setConfiguration(MetricsConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    public DateTime now() {
+        return DateTime.now();
     }
 
     public DateTime getTimeSlice(long timestamp, Minutes interval) {

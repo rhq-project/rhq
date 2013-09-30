@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +41,6 @@ import org.joda.time.Minutes;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
-import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.StorageSession;
@@ -55,13 +55,17 @@ public class Simulator implements ShutdownManager {
     private boolean shutdown = false;
 
     public void run(SimulationPlan plan) {
-        final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
-            new SimulatorThreadFactory());
+        final ScheduledExecutorService aggregators = Executors.newScheduledThreadPool(1, new SimulatorThreadFactory());
+        final ScheduledExecutorService collectors = Executors.newScheduledThreadPool(
+            plan.getNumMeasurementCollectors(), new SimulatorThreadFactory());
+        final ExecutorService aggregationQueue = Executors.newSingleThreadExecutor(new SimulatorThreadFactory());
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                shutdown(executorService);
+                shutdown(collectors, "collectors", 5);
+                shutdown(aggregators, "aggregators", 1);
+                shutdown(aggregationQueue, "aggregationQueue", Integer.MAX_VALUE);
             }
         });
 
@@ -75,27 +79,25 @@ public class Simulator implements ShutdownManager {
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
 
-        DateTimeService dateTimeService = new DateTimeService();
+        SimulatorDateTimeService dateTimeService = new SimulatorDateTimeService();
         dateTimeService.setConfiguration(plan.getMetricsServerConfiguration());
         metricsServer.setDateTimeService(dateTimeService);
 
         Metrics metrics = new Metrics();
 
-        MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics);
+        MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics,
+            aggregationQueue);
 
         ConsoleReporter consoleReporter = createConsoleReporter(metrics);
 
-        int batchSize = 3;
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
-            MeasurementCollector measurementCollector = new MeasurementCollector(batchSize, batchSize * i, metrics,
-                metricsServer);
-            executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
+            collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
+                plan.getBatchSize() * i, metrics, metricsServer, dateTimeService), 0, plan.getCollectionInterval(),
                 TimeUnit.MILLISECONDS);
         }
 
-        executorService.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
+        aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
             TimeUnit.MILLISECONDS);
-
         try {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
@@ -130,18 +132,18 @@ public class Simulator implements ShutdownManager {
         System.exit(status);
     }
 
-    private void shutdown(ScheduledExecutorService executorService) {
-        log.info("Shutting down executor service");
-        executorService.shutdown();
+    private void shutdown(ExecutorService service, String serviceName, int wait) {
+        log.info("Shutting down " + serviceName);
+        service.shutdown();
         try {
-            executorService.awaitTermination(5, TimeUnit.SECONDS);
+            service.awaitTermination(wait, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
-        if (!executorService.isTerminated()) {
-            log.info("Forcing executor service shutdown.");
-            executorService.shutdownNow();
+        if (!service.isTerminated()) {
+            log.info("Forcing " + serviceName + " shutdown.");
+            service.shutdownNow();
         }
-        log.info("Shut down complete");
+        log.info(serviceName + " shut down complete");
     }
 
     private void createSchema(String[] nodes, int cqlPort) {

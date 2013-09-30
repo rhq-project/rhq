@@ -31,14 +31,10 @@ import java.net.InetAddress;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.joda.time.Days;
-import org.joda.time.Duration;
-import org.joda.time.Hours;
 import org.joda.time.Minutes;
 import org.joda.time.Seconds;
 
 import org.rhq.server.metrics.MetricsConfiguration;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author John Sanda
@@ -50,11 +46,12 @@ public class SimulationPlanner {
         JsonNode root = mapper.readTree(jsonFile);
         SimulationPlan simulation = new SimulationPlan();
 
-        simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 1000L));
-        simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 60000L));
+        simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 1250L));
+        simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 150000L));  // 2.5 minutes
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
         simulation.setThreadPoolSize(getInt(root.get("threadPoolSize"), simulation.getNumMeasurementCollectors() + 2));
+        simulation.setBatchSize(getInt(root.get("batchSize"), 5000));
 
         String[] nodes;
         if (root.get("nodes") == null || root.get("nodes").size() == 0) {
@@ -78,97 +75,23 @@ public class SimulationPlanner {
 
     private MetricsConfiguration createDefaultMetricsConfiguration() {
 
-        // 500 ms --> 30 sec
-        // 1 sec --> 1 minute
-        // 60 sec / 1 minute --> 1 hr
-        // 1440 sec / 24 minutes --> 1 day
-        // 168 minutes --> 1 week
-        // 744 minutes / 12.4 hr --> 31 days / 1 month
-        // 8928 minutes / 148.8 hr --> 1 yr
-
         MetricsConfiguration configuration = new MetricsConfiguration();
         configuration.setRawTTL(Minutes.minutes(168).toStandardSeconds().getSeconds());
         configuration.setRawRetention(Minutes.minutes(168).toStandardDuration());
-        configuration.setRawTimeSliceDuration(Minutes.ONE.toStandardDuration());
+        configuration.setRawTimeSliceDuration(Seconds.seconds(150).toStandardDuration());
 
         configuration.setOneHourTTL(Minutes.minutes(336).toStandardSeconds().getSeconds());
         configuration.setOneHourRetention(Minutes.minutes(336));
-        configuration.setOneHourTimeSliceDuration(Minutes.minutes(6).toStandardDuration());
+        configuration.setOneHourTimeSliceDuration(Minutes.minutes(15).toStandardDuration());
 
         configuration.setSixHourTTL(Minutes.minutes(744).toStandardSeconds().getSeconds());
         configuration.setSixHourRetention(Minutes.minutes(744).toStandardSeconds());
-        configuration.setSixHourTimeSliceDuration(Minutes.minutes(24).toStandardDuration());
+        configuration.setSixHourTimeSliceDuration(Minutes.minutes(60).toStandardDuration());
 
         configuration.setTwentyFourHourTTL(Minutes.minutes(8928).toStandardSeconds().getSeconds());
         configuration.setTwentyFourHourRetention(Minutes.minutes(8928).toStandardSeconds());
 
         return configuration;
-    }
-
-    private MetricsTable getTable(String name) {
-        if (name.equals(MetricsTable.RAW.getTableName())) {
-            return MetricsTable.RAW;
-        } else if (name.equals(MetricsTable.ONE_HOUR.getTableName())) {
-            return MetricsTable.ONE_HOUR;
-        } else if (name.equals(MetricsTable.SIX_HOUR.getTableName())) {
-            return MetricsTable.SIX_HOUR;
-        } else if (name.equals(MetricsTable.TWENTY_FOUR_HOUR.getTableName())) {
-            return MetricsTable.TWENTY_FOUR_HOUR;
-        } else {
-            throw new IllegalArgumentException(name + " is not a valid metrics table name");
-        }
-    }
-
-    private void setTTLAndRetention(MetricsTable table, int ttl, MetricsConfiguration configuration) {
-        switch (table) {
-            case RAW:
-                configuration.setRawTTL(ttl);
-                configuration.setRawRetention(Seconds.seconds(ttl).toStandardDuration());
-                break;
-            case ONE_HOUR:
-                configuration.setOneHourTTL(ttl);
-                configuration.setOneHourRetention(Seconds.seconds(ttl));
-                break;
-            case SIX_HOUR:
-                configuration.setSixHourTTL(ttl);
-                configuration.setSixHourRetention(Seconds.seconds(ttl));
-                break;
-            default:
-                configuration.setTwentyFourHourTTL(ttl);
-                configuration.setTwentyFourHourRetention(Seconds.seconds(ttl));
-                break;
-        }
-    }
-
-    private Duration getDuration(String units, int value) {
-        if (units.equals("seconds")) {
-            return Seconds.seconds(value).toStandardDuration();
-        } else if (units.equals("minutes")) {
-            return Minutes.minutes(value).toStandardDuration();
-        } else if (units.equals("hours")) {
-            return Hours.hours(value).toStandardDuration();
-
-        } else if (units.equals("days")) {
-            return Days.days(value).toStandardDuration();
-        } else {
-            throw new IllegalArgumentException(units + " is not a valid value for the units property.");
-        }
-    }
-
-    private void setTimeSliceDuration(MetricsTable table, Duration duration, MetricsConfiguration configuration) {
-        switch (table) {
-            case RAW:
-                configuration.setRawTimeSliceDuration(duration);
-                break;
-            case ONE_HOUR:
-                configuration.setOneHourTimeSliceDuration(duration);
-                break;
-            case SIX_HOUR:
-                configuration.setSixHourTimeSliceDuration(duration);
-                break;
-            default:
-                // do nothing
-        }
     }
 
     private long getLong(JsonNode node, long defaultValue) {

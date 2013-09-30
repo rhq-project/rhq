@@ -34,6 +34,7 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -941,7 +942,12 @@ public class StorageInstaller {
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);
             int status = installer.run(cmdLine);
             System.exit(status);
-        } catch (ParseException e) {
+        } catch (UnknownHostException unknownHostException) {
+            installer.log
+                .error("Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. "
+                + unknownHostException.getMessage());
+            throw unknownHostException;
+        } catch (ParseException parseException) {
             installer.printUsage();
             System.exit(STATUS_SHOW_USAGE);
         }

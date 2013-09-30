@@ -345,7 +345,6 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
-        log.debug("Updating metrics_index with time " + new DateTime(timeSlice));
         StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
             timeSlice);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {

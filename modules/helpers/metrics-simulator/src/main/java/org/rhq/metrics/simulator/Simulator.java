@@ -88,7 +88,7 @@ public class Simulator implements ShutdownManager {
         MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics,
             aggregationQueue);
 
-        ConsoleReporter consoleReporter = createConsoleReporter(metrics);
+        ConsoleReporter consoleReporter = createConsoleReporter(metrics, plan.getMetricsReportInterval());
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
@@ -107,14 +107,14 @@ public class Simulator implements ShutdownManager {
         shutdown(0);
     }
 
-    private ConsoleReporter createConsoleReporter(Metrics metrics) {
+    private ConsoleReporter createConsoleReporter(Metrics metrics, int reportInterval) {
         try {
             File basedir = new File(System.getProperty("rhq.metrics.simulator.basedir"));
             File logDir = new File(basedir, "log");
             ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(metrics.registry)
                 .convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS)
                 .outputTo(new PrintStream(new FileOutputStream(new File(logDir, "metrics.txt")))).build();
-            consoleReporter.start(1, TimeUnit.MINUTES);
+            consoleReporter.start(reportInterval, TimeUnit.SECONDS);
             return consoleReporter;
         } catch (FileNotFoundException e) {
             throw new RuntimeException("Failed to create console reporter", e);

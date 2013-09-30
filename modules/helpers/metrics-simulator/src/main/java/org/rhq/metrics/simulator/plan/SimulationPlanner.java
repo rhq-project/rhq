@@ -51,6 +51,7 @@ public class SimulationPlanner {
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
         simulation.setBatchSize(getInt(root.get("batchSize"), 5000));
+        simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 180));
 
         String[] nodes;
         if (root.get("nodes") == null || root.get("nodes").size() == 0) {

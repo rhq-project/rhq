@@ -32,8 +32,6 @@ import org.rhq.server.metrics.MetricsConfiguration;
  */
 public class SimulationPlan {
 
-    private int threadPoolSize;
-
     private long collectionInterval;
 
     private long aggregationInterval;
@@ -49,6 +47,8 @@ public class SimulationPlan {
     private int cqlPort;
 
     private int batchSize;
+
+    private int metricsReportInterval;
 
     public long getCollectionInterval() {
         return collectionInterval;
@@ -112,5 +112,13 @@ public class SimulationPlan {
 
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
+    }
+
+    public int getMetricsReportInterval() {
+        return metricsReportInterval;
+    }
+
+    public void setMetricsReportInterval(int metricsReportInterval) {
+        this.metricsReportInterval = metricsReportInterval;
     }
 }

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Serves the static content found in rhq-downloads.
  */
+@WebServlet(urlPatterns = {"/*"}, loadOnStartup = 1)
 public class DownloadServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
@@ -202,7 +204,7 @@ public class DownloadServlet extends HttpServlet {
                     }
                     writer.println("<ul>");
                     for (File file : files) {
-                        writer.println("<li><a href=\"" + req.getServletPath() + pathInfo + file.getName() + "\">"
+                        writer.println("<li><a href=\"" + req.getContextPath() + req.getServletPath() + pathInfo + file.getName() + "\">"
                             + file.getName() + "</a></li>");
                     }
                     writer.println("</ul>");

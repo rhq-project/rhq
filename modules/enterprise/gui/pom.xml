@@ -28,6 +28,9 @@
       </activation>
       <modules>
         <module>portal-war</module>
+        <module>remote-client-war</module>
+        <module>agentupdate-war</module>
+        <module>downloads-war</module>
         <module>content_http-war</module>
         <module>coregui</module>
         <module>rest-war</module>

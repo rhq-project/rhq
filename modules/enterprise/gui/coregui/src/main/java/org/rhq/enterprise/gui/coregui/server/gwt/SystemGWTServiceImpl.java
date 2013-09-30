@@ -48,8 +48,6 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     private static final long serialVersionUID = 1L;
 
-    private static final String PORTAL_WAR_CONTEXT = "/portal";
-
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
     private RemoteClientManagerLocal remoteClientManager = LookupUtil.getRemoteClientManager();
@@ -138,7 +136,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             HashMap<String, String> map = new HashMap<String, String>(files.size());
             for (File file : files) {
                 // key is the filename, value is the relative URL to download the file from the server
-                map.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/connectors/" + file.getName());
+                map.put(file.getName(), "/downloads/connectors/" + file.getName());
             }
             return map;
         } catch (Throwable t) {
@@ -158,7 +156,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
                 HashMap<String, String> ret = new HashMap<String, String>(files.size());
 
                 for (File file : files) {
-                    ret.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/cli-alert-scripts/" + file.getName());
+                    ret.put(file.getName(), "/downloads/cli-alert-scripts/" + file.getName());
                 }
                 return ret;
             }
@@ -178,7 +176,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
                 HashMap<String, String> ret = new HashMap<String, String>(files.size());
 
                 for (File file : files) {
-                    ret.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/script-modules/" + file.getName());
+                    ret.put(file.getName(), "/downloads/script-modules/" + file.getName());
                 }
                 return ret;
             }
@@ -207,7 +205,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             }
             File file = files.get(0);
             HashMap<String, String> ret = new HashMap<String, String>(1);
-            ret.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/bundle-deployer/" + file.getName());
+            ret.put(file.getName(), "/downloads/bundle-deployer/" + file.getName());
             return ret;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

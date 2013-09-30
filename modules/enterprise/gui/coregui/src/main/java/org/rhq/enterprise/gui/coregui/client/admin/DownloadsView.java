@@ -53,8 +53,6 @@ public class DownloadsView extends EnhancedVLayout {
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
-    private static final String PORTAL_WAR_CONTEXT = "/portal";
-
     private final SystemGWTServiceAsync systemManager = GWTServiceLookup.getSystemService();
 
     private SectionStack sectionStack;
@@ -145,7 +143,7 @@ public class DownloadsView extends EnhancedVLayout {
 
                 StaticTextItem linkItem = new StaticTextItem("agentLink");
                 linkItem.setTitle(MSG.common_label_link());
-                linkItem.setValue("<a href=\"" + PORTAL_WAR_CONTEXT + "/agentupdate/download\">"
+                linkItem.setValue("<a href=\"/agentupdate/download\">"
                     + MSG.view_admin_downloads_agent_link_value(version, build) + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("agentSpacer");
@@ -196,7 +194,7 @@ public class DownloadsView extends EnhancedVLayout {
 
                 StaticTextItem linkItem = new StaticTextItem("cliLink");
                 linkItem.setTitle(MSG.common_label_link());
-                linkItem.setValue("<a href=\"" + PORTAL_WAR_CONTEXT + "/client/download\">"
+                linkItem.setValue("<a href=\"/client/download\">"
                     + MSG.view_admin_downloads_cli_link_value(version, build) + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("clientSpacer");

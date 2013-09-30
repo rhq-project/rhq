@@ -48,6 +48,28 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-remote-client-war</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-downloads-war</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-agentupdate-war</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>rhq-coregui</artifactId>
             <version>${project.version}</version>
             <type>war</type>
@@ -261,6 +283,27 @@
                             <artifactId>rhq-portal</artifactId>
                             <bundleFileName>rhq-portal.war</bundleFileName>
                             <contextRoot>/portal</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-remote-client-war</artifactId>
+                            <bundleFileName>rhq-client.war</bundleFileName>
+                            <contextRoot>/client</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-downloads-war</artifactId>
+                            <bundleFileName>rhq-downloads.war</bundleFileName>
+                            <contextRoot>/downloads</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-agentupdate-war</artifactId>
+                            <bundleFileName>rhq-agentupdate.war</bundleFileName>
+                            <contextRoot>/agentupdate</contextRoot>
                         </webModule>
 
                         <!-- used to expose content through http -->

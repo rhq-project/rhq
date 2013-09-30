@@ -18,27 +18,27 @@
  */
 package org.rhq.enterprise.gui.client;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 /**
  * Serves the remote client binary that is stored in the RHQ Server's download area.
  * This servlet also provides version information regarding the version of the remote
  * client this servlet serves up.
  */
+@WebServlet(urlPatterns = {"/download", "/version"}, loadOnStartup = 1)
 public class RemoteClientServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;

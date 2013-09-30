@@ -50,7 +50,6 @@ public class SimulationPlanner {
         simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 150000L));  // 2.5 minutes
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
-        simulation.setThreadPoolSize(getInt(root.get("threadPoolSize"), simulation.getNumMeasurementCollectors() + 2));
         simulation.setBatchSize(getInt(root.get("batchSize"), 5000));
 
         String[] nodes;

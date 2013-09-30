@@ -50,14 +50,6 @@ public class SimulationPlan {
 
     private int batchSize;
 
-    public int getThreadPoolSize() {
-        return threadPoolSize;
-    }
-
-    public void setThreadPoolSize(int threadPoolSize) {
-        this.threadPoolSize = threadPoolSize;
-    }
-
     public long getCollectionInterval() {
         return collectionInterval;
     }

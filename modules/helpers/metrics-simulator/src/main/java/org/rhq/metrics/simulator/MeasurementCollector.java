@@ -53,16 +53,20 @@ public class MeasurementCollector implements Runnable {
 
     private Metrics metrics;
 
-    public MeasurementCollector(int batchSize, int startingScheduleId, Metrics metrics, MetricsServer metricsServer) {
+    private SimulatorDateTimeService dateTimeService;
+
+    public MeasurementCollector(int batchSize, int startingScheduleId, Metrics metrics, MetricsServer metricsServer,
+        SimulatorDateTimeService dateTimeService) {
         this.batchSize = batchSize;
         this.startingScheduleId = startingScheduleId;
         this.metrics = metrics;
         this.metricsServer = metricsServer;
+        this.dateTimeService = dateTimeService;
     }
 
     private Set<MeasurementDataNumeric> generateData() {
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(batchSize);
-        long timestamp = System.currentTimeMillis();
+        long timestamp = dateTimeService.now().getMillis();
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
         for (int i = 0; i < batchSize; ++i) {
@@ -93,17 +97,4 @@ public class MeasurementCollector implements Runnable {
         });
     }
 
-    private static class NoOpCallback implements RawDataInsertedCallback {
-        @Override
-        public void onFinish() {
-        }
-
-        @Override
-        public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-        }
-    }
 }

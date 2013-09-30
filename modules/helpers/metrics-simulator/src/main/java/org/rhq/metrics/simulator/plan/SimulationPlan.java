@@ -48,6 +48,8 @@ public class SimulationPlan {
 
     private int cqlPort;
 
+    private int batchSize;
+
     public int getThreadPoolSize() {
         return threadPoolSize;
     }
@@ -110,5 +112,13 @@ public class SimulationPlan {
 
     public void setCqlPort(int cqlPort) {
         this.cqlPort = cqlPort;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
     }
 }

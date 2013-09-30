@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.gui.coregui.client.admin;
@@ -52,6 +52,8 @@ public class DownloadsView extends EnhancedVLayout {
         IconEnum.DOWNLOAD);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
+
+    private static final String PORTAL_WAR_CONTEXT = "/portal";
 
     private final SystemGWTServiceAsync systemManager = GWTServiceLookup.getSystemService();
 
@@ -143,7 +145,7 @@ public class DownloadsView extends EnhancedVLayout {
 
                 StaticTextItem linkItem = new StaticTextItem("agentLink");
                 linkItem.setTitle(MSG.common_label_link());
-                linkItem.setValue("<a href=\"/agentupdate/download\">"
+                linkItem.setValue("<a href=\"" + PORTAL_WAR_CONTEXT + "/agentupdate/download\">"
                     + MSG.view_admin_downloads_agent_link_value(version, build) + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("agentSpacer");
@@ -194,7 +196,7 @@ public class DownloadsView extends EnhancedVLayout {
 
                 StaticTextItem linkItem = new StaticTextItem("cliLink");
                 linkItem.setTitle(MSG.common_label_link());
-                linkItem.setValue("<a href=\"/client/download\">"
+                linkItem.setValue("<a href=\"" + PORTAL_WAR_CONTEXT + "/client/download\">"
                     + MSG.view_admin_downloads_cli_link_value(version, build) + "</a>");
 
                 SpacerItem spacerItem = new SpacerItem("clientSpacer");

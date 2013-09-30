@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
@@ -47,6 +47,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements SystemGWTService {
 
     private static final long serialVersionUID = 1L;
+
+    private static final String PORTAL_WAR_CONTEXT = "/portal";
 
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
@@ -136,7 +138,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             HashMap<String, String> map = new HashMap<String, String>(files.size());
             for (File file : files) {
                 // key is the filename, value is the relative URL to download the file from the server
-                map.put(file.getName(), "/downloads/connectors/" + file.getName());
+                map.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/connectors/" + file.getName());
             }
             return map;
         } catch (Throwable t) {
@@ -156,7 +158,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
                 HashMap<String, String> ret = new HashMap<String, String>(files.size());
 
                 for (File file : files) {
-                    ret.put(file.getName(), "/downloads/cli-alert-scripts/" + file.getName());
+                    ret.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/cli-alert-scripts/" + file.getName());
                 }
                 return ret;
             }
@@ -176,7 +178,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
                 HashMap<String, String> ret = new HashMap<String, String>(files.size());
 
                 for (File file : files) {
-                    ret.put(file.getName(), "/downloads/script-modules/" + file.getName());
+                    ret.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/script-modules/" + file.getName());
                 }
                 return ret;
             }
@@ -205,7 +207,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             }
             File file = files.get(0);
             HashMap<String, String> ret = new HashMap<String, String>(1);
-            ret.put(file.getName(), "/downloads/bundle-deployer/" + file.getName());
+            ret.put(file.getName(), PORTAL_WAR_CONTEXT + "/downloads/bundle-deployer/" + file.getName());
             return ret;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

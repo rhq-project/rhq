@@ -56,4 +56,12 @@
     <justification>Adding a method to a remote API interface is safe. This is method is added in order to deprecate the getAggregate. For more details see the previous intentional change.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/operation/OperationManagerRemote</className>
+    <differenceType>7006</differenceType>  <!-- method return type changed -->
+    <method>org.rhq.core.domain.util.PageList findOperationDefinitionsByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.OperationDefinitionCriteria)</method>
+    <to>java.util.List</to>
+    <justification> While this is technically a welcome change (because impl  of that method returned the PageList anyway), it breaks the strongly typed clients, because the methods are linked by their full signature and hence a library compiled against JON312GA version of that remote will fail to find the method with the new signature and will fail with NoSuchMethodError at runtime.</justification>
+  </difference>
+
 </differences>

@@ -267,7 +267,14 @@ public interface OperationManagerRemote {
 
     List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
-    PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
+    /**
+     * TODO: major release: this should return PageList as all our criteria finder do
+     *
+     * @param subject The logged in user's subject.
+     * @param criteria The criteria object for the finding.
+     * @return instance of PageList<OperationDefinition> (can be safely casted)
+     */
+    List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
 
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria);

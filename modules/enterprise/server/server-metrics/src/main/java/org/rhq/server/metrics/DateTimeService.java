@@ -50,7 +50,11 @@ public class DateTimeService {
     }
 
     public DateTime now() {
-        return DateTime.now();
+        return new DateTime(nowInMillis());
+    }
+
+    public long nowInMillis() {
+        return System.currentTimeMillis();
     }
 
     public DateTime getTimeSlice(long timestamp, Minutes interval) {

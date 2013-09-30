@@ -66,7 +66,7 @@ public class MeasurementCollector implements Runnable {
 
     private Set<MeasurementDataNumeric> generateData() {
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(batchSize);
-        long timestamp = dateTimeService.now().getMillis();
+        long timestamp = dateTimeService.nowInMillis();
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
         for (int i = 0; i < batchSize; ++i) {

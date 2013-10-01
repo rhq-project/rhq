@@ -132,12 +132,20 @@ public class StrippedDownStartupBeanPreparation {
         }
 
         String cqlPort = System.getProperty("rhq.storage.cql-port");
-        String gossipPort = System.getProperty("rhq.storage.gossip-port");
-
         entityManager.createNativeQuery("update rhq_system_config set property_value = '" + cqlPort +
             "', default_property_value = '" + cqlPort + "' where property_key = 'STORAGE_CQL_PORT'").executeUpdate();
+
+        String gossipPort = System.getProperty("rhq.storage.gossip-port");
         entityManager.createNativeQuery("update rhq_system_config set property_value = '" + gossipPort +
             "', default_property_value = '" + gossipPort + "' where property_key = 'STORAGE_GOSSIP_PORT'").executeUpdate();
+
+        String storageUserName = System.getProperty("rhq.storage.username");
+        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + storageUserName +
+            "', default_property_value = '" + storageUserName + "' where property_key = 'STORAGE_USERNAME'").executeUpdate();
+
+        String storagePassword = System.getProperty("rhq.storage.password");
+        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + storagePassword +
+            "', default_property_value = '" + storagePassword + "' where property_key = 'STORAGE_PASSWORD'").executeUpdate();
     }
 
     @Timeout

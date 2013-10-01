@@ -25,12 +25,36 @@
 
 package org.rhq.metrics.simulator.plan;
 
+import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 
 /**
  * @author John Sanda
  */
 public class SimulationPlan {
+
+    public static enum IntervalType {
+        SECONDS("seconds"), MINUTES("minutes"), HOURS("hours");
+
+        private final String text;
+
+        IntervalType(String text) {
+            this.text = text;
+        }
+
+        public static IntervalType fromText(String text) {
+            if (text.equals("seconds")) {
+                return SECONDS;
+            }
+            if (text.equals("minutes")) {
+                return MINUTES;
+            }
+            if (text.equals("hours")) {
+                return HOURS;
+            }
+            throw new IllegalArgumentException(text + " is not a valid interval type");
+        }
+    }
 
     private long collectionInterval;
 
@@ -49,6 +73,18 @@ public class SimulationPlan {
     private int batchSize;
 
     private int metricsReportInterval;
+
+    private IntervalType intervalType;
+
+    private DateTimeService dateTimeService;
+
+    public DateTimeService getDateTimeService() {
+        return dateTimeService;
+    }
+
+    public void setDateTimeService(DateTimeService dateTimeService) {
+        this.dateTimeService = dateTimeService;
+    }
 
     public long getCollectionInterval() {
         return collectionInterval;
@@ -120,5 +156,13 @@ public class SimulationPlan {
 
     public void setMetricsReportInterval(int metricsReportInterval) {
         this.metricsReportInterval = metricsReportInterval;
+    }
+
+    public IntervalType getIntervalType() {
+        return intervalType;
+    }
+
+    public void setIntervalType(IntervalType intervalType) {
+        this.intervalType = intervalType;
     }
 }

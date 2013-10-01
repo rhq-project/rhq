@@ -35,6 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.RawDataInsertedCallback;
 
@@ -53,10 +54,10 @@ public class MeasurementCollector implements Runnable {
 
     private Metrics metrics;
 
-    private SimulatorDateTimeService dateTimeService;
+    private DateTimeService dateTimeService;
 
     public MeasurementCollector(int batchSize, int startingScheduleId, Metrics metrics, MetricsServer metricsServer,
-        SimulatorDateTimeService dateTimeService) {
+        DateTimeService dateTimeService) {
         this.batchSize = batchSize;
         this.startingScheduleId = startingScheduleId;
         this.metrics = metrics;

@@ -34,6 +34,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joda.time.Minutes;
 import org.joda.time.Seconds;
 
+import org.rhq.metrics.simulator.SecondsDateTimeService;
+import org.rhq.metrics.simulator.SimulatorDateTimeService;
+import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 
 /**
@@ -46,12 +49,38 @@ public class SimulationPlanner {
         JsonNode root = mapper.readTree(jsonFile);
         SimulationPlan simulation = new SimulationPlan();
 
-        simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 1250L));
-        simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 150000L));  // 2.5 minutes
+        simulation.setIntervalType(SimulationPlan.IntervalType.fromText(getString(root.get("intervalType"), "minutes")));
+        DateTimeService dateTimeService;
+
+        switch (simulation.getIntervalType()) {
+        case SECONDS:
+            simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 20L));
+            simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 2500L));
+            simulation.setMetricsServerConfiguration(createSecondsConfiguration());
+            simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 30));
+            dateTimeService = new SecondsDateTimeService();
+            break;
+        case MINUTES:
+            simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 1250L));
+            simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 150000L));
+            simulation.setMetricsServerConfiguration(createMinutesConfiguration());
+            simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 180));
+            simulation.setDateTimeService(new SimulatorDateTimeService());
+            dateTimeService = new SimulatorDateTimeService();
+            break;
+        default:  // HOURS
+            simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 30000L));
+            simulation.setAggregationInterval(3600000L);
+            simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 1200));
+            dateTimeService = new DateTimeService();
+        }
+
+        dateTimeService.setConfiguration(simulation.getMetricsServerConfiguration());
+        simulation.setDateTimeService(dateTimeService);
+
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
         simulation.setBatchSize(getInt(root.get("batchSize"), 5000));
-        simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 180));
 
         String[] nodes;
         if (root.get("nodes") == null || root.get("nodes").size() == 0) {
@@ -67,14 +96,10 @@ public class SimulationPlanner {
 
         simulation.setCqlPort(getInt(root.get("cqlPort"), 9142));
 
-        MetricsConfiguration serverConfiguration = createDefaultMetricsConfiguration();
-        simulation.setMetricsServerConfiguration(serverConfiguration);
-
         return simulation;
     }
 
-    private MetricsConfiguration createDefaultMetricsConfiguration() {
-
+    private MetricsConfiguration createMinutesConfiguration() {
         MetricsConfiguration configuration = new MetricsConfiguration();
         configuration.setRawTTL(Minutes.minutes(168).toStandardSeconds().getSeconds());
         configuration.setRawRetention(Minutes.minutes(168).toStandardDuration());
@@ -92,6 +117,33 @@ public class SimulationPlanner {
         configuration.setTwentyFourHourRetention(Minutes.minutes(8928).toStandardSeconds());
 
         return configuration;
+    }
+
+    private MetricsConfiguration createSecondsConfiguration() {
+        MetricsConfiguration configuration = new MetricsConfiguration();
+        configuration.setRawTTL(420);
+        configuration.setRawRetention(Seconds.seconds(420).toStandardDuration());
+        configuration.setRawTimeSliceDuration(Seconds.seconds(2).toStandardDuration().plus(500));
+
+        configuration.setOneHourTTL(Seconds.seconds(840).getSeconds());
+        configuration.setOneHourRetention(Seconds.seconds(840));
+        configuration.setOneHourTimeSliceDuration(Seconds.seconds(15).toStandardDuration());
+
+        configuration.setSixHourTTL(Seconds.seconds(1860).getSeconds());
+        configuration.setSixHourRetention(Seconds.seconds(1860));
+        configuration.setSixHourTimeSliceDuration(Seconds.seconds(60).toStandardDuration());
+
+        configuration.setTwentyFourHourTTL(Minutes.minutes(365).toStandardSeconds().getSeconds());
+        configuration.setTwentyFourHourRetention(Minutes.minutes(365));
+
+        return configuration;
+    }
+
+    private String getString(JsonNode node, String defaultValue) {
+        if (node == null) {
+            return defaultValue;
+        }
+        return node.asText();
     }
 
     private long getLong(JsonNode node, long defaultValue) {

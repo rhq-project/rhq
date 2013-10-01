@@ -79,9 +79,7 @@ public class Simulator implements ShutdownManager {
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
 
-        SimulatorDateTimeService dateTimeService = new SimulatorDateTimeService();
-        dateTimeService.setConfiguration(plan.getMetricsServerConfiguration());
-        metricsServer.setDateTimeService(dateTimeService);
+        metricsServer.setDateTimeService(plan.getDateTimeService());
 
         Metrics metrics = new Metrics();
 
@@ -92,8 +90,8 @@ public class Simulator implements ShutdownManager {
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
-                plan.getBatchSize() * i, metrics, metricsServer, dateTimeService), 0, plan.getCollectionInterval(),
-                TimeUnit.MILLISECONDS);
+                plan.getBatchSize() * i, metrics, metricsServer, plan.getDateTimeService()), 0,
+                plan.getCollectionInterval(), TimeUnit.MILLISECONDS);
         }
 
         aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),

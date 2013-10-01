@@ -235,6 +235,7 @@ public class CassandraClusterManager {
 
     private void getStorageClusterConfiguration() {
         this.nodes = new String[deploymentOptions.getNumNodes()];
+        this.jmxPorts = new int[deploymentOptions.getNumNodes()];
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
             this.nodes[i] = getLocalIPAddress(i + 1);
             this.jmxPorts[i] = deploymentOptions.getJmxPort() + i;

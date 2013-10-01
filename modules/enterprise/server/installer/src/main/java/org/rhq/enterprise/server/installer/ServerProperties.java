@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
@@ -268,7 +269,7 @@ public class ServerProperties {
 
         for (String name : ServerProperties.BOOLEAN_PROPERTIES) {
             String val = serverProperties.get(name);
-            if (ServerInstallUtil.isEmpty(val) && OPTIONAL_PROPERTIES.contains(name)) {
+            if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
                 continue;
             }
             if (!("true".equals(val) || "false".equals(val))) {
@@ -278,7 +279,7 @@ public class ServerProperties {
 
         for (String name : ServerProperties.INTEGER_PROPERTIES) {
             String val = serverProperties.get(name);
-            if (ServerInstallUtil.isEmpty(val) && OPTIONAL_PROPERTIES.contains(name)) {
+            if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
                 continue;
             }
             try {
@@ -295,7 +296,7 @@ public class ServerProperties {
         }
         for (String name : requiredStringProperties) {
             String val = serverProperties.get(name);
-            if (ServerInstallUtil.isEmpty(val)) {
+            if (StringUtil.isBlank(val)) {
                 dataErrors.append("[" + name + "] must exist and be set to a valid string value\n");
 
             } else if (ServerProperties.OBFUSCATED_PROPERTIES.contains(name)) {

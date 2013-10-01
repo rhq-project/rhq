@@ -95,7 +95,14 @@ public enum SystemSetting {
      */
     ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE("RESOURCE_GENERIC_PROPERTIES_UPGRADE", PropertySimpleType.BOOLEAN, true, true),
 
+    /**
+     * @deprecated This attribute is no longer maintained and might not reflect the true version of the running server.
+     * Use {@code SystemManagerRemote.getProductInfo()} method to get at an equivalent and always up-to-date
+     * information.
+     */
+    @Deprecated
     SERVER_VERSION("SERVER_VERSION", PropertySimpleType.STRING, true, true),
+
     DB_SCHEMA_VERSION("DB_SCHEMA_VERSION", PropertySimpleType.STRING, true, true),
 
     /** How long do we keep data compressed in hourly intervals? This is not configurable through "normal" means but direct DB update. */

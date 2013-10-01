@@ -595,7 +595,10 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
-                                    if (confirmed) {
+                                    if(null == confirmed){
+                                        refreshTableInfo();
+                                    }else  if (confirmed) {
+                                        refreshTableInfo();
                                         tableAction.action.executeAction(listGrid.getSelectedRecords(), null);
                                     } else {
                                         refreshTableInfo();

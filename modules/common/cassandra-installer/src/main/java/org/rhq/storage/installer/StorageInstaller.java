@@ -104,6 +104,8 @@ public class StorageInstaller {
 
     public static final int STATUS_GOSSIP_PORT_CONFLICT = 10;
 
+    public static final int STATUS_UNKNOWN_HOST = 11;
+
     private final String STORAGE_BASEDIR = "rhq-storage";
 
     private final Log log = LogFactory.getLog(StorageInstaller.class);
@@ -437,8 +439,12 @@ public class StorageInstaller {
             deployer.updateStorageAuthConf(addresses);
 
             return installerInfo;
+        } catch (UnknownHostException unknownHostException) {
+            throw new StorageInstallerException(
+                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. Unknown host "
+                    + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
         } catch (IOException e) {
-            throw new StorageInstallerException("The upgrade cannot proceed. An unexpected I/O error occurred", e,
+            throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
                 STATUS_IO_ERROR);
         } catch (DeploymentException e) {
             throw new StorageInstallerException("The installation cannot proceed. An error occurred during storage "
@@ -549,12 +555,17 @@ public class StorageInstaller {
             deployer.updateStorageAuthConf(addresses);
 
             return installerInfo;
+
+        } catch (UnknownHostException unknownHostException) {
+            throw new StorageInstallerException(
+                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. Unknown host "
+                    + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
+        } catch (IOException e) {
+            throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
+                STATUS_IO_ERROR);
         } catch (DeploymentException e) {
             throw new StorageInstallerException("THe upgrade cannot proceed. An error occurred during the storage "
                 + "node deployment", e, STATUS_DEPLOYMENT_ERROR);
-        } catch (IOException e) {
-            throw new StorageInstallerException("The upgrade cannot proceed. An unexpected I/O error occurred", e,
-                STATUS_IO_ERROR);
         }
     }
 
@@ -935,11 +946,6 @@ public class StorageInstaller {
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);
             int status = installer.run(cmdLine);
             System.exit(status);
-        } catch (UnknownHostException unknownHostException) {
-            installer.log
-                .error("Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. "
-                + unknownHostException.getMessage());
-            throw unknownHostException;
         } catch (ParseException parseException) {
             installer.printUsage();
             System.exit(STATUS_SHOW_USAGE);

@@ -123,7 +123,7 @@
       <id>dev</id>
 
       <properties>
-        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.rootDir>../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
         <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/rhq-cassandra-installer/main</rhq.deploymentDir>
       </properties>

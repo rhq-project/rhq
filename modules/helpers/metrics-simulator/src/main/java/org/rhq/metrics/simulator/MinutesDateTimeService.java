@@ -8,7 +8,7 @@ import org.rhq.server.metrics.DateTimeService;
 /**
  * @author John Sanda
  */
-public class SimulatorDateTimeService extends DateTimeService {
+public class MinutesDateTimeService extends DateTimeService {
 
     @Override
     public DateTime getTimeSlice(DateTime dt, Duration duration) {

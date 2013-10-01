@@ -34,8 +34,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joda.time.Minutes;
 import org.joda.time.Seconds;
 
+import org.rhq.metrics.simulator.MinutesDateTimeService;
 import org.rhq.metrics.simulator.SecondsDateTimeService;
-import org.rhq.metrics.simulator.SimulatorDateTimeService;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 
@@ -65,8 +65,8 @@ public class SimulationPlanner {
             simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 150000L));
             simulation.setMetricsServerConfiguration(createMinutesConfiguration());
             simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 180));
-            simulation.setDateTimeService(new SimulatorDateTimeService());
-            dateTimeService = new SimulatorDateTimeService();
+            simulation.setDateTimeService(new MinutesDateTimeService());
+            dateTimeService = new MinutesDateTimeService();
             break;
         default:  // HOURS
             simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 30000L));

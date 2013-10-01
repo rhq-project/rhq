@@ -97,7 +97,7 @@ public enum StorageProperty {
             throw new Exception("Properties file not found: [" + storagePropertiesFile.getAbsolutePath() + "]");
         }
 
-        PropertiesFileUpdate pfu = new PropertiesFileUpdate(storagePropertiesFile);
+        PropertiesFileUpdate pfu = new PropertiesFileUpdate(storagePropertiesFile.getAbsolutePath());
         Properties props = pfu.loadExistingProperties();
         final HashMap<String, String> map = new HashMap<String, String>(props.size());
         for (Object property : props.keySet()) {

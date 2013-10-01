@@ -101,8 +101,10 @@
                             <copy todir="${classes.dir}" verbose="${rhq.verbose}">
                                <fileset dir="target/classes" />
                             </copy>
-                           <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Copying updated files from src${file.separator}main${file.separator}webapp${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <!-- Create src/main/webapp if it does not exist -->
+                            <mkdir dir="${basedir}/src/main/webapp"/>
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/src/main/webapp" />
                             </copy>

@@ -261,5 +261,4 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
     public boolean validate() {
         return super.validate() && nameField.validate();
     }
-
 }

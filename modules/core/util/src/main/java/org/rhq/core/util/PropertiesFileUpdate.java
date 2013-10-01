@@ -63,6 +63,15 @@ public class PropertiesFileUpdate {
     }
 
     /**
+     * Constructor given the .properties file.
+     *
+     * @param the properties file
+     */
+    public PropertiesFileUpdate(File file) {
+        this.file = file;
+    }
+
+    /**
      * Updates the properties file so it will contain the key with the value. If value is <code>null</code>, an empty
      * string will be used in the properties file. If the property does not yet exist in the properties file, it will be
      * appended to the end of the file.

@@ -18,8 +18,15 @@
  */
 package org.rhq.enterprise.server.installer;
 
+import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
  * Settings found in the rhq-server.properties file that controls the startup configuration of the server.
@@ -125,24 +132,20 @@ public class ServerProperties {
     public static final String PROP_STORAGE_GOSSIP_PORT = "rhq.storage.gossip-port";
 
     // this list contains all the properties that are to have boolean values (true | false)
-    public static final Set<String> BOOLEAN_PROPERTIES;
+    private static final Set<String> BOOLEAN_PROPERTIES;
     static {
         BOOLEAN_PROPERTIES = new HashSet<String>();
-        BOOLEAN_PROPERTIES.add(PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED);
-        BOOLEAN_PROPERTIES.add(PROP_MM_AT_START);
-        BOOLEAN_PROPERTIES.add(PROP_AUTOINSTALL_ENABLE);
         BOOLEAN_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_ENABLED);
+        BOOLEAN_PROPERTIES.add(PROP_AUTOINSTALL_ENABLE);
+        BOOLEAN_PROPERTIES.add(PROP_MM_AT_START);
+        BOOLEAN_PROPERTIES.add(PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED);
     }
 
     // this list contains all the properties that are to have integer values
-    public static final Set<String> INTEGER_PROPERTIES;
+    private static final Set<String> INTEGER_PROPERTIES;
     static {
         INTEGER_PROPERTIES = new HashSet<String>();
-        INTEGER_PROPERTIES.add(PROP_WEB_HTTP_PORT);
-        INTEGER_PROPERTIES.add(PROP_WEB_HTTPS_PORT);
-        INTEGER_PROPERTIES.add(PROP_CONNECTOR_BIND_PORT);
-        INTEGER_PROPERTIES.add(PROP_EMAIL_SMTP_PORT);
-        INTEGER_PROPERTIES.add(PROP_OPERATION_TIMEOUT);
+        INTEGER_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_PORT);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_AVAIL_REPORT);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_CONTENT_DOWNLOAD);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_CONTENT_REPORT);
@@ -152,16 +155,50 @@ public class ServerProperties {
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_MEAS_REPORT);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_WEBCONNS);
-        INTEGER_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_PORT);
+        INTEGER_PROPERTIES.add(PROP_CONNECTOR_BIND_PORT);
+        INTEGER_PROPERTIES.add(PROP_DATABASE_PORT);
+        INTEGER_PROPERTIES.add(PROP_EMAIL_SMTP_PORT);
+        INTEGER_PROPERTIES.add(PROP_OPERATION_TIMEOUT);
         INTEGER_PROPERTIES.add(PROP_STORAGE_CQL_PORT);
         INTEGER_PROPERTIES.add(PROP_STORAGE_GOSSIP_PORT);
+        INTEGER_PROPERTIES.add(PROP_WEB_HTTP_PORT);
+        INTEGER_PROPERTIES.add(PROP_WEB_HTTPS_PORT);
     }
 
     // this list contains all the properties that are to have non-empty string values
-    public static final Set<String> STRING_PROPERTIES;
+    private static final Set<String> STRING_PROPERTIES;
     static {
         STRING_PROPERTIES = new HashSet<String>();
+        STRING_PROPERTIES.add(PROP_AUTOINSTALL_DATABASE);
+        STRING_PROPERTIES.add(PROP_DATABASE_TYPE);
+        STRING_PROPERTIES.add(PROP_DATABASE_CONNECTION_URL);
+        STRING_PROPERTIES.add(PROP_DATABASE_PASSWORD);
+        STRING_PROPERTIES.add(PROP_DATABASE_USERNAME);
+        STRING_PROPERTIES.add(PROP_DATABASE_SERVER_NAME);
+        STRING_PROPERTIES.add(PROP_DATABASE_DB_NAME);
+        STRING_PROPERTIES.add(PROP_DATABASE_HIBERNATE_DIALECT);
+        STRING_PROPERTIES.add(PROP_EMAIL_FROM_ADDRESS);
+        STRING_PROPERTIES.add(PROP_EMAIL_SMTP_HOST);
         STRING_PROPERTIES.add(PROP_JBOSS_BIND_ADDRESS);
+        STRING_PROPERTIES.add(PROP_QUARTZ_DRIVER_DELEGATE_CLASS);
+        STRING_PROPERTIES.add(PROP_QUARTZ_LOCK_HANDLER_CLASS);
+        STRING_PROPERTIES.add(PROP_QUARTZ_SELECT_WITH_LOCK_SQL);
+    }
+
+    // this list contains all the STRING properties that are to have obfuscated values
+    private static final Set<String> OBFUSCATED_PROPERTIES;
+    static {
+        OBFUSCATED_PROPERTIES = new HashSet<String>();
+        OBFUSCATED_PROPERTIES.add(PROP_DATABASE_PASSWORD);
+        OBFUSCATED_PROPERTIES.add(PROP_MGMT_USER_PASSWORD);
+        OBFUSCATED_PROPERTIES.add(PROP_STORAGE_PASSWORD);
+    }
+
+    // this list contains all the non-STRING properties that can be unset when verified
+    private static final Set<String> OPTIONAL_PROPERTIES;
+    static {
+        OPTIONAL_PROPERTIES = new HashSet<String>();
+        OPTIONAL_PROPERTIES.add(PROP_CONNECTOR_BIND_PORT);
     }
 
     public static final Set<String> CLIENT_AUTH_MODES;
@@ -190,5 +227,92 @@ public class ServerProperties {
         IBM_ALGOROTHM_SETTINGS.add(PROP_SECURITY_SERVER_TRUSTSTORE_ALGORITHM);
         IBM_ALGOROTHM_SETTINGS.add(PROP_SECURITY_CLIENT_KEYSTORE_ALGORITHM);
         IBM_ALGOROTHM_SETTINGS.add(PROP_SECURITY_CLIENT_TRUSTSTORE_ALGORITHM);
+    }
+
+    public static void validate(File serverPropertiesFile) throws Exception {
+        validate(serverPropertiesFile, null);
+    }
+
+    /**
+     * @param serverPropertiesFile
+     * @param additionalProperties additional properties that should be set (present and not empty). can be null.
+     * @throws Exception
+     */
+    public static void validate(File serverPropertiesFile, Set<String> additionalProperties) throws Exception {
+        if (!serverPropertiesFile.isFile()) {
+            throw new Exception("Properties file not found: [" + serverPropertiesFile.getAbsolutePath() + "]");
+        }
+
+        PropertiesFileUpdate pfu = new PropertiesFileUpdate(serverPropertiesFile);
+        Properties props = pfu.loadExistingProperties();
+        final HashMap<String, String> map = new HashMap<String, String>(props.size());
+        for (Object property : props.keySet()) {
+            map.put(property.toString(), props.getProperty(property.toString()));
+        }
+
+        validate(map, additionalProperties);
+    }
+
+    public static void validate(Map<String, String> serverProperties) throws Exception {
+        validate(serverProperties, null);
+    }
+
+    /**
+     * @param serverProperties
+     * @param additionalProperties additional properties that should be set (present and not empty). can be null.
+     * @throws Exception
+     */
+    public static void validate(Map<String, String> serverProperties, Set<String> additionalProperties)
+        throws Exception {
+        final StringBuilder dataErrors = new StringBuilder();
+
+        for (String name : ServerProperties.BOOLEAN_PROPERTIES) {
+            String val = serverProperties.get(name);
+            if (ServerInstallUtil.isEmpty(val) && OPTIONAL_PROPERTIES.contains(name)) {
+                continue;
+            }
+            if (!("true".equals(val) || "false".equals(val))) {
+                dataErrors.append("[" + name + "] must exist and be set 'true' or 'false' : [" + val + "]\n");
+            }
+        }
+
+        for (String name : ServerProperties.INTEGER_PROPERTIES) {
+            String val = serverProperties.get(name);
+            if (ServerInstallUtil.isEmpty(val) && OPTIONAL_PROPERTIES.contains(name)) {
+                continue;
+            }
+            try {
+                Integer.parseInt(val);
+            } catch (NumberFormatException e) {
+                dataErrors.append("[" + name + "] must exist and be set to a number : [" + val + "]\n");
+            }
+        }
+
+        Set<String> requiredStringProperties = new HashSet<String>();
+        requiredStringProperties.addAll(STRING_PROPERTIES);
+        if (null != additionalProperties) {
+            requiredStringProperties.addAll(additionalProperties);
+        }
+        for (String name : requiredStringProperties) {
+            String val = serverProperties.get(name);
+            if (ServerInstallUtil.isEmpty(val)) {
+                dataErrors.append("[" + name + "] must exist and be set to a valid string value\n");
+
+            } else if (ServerProperties.OBFUSCATED_PROPERTIES.contains(name)) {
+                try {
+                    PicketBoxObfuscator.decode(val);
+                } catch (Throwable e) {
+                    dataErrors
+                        .append("["
+                            + name
+                            + "] must be encoded for security reasons. The value is not valid, perhaps it is set to a plain text value?  : ["
+                            + val + "]\n");
+                }
+            }
+        }
+
+        if (dataErrors.length() > 0) {
+            throw new Exception("Validation errors:\n" + dataErrors.toString());
+        }
     }
 }

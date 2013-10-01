@@ -22,18 +22,24 @@
  *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  */
-
 package org.rhq.server.control;
 
+import java.io.Console;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.obfuscation.Obfuscator;
+import org.rhq.enterprise.server.installer.ServerProperties;
+import org.rhq.storage.installer.StorageProperty;
 
 /**
  * @author John Sanda
@@ -67,21 +73,7 @@ public class RHQControl {
                 String commandName = findCommand(commands, args);
                 command = commands.get(commandName);
 
-                // perform any up front validation we can at this point.  Not that after this point we
-                // lose stdin due to the use of ProcessExecutions.
-                if ("install".equalsIgnoreCase(command.getName())) {
-                    File serverProperties = new File("bin/rhq-server.properties");
-                    File storageProperties = new File("bin/rhq-storage.properties");
-
-                    if (!serverProperties.isFile()) {
-                        throw new RHQControlException("Missing required configuration file, can not continue: ["
-                            + serverProperties.getAbsolutePath() + "]");
-                    }
-                    if (!storageProperties.isFile()) {
-                        throw new RHQControlException("Missing required configuration file, can not continue: ["
-                            + storageProperties.getAbsolutePath() + "]");
-                    }
-                }
+                validateInstallCommand(command);
 
                 // in case the installer gets killed, prepare the shutdown hook to try the undo
                 abortHook.setCommand(command);
@@ -93,11 +85,18 @@ public class RHQControl {
         } catch (UsageException e) {
             printUsage();
         } catch (RHQControlException e) {
-            log.error(e.getMessage() + " [Cause: " + e.getCause() + "]", e);
             undo = true;
+
+            Throwable rootCause = ThrowableUtil.getRootCause(e);
+            // Only show the messy stack trace if we're in debug mode. Otherwise keep it cleaner for the user...
+            if (log.isDebugEnabled()) {
+                log.error(rootCause.getMessage(), rootCause);
+            } else {
+                log.error(rootCause.getMessage());
+            }
         } catch (Throwable t) {
-            log.error(t);
             undo = true;
+            log.error(t);
         } finally {
             abortHook.setCommand(null);
             Runtime.getRuntime().removeShutdownHook(abortHook);
@@ -117,6 +116,97 @@ public class RHQControl {
         }
 
         return;
+    }
+
+    private void validateInstallCommand(ControlCommand command) {
+        if (!"install".equalsIgnoreCase(command.getName())) {
+            return;
+        }
+
+        // perform any up front validation we can at this point.  Not that after this point we
+        // lose stdin due to the use of ProcessExecutions.
+        File serverPropertiesFile = new File("bin/rhq-server.properties");
+        File storagePropertiesFile = new File("bin/rhq-storage.properties");
+
+        if (!serverPropertiesFile.isFile()) {
+            throw new RHQControlException(
+                "The required rhq-server.properties file can not be found in the expected location ["
+                    + serverPropertiesFile.getAbsolutePath() + "]. Installation is canceled.");
+        }
+
+        if (!storagePropertiesFile.isFile()) {
+            throw new RHQControlException(
+                "The required rhq-storage.properties file can not be found in the expected location ["
+                    + storagePropertiesFile.getAbsolutePath() + "]. Installation is canceled.");
+        }
+
+        // Prompt for critical required values, if not yet set.
+        try {
+            PropertiesFileUpdate pfu = new PropertiesFileUpdate(serverPropertiesFile);
+            Properties props = pfu.loadExistingProperties();
+
+            promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_JBOSS_BIND_ADDRESS,
+                false);
+            promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_DATABASE_PASSWORD, true);
+
+        } catch (Throwable t) {
+            throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
+                + t.getMessage());
+        }
+
+        // Now, validate the property settings
+        try {
+            ServerProperties.validate(serverPropertiesFile);
+
+        } catch (Throwable t) {
+            throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
+                + t.getMessage());
+        }
+
+        try {
+            StorageProperty.validate(storagePropertiesFile);
+
+        } catch (Throwable t) {
+            throw new RHQControlException("The rhq-storage.properties file is not valid. Installation is canceled: "
+                + t.getMessage());
+        }
+    }
+
+    private void promptForProperty(PropertiesFileUpdate pfu, Properties props, String propertiesFileName,
+        String propertyName, boolean encode) throws Exception {
+
+        String propertyValue = props.getProperty(propertyName);
+        if (StringUtil.isBlank(propertyValue)) {
+
+            // prompt for the property value
+            Console console = System.console();
+            console.format("\nThe [%s] property is required but not set in [%s].\n", propertyName, propertiesFileName);
+            console.format("Do you want to set [%s] value now?\n", propertyName);
+            String response = "";
+            while (!(response.startsWith("n") || response.startsWith("y"))) {
+                response = String.valueOf(console.readLine("%s", "yes|no: ")).toLowerCase();
+            }
+            if (response.startsWith("n")) {
+                throw new RHQControlException("Please update the [" + propertiesFileName + "] file as required.");
+            }
+
+            do {
+                propertyValue = "";
+                while (StringUtil.isBlank(propertyValue)) {
+                    propertyValue = String.valueOf(console.readLine("%s", propertyName
+                        + ((encode ? " (enter as plain text): " : ": "))));
+                }
+
+                console.format("Is [" + propertyValue + "] correct?\n");
+                response = "";
+                while (!(response.startsWith("n") || response.startsWith("y"))) {
+                    response = String.valueOf(console.readLine("%s", "yes|no: ")).toLowerCase();
+                }
+            } while (response.startsWith("n"));
+
+            props.setProperty(propertyName, encode ? Obfuscator.encode(propertyValue) : propertyValue);
+            pfu.update(props);
+        }
     }
 
     private String findCommand(Commands commands, String[] args) throws RHQControlException {
@@ -153,7 +243,12 @@ public class RHQControl {
             System.exit(0);
         } catch (RHQControlException e) {
             Throwable rootCause = ThrowableUtil.getRootCause(e);
-            control.log.error("There was an unxpected error: " + rootCause.getMessage(), rootCause);
+            // Only show the messy stack trace if we're in debug mode. Otherwise keep it cleaner for the user...
+            if (control.log.isDebugEnabled()) {
+                control.log.error("There was an unexpected error: " + rootCause.getMessage(), rootCause);
+            } else {
+                control.log.error("There was an unexpected error: " + rootCause.getMessage());
+            }
             System.exit(1);
         }
     }

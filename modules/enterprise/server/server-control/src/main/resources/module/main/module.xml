@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <module xmlns="urn:jboss:module:1.0" name="${moduleName}">
-  <main-class name="org.rhq.server.control.RHQControl" />
+  <main-class name="org.rhq.server.control.RHQControl"/>
 
   <resources>
-    <resource-root path="${project.build.finalName}.jar" />
-    <resource-root path="rhq-core-util-${project.version}.jar" />
-    <resource-root path="rhq-jboss-as-dmr-client-${project.version}.jar" />
+    <resource-root path="${project.build.finalName}.jar"/>
+    <resource-root path="rhq-core-util-${project.version}.jar"/>
+    <resource-root path="rhq-jboss-as-dmr-client-${project.version}.jar"/>
+    <resource-root path="rhq-installer-util-${project.version}.jar"/>
+    <resource-root path="rhq-cassandra-installer-${project.version}.jar"/>
   </resources>
 
   <dependencies>
-    <module name="javax.api" />
-    <module name="org.apache.commons.logging" />
-    <module name="org.apache.commons.cli" />
-    <module name="org.apache.commons.exec" />
-    <module name="org.apache.commons.configuration" />
-    <module name="org.apache.log4j" />
-    <module name="sun.jdk" />
-    <module name="org.jboss.as.controller-client" />
-    <module name="org.jboss.dmr" />
-    <module name="org.jboss.logmanager" services="import" />
-    <module name="org.jboss.logging" />
+    <module name="javax.api"/>
+    <module name="org.apache.commons.logging"/>
+    <module name="org.apache.commons.cli"/>
+    <module name="org.apache.commons.exec"/>
+    <module name="org.apache.commons.configuration"/>
+    <module name="org.apache.log4j"/>
+    <module name="sun.jdk"/>
+    <module name="org.jboss.as.controller-client"/>
+    <module name="org.jboss.dmr"/>
+    <module name="org.jboss.logmanager" services="import"/>
+    <module name="org.jboss.logging"/>
     <module name="org.picketbox"/>
   </dependencies>
 </module>

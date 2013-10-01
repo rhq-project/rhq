@@ -1,6 +1,5 @@
 package org.rhq.storage.installer;
 
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -28,6 +27,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.cassandra.CassandraClusterManager;
+import org.rhq.cassandra.Deployer;
+import org.rhq.cassandra.DeploymentException;
 import org.rhq.cassandra.util.ConfigEditor;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileUtil;
@@ -68,7 +69,7 @@ public class StorageInstallerTest {
 
         storageDir = new File(serverDir, "rhq-storage");
 
-        installer = new StorageInstaller();
+        installer = new SafeStorageInstaller();
     }
 
     @AfterMethod(alwaysRun = true)
@@ -134,7 +135,7 @@ public class StorageInstallerTest {
         assertEquals(yamlEditor.getAuthenticator(), "org.apache.cassandra.auth.PasswordAuthenticator",
             "The authenticator property is wrong");
         assertEquals(yamlEditor.getListenAddress(), address, "The listen_address property is wrong");
-        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142,  "The native_transport_port property is wrong");
+        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142, "The native_transport_port property is wrong");
         assertEquals(yamlEditor.getRpcAddress(), address, "The rpc_address property is wrong");
         assertEquals(yamlEditor.getStoragePort(), (Integer) 7100, "The storage_port property is wrong");
 
@@ -154,7 +155,7 @@ public class StorageInstallerTest {
         CommandLineParser parser = new PosixParser();
         File defaultInstallDir = new File(basedir.getParentFile(), "performDefaultInstall");
         File upgradeFromServerDir = new File(defaultInstallDir, "rhq-server");
-        String[] args = {"--upgrade", upgradeFromServerDir.getAbsolutePath()};
+        String[] args = { "--upgrade", upgradeFromServerDir.getAbsolutePath() };
         CommandLine cmdLine = parser.parse(installer.getOptions(), args);
 
         int status = installer.run(cmdLine);
@@ -204,7 +205,7 @@ public class StorageInstallerTest {
         assertEquals(yamlEditor.getAuthenticator(), "org.apache.cassandra.auth.PasswordAuthenticator",
             "The authenticator property is wrong");
         assertEquals(yamlEditor.getListenAddress(), address, "The listen_address property is wrong");
-        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142,  "The native_transport_port property is wrong");
+        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142, "The native_transport_port property is wrong");
         assertEquals(yamlEditor.getRpcAddress(), address, "The rpc_address property is wrong");
         assertEquals(yamlEditor.getStoragePort(), (Integer) 7100, "The storage_port property is wrong");
 
@@ -221,7 +222,7 @@ public class StorageInstallerTest {
 
     @Test
     public void performValidInstallWithOutputToStderr() throws Exception {
-        installer = new StorageInstaller() {
+        installer = new SafeStorageInstaller() {
             @Override
             protected void exec(Executor executor, org.apache.commons.exec.CommandLine cmdLine) throws IOException {
                 executor.execute(cmdLine, ImmutableMap.of("JAVA_TOOL_OPTIONS", "-Dfile.encoding=UTF8"));
@@ -247,7 +248,8 @@ public class StorageInstallerTest {
             serverSocket.bind(new InetSocketAddress(address, 7799));
 
             CommandLineParser parser = new PosixParser();
-            CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {"--jmx-port", "7799"});
+            CommandLine cmdLine = parser.parse(installer.getOptions(),
+                new String[] { "--rhq.storage.jmx-port", "7799" });
 
             int status = installer.run(cmdLine);
 
@@ -268,7 +270,8 @@ public class StorageInstallerTest {
             serverSocket.bind(new InetSocketAddress(address, 9342));
 
             CommandLineParser parser = new PosixParser();
-            CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {"--client-port", "9342"});
+            CommandLine cmdLine = parser.parse(installer.getOptions(),
+                new String[] { "--rhq.storage.cql-port", "9342" });
 
             int status = installer.run(cmdLine);
 
@@ -284,15 +287,11 @@ public class StorageInstallerTest {
     public void performValidInstall() throws Exception {
         CommandLineParser parser = new PosixParser();
 
-        String[] args = {
-            "--dir", storageDir.getAbsolutePath(),
-            "--commitlog", new File(storageDir, "commit_log").getAbsolutePath(),
-            "--data", new File(storageDir, "data").getAbsolutePath(),
-            "--saved-caches", new File(storageDir, "saved_caches").getAbsolutePath(),
-            "--heap-size", "256M",
-            "--heap-new-size", "64M",
-            "--hostname", "127.0.0.1"
-        };
+        String[] args = { "--dir", storageDir.getAbsolutePath(), "--rhq.storage.commitlog",
+            new File(storageDir, "commit_log").getAbsolutePath(), "--rhq.storage.data",
+            new File(storageDir, "data").getAbsolutePath(), "--rhq.storage.saved-caches",
+            new File(storageDir, "saved_caches").getAbsolutePath(), "--rhq.storage.heap-size", "256M",
+            "--rhq.storage.heap-new-size", "64M", "--rhq.storage.hostname", "127.0.0.1" };
 
         CommandLine cmdLine = parser.parse(installer.getOptions(), args);
         int status = installer.run(cmdLine);
@@ -331,19 +330,16 @@ public class StorageInstallerTest {
         File oldLog4JFile = new File(rhq48StorageConfDir, "log4j-server.properties");
 
         rhq48StorageConfDir.mkdirs();
-        StreamUtil.copy(getClass().getResourceAsStream("/rhq48/storage/conf/cassandra.yaml"),
-            new FileOutputStream(oldCassandraYamlFile), true);
-        StreamUtil.copy(getClass().getResourceAsStream("/rhq48/storage/conf/cassandra-env.sh"),
-            new FileOutputStream(oldCassandraEnvFile));
+        StreamUtil.copy(getClass().getResourceAsStream("/rhq48/storage/conf/cassandra.yaml"), new FileOutputStream(
+            oldCassandraYamlFile), true);
+        StreamUtil.copy(getClass().getResourceAsStream("/rhq48/storage/conf/cassandra-env.sh"), new FileOutputStream(
+            oldCassandraEnvFile));
         StreamUtil.copy(getClass().getResourceAsStream("/rhq48/storage/conf/log4j-server.properties"),
             new FileOutputStream(oldLog4JFile));
 
         CommandLineParser parser = new PosixParser();
 
-        String[] args = {
-            "--upgrade", rhq48ServerDir.getAbsolutePath(),
-            "--dir", storageDir.getAbsolutePath()
-        };
+        String[] args = { "--upgrade", rhq48ServerDir.getAbsolutePath(), "--dir", storageDir.getAbsolutePath() };
 
         CommandLine cmdLine = parser.parse(installer.getOptions(), args);
         int status = installer.run(cmdLine);
@@ -383,8 +379,8 @@ public class StorageInstallerTest {
 
         // If this check fails, make sure that the expected value matches the value in
         // src/test/resources/rhq48/storage/conf/cassandra-env.sh
-        assertEquals(properties.getProperty("jmx_port"), "7399", "Failed to update the JMX port in " +
-            cassandraJvmPropsFile);
+        assertEquals(properties.getProperty("jmx_port"), "7399", "Failed to update the JMX port in "
+            + cassandraJvmPropsFile);
 
         File yamlFile = new File(confDir, "cassandra.yaml");
         ConfigEditor newYamlEditor = new ConfigEditor(yamlFile);
@@ -395,8 +391,8 @@ public class StorageInstallerTest {
 
         assertEquals(newYamlEditor.getInternodeAuthenticator(), "org.rhq.cassandra.auth.RhqInternodeAuthenticator",
             "Failed to set the internode_authenticator property in " + yamlFile);
-        assertEquals(newYamlEditor.getAuthenticator(), oldYamlEditor.getAuthenticator(), "The authenticator property " +
-            "is wrong");
+        assertEquals(newYamlEditor.getAuthenticator(), oldYamlEditor.getAuthenticator(), "The authenticator property "
+            + "is wrong");
         assertEquals(newYamlEditor.getCommitLogDirectory(), oldYamlEditor.getCommitLogDirectory(),
             "The commit_log property is wrong");
         assertEquals(newYamlEditor.getDataFileDirectories(), oldYamlEditor.getDataFileDirectories(),
@@ -405,8 +401,7 @@ public class StorageInstallerTest {
             "The listen_address property is wrong");
         assertEquals(newYamlEditor.getNativeTransportPort(), oldYamlEditor.getNativeTransportPort(),
             "The native_transport_port property is wrong");
-        assertEquals(newYamlEditor.getRpcAddress(), oldYamlEditor.getRpcAddress(),
-            "The rpc_address property is wrong");
+        assertEquals(newYamlEditor.getRpcAddress(), oldYamlEditor.getRpcAddress(), "The rpc_address property is wrong");
         assertEquals(newYamlEditor.getSavedCachesDirectory(), oldYamlEditor.getSavedCachesDirectory(),
             "The saved_caches_directory property is wrong");
         assertEquals(newYamlEditor.getStoragePort(), oldYamlEditor.getStoragePort(),
@@ -439,4 +434,24 @@ public class StorageInstallerTest {
         assertEquals(properties.getProperty("rhq.storage.cql-port"), "9142");
     }
 
+    private static class SafeStorageInstaller extends StorageInstaller {
+
+        @Override
+        protected Deployer getDeployer() {
+            return new SafeDeployer();
+        }
+    }
+
+    private static class SafeDeployer extends Deployer {
+
+        @Override
+        public void applyChangesToWindowsServiceWrapper(File deployDir) throws DeploymentException {
+            // Not every test env will have this file set up.  If it doesn't exist just skip this.
+            File wrapperDir = new File(deployDir, "../bin/wrapper");
+            File wrapperEnvFile = new File(wrapperDir, "rhq-storage-wrapper.env");
+            if (wrapperEnvFile.isFile()) {
+                super.applyChangesToWindowsServiceWrapper(deployDir);
+            }
+        }
+    }
 }

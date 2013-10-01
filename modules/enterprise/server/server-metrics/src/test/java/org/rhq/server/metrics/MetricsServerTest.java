@@ -101,6 +101,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             }
             return currentHour;
         }
+
     }
 
     @BeforeMethod

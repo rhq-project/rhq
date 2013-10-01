@@ -87,6 +87,7 @@ import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.StorageClusterInitJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -110,6 +111,8 @@ public class StartupBean implements StartupLocal {
     private Log log = LogFactory.getLog(this.getClass());
 
     private volatile boolean initialized = false;
+
+    private String error = "";
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -152,6 +155,11 @@ public class StartupBean implements StartupLocal {
         return this.initialized;
     }
 
+    @Override
+    public String getError() {
+        return error;
+    }
+
     /**
      * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
      */
@@ -182,12 +190,13 @@ public class StartupBean implements StartupLocal {
         try {
             resourceTypeManager.reloadResourceFacetsCache();
         } catch (Throwable t) {
+            error += (error.isEmpty() ? "" : ", ") + "reloading facets cache";
             log.error("Could not load ResourceFacets cache.", t);
         }
 
         //Server depends on the storage cluster availability. Since the storage client init just
         //establishes connectivity with the storage cluster, then run it before the server init.
-        initStorageClient();
+        boolean isStorageRunning = initStorageClient();
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners
@@ -209,7 +218,7 @@ public class StartupBean implements StartupLocal {
         upgradeRhqUserSecurityDomainIfNeeded();
         startServerCommunicationServices();
         startScheduler();
-        scheduleJobs();
+        scheduleJobs(isStorageRunning);
         //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
         //startEmbeddedAgent(); // this is obsolete - we no longer have an embedded agent
         registerShutdownListener();
@@ -253,6 +262,7 @@ public class StartupBean implements StartupLocal {
             conn = dataSource.getConnection();
             DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "server";
             log.error("Could not initialize server.", e);
         } finally {
             if (conn != null) {
@@ -328,6 +338,7 @@ public class StartupBean implements StartupLocal {
         try {
             systemManager.enableHibernateStatistics();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "hibernate statistics";
             throw new RuntimeException("Cannot start hibernate statistics monitoring!", e);
         }
     }
@@ -347,6 +358,7 @@ public class StartupBean implements StartupLocal {
             PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
             deployer.startDeployment();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "plugin deployer";
             throw new RuntimeException("Cannot start the agent/server plugin deployer!", e);
         }
     }
@@ -372,6 +384,7 @@ public class StartupBean implements StartupLocal {
             // create a non-persistent periodic timer (we'll reset it ever startup) with the scan period as configured in our scanner object
             timerService.createIntervalTimer(scanPeriod, scanPeriod, new TimerConfig(null, false));
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "plugin scanner";
             throw new RuntimeException("Cannot schedule plugin scanning timer - new plugins will not be detected!", e);
         }
     }
@@ -415,6 +428,7 @@ public class StartupBean implements StartupLocal {
                 iface, false);
             jaas_mbean.upgradeRhqUserSecurityDomainIfNeeded();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "security domain upgrade";
             throw new RuntimeException("Cannot upgrade JAAS login modules!", e);
         }
     }
@@ -430,6 +444,7 @@ public class StartupBean implements StartupLocal {
         try {
             schedulerBean.initQuartzScheduler();
         } catch (SchedulerException e) {
+            error += (error.isEmpty() ? "" : ", ") + "scheduler initialization";
             throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
     }
@@ -439,8 +454,12 @@ public class StartupBean implements StartupLocal {
      *
      * @return true if the storage subsystem is running
      */
-    private void initStorageClient() {
-        storageClientManager.init();
+    private boolean initStorageClient() {
+        boolean isStorageRunning = storageClientManager.init();
+        if (!isStorageRunning) {
+            error += (error.isEmpty() ? "" : ", ") + "storage";
+        }
+        return isStorageRunning;
     }
 
     /**
@@ -455,6 +474,7 @@ public class StartupBean implements StartupLocal {
         try {
             schedulerBean.startQuartzScheduler();
         } catch (SchedulerException e) {
+            error += (error.isEmpty() ? "" : ", ") + "scheduler";
             throw new RuntimeException("Cannot start the scheduler!", e);
         }
     }
@@ -498,8 +518,36 @@ public class StartupBean implements StartupLocal {
                     new ExternalizableStrategyCommandListener(
                         org.rhq.core.domain.server.ExternalizableStrategy.Subsystem.AGENT));
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "communications services";
             throw new RuntimeException("Cannot start the server-side communications services.", e);
         }
+    }
+
+   /**
+     * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
+     * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
+     * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
+     * delivered might trigger the agents to send messages back to the server.
+     *
+     * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
+     * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
+     * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
+     * take some time to initialize. If we don't call this, it speeds up start up, and doesn't bloat memory with
+     * clients we might not ever need (since agents might have affinity to other servers). Agent clients
+     * can be created lazily at runtime when the server needs it.
+     */
+    private void startAgentClients() {
+        log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");
+
+        List<Agent> agents = agentManager.getAllAgents();
+
+        if (agents != null) {
+            for (Agent agent : agents) {
+                agentManager.getAgentClient(agent); // this caches and starts the client
+            }
+        }
+
+        return;
     }
 
     /**
@@ -507,7 +555,7 @@ public class StartupBean implements StartupLocal {
      *
      * @throws RuntimeException if unable to schedule a job
      */
-    private void scheduleJobs() throws RuntimeException {
+    private void scheduleJobs(boolean isStorageRunning) throws RuntimeException {
         log.info("Scheduling asynchronous jobs...");
 
         /*
@@ -527,7 +575,7 @@ public class StartupBean implements StartupLocal {
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
             schedulerBean.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
-                initialDelay, interval);
+                    initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule asynchronous resource deletion job.", e);
         }
@@ -565,7 +613,7 @@ public class StartupBean implements StartupLocal {
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
             schedulerBean.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
-                interval);
+                    interval);
         } catch (Exception e) {
             log.error("Cannot schedule DynaGroup auto-recalculation job.", e);
         }
@@ -656,39 +704,24 @@ public class StartupBean implements StartupLocal {
             log.error("Cannot create alert availability duration job.", e);
         }
 
+        if (!isStorageRunning) {
+            // Wait long enough to allow the Server instance jobs to start executing first.
+            final long initialDelay = 1000L * 60 * 2; // 2 mins
+            final long interval = 1000L * 60; // 30 secs
+            try {
+                schedulerBean.scheduleSimpleRepeatingJob(StorageClusterInitJob.class, true, false, initialDelay,
+                    interval);
+            } catch (Exception e) {
+                log.error("Cannot create storage cluster init job", e);
+            }
+        }
+        
         try {
             String cronString = "0 30 0 ? * SUN *";  // every sunday starting at 00:30.
             schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
         } catch (Exception e) {
             log.error("Cannot create storage cluster read repair job", e);
         }
-    }
-
-   /**
-     * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
-     * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
-     * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
-     * delivered might trigger the agents to send messages back to the server.
-     *
-     * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
-     * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
-     * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
-     * take some time to initialize. If we don't call this, it speeds up start up, and doesn't bloat memory with
-     * clients we might not ever need (since agents might have affinity to other servers). Agent clients
-     * can be created lazily at runtime when the server needs it.
-     */
-    private void startAgentClients() {
-        log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");
-
-        List<Agent> agents = agentManager.getAllAgents();
-
-        if (agents != null) {
-            for (Agent agent : agents) {
-                agentManager.getAgentClient(agent); // this caches and starts the client
-            }
-        }
-
-        return;
     }
 
     /**
@@ -814,6 +847,7 @@ public class StartupBean implements StartupLocal {
             ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             mbean.startMasterPluginContainerWithoutSchedulingJobs();
         } catch (Exception e) {
+            error += (error.isEmpty() ? "" : ", ") + "server plugin container";
             throw new RuntimeException("Cannot start the master server plugin container!", e);
         }
     }

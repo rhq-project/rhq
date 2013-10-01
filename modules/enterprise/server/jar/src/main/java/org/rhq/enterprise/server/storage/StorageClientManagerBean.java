@@ -88,12 +88,15 @@ public class StorageClientManagerBean {
     private boolean initialized;
     private StorageClusterMonitor storageClusterMonitor;
 
-    public synchronized void init() {
+    /**
+     * @return true if the storage subsystem is running
+     */
+    public synchronized boolean init() {
         if (initialized) {
             if (log.isDebugEnabled()) {
                 log.debug("Storage client subsystem is already initialized. Skipping initialization.");
             }
-            return;
+            return initialized;
         }
 
         log.info("Initializing storage client subsystem");
@@ -132,7 +135,7 @@ public class StorageClientManagerBean {
             log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                 + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                 + " as soon as possible.");
-            return;
+            return initialized;
         }
         Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);
@@ -147,6 +150,7 @@ public class StorageClientManagerBean {
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
+        return initialized;
     }
 
     /**
@@ -166,6 +170,8 @@ public class StorageClientManagerBean {
         SchemaManager schemaManager = new SchemaManager(username, password, nodes, cqlPort);
         try {
             schemaManager.checkCompatibility();
+        } catch (NoHostAvailableException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }

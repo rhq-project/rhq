@@ -114,6 +114,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
+    private static final Log LOG = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
     static private final int MERGE_BATCH_SIZE;
 
@@ -127,8 +128,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
         MERGE_BATCH_SIZE = mergeBatchSize;
     }
-
-    private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -173,11 +172,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Set<ResourceType> deletedTypes = filter.apply(report);
 
         if (!deletedTypes.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug("The inventory report from " + report.getAgent() + " with added roots "
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("The inventory report from " + report.getAgent() + " with added roots "
                     + report.getAddedRoots() + " contains these deleted resource types " + deletedTypes);
             } else {
-                log.info("The inventory report from " + report.getAgent() + " contains these deleted resource types "
+                LOG.info("The inventory report from " + report.getAgent() + " contains these deleted resource types "
                     + deletedTypes);
             }
             throw new StaleTypeException("The report contains one or more resource types that have been marked for "
@@ -195,13 +194,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + agent.getName() + "] was recently removed from the inventory. In any other case this is a bug.");
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
                 + report.getAddedRoots().size());
         }
 
         Set<Resource> roots = report.getAddedRoots();
-        log.debug(report);
+        LOG.debug(report);
 
         final Map<String, ResourceType> allTypes = new HashMap<String, ResourceType>();
 
@@ -220,8 +219,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
             mergeResource(root, knownAgent);
 
-            if (log.isDebugEnabled()) {
-                log.debug("Root merged: resource/millis=" + root.getName() + '/'
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Root merged: resource/millis=" + root.getName() + '/'
                     + (System.currentTimeMillis() - rootStart));
             }
         }
@@ -251,8 +250,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             results = null;
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
         }
 
         return results;
@@ -351,8 +350,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         scheduleAgentInventoryOperationJob(platforms, servers);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
                 + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
         }
     }
@@ -365,7 +364,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 isScheduled = true;
             }
         } catch (SchedulerException se) {
-            log.error("Error getting job detail", se);
+            LOG.error("Error getting job detail", se);
         }
         return isScheduled;
     }
@@ -402,7 +401,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 scheduler.scheduleJob(jobDetail, trigger);
             }
         } catch (SchedulerException e) {
-            log.error("Failed to schedule agent inventory update operation.", e);
+            LOG.error("Failed to schedule agent inventory update operation.", e);
             updateAgentInventoryStatus(platforms, servers);
         }
     }
@@ -426,7 +425,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 syncInfo = entityManager.find(ResourceSyncInfo.class, platform.getId());
                 agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
             } catch (Exception e) {
-                log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
+                LOG.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
                     + "]", e);
             }
         }
@@ -438,7 +437,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     syncInfo = entityManager.find(ResourceSyncInfo.class, server.getId());
                     agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
                 } catch (Exception e) {
-                    log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
+                    LOG.warn("Could not perform commit synchronization with agent for server [" + server.getName()
                         + "]", e);
                 }
             }
@@ -605,7 +604,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                         result.add(upgradedData);
                     }
                 } catch (Exception e) {
-                    log.error("Failed to process upgrade request for resource " + existingResource + ".", e);
+                    LOG.error("Failed to process upgrade request for resource " + existingResource + ".", e);
                 }
             }
         }
@@ -643,7 +642,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             versionChanged = !oldVersion.equals(newVersion);
 
             if (versionChanged) {
-                log.info("Resource [" + resource + "] changed its version from [" + oldVersion + "] to [" + newVersion
+                LOG.info("Resource [" + resource + "] changed its version from [" + oldVersion + "] to [" + newVersion
                     + "]");
                 resource.setVersion(newVersion);
 
@@ -688,20 +687,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             if (needsUpgrade(resource.getResourceKey(), resourceKey)) {
                 resource.setResourceKey(resourceKey);
                 logMessage.append("resourceKey, ");
+                ret.setUpgradedResourceKey(resource.getResourceKey());
             }
-            ret.setUpgradedResourceKey(resource.getResourceKey());
 
             if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getName(), name)) {
                 resource.setName(name);
                 logMessage.append("name, ");
+                ret.setUpgradedResourceName(resource.getName());
             }
-            ret.setUpgradedResourceName(resource.getName());
 
             if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getDescription(), description)) {
                 resource.setDescription(description);
                 logMessage.append("description, ");
+                ret.setUpgradedResourceDescription(resource.getDescription());
             }
-            ret.setUpgradedResourceDescription(resource.getDescription());
 
             // If provided, assume the new plugin config should replace the old plugin config in its entirety.
             // Use a deep copy without ids as the updgardeRequest config may contain entity config props. 
@@ -714,9 +713,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 PluginConfigurationUpdate update = configurationManager.upgradePluginConfiguration(
                     subjectManager.getOverlord(), resource.getId(), pluginConfig);
                 ret.setUpgradedResourcePluginConfiguration(update.getResource().getPluginConfiguration());
-
-            } else {
-                ret.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
             }
 
             // finally let's remove the potential previous upgrade error. we've now successfully
@@ -730,7 +726,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [").append(resource.toString())
                 .append("]");
 
-            log.info(logMessage.toString());
+            LOG.info(logMessage.toString());
         }
 
         return ret;
@@ -787,8 +783,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         long start = System.currentTimeMillis();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Merging [" + resource + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Merging [" + resource + "]...");
         }
 
         // We don't merge the entire resource tree. Instead we batch them in order to reduce transaction overhead
@@ -797,8 +793,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // NOTE: this will also strip out all resources that are to be ignored; thus, ignored resources won't get merged
         List<Resource> resourceList = treeToBreadthFirstList(resource);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Preparing to merge [" + resourceList.size() + "] Resources with a batch size of ["
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Preparing to merge [" + resourceList.size() + "] Resources with a batch size of ["
                 + MERGE_BATCH_SIZE + "]");
         }
 
@@ -813,8 +809,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             resourceBatch.clear();
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Resource and children merged: resource/millis=" + resource.getName() + '/'
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Resource and children merged: resource/millis=" + resource.getName() + '/'
                 + (System.currentTimeMillis() - start));
         }
 
@@ -854,7 +850,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         throws InvalidInventoryReportException {
 
         long batchStart = System.currentTimeMillis();
-        boolean isDebugEnabled = log.isDebugEnabled();
+        boolean isDebugEnabled = LOG.isDebugEnabled();
         // Cache parent resources we've already fetched from the DB, many resources will have the same parent
         Map<Integer, Resource> parentMap = new HashMap<Integer, Resource>();
 
@@ -874,7 +870,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
 
             if (isDebugEnabled) {
-                log.debug("Single Resource merged: resource/millis=" + resource.getName() + '/'
+                LOG.debug("Single Resource merged: resource/millis=" + resource.getName() + '/'
                     + (System.currentTimeMillis() - start));
             }
         }
@@ -884,7 +880,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         if (isDebugEnabled) {
             long delta = (System.currentTimeMillis() - batchStart);
-            log.debug("Resource Batch merged: size/average/millis=" + resourceBatch.size() + "/" + delta
+            LOG.debug("Resource Batch merged: size/average/millis=" + resourceBatch.size() + "/" + delta
                 / resourceBatch.size() + "/" + delta);
         }
     }
@@ -917,31 +913,31 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      */
     private Resource findExistingResource(Resource resource, Map<Integer, Resource> parentMap) {
 
-        boolean isDebugEnabled = log.isDebugEnabled();
+        boolean isDebugEnabled = LOG.isDebugEnabled();
 
         if (isDebugEnabled) {
-            log.debug("getExistingResource processing for [" + resource + "]");
+            LOG.debug("getExistingResource processing for [" + resource + "]");
         }
 
         Resource existingResource = null;
 
         if (resource.getId() != 0) {
             if (isDebugEnabled) {
-                log.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
+                LOG.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
             }
 
             // This maybe could be more efficient using a named query that pulls some lazy data, but this should be fine
             existingResource = entityManager.find(Resource.class, resource.getId());
             if (isDebugEnabled) {
                 if (null != existingResource) {
-                    log.debug("Found resource already in inventory. Id=" + resource.getId());
+                    LOG.debug("Found resource already in inventory. Id=" + resource.getId());
                 } else {
                     // agent lied - agent's copy of JON server inventory must be stale.
-                    log.debug("However, no resource exists with the specified id. Id=" + resource.getId());
+                    LOG.debug("However, no resource exists with the specified id. Id=" + resource.getId());
                 }
             }
         } else {
-            log.debug("Agent reported resource with id of 0");
+            LOG.debug("Agent reported resource with id of 0");
         }
 
         // If necessary double-check for an existing resource using the business key.
@@ -949,7 +945,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // or if the agent didn't know about it to begin with (id was 0).
         if (existingResource == null) {
             if (isDebugEnabled) {
-                log.debug("Checking if a resource exists with the specified business key. Id=" + resource.getId()
+                LOG.debug("Checking if a resource exists with the specified business key. Id=" + resource.getId()
                     + ", key=" + resource.getResourceKey());
             }
 
@@ -969,7 +965,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     int parentId = parent.getId();
 
                     if (parentId <= 0) {
-                        log.warn("Expected potential parent resource to have a valid ID. Parent=" + parent + ", Child="
+                        LOG.warn("Expected potential parent resource to have a valid ID. Parent=" + parent + ", Child="
                             + resource);
                     }
 
@@ -1010,20 +1006,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 // We found it - reset the id to what it should be.
                 resource.setId(existingResource.getId());
                 if (isDebugEnabled) {
-                    log.debug("Found resource already in inventory with specified business key, Id=" + resource.getId());
+                    LOG.debug("Found resource already in inventory with specified business key, Id=" + resource.getId());
                 }
 
             } else {
-                log.debug("Unable to find the agent-reported resource by id or business key.");
+                LOG.debug("Unable to find the agent-reported resource by id or business key.");
 
                 if (resource.getId() != 0) {
                     // existingResource is still null at this point, the resource does not exist in inventory.
-                    log.error("Resetting the resource's id to zero. Previous Id=" + resource.getId());
+                    LOG.error("Resetting the resource's id to zero. Previous Id=" + resource.getId());
                     resource.setId(0);
                     // TODO: Is there anything else we should do here to inform the agent it has an out-of-sync resource?
 
                 } else {
-                    log.debug("Resource's id was already zero, nothing to do for the merge.");
+                    LOG.debug("Resource's id was already zero, nothing to do for the merge.");
                 }
             }
         }
@@ -1083,8 +1079,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 }
 
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Existing Resource " + existingResource + " has invalid parent type ("
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Existing Resource " + existingResource + " has invalid parent type ("
                         + existingResourceParentType + ") and so does plugin-reported Resource " + updatedResource
                         + " (" + updatedResourceParentType + ") - valid parent types are [" + validParentTypes + "].");
                 }
@@ -1093,8 +1089,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
         if (existingResource.getDescription() == null && updatedResource.getDescription() != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '"
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Setting description of existing resource with id " + existingResource.getId() + " to '"
                     + updatedResource.getDescription() + "' (as reported by agent)...");
             }
             existingResource.setDescription(updatedResource.getDescription());
@@ -1104,7 +1100,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if ((existingResource.getResourceKey() != null)
             && !existingResource.getResourceKey().equals(updatedResource.getResourceKey())) {
 
-            log.warn("Agent reported that key for " + existingResource + " has changed from '"
+            LOG.warn("Agent reported that key for " + existingResource + " has changed from '"
                 + existingResource.getResourceKey() + "' to '" + updatedResource.getResourceKey() + "'.");
         }
 
@@ -1152,7 +1148,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
 
             if (null == resourceType) {
-                log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
+                LOG.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
                     + "]. The Agent most likely has a plugin named '" + plugin
                     + "' installed that is not installed on the Server. Resource will be ignored...");
                 return false;
@@ -1292,7 +1288,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         try {
             this.availabilityManager.setResourceAvailabilities(resourceIds, AvailabilityType.UNKNOWN);
         } catch (Exception e) {
-            log.error("Failed to reset availabilities for resources being ignored: " + ThrowableUtil.getAllMessages(e));
+            LOG.error("Failed to reset availabilities for resources being ignored: " + ThrowableUtil.getAllMessages(e));
         }
 
         return;
@@ -1367,7 +1363,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             ResourceCategory category = resource.getResourceType().getCategory();
             if (category == ResourceCategory.PLATFORM) {
                 if (target == InventoryStatus.IGNORED && (resource.getInventoryStatus() == InventoryStatus.COMMITTED)) {
-                    log.warn("Cannot ignore a committed platform - skipping request to ignore:" + resource);
+                    LOG.warn("Cannot ignore a committed platform - skipping request to ignore:" + resource);
                 } else {
                     platforms.add(resource);
                 }

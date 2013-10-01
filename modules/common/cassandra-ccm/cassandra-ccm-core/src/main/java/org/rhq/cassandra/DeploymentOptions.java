@@ -73,7 +73,7 @@ public class DeploymentOptions {
     private Boolean embedded;
     private String loggingLevel;
     private Integer numTokens;
-    private Integer nativeTransportPort;
+    private Integer cqlPort;
     private Boolean startRpc;
     private Integer rpcPort;
     private Integer nativeTransportMaxThreads;
@@ -87,8 +87,7 @@ public class DeploymentOptions {
     private String listenAddress;
     private String rpcAddress;
     private Integer jmxPort;
-    private Integer storagePort;
-    private Integer sslStoragePort;
+    private Integer gossipPort;
     private String seeds;
     private String heapSize;
     private String heapNewSize;
@@ -138,34 +137,38 @@ public class DeploymentOptions {
         setUsername(loadProperty("rhq.storage.username", properties));
         setPassword(loadProperty("rhq.storage.password", properties));
 
-        setClusterDir(loadProperty("rhq.cassandra.cluster.dir", properties));
-        setNumNodes(Integer.parseInt(loadProperty("rhq.cassandra.cluster.num-nodes", properties)));
-        setEmbedded(Boolean.valueOf(loadProperty("rhq.cassandra.cluster.is-embedded", properties)));
-        setLoggingLevel(loadProperty("rhq.cassandra.logging.level", properties));
+        setBasedir(loadProperty("rhq.storage.basedir", properties));
+        setClusterDir(loadProperty("rhq.storage.cluster.dir", properties));
+        setNumNodes(Integer.parseInt(loadProperty("rhq.storage.cluster.num-nodes", properties)));
+        setEmbedded(Boolean.valueOf(loadProperty("rhq.storage.cluster.is-embedded", properties)));
 
-        setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.num-tokens", properties)));
-        setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
-        setRpcPort(Integer.valueOf(loadProperty("rhq.cassandra.rpc-port", properties)));
-        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-max-threads",
+        setLoggingLevel(loadProperty("rhq.storage.logging.level", properties));
+        setLogFileName(loadProperty("rhq.storage.log.file", properties));
+
+        setRpcPort(Integer.valueOf(loadProperty("rhq.storage.rpc-port", properties)));
+        setCqlPort(Integer.valueOf(loadProperty("rhq.storage.cql-port", properties)));
+        setJmxPort(Integer.valueOf(loadProperty("rhq.storage.jmx-port", properties)));
+        setGossipPort(Integer.valueOf(loadProperty("rhq.storage.gossip-port", properties)));
+
+        setNumTokens(Integer.valueOf(loadProperty("rhq.storage.num-tokens", properties)));
+        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.storage.native-transport-max-threads",
             properties)));
-        setAuthenticator(loadProperty("rhq.cassandra.authenticator", properties));
-        setAuthorizer(loadProperty("rhq.cassandra.authorizer", properties));
-        setDataDir(loadProperty("rhq.cassandra.data.dir", properties));
-        setCommitLogDir(loadProperty("rhq.cassandra.commitlog.dir", properties));
-        setSavedCachesDir(loadProperty("rhq.cassandra.saved.caches.dir", properties));
-        setLogFileName(loadProperty("rhq.cassandra.log.file", properties));
-        setListenAddress(loadProperty("rhq.cassandra.listen.address", properties));
-        setStartRpc(Boolean.valueOf(loadProperty("rhq.cassandra.start_rpc", properties)));
-        setRpcAddress(loadProperty("rhq.cassandra.rpc.address", properties));
-        setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
-        setStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.storage.port", properties)));
-        setSslStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.ssl.storage.port", properties)));
 
-        setSeeds(loadProperty("rhq.cassandra.seeds", properties));
-        setBasedir(loadProperty("rhq.cassandra.basedir", properties));
-        setHeapSize(loadProperty("rhq.cassandra.max.heap.size", properties));
-        setHeapNewSize(loadProperty("rhq.cassandra.heap.new.size", properties));
-        setStackSize(loadProperty("rhq.cassandra.stack.size", properties));
+        setAuthenticator(loadProperty("rhq.storage.authenticator", properties));
+        setAuthorizer(loadProperty("rhq.storage.authorizer", properties));
+
+        setDataDir(loadProperty("rhq.storage.data", properties));
+        setCommitLogDir(loadProperty("rhq.storage.commitlog", properties));
+        setSavedCachesDir(loadProperty("rhq.storage.saved-caches", properties));
+
+        setSeeds(loadProperty("rhq.storage.seeds", properties));
+        setListenAddress(loadProperty("rhq.storage.listen.address", properties));
+        setStartRpc(Boolean.valueOf(loadProperty("rhq.storage.start_rpc", properties)));
+        setRpcAddress(loadProperty("rhq.storage.rpc.address", properties));
+
+        setHeapSize(loadProperty("rhq.storage.heap-size", properties));
+        setHeapNewSize(loadProperty("rhq.storage.heap-new-size", properties));
+        setStackSize(loadProperty("rhq.storage.stack-size", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -182,7 +185,7 @@ public class DeploymentOptions {
         setEmbedded(other.embedded);
         setLoggingLevel(other.loggingLevel);
         setNumTokens(other.numTokens);
-        setNativeTransportPort(other.nativeTransportPort);
+        setCqlPort(cqlPort);
         setNativeTransportMaxThreads(other.nativeTransportMaxThreads);
         setUsername(other.username);
         setPassword(other.password);
@@ -197,8 +200,7 @@ public class DeploymentOptions {
         setStartRpc(other.startRpc);
         setRpcPort(other.rpcPort);
         setJmxPort(other.jmxPort);
-        setStoragePort(other.storagePort);
-        setSslStoragePort(other.sslStoragePort);
+        setGossipPort(other.gossipPort);
         setSeeds(other.seeds);
         setBasedir(other.basedir);
         setHeapSize(other.heapSize);
@@ -252,7 +254,7 @@ public class DeploymentOptions {
     /**
      * @return The directory in which the node will be installed.
      */
-    @DeploymentProperty(name = "rhq.cassandra.basedir")
+    @DeploymentProperty(name = "rhq.storage.basedir")
     public String getBasedir() {
         return basedir;
     }
@@ -269,7 +271,7 @@ public class DeploymentOptions {
     /**
      * @return The number of nodes in the cluster. This only applies to embedded clusters.
      */
-    @DeploymentProperty(name = "rhq.cassandra.cluster.num-nodes")
+    @DeploymentProperty(name = "rhq.storage.cluster.num-nodes")
     public int getNumNodes() {
         return numNodes;
     }
@@ -289,7 +291,7 @@ public class DeploymentOptions {
      * embedded cluster is one in which all nodes run on a single host and can only accept
      * requests from that same host.
      */
-    @DeploymentProperty(name = "rhq.cassandra.cluster.is-embedded")
+    @DeploymentProperty(name = "rhq.storage.cluster.is-embedded")
     public boolean isEmbedded() {
         return embedded;
     }
@@ -308,7 +310,7 @@ public class DeploymentOptions {
     /**
      * @return The log4j logging level that Cassandra uses
      */
-    @DeploymentProperty(name = "rhq.cassandra.logging.level")
+    @DeploymentProperty(name = "rhq.storage.logging.level")
     public String getLoggingLevel() {
         return loggingLevel;
     }
@@ -325,7 +327,7 @@ public class DeploymentOptions {
     /**
      * @return The number of tokens assigned to this the node on the ring. Defaults to 256.
      */
-    @DeploymentProperty(name = "rhq.cassandra.num_tokens")
+    @DeploymentProperty(name = "rhq.storage.num_tokens")
     public Integer getNumTokens() {
         return numTokens;
     }
@@ -343,24 +345,24 @@ public class DeploymentOptions {
     /**
      * @return The port on which Cassandra listens for client requests.
      */
-    @DeploymentProperty(name = "rhq.cassandra.native_transport_port")
-    public Integer getNativeTransportPort() {
-        return nativeTransportPort;
+    @DeploymentProperty(name = "rhq.storage.cql-port")
+    public Integer getCqlPort() {
+        return cqlPort;
     }
 
     /**
      * @param port The port on which Cassandra listens for client requests.
      */
-    public void setNativeTransportPort(Integer port) {
-        if (nativeTransportPort == null) {
-            nativeTransportPort = port;
+    public void setCqlPort(Integer port) {
+        if (cqlPort == null) {
+            cqlPort = port;
         }
     }
 
     /**
      * @return true whether the Thrift-based RPC should be started
      */
-    @DeploymentProperty(name = "rhq.cassandra.start_rpc")
+    @DeploymentProperty(name = "rhq.storage.start_rpc")
     public Boolean getStartRpc() {
         return startRpc;
     }
@@ -374,7 +376,7 @@ public class DeploymentOptions {
         }
     }
 
-    @DeploymentProperty(name = "rhq.cassandra.rpc_port")
+    @DeploymentProperty(name = "rhq.storage.rpc_port")
     public Integer getRpcPort() {
         return rpcPort;
     }
@@ -388,7 +390,7 @@ public class DeploymentOptions {
     /**
      * @return The max number of threads to handle CQL requests
      */
-    @DeploymentProperty(name = "rhq.cassandra.native_transport_max_threads")
+    @DeploymentProperty(name = "rhq.storage.native_transport_max_threads")
     public Integer getNativeTransportMaxThreads() {
         return nativeTransportMaxThreads;
     }
@@ -449,7 +451,7 @@ public class DeploymentOptions {
     /**
      * @return The FQCN of the class that handles Cassandra authentication
      */
-    @DeploymentProperty(name = "rhq.cassandra.authenticator")
+    @DeploymentProperty(name = "rhq.storage.authenticator")
     public String getAuthenticator() {
         return authenticator;
     }
@@ -466,7 +468,7 @@ public class DeploymentOptions {
     /**
      * @return The FQCN of the class that handles Cassandra authorization
      */
-    @DeploymentProperty(name = "rhq.cassandra.authorizer")
+    @DeploymentProperty(name = "rhq.storage.authorizer")
     public String getAuthorizer() {
         return authorizer;
     }
@@ -483,7 +485,7 @@ public class DeploymentOptions {
     /**
      * @return The directory where Cassandra stores data on disk
      */
-    @DeploymentProperty(name = "rhq.cassandra.data.dir")
+    @DeploymentProperty(name = "rhq.storage.data")
     public String getDataDir() {
         return dataDir;
     }
@@ -500,7 +502,7 @@ public class DeploymentOptions {
     /**
      * @return The directory where Cassandra stores commit log files
      */
-    @DeploymentProperty(name = "rhq.cassandra.commitlog.dir")
+    @DeploymentProperty(name = "rhq.storage.commitlog")
     public String getCommitLogDir() {
         return commitLogDir;
     }
@@ -517,7 +519,7 @@ public class DeploymentOptions {
     /**
      * @return The directory where Cassandra stores saved caches on disk
      */
-    @DeploymentProperty(name = "rhq.cassandra.saved.caches.dir")
+    @DeploymentProperty(name = "rhq.storage.saved-caches")
     public String getSavedCachesDir() {
         return savedCachesDir;
     }
@@ -534,7 +536,7 @@ public class DeploymentOptions {
     /**
      * @return The full path of the Log4J log file to which Cassandra writes.
      */
-    @DeploymentProperty(name = "rhq.cassandra.log.file")
+    @DeploymentProperty(name = "rhq.storage.log.file")
     public String getLogFileName() {
         return logFileName;
     }
@@ -551,7 +553,7 @@ public class DeploymentOptions {
     /**
      * @return The address to which Cassandra binds and tells other node to connect to
      */
-    @DeploymentProperty(name = "rhq.cassandra.listen.address")
+    @DeploymentProperty(name = "rhq.storage.listen.address")
     public String getListenAddress() {
         return listenAddress;
     }
@@ -579,7 +581,7 @@ public class DeploymentOptions {
     /**
      * @return The port on which Cassandra listens for JMX connections
      */
-    @DeploymentProperty(name = "rhq.cassandra.jmx.port")
+    @DeploymentProperty(name = "rhq.storage.jmx-port")
     public Integer getJmxPort() {
         return jmxPort;
     }
@@ -596,36 +598,17 @@ public class DeploymentOptions {
     /**
      * @return The port on which Cassandra listens for gossip requests
      */
-    @DeploymentProperty(name = "rhq.cassandra.storage.port")
-    public Integer getStoragePort() {
-        return storagePort;
+    @DeploymentProperty(name = "rhq.storage.gossip-port")
+    public Integer getGossipPort() {
+        return gossipPort;
     }
 
     /**
      * @param port The port on which Cassandra listens for gossip requests
      */
-    public void setStoragePort(Integer port) {
-        if (storagePort == null) {
-            storagePort = port;
-        }
-    }
-
-    /**
-     * @return The port on which Cassandra listens for encrypted gossip requests. Note that
-     * this is only used if encryption is enabled.
-     */
-    @DeploymentProperty(name = "rhq.cassandra.ssl.storage.port")
-    public Integer getSslStoragePort() {
-        return sslStoragePort;
-    }
-
-    /**
-     * @param port The port on which Cassandra listens for encrypted gossip requests. Note
-     * that this is only used if encryption is enabled.
-     */
-    public void setSslStoragePort(Integer port) {
-        if (sslStoragePort == null) {
-            sslStoragePort = port;
+    public void setGossipPort(Integer port) {
+        if (gossipPort == null) {
+            gossipPort = port;
         }
     }
 
@@ -633,7 +616,7 @@ public class DeploymentOptions {
      * @return A comma-delimited list of IP addresses/host names that are deemed contact
      * points during node start up to learn about the ring topology.
      */
-    @DeploymentProperty(name = "rhq.cassandra.seeds")
+    @DeploymentProperty(name = "rhq.storage.seeds")
     public String getSeeds() {
         return seeds;
     }
@@ -652,7 +635,7 @@ public class DeploymentOptions {
      * @return The value to use for both the max and min heap sizes. Defaults to
      * ${MAX_HEAP_SIZE} which allows the cassandra-env.sh script to determine the value.
      */
-    @DeploymentProperty(name = "rhq.cassandra.max.heap.size")
+    @DeploymentProperty(name = "rhq.storage.heap-size")
     public String getHeapSize() {
         return heapSize;
     }
@@ -671,7 +654,7 @@ public class DeploymentOptions {
      * @return The value to use for the size of the new generation. Defaults to
      * ${HEAP_NEWSIZE} which allows the cassandra-env.sh script to determine the value.
      */
-    @DeploymentProperty(name = "rhq.cassandra.heap.new.size")
+    @DeploymentProperty(name = "rhq.storage.heap-new-size")
     public String getHeapNewSize() {
         return heapNewSize;
     }
@@ -691,7 +674,7 @@ public class DeploymentOptions {
      * @return The value to use for the JVM stack size. This is passed directly to the -Xss
      * JVM start up option.
      */
-    @DeploymentProperty(name = "rhq.cassandra.stack.size")
+    @DeploymentProperty(name = "rhq.storage.stack-size")
     public String getStackSize() {
         return stackSize;
     }

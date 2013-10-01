@@ -679,7 +679,11 @@ public class ServerConfiguration {
 
                 buf.append(key);
                 buf.append('=');
-                buf.append(m_preferences.get(key, LOG.getMsgString(ServerI18NResourceKeys.UNKNOWN)));
+                if (key.toLowerCase().contains("password")) {
+                    buf.append("***");
+                } else {
+                    buf.append(m_preferences.get(key, LOG.getMsgString(ServerI18NResourceKeys.UNKNOWN)));
+                }
 
                 if ((i + 1) < keys.length) {
                     buf.append(',');

@@ -17,4 +17,6 @@ public interface StorageStateListener {
 
     void onStorageClusterDown(NoHostAvailableException e);
 
+    void onStorageClusterUp();
+
 }

@@ -25,19 +25,12 @@
 
 package org.rhq.metrics.simulator.plan;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rhq.server.metrics.MetricsConfiguration;
 
 /**
  * @author John Sanda
  */
 public class SimulationPlan {
-
-    private List<ScheduleGroup> scheduleSets = new ArrayList<ScheduleGroup>();
-
-    private int threadPoolSize;
 
     private long collectionInterval;
 
@@ -49,29 +42,13 @@ public class SimulationPlan {
 
     private int simulationTime;
 
-    private ClusterConfig clusterConfig;
+    private String[] nodes;
 
-    private String clientCompression = null;
+    private int cqlPort;
 
-    public List<ScheduleGroup> getScheduleSets() {
-        return scheduleSets;
-    }
+    private int batchSize;
 
-    public void addScheduleSet(ScheduleGroup scheduleSet) {
-        scheduleSets.add(scheduleSet);
-    }
-
-    public void setScheduleSets(List<ScheduleGroup> scheduleSets) {
-        this.scheduleSets = scheduleSets;
-    }
-
-    public int getThreadPoolSize() {
-        return threadPoolSize;
-    }
-
-    public void setThreadPoolSize(int threadPoolSize) {
-        this.threadPoolSize = threadPoolSize;
-    }
+    private int metricsReportInterval;
 
     public long getCollectionInterval() {
         return collectionInterval;
@@ -113,19 +90,35 @@ public class SimulationPlan {
         this.simulationTime = simulationTime;
     }
 
-    public ClusterConfig getClusterConfig() {
-        return clusterConfig;
+    public String[] getNodes() {
+        return nodes;
     }
 
-    public void setClusterConfig(ClusterConfig clusterConfig) {
-        this.clusterConfig = clusterConfig;
+    public void setNodes(String[] nodes) {
+        this.nodes = nodes;
     }
 
-    public String getClientCompression() {
-        return clientCompression;
+    public int getCqlPort() {
+        return cqlPort;
     }
 
-    public void setClientCompression(String clientCompression) {
-        this.clientCompression = clientCompression;
+    public void setCqlPort(int cqlPort) {
+        this.cqlPort = cqlPort;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public int getMetricsReportInterval() {
+        return metricsReportInterval;
+    }
+
+    public void setMetricsReportInterval(int metricsReportInterval) {
+        this.metricsReportInterval = metricsReportInterval;
     }
 }

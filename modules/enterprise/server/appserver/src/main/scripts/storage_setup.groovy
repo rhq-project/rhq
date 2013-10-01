@@ -23,7 +23,7 @@
  * You can also run the setup for additional storage nodes after you have already built
  * your dev-container by executing
  *
- *   $ mvn -o groovy:execute -Pdev -Dsource=src/main/script/storage_setup.groovy -Drhq.storage.num-nodes=4
+ *   $ mvn -o groovy:execute -Pdev -Dsource=src/main/scripts/storage_setup.groovy -Drhq.storage.num-nodes=4
  *
  * The script will detect that you already have rhq-server-2 and rhq-server-3 setup; so, it
  * will only set up rhq-server-4.
@@ -89,15 +89,15 @@ def createStoragePropertiesFile(basedir, nodeId) {
 
   propsFile.withWriter { writer ->
     writer.write("""# storage installer options for dev deployment
-commitlog=${dataRootDir}/storage-$nodeId/commit_log
-data=${dataRootDir}/storage-$nodeId/data
-saved-caches=${dataRootDir}/storage-$nodeId/saved_caches
-heap-size=${heapSize}
-heap-new-size=${heapNewSize}
-hostname=127.0.0.$nodeId
-jmx-port=${defaultJmxPort + (nodeId - 1)}
-seeds=${seeds}
-verify-data-dirs-empty=false
+rhq.storage.commitlog=${dataRootDir}/storage-$nodeId/commit_log
+rhq.storage.data=${dataRootDir}/storage-$nodeId/data
+rhq.storage.saved-caches=${dataRootDir}/storage-$nodeId/saved_caches
+rhq.storage.heap-size=${heapSize}
+rhq.storage.heap-new-size=${heapNewSize}
+rhq.storage.hostname=127.0.0.$nodeId
+rhq.storage.jmx-port=${defaultJmxPort + (nodeId - 1)}
+rhq.storage.seeds=${seeds}
+rhq.storage.verify-data-dirs-empty=false
 """
     )
   }

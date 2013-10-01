@@ -20,18 +20,17 @@
 package org.rhq.metrics.simulator;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
+import com.codahale.metrics.ConsoleReporter;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
-import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -39,17 +38,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.Minutes;
 
-import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.ClusterInitService;
-import org.rhq.cassandra.DeploymentOptions;
-import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
-import org.rhq.metrics.simulator.plan.ClusterConfig;
-import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
-import org.rhq.metrics.simulator.stats.Stats;
-import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.StorageSession;
@@ -63,31 +54,24 @@ public class Simulator implements ShutdownManager {
 
     private boolean shutdown = false;
 
-    private CassandraClusterManager ccm;
-
     public void run(SimulationPlan plan) {
-        final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
-            new SimulatorThreadFactory());
+        final ScheduledExecutorService aggregators = Executors.newScheduledThreadPool(1, new SimulatorThreadFactory());
+        final ScheduledExecutorService collectors = Executors.newScheduledThreadPool(
+            plan.getNumMeasurementCollectors(), new SimulatorThreadFactory());
+        final ExecutorService aggregationQueue = Executors.newSingleThreadExecutor(new SimulatorThreadFactory());
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                shutdown(executorService);
+                shutdown(collectors, "collectors", 5);
+                shutdown(aggregators, "aggregators", 1);
+                shutdown(aggregationQueue, "aggregationQueue", Integer.MAX_VALUE);
             }
         });
 
-        initCluster(plan);
-        createSchema();
+        createSchema(plan.getNodes(), plan.getCqlPort());
 
-        Session session = createSession();
-//        if (plan.getClientCompression() == null) {
-//            session = createSession();
-//        } else {
-//            ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
-//                plan.getClientCompression().toUpperCase());
-//            session = createSession(compression);
-//        }
-
+        Session session = createSession(plan.getNodes(), plan.getCqlPort());
         StorageSession storageSession = new StorageSession(session);
 
         MetricsDAO metricsDAO = new MetricsDAO(storageSession, plan.getMetricsServerConfiguration());
@@ -95,47 +79,46 @@ public class Simulator implements ShutdownManager {
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
 
-        DateTimeService dateTimeService = new DateTimeService();
+        SimulatorDateTimeService dateTimeService = new SimulatorDateTimeService();
         dateTimeService.setConfiguration(plan.getMetricsServerConfiguration());
         metricsServer.setDateTimeService(dateTimeService);
 
-        Set<Schedule> schedules = initSchedules(plan.getScheduleSets().get(0));
-        PriorityQueue<Schedule> queue = new PriorityQueue<Schedule>(schedules);
-        ReentrantLock queueLock = new ReentrantLock();
+        Metrics metrics = new Metrics();
 
-        MeasurementAggregator measurementAggregator = new MeasurementAggregator();
-        measurementAggregator.setMetricsServer(metricsServer);
-        measurementAggregator.setShutdownManager(this);
+        MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics,
+            aggregationQueue);
 
-        Stats stats = new Stats();
-        StatsCollector statsCollector = new StatsCollector(stats);
-
-        log.info("Starting executor service");
-        executorService.scheduleAtFixedRate(statsCollector, 0, 1, TimeUnit.MINUTES);
-
+        ConsoleReporter consoleReporter = createConsoleReporter(metrics, plan.getMetricsReportInterval());
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
-            MeasurementCollector measurementCollector = new MeasurementCollector();
-            measurementCollector.setMetricsServer(metricsServer);
-            measurementCollector.setQueue(queue);
-            measurementCollector.setQueueLock(queueLock);
-            measurementCollector.setStats(stats);
-            measurementCollector.setShutdownManager(this);
-
-            executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
+            collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
+                plan.getBatchSize() * i, metrics, metricsServer, dateTimeService), 0, plan.getCollectionInterval(),
                 TimeUnit.MILLISECONDS);
         }
 
-        executorService.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
+        aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
             TimeUnit.MILLISECONDS);
-
         try {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
         }
-        statsCollector.reportSummaryStats();
         log.info("Simulation has completed. Initiating shutdown...");
+        consoleReporter.stop();
         shutdown(0);
+    }
+
+    private ConsoleReporter createConsoleReporter(Metrics metrics, int reportInterval) {
+        try {
+            File basedir = new File(System.getProperty("rhq.metrics.simulator.basedir"));
+            File logDir = new File(basedir, "log");
+            ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(metrics.registry)
+                .convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS)
+                .outputTo(new PrintStream(new FileOutputStream(new File(logDir, "metrics.txt")))).build();
+            consoleReporter.start(reportInterval, TimeUnit.SECONDS);
+            return consoleReporter;
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Failed to create console reporter", e);
+        }
     }
 
     @Override
@@ -143,81 +126,40 @@ public class Simulator implements ShutdownManager {
         if (shutdown) {
             return;
         }
+
         shutdown = true;
         log.info("Preparing to shutdown simulator...");
         System.exit(status);
     }
 
-    private void shutdown(ScheduledExecutorService executorService) {
-        log.info("Shutting down executor service");
-        executorService.shutdown();
+    private void shutdown(ExecutorService service, String serviceName, int wait) {
+        log.info("Shutting down " + serviceName);
+        service.shutdown();
         try {
-            executorService.awaitTermination(5, TimeUnit.SECONDS);
+            service.awaitTermination(wait, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
-        if (!executorService.isTerminated()) {
-            log.info("Forcing executor service shutdown.");
-            executorService.shutdownNow();
+        if (!service.isTerminated()) {
+            log.info("Forcing " + serviceName + " shutdown.");
+            service.shutdownNow();
         }
-        shutdownCluster();
-        log.info("Shut down complete");
+        log.info(serviceName + " shut down complete");
     }
 
-    private void initCluster(SimulationPlan plan) {
-        try {
-            deployCluster(plan.getClusterConfig());
-            waitForClusterToInitialize();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to start simulator. Cluster initialization failed.", e);
-        }
-    }
-
-    private void deployCluster(ClusterConfig clusterConfig) throws IOException {
-        File clusterDir = new File(clusterConfig.getClusterDir(), "cassandra");
-        log.info("Deploying cluster to " + clusterDir);
-        clusterDir.mkdirs();
-
-        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
-        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
-        deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
-        deploymentOptions.setNumNodes(clusterConfig.getNumNodes());
-        deploymentOptions.setHeapSize(clusterConfig.getHeapSize());
-        deploymentOptions.setHeapNewSize(clusterConfig.getHeapNewSize());
-        if (clusterConfig.getStackSize() != null) {
-            deploymentOptions.setStackSize(clusterConfig.getStackSize());
-        }
-        deploymentOptions.setLoggingLevel("INFO");
-        deploymentOptions.load();
-
-        ccm = new CassandraClusterManager(deploymentOptions);
-        ccm.createCluster();
-        ccm.startCluster(false);
-    }
-
-    private void shutdownCluster() {
-        log.info("Shutting down cluster");
-        ccm.shutdownCluster();
-    }
-
-    private void waitForClusterToInitialize() {
-        log.info("Waiting for cluster to initialize");
-        ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(ccm.getNodes(), ccm.getJmxPorts(), ccm.getNodes().length, 2000, 20, 10);
-    }
-
-    private void createSchema() {
+    private void createSchema(String[] nodes, int cqlPort) {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", ccm.getNodes(), ccm.getCqlPort());
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+                new String[] {"127.0.0.1"}, 9142);
             schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);
         }
     }
 
-    private Session createSession() throws NoHostAvailableException {
+    private Session createSession(String[] nodes, int cqlPort) throws NoHostAvailableException {
         try {
-            Cluster cluster = new ClusterBuilder().addContactPoints(ccm.getNodes()).withPort(ccm.getCqlPort())
+            Cluster cluster = new ClusterBuilder().addContactPoints(nodes).withPort(cqlPort)
                 .withCredentials("rhqadmin", "rhqadmin")
                 .build();
 
@@ -231,25 +173,6 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession(ProtocolOptions.Compression compression)
-        throws NoHostAvailableException {
-        try {
-            log.debug("Creating session using " + compression.name() + " compression");
-
-            Cluster cluster = new ClusterBuilder().addContactPoints(ccm.getNodes()).withPort(ccm.getCqlPort())
-                .withCredentials("cassandra", "cassandra")
-                .withCompression(compression)
-                .build();
-
-            log.debug("Created cluster object with " + cluster.getConfiguration().getProtocolOptions().getCompression()
-                + " compression.");
-
-            return initSession(cluster);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to start simulator. Unable to create " + Session.class, e);
-        }
-    }
-
     @SuppressWarnings("deprecation")
     private Session initSession(Cluster cluster) {
         NodeFailureListener listener = new NodeFailureListener();
@@ -258,18 +181,6 @@ public class Simulator implements ShutdownManager {
         }
 
         return cluster.connect("rhq");
-    }
-
-    private Set<Schedule> initSchedules(ScheduleGroup scheduleSet) {
-        long nextCollection = System.currentTimeMillis();
-        Set<Schedule> schedules = new HashSet<Schedule>();
-        for (int i = 0; i < scheduleSet.getCount(); ++i) {
-            Schedule schedule = new Schedule(i);
-            schedule.setInterval(scheduleSet.getInterval());
-            schedule.setNextCollection(nextCollection);
-            schedules.add(schedule);
-        }
-        return schedules;
     }
 
     private static class NodeFailureListener implements Host.StateListener {

@@ -47,8 +47,8 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
+    protected void onInit() {
+        super.onInit();
         removeMembers(getMembers());
         addGraphMarkerComponent();
     }

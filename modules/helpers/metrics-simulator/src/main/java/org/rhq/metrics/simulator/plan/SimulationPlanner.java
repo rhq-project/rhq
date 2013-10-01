@@ -26,18 +26,15 @@
 package org.rhq.metrics.simulator.plan;
 
 import java.io.File;
+import java.net.InetAddress;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.joda.time.Days;
-import org.joda.time.Duration;
-import org.joda.time.Hours;
 import org.joda.time.Minutes;
 import org.joda.time.Seconds;
 
 import org.rhq.server.metrics.MetricsConfiguration;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author John Sanda
@@ -49,185 +46,52 @@ public class SimulationPlanner {
         JsonNode root = mapper.readTree(jsonFile);
         SimulationPlan simulation = new SimulationPlan();
 
-        simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 500L));
-        simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 1000L));
-        simulation.setThreadPoolSize(getInt(root.get("threadPoolSize"), 7));
+        simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 1250L));
+        simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 150000L));  // 2.5 minutes
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
+        simulation.setBatchSize(getInt(root.get("batchSize"), 5000));
+        simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 180));
 
-        JsonNode clientCompressionNode = root.get("clientCompression");
-        if (clientCompressionNode != null) {
-            simulation.setClientCompression(clientCompressionNode.asText());
-        }
-
-        JsonNode schedules = root.get("schedules");
-        if (schedules == null) {
-            simulation.addScheduleSet(new ScheduleGroup(2500, 500L));
+        String[] nodes;
+        if (root.get("nodes") == null || root.get("nodes").size() == 0) {
+            nodes = new String[] {InetAddress.getLocalHost().getHostAddress()};
         } else {
-            if (schedules.isArray()) {
-                for (JsonNode node : schedules) {
-                    simulation.addScheduleSet(new ScheduleGroup(getInt(node.get("count"), 2500),
-                        getLong(node.get("interval"), 500L)));
-                }
-            } else {
-                simulation.addScheduleSet(new ScheduleGroup(getInt(schedules.get("count"), 2500),
-                    getLong(schedules.get("interval"), 500L)));
+            nodes = new String[root.get("nodes").size()];
+            int i = 0;
+            for (JsonNode node : root.get("nodes")) {
+                nodes[i++] = node.asText();
             }
         }
+        simulation.setNodes(nodes);
+
+        simulation.setCqlPort(getInt(root.get("cqlPort"), 9142));
 
         MetricsConfiguration serverConfiguration = createDefaultMetricsConfiguration();
         simulation.setMetricsServerConfiguration(serverConfiguration);
-
-        JsonNode ttlNodes = root.get("ttl");
-        if (ttlNodes != null) {
-            for (JsonNode node : ttlNodes) {
-                String tableName = node.get("table").asText();
-                if (!tableName.isEmpty()) {
-                    MetricsTable table = getTable(tableName);
-                    JsonNode ttlNode = node.get("value");
-                    if (ttlNode != null) {
-                        setTTLAndRetention(table, ttlNode.asInt(), serverConfiguration);
-                    }
-                }
-            }
-        }
-
-        JsonNode timeSliceNode = root.get("timeSliceDuration");
-        if (timeSliceNode != null) {
-            String units = timeSliceNode.get("units").asText();
-            if (units.isEmpty()) {
-                units = "minutes";
-            }
-            for (JsonNode node : timeSliceNode.get("values")) {
-                JsonNode valueNode = node.get("value");
-                JsonNode tableNode = node.get("table");
-                if (!(tableNode == null || valueNode == null)) {
-                    Duration duration = getDuration(units, valueNode.asInt());
-                    MetricsTable table = getTable(tableNode.asText());
-                    setTimeSliceDuration(table, duration, serverConfiguration);
-                }
-            }
-        }
-
-        ClusterConfig clusterConfig = new ClusterConfig();
-        JsonNode clusterConfigNode = root.get("cluster");
-        if (clusterConfigNode != null) {
-            JsonNode embeddedNode = clusterConfigNode.get("embedded");
-            if (embeddedNode != null) {
-                clusterConfig.setEmbedded(embeddedNode.asBoolean(true));
-            }
-
-            JsonNode clusterDirNode = clusterConfigNode.get("clusterDir");
-            if (clusterDirNode != null) {
-                clusterConfig.setClusterDir(clusterDirNode.asText());
-            }
-
-            JsonNode heapSizeNode = clusterConfigNode.get("heapSize");
-            if (heapSizeNode != null) {
-                clusterConfig.setHeapSize(heapSizeNode.asText());
-            }
-
-            JsonNode heapNewSizeNode = clusterConfigNode.get("heapNewSize");
-            if (heapNewSizeNode != null) {
-                clusterConfig.setHeapNewSize(heapNewSizeNode.asText());
-            }
-
-            JsonNode stackSizeNode = clusterConfigNode.get("stackSize");
-            if (stackSizeNode != null) {
-                clusterConfig.setStackSize(stackSizeNode.asText());
-            }
-
-            clusterConfig.setNumNodes(getInt(clusterConfigNode.get("numNodes"), 2));
-        }
-        simulation.setClusterConfig(clusterConfig);
 
         return simulation;
     }
 
     private MetricsConfiguration createDefaultMetricsConfiguration() {
+
         MetricsConfiguration configuration = new MetricsConfiguration();
-        configuration.setRawTTL(180);
-        configuration.setRawRetention(Seconds.seconds(180).toStandardDuration());
-        configuration.setRawTimeSliceDuration(Minutes.ONE.toStandardDuration());
+        configuration.setRawTTL(Minutes.minutes(168).toStandardSeconds().getSeconds());
+        configuration.setRawRetention(Minutes.minutes(168).toStandardDuration());
+        configuration.setRawTimeSliceDuration(Seconds.seconds(150).toStandardDuration());
 
-        configuration.setOneHourTTL(360);
-        configuration.setOneHourRetention(Seconds.seconds(360));
-        configuration.setOneHourTimeSliceDuration(Minutes.minutes(6).toStandardDuration());
+        configuration.setOneHourTTL(Minutes.minutes(336).toStandardSeconds().getSeconds());
+        configuration.setOneHourRetention(Minutes.minutes(336));
+        configuration.setOneHourTimeSliceDuration(Minutes.minutes(15).toStandardDuration());
 
-        configuration.setSixHourTTL(540);
-        configuration.setSixHourRetention(Seconds.seconds(540));
-        configuration.setSixHourTimeSliceDuration(Minutes.minutes(24).toStandardDuration());
+        configuration.setSixHourTTL(Minutes.minutes(744).toStandardSeconds().getSeconds());
+        configuration.setSixHourRetention(Minutes.minutes(744).toStandardSeconds());
+        configuration.setSixHourTimeSliceDuration(Minutes.minutes(60).toStandardDuration());
 
-        configuration.setTwentyFourHourTTL(720);
-        configuration.setTwentyFourHourRetention(Seconds.seconds(720));
+        configuration.setTwentyFourHourTTL(Minutes.minutes(8928).toStandardSeconds().getSeconds());
+        configuration.setTwentyFourHourRetention(Minutes.minutes(8928).toStandardSeconds());
 
         return configuration;
-    }
-
-    private MetricsTable getTable(String name) {
-        if (name.equals(MetricsTable.RAW.getTableName())) {
-            return MetricsTable.RAW;
-        } else if (name.equals(MetricsTable.ONE_HOUR.getTableName())) {
-            return MetricsTable.ONE_HOUR;
-        } else if (name.equals(MetricsTable.SIX_HOUR.getTableName())) {
-            return MetricsTable.SIX_HOUR;
-        } else if (name.equals(MetricsTable.TWENTY_FOUR_HOUR.getTableName())) {
-            return MetricsTable.TWENTY_FOUR_HOUR;
-        } else {
-            throw new IllegalArgumentException(name + " is not a valid metrics table name");
-        }
-    }
-
-    private void setTTLAndRetention(MetricsTable table, int ttl, MetricsConfiguration configuration) {
-        switch (table) {
-            case RAW:
-                configuration.setRawTTL(ttl);
-                configuration.setRawRetention(Seconds.seconds(ttl).toStandardDuration());
-                break;
-            case ONE_HOUR:
-                configuration.setOneHourTTL(ttl);
-                configuration.setOneHourRetention(Seconds.seconds(ttl));
-                break;
-            case SIX_HOUR:
-                configuration.setSixHourTTL(ttl);
-                configuration.setSixHourRetention(Seconds.seconds(ttl));
-                break;
-            default:
-                configuration.setTwentyFourHourTTL(ttl);
-                configuration.setTwentyFourHourRetention(Seconds.seconds(ttl));
-                break;
-        }
-    }
-
-    private Duration getDuration(String units, int value) {
-        if (units.equals("seconds")) {
-            return Seconds.seconds(value).toStandardDuration();
-        } else if (units.equals("minutes")) {
-            return Minutes.minutes(value).toStandardDuration();
-        } else if (units.equals("hours")) {
-            return Hours.hours(value).toStandardDuration();
-
-        } else if (units.equals("days")) {
-            return Days.days(value).toStandardDuration();
-        } else {
-            throw new IllegalArgumentException(units + " is not a valid value for the units property.");
-        }
-    }
-
-    private void setTimeSliceDuration(MetricsTable table, Duration duration, MetricsConfiguration configuration) {
-        switch (table) {
-            case RAW:
-                configuration.setRawTimeSliceDuration(duration);
-                break;
-            case ONE_HOUR:
-                configuration.setOneHourTimeSliceDuration(duration);
-                break;
-            case SIX_HOUR:
-                configuration.setSixHourTimeSliceDuration(duration);
-                break;
-            default:
-                // do nothing
-        }
     }
 
     private long getLong(JsonNode node, long defaultValue) {

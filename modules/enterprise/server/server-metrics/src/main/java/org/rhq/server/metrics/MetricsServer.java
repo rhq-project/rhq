@@ -27,6 +27,7 @@ package org.rhq.server.metrics;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,13 +98,13 @@ public class MetricsServer {
      * purged.
      */
     private void determineMostRecentRawDataSinceLastShutdown() {
-        DateTime previousHour = currentHour().minusHours(1);
+        DateTime previousHour = currentHour().minus(configuration.getRawTimeSliceDuration());
         DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());
 
         ResultSet resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
         Row row = resultSet.one();
         while (row == null && previousHour.compareTo(oldestRawTime) > 0) {
-            previousHour = previousHour.minusHours(1);
+            previousHour = previousHour.minus(configuration.getRawTimeSliceDuration());
             resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
             row = resultSet.one();
         }
@@ -126,12 +127,11 @@ public class MetricsServer {
     }
 
     protected DateTime currentHour() {
-        DateTime dt = new DateTime(System.currentTimeMillis());
-        return dateTimeService.getTimeSlice(dt, Duration.standardHours(1));
+        return dateTimeService.getTimeSlice(dateTimeService.now(), configuration.getRawTimeSliceDuration());
     }
 
     protected DateTime roundDownToHour(long timestamp) {
-        return dateTimeService.getTimeSlice(new DateTime(timestamp), Duration.standardHours(1));
+        return dateTimeService.getTimeSlice(new DateTime(timestamp), configuration.getRawTimeSliceDuration());
     }
 
     public void shutdown() {
@@ -308,7 +308,7 @@ public class MetricsServer {
                 log.debug("Inserting " + dataSet.size() + " raw metrics");
             }
 
-            final long startTime = System.currentTimeMillis();
+            final long startTime = dateTimeService.now().getMillis();
             final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
             for (final MeasurementDataNumeric data : dataSet) {
@@ -394,12 +394,17 @@ public class MetricsServer {
     private Iterable<AggregateNumericMetric> calculateAggregates(long startTime) {
         DateTime dt = new DateTime(startTime);
         DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
-        DateTime lastHour = currentHour.minusHours(1);
+        DateTime lastHour = currentHour.minus(configuration.getRawTimeSliceDuration());
 
-        long hourTimeSlice = lastHour.getMillis();
+        if (log.isDebugEnabled()) {
+            log.debug("Starting aggregation for time slice " + lastHour);
+        }
 
         long sixHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getOneHourTimeSliceDuration()).getMillis();
+        if (log.isDebugEnabled()) {
+            log.debug("six hour time slice = " + new Date(sixHourTimeSlice));
+        }
 
         long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getSixHourTimeSliceDuration()).getMillis();
@@ -416,10 +421,10 @@ public class MetricsServer {
 
         Iterable<AggregateNumericMetric> newOneHourAggregates = null;
 
-        List<AggregateNumericMetric> updatedSchedules = aggregateRawData(hourTimeSlice);
+        List<AggregateNumericMetric> updatedSchedules = aggregateRawData(lastHour);
         newOneHourAggregates = updatedSchedules;
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, hourTimeSlice);
+            dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, lastHour.getMillis());
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
         }
 
@@ -449,16 +454,20 @@ public class MetricsServer {
         dao.updateMetricsIndex(bucket, updates);
     }
 
-    private List<AggregateNumericMetric> aggregateRawData(long theHour) {
+    private List<AggregateNumericMetric> aggregateRawData(DateTime theHour) {
         long start = System.currentTimeMillis();
         try {
-            Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR, theHour);
+            if (log.isDebugEnabled()) {
+                log.debug("Preparing to aggregate raw data. Time slice start time is [" + theHour +
+                    "] and the end time is [" + theHour.plus(configuration.getRawTimeSliceDuration()) + "]");
+            }
+            Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR,
+                theHour.getMillis());
             List<AggregateNumericMetric> oneHourMetrics = new ArrayList<AggregateNumericMetric>();
 
             for (MetricsIndexEntry indexEntry : indexEntries) {
                 DateTime startTime = indexEntry.getTime();
-                DateTime endTime = startTime.plusMinutes(60);
-
+                DateTime endTime = startTime.plus(configuration.getRawTimeSliceDuration());
                 Iterable<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(),
                     startTime.getMillis(), endTime.getMillis());
                 AggregateNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
@@ -510,9 +519,6 @@ public class MetricsServer {
     private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromTable,
         MetricsTable toTable, long timeSlice, Duration nextDuration) {
 
-        if (log.isDebugEnabled()) {
-            log.debug("Preparing to compute aggregates for data in " + fromTable + " table");
-        }
         long start = System.currentTimeMillis();
         try {
             DateTime startTime = new DateTime(timeSlice);
@@ -520,6 +526,7 @@ public class MetricsServer {
             DateTime currentHour = currentHour();
 
             if (log.isDebugEnabled()) {
+                log.debug("Preparing to compute aggregates for data in " + fromTable + " table");
                 log.debug("Time slice start time is [" + startTime + "] and the end time is [" + endTime +  "].");
             }
 
@@ -554,6 +561,9 @@ public class MetricsServer {
                 AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
                 aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
                 toMetrics.add(aggregatedMetric);
+                if (toTable == MetricsTable.TWENTY_FOUR_HOUR) {
+                    log.debug("Calculated 24 hour metric = " + aggregatedMetric);
+                }
             }
 
             switch (toTable) {

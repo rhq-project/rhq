@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * This servlet also provides version information regarding the version of the agent
  * this servlet serves up as well as versions of agents the RHQ Server supports.
  */
+@WebServlet(urlPatterns = {"/download", "/version"}, loadOnStartup = 1)
 public class AgentUpdateServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;

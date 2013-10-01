@@ -25,6 +25,7 @@
 
 package org.rhq.server.control;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,20 +56,67 @@ public class RHQControl {
     }
 
     public void exec(String[] args) {
+        ControlCommand command = null;
+        boolean undo = false;
+        AbortHook abortHook = new AbortHook();
+
         try {
             if (args.length == 0) {
                 printUsage();
             } else {
                 String commandName = findCommand(commands, args);
-                ControlCommand command = commands.get(commandName);
+                command = commands.get(commandName);
 
+                // perform any up front validation we can at this point.  Not that after this point we
+                // lose stdin due to the use of ProcessExecutions.
+                if ("install".equalsIgnoreCase(command.getName())) {
+                    File serverProperties = new File("bin/rhq-server.properties");
+                    File storageProperties = new File("bin/rhq-storage.properties");
+
+                    if (!serverProperties.isFile()) {
+                        throw new RHQControlException("Missing required configuration file, can not continue: ["
+                            + serverProperties.getAbsolutePath() + "]");
+                    }
+                    if (!storageProperties.isFile()) {
+                        throw new RHQControlException("Missing required configuration file, can not continue: ["
+                            + storageProperties.getAbsolutePath() + "]");
+                    }
+                }
+
+                // in case the installer gets killed, prepare the shutdown hook to try the undo
+                abortHook.setCommand(command);
+                Runtime.getRuntime().addShutdownHook(abortHook);
+
+                // run the command
                 command.exec(getCommandLine(commandName, args));
             }
         } catch (UsageException e) {
             printUsage();
         } catch (RHQControlException e) {
-            log.error(e.getMessage() + " [Cause: " + e.getCause() + "]");
+            log.error(e.getMessage() + " [Cause: " + e.getCause() + "]", e);
+            undo = true;
+        } catch (Throwable t) {
+            log.error(t);
+            undo = true;
+        } finally {
+            abortHook.setCommand(null);
+            Runtime.getRuntime().removeShutdownHook(abortHook);
         }
+
+        if (undo && command != null) {
+            try {
+                if (!Boolean.getBoolean("rhqctl.skip.undo")) {
+                    command.undo();
+                } else {
+                    throw new Exception("Was told by user to skip clean up attempt.");
+                }
+            } catch (Throwable t) {
+                log.warn("Failed to clean up after the failed installation attempt. "
+                    + "You may have to clean up some things before attempting to install again", t);
+            }
+        }
+
+        return;
     }
 
     private String findCommand(Commands commands, String[] args) throws RHQControlException {
@@ -110,4 +158,27 @@ public class RHQControl {
         }
     }
 
+    private class AbortHook extends Thread {
+        private ControlCommand command = null;
+
+        public AbortHook() {
+            super("Controller Abort Hook");
+        }
+
+        public void setCommand(ControlCommand cmd) {
+            this.command = cmd;
+        }
+
+        @Override
+        public void run() {
+            try {
+                if (this.command != null) {
+                    this.command.undo();
+                }
+            } catch (Throwable t) {
+                log.warn("An attempt to clean up after an aborted installation was unsuccessful. "
+                    + "You may have to clean up some things before attempting to install again", t);
+            }
+        }
+    }
 }

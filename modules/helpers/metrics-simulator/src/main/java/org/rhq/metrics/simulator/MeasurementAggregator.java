@@ -25,6 +25,10 @@
 
 package org.rhq.metrics.simulator;
 
+import java.util.concurrent.ExecutorService;
+
+import com.codahale.metrics.Timer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -39,29 +43,36 @@ public class MeasurementAggregator implements Runnable {
 
     private MetricsServer metricsServer;
 
+    private Metrics metrics;
+
+    private ExecutorService aggregationQueue;
+
     private ShutdownManager shutdownManager;
 
-    public void setMetricsServer(MetricsServer metricsServer) {
+    public MeasurementAggregator(MetricsServer metricsServer, ShutdownManager shutdownManager, Metrics metrics,
+        ExecutorService aggregationQueue) {
         this.metricsServer = metricsServer;
-    }
-
-    public void setShutdownManager(ShutdownManager shutdownManager) {
         this.shutdownManager = shutdownManager;
+        this.metrics = metrics;
+        this.aggregationQueue = aggregationQueue;
     }
 
-    @Override
     public void run() {
-        log.info("Starting metrics aggregation...");
-        long startTime = System.currentTimeMillis();
-        try {
-            metricsServer.calculateAggregates();
-        } catch (Exception e) {
-            log.error("An error occurred while trying to perform aggregation", e);
-            log.error("Requesting simulation shutdown...");
-            shutdownManager.shutdown(1);
-        } finally {
-            long endTime = System.currentTimeMillis();
-            log.info("Finished metrics aggregation in " + (endTime - startTime) + " ms");
-        }
+        aggregationQueue.submit(new Runnable() {
+            @Override
+            public void run() {
+                Timer.Context context = metrics.totalAggregationTime.time();
+                try {
+                    log.debug("Starting metrics aggregation");
+                    metricsServer.calculateAggregates();
+                } catch (Exception e) {
+                    log.error("An error occurred while trying to perform aggregation", e);
+                    log.error("Requesting simulation shutdown...");
+                    shutdownManager.shutdown(1);
+                } finally {
+                    context.stop();
+                }
+            }
+        });
     }
 }

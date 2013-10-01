@@ -39,7 +39,7 @@ public class DeploymentOptionsFactory {
      */
     public DeploymentOptions newDeploymentOptions() {
         // Make sure we have a high enough stack size. See https://bugzilla.redhat.com/show_bug.cgi?id=1008090
-        System.setProperty("rhq.cassandra.stack.size", "256k");
+        System.setProperty("rhq.storage.stack-size", "256k");
         return new DeploymentOptions();
     }
 

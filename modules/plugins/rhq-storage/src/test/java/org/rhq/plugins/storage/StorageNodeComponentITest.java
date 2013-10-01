@@ -113,8 +113,8 @@ public class StorageNodeComponentITest {
         deploymentOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
         deploymentOptions.setCommitLogDir(new File(basedir, "logs").getAbsolutePath());
         deploymentOptions.setLoggingLevel("DEBUG");
-        deploymentOptions.setStoragePort(7200);
-        deploymentOptions.setNativeTransportPort(9142);
+        deploymentOptions.setGossipPort(7200);
+        deploymentOptions.setCqlPort(9142);
         deploymentOptions.setJmxPort(7399);
         deploymentOptions.setHeapSize("256M");
         deploymentOptions.setHeapNewSize("64M");
@@ -309,8 +309,8 @@ public class StorageNodeComponentITest {
             deploymentOptions.setSavedCachesDir(new File(node2Basedir, "saved_caches").getAbsolutePath());
             deploymentOptions.setCommitLogDir(new File(node2Basedir, "logs").getAbsolutePath());
             deploymentOptions.setLoggingLevel("DEBUG");
-            deploymentOptions.setStoragePort(7200);
-            deploymentOptions.setNativeTransportPort(9142);
+            deploymentOptions.setGossipPort(7200);
+            deploymentOptions.setCqlPort(9142);
             deploymentOptions.setJmxPort(7400);
             deploymentOptions.setHeapSize("256M");
             deploymentOptions.setHeapNewSize("64M");

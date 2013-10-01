@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -28,7 +27,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
@@ -48,11 +46,11 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     protected static final Label loadingLabel = new Label(MSG.common_msg_loading());
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;
-    protected AvailabilityD3GraphView availabilityGraph;
+    protected static AvailabilityD3GraphView availabilityGraph;
     protected final MeasurementUserPreferences measurementUserPrefs;
     protected boolean showAvailabilityGraph = false;
     protected final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
-    protected Timer refreshTimer;
+    protected static Timer refreshTimer;
     protected boolean isRefreshing;
 
     public AbstractD3GraphListView() {
@@ -90,7 +88,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
         if (isVisible() && !isRefreshing()) {
             isRefreshing = true;
             try {
-                updateTimeRangeToNow();
+                buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                 refreshData();
             } finally {
                 isRefreshing = false;
@@ -98,13 +96,4 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
         }
     }
 
-    protected void updateTimeRangeToNow() {
-        Date now = new Date();
-        AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPrefs
-            .getMetricRangePreferences();
-        long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
-        Date newStartDate = new Date(now.getTime() - timeRange);
-        buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
-        buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
-    }
 }

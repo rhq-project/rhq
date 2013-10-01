@@ -229,7 +229,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
                 alertNotificationManager.cleanseAlertNotificationByRole(doomedRole.getId());
                 // Fetch the lazy Sets on the Role to be returned.
-                //[BZ 754693:] we must fetch the lazy sets of LDAP Groups here for correct cascade removal 
+                //[BZ 754693:] we must fetch the lazy sets of LDAP Groups here for correct cascade removal
                 doomedRole.getResourceGroups().size();
                 doomedRole.getSubjects().size();
                 doomedRole.getLdapGroups().size();
@@ -465,21 +465,25 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             // wrap in new HashSet to avoid ConcurrentModificationExceptions.
             Set<LdapGroup> currentLdapGroups = new HashSet<LdapGroup>(attachedRole.getLdapGroups());
             for (LdapGroup ldapGroup : currentLdapGroups) {
+                // Delete removed groups
                 if (!newLdapGroups.contains(ldapGroup)) {
                     attachedRole.removeLdapGroup(ldapGroup);
                     entityManager.remove(ldapGroup);
                 }
             }
 
+            // Add new groups, but filter those that are still attached
             for (LdapGroup ldapGroup : newLdapGroups) {
                 LdapGroup attachedLdapGroup = (ldapGroup.getId() != 0) ? entityManager.find(LdapGroup.class,
                     ldapGroup.getId()) : null;
-                if (attachedLdapGroup == null) {
+                if (attachedLdapGroup == null && !currentLdapGroups.contains(ldapGroup)) {
                     ldapGroup.setRole(attachedRole);
                     entityManager.persist(ldapGroup);
                     attachedLdapGroup = ldapGroup;
                 }
-                attachedRole.addLdapGroup(attachedLdapGroup);
+                if (attachedLdapGroup!=null) {
+                    attachedRole.addLdapGroup(attachedLdapGroup);
+                }
             }
         }
 

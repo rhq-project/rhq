@@ -18,6 +18,8 @@
     <description>The full RHQ appserver container build, including the JBossAS server and all config/deploy files</description>
 
     <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+
         <rhq.dev.data.dir>${rhq.rootDir}/rhq-data</rhq.dev.data.dir>
         <jgroups.initial.version>3.2.7.Final</jgroups.initial.version>
         <jgroups.patch.version>3.2.10.Final</jgroups.patch.version>
@@ -134,6 +136,7 @@
                                     <property name="project.version"               value="${project.version}" />
                                     <property name="dev.profile.active"            value="${dev.profile.active}" />
                                     <property name="developer"                     value="${developer}" />
+                                    <property name="rhq.rootDir"                   value="${rhq.rootDir}" />
                                     <property name="rhq.earName"                   value="${rhq.earName}" />
 
                                     <!-- dependency versions -->
@@ -166,8 +169,8 @@
                                     <property name="rhq.server.http.port"               value="${rhq.server.http.port}" />
                                     <property name="rhq.server.https.port"              value="${rhq.server.https.port}" />
                                     <property name="rhq.sync.endpoint-address"          value="${rhq.sync.endpoint-address}" />
-                                    <property name="jgroups.initial.version"             value="${jgroups.initial.version}" />
-                                    <property name="jgroups.patch.version"               value="${jgroups.patch.version}" />                                    
+                                    <property name="jgroups.initial.version"            value="${jgroups.initial.version}" />
+                                    <property name="jgroups.patch.version"              value="${jgroups.patch.version}" />
                                 </ant>
                             </target>
                         </configuration>
@@ -258,7 +261,6 @@
             <id>dev</id>
 
             <properties>
-                <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
                 <rhq.containerServerDir>${rhq.containerDir}/rhq-server</rhq.containerServerDir>
                 <rhq.storage.num-nodes>1</rhq.storage.num-nodes>

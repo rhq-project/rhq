@@ -26,15 +26,15 @@
 package org.rhq.metrics.simulator;
 
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ThreadLocalRandom;
+
+import com.codahale.metrics.Timer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.metrics.simulator.stats.Stats;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.RawDataInsertedCallback;
 
@@ -45,111 +45,56 @@ public class MeasurementCollector implements Runnable {
 
     private final Log log = LogFactory.getLog(MeasurementCollector.class);
 
-    private PriorityQueue<Schedule> queue;
-
     private MetricsServer metricsServer;
 
-    private ReentrantLock queueLock;
+    private int batchSize;
 
-    private Stats stats;
+    private int startingScheduleId;
 
-    private ShutdownManager shutdownManager;
+    private Metrics metrics;
 
-    private int batchSize = 500;
+    private SimulatorDateTimeService dateTimeService;
 
-    private NoOpCallback rawInsertsCallback = new NoOpCallback();
-
-    public void setQueue(PriorityQueue<Schedule> queue) {
-        this.queue = queue;
-    }
-
-    public void setMetricsServer(MetricsServer metricsServer) {
+    public MeasurementCollector(int batchSize, int startingScheduleId, Metrics metrics, MetricsServer metricsServer,
+        SimulatorDateTimeService dateTimeService) {
+        this.batchSize = batchSize;
+        this.startingScheduleId = startingScheduleId;
+        this.metrics = metrics;
         this.metricsServer = metricsServer;
+        this.dateTimeService = dateTimeService;
     }
 
-    public void setQueueLock(ReentrantLock queueLock) {
-        this.queueLock = queueLock;
-    }
+    private Set<MeasurementDataNumeric> generateData() {
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(batchSize);
+        long timestamp = dateTimeService.nowInMillis();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-    public void setStats(Stats stats) {
-        this.stats = stats;
-    }
+        for (int i = 0; i < batchSize; ++i) {
+            data.add(new MeasurementDataNumeric(timestamp, startingScheduleId + i, random.nextDouble()));
+        }
 
-    public void setShutdownManager(ShutdownManager shutdownManager) {
-        this.shutdownManager = shutdownManager;
+        return data;
     }
 
     @Override
     public void run() {
-        long startTime = System.currentTimeMillis();
-        int metricsCollected = 0;
-        // TODO parameterize threshold
-        try {
-            log.info("Starting metrics collections...");
-            Set<Schedule> schedules = new HashSet<Schedule>();
-            try {
-                queueLock.lock();
-                Schedule first = queue.peek();
-                if (first != null && first.getNextCollection() <= System.currentTimeMillis()) {
-                    Schedule next = first;
-                    while (next != null && next.getNextCollection() == first.getNextCollection() &&
-                        schedules.size() < batchSize) {
-                        schedules.add(queue.poll());
-                        next = queue.peek();
-                    }
-                }
-            } finally {
-                queueLock.unlock();
+        final Timer.Context context = metrics.batchInsertTime.time();
+        metricsServer.addNumericData(generateData(), new RawDataInsertedCallback() {
+            @Override
+            public void onFinish() {
+                 context.stop();
             }
 
-            if (schedules.isEmpty()) {
-                log.debug("No schedules are ready for collections.");
-                return;
+            @Override
+            public void onSuccess(MeasurementDataNumeric result) {
+                metrics.rawInserts.mark();
             }
-            log.debug("There are " + schedules.size() + " schedules ready for collection.");
 
-            Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(schedules.size());
-            for (Schedule schedule : schedules) {
-                data.add(new MeasurementDataNumeric(schedule.getNextCollection(), schedule.getId(),
-                    schedule.getNextValue()));
-                schedule.updateCollection();
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("Failed to insert raw data", t);
             }
-            metricsCollected = data.size();
-            try {
-                metricsServer.addNumericData(data, rawInsertsCallback);
-            } catch (Exception e) {
-                log.error("An error occurred while trying to store raw metrics", e);
-                log.error("Requesting simulation shutdown...");
-                shutdownManager.shutdown(1);
-            }
-            stats.addRawInserts(metricsCollected);
-            try {
-                queueLock.lock();
-                for (Schedule schedule : schedules) {
-                    queue.offer(schedule);
-                }
-            } finally {
-                queueLock.unlock();
-            }
-        } finally {
-            long endTime = System.currentTimeMillis();
-            long totalTime = endTime - startTime;
-            stats.addRawInsertTime(totalTime);
-            log.info("Finished collecting and storing " + metricsCollected + " raw metric in " +totalTime + " ms.");
-        }
+        });
     }
 
-    private static class NoOpCallback implements RawDataInsertedCallback {
-        @Override
-        public void onFinish() {
-        }
-
-        @Override
-        public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-        }
-    }
 }

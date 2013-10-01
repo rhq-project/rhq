@@ -109,7 +109,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 });
             }
         }
-        
+
         ListGrid listGrid = getListGrid();
         listGrid.setAutoSaveEdits(false);
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
@@ -197,8 +197,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             protected Canvas getExpansionComponent(final ListGridRecord record) {
                 if (record.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
                     // no resource set
-                    return new HTMLFlow("There is no load data available for this node. Is the agent running on the "
-                        + record.getAttributeAsString(FIELD_ADDRESS.propertyName() + "?"));
+                    return new HTMLFlow("There is no load data available for this node. Is the agent running on the " +
+                        "platform?");
                 }
                 int id = record.getAttributeAsInt(FIELD_ID);
                 return new StorageNodeLoadComponent(id, null);

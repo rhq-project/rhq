@@ -323,8 +323,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         startDate = new Date(+d.x),
                         metricGraphTooltipDiv =  $wnd.d3.select("#metricGraphTooltip");
 
-                metricGraphTooltipDiv.style("left", + timeScale(+d.x) + 55 + "px")
-                        .style("top",  "70px");
+                metricGraphTooltipDiv.style("left", + ($wnd.d3.event.pageX) +15 + "px")
+                        .style("top",  ($wnd.d3.event.pageY)+"px");
 
                 metricGraphTooltipDiv.select("#metricGraphTooltipTimeLabel")
                         .text(chartContext.timeLabel);
@@ -368,8 +368,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     startDate = new Date(+d.x),
                     noDataTooltipDiv =  $wnd.d3.select("#noDataTooltip");
 
-                noDataTooltipDiv.style("left", + timeScale(+d.x)+55 + "px")
-                        .style("top", "70px");
+                noDataTooltipDiv.style("left", + ($wnd.d3.event.pageX) + 15 + "px")
+                        .style("top",  ($wnd.d3.event.pageY)+"px");
 
                 noDataTooltipDiv.select("#noDataTooltipTimeLabel")
                     .text(chartContext.timeLabel);
@@ -528,9 +528,10 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
                             dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                             startDate = new Date(+d.x),
-                            singleValueGraphTooltipDiv =  $wnd.d3.select("#singleValueTooltip")
-                                    .style("left", + timeScale(+d.x) +55 + "px")
-                                    .style("top",  +  yScale(+d.y)+  "px");
+                            singleValueGraphTooltipDiv =  $wnd.d3.select("#singleValueTooltip");
+
+                    singleValueGraphTooltipDiv.style("left", + ($wnd.d3.event.pageX) + 15 + "px")
+                            .style("top",  ($wnd.d3.event.pageY)+"px");
 
                     singleValueGraphTooltipDiv.select("#singleValueTooltipTimeLabel")
                             .text(chartContext.timeLabel);

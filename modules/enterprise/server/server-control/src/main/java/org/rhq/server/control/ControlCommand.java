@@ -28,8 +28,10 @@ package org.rhq.server.control;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -73,6 +75,25 @@ public abstract class ControlCommand {
     private File binDir; // where the internal startup scripts are
 
     private PropertiesConfiguration rhqctlConfig;
+
+    private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
+
+    protected void undo() {
+        Collections.reverse(undoTasks); // do the undo tasks in the reverse order in which they were added to the list
+        for (Runnable undoTask : undoTasks) {
+            try {
+                undoTask.run();
+            } catch (Throwable t) {
+                log.error("Failed to invoke undo task [" + undoTask
+                    + "], will keep going but system may be in an indeterminate state");
+            }
+        }
+        return;
+    }
+
+    protected void addUndoTask(Runnable r) {
+        undoTasks.add(r);
+    }
 
     public ControlCommand() {
         basedir = new File(System.getProperty("rhq.server.basedir"));
@@ -161,9 +182,16 @@ public abstract class ControlCommand {
         return isServerInstalled(getBaseDir());
     }
 
-    protected boolean isServerInstalled(File baseDir) {
-        File markerFile = new File(baseDir, "jbossas/standalone/data/rhq.installed");
+    protected File getServerInstalledMarkerFile(File baseDir) {
+        return new File(baseDir, "jbossas/standalone/data/rhq.installed");
+    }
 
+    protected File getServerPropertiesFile() {
+        return new File(getBaseDir(), "bin/rhq-server.properties");
+    }
+
+    protected boolean isServerInstalled(File baseDir) {
+        File markerFile = getServerInstalledMarkerFile(baseDir);
         return markerFile.exists();
     }
 
@@ -317,9 +345,9 @@ public abstract class ControlCommand {
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
+        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
+        executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine;
-
         commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
         executor.execute(commandLine);
     }
@@ -328,7 +356,8 @@ public abstract class ControlCommand {
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
+        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
+        executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("/bin/kill")
             .addArgument("-0")
             .addArgument(pid);
@@ -363,5 +392,19 @@ public abstract class ControlCommand {
     	} else {
     		return true;
     	}
+    }
+
+    private class NullOutputStream extends OutputStream {
+        @Override
+        public void write(byte[] b, int off, int len) {
+        }
+
+        @Override
+        public void write(int b) {
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+        }
     }
 }

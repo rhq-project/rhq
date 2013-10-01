@@ -42,6 +42,8 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import org.rhq.core.util.file.FileReverter;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.RHQControlException;
 
@@ -53,8 +55,6 @@ public class Install extends AbstractInstall {
     private final String AGENT_CONFIG_OPTION = "agent-config";
     private final String AGENT_PREFERENCE = "agent-preference";
     private final String AGENT_AUTOSTART_OPTION = "agent-auto-start";
-
-    private final String SERVER_CONFIG_OPTION = "server-config";
 
     private Options options;
 
@@ -79,17 +79,8 @@ public class Install extends AbstractInstall {
                 "Install RHQ server. If you have not yet installed an RHQ storage node somewhere in your network, you must specify --storage to install one.")
             .addOption(null, "agent", false,
                 "Install RHQ agent. The install directory will be [" + getAgentBasedir() + "]")
-            .addOption(null, SERVER_CONFIG_OPTION, true,
-                "An alternate properties file to use in place of the default rhq-server.properties")
             .addOption(null, AGENT_CONFIG_OPTION, true,
                 "An alternate XML file to use in place of the default agent-configuration.xml")
-            .addOption(
-                null,
-                STORAGE_CONFIG_OPTION,
-                true,
-                "A properties file with keys that correspond to option names "
-                    + "of the storage installer. Each property will be translated into an option that is passed to the "
-                    + "storage installer.")
             .addOption(
                 null,
                 AGENT_PREFERENCE,
@@ -133,11 +124,22 @@ public class Install extends AbstractInstall {
                 return;
             }
 
+            // If any failures occur, we know we need to reset rhq-server.properties.
+            final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
+            addUndoTask(new Runnable() {
+                public void run() {
+                    try {
+                        serverPropFileReverter.revert();
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                            "Cannot reset rhq-server.properties - you may have to revert settings manually", e);
+                    }
+                }
+            });
+
             // if no options specified, then install whatever is not installed yet
             if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
                 .hasOption(AGENT_OPTION))) {
-
-                replaceServerPropertiesIfNecessary(commandLine);
 
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(), commandLine);
@@ -180,7 +182,6 @@ public class Install extends AbstractInstall {
                             log.info("Skipping storage node installation.");
                         }
                     } else {
-                        replaceServerPropertiesIfNecessary(commandLine);
                         installStorageNode(getStorageBasedir(), commandLine);
                     }
 
@@ -208,7 +209,6 @@ public class Install extends AbstractInstall {
                         }
 
                     } else {
-                        replaceServerPropertiesIfNecessary(commandLine);
                         startRHQServerForInstallation();
                         runRHQServerInstaller();
                         waitForRHQServerToInitialize();
@@ -253,39 +253,18 @@ public class Install extends AbstractInstall {
 
             validateCustomStorageDataDirectories(commandLine, errors);
 
-            if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
-                File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
-                validateServerConfigOption(serverConfig, errors);
-            }
-
             if (commandLine.hasOption(AGENT_CONFIG_OPTION) && !isAgentInstalled()) {
                 File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 validateAgentConfigOption(agentConfig, errors);
             }
-
-            if (commandLine.hasOption(STORAGE_CONFIG_OPTION) && !isStorageInstalled()) {
-                File storageConfig = new File(commandLine.getOptionValue(STORAGE_CONFIG_OPTION));
-                validateStorageConfigOption(storageConfig, errors);
-            }
         } else {
             if (commandLine.hasOption(STORAGE_OPTION)) {
-                if (!isStorageInstalled() && commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
-                    File storageConfig = new File(commandLine.getOptionValue(STORAGE_CONFIG_OPTION));
-                    validateStorageConfigOption(storageConfig, errors);
-                }
-
                 if (!isAgentInstalled() && commandLine.hasOption(AGENT_CONFIG_OPTION)) {
                     File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                     validateAgentConfigOption(agentConfig, errors);
                 }
 
                 validateCustomStorageDataDirectories(commandLine, errors);
-            }
-
-            if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled()
-                && commandLine.hasOption(SERVER_CONFIG_OPTION)) {
-                File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
-                validateServerConfigOption(serverConfig, errors);
             }
 
             if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()
@@ -296,17 +275,6 @@ public class Install extends AbstractInstall {
         }
 
         return errors;
-    }
-
-    private void validateServerConfigOption(File serverConfig, List<String> errors) {
-        if (!serverConfig.exists()) {
-            errors.add("The --server-config option has as its value a file that does not exist ["
-                + serverConfig.getAbsolutePath() + "]");
-        } else if (serverConfig.isDirectory()) {
-            errors.add("The --server-config option has as its value a path that is a directory ["
-                + serverConfig.getAbsolutePath() + "]. It should be a properties file that replaces the "
-                + "default rhq-server.properties");
-        }
     }
 
     private void validateAgentConfigOption(File agentConfig, List<String> errors) {
@@ -320,24 +288,20 @@ public class Install extends AbstractInstall {
         }
     }
 
-    private void validateStorageConfigOption(File storageConfig, List<String> errors) {
-        if (!storageConfig.exists()) {
-            errors.add("The --storage-config option has as its value a file that does not exist ["
-                + storageConfig.getAbsolutePath() + "]");
-        } else if (storageConfig.isDirectory()) {
-            errors.add("The --storage-config option has as its value a path that is a directory ["
-                + storageConfig.getAbsolutePath() + "]. It should be a properties file with keys that "
-                + "correspond to options for the storage installer.");
-        }
-    }
-
-    private void installAgent(File agentBasedir) throws IOException {
+    private void installAgent(final File agentBasedir) throws IOException {
         try {
             log.info("Installing RHQ agent");
 
             File agentInstallerJar = getAgentInstaller();
 
             putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+
+            // if the install fails, we will completely delete any agent that might have been "half" installed
+            addUndoTask(new Runnable() {
+                public void run() {
+                    FileUtil.purge(agentBasedir, true);
+                }
+            });
 
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
@@ -467,22 +431,6 @@ public class Install extends AbstractInstall {
     private Preferences getAgentPreferences() {
         Preferences agentPrefs = Preferences.userRoot().node("rhq-agent/default");
         return agentPrefs;
-    }
-
-    private void replaceServerPropertiesIfNecessary(CommandLine commandLine) {
-        if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
-            replaceServerProperties(new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION)));
-        }
-    }
-
-    private void replaceServerProperties(File newServerProperties) {
-        File defaultServerProps = new File(System.getProperty("rhq.server.properties-file"));
-        defaultServerProps.delete();
-        try {
-            StreamUtil.copy(new FileReader(newServerProperties), new FileWriter(defaultServerProps));
-        } catch (IOException e) {
-            throw new RHQControlException("Failed to replace " + defaultServerProps + " with " + newServerProperties, e);
-        }
     }
 
     private void replaceAgentConfigIfNecessary(CommandLine commandLine) {

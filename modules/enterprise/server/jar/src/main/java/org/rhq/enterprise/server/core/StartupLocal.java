@@ -33,6 +33,13 @@ public interface StartupLocal {
     boolean isInitialized();
 
     /**
+     * This method can be used for investigating the startup failure
+     *
+     * @return short text representation indicating what subsystem wasn't started
+     */
+    String getError();
+
+    /**
      * Tells the startup bean to do its work. This will finish the initialization of the server.
      */
     void init();

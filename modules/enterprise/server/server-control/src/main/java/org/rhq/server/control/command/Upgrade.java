@@ -43,6 +43,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.RHQControlException;
@@ -92,13 +93,6 @@ public class Upgrade extends AbstractInstall {
                 "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify a non-default base "
                     + "directory for the data directories created by the storage node. For example, if the default directory is "
                     + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
-            .addOption(
-                null,
-                STORAGE_CONFIG_OPTION,
-                true,
-                "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify non-default storage "
-                    + "installer options. It is the path to a properties file with keys that correspond to option names of the "
-                    + "storage installer. Each property will be translated into an option that is passed to the storage installer.")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,
@@ -180,6 +174,19 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
+            // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
+            final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
+            addUndoTask(new Runnable() {
+                public void run() {
+                    try {
+                        serverPropFileReverter.revert();
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                            "Cannot reset rhq-server.properties - you may have to revert settings manually", e);
+                    }
+                }
+            });
+
             // now upgrade everything and start them up again
             upgradeStorage(commandLine);
             upgradeServer(commandLine);
@@ -247,12 +254,17 @@ public class Upgrade extends AbstractInstall {
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
         if (isRhq48OrLater(rhqctlCommandLine)) {
             try {
-                // We need to be sure the storage is really stopped (long enough)
-                // to not get a port conflict
+                // We need to be sure the storage is really stopped (long enough) to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
-                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer",
-                    "--upgrade",
+                // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again later
+                addUndoTask(new Runnable() {
+                    public void run() {
+                        FileUtil.purge(getStorageBasedir(), true);
+                    }
+                });
+
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
                 Executor executor = new DefaultExecutor();
                 executor.setWorkingDirectory(getBinDir());
@@ -473,6 +485,12 @@ public class Upgrade extends AbstractInstall {
             oldServerProps.setProperty("rhq.storage.cql-port", cqlPort);
         }
 
+        String storageCompression = oldServerProps.getProperty("rhq.cassandra.client.compression-enabled");
+        if (storageCompression != null) {
+            oldServerProps.remove("rhq.cassandra.client.compression-enabled");
+            oldServerProps.setProperty("rhq.storage.client.compression-enabled", storageCompression);
+        }
+
         // copy the old key/truststore files from the old location to the new server configuration directory
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.truststore.file");
@@ -584,7 +602,7 @@ public class Upgrade extends AbstractInstall {
 
             log.info("Upgrading RHQ agent located at: " + oldAgentDir.getAbsolutePath());
 
-            File agentBasedir = getAgentBasedir();
+            final File agentBasedir = getAgentBasedir();
             File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
@@ -608,6 +626,12 @@ public class Upgrade extends AbstractInstall {
                     FileUtil.copyDirectory(oldAgentDir, agentBasedir);
                 }
             }
+
+            addUndoTask(new Runnable() {
+                public void run() {
+                    FileUtil.purge(agentBasedir, true);
+                }
+            });
 
             log.info("The agent has been upgraded and placed in: " + agentBasedir);
 
@@ -651,11 +675,6 @@ public class Upgrade extends AbstractInstall {
         if (isRhq48OrLater(commandLine)) {
             if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 errors.add("The option --" + STORAGE_DATA_ROOT_DIR
-                    + " is valid only for upgrades from older systems that did not have storage nodes.");
-            }
-
-            if (commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
-                errors.add("The option --" + STORAGE_CONFIG_OPTION
                     + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
 

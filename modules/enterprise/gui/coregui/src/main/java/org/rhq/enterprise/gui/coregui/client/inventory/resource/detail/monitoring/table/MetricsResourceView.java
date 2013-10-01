@@ -73,7 +73,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     public void onInit() {
         super.onInit();
 
-        updateTimeRangeToNow();
 
         final ResourceMetricAvailabilityView availabilityDetails = new ResourceMetricAvailabilityView(resource);
         availabilityDetails.hide();
@@ -162,6 +161,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
                     @Override
                     public void run() {
                         availabilityGraph.drawJsniChart();
+                        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
 
                     }
                 }.schedule(150);
@@ -181,8 +181,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
     @Override
     public void onViewRendered() {
-
         // refresh the graphs on subtab nav because we are a cached view not new
-        drawGraphs();
+        availabilityGraph.parentResized();
     }
 }

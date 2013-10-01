@@ -69,6 +69,7 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         list.add(new Step4to5()); // goes from v4 to v5
         list.add(new Step5to6()); // goes from v5 to v6
         list.add(new Step6to7()); // goes from v6 to v7
+        list.add(new Step7to8()); // goes from v7 to v8
         return list;
     }
 
@@ -198,6 +199,22 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
             }
 
             return;
+        }
+    }
+
+    static class Step7to8 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 8;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // This new schema version added support for the new command authenticator so the agent authenticates servers.
+            // Note that to support tests, we only upgrade the pref if it wasn't set (it should not have been set in production
+            // builds - it was only ever set in tests in older versions).
+            if (null == preferences.get(ServiceContainerConfigurationConstants.COMMAND_AUTHENTICATOR, null)) {
+                preferences.put(ServiceContainerConfigurationConstants.COMMAND_AUTHENTICATOR,
+                    SecurityTokenCommandAuthenticator.class.getName());
+            }
         }
     }
 }

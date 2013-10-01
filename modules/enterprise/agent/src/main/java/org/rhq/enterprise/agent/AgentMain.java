@@ -1371,6 +1371,8 @@ public class AgentMain {
 
                                 // delete any old token so request is unauthenticated to get server to accept it
                                 agent_config.setAgentSecurityToken(null);
+                                m_commServices.addCustomData(
+                                    SecurityTokenCommandAuthenticator.CMDCONFIG_PROP_SECURITY_TOKEN, null);
 
                                 FailoverListComposite failover_list = null;
                                 try {
@@ -1414,6 +1416,9 @@ public class AgentMain {
                                     // Note that we don't retry even if storing the token fails since this kind
                                     // of failure is probably not recoverable even if we try again.
                                     agent_config.setAgentSecurityToken(token);
+                                    m_commServices.addCustomData(
+                                        SecurityTokenCommandAuthenticator.CMDCONFIG_PROP_SECURITY_TOKEN, token);
+
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
                                 }
 
@@ -2329,6 +2334,11 @@ public class AgentMain {
 
         // add the command listener that was passed to us
         m_commServices.addCommandListener(listener);
+
+        // In case we are already registered from a previous run, store the token in the custom data - this is used
+        // by the security token authenticator in order to authenticate the remote endpoint sending us messages
+        m_commServices.addCustomData(SecurityTokenCommandAuthenticator.CMDCONFIG_PROP_SECURITY_TOKEN,
+            m_configuration.getAgentSecurityToken());
 
         // this listener will enable our sender as soon as we receive a message from the server
         CommandListenerStateListener commandListenerStateListener = new CommandListenerStateListener();

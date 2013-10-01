@@ -5,10 +5,10 @@
             http://forums.smartclient.com/showthread.php?t=15973
          2) solves initial app load issues that we experienced on some XP and Vista/Windows7  flavors.
     -->
-    <meta http-equiv="X-UA-Compatible" content="IE=9" />
+    <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 
     <!-- support internationalized characters -->
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
 
     <link rel="stylesheet" href="CoreGUI-4.9.0.css">
     <!-- for d3 charting -->
@@ -17,18 +17,19 @@
     <script type="text/javascript">
         var search = location.search;
         // only do this if you have not specified locale as query param
-        if(search.indexOf("locale") == -1){
+        if (search.indexOf("locale") == -1) {
             // IE uses browserLanguage
-            var lang = navigator.language!=null ? navigator.language : navigator.browserLanguage;
+            var lang = navigator.language != null ? navigator.language : navigator.browserLanguage;
             lang = lang.replace("-", "_");
-            document.write("<meta name='gwt:property' content='locale="+lang +"'>");
+            document.write("<meta name='gwt:property' content='locale=" + lang + "'>");
         }
 
     </script>
     <script type="text/javascript">
-        (function() {
+        (function () {
             var method;
-            var noop = function () {};
+            var noop = function () {
+            };
             var methods = [
                 'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
                 'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
@@ -50,13 +51,12 @@
     </script>
 
     <title>RHQ</title>
-    <link rel="icon" type="image/png" href="/images/favicon.png" />
-    <link rel="apple-touch-icon" href="/images/favicon.png" />
+    <link rel="icon" type="image/png" href="/images/favicon.png"/>
+    <link rel="apple-touch-icon" href="/images/favicon.png"/>
 
     <script type="text/javascript">
         var isomorphicDir = "org.rhq.enterprise.gui.coregui.CoreGUI/sc/";
     </script>
-
 
 
 </head>
@@ -64,6 +64,8 @@
 
 <script type="text/javascript" language="javascript"
         src="org.rhq.enterprise.gui.coregui.CoreGUI/org.rhq.enterprise.gui.coregui.CoreGUI.nocache.js"></script>
+
+
 
 <div id="Loading-Panel" style="width: 214px; height: 90px; margin-top: 300px; margin-left: 40%; margin-right: 40%;">
     <div style="text-align: center; border: 3px solid lightgray;">
@@ -73,6 +75,48 @@
 </div>
 
 <iframe src="javascript:''" id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
+
+<div id="singleValueTooltip" class="hidden">
+    <div><span id="singleValueTooltipTimeLabel"></span><span>: </span><span id="singleValueTooltipTimeValue"></span>
+    </div>
+    <div><span id="singleValueTooltipDateLabel"></span><span>: </span><span id="singleValueTooltipDateValue"></span>
+    </div>
+    <hr>
+    <div><span id="singleValueTooltipValueLabel"></span><span>: </span><span id="singleValueTooltipValue"></span></div>
+</div>
+<div id="noDataTooltip" class="hidden">
+    <div><span id="noDataTooltipTimeLabel"></span><span>: </span><span id="noDataTooltipTimeValue"></span></div>
+    <div><span id="noDataTooltipDateLabel"></span><span>: </span><span id="noDataTooltipDateValue"></span></div>
+    <hr>
+    <div id="noDataLabel"></div>
+</div>
+<div id="metricGraphTooltip" class="hidden">
+    <div><span id="metricGraphTooltipTimeLabel"></span><span>: </span><span id="metricGraphTooltipTimeValue"></span>
+    </div>
+    <div><span id="metricGraphTooltipDateLabel"></span><span>: </span><span id="metricGraphTooltipDateValue"></span>
+    </div>
+    <div><span id="metricGraphTooltipDurationLabel"></span><span>: </span><span
+            id="metricGraphTooltipDurationValue"></span>
+        <div>
+            <hr>
+            <div><span id="metricGraphTooltipMaxLabel"></span><span> : </span><span
+                    id="metricGraphTooltipMaxValue"></span>
+                <div>
+                    <div><span id="metricGraphTooltipAvgLabel"></span><span> : </span><span
+                            id="metricGraphTooltipAvgValue"></span>
+
+                        <div>
+                            <div><span id="metricGraphTooltipMinLabel"></span><span> : </span><span
+                                    id="metricGraphTooltipMinValue"></span>
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

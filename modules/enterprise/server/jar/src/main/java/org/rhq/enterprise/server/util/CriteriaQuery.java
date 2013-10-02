@@ -20,9 +20,7 @@
  */
 package org.rhq.enterprise.server.util;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.util.PageControl;
@@ -82,15 +80,11 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
     //
     //NOTE: Assumes criteria page iteration starts with page 0. Will continue to iterate over N members.
     protected class QueryResultsIterator implements Iterator<T> {
-        private int count;
-
         private PageList<T> currentPage;
 
         private Iterator<T> iterator;
 
-        private T deletable = null;
-
-        private ArrayList<T> forDeletion = new ArrayList<T>();
+        private boolean reachedEnd;
 
         /**The first pageList returned by the criteria instance is where iteration begins.
          * @param firstPage
@@ -98,31 +92,11 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
         public QueryResultsIterator(PageList<T> firstPage) {
             currentPage = firstPage;
             iterator = currentPage.iterator();
-            count = firstPage == null || firstPage.getPageControl() == null ? 0 : firstPage.getPageControl()
-                .getStartRow();
         }
 
         @Override
         public boolean hasNext() {
-            return count < currentPage.getTotalSize();
-        }
-
-        @Override
-        public T next() {
-            //define logic for the end of a pagelist to move the iterator onto next page
-            if (!iterator.hasNext()) {
-                if (count == currentPage.getTotalSize()) {
-                    throw new NoSuchElementException();
-                }
-
-                deletable = null; // reset deletable.
-
-                //remove all flagged instances of T
-                if (!forDeletion.isEmpty()) {
-                    currentPage.removeAll(forDeletion);
-                    forDeletion.clear();
-                }
-
+            if (!iterator.hasNext() && !reachedEnd) {
                 // advance the page. Although strange to be using a page control override in conjunction with
                 // CriteriaQuery, nonetheless make sure we advance it if it exists, because the normal setPaging is
                 // ignored when their is an overrides.
@@ -140,23 +114,21 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
 
                 currentPage = queryExecutor.execute(criteria);
                 iterator = currentPage.iterator();
+                reachedEnd = !iterator.hasNext(); //if we got an empty collection as a result for obtaining the next page
+                                                  //we can be pretty sure we're past the number of available results
             }
 
-            T next = iterator.next();
-            deletable = next;
-            count++;
-            return next;
+            return iterator.hasNext();
+        }
+
+        @Override
+        public T next() {
+            return iterator.next();
         }
 
         @Override
         public void remove() {
-            if (deletable != null) {
-                forDeletion.add(deletable);
-                deletable = null;
-            } else {
-                throw new IllegalStateException(
-                    "Not allowed to call remove() without calling next() just before this call.");
-            }
+            iterator.remove();
         }
     }
 }

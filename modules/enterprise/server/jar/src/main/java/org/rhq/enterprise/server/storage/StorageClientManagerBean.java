@@ -41,6 +41,8 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -354,6 +356,16 @@ public class StorageClientManagerBean {
             .withLoadBalancingPolicy(new RoundRobinPolicy())
             .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE)).withCompression(
                 ProtocolOptions.Compression.NONE).build();
+
+        PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+        poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, Integer.parseInt(
+            System.getProperty("rhq.storage.client.local-connections", "24")));
+        poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, Integer.parseInt(
+            System.getProperty("rhq.storage.client.remote-connections", "16")));
+        poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL, Integer.parseInt(
+            System.getProperty("rhq.storage.client.max-local-connections", "32")));
+        poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, Integer.parseInt(
+            System.getProperty("rhq.storage.client.max-remote-connections", "24")));
 
         return cluster.connect(RHQ_KEYSPACE);
     }

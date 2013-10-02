@@ -31,7 +31,6 @@ import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -40,10 +39,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 
@@ -1011,39 +1008,4 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         return new SimplePagedResult<RawNumericMetric>(cql, new RawNumericMetricMapper(true), storageSession);
     }
 
-    private static class WaitForRawInserts implements RawDataInsertedCallback {
-
-        private final Log log = LogFactory.getLog(WaitForRawInserts.class);
-
-        private CountDownLatch latch;
-
-        private Throwable throwable;
-
-        public WaitForRawInserts(int numInserts) {
-            latch = new CountDownLatch(numInserts);
-        }
-
-        @Override
-        public void onFinish() {
-        }
-
-        @Override
-        public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
-            latch.countDown();
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            latch.countDown();
-            this.throwable = throwable;
-            log.error("An async operation failed", throwable);
-        }
-
-        public void await(String errorMsg) throws InterruptedException {
-            latch.await();
-            if (throwable != null) {
-                fail(errorMsg, Throwables.getRootCause(throwable));
-            }
-        }
-    }
 }

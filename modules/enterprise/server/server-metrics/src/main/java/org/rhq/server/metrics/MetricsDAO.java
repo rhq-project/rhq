@@ -154,15 +154,34 @@ public class MetricsDAO {
         return storageSession.execute(statement);
     }
 
+    public StorageResultSetFuture insertOneHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return storageSession.executeAsync(statement);
+    }
+
     public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
         return storageSession.execute(statement);
+    }
+
+    public StorageResultSetFuture insertSixHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return storageSession.executeAsync(statement);
     }
 
     public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
             value);
         return storageSession.execute(statement);
+    }
+
+    public StorageResultSetFuture insertTwentyFourHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
+            value);
+        return storageSession.executeAsync(statement);
     }
 
     public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
@@ -173,6 +192,11 @@ public class MetricsDAO {
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
+    }
+
+    public ResultSet findRawMetricsSync(int scheduleId, long startTime, long endTime) {
+        BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return storageSession.execute(boundStatement);
     }
 
     public StorageResultSetFuture findRawMetricsAsync(int scheduleId, long startTime, long endTime) {
@@ -212,8 +236,7 @@ public class MetricsDAO {
     }
 
     public StorageResultSetFuture findSixHourMetricsAsync(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
+        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
         return storageSession.executeAsync(statement);
     }
 
@@ -260,6 +283,11 @@ public class MetricsDAO {
         return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), storageSession);
     }
 
+    public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
+        BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
+        return storageSession.executeAsync(statement);
+    }
+
     public ResultSet setFindTimeSliceForIndex(MetricsTable table, long timestamp) {
         BoundStatement statement = findTimeSliceForIndex.bind(table.toString(), new Date(timestamp));
         return storageSession.execute(statement);
@@ -281,5 +309,10 @@ public class MetricsDAO {
     public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {
         BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
         storageSession.execute(statement);
+    }
+
+    public StorageResultSetFuture deleteMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
+        BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
+        return storageSession.executeAsync(statement);
     }
 }

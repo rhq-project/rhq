@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,6 +43,9 @@ import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,6 +55,7 @@ import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.server.metrics.aggregation.Aggregator;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
@@ -71,13 +75,24 @@ public class MetricsServer {
 
     private MetricsConfiguration configuration;
 
-    private Semaphore semaphore = new Semaphore(100);
+    private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
+        System.getProperty("rhq.storage.read-limit", "1000")), 3, TimeUnit.MINUTES);
+
+    private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
+        System.getProperty("rhq.storage.write-limit", "2500")), 3, TimeUnit.MINUTES);
 
     private boolean pastAggregationMissed;
 
     private Long mostRecentRawDataPriorToStartup;
 
     private AtomicLong totalAggregationTime = new AtomicLong();
+
+    private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
+        Executors.newFixedThreadPool(5));
+
+    private int aggregationBatchSize;
+
+    private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -91,7 +106,34 @@ public class MetricsServer {
         this.dateTimeService = dateTimeService;
     }
 
+    public void setAggregationBatchSize(int batchSize) {
+        aggregationBatchSize = batchSize;
+    }
+
+    public void setUseAsyncAggregation(boolean useAsyncAggregation) {
+        this.useAsyncAggregation = useAsyncAggregation;
+    }
+
+    public RateLimiter getReadPermits() {
+        return readPermits;
+    }
+
+    public void setReadPermits(RateLimiter readPermits) {
+        this.readPermits = readPermits;
+    }
+
+    public RateLimiter getWritePermits() {
+        return writePermits;
+    }
+
+    public void setWritePermits(RateLimiter writePermits) {
+        this.writePermits = writePermits;
+    }
+
     public void init() {
+        if (log.isDebugEnabled() && useAsyncAggregation) {
+            log.debug("Async aggregation is enabled");
+        }
         determineMostRecentRawDataSinceLastShutdown();
     }
 
@@ -131,6 +173,11 @@ public class MetricsServer {
         }
     }
 
+    private boolean hasTimeSliceEnded(DateTime startTime, Duration duration) {
+        DateTime endTime = startTime.plus(duration);
+        return DateTimeComparator.getInstance().compare(currentHour(), endTime) >= 0;
+    }
+
     protected DateTime currentHour() {
         return dateTimeService.getTimeSlice(dateTimeService.now(), configuration.getRawTimeSliceDuration());
     }
@@ -140,6 +187,7 @@ public class MetricsServer {
     }
 
     public void shutdown() {
+        aggregationWorkers.shutdown();
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
@@ -363,7 +411,7 @@ public class MetricsServer {
             final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
             for (final MeasurementDataNumeric data : dataSet) {
-                semaphore.acquire();
+                writePermits.acquire();
                 StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
                 Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
                     @Override
@@ -381,7 +429,6 @@ public class MetricsServer {
                                     throwable.getClass().getName() + ": " + throwable.getMessage());
                         }
                         callback.onFailure(throwable);
-                        semaphore.release();
                     }
                 });
             }
@@ -396,6 +443,7 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
+        writePermits.acquire();
         StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
             timeSlice);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
@@ -409,7 +457,6 @@ public class MetricsServer {
                     }
                     callback.onFinish();
                 }
-                semaphore.release();
             }
 
             @Override
@@ -417,7 +464,6 @@ public class MetricsServer {
                 log.error("An error occurred while trying to update " + MetricsTable.INDEX + " for raw data " +
                     rawData);
                 callback.onFailure(throwable);
-                semaphore.release();
             }
         });
     }
@@ -431,14 +477,24 @@ public class MetricsServer {
      * for subsequently computing baselines.
      */
     public Iterable<AggregateNumericMetric> calculateAggregates() {
-        DateTime theHour = currentHour();
+        long start = System.currentTimeMillis();
+        try {
+            DateTime theHour = currentHour();
 
-        if (pastAggregationMissed) {
-            calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());
-            pastAggregationMissed = false;
-            return calculateAggregates(theHour.getMillis());
-        } else {
-            return calculateAggregates(theHour.getMillis());
+            if (pastAggregationMissed) {
+                theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
+                pastAggregationMissed = false;
+            }
+
+            if (useAsyncAggregation) {
+                DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
+                return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+                    aggregationBatchSize, writePermits, readPermits).run();
+            } else {
+                return calculateAggregates(theHour.getMillis());
+            }
+        } finally {
+            log.info("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
         }
     }
 
@@ -459,16 +515,6 @@ public class MetricsServer {
 
         long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getSixHourTimeSliceDuration()).getMillis();
-
-        // We first query the metrics index table to determine which schedules have data to
-        // be aggregated. Then we retrieve the metric data and aggregate or compress the
-        // data, writing the compressed values into the next wider (i.e., longer life span
-        // for data) bucket/table. At this point we remove the index entries for the data
-        // that has already been processed. We purge the entire row in the index table.
-        // We can safely do this because the row wi..
-        //
-        // The last step in the work flow is to update the metrics
-        // index for the newly persisted aggregates.
 
         List<AggregateNumericMetric> newOneHourAggregates = null;
 

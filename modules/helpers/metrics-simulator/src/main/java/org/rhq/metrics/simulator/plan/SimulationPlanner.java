@@ -58,6 +58,7 @@ public class SimulationPlanner {
             simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 2500L));
             simulation.setMetricsServerConfiguration(createSecondsConfiguration());
             simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 30));
+            simulation.setSimulationRate(1440);
             dateTimeService = new SecondsDateTimeService();
             break;
         case MINUTES:
@@ -66,12 +67,14 @@ public class SimulationPlanner {
             simulation.setMetricsServerConfiguration(createMinutesConfiguration());
             simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 180));
             simulation.setDateTimeService(new MinutesDateTimeService());
+            simulation.setSimulationRate(2400);
             dateTimeService = new MinutesDateTimeService();
             break;
         default:  // HOURS
             simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 30000L));
             simulation.setAggregationInterval(3600000L);
             simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 1200));
+            simulation.setSimulationRate(1000);
             dateTimeService = new DateTimeService();
         }
 

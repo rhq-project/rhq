@@ -78,6 +78,12 @@ public class SimulationPlan {
 
     private DateTimeService dateTimeService;
 
+    private int numReaders;
+
+    private long readInterval;
+
+    private long simulationRate;
+
     public DateTimeService getDateTimeService() {
         return dateTimeService;
     }
@@ -164,5 +170,29 @@ public class SimulationPlan {
 
     public void setIntervalType(IntervalType intervalType) {
         this.intervalType = intervalType;
+    }
+
+    public int getNumReaders() {
+        return numReaders;
+    }
+
+    public void setNumReaders(int numReaders) {
+        this.numReaders = numReaders;
+    }
+
+    public long getReadInterval() {
+        return readInterval;
+    }
+
+    public void setReadInterval(long readInterval) {
+        this.readInterval = readInterval;
+    }
+
+    public long getSimulationRate() {
+        return simulationRate;
+    }
+
+    public void setSimulationRate(long simulationRate) {
+        this.simulationRate = simulationRate;
     }
 }

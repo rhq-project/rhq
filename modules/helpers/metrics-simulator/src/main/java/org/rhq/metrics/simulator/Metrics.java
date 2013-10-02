@@ -19,12 +19,27 @@ public class Metrics {
 
     public final Timer totalAggregationTime;
 
+    public final Timer twentyFourHourResourceQueryTime;
+
+    public final Timer oneWeekResourceQueryTime;
+
+    public final Timer twoWeekResourceQueryTime;
+
+    public final Timer monthResourceQueryTime;
+
+    public final Timer yearResourceQueryTime;
+
     public Metrics() {
         registry = new MetricRegistry();
 
         rawInserts = registry.meter(name(MeasurementCollector.class, "rawInserts"));
         batchInsertTime = registry.timer(name(MeasurementCollector.class, "batchInsertTime"));
         totalAggregationTime = registry.timer(name(MeasurementAggregator.class, "totalAggregationTime"));
+        twentyFourHourResourceQueryTime = registry.timer(name(MeasurementReader.class, "24HourResourceDataQuery"));
+        oneWeekResourceQueryTime = registry.timer(name(MeasurementReader.class, "oneWeekResourceQueryData"));
+        twoWeekResourceQueryTime = registry.timer(name(MeasurementReader.class, "twoWeekResourceQueryData"));
+        monthResourceQueryTime = registry.timer(name(MeasurementReader.class, "monthResourceQueryTime"));
+        yearResourceQueryTime = registry.timer(name(MeasurementReader.class, "yearResourceQueryTime"));
     }
 
 }

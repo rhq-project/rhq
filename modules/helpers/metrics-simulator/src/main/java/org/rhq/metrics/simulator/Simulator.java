@@ -59,11 +59,14 @@ public class Simulator implements ShutdownManager {
         final ScheduledExecutorService collectors = Executors.newScheduledThreadPool(
             plan.getNumMeasurementCollectors(), new SimulatorThreadFactory());
         final ExecutorService aggregationQueue = Executors.newSingleThreadExecutor(new SimulatorThreadFactory());
+        final ScheduledExecutorService readers = Executors.newScheduledThreadPool(plan.getNumReaders(),
+            new SimulatorThreadFactory());
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 shutdown(collectors, "collectors", 5);
+                shutdown(readers, "readers", 5);
                 shutdown(aggregators, "aggregators", 1);
                 shutdown(aggregationQueue, "aggregationQueue", Integer.MAX_VALUE);
             }
@@ -96,6 +99,11 @@ public class Simulator implements ShutdownManager {
 
         aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
             TimeUnit.MILLISECONDS);
+
+        MeasurementReader reader = new MeasurementReader(plan.getSimulationRate(), metrics, metricsServer, 0,
+            plan.getBatchSize());
+        readers.scheduleAtFixedRate(reader, 30, 30, TimeUnit.SECONDS);
+
         try {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {

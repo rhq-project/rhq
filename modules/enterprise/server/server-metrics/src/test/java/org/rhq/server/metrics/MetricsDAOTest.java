@@ -29,6 +29,7 @@ import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +39,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
 import org.apache.commons.logging.Log;
@@ -54,6 +57,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
+import org.rhq.server.metrics.domain.MetricsIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
@@ -352,12 +356,24 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         updates.put(scheduleId2, hour0.getMillis());
 
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
-        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR,
-            hour0.getMillis()));
-
-        List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId1),
+        final List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId1),
             new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId2));
-        assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
+
+        StorageResultSetFuture future = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR, hour0.getMillis());
+        Futures.addCallback(future, new FutureCallback<ResultSet>() {
+            @Override
+            public void onSuccess(ResultSet result) {
+                MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.ONE_HOUR);
+                List<MetricsIndexEntry> actual = mapper.mapAll(result);
+
+                assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                fail("Failed to retrieve one hour index entries", t);
+            }
+        });
     }
 
     @Test(enabled = ENABLED)

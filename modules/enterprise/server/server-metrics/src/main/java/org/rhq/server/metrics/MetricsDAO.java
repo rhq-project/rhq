@@ -154,6 +154,12 @@ public class MetricsDAO {
         return storageSession.execute(statement);
     }
 
+    public StorageResultSetFuture insertOneHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return storageSession.executeAsync(statement);
+    }
+
     public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
         return storageSession.execute(statement);
@@ -240,6 +246,11 @@ public class MetricsDAO {
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {
         BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
         return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), storageSession);
+    }
+
+    public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
+        BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
+        return storageSession.executeAsync(statement);
     }
 
     public ResultSet setFindTimeSliceForIndex(MetricsTable table, long timestamp) {

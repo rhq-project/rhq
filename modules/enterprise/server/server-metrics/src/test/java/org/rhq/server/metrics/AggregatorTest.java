@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
@@ -131,11 +132,11 @@ public class AggregatorTest extends CassandraIntegrationTest {
             firstValue, thirdValue, hour8.getMillis())));
 
         // verify that the 6 hour index is updated
-//        List<MetricsIndexEntry> expected6HourIndex = asList(new MetricsIndexEntry(MetricsTable.SIX_HOUR,
-//            dateTimeService.getTimeSlice(hour9, Minutes.minutes(60 * 6)), scheduleId));
+        List<MetricsIndexEntry> expected6HourIndex = asList(new MetricsIndexEntry(MetricsTable.SIX_HOUR,
+            dateTimeService.getTimeSlice(hour9, configuration.getOneHourTimeSliceDuration()), scheduleId));
 
-//        assertMetricsIndexEquals(MetricsTable.SIX_HOUR, hour9.minusHours(3).getMillis(), expected6HourIndex,
-//            "Failed to update index for " + MetricsTable.SIX_HOUR);
+        assertMetricsIndexEquals(MetricsTable.SIX_HOUR, hour9.minusHours(3).getMillis(), expected6HourIndex,
+            "Failed to update index for " + MetricsTable.SIX_HOUR);
 
         // The 6 hour data should not get aggregated since the current 6 hour time slice
         // has not passed yet. More specifically, the aggregation job is running at 09:00
@@ -171,6 +172,13 @@ public class AggregatorTest extends CassandraIntegrationTest {
         List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
         assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + columnFamily +
             " does not match expected values", expected, actual, TEST_PRECISION);
+    }
+
+    private void assertMetricsIndexEquals(MetricsTable table, long timeSlice, List<MetricsIndexEntry> expected,
+        String msg) {
+        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice));
+        assertCollectionMatchesNoOrder(msg + ": " + table + " index does not match expected values.",
+            expected, actual);
     }
 
 }

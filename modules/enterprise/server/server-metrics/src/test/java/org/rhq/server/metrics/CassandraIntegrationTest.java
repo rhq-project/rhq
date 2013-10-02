@@ -28,6 +28,8 @@ import java.util.concurrent.CountDownLatch;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -78,6 +80,12 @@ public class CassandraIntegrationTest {
             .addContactPoints("127.0.0.1")
             .withCredentialsObfuscated(RHQADMIN, RHQADMIN_PASSWORD)
             .build();
+
+        PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+        poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 24);
+        poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 24);
+        poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL, 32);
+        poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, 32);
 
         cluster.register(new Host.StateListener() {
             @Override
@@ -143,39 +151,6 @@ public class CassandraIntegrationTest {
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
-    }
-
-    protected static class WaitForWrite implements FutureCallback<ResultSet> {
-
-        private final Log log = LogFactory.getLog(WaitForWrite.class);
-
-        private CountDownLatch latch;
-
-        private Throwable throwable;
-
-        public WaitForWrite(int numResults) {
-            latch = new CountDownLatch(numResults);
-        }
-
-        @Override
-        public void onSuccess(ResultSet rows) {
-            latch.countDown();
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            latch.countDown();
-            this.throwable = throwable;
-            log.error("An async operation failed", throwable);
-        }
-
-        public void await(String errorMsg) throws InterruptedException {
-            latch.await();
-            if (throwable != null) {
-                fail(errorMsg, Throwables.getRootCause(throwable));
-            }
-        }
-
     }
 
     protected static class WaitForRead<T> implements FutureCallback<ResultSet> {

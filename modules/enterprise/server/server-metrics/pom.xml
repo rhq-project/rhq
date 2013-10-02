@@ -157,6 +157,9 @@
             <rhq.storage.cluster.dir>${rhq.storage.cluster.dir}</rhq.storage.cluster.dir>
             <rhq.storage.cluster.deploy>${deployCluster}</rhq.storage.cluster.deploy>
           </systemPropertyVariables>
+          <excludes>
+            <exclude>**/MetricsPerfTests.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
     </plugins>

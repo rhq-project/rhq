@@ -104,20 +104,9 @@ public class StorageInstaller {
 
     public static final int STATUS_GOSSIP_PORT_CONFLICT = 10;
 
-    private final String STORAGE_BASEDIR = "rhq-storage";
+    public static final int STATUS_UNKNOWN_HOST = 11;
 
-    private static final String OPTION_HOSTNAME = "rhq.storage.hostname";
-    private static final String OPTION_SEEDS = "rhq.storage.seeds";
-    private static final String OPTION_CQL_PORT = "rhq.storage.cql-port";
-    private static final String OPTION_JMX_PORT = "rhq.storage.jmx-port";
-    private static final String OPTION_GOSSIP_PORT = "rhq.storage.gossip-port";
-    private static final String OPTION_COMMITLOG = "rhq.storage.commitlog";
-    private static final String OPTION_DATA = "rhq.storage.data";
-    private static final String OPTION_SAVED_CACHES = "rhq.storage.saved-caches";
-    private static final String OPTION_HEAP_SIZE = "rhq.storage.heap-size";
-    private static final String OPTION_HEAP_NEW_SIZE = "rhq.storage.heap-new-size";
-    private static final String OPTION_STACK_SIZE = "rhq.storage.stack-size";
-    private static final String OPTION_VERIFY_DATA_DIRS_EMPTY = "rhq.storage.verify-data-dirs-empty";
+    private final String STORAGE_BASEDIR = "rhq-storage";
 
     private final Log log = LogFactory.getLog(StorageInstaller.class);
 
@@ -147,26 +136,27 @@ public class StorageInstaller {
         storageBasedir = new File(basedir, STORAGE_BASEDIR);
         logDir = new File(serverBasedir, "logs");
 
-        Option hostname = new Option("n", OPTION_HOSTNAME, true,
+        Option hostname = new Option("n", StorageProperty.HOSTNAME.property(), true,
             "The hostname or IP address on which the node will listen for "
                 + "requests. Note that if a hostname is specified, the IP address is used. Defaults to the IP "
                 + "address of the local host (which depending on hostname configuration may not be localhost).");
         hostname.setArgName("HOSTNAME");
 
-        Option seeds = new Option("s", OPTION_SEEDS, true, "A comma-delimited list of hostnames or IP addresses that "
-            + "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. "
-            + "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
+        Option seeds = new Option("s", StorageProperty.SEEDS.property(), true,
+            "A comma-delimited list of hostnames or IP addresses that "
+                + "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. "
+                + "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
         seeds.setArgName("SEEDS");
 
-        Option jmxPortOption = new Option("j", OPTION_JMX_PORT, true,
+        Option jmxPortOption = new Option("j", StorageProperty.JMX_PORT.property(), true,
             "The port on which to listen for JMX connections. " + "Defaults to " + defaultJmxPort + ".");
         jmxPortOption.setArgName("PORT");
 
-        Option cqlPortOption = new Option("c", OPTION_CQL_PORT, true, "The port on which to "
+        Option cqlPortOption = new Option("c", StorageProperty.CQL_PORT.property(), true, "The port on which to "
             + "listen for client requests. Defaults to " + defaultCqlPort);
         cqlPortOption.setArgName("PORT");
 
-        Option gossipPortOption = new Option(null, OPTION_GOSSIP_PORT, true,
+        Option gossipPortOption = new Option(null, StorageProperty.GOSSIP_PORT.property(), true,
             "The port on which to listen for requests " + " from other nodes. Defaults to " + defaultGossipPort);
         gossipPortOption.setArgName("PORT");
 
@@ -178,15 +168,16 @@ public class StorageInstaller {
             + "after starting it. This option is ignored if the start option is not set. Defaults to true.");
         checkStatus.setArgName("true|false");
 
-        Option commitLogOption = new Option(null, OPTION_COMMITLOG, true, "The directory where the storage node keeps "
-            + "commit log files. Defaults to " + getDefaultCommitLogDir() + ".");
+        Option commitLogOption = new Option(null, StorageProperty.COMMITLOG.property(), true,
+            "The directory where the storage node keeps " + "commit log files. Defaults to " + getDefaultCommitLogDir()
+                + ".");
         commitLogOption.setArgName("DIR");
 
-        Option dataDirOption = new Option(null, OPTION_DATA, true,
+        Option dataDirOption = new Option(null, StorageProperty.DATA.property(), true,
             "The directory where the storage node keeps data files. " + "Defaults to " + getDefaultDataDir() + ".");
         dataDirOption.setArgName("DIR");
 
-        Option savedCachesDirOption = new Option(null, OPTION_SAVED_CACHES, true,
+        Option savedCachesDirOption = new Option(null, StorageProperty.SAVED_CACHES.property(), true,
             "The directory where the storage node " + "keeps saved cache files. Defaults to "
                 + getDefaultSavedCachesDir() + ".");
         savedCachesDirOption.setArgName("DIR");
@@ -194,17 +185,17 @@ public class StorageInstaller {
         Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed "
             + "The default directory will be " + storageBasedir);
 
-        Option heapSizeOption = new Option(null, OPTION_HEAP_SIZE, true,
+        Option heapSizeOption = new Option(null, StorageProperty.HEAP_SIZE.property(), true,
             "The value to use for both the min and max heap. "
                 + "This value is passed directly to the -Xms and -Xmx options of the Java executable. Defaults to "
                 + defaultHeapSize);
 
-        Option heapNewSizeOption = new Option(null, OPTION_HEAP_NEW_SIZE, true,
+        Option heapNewSizeOption = new Option(null, StorageProperty.HEAP_NEW_SIZE.property(), true,
             "The value to use for the new generation "
                 + "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to "
                 + defaultHeapNewSize);
 
-        Option stackSizeOption = new Option(null, OPTION_STACK_SIZE, true,
+        Option stackSizeOption = new Option(null, StorageProperty.STACK_SIZE.property(), true,
             "The value to use for the thread stack size. "
                 + "This value is passed directly to the -Xss option of the Java executable.");
 
@@ -212,7 +203,7 @@ public class StorageInstaller {
             + "where the existing RHQ server is installed.");
         upgradeOption.setArgName("RHQ_SERVER_DIR");
 
-        Option verifyDataDirsEmptyOption = new Option(null, OPTION_VERIFY_DATA_DIRS_EMPTY, true,
+        Option verifyDataDirsEmptyOption = new Option(null, StorageProperty.VERIFY_DATA_DIRS_EMPTY.property(), true,
             "Will cause the installer " + "to abort if any of the data directories is not empty. Defaults to true.");
 
         options = new Options().addOption(new Option("h", "help", false, "Show this message.")).addOption(hostname)
@@ -250,8 +241,8 @@ public class StorageInstaller {
             log.info("Updating rhq-server.properties...");
             Properties properties = new Properties();
             properties.setProperty("rhq.storage.nodes", installerInfo.hostname);
-            properties.setProperty(OPTION_CQL_PORT, Integer.toString(installerInfo.cqlPort));
-            properties.setProperty(OPTION_GOSSIP_PORT, Integer.toString(installerInfo.gossipPort));
+            properties.setProperty(StorageProperty.CQL_PORT.property(), Integer.toString(installerInfo.cqlPort));
+            properties.setProperty(StorageProperty.GOSSIP_PORT.property(), Integer.toString(installerInfo.gossipPort));
 
             serverPropertiesUpdater.update(properties);
 
@@ -335,21 +326,23 @@ public class StorageInstaller {
             deploymentOptions.setListenAddress(installerInfo.hostname);
             deploymentOptions.setRpcAddress(installerInfo.hostname);
 
-            String seeds = cmdLine.getOptionValue(OPTION_SEEDS, installerInfo.hostname);
+            String seeds = cmdLine.getOptionValue(StorageProperty.SEEDS.property(), installerInfo.hostname);
             deploymentOptions.setSeeds(seeds);
 
-            String commitlogDir = cmdLine.getOptionValue(OPTION_COMMITLOG, getDefaultCommitLogDir().getAbsolutePath());
-            String dataDir = cmdLine.getOptionValue(OPTION_DATA, getDefaultDataDir().getAbsolutePath());
-            String savedCachesDir = cmdLine.getOptionValue(OPTION_SAVED_CACHES, getDefaultSavedCachesDir()
+            String commitlogDir = cmdLine.getOptionValue(StorageProperty.COMMITLOG.property(), getDefaultCommitLogDir()
                 .getAbsolutePath());
+            String dataDir = cmdLine.getOptionValue(StorageProperty.DATA.property(), getDefaultDataDir()
+                .getAbsolutePath());
+            String savedCachesDir = cmdLine.getOptionValue(StorageProperty.SAVED_CACHES.property(),
+                getDefaultSavedCachesDir().getAbsolutePath());
 
             File commitLogDirFile = new File(commitlogDir);
             File dataDirFile = new File(dataDir);
             File savedCachesDirFile = new File(savedCachesDir);
             installerInfo.logFile = new File(logDir, "rhq-storage.log");
 
-            boolean verifyDataDirsEmpty = Boolean
-                .valueOf(cmdLine.getOptionValue(OPTION_VERIFY_DATA_DIRS_EMPTY, "true"));
+            boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(
+                StorageProperty.VERIFY_DATA_DIRS_EMPTY.property(), "true"));
             if (verifyDataDirsEmpty) {
                 // validate the three data directories are empty - if they are not, we are probably stepping on
                 // another storage node
@@ -373,20 +366,20 @@ public class StorageInstaller {
                 }
             }
 
-            installerInfo.jmxPort = getPort(cmdLine, OPTION_JMX_PORT, defaultJmxPort);
+            installerInfo.jmxPort = getPort(cmdLine, StorageProperty.JMX_PORT.property(), defaultJmxPort);
             if (isPortBound(installerInfo.hostname, installerInfo.jmxPort, "jmx-port")) {
                 throw new StorageInstallerException("The jmx-port (" + installerInfo.jmxPort + ") is already in use. "
                     + "Installation cannot proceed.", STATUS_JMX_PORT_CONFLICT);
             }
 
-            installerInfo.cqlPort = getPort(cmdLine, OPTION_CQL_PORT, defaultCqlPort);
-            if (isPortBound(installerInfo.hostname, installerInfo.cqlPort, OPTION_CQL_PORT)) {
+            installerInfo.cqlPort = getPort(cmdLine, StorageProperty.CQL_PORT.property(), defaultCqlPort);
+            if (isPortBound(installerInfo.hostname, installerInfo.cqlPort, StorageProperty.CQL_PORT.property())) {
                 throw new StorageInstallerException("The cql-port (" + installerInfo.cqlPort + ") is already in use. "
                     + "Installation cannot proceed.", STATUS_CQL_PORT_CONFLICT);
             }
 
-            installerInfo.gossipPort = getPort(cmdLine, OPTION_GOSSIP_PORT, defaultGossipPort);
-            if (isPortBound(installerInfo.hostname, installerInfo.gossipPort, OPTION_GOSSIP_PORT)) {
+            installerInfo.gossipPort = getPort(cmdLine, StorageProperty.GOSSIP_PORT.property(), defaultGossipPort);
+            if (isPortBound(installerInfo.hostname, installerInfo.gossipPort, StorageProperty.GOSSIP_PORT.property())) {
                 throw new StorageInstallerException("The gossip-port (" + installerInfo.gossipPort
                     + ") is already in use. " + "Installation cannot proceed.", STATUS_GOSSIP_PORT_CONFLICT);
             }
@@ -404,10 +397,12 @@ public class StorageInstaller {
             deploymentOptions.setGossipPort(installerInfo.gossipPort);
             deploymentOptions.setJmxPort(installerInfo.jmxPort);
 
-            deploymentOptions.setHeapSize(cmdLine.getOptionValue(OPTION_HEAP_SIZE, defaultHeapSize));
-            deploymentOptions.setHeapNewSize(cmdLine.getOptionValue(OPTION_HEAP_NEW_SIZE, defaultHeapNewSize));
-            if (cmdLine.hasOption(OPTION_STACK_SIZE)) {
-                deploymentOptions.setStackSize(cmdLine.getOptionValue(OPTION_STACK_SIZE));
+            deploymentOptions
+                .setHeapSize(cmdLine.getOptionValue(StorageProperty.HEAP_SIZE.property(), defaultHeapSize));
+            deploymentOptions.setHeapNewSize(cmdLine.getOptionValue(StorageProperty.HEAP_NEW_SIZE.property(),
+                defaultHeapNewSize));
+            if (cmdLine.hasOption(StorageProperty.STACK_SIZE.property())) {
+                deploymentOptions.setStackSize(cmdLine.getOptionValue(StorageProperty.STACK_SIZE.property()));
             }
 
             // The out of box default for native_transport_max_threads is 128. We default
@@ -417,9 +412,9 @@ public class StorageInstaller {
             deploymentOptions.load();
 
             List<String> errors = new ArrayList<String>();
-            checkPerms(options.getOption(OPTION_SAVED_CACHES), savedCachesDir, errors);
-            checkPerms(options.getOption(OPTION_COMMITLOG), commitlogDir, errors);
-            checkPerms(options.getOption(OPTION_DATA), dataDir, errors);
+            checkPerms(options.getOption(StorageProperty.SAVED_CACHES.property()), savedCachesDir, errors);
+            checkPerms(options.getOption(StorageProperty.COMMITLOG.property()), commitlogDir, errors);
+            checkPerms(options.getOption(StorageProperty.DATA.property()), dataDir, errors);
 
             if (!errors.isEmpty()) {
                 log.error("Problems have been detected with one or more of the directories in which the storage "
@@ -444,8 +439,12 @@ public class StorageInstaller {
             deployer.updateStorageAuthConf(addresses);
 
             return installerInfo;
+        } catch (UnknownHostException unknownHostException) {
+            throw new StorageInstallerException(
+                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. Unknown host "
+                    + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
         } catch (IOException e) {
-            throw new StorageInstallerException("The upgrade cannot proceed. An unexpected I/O error occurred", e,
+            throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
                 STATUS_IO_ERROR);
         } catch (DeploymentException e) {
             throw new StorageInstallerException("The installation cannot proceed. An error occurred during storage "
@@ -556,12 +555,17 @@ public class StorageInstaller {
             deployer.updateStorageAuthConf(addresses);
 
             return installerInfo;
+
+        } catch (UnknownHostException unknownHostException) {
+            throw new StorageInstallerException(
+                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. Unknown host "
+                    + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
+        } catch (IOException e) {
+            throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
+                STATUS_IO_ERROR);
         } catch (DeploymentException e) {
             throw new StorageInstallerException("THe upgrade cannot proceed. An error occurred during the storage "
                 + "node deployment", e, STATUS_DEPLOYMENT_ERROR);
-        } catch (IOException e) {
-            throw new StorageInstallerException("The upgrade cannot proceed. An unexpected I/O error occurred", e,
-                STATUS_IO_ERROR);
         }
     }
 
@@ -913,7 +917,7 @@ public class StorageInstaller {
     public Options getHelpOptions() {
         Options helpOptions = new Options();
         for (Option option : (Collection<Option>) options.getOptions()) {
-            if (option.getLongOpt().equals(OPTION_VERIFY_DATA_DIRS_EMPTY)) {
+            if (option.getLongOpt().equals(StorageProperty.VERIFY_DATA_DIRS_EMPTY)) {
                 continue;
             }
             helpOptions.addOption(option);
@@ -942,11 +946,6 @@ public class StorageInstaller {
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);
             int status = installer.run(cmdLine);
             System.exit(status);
-        } catch (UnknownHostException unknownHostException) {
-            installer.log
-                .error("Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. "
-                + unknownHostException.getMessage());
-            throw unknownHostException;
         } catch (ParseException parseException) {
             installer.printUsage();
             System.exit(STATUS_SHOW_USAGE);

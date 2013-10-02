@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.ArrayList;
@@ -19,8 +38,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * already been purged. Puring resource types is performed by {@link PurgeResourceTypesJob}.
  */
 public class PurgePluginsJob extends AbstractStatefulJob {
-
-    private static final Log log = LogFactory.getLog(PurgePluginsJob.class);
+    private static final Log LOG = LogFactory.getLog(PurgePluginsJob.class);
 
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
@@ -30,14 +48,18 @@ public class PurgePluginsJob extends AbstractStatefulJob {
 
         for (Plugin plugin : plugins) {
             if (pluginMgr.isReadyForPurge(plugin)) {
-                log.debug("Preparing to purge plugin [" + plugin.getName() + "]");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Preparing to purge plugin [" + plugin.getName() + "]");
+                }
                 pluginsToPurge.add(plugin);
             }
         }
 
         if (!pluginsToPurge.isEmpty()) {
             pluginMgr.purgePlugins(pluginsToPurge);
-            log.debug("Purged " + pluginsToPurge.size() + " plugins");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Purged " + pluginsToPurge.size() + " plugins");
+            }
         }
     }
 }

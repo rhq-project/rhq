@@ -59,11 +59,14 @@ public class Simulator implements ShutdownManager {
         final ScheduledExecutorService collectors = Executors.newScheduledThreadPool(
             plan.getNumMeasurementCollectors(), new SimulatorThreadFactory());
         final ExecutorService aggregationQueue = Executors.newSingleThreadExecutor(new SimulatorThreadFactory());
+        final ScheduledExecutorService readers = Executors.newScheduledThreadPool(plan.getNumReaders(),
+            new SimulatorThreadFactory());
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 shutdown(collectors, "collectors", 5);
+                shutdown(readers, "readers", 5);
                 shutdown(aggregators, "aggregators", 1);
                 shutdown(aggregationQueue, "aggregationQueue", Integer.MAX_VALUE);
             }
@@ -79,9 +82,7 @@ public class Simulator implements ShutdownManager {
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
 
-        SimulatorDateTimeService dateTimeService = new SimulatorDateTimeService();
-        dateTimeService.setConfiguration(plan.getMetricsServerConfiguration());
-        metricsServer.setDateTimeService(dateTimeService);
+        metricsServer.setDateTimeService(plan.getDateTimeService());
 
         Metrics metrics = new Metrics();
 
@@ -92,12 +93,17 @@ public class Simulator implements ShutdownManager {
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
-                plan.getBatchSize() * i, metrics, metricsServer, dateTimeService), 0, plan.getCollectionInterval(),
-                TimeUnit.MILLISECONDS);
+                plan.getBatchSize() * i, metrics, metricsServer, plan.getDateTimeService()), 0,
+                plan.getCollectionInterval(), TimeUnit.MILLISECONDS);
         }
 
         aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
             TimeUnit.MILLISECONDS);
+
+        MeasurementReader reader = new MeasurementReader(plan.getSimulationRate(), metrics, metricsServer, 0,
+            plan.getBatchSize());
+        readers.scheduleAtFixedRate(reader, 30, 30, TimeUnit.SECONDS);
+
         try {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
@@ -149,8 +155,7 @@ public class Simulator implements ShutdownManager {
     private void createSchema(String[] nodes, int cqlPort) {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
-                new String[] {"127.0.0.1"}, 9142);
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, 9142);
             schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);

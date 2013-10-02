@@ -1,8 +1,29 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.enterprise.server.resource.metadata;
 
+import static org.rhq.core.domain.criteria.Criteria.Restriction.COLLECTION_ONLY;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -26,18 +47,14 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 @Stateless
 public class MeasurementMetadataManagerBean implements MeasurementMetadataManagerLocal {
-
-    private final Log log = LogFactory.getLog(MeasurementMetadataManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(MeasurementMetadataManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
@@ -54,7 +71,9 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateMetadata(ResourceType existingType, ResourceType newType) {
-        log.debug("Updating metric definitions for " + existingType);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Updating metric definitions for " + existingType);
+        }
 
         existingType = entityMgr.find(ResourceType.class, existingType.getId());
         Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
@@ -63,15 +82,15 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         Set<MeasurementDefinition> newTypeMetricDefinitions = getMetricDefinitions(newType);
 
         if (existingDefinitions.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug(existingType + " currently does not define any metric definitions.");
-                log.debug("New metric definitions to be added: " + newType.getMetricDefinitions());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(existingType + " currently does not define any metric definitions. "
+                    + "New metric definitions to be added: " + newType.getMetricDefinitions());
             }
             // They're all new.
             for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
                 if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                     newDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
-                    log.info("Definition [" + newDefinition
+                    LOG.info("Definition [" + newDefinition
                         + "] has too short of a default interval, setting to minimum");
                 }
                 existingType.addMetricDefinition(newDefinition);
@@ -89,8 +108,8 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                         && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
                         found = true;
 
-                        if (log.isDebugEnabled()) {
-                            log.debug("Updating existing metric definition: " + existingDefinition);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Updating existing metric definition: " + existingDefinition);
                         }
 
                         // We normally protect the user's interval settings. But the Availability metric is
@@ -112,7 +131,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                         // but we cannot allow too-short of an interval, so override it if necessary
                         if (existingDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                             existingDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
-                            log.info("Definition [" + existingDefinition
+                            LOG.info("Definition [" + existingDefinition
                                 + "] has too short of a default interval, setting to minimum");
                         }
 
@@ -128,7 +147,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
                 if (!found) {
                     // It's new - create it
-                    log.info("Metadata update: Adding new " + newDefinition.getDataType().name().toLowerCase() + " definition ["
+                    LOG.info("Metadata update: Adding new " + newDefinition.getDataType().name().toLowerCase() + " definition ["
                             + newDefinition.getDisplayName() + "] to type " + existingType + "...");
                     existingType.addMetricDefinition(newDefinition);
                     entityMgr.persist(newDefinition);
@@ -150,7 +169,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
             // ... and remove them
             existingDefinitions.removeAll(definitionsToDelete);
             for (MeasurementDefinition definitionToDelete : definitionsToDelete) {
-                log.info("Metadata update: Removing " + definitionToDelete.getDataType().name().toLowerCase() + " definition ["
+                LOG.info("Metadata update: Removing " + definitionToDelete.getDataType().name().toLowerCase() + " definition ["
                         + definitionToDelete.getDisplayName() + "] from type " + existingType + "...");
                 measurementDefinitionMgr.removeMeasurementDefinition(definitionToDelete);
             }
@@ -215,33 +234,24 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
     @Override
     public void deleteMetadata(ResourceType existingType) {
-        log.debug("Deleting metric definitions for " + existingType);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Deleting metric definitions for " + existingType);
+        }
 
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
-
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<MeasurementDefinition, MeasurementDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<MeasurementDefinition, MeasurementDefinitionCriteria>() {
-            @Override
-            public PageList<MeasurementDefinition> execute(MeasurementDefinitionCriteria criteria) {
-                return measurementDefinitionMgr
-                    .findMeasurementDefinitionsByCriteria(subjectMgr.getOverlord(), criteria);
-            }
-        };
-
-        CriteriaQuery<MeasurementDefinition, MeasurementDefinitionCriteria> definitions = new CriteriaQuery<MeasurementDefinition, MeasurementDefinitionCriteria>(
-            criteria, queryExecutor);
+        criteria.setRestriction(COLLECTION_ONLY);
 
         // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
         // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
         // of removing any associated schedules and those schedules' OOBs.
-        if (definitions != null) {
-            Iterator<MeasurementDefinition> defIter = definitions.iterator();
-            while (defIter.hasNext()) {
-                MeasurementDefinition def = defIter.next();
-                measurementDefinitionMgr.removeMeasurementDefinition(def);
-                defIter.remove();
+        List<MeasurementDefinition> definitions = Collections.emptyList();
+        do {
+            for (MeasurementDefinition definition : definitions) {
+                measurementDefinitionMgr.removeMeasurementDefinition(definition);
             }
-        }
+            definitions = measurementDefinitionMgr.findMeasurementDefinitionsByCriteria(subjectMgr.getOverlord(),
+                criteria);
+        } while (!definitions.isEmpty());
     }
 }

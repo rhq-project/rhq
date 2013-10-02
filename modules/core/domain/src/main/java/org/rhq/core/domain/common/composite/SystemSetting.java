@@ -95,16 +95,26 @@ public enum SystemSetting {
      */
     ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE("RESOURCE_GENERIC_PROPERTIES_UPGRADE", PropertySimpleType.BOOLEAN, true, true),
 
+    /**
+     * @deprecated This attribute is no longer maintained and might not reflect the true version of the running server.
+     * Use {@code SystemManagerRemote.getProductInfo()} method to get at an equivalent and always up-to-date
+     * information.
+     */
+    @Deprecated
     SERVER_VERSION("SERVER_VERSION", PropertySimpleType.STRING, true, true),
+
     DB_SCHEMA_VERSION("DB_SCHEMA_VERSION", PropertySimpleType.STRING, true, true),
 
-    /** How long do we keep data compressed in hourly intervals? This is not configurable through "normal" means but direct DB update. */
+    /** @deprecated since RHQ 4.8.0. This is not used anymore */
+    @Deprecated
     DATA_PURGE_1H_PERIOD("CAM_DATA_PURGE_1H", PropertySimpleType.LONG, true, true),
 
-    /** How long do we keep data compressed in 6 hour intervals? This is not configurable through "normal" means but direct DB update. */
+    /** @deprecated since RHQ 4.8.0. This is not used anymore */
+    @Deprecated
     DATA_PURGE_6H_PERIOD("CAM_DATA_PURGE_6H", PropertySimpleType.LONG, true, true),
 
-    /** How long do we keep data compressed in 1 day intervals? This is not configurable through "normal" means but direct DB update. */
+    /** @deprecated since RHQ 4.8.0. This is not used anymore */
+    @Deprecated
     DATA_PURGE_1D_PERIOD("CAM_DATA_PURGE_1D", PropertySimpleType.LONG, true, true),
 
     /** The length of CoreGUI inactivity (no call to UserSessionManager.refresh()) before a CoreGUI session timeout, Default: 1 hour */

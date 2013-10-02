@@ -64,11 +64,22 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
     private TabSet tabSet;
     private Tab generalPropertiesTab;
     private HandlerRegistration handlerRegistration;
+    private boolean needsCleanup = false;
 
     private boolean isAuthorizedToModifyAlertDefinitions;
 
     public SingleAlertDefinitionView(AbstractAlertDefinitionsView alertDefView) {
         this(alertDefView, null);
+    }
+    
+    @Override
+    public void destroy() {
+        if (handlerRegistration == null) { // the leaving dialog has been answered
+            super.destroy();
+            needsCleanup = false;
+        } else {
+            needsCleanup = true;
+        }
     }
 
     public SingleAlertDefinitionView(final AbstractAlertDefinitionsView alertDefView, AlertDefinition alertDefinition) {
@@ -285,6 +296,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         if (handlerRegistration != null) {
             handlerRegistration.removeHandler();
             handlerRegistration = null;
+            if (needsCleanup) destroy();
         }
     }
 }

@@ -24,8 +24,8 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.SubCategoryTreeNode;
 
 /**
  * @author Greg Hinkle
@@ -52,10 +52,11 @@ public class CustomResourceTreeGrid extends TreeGrid {
                     return ImageManager.getResourceIcon(resource.getResourceType().getCategory(), resource
                         .getCurrentAvailability().getAvailabilityType());
                 }
-            } else if (record instanceof SubCategoryTreeNode) {
-                return "resources/folder_mixed_" + (open ? "opened" : "closed") + ".png";
+            } else if (record instanceof AutoGroupTreeNode) {
+                return "resources/folder_autogroup_" + (open ? "opened" : "closed") + ".png";
             } else {
-                return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
+                // note - subcategory nodes use default folder icons
+                return super.getIcon(record, defaultState);
             }
         }
         return null;

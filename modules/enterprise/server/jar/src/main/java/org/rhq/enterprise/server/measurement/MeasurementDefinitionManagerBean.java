@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.measurement;
 
@@ -51,7 +51,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 @Stateless
 public class MeasurementDefinitionManagerBean implements MeasurementDefinitionManagerLocal,
     MeasurementDefinitionManagerRemote {
-    private Log log = LogFactory.getLog(MeasurementDefinitionManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(MeasurementDefinitionManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -95,15 +95,15 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
                 entityManager.remove(def);
             }
         } catch (EntityNotFoundException enfe) {
-            if (log.isDebugEnabled()) {
-                log.debug("Definition # " + def.getId() + " not found: " + enfe.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Definition # " + def.getId() + " not found: " + enfe.getMessage());
             }
         } catch (PersistenceException pe) {
-            if (log.isDebugEnabled()) {
-                log.debug("Exception when deleting Definition # " + def.getId() + ": " + pe.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Exception when deleting Definition # " + def.getId() + ": " + pe.getMessage());
             }
         } catch (Exception e) {
-            log.warn(e.fillInStackTrace());
+            LOG.warn(e.fillInStackTrace());
         }
     }
 
@@ -134,8 +134,6 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
         MeasurementDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
-
         CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner<MeasurementDefinition>(
             criteria, generator, entityManager);
         return queryRunner.execute();

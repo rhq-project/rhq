@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -130,7 +132,7 @@ public class InstallerServiceImpl implements InstallerService {
         HashMap<String, String> serverProperties = preInstall();
 
         // make sure the data is valid
-        verifyDataFormats(serverProperties);
+        ServerProperties.validate(serverProperties);
 
         // checks to make sure we can connect to the DB
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
@@ -294,6 +296,13 @@ public class InstallerServiceImpl implements InstallerService {
             serverProperties.put(ServerProperties.PROP_STORAGE_PASSWORD, encodedStoragePassword);
         }
 
+        // After manipulating the server props, sanity check them
+        Set<String> additionalProperties = new HashSet<String>();
+        additionalProperties.add(ServerProperties.PROP_MGMT_USER_PASSWORD);
+        additionalProperties.add(ServerProperties.PROP_STORAGE_USERNAME);
+        additionalProperties.add(ServerProperties.PROP_STORAGE_PASSWORD);
+        ServerProperties.validate(serverProperties, additionalProperties);
+
         prepareDatabase(serverProperties, serverDetails, existingSchemaOption);
 
         // perform stuff that has to get done via the JBossAS management client
@@ -353,9 +362,6 @@ public class InstallerServiceImpl implements InstallerService {
     @Override
     public void prepareDatabase(HashMap<String, String> serverProperties, ServerDetails serverDetails,
         String existingSchemaOption) throws Exception {
-
-        // since we are going to write out the properties file, we need to make sure the properties are valid
-        verifyDataFormats(serverProperties);
 
         // if we are in auto-install mode, ignore the server details passed in and build our own using the given server properties
         // if not in auto-install mode, make sure user gave us the server details that we will need
@@ -653,45 +659,6 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     /**
-     * Makes sure the data is at least in the correct format (booleans are true/false, integers are valid numbers).
-     *
-     * @param serverProperties the server properties to check for correctness
-     *
-     * @throws Exception if the data was invalid
-     */
-    private void verifyDataFormats(HashMap<String, String> serverProperties) throws Exception {
-        final StringBuilder dataErrors = new StringBuilder();
-        for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
-            final String name = entry.getKey();
-            if (ServerProperties.BOOLEAN_PROPERTIES.contains(name)) {
-                final String newValue = entry.getValue();
-                if (!(newValue.equals("true") || newValue.equals("false"))) {
-                    dataErrors.append("[" + name + "] must be 'true' or 'false' : [" + newValue + "]\n");
-                }
-            } else if (ServerProperties.INTEGER_PROPERTIES.contains(name)) {
-                final String newValue = entry.getValue();
-                try {
-                    Integer.parseInt(newValue);
-                } catch (NumberFormatException e) {
-                    if (ServerInstallUtil.isEmpty(newValue) && name.equals(ServerProperties.PROP_CONNECTOR_BIND_PORT)) {
-                        // this is a special setting and is allowed to be empty
-                    } else {
-                        dataErrors.append("[" + name + "] must be a number : [" + newValue + "]\n");
-                    }
-                }
-            } else if (ServerProperties.STRING_PROPERTIES.contains(name)) {
-                final String newValue = entry.getValue();
-                if (ServerInstallUtil.isEmpty(newValue)) {
-                    dataErrors.append("[" + name + "] must be set to a valid string value\n");
-                }
-            }
-        }
-        if (dataErrors.length() > 0) {
-            throw new Exception("Cannot install due to data errors:\n" + dataErrors.toString());
-        }
-    }
-
-    /**
      * Save the given properties to the server's .properties file.
      *
      * Note that this is private - it is not exposed to the installer UI. It should have no need to save
@@ -701,6 +668,8 @@ public class InstallerServiceImpl implements InstallerService {
      * @throws Exception if failed to save the properties to the .properties file
      */
     private void saveServerProperties(HashMap<String, String> serverProperties) throws Exception {
+        ServerProperties.validate(serverProperties);
+
         final File serverPropertiesFile = getServerPropertiesFile();
         final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
 

@@ -8,18 +8,18 @@ import org.rhq.server.metrics.DateTimeService;
 /**
  * @author John Sanda
  */
-public class SimulatorDateTimeService extends DateTimeService {
+public class SecondsDateTimeService extends DateTimeService {
 
     @Override
     public DateTime getTimeSlice(DateTime dt, Duration duration) {
         if (duration.equals(configuration.getRawTimeSliceDuration())) {
-            int seconds = ((dt.getMinuteOfHour() * 60) + dt.getSecondOfMinute()) / 150;
-            return dt.hourOfDay().roundFloorCopy().plusSeconds(seconds * 150);
+            int milliseconds = (dt.getSecondOfMinute() * 1000) / 2500;
+            return dt.minuteOfHour().roundFloorCopy().plus(milliseconds * 2500);
         } else if (duration.equals(configuration.getOneHourTimeSliceDuration())) {
-            int minutes = dt.minuteOfHour().get() / 15;
-            return dt.hourOfDay().roundFloorCopy().plusMinutes(minutes * 15);
+            int seconds = dt.getSecondOfMinute() / 15;
+            return dt.minuteOfHour().roundFloorCopy().plusSeconds(seconds * 15);
         } else if (duration.equals(configuration.getSixHourTimeSliceDuration())) {
-            return dt.hourOfDay().roundFloorCopy();
+            return dt.minuteOfHour().roundFloorCopy();
         } else {
             throw new IllegalArgumentException("The duration [" + duration + "] is not supported");
         }

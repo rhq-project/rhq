@@ -28,6 +28,18 @@
 
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-installer-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-installer</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>rhq-jboss-as-dmr-client</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -102,6 +114,16 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-core-util</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>rhq-installer-util</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>rhq-cassandra-installer</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>

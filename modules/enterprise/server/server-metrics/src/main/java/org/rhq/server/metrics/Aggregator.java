@@ -149,7 +149,24 @@ public class Aggregator {
                         if (result.get(2) == null) {
                             log.warn("Failed to store the average of the one hour aggregate " + oneHourAggregate);
                         }
-                        updateRemainingRawDataCount();
+                        DateTime sixHourTimeSlice = dtService.getTimeSlice(new DateTime(oneHourAggregate.getTimestamp()),
+                            configuration.getOneHourTimeSliceDuration());
+                        StorageResultSetFuture indexFuture = dao.updateMetricsIndex(MetricsTable.SIX_HOUR,
+                            oneHourAggregate.getScheduleId(), sixHourTimeSlice.getMillis());
+                        Futures.addCallback(indexFuture, new FutureCallback<ResultSet>() {
+                            @Override
+                            public void onSuccess(ResultSet result) {
+                                updateRemainingRawDataCount();
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("Failed to update 6 hour data index for one hour aggregate " +
+                                    oneHourAggregate);
+                                updateRemainingRawDataCount();
+                            }
+                        });
+
                         // TODO compute six hour aggregate
                     }
 

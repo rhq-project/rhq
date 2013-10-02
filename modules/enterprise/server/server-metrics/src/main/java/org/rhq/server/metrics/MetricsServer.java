@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +43,8 @@ import com.datastax.driver.core.Row;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -78,6 +80,9 @@ public class MetricsServer {
     private Long mostRecentRawDataPriorToStartup;
 
     private AtomicLong totalAggregationTime = new AtomicLong();
+
+    private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
+        Executors.newFixedThreadPool(10));
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -129,6 +134,11 @@ public class MetricsServer {
                     "next time the aggregation job runs.");
             }
         }
+    }
+
+    private boolean hasTimeSliceEnded(DateTime startTime, Duration duration) {
+        DateTime endTime = startTime.plus(duration);
+        return DateTimeComparator.getInstance().compare(currentHour(), endTime) >= 0;
     }
 
     protected DateTime currentHour() {
@@ -460,17 +470,7 @@ public class MetricsServer {
         long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getSixHourTimeSliceDuration()).getMillis();
 
-        // We first query the metrics index table to determine which schedules have data to
-        // be aggregated. Then we retrieve the metric data and aggregate or compress the
-        // data, writing the compressed values into the next wider (i.e., longer life span
-        // for data) bucket/table. At this point we remove the index entries for the data
-        // that has already been processed. We purge the entire row in the index table.
-        // We can safely do this because the row wi..
-        //
-        // The last step in the work flow is to update the metrics
-        // index for the newly persisted aggregates.
-
-        List<AggregateNumericMetric> newOneHourAggregates = null;
+        Iterable<AggregateNumericMetric> newOneHourAggregates = null;
 
         Stopwatch stopwatch = new Stopwatch().start();
         List<AggregateNumericMetric> updatedSchedules = aggregateRawData(lastHour);

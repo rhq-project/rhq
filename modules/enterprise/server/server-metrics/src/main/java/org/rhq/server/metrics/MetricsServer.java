@@ -561,9 +561,6 @@ public class MetricsServer {
                 AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
                 aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
                 toMetrics.add(aggregatedMetric);
-                if (toTable == MetricsTable.TWENTY_FOUR_HOUR) {
-                    log.debug("Calculated 24 hour metric = " + aggregatedMetric);
-                }
             }
 
             switch (toTable) {

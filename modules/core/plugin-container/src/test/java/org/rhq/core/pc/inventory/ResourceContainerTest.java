@@ -174,7 +174,7 @@ public class ResourceContainerTest {
     private class MockResourceComponent implements ResourceComponent, OperationFacet {
         static final String OPERATION_RESULT = "uninterrupted";
         boolean naughty;
-        boolean caughtInterruptedComponentInvocation;
+        volatile boolean caughtInterruptedComponentInvocation;
         ResourceContext resourceContext;
 
         MockResourceComponent(boolean naughty) {

@@ -271,6 +271,17 @@ public class StorageInstaller {
 
                         return STATUS_JMX_PORT_CONFLICT;
                     }
+                    if (startupErrors.contains("java.net.UnknownHostException")) {
+                        int from = startupErrors.indexOf("java.net.UnknownHostException:")
+                            + "java.net.UnknownHostException:".length();
+                        String hostname = startupErrors.substring(from, startupErrors.indexOf(':', from));
+                        log.error("Failed to resolve requested binding address. Please check the installation "
+                            + "instructions and host DNS settings" 
+                            + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts." ) 
+                            + " Unknown host: " + hostname);
+                        log.error("The storage installer will exit due to previous errors");
+                        return STATUS_UNKNOWN_HOST;
+                    }
                     log.warn("Please review your configuration for possible sources of errors such as port "
                         + "conflicts or invalid arguments/options passed to the java executable.");
                 }
@@ -441,7 +452,9 @@ public class StorageInstaller {
             return installerInfo;
         } catch (UnknownHostException unknownHostException) {
             throw new StorageInstallerException(
-                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. Unknown host "
+                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings"
+                + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts." )
+                + " Unknown host "
                     + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
         } catch (IOException e) {
             throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
@@ -558,7 +571,9 @@ public class StorageInstaller {
 
         } catch (UnknownHostException unknownHostException) {
             throw new StorageInstallerException(
-                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings. Unknown host "
+                "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings"
+                + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts." )
+                + " Unknown host "
                     + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
         } catch (IOException e) {
             throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,

@@ -65,6 +65,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -617,45 +618,43 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
 
-            if (alertNotifications != null && alertNotifications.size() > 0) {
-                AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
-                DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+            AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
+            DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
-                for (AlertNotification alertNotification : alertNotifications) {
-                    AlertNotificationLog notificationLog = null;
+            for (AlertNotification alertNotification : alertNotifications) {
+                AlertNotificationLog notificationLog;
 
-                    String senderName = alertNotification.getSenderName();
-                    if (alertSenderPluginManager == null) {
+                String senderName = alertNotification.getSenderName();
+                if (alertSenderPluginManager == null) {
+                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                        "Notification was not sent as alert sender plugins are not yet initialized ");
+                } else if (senderName == null) {
+                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
+                        + senderName + "' is not defined");
+                } else {
+
+                    AlertSender<?> notificationSender = alertSenderPluginManager
+                        .getAlertSenderForNotification(alertNotification);
+                    if (notificationSender == null) {
                         notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                            "Notification was not sent as alert sender plugins are not yet initialized ");
-                    } else if (senderName == null) {
-                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
-                            + senderName + "' is not defined");
+                            "Failed to obtain a sender with given name");
                     } else {
-
-                        AlertSender<?> notificationSender = alertSenderPluginManager
-                            .getAlertSenderForNotification(alertNotification);
-                        if (notificationSender == null) {
-                            notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                                "Failed to obtain a sender with given name");
-                        } else {
-                            try {
-                                SenderResult result = notificationSender.send(alert);
-                                if (log.isDebugEnabled()) {
-                                    log.debug(result);
-                                }
-
-                                if (result == null) {
-                                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
-                                        "Sender did not return any result");
-                                } else {
-                                    notificationLog = new AlertNotificationLog(alert, senderName, result);
-                                }
-                            } catch (Throwable t) {
-                                log.error("Notification processing terminated abruptly" + t.getMessage());
-                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                                    "Notification processing terminated abruptly, cause: " + t.getMessage());
+                        try {
+                            SenderResult result = notificationSender.send(alert);
+                            if (log.isDebugEnabled()) {
+                                log.debug("sender result " + result);
                             }
+
+                            if (result == null) {
+                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
+                                    "Sender did not return any result");
+                            } else {
+                                notificationLog = new AlertNotificationLog(alert, senderName, result);
+                            }
+                        } catch (Throwable t) {
+                            log.error("Failed notification processing for " + notificationSender, t);
+                            notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                                "Notification processing terminated abruptly, cause: " + t.getMessage());
                         }
                     }
 
@@ -669,6 +668,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     entityManager.persist(notificationLog);
                     alert.addAlertNotificatinLog(notificationLog);
                 }
+
+                alert.addAlertNotificatinLog(notificationLog);
+                entityManager.persist(notificationLog);
             }
         } catch (Throwable t) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), t);
@@ -708,12 +710,24 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();
         Resource resource = alertDefinition.getResource();
-        Map<Integer, String> ancestry = resourceManager.getResourcesAncestry(subjectManager.getOverlord(),
-            new Integer[] { resource.getId() }, ResourceAncestryFormat.VERBOSE);
-        Map<String, String> alertMessage = emailManager.getAlertEmailMessage(ancestry.get(resource.getId()), //
-            resource.getName(), //
+        String ancestryString;
+        String resourceName;
+        if (resource == null) {
+            ancestryString = "";
+            resourceName = "";
+            if (alertDefinition.getGroup() != null) {
+                resourceName = alertDefinition.getGroup().getName();
+            }
+        } else {
+            Map<Integer, String> ancestry = resourceManager.getResourcesAncestry(subjectManager.getOverlord(),
+                new Integer[] { resource.getId() }, ResourceAncestryFormat.VERBOSE);
+            ancestryString = ancestry.get(resource.getId());
+            resourceName = resource.toString();
+        }
+        Map<String, String> alertMessage = emailManager.getAlertEmailMessage(ancestryString,
+            resourceName,
             alertDefinition.getName(), //
-            alertDefinition.getPriority().toString(), //
+            String.valueOf(alertDefinition.getPriority()), //
             new Date(alert.getCtime()).toString(), //
             prettyPrintAlertConditions(alert.getConditionLogs(), false), //
             prettyPrintAlertURL(alert));
@@ -1173,16 +1187,25 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     @Override
     public String prettyPrintAlertURL(Alert alert) {
-        StringBuilder builder = new StringBuilder();
-
         String baseUrl = systemManager.getUnmaskedSystemSettings(true).get(SystemSetting.BASE_URL);
+        return prettyPrintAlertURL(alert, baseUrl);
+    }
+
+    String prettyPrintAlertURL(Alert alert, String baseUrl) {
+        StringBuilder builder = new StringBuilder();
         builder.append(baseUrl);
         if (!baseUrl.endsWith("/")) {
             builder.append("/");
         }
 
-        builder.append("coregui/CoreGUI.html#Resource/");
-        builder.append(alert.getAlertDefinition().getResource().getId());
+        builder.append("coregui/");
+        Resource resource = alert.getAlertDefinition().getResource();
+        ResourceGroup group = alert.getAlertDefinition().getGroup();
+        if (resource != null) {
+            builder.append("#Resource/").append(resource.getId());
+        } else if (group != null) {
+            builder.append("#ResourceGroup/").append(group.getId());
+        }
         builder.append("/Alerts/History/");
         builder.append(alert.getId());
 

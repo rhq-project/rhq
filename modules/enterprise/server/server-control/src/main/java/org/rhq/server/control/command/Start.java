@@ -33,7 +33,6 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 

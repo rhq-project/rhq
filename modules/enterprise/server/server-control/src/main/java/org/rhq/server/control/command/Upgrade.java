@@ -57,7 +57,7 @@ public class Upgrade extends AbstractInstall {
 
     private static final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
     private static final String FROM_SERVER_DIR_OPTION = "from-server-dir";
-    private static final String AGENT_AUTOSTART_OPTION = "agent-auto-start";
+    private static final String START_OPTION = "start";
     private static final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     private static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
     private static final String RUN_DATA_MIGRATION = "run-data-migrator";
@@ -76,10 +76,9 @@ public class Upgrade extends AbstractInstall {
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(
                 null,
-                AGENT_AUTOSTART_OPTION,
-                true,
-                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to "
-                    + "false, the agent will not be started after it gets upgraded.")
+                START_OPTION,
+                false,
+                "If specified then immediately start the services after upgrade.  Note that services may be started and shut down as part of the upgrade process, but will not be started or left running by default.")
             .addOption(
                 null,
                 USE_REMOTE_STORAGE_NODE,
@@ -102,8 +101,6 @@ public class Upgrade extends AbstractInstall {
                     + "to have fine control over the process, please run the migrator on the command line. Options are none (do "
                     + "nothing), estimate (estimate the migration time only), print-command (print the command line for a manual run), "
                     + "do-it (run the migration)");
-
-        options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
 
     @Override
@@ -123,6 +120,8 @@ public class Upgrade extends AbstractInstall {
 
     @Override
     protected void exec(CommandLine commandLine) {
+        boolean start = commandLine.hasOption(START_OPTION);
+
         try {
             List<String> errors = validateOptions(commandLine);
             if (!errors.isEmpty()) {
@@ -148,7 +147,7 @@ public class Upgrade extends AbstractInstall {
             // if the agent already exists in the default location, it may be there from a prior install.
             if (isStorageInstalled() || isServerInstalled()) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
-                //return;
+                return;
             }
 
             // Stop the agent, if running.
@@ -187,26 +186,40 @@ public class Upgrade extends AbstractInstall {
                 }
             });
 
-            // now upgrade everything and start them up again
+            // now upgrade everything
             upgradeStorage(commandLine);
             upgradeServer(commandLine);
             upgradeAgent(commandLine);
 
-            if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
-                log.info("The agent was upgraded but was told not to start automatically.");
-            } else {
-                File agentDir;
+            File agentDir;
 
-                if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
-                    agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
-                } else {
-                    agentDir = getAgentBasedir();
-                }
-                startAgent(agentDir, true);
+            if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
+                agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
+            } else {
+                agentDir = getAgentBasedir();
+            }
+
+            updateWindowsAgentService(agentDir);
+
+            if (start) {
+                startAgent(agentDir);
             }
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
+        } finally {
+            try {
+                if (!start) {
+                    Stop stopCommand = new Stop();
+                    stopCommand.exec(new String[] { "stop", "--server" });
+                    if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
+                        stopCommand.exec(new String[] { "stop", "--storage" });
+                    }
+                }
+            } catch (Throwable t) {
+                log.warn("Unable to stop services: " + t.getMessage());
+            }
         }
+
         if (!isRhq48OrLater(commandLine) && commandLine.hasOption(RUN_DATA_MIGRATION)) {
             runDataMigration(commandLine);
         }
@@ -279,7 +292,7 @@ public class Upgrade extends AbstractInstall {
             }
 
         } else {
-            installStorageNode(getStorageBasedir(), rhqctlCommandLine);
+            installStorageNode(getStorageBasedir(), rhqctlCommandLine, true);
         }
     }
 

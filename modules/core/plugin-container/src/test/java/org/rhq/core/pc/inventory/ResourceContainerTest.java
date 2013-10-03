@@ -131,7 +131,7 @@ public class ResourceContainerTest {
     public void testInterruptedComponentInvocationContext() throws Exception {
         ResourceContainer resourceContainer = getResourceContainer();
         OperationFacet proxy = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-                FacetLockType.WRITE, 50, true, false, true);
+            FacetLockType.WRITE, SECONDS.toMillis(1), true, false, true);
         try {
             proxy.invokeOperation("op", new Configuration());
             fail("Expected invokeOperation to throw a TimeoutException");
@@ -139,15 +139,18 @@ public class ResourceContainerTest {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Caught expected TimeoutException: " + e.getMessage());
             }
-            assertTrue(((MockResourceComponent) resourceContainer.getResourceComponent())
-                    .caughtInterruptedComponentInvocation());
+            MockResourceComponent component = (MockResourceComponent) resourceContainer.getResourceComponent();
+            for (int i = 0; i < 5 && !component.caughtInterruptedComponentInvocation(); i++) {
+                Thread.sleep(SECONDS.toMillis(2));
+            }
+            assertTrue(component.caughtInterruptedComponentInvocation());
         }
     }
 
     public void testUninterruptedComponentInvocationContext() throws Exception {
         ResourceContainer resourceContainer = getResourceContainer();
         OperationFacet proxy = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-                FacetLockType.WRITE, SECONDS.toMillis(2), true, false, true);
+            FacetLockType.WRITE, SECONDS.toMillis(10), true, false, true);
         try {
             OperationResult op = proxy.invokeOperation("op", new Configuration());
             assertTrue(op.getSimpleResult().equals(MockResourceComponent.OPERATION_RESULT));
@@ -216,16 +219,24 @@ public class ResourceContainerTest {
 
         @Override
         public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
-            long start = System.nanoTime();
-            while (!resourceContext.getComponentInvocationContext().isInterrupted()) {
-                // Return after 1s
-                if ((System.nanoTime() - start) > SECONDS.toNanos(1)) {
-                    caughtInterruptedComponentInvocation = false;
-                    return new OperationResult(OPERATION_RESULT);
+            caughtInterruptedComponentInvocation = false;
+            sleep(SECONDS.toMillis(5));
+            if (resourceContext.getComponentInvocationContext().isInterrupted()) {
+                caughtInterruptedComponentInvocation = true;
+                throw new InterruptedException();
+            }
+            return new OperationResult(OPERATION_RESULT);
+        }
+
+        private void sleep(long millis) {
+            // Do not return before 'millis' have elapsed, even if the thread is interrupted
+            long start = System.currentTimeMillis();
+            for (long stop = System.currentTimeMillis(); stop - start < millis; stop = System.currentTimeMillis()) {
+                try {
+                    Thread.sleep(millis - (stop - start));
+                } catch (InterruptedException e) {
                 }
             }
-            caughtInterruptedComponentInvocation = true;
-            throw new InterruptedException();
         }
 
         boolean caughtInterruptedComponentInvocation() {

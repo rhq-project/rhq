@@ -2,6 +2,7 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -131,16 +132,15 @@ public class AggregatorTest extends CassandraIntegrationTest {
         assertMetricsIndexEquals(MetricsTable.SIX_HOUR, hour9.minusHours(3).getMillis(), expected6HourIndex,
             "Failed to update index for " + MetricsTable.SIX_HOUR);
 
-        // The 6 hour data should not get aggregated since the current 6 hour time slice
-        // has not passed yet. More specifically, the aggregation job is running at 09:00
-        // which means that the current 6 hour slice is from 06:00 to 12:00.
-//        assert6HourDataEmpty(scheduleId);
+        // The 6 hour data should not get aggregated since the current 6 hour time slice,
+        // 06:00 - 12:00, has not yet passed.
+        assert6HourDataEmpty(scheduleId);
 
         // verify that the 24 hour index is empty
-//        assert24HourMetricsIndexEmpty(scheduleId, hour0.getMillis());
+        assert24HourMetricsIndexEmpty(scheduleId, hour0.getMillis());
 
         // verify that the 1 hour queue has been purged
-//        assert1HourMetricsIndexEmpty(scheduleId, hour9.getMillis());
+        assert1HourMetricsIndexEmpty(scheduleId, hour8.getMillis());
     }
 
     static double divide(double dividend, int divisor) {
@@ -172,6 +172,37 @@ public class AggregatorTest extends CassandraIntegrationTest {
         List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice));
         assertCollectionMatchesNoOrder(msg + ": " + table + " index does not match expected values.",
             expected, actual);
+    }
+
+    private void assert6HourDataEmpty(int scheduleId) {
+        assertMetricDataEmpty(scheduleId, MetricsTable.SIX_HOUR);
+    }
+
+    private void assert24HourDataEmpty(int scheduleId) {
+        assertMetricDataEmpty(scheduleId, MetricsTable.TWENTY_FOUR_HOUR);
+    }
+
+    private void assertMetricDataEmpty(int scheduleId, MetricsTable columnFamily) {
+        List<AggregateNumericMetric> metrics = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
+        assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
+            " but found " + metrics);
+    }
+
+    private void assert1HourMetricsIndexEmpty(int scheduleId, long timeSlice) {
+        assertMetricsIndexEmpty(scheduleId, MetricsTable.ONE_HOUR, timeSlice);
+    }
+
+    private void assert6HourMetricsIndexEmpty(int scheduleId, long timeSlice) {
+        assertMetricsIndexEmpty(scheduleId, MetricsTable.SIX_HOUR, timeSlice);
+    }
+
+    private void assert24HourMetricsIndexEmpty(int scheduleId, long timeSlice) {
+        assertMetricsIndexEmpty(scheduleId, MetricsTable.TWENTY_FOUR_HOUR, timeSlice);
+    }
+
+    private void assertMetricsIndexEmpty(int scheduleId, MetricsTable table, long timeSlice) {
+        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice));
+        assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
     }
 
 }

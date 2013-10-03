@@ -386,8 +386,7 @@ public class Aggregator {
             if (log.isDebugEnabled()) {
                 log.debug("Finished aggregating raw data for time slice [" + startTime + "]");
             }
-            allAggregationFinished.countDown();
-            // TODO delete the row from metrics_index
+            deleteIndexEntries(MetricsTable.ONE_HOUR);
         }
     }
 
@@ -399,9 +398,24 @@ public class Aggregator {
                 log.debug("Finished aggregating one hour data for time slice [startTime: " + start +
                     ", endTime: " + end + "]");
             }
-            allAggregationFinished.countDown();
-            // TODO delete the row from metrics_index
+            deleteIndexEntries(MetricsTable.SIX_HOUR);
         }
+    }
+
+    private void deleteIndexEntries(final MetricsTable table) {
+        StorageResultSetFuture future = dao.deleteMetricsIndexEntriesAsync(table, startTime.getMillis());
+        Futures.addCallback(future, new FutureCallback<ResultSet>() {
+            @Override
+            public void onSuccess(ResultSet result) {
+                allAggregationFinished.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("Failed to delete index entries for table " + table + " at time [" + startTime + "]");
+                allAggregationFinished.countDown();
+            }
+        });
     }
 
 }

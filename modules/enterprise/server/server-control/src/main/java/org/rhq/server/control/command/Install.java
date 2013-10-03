@@ -54,7 +54,7 @@ public class Install extends AbstractInstall {
 
     private final String AGENT_CONFIG_OPTION = "agent-config";
     private final String AGENT_PREFERENCE = "agent-preference";
-    private final String AGENT_AUTOSTART_OPTION = "agent-auto-start";
+    private final String START_OPTION = "start";
 
     private Options options;
 
@@ -88,13 +88,11 @@ public class Install extends AbstractInstall {
                 "An agent preference setting (whose argument is in the form 'name=value') to be set in the agent. More than one of these is allowed.")
             .addOption(
                 null,
-                AGENT_AUTOSTART_OPTION,
-                true,
-                "If an agent is to be installed it will, by default, also be started. However, if this option is set to false, the agent will not be started after it gets installed.")
+                START_OPTION,
+                false,
+                "If specified then immediately start the services after installation.  Note that services may be started and shut down as part of the installation process, but will not be started or left running by default.")
             .addOption(null, STORAGE_DATA_ROOT_DIR, true,
                 "The root directory under which all storage data directories will be placed.");
-
-        options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
 
     @Override
@@ -114,6 +112,10 @@ public class Install extends AbstractInstall {
 
     @Override
     protected void exec(CommandLine commandLine) {
+        boolean start = commandLine.hasOption(START_OPTION);
+        boolean startedStorage = false;
+        boolean startedServer = false;
+
         try {
             List<String> errors = validateOptions(commandLine);
             if (!errors.isEmpty()) {
@@ -137,111 +139,92 @@ public class Install extends AbstractInstall {
                 }
             });
 
-            // if no options specified, then install whatever is not installed yet
-            if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
-                .hasOption(AGENT_OPTION))) {
+            boolean installAll = (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
+                .hasOption(AGENT_OPTION)));
+            boolean installStorage = installAll || commandLine.hasOption(STORAGE_OPTION);
+            boolean installServer = installAll || commandLine.hasOption(SERVER_OPTION);
+            boolean installAgent = installAll || commandLine.hasOption(AGENT_OPTION)
+                || commandLine.hasOption(STORAGE_OPTION);
+            boolean startStorage = false;
 
-                if (!isStorageInstalled()) {
-                    installStorageNode(getStorageBasedir(), commandLine);
-                } else if (isWindows()) {
-                    installWindowsService(getBinDir(), "rhq-storage", false, true);
+            if (installStorage) {
+                if (isStorageInstalled()) {
+                    log.info("The RHQ storage node is already installed in [" + new File(getBaseDir(), "storage")
+                        + "]. It will not be installed.");
+
+                    if (isWindows()) {
+                        log.info("Ensuring the RHQ Storage Windows service exists. Ignore any CreateService failure.");
+                        installWindowsService(getBinDir(), "rhq-storage", false, false);
+                    }
+                } else {
+                    installStorageNode(getStorageBasedir(), commandLine, false);
+                    startStorage = start;
                 }
+            }
 
-                if (!isServerInstalled()) {
+            if (startStorage || installServer) {
+                startedStorage = true;
+                Start startCommand = new Start();
+                startCommand.exec(new String[] { "start", "--storage" });
+            }
+
+            if (installServer) {
+                if (isServerInstalled()) {
+                    log.info("The RHQ server is already installed. It will not be installed.");
+
+                    if (isWindows()) {
+                        log.info("Ensuring the RHQ Server Windows service exists. Ignore any CreateService failure.");
+                        installWindowsService(getBinDir(), "rhq-server", false, false);
+                    }
+                } else {
+                    startedServer = true;
                     startRHQServerForInstallation();
                     runRHQServerInstaller();
                     waitForRHQServerToInitialize();
-                } else if (isWindows()) {
-                    installWindowsService(getBinDir(), "rhq-server", false, true);
                 }
+            }
 
-                if (!isAgentInstalled()) {
+            if (installAgent) {
+                if (isAgentInstalled()) {
+                    log.info("The RHQ agent is already installed in [" + getAgentBasedir()
+                        + "]. It will not be installed.");
+
+                    if (isWindows()) {
+                        try {
+                            log.info("Ensuring the RHQ Agent Windows service exists. Ignore any CreateService failure.");
+                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, false);
+                        } catch (Exception e) {
+                            // Ignore, service may already exist or be running, wrapper script returns 1
+                            log.debug("Failed to stop agent service", e);
+                        }
+                    }
+                } else {
                     clearAgentPreferences();
                     File agentBasedir = getAgentBasedir();
                     installAgent(agentBasedir);
                     configureAgent(agentBasedir, commandLine);
-                    boolean start = Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
+
+                    updateWindowsAgentService(agentBasedir);
+
                     if (start) {
-                        startAgent(agentBasedir, true);
-                    } else {
-                        log.info("The agent was installed but was told not to start automatically.");
-                    }
-                } else if (isWindows()) {
-                    boolean start = Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
-                    installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, start);
-                }
-
-            } else {
-                if (commandLine.hasOption(STORAGE_OPTION)) {
-                    if (isStorageInstalled()) {
-                        log.info("The RHQ storage node is already installed in " + new File(getBaseDir(), "storage"));
-
-                        if (isWindows()) {
-                            installWindowsService(getBinDir(), "rhq-storage", false, true);
-                        } else {
-                            log.info("Skipping storage node installation.");
-                        }
-                    } else {
-                        installStorageNode(getStorageBasedir(), commandLine);
-                    }
-
-                    if (!isAgentInstalled()) {
-                        File agentBasedir = getAgentBasedir();
-                        clearAgentPreferences();
-                        installAgent(agentBasedir);
-                        configureAgent(agentBasedir, commandLine);
-                        if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
-                            startAgent(agentBasedir, true);
-                        } else {
-                            log.info("The agent was installed but was told not to start automatically.");
-                        }
-                    }
-                }
-
-                if (commandLine.hasOption(SERVER_OPTION)) {
-                    if (isServerInstalled()) {
-                        log.warn("The RHQ server is already installed.");
-
-                        if (isWindows()) {
-                            installWindowsService(getBinDir(), "rhq-server", false, true);
-                        } else {
-                            log.info("Skipping server installation.");
-                        }
-
-                    } else {
-                        startRHQServerForInstallation();
-                        runRHQServerInstaller();
-                        waitForRHQServerToInitialize();
-                    }
-                }
-
-                if (commandLine.hasOption(AGENT_OPTION)) {
-                    if (isAgentInstalled() && !commandLine.hasOption(STORAGE_OPTION)) {
-                        log.info("The RHQ agent is already installed in [" + getAgentBasedir() + "]");
-
-                        boolean start = Boolean
-                            .parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
-                        if (isWindows()) {
-                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, start);
-                        } else {
-                            log.info("Skipping agent installation.");
-                        }
-
-                    } else {
-                        File agentBasedir = getAgentBasedir();
-                        clearAgentPreferences();
-                        installAgent(agentBasedir);
-                        configureAgent(agentBasedir, commandLine);
-                        if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
-                            startAgent(agentBasedir, true);
-                        } else {
-                            log.info("The agent was installed but was told not to start automatically.");
-                        }
+                        startAgent(agentBasedir);
                     }
                 }
             }
+
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the install command", e);
+
+        } finally {
+            if (startedStorage || startedServer) {
+                Stop stopCommand = new Stop();
+                if (startedServer) {
+                    stopCommand.exec(new String[] { "stop", "--server" });
+                }
+                if (startedStorage) {
+                    stopCommand.exec(new String[] { "stop", "--storage" });
+                }
+            }
         }
     }
 

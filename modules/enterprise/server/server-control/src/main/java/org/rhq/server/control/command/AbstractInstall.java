@@ -150,13 +150,13 @@ public abstract class AbstractInstall extends ControlCommand {
                     long totalWait = (now - timerStart);
 
                     if (totalWait < problemMessageInterval) {
-                        log.info("Still waiting for server to start...");
+                        log.info("Still waiting for server to initialize...");
 
                     } else {
                         long minutes = totalWait / 60000;
                         log.info("It has been over ["
                             + minutes
-                            + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
+                            + "] minutes - you may want to ensure your server initialization is proceeding as expected. You can check the log at ["
                             + new File(getBaseDir(), "logs/server.log").getPath() + "].");
 
                         timerStart = now;
@@ -202,7 +202,7 @@ public abstract class AbstractInstall extends ControlCommand {
             reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
             String line = reader.readLine();
             while (line != null) {
-                if (line.contains("Server started")) {
+                if (line.contains("Server initialized")) {
                     return true;
                 }
                 line = reader.readLine();
@@ -228,16 +228,51 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    /**
-     * Same as <pre>startAgent(agentBasedir, false);</pre>
-     * @param agentBasedir
-     * @throws Exception
-     */
-    protected void startAgent(File agentBasedir) throws Exception {
-        startAgent(agentBasedir, false);
+    protected void updateWindowsAgentService(final File agentBasedir) throws Exception {
+        if (!isWindows()) {
+            return;
+        }
+
+        try {
+            File agentBinDir = new File(agentBasedir, "bin");
+            if (!agentBinDir.exists()) {
+                throw new IllegalArgumentException("No Agent found for base directory [" + agentBasedir.getPath() + "]");
+            }
+
+            log.info("Updating RHQ Agent Service...");
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(agentBinDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine;
+
+            // Ensure the windows service is up to date. [re-]install the windows service.
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist or be running, , script returns 1
+                log.debug("Failed to stop agent service", e);
+            }
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "remove");
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist, script returns 1
+                log.debug("Failed to uninstall agent service", e);
+            }
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "install");
+            executor.execute(commandLine);
+
+        } catch (IOException e) {
+            log.error("An error occurred while updating the agent service: " + e.getMessage());
+            throw e;
+        }
     }
 
-    protected void startAgent(final File agentBasedir, boolean updateWindowsService) throws Exception {
+    protected void startAgent(final File agentBasedir) throws Exception {
         try {
             File agentBinDir = new File(agentBasedir, "bin");
             if (!agentBinDir.exists()) {
@@ -249,29 +284,6 @@ public abstract class AbstractInstall extends ControlCommand {
             executor.setWorkingDirectory(agentBinDir);
             executor.setStreamHandler(new PumpStreamHandler());
             org.apache.commons.exec.CommandLine commandLine;
-
-            if (isWindows() && updateWindowsService) {
-                // Ensure the windows service is up to date beFore starting. [re-]install the windows service.
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                try {
-                    executor.execute(commandLine);
-                } catch (Exception e) {
-                    // Ignore, service may not exist or be running, , script returns 1
-                    log.debug("Failed to stop agent service", e);
-                }
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "remove");
-                try {
-                    executor.execute(commandLine);
-                } catch (Exception e) {
-                    // Ignore, service may not exist, script returns 1
-                    log.debug("Failed to uninstall agent service", e);
-                }
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "install");
-                executor.execute(commandLine);
-            }
 
             // For *nix, just start the server in the background, for Win, now that the service is installed, start it
             commandLine = getCommandLine("rhq-agent-wrapper", "start");
@@ -324,11 +336,11 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void stopServer(File serverBasedir) throws Exception {
+    protected void stopServer() throws Exception {
 
-        File serverBinDir = new File(serverBasedir, "bin/internal");
+        File serverBinDir = getBinDir();
         if (!serverBinDir.exists()) {
-            throw new IllegalArgumentException("No Server found for base directory [" + serverBasedir.getPath() + "]");
+            throw new IllegalArgumentException("No Server found for base directory [" + getBaseDir().getPath() + "]");
         }
 
         log.debug("Stopping RHQ server...");
@@ -504,7 +516,8 @@ public abstract class AbstractInstall extends ControlCommand {
         return storageDataDirs;
     }
 
-    protected int installStorageNode(final File storageBasedir, CommandLine rhqctlCommandLine) throws IOException {
+    protected int installStorageNode(final File storageBasedir, CommandLine rhqctlCommandLine, boolean start)
+        throws IOException {
         try {
             log.info("Preparing to install RHQ storage node.");
 
@@ -513,7 +526,7 @@ public abstract class AbstractInstall extends ControlCommand {
             final Properties storageProperties = loadStorageProperties();
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
-                storageBasedir.getAbsolutePath());
+                storageBasedir.getAbsolutePath(), "--start", Boolean.valueOf(start).toString());
 
             if (rhqctlCommandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 StorageDataDirectories dataDirs;

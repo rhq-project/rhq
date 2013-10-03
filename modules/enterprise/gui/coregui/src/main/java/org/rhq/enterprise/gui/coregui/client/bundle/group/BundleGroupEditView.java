@@ -56,7 +56,7 @@ public class BundleGroupEditView extends AbstractRecordEditor<BundleGroupsDataSo
     private Tab bundlesTab;
     private BundleSelector bundleSelector;
     private Set<Permission> globalPermissions;
-    private int permissionCheckBundleGroupId = 0;
+    private Integer permissionCheckBundleGroupId = null;
     private boolean canManage;
     private boolean canAssign;
     private boolean canUnassign;
@@ -72,7 +72,7 @@ public class BundleGroupEditView extends AbstractRecordEditor<BundleGroupsDataSo
         final int bundleGroupId = Integer.parseInt(viewPath.getCurrent().getPath());
 
         // if we have already determined permissions for this bundle, just proceed
-        if (permissionCheckBundleGroupId == bundleGroupId) {
+        if (null != permissionCheckBundleGroupId && permissionCheckBundleGroupId.intValue() == bundleGroupId) {
             authorizedRenderView(bundleGroupId, viewPath);
             return;
         }

@@ -165,10 +165,23 @@ public class MetricsDAO {
         return storageSession.execute(statement);
     }
 
+    public StorageResultSetFuture insertSixHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return storageSession.executeAsync(statement);
+    }
+
     public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
             value);
         return storageSession.execute(statement);
+    }
+
+    public StorageResultSetFuture insertTwentyFourHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
+            value);
+        return storageSession.executeAsync(statement);
     }
 
     public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
@@ -205,10 +218,20 @@ public class MetricsDAO {
             storageSession);
     }
 
+    public StorageResultSetFuture findOneHourMetricsAsync(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return storageSession.executeAsync(statement);
+    }
+
     public Iterable<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime) {
         BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
         return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
             storageSession);
+    }
+
+    public StorageResultSetFuture findSixHourMetricsAsync(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return storageSession.executeAsync(statement);
     }
 
     public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime) {

@@ -34,27 +34,20 @@ public class AggregatorTest extends CassandraIntegrationTest {
 
     private static final double TEST_PRECISION = Math.pow(10, -9);
 
-    private static class AggregatorTestStub extends Aggregator {
+    private class AggregatorTestStub extends Aggregator {
 
         public AggregatorTestStub(ListeningExecutorService workers, MetricsDAO dao, MetricsConfiguration configuration,
             DateTimeService dtService, DateTime startTime) {
             super(workers, dao, configuration, dtService, startTime);
         }
 
-        private DateTime currentHour;
-
-        public void setCurrentHour(DateTime currentHour) {
-            this.currentHour = currentHour;
-        }
-
         @Override
         protected DateTime currentHour() {
-            if (currentHour == null) {
-                return super.currentHour();
-            }
             return currentHour;
         }
     }
+
+    private DateTime currentHour;
 
     private ListeningExecutorService workers;
 
@@ -97,8 +90,8 @@ public class AggregatorTest extends CassandraIntegrationTest {
         DateTime hour9 = hour0.plusHours(9);
         DateTime hour8 = hour9.minusHours(1);
 
+        currentHour = hour9;
         AggregatorTestStub aggregator = new AggregatorTestStub(workers, dao, configuration, dateTimeService, hour8);
-        aggregator.setCurrentHour(hour9);
 
         DateTime firstMetricTime = hour8.plusMinutes(5);
         DateTime secondMetricTime = hour8.plusMinutes(10);

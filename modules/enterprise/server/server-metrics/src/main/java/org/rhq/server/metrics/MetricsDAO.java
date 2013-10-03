@@ -165,10 +165,23 @@ public class MetricsDAO {
         return storageSession.execute(statement);
     }
 
+    public StorageResultSetFuture insertSixHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return storageSession.executeAsync(statement);
+    }
+
     public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
             value);
         return storageSession.execute(statement);
+    }
+
+    public StorageResultSetFuture insertTwentyFourHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+        double value) {
+        BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
+            value);
+        return storageSession.executeAsync(statement);
     }
 
     public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
@@ -218,8 +231,7 @@ public class MetricsDAO {
     }
 
     public StorageResultSetFuture findSixHourMetricsAsync(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
+        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
         return storageSession.executeAsync(statement);
     }
 

@@ -22,6 +22,7 @@ import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.testng.AssertJUnit;
@@ -84,7 +85,8 @@ public class CriteriaQueryTest {
 
         @Override
         public PageList<FakeEntity> execute(FakeEntityCriteria criteria) {
-            return pages.get(criteria.getPageNumber());
+            int page = criteria.getPageNumber();
+            return pages.size() > page ? pages.get(page) : new PageList<FakeEntity>(new PageControl(page, pc.getPageSize()));
         }
     }
 
@@ -191,6 +193,87 @@ public class CriteriaQueryTest {
     }
 
     @Test
+    public void testIteratingOverQueryWithInconsistentResults_fewResultsOnLastPage() {
+        PageControl pc = new PageControl(0, 100);
+        int realResults = 490;
+        FakeCriteriaQueryExecutor executor = prepareExecutor(realResults, 500, pc);
+
+        FakeEntityCriteria criteria = new FakeEntityCriteria();
+
+        criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
+
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, executor);
+
+        //Now iterate over the list and make sure that iteration happens in order as expected
+        //monotonically increasing.
+        int num = 0;
+        int last = -1;
+        for (FakeEntity entity : query) {
+            //this fails with earlier bug in CriteriaQuery
+            assertEquals(true, (last < entity.getId()));
+            last = entity.getId();
+            ++num;
+        }
+
+        assertEquals(num, realResults, "Unexpected number for results returned");
+    }
+
+    @Test
+    public void testIteratingOVerQueryWithInconsistentResults_emptyLastPage() {
+        PageControl pc = new PageControl(0, 100);
+        int realResults = 400;
+        FakeCriteriaQueryExecutor executor = prepareExecutor(realResults, 500, pc);
+
+        FakeEntityCriteria criteria = new FakeEntityCriteria();
+
+        criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
+
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, executor);
+
+        //Now iterate over the list and make sure that iteration happens in order as expected
+        //monotonically increasing.
+        int num = 0;
+        int last = -1;
+        for (FakeEntity entity : query) {
+            //this fails with earlier bug in CriteriaQuery
+            assertEquals(true, (last < entity.getId()));
+            last = entity.getId();
+            ++num;
+        }
+
+        assertEquals(num, realResults, "Unexpected number for results returned");
+    }
+
+    @Test
+    public void testIteratingOverQueryWithInconsistentResults_tooManyResults() {
+        PageControl pc = new PageControl(0, 100);
+        int realResults = 551;
+        FakeCriteriaQueryExecutor executor = prepareExecutor(realResults, 520, pc);
+
+        FakeEntityCriteria criteria = new FakeEntityCriteria();
+
+        criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
+
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, executor);
+
+        //Now iterate over the list and make sure that iteration happens in order as expected
+        //monotonically increasing.
+        int num = 0;
+        int last = -1;
+        for (FakeEntity entity : query) {
+            //this fails with earlier bug in CriteriaQuery
+            assertEquals(true, (last < entity.getId()));
+            last = entity.getId();
+            ++num;
+        }
+
+        assertEquals(num, realResults, "Unexpected number for results returned");
+    }
+
+    @Test
     public void singleResultTest() {
         // This test doesn't really fit here but I;m adding it for convenience
         List<FakeEntity> result = null;
@@ -250,5 +333,26 @@ public class CriteriaQueryTest {
         assertEquals(2, CriteriaQueryGenerator.getPageControl(c).getOrderingFields().size());
         assertEquals("name", CriteriaQueryGenerator.getPageControl(c).getOrderingFields().get(0).getField());
         assertEquals("id", CriteriaQueryGenerator.getPageControl(c).getOrderingFields().get(1).getField());
+    }
+
+
+    private FakeCriteriaQueryExecutor prepareExecutor(int realTotalSize, int reportedTotalSize, PageControl pc) {
+        FakeCriteriaQueryExecutor executor = new FakeCriteriaQueryExecutor(reportedTotalSize, pc);
+
+        List<FakeEntity> page = new ArrayList(pc.getPageSize());
+        for(int i = 0; i < realTotalSize; ++i) {
+            if (i != 0 && i % pc.getPageSize() == 0) {
+                executor.addPage(page);
+                page.clear();
+            }
+            page.add(new FakeEntity(i));
+        }
+
+        //add the last page
+        if (realTotalSize != reportedTotalSize) {
+            executor.addPage(page);
+        }
+
+        return executor;
     }
 }

@@ -361,6 +361,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 //Show the tooltip
                 $wnd.d3.select("#metricGraphTooltip").classed("hidden", false);
 
+                setTimeout(function(){$wnd.jQuery('#metricGraphTooltip').hide();},5000);
+
             }
             function showNoDataBarHover(d){
                 var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
@@ -386,6 +388,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                 //Show the tooltip
                 $wnd.d3.select("#noDataTooltip").classed("hidden", false);
+                setTimeout(function(){$wnd.jQuery('#noDataTooltip').hide();},5000);
 
             }
 
@@ -551,6 +554,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                     //Show the tooltip
                     $wnd.d3.select("#singleValueTooltip").classed("hidden", false);
+                    setTimeout(function(){$wnd.jQuery('#singleValueTooltip').hide();},5000);
 
                 }
 

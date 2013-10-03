@@ -298,4 +298,9 @@ public class MetricsDAO {
         BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
         storageSession.execute(statement);
     }
+
+    public StorageResultSetFuture deleteMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
+        BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
+        return storageSession.executeAsync(statement);
+    }
 }

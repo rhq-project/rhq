@@ -338,4 +338,15 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     BundleGroupAssignmentComposite getAssignableBundleGroups(Subject subject, Subject assigningSubject, int bundleId)
         throws Exception;
+
+    /**
+     * Determines (and updates) the deployment status of the provided bundle deployment based on the deployment statuses
+     * of the underlying resource deployments.
+     *
+     * @param bundleDeploymentId the id of the bundle deployment to check
+     * @return the determined bundle deployment status
+     *
+     * @since 4.10
+     */
+    BundleDeploymentStatus determineOverallBundleDeploymentStatus(int bundleDeploymentId);
 }

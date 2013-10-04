@@ -24,24 +24,34 @@ package org.rhq.core.domain.bundle;
 
 /**
  * Simple statuses for Bundle (Group) Deploy requests. When a request is first initiated, it will be considered in the
- * {@link #INPROGRESS} state. When the request has completed, it will have been either a {@link #SUCCESS} or
+ * {@link #IN_PROGRESS} state. When the request has completed, it will have been either a {@link #SUCCESS} or
  * {@link #FAILURE}. For group deploy requests the status values are the same. Any individual failure will be
  * reflected as a group failure. 
  *
  * @author Jay Shaughnessy
  */
 public enum BundleDeploymentStatus {
-    PENDING("Pending"), // for future, when we support true scheduling of bundle deployments
-    IN_PROGRESS("In Progress"), //
-    MIXED("Mixed"), //
-    SUCCESS("Success"), //
-    FAILURE("Failure") //
+    PENDING("Pending", false), // for future, when we support true scheduling of bundle deployments
+    IN_PROGRESS("In Progress", false), //
+    MIXED("Mixed", true), //
+    SUCCESS("Success", true), //
+    FAILURE("Failure", true) //
     ; // need this for GWT
 
-    private String displayName;
+    private final String displayName;
+    private final boolean terminal;
 
-    BundleDeploymentStatus(String displayName) {
+    BundleDeploymentStatus(String displayName, boolean terminal) {
         this.displayName = displayName;
+        this.terminal = terminal;
+    }
+
+    /**
+     * @return true if this state is final (i.e. the bundle deployment has completed and will not move from this status
+     * on its own).
+     */
+    public boolean isTerminal() {
+        return terminal;
     }
 
     public String toString() {

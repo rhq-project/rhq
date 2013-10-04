@@ -25,21 +25,26 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle
  */
 public class ObjectFilter {
 
+    private static Log log = LogFactory.getLog(ObjectFilter.class);
+
     public static <T extends Collection<?>> T filterFieldsInCollection(T collection, Set<String> goodFields) {
         long sizeOfBefore = sizeOf(collection);
         for (Object object : collection) {
             filterFields(object, goodFields);
         }
-        Log.debug("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Object filtered from size [" + sizeOfBefore + "] to [" + sizeOf(collection) + "]");
+        }
 
         return collection;
     }
@@ -53,11 +58,15 @@ public class ObjectFilter {
                         // Only clearing objects, no point in clearing primitives as it
                         // doesn't save any space on the stream
                         if (!f.getType().isPrimitive()) {
-                            Log.debug("Clearing " + f.getName() + "...");
+                            if (log.isDebugEnabled()) {
+                                log.debug("Clearing " + f.getName() + "...");
+                            }
                             f.setAccessible(true);
                             f.set(object, null);
                         } else {
-                            Log.debug("Can't do " + f.getType());
+                            if (log.isDebugEnabled()) {
+                                log.debug("Can't do " + f.getType());
+                            }
                         }
                     }
                 }

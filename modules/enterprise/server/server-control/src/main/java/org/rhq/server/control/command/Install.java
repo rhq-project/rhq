@@ -216,7 +216,7 @@ public class Install extends AbstractInstall {
             throw new RHQControlException("An error occurred while executing the install command", e);
 
         } finally {
-            if (startedStorage || startedServer) {
+            if (!start && (startedStorage || startedServer)) {
                 Stop stopCommand = new Stop();
                 if (startedServer) {
                     stopCommand.exec(new String[] { "stop", "--server" });

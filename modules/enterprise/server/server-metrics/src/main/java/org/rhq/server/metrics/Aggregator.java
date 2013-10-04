@@ -2,8 +2,9 @@ package org.rhq.server.metrics;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,12 +63,14 @@ public class Aggregator {
     private AtomicInteger remainingOneHourData;
     private AtomicInteger remainingSixHourData;
 
+    private CountDownLatch readyForRemaining1HourData;
+    private CountDownLatch readyForRemaining6HourData;
     private CountDownLatch allAggregationFinished;
-    private CountDownLatch oneHourIndexEntriesArrival;
-    private CountDownLatch sixHourIndexEntriesArrival;
+    private SignalingCountDownLatch oneHourIndexEntriesArrival;
+    private SignalingCountDownLatch sixHourIndexEntriesArrival;
 
-    private ConcurrentHashMap<Integer, MetricsIndexEntry> oneHourIndexEntries;
-    private ConcurrentHashMap<Integer, MetricsIndexEntry> sixHourIndexEntries;
+    private ConcurrentSkipListMap<Integer, MetricsIndexEntry> oneHourIndexEntries;
+    private ConcurrentSkipListMap<Integer, MetricsIndexEntry> sixHourIndexEntries;
 
     public Aggregator(ListeningExecutorService workers, MetricsDAO dao, MetricsConfiguration configuration,
         DateTimeService dtService, DateTime startTime) {
@@ -76,6 +79,9 @@ public class Aggregator {
         this.configuration = configuration;
         this.dtService = dtService;
         this.startTime = startTime;
+
+        oneHourIndexEntries = new ConcurrentSkipListMap<Integer, MetricsIndexEntry>();
+        sixHourIndexEntries = new ConcurrentSkipListMap<Integer, MetricsIndexEntry>();
 
         DateTime oneHourTimeSlice = getOneHourTimeSlice();
         DateTime sixHourTimeSlice = getSixHourTimeSlice();
@@ -86,11 +92,20 @@ public class Aggregator {
         int count = 1;
         if (oneHourDataReady) {
             count++;
-            oneHourIndexEntriesArrival = new CountDownLatch(1);
+            oneHourIndexEntriesArrival = new SignalingCountDownLatch(new CountDownLatch(1));
+            readyForRemaining1HourData = new CountDownLatch(1);
+        } else {
+            oneHourIndexEntriesArrival = new SignalingCountDownLatch(new CountDownLatch(0));
+            readyForRemaining1HourData = new CountDownLatch(0);
         }
+
         if (sixHourDataReady) {
             count++;
-            sixHourIndexEntriesArrival = new CountDownLatch(1);
+            sixHourIndexEntriesArrival = new SignalingCountDownLatch(new CountDownLatch(1));
+            readyForRemaining6HourData = new CountDownLatch(1);
+        } else {
+            sixHourIndexEntriesArrival = new SignalingCountDownLatch(new CountDownLatch(0));
+            readyForRemaining6HourData = new CountDownLatch(0);
         }
 
         allAggregationFinished = new CountDownLatch(count);
@@ -119,50 +134,138 @@ public class Aggregator {
             @Override
             public void onSuccess(ResultSet result) {
                 List<Row> rows = result.all();
-                remainingRawData = new AtomicInteger(rows.size());
-                MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.ONE_HOUR);
-                for (Row row : rows) {
-                    MetricsIndexEntry indexEntry = mapper.map(row);
-                    aggregateRawData(indexEntry);
+                if (rows.isEmpty()) {
+                    readyForRemaining1HourData.countDown();
+                    deleteIndexEntries(MetricsTable.ONE_HOUR);
+                } else {
+                    remainingRawData = new AtomicInteger(rows.size());
+                    MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.ONE_HOUR);
+                    for (Row row : rows) {
+                        MetricsIndexEntry indexEntry = mapper.map(row);
+                        aggregateRawData(indexEntry);
+                    }
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("Failed to retrieve raw data index entries for time slice [" + startTime +
-                    "]. Data aggregation cannot proceed.", t);
+                log.warn("Failed to retrieve raw data index entries. Raw data aggregation for time slice [" +
+                    startTime + "] cannot proceed.", t);
+                readyForRemaining1HourData.countDown();
+                deleteIndexEntries(MetricsTable.ONE_HOUR);
             }
         }, workers);
 
         if (oneHourDataReady) {
             StorageResultSetFuture oneHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.SIX_HOUR,
-                startTime.getMillis());
+                getOneHourTimeSlice().getMillis());
             Futures.addCallback(oneHourFuture, new FutureCallback<ResultSet>() {
                 @Override
                 public void onSuccess(ResultSet result) {
                     List<Row> rows = result.all();
-                    oneHourIndexEntries = new ConcurrentHashMap<Integer, MetricsIndexEntry>(rows.size());
-                    MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.SIX_HOUR);
+                    if (rows.isEmpty()) {
+                        try {
+                            readyForRemaining1HourData.await();
+                        } catch (InterruptedException e) {
+                        }
+                        readyForRemaining6HourData.countDown();
+                        deleteIndexEntries(MetricsTable.SIX_HOUR);
+                    } else {
+                        MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.SIX_HOUR);
 
-                    for (Row row : result) {
-                        MetricsIndexEntry indexEntry = mapper.map(row);
-                        oneHourIndexEntries.put(indexEntry.getScheduleId(), indexEntry);
+                        for (Row row : rows) {
+                            MetricsIndexEntry indexEntry = mapper.map(row);
+                            oneHourIndexEntries.put(indexEntry.getScheduleId(), indexEntry);
+                        }
+                        remainingOneHourData = new AtomicInteger(oneHourIndexEntries.size());
                     }
-                    remainingOneHourData = new AtomicInteger(oneHourIndexEntries.size());
                     oneHourIndexEntriesArrival.countDown();
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.warn("Failed to retrieve one hour aggregate index entries for time slice [" + startTime +
-                        "]. Some six hour aggregates may not get generated.");
+                    log.warn("Failed to retrieve one hour aggregate index entries for time slice [" +
+                        getOneHourTimeSlice() + "]. Some six hour aggregates may not get generated.");
+                    oneHourIndexEntriesArrival.abort();
+                    deleteIndexEntries(MetricsTable.SIX_HOUR);
                 }
             });
         }
 
+        if (sixHourDataReady) {
+            StorageResultSetFuture sixHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
+                getSixHourTimeSlice().getMillis());
+            Futures.addCallback(sixHourFuture, new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(ResultSet result) {
+                    List<Row> rows = result.all();
+                    if (rows.isEmpty()) {
+                        try {
+                            readyForRemaining6HourData.await();
+                        } catch (InterruptedException e) {
+                        }
+                        deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
+                    } else {
+                        MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.TWENTY_FOUR_HOUR);
+
+                        for (Row row : rows) {
+                            MetricsIndexEntry indexEntry = mapper.map(row);
+                            sixHourIndexEntries.put(indexEntry.getScheduleId(), indexEntry);
+                        }
+                        remainingSixHourData = new AtomicInteger(sixHourIndexEntries.size());
+                    }
+                    sixHourIndexEntriesArrival.countDown();
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.warn("Failed to retrieve 6 hour aggregate index entries for time slice [" +
+                        getSixHourTimeSlice() + "]. Some 24 hour aggregates may not get generated.");
+                    sixHourIndexEntriesArrival.abort();
+                    deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
+                }
+            });
+        }
+
+
+        calculateAggregatesIfNecessary(oneHourDataReady, oneHourIndexEntriesArrival, readyForRemaining1HourData,
+            oneHourIndexEntries, MetricsTable.SIX_HOUR);
+        calculateAggregatesIfNecessary(sixHourDataReady, sixHourIndexEntriesArrival, readyForRemaining6HourData,
+            sixHourIndexEntries, MetricsTable.TWENTY_FOUR_HOUR);
         allAggregationFinished.await();
 
         return oneHourAggregates;
+    }
+
+    private void calculateAggregatesIfNecessary(boolean isDataReady, SignalingCountDownLatch arrival,
+        CountDownLatch readyForData, final ConcurrentSkipListMap<Integer, MetricsIndexEntry> indexEntries,
+        final MetricsTable toTable) {
+        if (isDataReady) {
+            try {
+                arrival.await();
+                readyForData.await();
+                Map.Entry<Integer, MetricsIndexEntry> entry = indexEntries.pollLastEntry();
+                while (entry != null) {
+                    scheduleAggregation(entry.getKey(), toTable);
+                    entry = indexEntries.pollLastEntry();
+                }
+            } catch (AbortedException e) {
+                // There is no need to log a message since the failed callback already
+                // logged a message indicating the failure to load the index entries
+            } catch (InterruptedException e) {
+                log.warn("An interrupt occurred while waiting for index entries. Some aggregates for the " + toTable +
+                    " may not be calculated.", e);
+            }
+        }
+    }
+
+    private void scheduleAggregation(final int scheduleId, final MetricsTable toTable) {
+        workers.submit(new Runnable() {
+            @Override
+            public void run() {
+                calculateAggregate(scheduleId, toTable);
+            }
+        });
     }
 
     private void aggregateRawData(final MetricsIndexEntry indexEntry) {
@@ -205,12 +308,24 @@ public class Aggregator {
                         Futures.addCallback(indexFuture, new FutureCallback<ResultSet>() {
                             @Override
                             public void onSuccess(ResultSet result) {
+                                oneHourAggregates.add(oneHourAggregate);
                                 updateRemainingRawDataCount();
                                 try {
                                     if (oneHourDataReady) {
                                         oneHourIndexEntriesArrival.await();
+                                        // We wind up calling oneHourIndexEntries.remove() twice. Once here and then
+                                        // again after the one hour aggregate is generated. We want to make the extra
+                                        // call here to prevent the possibility of duplicate work. Because the removal
+                                        // is done here before readyForRemaining1HourData reaches zero, we are assured
+                                        // that the schedule is only processed once.
+                                        oneHourIndexEntries.remove(indexEntry.getScheduleId());
                                         calculateAggregate(indexEntry.getScheduleId(), MetricsTable.SIX_HOUR);
                                     }
+                                } catch (AbortedException e) {
+                                    // The AbortedException means we failed to retrieve index entries for 1 hr data.
+                                    // We can still produce a 6 hr aggregate for this schedule because we already
+                                    // know it has data to be aggregated, namely the 1 hr data that was just computed.
+                                    calculateAggregate(indexEntry.getScheduleId(), MetricsTable.SIX_HOUR);
                                 } catch (InterruptedException e) {
                                     log.warn("An interrupt occurred while waiting one hour data index entries. " +
                                         "No 6 hour data will be generated for " + oneHourAggregate.getScheduleId() +
@@ -223,6 +338,7 @@ public class Aggregator {
                                 log.warn("Failed to update 6 hour data index for one hour aggregate " +
                                     oneHourAggregate);
                                 updateRemainingRawDataCount();
+                                // TODO should we try to aggregate 6 hr data here (probably)
                             }
                         });
                     }
@@ -285,36 +401,61 @@ public class Aggregator {
                             if (result.get(2) == null) {
                                 log.warn("Failed to store the average of the 6 hour aggregate " + aggregate);
                             }
-                            DateTime twentyFourHourTimeSlice = dtService.getTimeSlice(new DateTime(
-                                aggregate.getTimestamp()), configuration.getSixHourTimeSliceDuration());
                             StorageResultSetFuture indexFuture = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR,
-                                aggregate.getScheduleId(), twentyFourHourTimeSlice.getDayOfMonth());
+                                aggregate.getScheduleId(), getSixHourTimeSlice().getMillis());
                             Futures.addCallback(indexFuture, new FutureCallback<ResultSet>() {
                                 @Override
                                 public void onSuccess(ResultSet result) {
-                                    oneHourIndexEntries.remove(aggregate.getScheduleId());
-                                    updateRemainingOneHourDataCount();
-                                    // TODO compute 24 hr aggregate if necessary
+                                    updateRemainingOneHourDataCount(scheduleId);
+                                    calculate24HourAggregateIfNecessary(scheduleId);
                                 }
 
                                 @Override
                                 public void onFailure(Throwable t) {
-                                    log.warn("Failed to update 24 hour data index for 6 hour aggregate " + aggregate);
-                                    oneHourIndexEntries.remove(aggregate.getScheduleId());
-                                    updateRemainingOneHourDataCount();
+                                    log.warn("Failed to update 24 hour data index for 6 hour aggregate " + aggregate, t);
+                                    updateRemainingOneHourDataCount(scheduleId);
+                                    calculate24HourAggregateIfNecessary(scheduleId);
                                 }
                             });
                         }
 
                         @Override
                         public void onFailure(Throwable t) {
-                            log.warn("Failed to store six hour aggregate " + aggregate);
-                            oneHourIndexEntries.remove(aggregate.getScheduleId());
-                            updateRemainingOneHourDataCount();
+                            log.warn("Failed to store 6 hour aggregate " + aggregate, t);
+                            updateRemainingOneHourDataCount(scheduleId);
+                            calculate24HourAggregateIfNecessary(scheduleId);
                         }
                     });
                 } else {
-                    // TODO handle 6 hr data
+                    ListenableFuture<List<ResultSet>> insertFuture = Futures.allAsList(
+                        dao.insertTwentyFourHourDataAsync(aggregate.getScheduleId(), startTime.getMillis(),
+                            AggregateType.MIN, aggregate.getMin()),
+                        dao.insertTwentyFourHourDataAsync(aggregate.getScheduleId(), startTime.getMillis(),
+                            AggregateType.MAX, aggregate.getMax()),
+                        dao.insertTwentyFourHourDataAsync(aggregate.getScheduleId(), startTime.getMillis(),
+                            AggregateType.AVG, aggregate.getAvg())
+                    );
+                    Futures.addCallback(insertFuture, new FutureCallback<List<ResultSet>>() {
+                        @Override
+                        public void onSuccess(List<ResultSet> result) {
+                            if (result.get(0) == null) {
+                                log.warn("Failed to store the minimum of the 24 hour aggregate " + aggregate);
+                            }
+                            if (result.get(1) == null) {
+                                log.warn("Failed to store the maximum of the 24 hour aggregate " + aggregate);
+                            }
+                            if (result.get(2) == null) {
+                                log.warn("Failed to store the average of the 24 hour aggregate " + aggregate);
+                            }
+                            updateRemainingSixHourDataCount(scheduleId);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.warn("Failed to store 24 hour aggregate " + aggregate, t);
+                            updateRemainingSixHourDataCount(scheduleId);
+                        }
+                    });
                 }
             }
 
@@ -329,6 +470,22 @@ public class Aggregator {
                 }
             }
         });
+    }
+
+    private void calculate24HourAggregateIfNecessary(int scheduleId) {
+        if (sixHourDataReady) {
+            try {
+                sixHourIndexEntriesArrival.await();
+                sixHourIndexEntries.remove(scheduleId);
+                calculateAggregate(scheduleId, MetricsTable.TWENTY_FOUR_HOUR);
+            } catch (InterruptedException e) {
+                log.warn("An interrupt occurred while preparing to generate 24 hour data for scheduleId " +
+                    scheduleId + ". No 24 hour data will be generated for this schedule at time slice [" +
+                    getSixHourTimeSlice() + "]", e);
+            } catch (AbortedException e) {
+                calculateAggregate(scheduleId, MetricsTable.TWENTY_FOUR_HOUR);
+            }
+        }
     }
 
     private AggregateNumericMetric calculateAggregatedRaw(List<RawNumericMetric> rawMetrics, long timestamp) {
@@ -385,25 +542,63 @@ public class Aggregator {
         if (remainingRawData.decrementAndGet() == 0) {
             if (log.isDebugEnabled()) {
                 log.debug("Finished aggregating raw data for time slice [" + startTime + "]");
+            } else {
+                log.info("Finished aggregating raw data in " + getElapsedTime());
             }
+            readyForRemaining1HourData.countDown();
             deleteIndexEntries(MetricsTable.ONE_HOUR);
         }
     }
 
-    private void updateRemainingOneHourDataCount() {
+    private void updateRemainingOneHourDataCount(int scheduleId) {
+        oneHourIndexEntries.remove(scheduleId);
         if (remainingOneHourData.decrementAndGet() == 0) {
             if (log.isDebugEnabled()) {
                 DateTime start = getOneHourTimeSlice();
                 DateTime end = start.plus(configuration.getOneHourTimeSliceDuration());
                 log.debug("Finished aggregating one hour data for time slice [startTime: " + start +
-                    ", endTime: " + end + "]");
+                    ", endTime: " + end + "] in " + getElapsedTime());
+            } else {
+                log.info("Finished aggregating one hour data in " + getElapsedTime());
             }
+            readyForRemaining6HourData.countDown();
             deleteIndexEntries(MetricsTable.SIX_HOUR);
         }
     }
 
+    private void updateRemainingSixHourDataCount(int scheduleId) {
+        sixHourIndexEntries.remove(scheduleId);
+        if (remainingSixHourData.decrementAndGet() == 0) {
+            if (log.isDebugEnabled()) {
+                DateTime start = getSixHourTimeSlice();
+                DateTime end = start.plus(configuration.getSixHourTimeSliceDuration());
+                log.debug("Finished aggregating 6 hour data for time slice [startTime: " + start +
+                    ", endTime: " + end + "] in " + getElapsedTime());
+            } else {
+                log.info("Finished aggregating 6 hour data in " + getElapsedTime());
+            }
+            deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
+        }
+    }
+
+    private String getElapsedTime() {
+        return (dtService.nowInMillis() - startTime.getMillis()) + " ms";
+    }
+
     private void deleteIndexEntries(final MetricsTable table) {
-        StorageResultSetFuture future = dao.deleteMetricsIndexEntriesAsync(table, startTime.getMillis());
+        DateTime time;
+        switch (table) {
+            case ONE_HOUR:
+                time = startTime;
+                break;
+            case SIX_HOUR:
+                time = getOneHourTimeSlice();
+                break;
+            default:
+                time = getSixHourTimeSlice();
+                break;
+        }
+        StorageResultSetFuture future = dao.deleteMetricsIndexEntriesAsync(table, time.getMillis());
         Futures.addCallback(future, new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(ResultSet result) {

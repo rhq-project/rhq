@@ -35,7 +35,7 @@ public enum JBossProductType {
     ISPN("ISPN", "Infinispan Server", "Infinispan Server", "ISPN"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
-    SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "SOAP"),
+    SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "Red Hat JBoss Fuse Service Works"),
     WILDFLY8("WildFly","WildFly 8" ,"WildFly Application Server 8" , "WildFly");
 
     public final String SHORT_NAME;

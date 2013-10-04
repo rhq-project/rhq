@@ -91,7 +91,7 @@ public interface GroupDefinitionRecalculationThreadMonitorMBean {
     Map<String, Map<String, Object>> getStatistics();
 
     /**
-     * Updates the internal {@link GroupDefinitionRecalculationThreadMonitor.GroupDefinitionRecalculationStatistic}
+     * Updates the internal {@link GroupDefinitionRecalculationThreadMonitor.GroupDefinitionRecalculationStat}
      * for the {@link GroupDefinition} with the given name.
      * 
      * @param groupDefinitionName the name of the {@link GroupDefinition} whose internal statistics will be updated

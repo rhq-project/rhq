@@ -62,7 +62,7 @@ public class GroupDefinitionRecalculationThreadMonitor implements GroupDefinitio
      * atomically.  as a result, all access to and from them must be guarded by the same lock. extensions to this 
      * class should use the intrinsic object lock to protect during access and/or modification. 
      */
-    public class GroupDefinitionRecalculationStatistic {
+    public class GroupDefinitionRecalculationStat {
         private long dynaGroupCount;
         private long recalculationCount;
         private long successfulCount;
@@ -100,7 +100,7 @@ public class GroupDefinitionRecalculationThreadMonitor implements GroupDefinitio
     }
 
     private static AtomicLong lastAutoRecalculationThreadTime = new AtomicLong(0);
-    private static ConcurrentMap<String, GroupDefinitionRecalculationStatistic> statistics = new ConcurrentHashMap<String, GroupDefinitionRecalculationStatistic>();
+    private static ConcurrentMap<String, GroupDefinitionRecalculationStat> statistics = new ConcurrentHashMap<String, GroupDefinitionRecalculationStat>();
 
     private static MBeanServer mbeanServer;
     private static ObjectName objectName;
@@ -150,14 +150,14 @@ public class GroupDefinitionRecalculationThreadMonitor implements GroupDefinitio
     }
 
     public void updateStatistic(String groupDefinitionName, int newDynaGroupCount, boolean success, long executionTime) {
-        statistics.putIfAbsent(groupDefinitionName, new GroupDefinitionRecalculationStatistic());
-        GroupDefinitionRecalculationStatistic stat = statistics.get(groupDefinitionName);
+        statistics.putIfAbsent(groupDefinitionName, new GroupDefinitionRecalculationStat());
+        GroupDefinitionRecalculationStat stat = statistics.get(groupDefinitionName);
         stat.update(newDynaGroupCount, success, executionTime);
     }
 
     public Map<String, Map<String, Object>> getStatistics() {
         Map<String, Map<String, Object>> results = new HashMap<String, Map<String, Object>>();
-        for (Map.Entry<String, GroupDefinitionRecalculationStatistic> stat : statistics.entrySet()) {
+        for (Map.Entry<String, GroupDefinitionRecalculationStat> stat : statistics.entrySet()) {
             String groupDefinitionName = stat.getKey();
             Map<String, Object> groupDefinitionStatistics = stat.getValue().getStatistics();
             results.put(groupDefinitionName, groupDefinitionStatistics);

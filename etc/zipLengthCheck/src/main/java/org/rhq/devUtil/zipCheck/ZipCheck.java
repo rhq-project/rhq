@@ -16,8 +16,13 @@ public class ZipCheck {
     public static void main(String[] args) throws Exception {
 
         if (args.length<1) {
-            System.err.println("Usage: ZipCheck <file.zip>");
+            System.err.println("Usage: ZipCheck <file.zip> [warnLength]");
             System.exit(1);
+        }
+
+        int warnLength = WARN_LENGTH;
+        if (args.length == 2) {
+                warnLength = Integer.valueOf( args[1] );
         }
 
         ZipFile file = new ZipFile(args[0]);
@@ -25,7 +30,7 @@ public class ZipCheck {
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
             String name = entry.getName();
-            if (name.length()> WARN_LENGTH) {
+            if (name.length()> warnLength) {
                 System.err.printf("Long path: %4d : %s\n", name.length(), name);
             }
         }

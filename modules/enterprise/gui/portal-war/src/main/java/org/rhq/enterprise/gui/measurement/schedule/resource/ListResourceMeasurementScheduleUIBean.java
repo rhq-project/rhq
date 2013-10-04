@@ -76,15 +76,16 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListResourceMeasurementScheduleDataModel(PageControlView.ResourceMeasurementScheduleList,
+            dataModel = new A(PageControlView.ResourceMeasurementScheduleList,
                 MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ListResourceMeasurementScheduleDataModel extends PagedListDataModel<MeasurementScheduleComposite> {
-        public ListResourceMeasurementScheduleDataModel(PageControlView view, String beanName) {
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends PagedListDataModel<MeasurementScheduleComposite> {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

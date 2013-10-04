@@ -53,7 +53,7 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupResourceConfigurationUpdateDetailsDataModel(
+            dataModel = new A(
                 PageControlView.GroupResourceConfigurationUpdateDetails,
                 GroupResourceConfigurationHistoryDetailsUIBean.MANAGED_BEAN_NAME);
         }
@@ -78,10 +78,11 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
         return FacesContextUtility.getRequiredRequestParameter("arcuId", Integer.class);
     }
 
-    private class ListGroupResourceConfigurationUpdateDetailsDataModel extends
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends
         PagedListDataModel<ConfigurationUpdateComposite> {
 
-        public ListGroupResourceConfigurationUpdateDetailsDataModel(PageControlView view, String beanName) {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

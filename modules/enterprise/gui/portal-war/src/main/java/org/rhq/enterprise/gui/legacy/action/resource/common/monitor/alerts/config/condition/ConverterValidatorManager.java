@@ -33,7 +33,7 @@ public class ConverterValidatorManager {
     private static CallTimeDataConverterValidator calltimeConverter;
     private static OperationConverterValidator operationConverter;
     private static TraitConverterValidator traitConverter;
-    private static ResourceConfigurationConverterValidator resourceConfigurationConverter;
+    private static ResConfigConvertValidator resourceConfigurationConverter;
 
     static {
         availabilityConverter = new AvailabilityConverterValidator();
@@ -42,7 +42,7 @@ public class ConverterValidatorManager {
         calltimeConverter = new CallTimeDataConverterValidator();
         operationConverter = new OperationConverterValidator();
         traitConverter = new TraitConverterValidator();
-        resourceConfigurationConverter = new ResourceConfigurationConverterValidator();
+        resourceConfigurationConverter = new ResConfigConvertValidator();
     }
 
     public static AlertCondition exportProperties(Subject subject, ConditionBean fromBean) {

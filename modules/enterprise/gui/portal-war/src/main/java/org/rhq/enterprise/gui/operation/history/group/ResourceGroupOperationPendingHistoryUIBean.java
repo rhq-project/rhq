@@ -73,7 +73,7 @@ public class ResourceGroupOperationPendingHistoryUIBean extends PagedDataTableUI
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupOperationPendingHistoryDataModel(
+            dataModel = new A(
                 PageControlView.ResourceGroupOperationPendingHistory, MANAGED_BEAN_NAME);
         }
 
@@ -119,8 +119,9 @@ public class ResourceGroupOperationPendingHistoryUIBean extends PagedDataTableUI
         return "success";
     }
 
-    private class ListGroupOperationPendingHistoryDataModel extends PagedListDataModel<GroupOperationHistory> {
-        public ListGroupOperationPendingHistoryDataModel(PageControlView view, String beanName) {
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends PagedListDataModel<GroupOperationHistory> {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

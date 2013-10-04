@@ -45,7 +45,7 @@ public class GroupResourceConfigurationHistoryUIBean extends PagedDataTableUIBea
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupResourceConfigurationUpdatesDataModel(
+            dataModel = new A(
                 PageControlView.GroupResourceConfigurationUpdateHistory,
                 GroupResourceConfigurationHistoryUIBean.MANAGED_BEAN_NAME);
         }
@@ -68,10 +68,11 @@ public class GroupResourceConfigurationHistoryUIBean extends PagedDataTableUIBea
         return "success";
     }
 
-    private class ListGroupResourceConfigurationUpdatesDataModel extends
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends
         PagedListDataModel<GroupResourceConfigurationUpdate> {
 
-        public ListGroupResourceConfigurationUpdatesDataModel(PageControlView view, String beanName) {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

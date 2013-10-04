@@ -22,6 +22,8 @@ package org.rhq.enterprise.agent;
 
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.command.Command;
+import org.rhq.enterprise.communications.command.impl.stream.RemoteInputStreamCommand;
+import org.rhq.enterprise.communications.command.impl.stream.RemoteOutputStreamCommand;
 import org.rhq.enterprise.communications.command.server.CommandAuthenticator;
 
 /**
@@ -46,6 +48,11 @@ public class SecurityTokenCommandAuthenticator implements CommandAuthenticator {
     public boolean isAuthenticated(Command command) {
         if (this.serviceContainer == null) {
             return false; // we can't authenticate yet, we don't have the service container
+        }
+
+        if (command.getCommandType().equals(RemoteOutputStreamCommand.COMMAND_TYPE)
+            || (command.getCommandType().equals(RemoteInputStreamCommand.COMMAND_TYPE))) {
+            return true; // remoting streaming can go through
         }
 
         String incomingToken = command.getConfiguration().getProperty(CMDCONFIG_PROP_SECURITY_TOKEN);

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
+package org.rhq.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.Collection;
 
@@ -28,8 +28,8 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.coregui.client.inventory.resource.selection.ResourceGroupSelector;
 
 /**
  * @author Jay Shaughnessy

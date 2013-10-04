@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
+package org.rhq.coregui.client.bundle.deploy;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
+import org.rhq.coregui.client.components.wizard.AbstractWizard;
 
 /**
  * @author Jay Shaughnessy

@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported;
+package org.rhq.coregui.client.dashboard.portlets.recent.imported;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 

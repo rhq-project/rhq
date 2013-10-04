@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.test;
+package org.rhq.coregui.client.test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,21 +24,21 @@ import java.util.List;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
-import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.components.FullHTMLPane;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.coregui.client.components.view.NavigationItem;
+import org.rhq.coregui.client.components.view.NavigationSection;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeTreeView;
+import org.rhq.coregui.client.test.configuration.TestConfigurationView;
+import org.rhq.coregui.client.test.configuration.TestGroupConfigurationView;
+import org.rhq.coregui.client.test.configuration.TestReadOnlyConfigurationView;
+import org.rhq.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
+import org.rhq.coregui.client.test.inventory.TestSearchBarView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL

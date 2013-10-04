@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
+package org.rhq.coregui.client.inventory.common.detail.operation.schedule;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,26 +53,26 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
-import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
-import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
-import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
-import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.coregui.client.components.form.DurationItem;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.form.SortedSelectItem;
+import org.rhq.coregui.client.components.form.TimeUnit;
+import org.rhq.coregui.client.components.form.UnitType;
+import org.rhq.coregui.client.components.trigger.JobTriggerEditor;
+import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
+import org.rhq.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
+import org.rhq.coregui.client.util.FormUtility;
+import org.rhq.coregui.client.util.TypeConversionUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A view for viewing or editing an RHQ {@link org.rhq.core.domain.operation.bean.OperationSchedule operation schedule}.

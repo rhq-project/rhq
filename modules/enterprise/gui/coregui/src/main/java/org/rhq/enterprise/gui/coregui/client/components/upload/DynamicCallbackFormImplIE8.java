@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.rhq.enterprise.gui.coregui.client.components.upload;
+package org.rhq.coregui.client.components.upload;
 
 import com.google.gwt.dom.client.Element;
 
@@ -35,7 +35,7 @@ public class DynamicCallbackFormImplIE8  extends DynamicCallbackFormImpl {
                 if (iframe.readyState == 'complete') {
                     // If the iframe's contentWindow has not navigated to the expected action
                     // url, then it must be an error, so we ignore it.
-                    listener.@org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplHost::onFrameLoad()();
+                    listener.@org.rhq.coregui.client.components.upload.DynamicCallbackFormImplHost::onFrameLoad()();
                 }
             };
         }

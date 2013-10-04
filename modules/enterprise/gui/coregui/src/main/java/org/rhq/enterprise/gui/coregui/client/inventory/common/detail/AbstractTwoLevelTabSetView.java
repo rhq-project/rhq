@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
+package org.rhq.coregui.client.inventory.common.detail;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,22 +29,22 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.ViewChangedException;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.ViewChangedException;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.tab.SubTab;
+import org.rhq.coregui.client.components.tab.TwoLevelTab;
+import org.rhq.coregui.client.components.tab.TwoLevelTabSelectedEvent;
+import org.rhq.coregui.client.components.tab.TwoLevelTabSelectedHandler;
+import org.rhq.coregui.client.components.tab.TwoLevelTabSet;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components;
+package org.rhq.coregui.client.components;
 
 import com.smartgwt.client.widgets.HTMLFlow;
 
@@ -24,7 +24,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
  * Deprecated in favor of TitleBar.
  * Favoring actual components over free form HTML with HTMLFlow.
  * @author Greg Hinkle
- * @see org.rhq.enterprise.gui.coregui.client.components.TitleBar
+ * @see org.rhq.coregui.client.components.TitleBar
  */
 @Deprecated
 public class HeaderLabel extends HTMLFlow {

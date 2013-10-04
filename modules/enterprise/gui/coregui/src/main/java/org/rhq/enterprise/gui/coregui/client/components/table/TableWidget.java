@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.coregui.client.components.table;
 
 import com.smartgwt.client.widgets.grid.ListGrid;
 

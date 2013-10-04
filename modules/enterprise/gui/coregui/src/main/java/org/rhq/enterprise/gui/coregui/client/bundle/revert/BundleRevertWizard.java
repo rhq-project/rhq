@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.revert;
+package org.rhq.coregui.client.bundle.revert;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.bundle.BundleDestination;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.coregui.client.components.wizard.WizardStep;
 
 public class BundleRevertWizard extends AbstractBundleRevertWizard {
 

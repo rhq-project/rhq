@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
+package org.rhq.coregui.client.inventory.common.detail.operation.schedule;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -42,11 +42,11 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.RecordUtility;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleDataSource;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.RecordUtility;
 
 /**
  * @author Ian Springer

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.report.operation;
+package org.rhq.coregui.client.report.operation;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.operation.OperationHistoryView;
 
 /**
  * @author Ian Springer

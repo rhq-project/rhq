@@ -20,9 +20,9 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.coregui.client.util;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.coregui.client.CoreGUI;
 
 public enum WidgetsField {
 

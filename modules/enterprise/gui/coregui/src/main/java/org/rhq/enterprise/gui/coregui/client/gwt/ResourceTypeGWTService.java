@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.coregui.client.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -16,14 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_DETAIL;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_TYPE;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EXECUTION_STATUS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_SUBJECT_NAME;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_CTIME;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_DETAIL;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_TYPE;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EXECUTION_STATUS;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_ID;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_SUBJECT_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,11 +42,11 @@ import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * Datasource for @see PartitionEvent.

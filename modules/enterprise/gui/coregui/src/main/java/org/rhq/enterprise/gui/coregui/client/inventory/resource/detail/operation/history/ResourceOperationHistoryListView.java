@@ -17,13 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history;
+package org.rhq.coregui.client.inventory.resource.detail.operation.history;
 
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
+import org.rhq.coregui.client.operation.OperationHistoryView;
 
 /**
  * A table that displays all of the operation histories for a particular Resource.

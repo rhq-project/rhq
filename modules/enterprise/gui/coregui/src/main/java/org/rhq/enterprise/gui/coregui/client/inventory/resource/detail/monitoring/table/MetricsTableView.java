@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,18 +48,18 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.inventory.common.graph.MetricGraphData;
+import org.rhq.coregui.client.inventory.common.graph.Refreshable;
+import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
+import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.

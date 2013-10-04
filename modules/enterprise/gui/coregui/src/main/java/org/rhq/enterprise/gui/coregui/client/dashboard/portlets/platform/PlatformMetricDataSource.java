@@ -16,9 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
+package org.rhq.coregui.client.dashboard.portlets.platform;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,10 +37,10 @@ import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author John Sanda

@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.coregui.client.gwt;
 
 import java.util.List;
 import java.util.Map;

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -35,9 +35,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.preferences.UserPreferences;
 
 /**
  * Upon application load, if already loggedIn on the server-side, local loggedIn bit will be set to true.
@@ -619,7 +619,7 @@ public class UserSessionManager {
     /**
      * Obtain an object that you can use to add/modify/remove/retrieve user preferences.
      * You can optionally wrap the returned object with a
-     * {@link org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences}
+     * {@link org.rhq.coregui.client.util.preferences.MeasurementUserPreferences}
      * object to work with measurement preferences.
      *
      * @return user preferences object

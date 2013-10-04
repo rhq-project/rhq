@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.carousel;
+package org.rhq.coregui.client.components.carousel;
 
 import com.smartgwt.client.data.Criteria;
 

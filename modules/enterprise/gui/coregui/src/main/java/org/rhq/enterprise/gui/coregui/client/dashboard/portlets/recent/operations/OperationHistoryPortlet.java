@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations;
+package org.rhq.coregui.client.dashboard.portlets.recent.operations;
 
 /*
  * RHQ Management Platform
@@ -20,8 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
  */
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
 
 /**
  * @author Jay Shaughnessy

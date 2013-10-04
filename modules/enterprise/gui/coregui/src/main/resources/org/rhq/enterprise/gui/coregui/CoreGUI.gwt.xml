@@ -23,30 +23,30 @@
     <set-property name="gwt.logging.systemHandler" value="ENABLED" />
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
+    <replace-with class="org.rhq.coregui.client.components.upload.DynamicCallbackFormImpl">
+        <when-type-is class="org.rhq.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
 
     <!-- Special case for IE8 where upload onsubmit handlers need special registration code from other browsers -->
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE8">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
+    <replace-with class="org.rhq.coregui.client.components.upload.DynamicCallbackFormImplIE8">
+        <when-type-is class="org.rhq.coregui.client.components.upload.DynamicCallbackFormImpl"/>
         <any>
             <when-property-is name="user.agent" value="ie8"/>
             <when-property-is name="user.agent" value="ie9"/>
         </any>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
+    <replace-with class="org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl">
+        <when-type-is class="org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphIE8Impl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
+    <replace-with class="org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphIE8Impl">
+        <when-type-is class="org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
             <when-property-is name="user.agent" value="ie8"/>
     </replace-with>
 
 
-    <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
+    <generate-with class="org.rhq.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
 
@@ -108,6 +108,6 @@
                                an element that GWT 2.x supports. -->
     <set-property-fallback name="locale" value="${gwt.fallback.locale}"/>
 
-    <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
+    <entry-point class='org.rhq.coregui.client.CoreGUI'/>
 
 </module>

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.test;
+package org.rhq.coregui.client.test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,11 +38,11 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics;
-import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.util.rpc.RemoteServiceStatistics;
+import org.rhq.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
 
 /**
  * A view that gives a display of statistics for all remote services executed since the application was loaded.

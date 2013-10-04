@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.components.configuration;
+package org.rhq.coregui.client.components.configuration;
 
 import java.util.List;
 

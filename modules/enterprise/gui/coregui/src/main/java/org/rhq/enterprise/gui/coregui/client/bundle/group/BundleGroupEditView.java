@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.group;
+package org.rhq.coregui.client.bundle.group;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,17 +34,17 @@ import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.BundleGroup;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.bundle.BundleSelector;
-import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.bundle.BundleSelector;
+import org.rhq.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.selector.AssignedItemsChangedEvent;
+import org.rhq.coregui.client.components.selector.AssignedItemsChangedHandler;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy

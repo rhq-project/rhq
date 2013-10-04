@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
+package org.rhq.coregui.client.inventory.resource.selection;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 
 import java.util.LinkedHashMap;
 
@@ -38,11 +38,11 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.components.selector.AbstractSelector;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle

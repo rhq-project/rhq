@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.components.sorter;
+package org.rhq.coregui.client.components.sorter;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 

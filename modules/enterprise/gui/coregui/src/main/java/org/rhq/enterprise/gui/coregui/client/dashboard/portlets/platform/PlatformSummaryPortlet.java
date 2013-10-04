@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
+package org.rhq.coregui.client.dashboard.portlets.platform;
 
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
@@ -36,19 +36,19 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.IconField;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.PortletWindow;
+import org.rhq.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
 
 
 public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {

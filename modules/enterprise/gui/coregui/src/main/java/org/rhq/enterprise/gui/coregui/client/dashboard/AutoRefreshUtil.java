@@ -17,14 +17,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.dashboard;
+package org.rhq.coregui.client.dashboard;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.inventory.AutoRefresh;
+import org.rhq.coregui.client.util.MeasurementUtility;
 
 /**
  * @author Jay Shaughnessy

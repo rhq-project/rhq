@@ -1,9 +1,9 @@
-package org.rhq.enterprise.gui.coregui.client.components.tab;
+package org.rhq.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.components.view.ViewName;
 
 /**
  * A Wrapper for {@link Tab} allowing for a Tab that separates internal naming and external title.

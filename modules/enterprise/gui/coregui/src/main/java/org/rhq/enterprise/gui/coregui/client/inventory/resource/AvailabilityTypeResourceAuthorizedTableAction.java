@@ -18,7 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource;
+package org.rhq.coregui.client.inventory.resource;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -27,10 +27,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
-import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.RecordExtractor;
+import org.rhq.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
 
 /**
  * A {@link ResourceAuthorizedTableAction} that does further button enablement based on the {@link AvailabilityType}

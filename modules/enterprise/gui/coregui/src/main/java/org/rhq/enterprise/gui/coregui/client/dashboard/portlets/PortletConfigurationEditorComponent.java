@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets;
+package org.rhq.coregui.client.dashboard.portlets;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -30,11 +30,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.coregui.client.util.MeasurementUtility;
 
 /** Shared portlet configuration component where initial configuration settings
  *  and widgets shared across portlet editors is defined.
@@ -192,7 +192,7 @@ public class PortletConfigurationEditorComponent {
         sortPrioritySelection.setValueMap(priorities);
         sortPrioritySelection.setValueIcons(priorityIcons);
         //TODO: spinder 3/4/11 not sure why this is necessary. [SKIN] not being interpreted.
-        String skinDir = "../org.rhq.enterprise.gui.coregui.CoreGUI/sc/skins/Enterprise/images";
+        String skinDir = "../org.rhq.coregui.CoreGUI/sc/skins/Enterprise/images";
         sortPrioritySelection.setImageURLPrefix(skinDir + "/actions/sort_");
         sortPrioritySelection.setImageURLSuffix(".png");
 

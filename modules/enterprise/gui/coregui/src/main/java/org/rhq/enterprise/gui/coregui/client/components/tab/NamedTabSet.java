@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.components.tab;
+package org.rhq.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;

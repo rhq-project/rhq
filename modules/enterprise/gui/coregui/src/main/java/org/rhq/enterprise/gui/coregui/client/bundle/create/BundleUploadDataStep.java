@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.create;
+package org.rhq.coregui.client.bundle.create;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,17 +32,17 @@ import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.components.upload.BundleFileUploadForm;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.HeaderLabel;
+import org.rhq.coregui.client.components.upload.BundleFileUploadForm;
+import org.rhq.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 public class BundleUploadDataStep extends AbstractWizardStep {
 

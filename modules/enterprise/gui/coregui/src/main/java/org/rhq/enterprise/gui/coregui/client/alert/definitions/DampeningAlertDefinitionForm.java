@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
@@ -38,8 +38,8 @@ import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 /**
  * @author John Mazzitelli

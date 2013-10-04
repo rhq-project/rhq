@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
+import org.rhq.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
 
 /**
  * The detail view for the Resource Monitoring>Traits subtab.

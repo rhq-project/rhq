@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;

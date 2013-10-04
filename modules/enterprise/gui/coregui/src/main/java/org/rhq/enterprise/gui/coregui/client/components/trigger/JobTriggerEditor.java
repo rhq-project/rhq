@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.trigger;
+package org.rhq.coregui.client.components.trigger;
 
 import java.util.Date;
 import java.util.EnumSet;
@@ -43,13 +43,13 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.common.JobTrigger;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
-import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.form.DurationItem;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.form.TimeUnit;
+import org.rhq.coregui.client.components.form.UnitType;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A SmartGWT widget that provides the ability to create a new {@link JobTrigger job trigger}, or view or edit an

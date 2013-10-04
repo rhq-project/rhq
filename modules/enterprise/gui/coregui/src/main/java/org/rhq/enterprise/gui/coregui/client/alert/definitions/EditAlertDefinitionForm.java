@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 

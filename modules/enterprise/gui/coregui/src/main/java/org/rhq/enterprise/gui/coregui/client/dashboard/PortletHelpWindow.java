@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.dashboard;
+package org.rhq.coregui.client.dashboard;
 
 import com.smartgwt.client.types.LayoutPolicy;
 import com.smartgwt.client.types.Overflow;
@@ -31,8 +31,8 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 /**
  * This is a window for displaying portlet settings. The window contains a form which in turn will contain the

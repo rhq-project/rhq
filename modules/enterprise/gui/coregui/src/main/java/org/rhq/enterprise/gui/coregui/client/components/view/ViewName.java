@@ -1,7 +1,7 @@
-package org.rhq.enterprise.gui.coregui.client.components.view;
+package org.rhq.coregui.client.components.view;
 
 import org.rhq.core.domain.util.StringUtils;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.coregui.client.IconEnum;
 
 /**
  * A simple class that ties a private name to a displayed title.  The title may very well change with locale but

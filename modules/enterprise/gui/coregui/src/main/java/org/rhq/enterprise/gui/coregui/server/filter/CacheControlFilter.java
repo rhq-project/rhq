@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.filter;
+package org.rhq.coregui.server.filter;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

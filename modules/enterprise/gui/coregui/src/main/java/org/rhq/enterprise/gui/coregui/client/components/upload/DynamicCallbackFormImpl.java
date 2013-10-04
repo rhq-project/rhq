@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.rhq.enterprise.gui.coregui.client.components.upload;
+package org.rhq.coregui.client.components.upload;
 
 import com.google.gwt.dom.client.Element;
 
@@ -68,7 +68,7 @@ public class DynamicCallbackFormImpl {
         if (!iframe.__formAction)
           return;
 
-        listener.@org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplHost::onFrameLoad()();
+        listener.@org.rhq.coregui.client.components.upload.DynamicCallbackFormImplHost::onFrameLoad()();
       };
     }
 

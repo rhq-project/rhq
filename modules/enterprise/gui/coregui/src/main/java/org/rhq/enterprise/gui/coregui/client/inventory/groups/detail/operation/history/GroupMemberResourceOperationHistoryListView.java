@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history;
+package org.rhq.coregui.client.inventory.groups.detail.operation.history;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,13 +11,13 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
+import org.rhq.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
+import org.rhq.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
 
 /**
  * @author Ian Springer

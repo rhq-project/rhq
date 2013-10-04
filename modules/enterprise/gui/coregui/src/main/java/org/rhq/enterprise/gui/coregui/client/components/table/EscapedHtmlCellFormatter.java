@@ -1,9 +1,9 @@
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.coregui.client.components.table;
 
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.StringUtility;
 
 /**
  * A cell formatter that escapes any HTML in the cell's value.

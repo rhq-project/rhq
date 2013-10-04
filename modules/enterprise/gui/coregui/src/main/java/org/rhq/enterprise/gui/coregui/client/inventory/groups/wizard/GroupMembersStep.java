@@ -20,17 +20,17 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
+package org.rhq.coregui.client.inventory.groups.wizard;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
 
 import java.util.Set;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.inventory.resource.selection.ResourceSelector;
 
 /**
  * @author Greg Hinkle

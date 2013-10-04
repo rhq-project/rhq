@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.BaseCriteria;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * Base class for all Server derivatives like {@link ServerWithAgentCountComposite} and {@link FailoverListDetails}

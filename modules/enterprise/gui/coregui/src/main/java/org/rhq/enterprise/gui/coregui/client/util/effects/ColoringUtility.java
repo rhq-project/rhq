@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.effects;
+package org.rhq.coregui.client.util.effects;
 
 import java.util.ArrayList;
 import java.util.List;

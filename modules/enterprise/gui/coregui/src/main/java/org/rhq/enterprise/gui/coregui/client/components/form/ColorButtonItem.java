@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.form;
+package org.rhq.coregui.client.components.form;
 
 import com.smartgwt.client.widgets.form.ColorPicker;
 import com.smartgwt.client.widgets.form.events.ColorSelectedEvent;
@@ -26,7 +26,7 @@ import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.coregui.client.CoreGUI;
 
 /**
  * A button that lets you pick a color. This is different than the smartgwt

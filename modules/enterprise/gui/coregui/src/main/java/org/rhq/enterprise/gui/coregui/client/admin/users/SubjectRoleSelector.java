@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.users;
+package org.rhq.coregui.client.admin.users;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -28,9 +28,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.admin.roles.RolesDataSource;
+import org.rhq.coregui.client.components.selector.AbstractSelector;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle

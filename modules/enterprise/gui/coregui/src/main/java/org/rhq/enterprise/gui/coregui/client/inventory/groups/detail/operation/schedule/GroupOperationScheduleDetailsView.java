@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule;
+package org.rhq.coregui.client.inventory.groups.detail.operation.schedule;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,13 +24,13 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.sorter.ReorderableList;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.sorter.ReorderableList;
+import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The details view of the Group Operations>Schedules subtab.

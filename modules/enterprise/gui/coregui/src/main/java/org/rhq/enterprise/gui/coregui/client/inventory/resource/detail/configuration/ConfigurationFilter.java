@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
+package org.rhq.coregui.client.inventory.resource.detail.configuration;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 

@@ -16,11 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.util.ArrayList;
 
-import org.rhq.enterprise.gui.coregui.client.gwt.GroupDefinitionExpressionBuilderGWTService;
+import org.rhq.coregui.client.gwt.GroupDefinitionExpressionBuilderGWTService;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
+package org.rhq.coregui.client.inventory.common.graph;
 
 import java.util.Date;
 
@@ -37,14 +37,14 @@ import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.RefreshIntervalMenu;
-import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
+import org.rhq.coregui.client.inventory.AutoRefresh;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Component to allow selection of Date/Time range for graphs using a radio button group.
@@ -180,7 +180,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         "use strict";
         var startDateMoment = $wnd.moment(startTime),
             endDateMoment = $wnd.moment(endTime),
-            dateTimeFormat = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor::DATE_TIME_FORMAT,
+            dateTimeFormat = this.@org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor::DATE_TIME_FORMAT,
             formattedDateRange = startDateMoment.format(dateTimeFormat) + '  -  ' + endDateMoment.format(dateTimeFormat),
         timeRange = endDateMoment.from(startDateMoment,true);
         $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+' ('+timeRange+')');

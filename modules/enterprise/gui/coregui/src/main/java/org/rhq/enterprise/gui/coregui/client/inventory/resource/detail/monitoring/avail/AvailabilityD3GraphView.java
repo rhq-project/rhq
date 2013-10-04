@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring.avail;
 
 import java.util.List;
 
@@ -24,10 +24,10 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.GraphMarker;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.GraphMarker;
+import org.rhq.coregui.client.inventory.common.graph.AvailabilityGraphType;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A special graph implementation just for representing Availability (with hovers) for

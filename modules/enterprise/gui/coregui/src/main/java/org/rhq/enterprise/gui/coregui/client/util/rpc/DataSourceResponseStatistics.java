@@ -1,11 +1,11 @@
-package org.rhq.enterprise.gui.coregui.client.util.rpc;
+package org.rhq.coregui.client.util.rpc;
 
 import java.util.ArrayList;
 import java.util.Date;
 
 import com.smartgwt.client.data.DSResponse;
 
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * Tracks responses received by {@link RPCDataSource}.

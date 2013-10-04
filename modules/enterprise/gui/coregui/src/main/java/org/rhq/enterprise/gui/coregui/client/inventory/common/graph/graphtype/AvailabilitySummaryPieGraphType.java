@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
+package org.rhq.coregui.client.inventory.common.graph.graphtype;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.enterprise.gui.coregui.client.GraphMarker;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.GraphMarker;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
@@ -96,11 +96,11 @@ public class AvailabilitySummaryPieGraphType implements GraphMarker{
         var availPieGraph = (function () {
             "use strict";
 
-            var w = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::WIDTH,
-                h = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::HEIGHT,
+            var w = @org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::WIDTH,
+                h = @org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::HEIGHT,
                     outerRadius = w / 2,
                     innerRadius = 0,
-                    data = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()());
+                    data = $wnd.jQuery.parseJSON(global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()());
 
             function drawPieGraph() {
 

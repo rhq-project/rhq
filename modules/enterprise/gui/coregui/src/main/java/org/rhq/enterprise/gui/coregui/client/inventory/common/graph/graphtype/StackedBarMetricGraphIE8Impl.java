@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
+package org.rhq.coregui.client.inventory.common.graph.graphtype;
 
 /**
  * Contains the javascript chart definition for an IE8 d3 Stacked Bar graph chart.

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.form;
+package org.rhq.coregui.client.components.form;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -37,7 +37,7 @@ import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.coregui.client.ImageManager;
 
 /**
  * This form item can be used to display a value normally in "read-only" form (i.e. as a StaticTextItem),

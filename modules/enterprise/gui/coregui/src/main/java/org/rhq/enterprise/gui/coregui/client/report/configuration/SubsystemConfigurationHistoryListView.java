@@ -1,10 +1,10 @@
-package org.rhq.enterprise.gui.coregui.client.report.configuration;
+package org.rhq.coregui.client.report.configuration;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 
 public class SubsystemConfigurationHistoryListView extends ResourceConfigurationHistoryListView {
 

@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.client.report.inventory;
+package org.rhq.coregui.client.report.inventory;
 
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -27,11 +27,11 @@ import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
+package org.rhq.coregui.client.inventory.resource.factory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
+import org.rhq.coregui.client.components.wizard.AbstractWizard;
+import org.rhq.coregui.client.components.wizard.WizardView;
 
 /**
  * @author Jay Shaughnessy

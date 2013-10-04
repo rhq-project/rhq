@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.test;
+package org.rhq.coregui.client.test;
 
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -32,8 +32,8 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
-import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.measurement.MeasurementParser;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 public class TestNumberFormatView extends EnhancedVLayout {
 

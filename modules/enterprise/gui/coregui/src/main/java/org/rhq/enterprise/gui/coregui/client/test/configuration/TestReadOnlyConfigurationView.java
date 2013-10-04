@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.test.configuration;
+package org.rhq.coregui.client.test.configuration;
 
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 
 /**
  * @author Ian Springer

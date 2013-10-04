@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
+package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,15 +29,15 @@ import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.inventory.AutoRefresh;
+import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
+import org.rhq.coregui.client.inventory.common.graph.Refreshable;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Views a resource's measurements in a tabular view.

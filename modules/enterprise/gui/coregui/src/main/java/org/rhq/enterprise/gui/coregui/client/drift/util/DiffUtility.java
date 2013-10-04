@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.drift.util;
+package org.rhq.coregui.client.drift.util;
 
 import java.util.List;
 
@@ -26,8 +26,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.PopupWindow;
+import org.rhq.coregui.client.util.StringUtility;
 
 /**
  * A collection of utility methods for working with unified diffs.

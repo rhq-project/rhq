@@ -18,7 +18,7 @@
  *  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-package org.rhq.enterprise.gui.coregui.client.components;
+package org.rhq.coregui.client.components;
 
 import java.util.Date;
 
@@ -27,7 +27,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.util.DateUtil;
 
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.util.Log;
 
 import static com.smartgwt.client.data.RelativeDate.END_OF_TODAY;
 import static com.smartgwt.client.data.RelativeDate.START_OF_TODAY;

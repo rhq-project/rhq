@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration;
+package org.rhq.coregui.client.inventory.groups.detail.configuration;
 
 import static java.util.EnumSet.of;
 
@@ -41,22 +41,22 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupMemberConfiguration;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.components.configuration.GroupConfigurationEditor;
+import org.rhq.coregui.client.components.configuration.GroupMemberConfiguration;
+import org.rhq.coregui.client.components.configuration.PropertyValueChangeEvent;
+import org.rhq.coregui.client.components.configuration.PropertyValueChangeListener;
+import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.MessageCenter;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view for editing a group's configuration.

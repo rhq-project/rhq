@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.client.report.inventory;
+package org.rhq.coregui.client.report.inventory;
 
 import java.util.List;
 
@@ -37,10 +37,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author jsanda

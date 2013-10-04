@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules;
+package org.rhq.coregui.client.inventory.groups.detail.monitoring.schedules;
 
 import java.util.List;
 
@@ -24,9 +24,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractSchedulesView;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.inventory.common.AbstractSchedulesView;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The group Monitoring>Schedules subtab.

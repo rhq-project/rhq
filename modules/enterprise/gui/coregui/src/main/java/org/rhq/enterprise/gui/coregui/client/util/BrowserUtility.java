@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.coregui.client.util;
 
 /**
  * Utility class for dealing with browser quirks.

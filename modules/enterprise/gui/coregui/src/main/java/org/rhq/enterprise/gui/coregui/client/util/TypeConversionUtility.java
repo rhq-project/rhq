@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.coregui.client.util;
 
 /**
  * @author Ian Springer

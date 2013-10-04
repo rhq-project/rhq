@@ -21,10 +21,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import org.rhq.core.domain.resource.InventorySummary;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTService;
+import org.rhq.coregui.client.gwt.ResourceBossGWTService;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

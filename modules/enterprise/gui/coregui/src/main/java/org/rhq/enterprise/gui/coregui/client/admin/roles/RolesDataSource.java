@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.roles;
+package org.rhq.coregui.client.admin.roles;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,13 +42,13 @@ import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
-import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupsDataSource;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.admin.users.UsersDataSource;
+import org.rhq.coregui.client.bundle.group.BundleGroupsDataSource;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.RoleGWTServiceAsync;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A DataSource for RHQ {@link Role role}s.

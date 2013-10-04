@@ -16,17 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_MTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_OPERATION_MODE;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_SECURE_PORT;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_ADDRESS;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP_ID;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_ID;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_MTIME;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_PORT;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_SECURE_PORT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +46,10 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * Datasource for @see Server.

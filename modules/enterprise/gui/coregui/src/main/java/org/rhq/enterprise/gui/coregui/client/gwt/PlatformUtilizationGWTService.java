@@ -19,7 +19,7 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.client.gwt;
+package org.rhq.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 

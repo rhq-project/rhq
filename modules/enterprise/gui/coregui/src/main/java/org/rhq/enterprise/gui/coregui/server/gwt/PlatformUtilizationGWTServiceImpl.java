@@ -19,12 +19,12 @@
  *
  */
 
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.PlatformUtilizationGWTService;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.coregui.client.gwt.PlatformUtilizationGWTService;
+import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.resource.PlatformUtilizationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

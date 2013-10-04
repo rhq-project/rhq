@@ -17,12 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule;
+package org.rhq.coregui.client.inventory.resource.detail.operation.schedule;
 
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
+import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
 
 /**
  * The details view of the Resource Operations>Schedules subtab.

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.list;
+package org.rhq.coregui.client.bundle.list;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,32 +42,32 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
-import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
-import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
-import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupsListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
-import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.ViewId;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.bundle.BundleTopView;
+import org.rhq.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.coregui.client.bundle.deployment.BundleDeploymentView;
+import org.rhq.coregui.client.bundle.destination.BundleDestinationListView;
+import org.rhq.coregui.client.bundle.destination.BundleDestinationView;
+import org.rhq.coregui.client.bundle.group.BundleGroupsListView;
+import org.rhq.coregui.client.bundle.version.BundleVersionListView;
+import org.rhq.coregui.client.bundle.version.BundleVersionView;
+import org.rhq.coregui.client.components.HeaderLabel;
+import org.rhq.coregui.client.components.buttons.BackButton;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.tagging.TagEditorView;
+import org.rhq.coregui.client.components.tagging.TagsChangedCallback;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private DynamicForm form;

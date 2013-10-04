@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.rpc;
+package org.rhq.coregui.client.util.rpc;
 
 import java.util.logging.Logger;
 import com.google.gwt.http.client.Request;
@@ -27,8 +27,8 @@ import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
 import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
 import com.google.gwt.user.client.rpc.impl.Serializer;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.util.Log;
 
 import java.util.HashSet;
 import java.util.Set;

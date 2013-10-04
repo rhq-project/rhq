@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle;
+package org.rhq.coregui.client.bundle;
 import java.util.Set;
 
 import com.smartgwt.client.types.VisibilityMode;
@@ -24,11 +24,11 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupsListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.bundle.group.BundleGroupsListView;
+import org.rhq.coregui.client.bundle.list.BundlesListView;
 
 
 /**

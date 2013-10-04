@@ -16,14 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.measurement;
+package org.rhq.coregui.client.util.measurement;
 
 import com.google.gwt.i18n.client.NumberFormat;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
 
 /**
  * Parses measurement strings given in the typical form of "[sign] magnitude [units]" such as:

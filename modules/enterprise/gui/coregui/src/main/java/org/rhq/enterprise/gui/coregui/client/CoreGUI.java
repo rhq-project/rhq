@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import java.util.List;
 
@@ -46,26 +46,26 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.help.HelpView;
-import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTopView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTopView;
-import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
-import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisticsView;
-import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
-import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
-import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
+import org.rhq.coregui.client.admin.AdministrationView;
+import org.rhq.coregui.client.alert.AlertHistoryView;
+import org.rhq.coregui.client.bundle.BundleTopView;
+import org.rhq.coregui.client.dashboard.DashboardsView;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.help.HelpView;
+import org.rhq.coregui.client.inventory.InventoryView;
+import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
+import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupTopView;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceTopView;
+import org.rhq.coregui.client.menu.MenuBarView;
+import org.rhq.coregui.client.report.ReportTopView;
+import org.rhq.coregui.client.report.tag.TaggedView;
+import org.rhq.coregui.client.test.TestDataSourceResponseStatisticsView;
+import org.rhq.coregui.client.test.TestRemoteServiceStatisticsView;
+import org.rhq.coregui.client.test.TestTopView;
+import org.rhq.coregui.client.util.ErrorHandler;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.MessageCenter;
 
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ GUI.

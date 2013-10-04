@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.form;
+package org.rhq.coregui.client.components.form;
 
 import java.util.Set;
 
@@ -26,7 +26,7 @@ import com.smartgwt.client.widgets.form.validator.CustomValidator;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
+import org.rhq.coregui.client.util.measurement.MeasurementParser;
 
 /**
  * Validates user entered numbers with units. This validator can be given

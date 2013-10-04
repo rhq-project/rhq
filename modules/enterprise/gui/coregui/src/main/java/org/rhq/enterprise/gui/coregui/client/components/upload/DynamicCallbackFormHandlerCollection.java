@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.components.upload;
+package org.rhq.coregui.client.components.upload;
 
 import java.util.ArrayList;
 

@@ -251,8 +251,8 @@
           <hostedWebapp>target/hostedWar</hostedWebapp>
           <debugSuspend>false</debugSuspend>
           <servicePattern>**/gwt/*GWTService.java</servicePattern>
-          <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
-          <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
+          <i18nMessagesBundle>org.rhq.coregui.client.Messages</i18nMessagesBundle>
+          <i18nConstantsWithLookupBundle>org.rhq.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
           <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
           <style>${gwt.style}</style>
           <strict>true</strict>
@@ -276,7 +276,7 @@
               <goal>debug</goal>
             </goals>
             <configuration>
-              <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
+              <module>org.rhq.coregui.CoreGUI</module>
             </configuration>
           </execution>
         </executions>
@@ -322,6 +322,34 @@
         </executions>
       </plugin>
 
+      <!-- remove unnecessary client .class files to reduce the size of the webapp and avoid long path names on windows -->
+      <plugin>
+         <artifactId>maven-clean-plugin</artifactId>
+         <executions>
+           <execution>
+            <id>remove-gwt-client-classes</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <verbose>true</verbose>
+              <excludeDefaultDirectories>true</excludeDefaultDirectories>
+              <filesets>
+                <fileset>  <!-- remove the class files of client-only code -->
+                  <directory>${project.build.directory}/classes/org/rhq/coregui/client</directory>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                  <excludes> <!-- keep the RPC-Service interface, and the entry- point class -->
+                    <exclude>CoreGUI*.class</exclude>
+                  </excludes>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
 

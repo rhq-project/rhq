@@ -51,7 +51,6 @@ import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.gwt.ResourceGWTService;
-import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
@@ -120,7 +119,6 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        Log.info("Loading GWT RPC Services");
     }
 
     public ResourceGWTServiceImpl() {

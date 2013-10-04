@@ -66,7 +66,7 @@
 
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
-             src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
+             src/main/resources/org/rhq/coregui/client/. For example, the "ja" locale has
              Messages_ja.properties and MessageConstants_ja.properties. -->
     <gwt.locale>en,de,ja,pt,zh,ru,cs,ko</gwt.locale>
 
@@ -341,8 +341,10 @@
                   <includes>
                     <include>**</include>
                   </includes>
-                  <excludes> <!-- keep the RPC-Service interface, and the entry- point class -->
+                  <!-- keep the RPC-Service interface, and the entry- point class -->
+                  <excludes>
                     <exclude>CoreGUI*.class</exclude>
+                    <exclude>gwt/**</exclude>
                   </excludes>
                 </fileset>
               </filesets>
@@ -457,7 +459,7 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
               <includes>
-                <include>org/rhq/enterprise/gui/coregui/client/Messages*.java</include>
+                <include>org/rhq/coregui/client/Messages*.java</include>
               </includes>
             </configuration>
           </plugin>

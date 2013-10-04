@@ -34,7 +34,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -66,7 +65,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         }
 
         boolean continueProcessing = true;
-        String sid = req.getHeader(UserSessionManager.SESSION_NAME);
+        String sid = req.getHeader("RHQ_Session");
         if (sid != null) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             try {

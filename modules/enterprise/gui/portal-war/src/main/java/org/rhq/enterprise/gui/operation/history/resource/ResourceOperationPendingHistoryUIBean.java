@@ -70,7 +70,7 @@ public class ResourceOperationPendingHistoryUIBean extends PagedDataTableUIBean 
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListResourceOperationPendingHistoryDataModel(
+            dataModel = new A(
                 PageControlView.ResourceOperationPendingHistory, MANAGED_BEAN_NAME);
         }
 
@@ -116,8 +116,9 @@ public class ResourceOperationPendingHistoryUIBean extends PagedDataTableUIBean 
         return "success";
     }
 
-    private class ListResourceOperationPendingHistoryDataModel extends PagedListDataModel<ResourceOperationHistory> {
-        public ListResourceOperationPendingHistoryDataModel(PageControlView view, String beanName) {
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends PagedListDataModel<ResourceOperationHistory> {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

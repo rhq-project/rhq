@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.inventory.group;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -27,10 +28,10 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.enterprise.gui.common.Outcomes;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.common.Outcomes;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -75,16 +76,17 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupConnectionPropertyUpdateHistoryDataModel(
+            dataModel = new A(
                 PageControlView.GroupConnectionPropertyUpdateHistory, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ListGroupConnectionPropertyUpdateHistoryDataModel extends
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends
         PagedListDataModel<GroupPluginConfigurationUpdate> {
-        public ListGroupConnectionPropertyUpdateHistoryDataModel(PageControlView view, String beanName) {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

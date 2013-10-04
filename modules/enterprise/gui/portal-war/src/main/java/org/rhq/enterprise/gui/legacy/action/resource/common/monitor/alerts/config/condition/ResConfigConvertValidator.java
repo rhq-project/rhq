@@ -25,7 +25,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 
-class ResourceConfigurationConverterValidator implements ConditionBeanConverterValidator {
+class ResConfigConvertValidator implements ConditionBeanConverterValidator {
     public void exportProperties(Subject subject, ConditionBean fromBean, AlertCondition toCondition) {
         toCondition.setCategory(AlertConditionCategory.RESOURCE_CONFIG);
     }

@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.form;
+package org.rhq.coregui.client.components.form;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 
 import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.gui.coregui.client.searchbar.EnhancedSearchBar;
+import org.rhq.coregui.client.searchbar.EnhancedSearchBar;
 
 /**
  * Wrap the SearchBar component in CanvasItem so it can be put into a DynamicForm.

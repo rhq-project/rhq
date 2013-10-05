@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
+package org.rhq.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -44,19 +44,19 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.operation.OperationHistoryDataSource;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle

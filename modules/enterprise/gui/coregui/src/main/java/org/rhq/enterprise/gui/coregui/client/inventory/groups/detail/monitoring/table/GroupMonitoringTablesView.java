@@ -17,11 +17,11 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
+package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * 

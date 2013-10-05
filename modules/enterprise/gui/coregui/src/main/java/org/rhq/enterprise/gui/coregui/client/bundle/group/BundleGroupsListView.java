@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.group;
+package org.rhq.coregui.client.bundle.group;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,20 +35,20 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.BundleGroup;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.ErrorHandler;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * Shows a list of bundle groups in the system. The list gives you some actions but proper permissions are required.

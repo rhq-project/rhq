@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.form;
+package org.rhq.coregui.client.components.form;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,7 +35,7 @@ import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * TODO

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.revert;
+package org.rhq.coregui.client.bundle.revert;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -27,13 +27,13 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy

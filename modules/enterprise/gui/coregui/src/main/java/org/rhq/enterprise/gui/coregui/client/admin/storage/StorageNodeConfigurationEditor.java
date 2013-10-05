@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.storage;
+package org.rhq.coregui.client.admin.storage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,15 +42,15 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.ValueWithUnitsItem;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.form.ValueWithUnitsItem;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The component for editing the storage node configuration

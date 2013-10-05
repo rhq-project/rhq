@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.selector;
+package org.rhq.coregui.client.components.selector;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -28,8 +28,8 @@ import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
 public class SingleResourceGroupSelectorItem extends ComboBoxItem {
 

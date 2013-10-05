@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.operation;
+package org.rhq.coregui.client.operation;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -38,21 +38,21 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.form.DateFilterItem;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.OperationGWTServiceAsync;
+import org.rhq.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.

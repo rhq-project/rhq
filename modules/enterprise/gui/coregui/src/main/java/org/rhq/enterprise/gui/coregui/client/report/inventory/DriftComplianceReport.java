@@ -20,19 +20,19 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.report.inventory;
+package org.rhq.coregui.client.report.inventory;
 
 import com.smartgwt.client.data.Criteria;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.coregui.client.report.DriftComplianceReportResourceSearchView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A tweaked version of the InventorySummary report that narrows the relevant types to those that support Drift

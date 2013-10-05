@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,11 +37,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.admin.users.UsersDataSource;
+import org.rhq.coregui.client.components.selector.AbstractSelector;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * This notification form will be used for the System Users sender. This form lets

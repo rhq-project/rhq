@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.coregui.client.components.table;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -38,19 +38,19 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.DetailsView;
-import org.rhq.enterprise.gui.coregui.client.InitializableView;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.DetailsView;
+import org.rhq.coregui.client.InitializableView;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.buttons.BackButton;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Provides the typical table view with the additional ability of traversing to a "details" view
@@ -152,7 +152,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * </br>
      * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields.
      * 
-     * @see org.rhq.enterprise.gui.coregui.client.components.table.Table#configureTable()
+     * @see org.rhq.coregui.client.components.table.Table#configureTable()
      */
     @Override
     protected void configureTable() {

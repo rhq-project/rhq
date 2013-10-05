@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.measurement;
+package org.rhq.coregui.client.util.measurement;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;

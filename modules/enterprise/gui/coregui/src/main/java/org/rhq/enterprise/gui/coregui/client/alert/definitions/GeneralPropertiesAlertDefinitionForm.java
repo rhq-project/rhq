@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
@@ -32,12 +32,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableTextAreaFormItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.components.form.SimpleEditableFormItem;
+import org.rhq.coregui.client.components.form.SimpleEditableTextAreaFormItem;
+import org.rhq.coregui.client.components.form.StringLengthValidator;
 
 /**
  * @author John Mazzitelli

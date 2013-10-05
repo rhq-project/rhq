@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.coregui.client.inventory.common;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,12 +38,12 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * A server-side SmartGWT DataSource for reading {@link MeasurementDataTrait trait data}.

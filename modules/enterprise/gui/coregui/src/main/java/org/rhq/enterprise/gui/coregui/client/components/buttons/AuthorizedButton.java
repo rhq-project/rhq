@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.buttons;
+package org.rhq.coregui.client.components.buttons;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,9 +25,9 @@ import java.util.Set;
 import com.smartgwt.client.widgets.Button;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 
 // TODO: This utility isCurrently unused. Candidate for removal. 
 

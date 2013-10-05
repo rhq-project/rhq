@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,7 +30,7 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
-import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
+import org.rhq.coregui.client.gwt.SystemGWTService;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.RemoteClientManagerLocal;

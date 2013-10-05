@@ -21,10 +21,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.util.enhanced;
+package org.rhq.coregui.client.util.enhanced;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 /**
  * Interface to all Enhanced components.

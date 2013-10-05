@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
+package org.rhq.coregui.client.inventory.groups.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -30,9 +30,9 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTreeView.ResourceGroupEnhancedTreeNode;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupTreeView.ResourceGroupEnhancedTreeNode;
 
 /**
  * @author Jay Shaughnessy

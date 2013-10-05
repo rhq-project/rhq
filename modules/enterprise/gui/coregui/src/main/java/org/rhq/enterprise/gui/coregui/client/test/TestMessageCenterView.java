@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.test;
+package org.rhq.coregui.client.test;
 
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -31,11 +31,11 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 public class TestMessageCenterView extends EnhancedVLayout {
 

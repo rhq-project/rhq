@@ -20,10 +20,10 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.roles;
+package org.rhq.coregui.client.admin.roles;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupSelector;
+import org.rhq.coregui.client.bundle.group.BundleGroupSelector;
 
 
 /**

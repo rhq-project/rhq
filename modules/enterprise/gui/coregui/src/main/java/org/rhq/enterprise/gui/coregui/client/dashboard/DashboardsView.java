@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard;
+package org.rhq.coregui.client.dashboard;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,27 +53,27 @@ import org.rhq.core.domain.dashboard.DashboardCategory;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.InitializableView;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
-import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.InitializableView;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.tab.NamedTab;
+import org.rhq.coregui.client.components.tab.NamedTabSet;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.util.MashupPortlet;
+import org.rhq.coregui.client.dashboard.portlets.util.MessagePortlet;
+import org.rhq.coregui.client.gwt.DashboardGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy

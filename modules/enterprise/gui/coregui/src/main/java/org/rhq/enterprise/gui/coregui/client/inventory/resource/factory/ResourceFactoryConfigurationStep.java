@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
+package org.rhq.coregui.client.inventory.resource.factory;
 
 import java.util.TreeSet;
 
@@ -27,17 +27,17 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
-import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.components.configuration.PropertyValueChangeEvent;
+import org.rhq.coregui.client.components.configuration.PropertyValueChangeListener;
+import org.rhq.coregui.client.components.form.DurationItem;
+import org.rhq.coregui.client.components.form.TimeUnit;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * This step displays a config editor for the user to enter the new Resource's initial Resource or plugin configuration.

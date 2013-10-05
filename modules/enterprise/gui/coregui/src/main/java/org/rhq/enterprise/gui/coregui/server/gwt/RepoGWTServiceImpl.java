@@ -20,13 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.RepoGWTService;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.coregui.client.gwt.RepoGWTService;
+import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.rpc;
+package org.rhq.coregui.client.util.rpc;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,9 +24,9 @@ import java.util.Set;
 import java.util.logging.Logger;
 import com.smartgwt.client.widgets.Img;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

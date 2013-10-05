@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
+package org.rhq.coregui.client.inventory.common.event;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,18 +41,18 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.DateTimeFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.form.DateTimeFilterItem;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Joseph Marques

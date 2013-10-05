@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
+package org.rhq.coregui.client.inventory.groups.wizard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +29,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.wizard.AbstractWizard;
+import org.rhq.coregui.client.components.wizard.WizardStep;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A wizard for creating a new Resource group. This is an abstract base class that

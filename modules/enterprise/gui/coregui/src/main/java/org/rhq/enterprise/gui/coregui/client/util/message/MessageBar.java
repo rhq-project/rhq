@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.message;
+package org.rhq.coregui.client.util.message;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
@@ -35,8 +35,8 @@ import com.smartgwt.client.widgets.menu.MenuItemIfFunction;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
 
 /**

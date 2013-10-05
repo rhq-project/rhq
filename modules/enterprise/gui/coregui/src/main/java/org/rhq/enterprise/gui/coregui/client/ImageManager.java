@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.ResultState;

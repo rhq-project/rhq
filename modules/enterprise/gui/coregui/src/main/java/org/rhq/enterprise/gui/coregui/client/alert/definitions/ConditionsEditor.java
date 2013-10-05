@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -46,14 +46,14 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.alert.AlertFormatUtility;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli

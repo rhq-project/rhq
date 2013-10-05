@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring;
 
 import java.util.ArrayList;
 
@@ -26,11 +26,11 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
 
 /**
  * A view that displays a paginated table of calltime (aka response time) data.

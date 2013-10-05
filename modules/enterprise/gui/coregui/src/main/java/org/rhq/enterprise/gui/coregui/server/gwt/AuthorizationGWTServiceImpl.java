@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.gwt.AuthorizationGWTService;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.coregui.client.gwt.AuthorizationGWTService;
+import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

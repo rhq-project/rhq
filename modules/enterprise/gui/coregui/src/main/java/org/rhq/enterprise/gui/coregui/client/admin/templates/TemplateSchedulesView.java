@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.templates;
+package org.rhq.coregui.client.admin.templates;
 
 import java.util.List;
 import java.util.Set;
@@ -26,9 +26,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractSchedulesView;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.inventory.common.AbstractSchedulesView;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A view for viewing and updating the default metric schedules ("metric templates") for a particular ResourceType.

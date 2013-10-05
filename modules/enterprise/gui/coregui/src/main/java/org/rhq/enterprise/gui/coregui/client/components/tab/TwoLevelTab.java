@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.tab;
+package org.rhq.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.components.view.ViewName;
 
 /**
  * @author John Sanda

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -27,7 +27,7 @@ import java.util.Set;
 
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

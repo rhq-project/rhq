@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,8 +38,8 @@ import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.coregui.client.gwt.ConfigurationGWTService;
+import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

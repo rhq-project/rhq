@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
+package org.rhq.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.Set;
 
@@ -30,11 +30,11 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy

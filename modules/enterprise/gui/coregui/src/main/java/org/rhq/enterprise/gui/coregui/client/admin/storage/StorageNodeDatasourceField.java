@@ -16,11 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.storage;
+package org.rhq.coregui.client.admin.storage;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.coregui.client.CoreGUI;
 
 /**
  * Fields for {@link StorageNodeDatasource} class.

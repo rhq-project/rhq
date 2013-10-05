@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
+package org.rhq.coregui.client.inventory.common.graph.graphtype;
 
 import java.util.Date;
 import java.util.List;
@@ -24,11 +24,11 @@ import java.util.List;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.inventory.common.graph.AvailabilityGraphType;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
 
 /**
  * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
@@ -145,20 +145,20 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
         var global = this,
         // tidy up all of our interactions with java (via JSNI) thru AvailChartContext class
         // NOTE: rhq.js has the javascript object constructors in it.
-                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailabilityJson()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverBarLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverAvailabilityLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartTitleLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartUpLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartXaxisTimeFormatHours()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartXaxisTimeFormatHoursMinutes()()
+                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartId()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailabilityJson()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartDateLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartTimeLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverStartLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverBarLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverAvailabilityLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverTimeFormat()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartTitleLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartUpLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartXaxisTimeFormatHours()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartXaxisTimeFormatHoursMinutes()()
                 );
 
 

@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.report.tag;
+package org.rhq.coregui.client.report.tag;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -34,21 +34,21 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
-import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.bundle.deployment.BundleDeploymentListView;
+import org.rhq.coregui.client.bundle.destination.BundleDestinationListView;
+import org.rhq.coregui.client.bundle.list.BundlesListView;
+import org.rhq.coregui.client.bundle.version.BundleVersionListView;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The main tag cloud view which will show the actual tag cloud with a tabbed view

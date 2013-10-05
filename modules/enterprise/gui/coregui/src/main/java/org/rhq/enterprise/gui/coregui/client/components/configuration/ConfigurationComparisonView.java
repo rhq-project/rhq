@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.configuration;
+package org.rhq.coregui.client.components.configuration;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,9 +48,9 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 
 /**
  * @author Greg Hinkle

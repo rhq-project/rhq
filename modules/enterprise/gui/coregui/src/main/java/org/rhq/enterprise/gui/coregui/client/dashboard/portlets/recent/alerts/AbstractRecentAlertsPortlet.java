@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts;
+package org.rhq.coregui.client.dashboard.portlets.recent.alerts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,20 +32,20 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.alert.AlertDataSource;
+import org.rhq.coregui.client.alert.AlertHistoryView;
+import org.rhq.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.dashboard.CustomSettingsPortlet;
+import org.rhq.coregui.client.dashboard.PortletWindow;
+import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
+import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A base class for deriving recent alerts portlets for different entity contexts.  In this way the
@@ -340,7 +340,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
          * This override allows us to set the total rows to the number of recent op history configured for
          * the portlet. This sets the counter appropriately and stops further queries to the server.
          *
-         * @see org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource#getTotalRows(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
+         * @see org.rhq.coregui.client.operation.OperationHistoryDataSource#getTotalRows(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
          */
         @Override
         protected int getTotalRows(final PageList<Alert> result, final DSResponse response, final DSRequest request) {

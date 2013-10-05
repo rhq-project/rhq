@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.carousel;
+package org.rhq.coregui.client.components.carousel;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.AnimationEffect;
@@ -26,14 +26,14 @@ import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.DetailsView;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableSection;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.DetailsView;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.buttons.BackButton;
+import org.rhq.coregui.client.components.table.AbstractTableSection;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Provides the typical carousel view with the additional ability of traversing to "details" views - a masters/detail 

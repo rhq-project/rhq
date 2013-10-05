@@ -20,15 +20,15 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
-import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
-import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionsView;
+import org.rhq.coregui.client.admin.roles.RolesView;
+import org.rhq.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
+import org.rhq.coregui.client.admin.users.UsersView;
+import org.rhq.coregui.client.components.table.StringIDTableSection;
+import org.rhq.coregui.client.drift.DriftDefinitionsView;
 
 /**
  * @author Greg Hinkle

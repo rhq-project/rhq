@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
+package org.rhq.coregui.client.inventory.common.event;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TitleOrientation;
@@ -32,13 +32,13 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Joseph Marques

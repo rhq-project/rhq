@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.menu;
+package org.rhq.coregui.client.menu;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,17 +36,17 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
-import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
-import org.rhq.enterprise.gui.coregui.client.help.HelpView;
-import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHStack;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.admin.AdministrationView;
+import org.rhq.coregui.client.bundle.BundleTopView;
+import org.rhq.coregui.client.components.AboutModalWindow;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.dashboard.DashboardsView;
+import org.rhq.coregui.client.help.HelpView;
+import org.rhq.coregui.client.inventory.InventoryView;
+import org.rhq.coregui.client.report.ReportTopView;
+import org.rhq.coregui.client.util.enhanced.EnhancedHStack;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle

@@ -17,13 +17,13 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_DETAIL;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_TYPE;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EXECUTION_STATUS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_SUBJECT_NAME;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_CTIME;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_DETAIL;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_TYPE;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EXECUTION_STATUS;
+import static org.rhq.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_SUBJECT_NAME;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -43,14 +43,14 @@ import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.TopologyGWTServiceAsync;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of a partition event.

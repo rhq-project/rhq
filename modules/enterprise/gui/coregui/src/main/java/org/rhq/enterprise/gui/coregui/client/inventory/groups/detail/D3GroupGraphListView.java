@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
+package org.rhq.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,17 +36,17 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.AutoRefresh;
+import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.inventory.common.graph.MetricGraphData;
+import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
+import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.async.CountDownLatch;
 
 /**
  * Build the Group version of the View that shows the individual graph views.

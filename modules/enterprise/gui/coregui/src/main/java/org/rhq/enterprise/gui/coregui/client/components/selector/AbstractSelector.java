@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.selector;
+package org.rhq.coregui.client.components.selector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,11 +63,11 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VStack;
 
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedVStack;
 
 /**
  * @author Greg Hinkle

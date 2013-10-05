@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.users;
+package org.rhq.coregui.client.admin.users;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,17 +37,17 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.form.AbstractRecordEditor;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.selector.AssignedItemsChangedEvent;
+import org.rhq.coregui.client.components.selector.AssignedItemsChangedHandler;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and if the user is authenticated via RHQ and

@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.rpc;
+package org.rhq.coregui.client.util.rpc;
 
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

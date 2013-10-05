@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard;
+package org.rhq.coregui.client.dashboard;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,41 +27,41 @@ import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.FavoriteGroupsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationSchedulePortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.dashboard.portlets.groups.FavoriteGroupsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
+import org.rhq.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
+import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.operations.OperationSchedulePortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceBundleDeploymentsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
+import org.rhq.coregui.client.dashboard.portlets.util.MashupPortlet;
+import org.rhq.coregui.client.dashboard.portlets.util.MessagePortlet;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Simeon Pinder

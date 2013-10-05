@@ -16,9 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.async;
+package org.rhq.coregui.client.util.async;
 
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * A Simple version of CountDownLatch.

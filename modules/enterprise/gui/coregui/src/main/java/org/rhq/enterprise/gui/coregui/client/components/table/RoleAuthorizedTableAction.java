@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.coregui.client.components.table;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,9 +30,9 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * This is used only to determine enablement of certain bundle buttons (new, deploy). It activates the button if the user

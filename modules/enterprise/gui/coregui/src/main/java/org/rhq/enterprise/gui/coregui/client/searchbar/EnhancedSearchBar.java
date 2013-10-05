@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.searchbar;
+package org.rhq.coregui.client.searchbar;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -39,15 +39,15 @@ import com.smartgwt.client.widgets.toolbar.ToolStripButton;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.SearchGWTServiceAsync;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The class defines the UI component of the search bar.

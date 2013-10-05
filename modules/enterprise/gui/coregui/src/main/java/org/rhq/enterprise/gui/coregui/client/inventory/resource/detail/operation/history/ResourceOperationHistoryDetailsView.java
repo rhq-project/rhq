@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history;
+package org.rhq.coregui.client.inventory.resource.detail.operation.history;
 
 import java.util.List;
 
@@ -36,12 +36,12 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Ian Springer

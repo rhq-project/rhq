@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.util.List;
 
@@ -40,8 +40,8 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTService;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.coregui.client.gwt.TopologyGWTService;
+import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;

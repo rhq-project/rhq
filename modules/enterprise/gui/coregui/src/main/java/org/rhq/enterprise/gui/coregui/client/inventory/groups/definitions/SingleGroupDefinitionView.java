@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
+package org.rhq.coregui.client.inventory.groups.definitions;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,23 +72,23 @@ import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Joseph Marques

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.list;
+package org.rhq.coregui.client.bundle.list;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,22 +40,22 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
-import org.rhq.enterprise.gui.coregui.client.components.table.BundleAuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
-import org.rhq.enterprise.gui.coregui.client.components.table.RoleAuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.bundle.create.BundleCreateWizard;
+import org.rhq.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.coregui.client.components.table.BundleAuthorizedTableAction;
+import org.rhq.coregui.client.components.table.RecordExtractor;
+import org.rhq.coregui.client.components.table.RoleAuthorizedTableAction;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.ErrorHandler;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * Shows a list of bundles in the system. The list gives you some actions like new, delete and deploy but

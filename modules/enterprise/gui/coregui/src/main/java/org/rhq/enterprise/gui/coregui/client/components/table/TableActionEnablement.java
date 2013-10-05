@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.coregui.client.components.table;
 
 /**
  * Specifies how many rows must be selected in order for a {@link TableAction} button to be enabled.

@@ -20,23 +20,23 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource;
+package org.rhq.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PARENT_INVENTORY_STATUS;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.PARENT_INVENTORY_STATUS;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -60,14 +60,14 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A DataSource, basically the same as ResourceDatasource in the fields it defines, but that works with

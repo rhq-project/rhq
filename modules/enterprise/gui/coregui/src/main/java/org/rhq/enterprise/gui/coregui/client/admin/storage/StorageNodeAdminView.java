@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.storage;
+package org.rhq.coregui.client.admin.storage;
 
 import java.util.Map;
 
@@ -26,22 +26,22 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.admin.AdministrationView;
+import org.rhq.coregui.client.components.tab.NamedTab;
+import org.rhq.coregui.client.components.tab.NamedTabSet;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.AutoRefresh;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The main view for managing storage nodes.

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration;
+package org.rhq.coregui.client.inventory.resource.detail.configuration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,15 +33,15 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.configuration.ConfigurationComparisonView;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * The superclass to the main plugin/resource views that lists all configuration history items.

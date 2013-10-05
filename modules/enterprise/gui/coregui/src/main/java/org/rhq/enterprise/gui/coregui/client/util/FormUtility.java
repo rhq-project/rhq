@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.coregui.client.util;
 
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -25,7 +25,7 @@ import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.coregui.client.ImageManager;
 
 /**
  * A collection of utility methods for working with SmartGWT {@link DynamicForm}s.

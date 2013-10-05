@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle;
+package org.rhq.coregui.client.bundle;
 
 import java.util.Set;
 
@@ -28,18 +28,18 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupEditView;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
-import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.ViewId;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.bundle.group.BundleGroupEditView;
+import org.rhq.coregui.client.bundle.list.BundleView;
+import org.rhq.coregui.client.bundle.tree.BundleTreeView;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * This is the main bundle view with left hand side trees and right hand side list/details view.

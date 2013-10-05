@@ -20,16 +20,16 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.store;
+package org.rhq.coregui.client.dashboard.store;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.dashboard.Dashboard;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.gwt.DashboardGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle

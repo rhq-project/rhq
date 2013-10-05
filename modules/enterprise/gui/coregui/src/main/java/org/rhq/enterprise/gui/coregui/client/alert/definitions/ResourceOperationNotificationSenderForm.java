@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,15 +56,15 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.alert.definitions.ResourceOperationNotificationInfo.ResourceSelectionMode;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.alert.definitions.ResourceOperationNotificationInfo.ResourceSelectionMode;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.components.form.SortedSelectItem;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
+import org.rhq.coregui.client.inventory.resource.selection.SingleResourcePicker;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * This notification form will be used for the Resource Operation sender. This form lets

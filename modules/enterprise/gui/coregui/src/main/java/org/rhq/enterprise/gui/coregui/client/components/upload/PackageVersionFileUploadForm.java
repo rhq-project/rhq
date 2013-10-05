@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.upload;
+package org.rhq.coregui.client.components.upload;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.coregui.client.CoreGUI;
 
 /**
  * Upload a single file and use it to create a new PackageVersion. 

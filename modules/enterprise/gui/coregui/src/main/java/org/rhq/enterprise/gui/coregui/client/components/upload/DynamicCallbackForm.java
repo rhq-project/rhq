@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.upload;
+package org.rhq.coregui.client.components.upload;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
@@ -26,8 +26,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.smartgwt.client.widgets.form.DynamicForm;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackFormImplHost {
 

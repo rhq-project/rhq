@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -65,12 +65,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle

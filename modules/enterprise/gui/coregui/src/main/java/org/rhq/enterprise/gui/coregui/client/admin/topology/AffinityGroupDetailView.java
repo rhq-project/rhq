@@ -17,9 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AffinityGroupWithCountsDatasource.Fields.FIELD_NAME;
+import static org.rhq.coregui.client.admin.topology.AffinityGroupWithCountsDatasource.Fields.FIELD_NAME;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -34,14 +34,14 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.AffinityGroup;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of a affinity group.

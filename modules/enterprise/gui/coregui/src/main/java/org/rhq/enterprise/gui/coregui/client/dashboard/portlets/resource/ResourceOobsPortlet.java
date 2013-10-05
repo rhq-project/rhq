@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
+package org.rhq.coregui.client.dashboard.portlets.resource;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -37,17 +37,17 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.coregui.client.util.Log;
 
 import java.util.Arrays;
 import java.util.EnumSet;

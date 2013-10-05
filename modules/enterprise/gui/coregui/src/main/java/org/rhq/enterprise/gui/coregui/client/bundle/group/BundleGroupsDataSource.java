@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.group;
+package org.rhq.coregui.client.bundle.group;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,13 +36,13 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource.Field;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesDataSource;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.admin.users.UsersDataSource.Field;
+import org.rhq.coregui.client.bundle.list.BundlesDataSource;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author Jay Shaughnessy

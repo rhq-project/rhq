@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
+package org.rhq.coregui.client.dashboard.portlets.resource;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.AbstractOperationHistoryPortlet;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.portlets.recent.operations.AbstractOperationHistoryPortlet;
 
 /**
  * @author Simeon Pinder

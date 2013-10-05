@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.report;
+package org.rhq.coregui.client.report;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,28 +30,28 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
-import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
-import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
-import org.rhq.enterprise.gui.coregui.client.report.alert.SubsystemRecentAlertsView;
-import org.rhq.enterprise.gui.coregui.client.report.configuration.SubsystemConfigurationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.report.inventory.DriftComplianceReport;
-import org.rhq.enterprise.gui.coregui.client.report.inventory.ResourceInstallReport;
-import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
-import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.alert.AlertHistoryView;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.coregui.client.components.view.NavigationItem;
+import org.rhq.coregui.client.components.view.NavigationSection;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
+import org.rhq.coregui.client.drift.DriftHistoryView;
+import org.rhq.coregui.client.drift.SubsystemResourceDriftView;
+import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
+import org.rhq.coregui.client.operation.OperationHistoryView;
+import org.rhq.coregui.client.report.alert.SubsystemRecentAlertsView;
+import org.rhq.coregui.client.report.configuration.SubsystemConfigurationHistoryListView;
+import org.rhq.coregui.client.report.inventory.DriftComplianceReport;
+import org.rhq.coregui.client.report.inventory.ResourceInstallReport;
+import org.rhq.coregui.client.report.measurement.MeasurementOOBView;
+import org.rhq.coregui.client.report.operation.SubsystemOperationHistoryListView;
+import org.rhq.coregui.client.report.tag.TaggedView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Reports top-level view.

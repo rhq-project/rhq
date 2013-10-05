@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.coregui.client.inventory.common;
 
 import java.util.ArrayList;
 
@@ -30,7 +30,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.Table;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementDataTrait trait}s,

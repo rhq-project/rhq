@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util.message;
+package org.rhq.coregui.client.util.message;
 
 import java.util.Date;
 import java.util.EnumSet;
 
-import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.ErrorHandler;
+import org.rhq.coregui.client.util.StringUtility;
 
 /**
  * A message to be displayed to the user in one or more places.

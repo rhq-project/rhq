@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems;
+package org.rhq.coregui.client.dashboard.portlets.recent.problems;
 
 /*
  * RHQ Management Platform
@@ -20,9 +20,9 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems
  */
 
 //import java.text.SimpleDateFormat;
-import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.ALERTS;
-import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource.Field.RESOURCE;
+import static org.rhq.coregui.client.resource.ProblemResourcesDataSource.Field.ALERTS;
+import static org.rhq.coregui.client.resource.ProblemResourcesDataSource.Field.AVAILABILITY;
+import static org.rhq.coregui.client.resource.ProblemResourcesDataSource.Field.RESOURCE;
 
 import java.util.Date;
 import java.util.List;
@@ -48,20 +48,20 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.table.IconField;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableWidget;
+import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.dashboard.CustomSettingsPortlet;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.PortletWindow;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.resource.ProblemResourcesDataSource;
+import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * A view that displays a paginated table of Resources with alerts,

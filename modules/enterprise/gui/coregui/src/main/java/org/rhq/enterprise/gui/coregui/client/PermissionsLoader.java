@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -28,10 +28,10 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Option;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * Provides convenience methods that loads permissions and notifies you via a callback when done.

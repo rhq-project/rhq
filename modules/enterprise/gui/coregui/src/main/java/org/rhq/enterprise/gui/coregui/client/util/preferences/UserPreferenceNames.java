@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.preferences;
+package org.rhq.coregui.client.util.preferences;
 
 /**
  * Names of {@link org.rhq.core.domain.auth.Subject#getUserConfiguration() user preference properties}. The default

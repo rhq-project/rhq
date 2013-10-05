@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring;
 
 import java.util.ArrayList;
 
@@ -15,13 +15,13 @@ import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.util.preferences.UserPreferences;
 
 /**
  * A data source to read in calltime (aka response time) metric data.

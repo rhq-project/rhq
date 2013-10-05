@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.alert;
+package org.rhq.coregui.client.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,20 +42,20 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
-import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.form.DateFilterItem;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.table.RecordExtractor;
+import org.rhq.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the

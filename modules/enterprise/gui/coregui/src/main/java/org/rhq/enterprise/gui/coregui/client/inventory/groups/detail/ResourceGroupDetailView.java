@@ -16,9 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
+package org.rhq.coregui.client.inventory.groups.detail;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
+import static org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -42,38 +42,38 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
-import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
-import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.GroupPluginConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.MembersView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.ResourceGroupSchedulesView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMonitoringTablesView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.alert.GroupAlertHistoryView;
+import org.rhq.coregui.client.alert.definitions.GroupAlertDefinitionsView;
+import org.rhq.coregui.client.components.tab.SubTab;
+import org.rhq.coregui.client.components.tab.TwoLevelTab;
+import org.rhq.coregui.client.components.tab.TwoLevelTabSelectedEvent;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.InventoryView;
+import org.rhq.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
+import org.rhq.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
+import org.rhq.coregui.client.inventory.groups.detail.inventory.GroupPluginConfigurationEditView;
+import org.rhq.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
+import org.rhq.coregui.client.inventory.groups.detail.inventory.MembersView;
+import org.rhq.coregui.client.inventory.groups.detail.monitoring.schedules.ResourceGroupSchedulesView;
+import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.GroupMonitoringTablesView;
+import org.rhq.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
+import org.rhq.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
+import org.rhq.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
+import org.rhq.coregui.client.inventory.groups.detail.summary.ActivityView;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The right panel of a Resource Group view (#ResourceGroup/* or #Resource/AutoGroup/*).

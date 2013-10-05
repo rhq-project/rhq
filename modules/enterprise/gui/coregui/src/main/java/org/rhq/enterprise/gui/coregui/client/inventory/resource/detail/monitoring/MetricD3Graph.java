@@ -16,17 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.enterprise.gui.coregui.client.GraphMarker;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.GraphMarker;
+import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.inventory.common.graph.Refreshable;
+import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A D3 graph implementation for graphing Resource metrics.

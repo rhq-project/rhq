@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.util.List;
 
@@ -28,8 +28,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
-import org.rhq.enterprise.gui.coregui.client.gwt.ClusterGWTService;
-import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.coregui.client.gwt.ClusterGWTService;
+import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory;
+package org.rhq.coregui.client.inventory;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -32,24 +32,24 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.PermissionsLoadedListener;
+import org.rhq.coregui.client.PermissionsLoader;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.coregui.client.components.view.HasViewName;
+import org.rhq.coregui.client.components.view.NavigationItem;
+import org.rhq.coregui.client.components.view.NavigationSection;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupListView;
+import org.rhq.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
+import org.rhq.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Inventory top-level view.

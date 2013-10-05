@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.version;
+package org.rhq.coregui.client.bundle.version;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SelectionStyle;
@@ -31,11 +31,11 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.bundle.list.BundleVersionDataSource;
+import org.rhq.coregui.client.components.table.Table;
 
 /**
  * @author Greg Hinkle

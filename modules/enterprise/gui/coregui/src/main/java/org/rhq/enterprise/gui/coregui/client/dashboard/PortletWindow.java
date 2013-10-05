@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard;
+package org.rhq.coregui.client.dashboard;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -49,7 +49,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.Table;
 
 /**
  * @author Greg Hinkle

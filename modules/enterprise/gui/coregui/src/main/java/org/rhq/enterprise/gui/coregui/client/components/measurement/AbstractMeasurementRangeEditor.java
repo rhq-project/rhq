@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.measurement;
+package org.rhq.coregui.client.components.measurement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,12 +41,12 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.components.table.TableWidget;
+import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Simeon Pinder

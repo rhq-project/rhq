@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.tagging;
+package org.rhq.coregui.client.components.tagging;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -31,9 +31,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.TagCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author Greg Hinkle

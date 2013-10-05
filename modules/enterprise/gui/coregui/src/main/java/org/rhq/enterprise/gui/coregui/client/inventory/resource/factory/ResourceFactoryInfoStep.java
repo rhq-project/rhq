@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
+package org.rhq.coregui.client.inventory.resource.factory;
 
 import static java.lang.Boolean.FALSE;
 
@@ -40,10 +40,10 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.form.SortedSelectItem;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * @author Jay Shaughnessy

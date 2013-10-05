@@ -20,9 +20,9 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
+import static org.rhq.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -50,14 +50,14 @@ import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.selector.AbstractSelector;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 
 /**
  * Component for assigning the servers into affinity group.

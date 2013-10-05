@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.coregui.client.util;
 
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.coregui.client.components.tree.EnhancedTreeNode;
 
 /**
  * A collection of utility methods for working with SmartGWT {@link Tree}s.

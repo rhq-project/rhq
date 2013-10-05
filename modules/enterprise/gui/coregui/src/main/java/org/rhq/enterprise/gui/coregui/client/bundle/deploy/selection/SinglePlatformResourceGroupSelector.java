@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection;
+package org.rhq.coregui.client.bundle.deploy.selection;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -29,8 +29,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
 /**
  * @author Greg Hinkle

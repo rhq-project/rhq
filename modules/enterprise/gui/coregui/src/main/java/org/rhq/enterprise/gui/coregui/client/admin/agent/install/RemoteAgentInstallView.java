@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.agent.install;
+package org.rhq.coregui.client.admin.agent.install;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,15 +50,15 @@ import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.RemoteInstallGWTServiceAsync;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle

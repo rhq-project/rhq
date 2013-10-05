@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.measurement;
+package org.rhq.coregui.client.components.measurement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,8 +24,8 @@ import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.coregui.client.util.MeasurementUtility;
 
 public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
 

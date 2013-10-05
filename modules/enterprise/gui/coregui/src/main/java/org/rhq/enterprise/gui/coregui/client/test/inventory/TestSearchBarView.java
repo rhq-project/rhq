@@ -1,6 +1,6 @@
-package org.rhq.enterprise.gui.coregui.client.test.inventory;
+package org.rhq.coregui.client.test.inventory;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.coregui.client.inventory.resource.ResourceSearchView;
 
 public class TestSearchBarView extends ResourceSearchView {
     public TestSearchBarView() {

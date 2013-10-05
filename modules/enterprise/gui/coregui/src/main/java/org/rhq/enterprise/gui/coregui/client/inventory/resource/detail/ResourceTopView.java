@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
+package org.rhq.coregui.client.inventory.resource.detail;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * @author Jay Shaughnessy

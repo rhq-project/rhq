@@ -1,10 +1,10 @@
-package org.rhq.enterprise.gui.coregui.client.report.alert;
+package org.rhq.coregui.client.report.alert;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.alert.SubsystemResourceAlertView;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 

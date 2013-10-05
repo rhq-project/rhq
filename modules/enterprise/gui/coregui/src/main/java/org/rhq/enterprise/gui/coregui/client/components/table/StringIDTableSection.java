@@ -17,15 +17,15 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.coregui.client.components.table;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * The TableSection abstract implementation that supports IDs as basic Strings.

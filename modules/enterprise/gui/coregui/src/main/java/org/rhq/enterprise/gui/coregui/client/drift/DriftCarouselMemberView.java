@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.drift;
+package org.rhq.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,12 +41,12 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.carousel.CarouselMember;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.carousel.CarouselMember;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 
 /**
  * @author Jay Shaughnessy

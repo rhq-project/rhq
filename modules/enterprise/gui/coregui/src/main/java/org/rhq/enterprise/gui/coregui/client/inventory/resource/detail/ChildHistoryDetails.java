@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
+package org.rhq.coregui.client.inventory.resource.detail;
 
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
@@ -27,8 +27,8 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Details view for a single child history entity.

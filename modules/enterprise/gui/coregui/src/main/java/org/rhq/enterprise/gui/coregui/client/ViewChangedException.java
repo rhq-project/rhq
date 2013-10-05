@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 /**
  * If a view X is in the process of rendering itself and realizes that the user has navigated to view Y, it should

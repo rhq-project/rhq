@@ -21,11 +21,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.inventory.groups;
+package org.rhq.coregui.client.inventory.groups;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.coregui.client.CoreGUI;
 
 public enum ResourceGroupDataSourceField {
 

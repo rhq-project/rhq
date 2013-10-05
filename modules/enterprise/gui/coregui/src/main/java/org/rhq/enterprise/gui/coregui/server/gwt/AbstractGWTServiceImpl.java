@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.server.gwt;
+package org.rhq.coregui.server.gwt;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -34,7 +34,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;

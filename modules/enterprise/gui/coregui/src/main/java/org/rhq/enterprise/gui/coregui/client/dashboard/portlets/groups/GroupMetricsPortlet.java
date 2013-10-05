@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
+package org.rhq.coregui.client.dashboard.portlets.groups;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,26 +55,26 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.dashboard.CustomSettingsPortlet;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.PortletWindow;
+import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
+import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
+import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the metric display
  *

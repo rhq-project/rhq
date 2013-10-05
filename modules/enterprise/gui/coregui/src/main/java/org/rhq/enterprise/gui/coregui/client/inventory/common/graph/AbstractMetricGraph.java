@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
+package org.rhq.coregui.client.inventory.common.graph;
 
 
 import java.util.Date;
@@ -24,14 +24,14 @@ import java.util.Date;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Common Metric Graph capability used across multiple metric rendering graphs.

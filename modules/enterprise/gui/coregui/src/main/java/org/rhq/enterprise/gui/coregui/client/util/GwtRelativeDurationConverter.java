@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util;
+package org.rhq.coregui.client.util;
 
 import java.util.Date;
 
@@ -6,8 +6,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.client.TimeZoneInfo;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 /** An RPC gwt serializable implemenation of the jsf RelativeDurationConverter
  *  utility.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule;
+package org.rhq.coregui.client.inventory.resource.detail.operation.schedule;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
+import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 
 /**
  * A DataSource for {@link ResourceOperationSchedule}s for a given {@link Resource}.

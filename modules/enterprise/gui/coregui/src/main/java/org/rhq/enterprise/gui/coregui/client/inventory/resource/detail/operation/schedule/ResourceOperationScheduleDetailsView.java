@@ -1,7 +1,7 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule;
+package org.rhq.coregui.client.inventory.resource.detail.operation.schedule;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
+import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
 
 /**
  * The details view of the Resource Operations>Schedules subtab.

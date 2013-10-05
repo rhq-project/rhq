@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring.traits;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,11 +37,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
+import org.rhq.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 
 /**
  * The Resource Monitoring>Traits subtab.

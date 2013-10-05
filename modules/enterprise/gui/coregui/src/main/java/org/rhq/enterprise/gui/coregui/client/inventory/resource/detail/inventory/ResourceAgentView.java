@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
+package org.rhq.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,14 +32,14 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.RefreshableView;
+import org.rhq.coregui.client.admin.topology.AgentTableView;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The content pane for the Resource Inventory>Agent subtab.

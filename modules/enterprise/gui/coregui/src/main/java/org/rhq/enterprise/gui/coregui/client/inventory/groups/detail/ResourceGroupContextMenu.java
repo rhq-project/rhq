@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
+package org.rhq.coregui.client.inventory.groups.detail;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -57,17 +57,17 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeView;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy

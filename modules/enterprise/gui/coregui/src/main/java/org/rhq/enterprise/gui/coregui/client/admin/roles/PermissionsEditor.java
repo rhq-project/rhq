@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.roles;
+package org.rhq.coregui.client.admin.roles;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -46,10 +46,10 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role role}.

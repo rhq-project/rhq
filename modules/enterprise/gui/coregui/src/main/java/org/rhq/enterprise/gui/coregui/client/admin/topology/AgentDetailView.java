@@ -17,17 +17,17 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.admin.topology;
+package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AGENT_TOKEN;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_PING;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_REMOTE_ENDPOINT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_ADDRESS;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_AGENT_TOKEN;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_PING;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_PORT;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_REMOTE_ENDPOINT;
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -42,12 +42,12 @@ import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of an agent.

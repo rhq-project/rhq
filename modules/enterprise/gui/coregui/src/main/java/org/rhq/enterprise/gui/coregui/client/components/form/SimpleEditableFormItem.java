@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.form;
+package org.rhq.coregui.client.components.form;
 
 import java.util.Date;
 
@@ -34,8 +34,8 @@ import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
 import com.smartgwt.client.widgets.form.fields.events.BlurHandler;
 import com.smartgwt.client.widgets.form.validator.Validator;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 /**
  * This form item can be used to display a value normally in "read-only" form (i.e. as a StaticTextItem),

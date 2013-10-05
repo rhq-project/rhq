@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
+package org.rhq.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,18 +37,18 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
-import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.form.EditableFormItem;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
+import org.rhq.coregui.client.components.form.StringLengthValidator;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.inventory.resource.ResourceDataSourceField;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The Resource Summary>Overview tab - Resource general properties + summary traits.

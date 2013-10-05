@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.enterprise.gui.coregui.server.listener;
+package org.rhq.coregui.server.listener;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 

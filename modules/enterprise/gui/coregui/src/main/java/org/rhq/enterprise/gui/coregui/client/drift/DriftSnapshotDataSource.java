@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.drift;
+package org.rhq.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,10 +37,10 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.DriftSnapshot.DriftSnapshotDirectory;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.DriftGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author jshaughnessy

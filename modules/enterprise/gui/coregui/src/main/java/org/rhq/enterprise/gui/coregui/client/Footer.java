@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client;
+package org.rhq.coregui.client;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
@@ -25,12 +25,12 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.footer.FavoritesButton;
+import org.rhq.coregui.client.util.message.MessageBar;
+import org.rhq.coregui.client.util.message.MessageCenterView;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle

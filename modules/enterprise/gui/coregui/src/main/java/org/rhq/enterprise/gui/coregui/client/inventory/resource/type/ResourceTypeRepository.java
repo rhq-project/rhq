@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
+package org.rhq.coregui.client.inventory.resource.type;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -38,11 +38,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.coregui.client.util.Log;
 
 /**
  * A cache for ResourceTypes and their various fields. Fields are only fetched as needed.

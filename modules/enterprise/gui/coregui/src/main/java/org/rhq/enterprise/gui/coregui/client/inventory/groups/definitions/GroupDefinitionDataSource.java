@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
+package org.rhq.coregui.client.inventory.groups.definitions;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,11 +36,11 @@ import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle

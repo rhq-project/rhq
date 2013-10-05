@@ -16,16 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
+package org.rhq.coregui.client.inventory.resource.detail;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
+import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 
 /**
  * @author Greg Hinkle

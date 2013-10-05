@@ -16,12 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.wizard;
+package org.rhq.coregui.client.components.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
 
 /**
  * A step in a {@link Wizard wizard}.

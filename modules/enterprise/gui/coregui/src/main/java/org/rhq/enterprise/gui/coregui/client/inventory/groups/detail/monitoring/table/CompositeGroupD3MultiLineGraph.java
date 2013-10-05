@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
+package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
 
 /**
  * D3 rendition of group composite graphs for single metric multiple resources.
@@ -65,22 +65,22 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI and kept all the java interaction right here.
-        chartContext = new MultiLineChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHeight()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitle()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitleMinLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitleAvgLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitlePeakLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHoverDateFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getButtonBarDateTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTimeFormatHours()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTimeFormatHoursMinutes()()
+        chartContext = new MultiLineChartContext(global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHeight()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitle()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitleMinLabel()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitleAvgLabel()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTitlePeakLabel()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartDateLabel()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartTimeLabel()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHoverTimeFormat()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHoverDateFormat()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getButtonBarDateTimeFormat()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTimeFormatHours()(),
+                        global.@org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTimeFormatHoursMinutes()()
                 );
 
 

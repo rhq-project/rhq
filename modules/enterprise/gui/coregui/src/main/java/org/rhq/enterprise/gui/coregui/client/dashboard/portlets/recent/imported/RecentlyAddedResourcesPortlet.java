@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.imported;
+package org.rhq.coregui.client.dashboard.portlets.recent.imported;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,15 +38,15 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.components.HeaderLabel;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.coregui.client.dashboard.CustomSettingsPortlet;
+import org.rhq.coregui.client.dashboard.Portlet;
+import org.rhq.coregui.client.dashboard.PortletViewFactory;
+import org.rhq.coregui.client.dashboard.PortletWindow;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 public class RecentlyAddedResourcesPortlet extends EnhancedVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {

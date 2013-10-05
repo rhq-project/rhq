@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.group;
+package org.rhq.coregui.client.bundle.group;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -26,8 +26,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.criteria.BundleGroupCriteria;
-import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.components.selector.AbstractSelector;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author Jay Shaughnessy

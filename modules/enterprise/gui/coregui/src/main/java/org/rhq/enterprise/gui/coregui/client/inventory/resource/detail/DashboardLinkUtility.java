@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
+package org.rhq.coregui.client.inventory.resource.detail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,15 +46,15 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.util.preferences.UserPreferences;
 
 /**
  * Utility Class to build menus for linking to the Dashboard.

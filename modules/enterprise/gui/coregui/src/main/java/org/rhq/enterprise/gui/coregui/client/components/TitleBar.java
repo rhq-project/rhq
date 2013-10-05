@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components;
+package org.rhq.coregui.client.components;
 
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A title bar to be displayed at the top of a content view - contains a label and/or an icon.

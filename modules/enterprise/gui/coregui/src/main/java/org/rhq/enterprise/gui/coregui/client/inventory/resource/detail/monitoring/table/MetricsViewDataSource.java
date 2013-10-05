@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
+package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,16 +23,16 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.async.Command;
-import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.BrowserUtility;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.MeasurementUtility;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.async.Command;
+import org.rhq.coregui.client.util.async.CountDownLatch;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * A simple data source to read in metric data summaries for a resource.

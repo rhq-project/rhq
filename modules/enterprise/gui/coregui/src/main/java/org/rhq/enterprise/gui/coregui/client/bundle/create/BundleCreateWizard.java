@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.create;
+package org.rhq.coregui.client.bundle.create;
 
 import java.util.ArrayList;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
+import org.rhq.coregui.client.components.wizard.WizardStep;
 
 public class BundleCreateWizard extends AbstractBundleCreateWizard {
 

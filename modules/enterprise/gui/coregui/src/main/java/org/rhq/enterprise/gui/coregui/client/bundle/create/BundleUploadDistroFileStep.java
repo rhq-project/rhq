@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.create;
+package org.rhq.coregui.client.bundle.create;
 
 import java.util.LinkedHashMap;
 
@@ -42,20 +42,20 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
-import org.rhq.enterprise.gui.coregui.client.components.upload.BundleDistributionFileUploadForm;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackForm;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
-import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetrieverForm;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.form.RadioGroupWithComponentsItem;
+import org.rhq.coregui.client.components.upload.BundleDistributionFileUploadForm;
+import org.rhq.coregui.client.components.upload.DynamicCallbackForm;
+import org.rhq.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
+import org.rhq.coregui.client.components.upload.TextFileRetrieverForm;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.gwt.BundleGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 public class BundleUploadDistroFileStep extends AbstractWizardStep {
 

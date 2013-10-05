@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.storage;
+package org.rhq.coregui.client.admin.storage;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,19 +47,19 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.async.Command;
-import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.admin.AdministrationView;
+import org.rhq.coregui.client.components.table.AuthorizedTableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TableSection;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.async.Command;
+import org.rhq.coregui.client.util.async.CountDownLatch;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * Shows the table of all storage nodes.

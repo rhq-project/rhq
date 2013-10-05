@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.configuration;
+package org.rhq.coregui.client.components.configuration;
 
 /**
  * A listener that can register to be notified by a {@link ConfigurationEditor} when a configuration property's value

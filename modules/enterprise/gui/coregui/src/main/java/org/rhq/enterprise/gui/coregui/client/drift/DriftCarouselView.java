@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.drift;
+package org.rhq.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,19 +38,19 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.DetailsView;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.components.carousel.BookmarkableCarousel;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.drift.DriftCarouselMemberView.DriftSelectionListener;
-import org.rhq.enterprise.gui.coregui.client.drift.util.DiffUtility;
-import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.DetailsView;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.buttons.BackButton;
+import org.rhq.coregui.client.components.carousel.BookmarkableCarousel;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.drift.DriftCarouselMemberView.DriftSelectionListener;
+import org.rhq.coregui.client.drift.util.DiffUtility;
+import org.rhq.coregui.client.gwt.DriftGWTServiceAsync;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * A carousel view used for display of Drift Definition detail.  Each carousel member is a snapshot delta

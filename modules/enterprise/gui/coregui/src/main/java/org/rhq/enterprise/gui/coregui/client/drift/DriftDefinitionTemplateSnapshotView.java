@@ -18,9 +18,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.drift;
+package org.rhq.coregui.client.drift;
 
-import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.coregui.client.InitializableView;
 
 /**
  * @author Jay Shaughnessy

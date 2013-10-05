@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin;
+package org.rhq.coregui.client.admin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,28 +28,28 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeAdminView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.IgnoreResourceTypesView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeView;
-import org.rhq.enterprise.gui.coregui.client.admin.topology.AffinityGroupTableView;
-import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
-import org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventTableView;
-import org.rhq.enterprise.gui.coregui.client.admin.topology.ServerTableView;
-import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView;
+import org.rhq.coregui.client.admin.roles.RolesView;
+import org.rhq.coregui.client.admin.storage.StorageNodeAdminView;
+import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
+import org.rhq.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
+import org.rhq.coregui.client.admin.templates.IgnoreResourceTypesView;
+import org.rhq.coregui.client.admin.templates.MetricTemplateTypeView;
+import org.rhq.coregui.client.admin.topology.AffinityGroupTableView;
+import org.rhq.coregui.client.admin.topology.AgentTableView;
+import org.rhq.coregui.client.admin.topology.PartitionEventTableView;
+import org.rhq.coregui.client.admin.topology.ServerTableView;
+import org.rhq.coregui.client.admin.users.UsersView;
+import org.rhq.coregui.client.components.FullHTMLPane;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.coregui.client.components.view.NavigationItem;
+import org.rhq.coregui.client.components.view.NavigationSection;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Administration top-level view.

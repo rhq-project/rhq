@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
+package org.rhq.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,19 +32,19 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
-import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.form.CheckboxEditableFormItem;
+import org.rhq.coregui.client.components.form.EditableFormItem;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
+import org.rhq.coregui.client.components.form.StringLengthValidator;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A canvas that shows basic information/properties on a specific group.

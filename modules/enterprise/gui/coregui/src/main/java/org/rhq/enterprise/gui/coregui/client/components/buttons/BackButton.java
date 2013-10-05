@@ -20,13 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.buttons;
+package org.rhq.coregui.client.components.buttons;
 
 import com.smartgwt.client.widgets.StretchImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.coregui.client.CoreGUI;
 
 /**
  * @author Greg Hinkle

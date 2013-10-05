@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.help;
+package org.rhq.coregui.client.help;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,18 +30,18 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.MessageConstants;
-import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.MessageConstants;
+import org.rhq.coregui.client.components.AboutModalWindow;
+import org.rhq.coregui.client.components.FullHTMLPane;
+import org.rhq.coregui.client.components.TitleBar;
+import org.rhq.coregui.client.components.view.AbstractSectionedLeftNavigationView;
+import org.rhq.coregui.client.components.view.NavigationItem;
+import org.rhq.coregui.client.components.view.NavigationSection;
+import org.rhq.coregui.client.components.view.ViewFactory;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Help top-level view.

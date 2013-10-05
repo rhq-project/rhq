@@ -16,22 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource;
+package org.rhq.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,26 +60,26 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
-import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
-import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.coregui.client.components.table.IconField;
+import org.rhq.coregui.client.components.table.RecordExtractor;
+import org.rhq.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.coregui.client.components.table.ResourceCategoryCellFormatter;
+import org.rhq.coregui.client.components.table.Table;
+import org.rhq.coregui.client.components.table.TableAction;
+import org.rhq.coregui.client.components.table.TableActionEnablement;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.coregui.client.report.DriftComplianceReportResourceSearchView;
+import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.StringUtility;
+import org.rhq.coregui.client.util.TableUtility;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * The list view for {@link Resource}s. If not specified a default title is assigned.  If not specified the list will

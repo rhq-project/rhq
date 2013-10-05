@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.enhanced;
+package org.rhq.coregui.client.util.enhanced;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;

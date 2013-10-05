@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
+package org.rhq.coregui.client.inventory.resource.selection;
 
 import java.util.ArrayList;
 
@@ -25,7 +25,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
 import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
 
 /**
  * @author Greg Hinkle

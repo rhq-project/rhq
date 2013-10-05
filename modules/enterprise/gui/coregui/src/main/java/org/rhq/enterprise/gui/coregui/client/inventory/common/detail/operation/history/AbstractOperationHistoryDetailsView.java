@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
+package org.rhq.coregui.client.inventory.common.detail.operation.history;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -42,13 +42,13 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.enhanced.EnhancedVStack;
 
 /**
  * @author Greg Hinkle

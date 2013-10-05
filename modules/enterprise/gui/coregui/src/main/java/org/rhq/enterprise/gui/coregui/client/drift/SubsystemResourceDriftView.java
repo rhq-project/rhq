@@ -20,13 +20,13 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.drift;
+package org.rhq.coregui.client.drift;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.ReportExporter;
+import org.rhq.coregui.client.components.table.AbstractTableAction;
 
 public class SubsystemResourceDriftView extends DriftHistoryView {
     public SubsystemResourceDriftView(boolean hasWriteAccess) {

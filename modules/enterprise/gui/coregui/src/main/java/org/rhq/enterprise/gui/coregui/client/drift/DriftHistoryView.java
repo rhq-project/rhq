@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.drift;
+package org.rhq.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,15 +34,15 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.form.DateFilterItem;
+import org.rhq.coregui.client.components.form.EnumSelectItem;
+import org.rhq.coregui.client.components.table.StringIDTableSection;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.components.view.ViewName;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 
 /**
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.JPADrift}s, along with the

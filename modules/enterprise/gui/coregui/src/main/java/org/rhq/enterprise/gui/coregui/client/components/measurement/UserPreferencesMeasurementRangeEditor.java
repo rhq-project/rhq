@@ -17,12 +17,12 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.components.measurement;
+package org.rhq.coregui.client.components.measurement;
 
 import java.util.List;
 
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
     private static final int START_TIME_INDEX = 0;

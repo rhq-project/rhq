@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.gui.coregui.client.alert.definitions;
+package org.rhq.coregui.client.alert.definitions;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -55,15 +55,15 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.OSGiVersion;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
-import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
-import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.components.form.RadioGroupWithComponentsItem;
+import org.rhq.coregui.client.components.form.SortedSelectItem;
+import org.rhq.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
+import org.rhq.coregui.client.components.upload.PackageVersionFileUploadForm;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * A form to configure the CLI script alert notification.

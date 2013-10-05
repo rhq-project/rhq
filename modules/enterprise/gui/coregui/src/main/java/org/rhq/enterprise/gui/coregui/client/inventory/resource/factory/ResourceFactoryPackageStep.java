@@ -16,19 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
+package org.rhq.coregui.client.inventory.resource.factory;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandler;
-import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
-import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
+import org.rhq.coregui.client.components.upload.PackageVersionFileUploadForm;
+import org.rhq.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.coregui.client.util.message.Message;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Jay Shaughnessy

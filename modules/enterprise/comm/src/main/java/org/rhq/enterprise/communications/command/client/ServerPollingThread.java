@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.communications.command.client;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import mazz.i18n.Logger;
 
@@ -54,17 +54,6 @@ class ServerPollingThread extends Thread {
     private final long m_interval;
 
     /**
-     * Will be <code>true</code> when this thread is told to stop polling. Note that this does not necessarily mean the
-     * thread is stopped, it just means this thread was told to stop. See {@link #m_stopped}.
-     */
-    private boolean m_stop;
-
-    /**
-     * Will be <code>true</code> when this thread is stopped.
-     */
-    private boolean m_stopped;
-
-    /**
      * This is simply a flag to eliminate a flood of log messages that would get dumped each time the server failed to
      * be communicated with. We want to warn once in the case the failure is due to a misconfiguration (the log message
      * should help diagnose the misconfiguration), but we don't want to continually log warnings in the normal case when
@@ -75,7 +64,7 @@ class ServerPollingThread extends Thread {
     /**
      * The list of polling listeners that will be notified when the sender's polling thread polls the server.
      */
-    private final List<PollingListener> m_pollingListeners = new ArrayList<PollingListener>();
+    private final Set<PollingListener> m_pollingListeners = new CopyOnWriteArraySet<PollingListener>();
 
     /**
      * Constructor for {@link ServerPollingThread} making this thread a daemon thread.
@@ -89,11 +78,7 @@ class ServerPollingThread extends Thread {
 
         m_clientSender = client;
         m_interval = polling_interval;
-        m_stop = false;
-        m_stopped = true;
         m_warnedAboutConnectionFailure = false;
-
-        return;
     }
 
     /**
@@ -101,12 +86,12 @@ class ServerPollingThread extends Thread {
      */
     @Override
     public void run() {
-        m_stopped = false;
-
         LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_STARTED, m_interval);
 
-        while (!m_stop) {
-            try {
+        // Chapter 7 - Java Concurrency in Practice
+        // Use interruption to do thread cancellation
+        try {
+            while (!isInterrupted()) {
                 try {
                     // Send a small, simple identify command to the server and if it succeeds, tell the client
                     // sender that it is OK to start sending messages, if it is not already sending
@@ -115,13 +100,11 @@ class ServerPollingThread extends Thread {
                     CommandResponse response = m_clientSender.send(id_cmd);
 
                     // let all our listeners know what the results of the poll was
-                    synchronized (m_pollingListeners) {
-                        for (PollingListener listener : m_pollingListeners) {
-                            try {
-                                listener.pollResponse(response);
-                            } catch (Throwable t) {
-                                // should never happen, but I'm paranoid
-                            }
+                    for (PollingListener listener : m_pollingListeners) {
+                        try {
+                            listener.pollResponse(response);
+                        } catch (Throwable t) {
+                            // should never happen, but I'm paranoid
                         }
                     }
 
@@ -138,13 +121,15 @@ class ServerPollingThread extends Thread {
                         LOG.info(CommI18NResourceKeys.SERVER_POLLING_THREAD_SERVER_ONLINE);
                         m_warnedAboutConnectionFailure = false; // if we detect the server is down again, lets log the exception again
                     }
-                } catch (Throwable e) {
+                } catch (InterruptedException e) {
+                    throw e;
+                } catch (Throwable t) {
                     // This probably just means that the server isn't online yet
                     // However, we want to log a warning at least once in case this is a configuration error (in which case
                     // the connection will never succeed - without this log message, it will be hard to debug the misconfiguration).
                     if (!m_warnedAboutConnectionFailure) {
                         m_warnedAboutConnectionFailure = true;
-                        LOG.debug(CommI18NResourceKeys.SERVER_POLL_FAILURE, ThrowableUtil.getAllMessages(e));
+                        LOG.debug(CommI18NResourceKeys.SERVER_POLL_FAILURE, ThrowableUtil.getAllMessages(t));
                     }
 
                     // Failed to send the command for some reason, make sure the client sender isn't trying to send the server messages.
@@ -157,58 +142,38 @@ class ServerPollingThread extends Thread {
                 synchronized (this) {
                     wait(m_interval); // go to sleep before we poll again
                 }
-            } catch (InterruptedException e) {
-                m_stop = true;
             }
+        } catch (InterruptedException e) {
+            // Thread exiting
         }
 
         LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_STOPPED);
-        m_stopped = true;
-
-        return;
     }
 
     /**
      * Tells this thread to stop polling. This will block and wait for the thread to die.
      */
     public void stopPolling() {
-        m_stop = true;
-
-        // tell the thread that we flipped the stop flag in case it is waiting in a sleep interval
-        synchronized (this) {
-            while (!m_stopped) {
-                try {
-                    notifyAll();
-                    wait(5000L);
-                } catch (InterruptedException e) {
-                }
-            }
+        interrupt();
+        try {
+            // Not sure why the thread wouldn't die immediately, but you never know
+            join(m_interval * 2);
+        } catch (InterruptedException e) {
+            interrupt();
         }
-
-        synchronized (m_pollingListeners) {
-            m_pollingListeners.clear();
-        }
-
-        return;
+        m_pollingListeners.clear();
     }
 
     public void addPollingListener(PollingListener listener) {
-        synchronized (m_pollingListeners) {
-            if (!m_pollingListeners.contains(listener)) {
-                m_pollingListeners.add(listener);
-                LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_ADDED_POLLING_LISTENER, listener);
-            }
+        if (m_pollingListeners.add(listener)) {
+            LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_ADDED_POLLING_LISTENER, listener);
         }
-
-        return;
     }
 
     public void removePollingListener(PollingListener listener) {
-        synchronized (m_pollingListeners) {
-            m_pollingListeners.remove(listener);
+        if (m_pollingListeners.remove(listener)) {
             LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_REMOVED_POLLING_LISTENER, listener);
         }
-
-        return;
     }
+
 }

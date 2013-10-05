@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -205,7 +207,7 @@ public class ClientCommandSender {
     /**
      * The list of state listeners that will be notified when the sender starts and stops sending.
      */
-    private final List<ClientCommandSenderStateListener> m_stateListeners = new ArrayList<ClientCommandSenderStateListener>();
+    private final Set<ClientCommandSenderStateListener> m_stateListeners = new CopyOnWriteArraySet<ClientCommandSenderStateListener>();
 
     /**
      * Maintains the metric data that is collected by this sender.
@@ -335,7 +337,9 @@ public class ClientCommandSender {
                     m_queue.put(task);
                     requeued++;
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     LOG.warn(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_REQUEUE_FAILED, remote_communicator);
+                    break;
                 }
             }
 
@@ -455,15 +459,11 @@ public class ClientCommandSender {
     public void addStateListener(ClientCommandSenderStateListener listener, boolean immediately_notify) {
         boolean is_sending;
 
-        synchronized (m_stateListeners) {
-            is_sending = isSending();
+        is_sending = isSending();
 
-            if (!m_stateListeners.contains(listener)) {
-                m_stateListeners.add(listener);
-
-                LOG.debug(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_ADDED_STATE_LISTENER, listener, is_sending,
-                    immediately_notify);
-            }
+        if (m_stateListeners.add(listener)) {
+            LOG.debug(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_ADDED_STATE_LISTENER, listener, is_sending,
+                immediately_notify);
         }
 
         // just like in notifyStateListeners, we do not want to be synchronized when within the listener callback code
@@ -481,10 +481,8 @@ public class ClientCommandSender {
      * @param listener
      */
     public void removeStateListener(ClientCommandSenderStateListener listener) {
-        synchronized (m_stateListeners) {
-            if (m_stateListeners.remove(listener)) {
-                LOG.debug(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_REMOVED_STATE_LISTENER, listener);
-            }
+        if (m_stateListeners.remove(listener)) {
+            LOG.debug(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_REMOVED_STATE_LISTENER, listener);
         }
 
         return;
@@ -499,15 +497,7 @@ public class ClientCommandSender {
     private void notifyStateListeners(boolean started_sending) {
         LOG.debug(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_NOTIFYING_STATE_LISTENERS, started_sending);
 
-        List<ClientCommandSenderStateListener> listeners_copy;
-
-        // make a copy so we don't remained synchronized within the listener callback methods
-        // this avoids any potential deadlocks and allows a listener to remove itself
-        synchronized (m_stateListeners) {
-            listeners_copy = new ArrayList<ClientCommandSenderStateListener>(m_stateListeners);
-        }
-
-        for (ClientCommandSenderStateListener listener : listeners_copy) {
+        for (ClientCommandSenderStateListener listener : m_stateListeners) {
             notifyStateListener(started_sending, listener);
         }
 
@@ -601,6 +591,8 @@ public class ClientCommandSender {
                     }
                 }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             throw new Exception(LOG.getMsgString(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_QUEUE_FAILED, command), e);
         }
@@ -943,6 +935,7 @@ public class ClientCommandSender {
                         m_executor.awaitTermination(1000L * 60 * 1, TimeUnit.MILLISECONDS);
                         m_timerThreadPool.awaitTermination(1000L * 60 * 1, TimeUnit.MILLISECONDS);
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
 
                     m_executor = null;
@@ -1147,6 +1140,7 @@ public class ClientCommandSender {
             }
         }
 
+        boolean interrupt = false;
         try {
             if (m_shuttingDownTasks) {
                 // hurry up and let this thread finish - the thread pool is waiting for us to die
@@ -1156,6 +1150,7 @@ public class ClientCommandSender {
                 try {
                     Thread.sleep(m_configuration.retryInterval);
                 } catch (InterruptedException ie) {
+                    interrupt = true;
                 }
 
                 // This acquires our changing mode lock.  But that's OK - since we are holding onto the read lock, stopSending
@@ -1167,6 +1162,9 @@ public class ClientCommandSender {
                 cnc.getCommand());
         } finally {
             m_shuttingDownTasksLock.readLock().unlock();
+        }
+        if (interrupt) {
+            Thread.currentThread().interrupt();
         }
 
         return;

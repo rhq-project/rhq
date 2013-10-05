@@ -90,7 +90,8 @@ public class AgentUpdateThread extends Thread {
                 try {
                     updateThread.join();
                 } catch (InterruptedException e) {
-                    // if we were interrupted, our while loop will keep us waiting
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
             Thread.currentThread().interrupt(); // interrupt the current thread so we help it exit faster
@@ -128,7 +129,7 @@ public class AgentUpdateThread extends Thread {
 
         int attempts = 0;
         boolean tryAgain = true;
-        while (tryAgain) {
+        while (tryAgain && !isInterrupted()) {
             try {
                 showMessage(AgentI18NResourceKeys.UPDATE_THREAD_STARTED);
 
@@ -201,7 +202,9 @@ public class AgentUpdateThread extends Thread {
                 showErrorMessage(AgentI18NResourceKeys.UPDATE_THREAD_CANNOT_RESTART_RETRY, pause);
                 try {
                     Thread.sleep(pause);
-                } catch (Throwable ignore) {
+                } catch (InterruptedException e) {
+                    // our thread was interrupted
+                    break;
                 }
             }
         }

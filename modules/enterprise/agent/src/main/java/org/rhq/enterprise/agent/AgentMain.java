@@ -51,6 +51,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.prefs.BackingStoreException;
@@ -252,10 +253,14 @@ public class AgentMain {
     private ClientCommandSender m_clientSender;
 
     /**
-     * One-element array containing the flag to indicate if agent is started. An array so we can use its monitor lock -
-     * its lock is held when the m_clientSender needs to be created and destroyed.
+     * Flag to indicate if agent is started.
      */
-    private boolean[] m_started;
+    private final AtomicBoolean m_started = new AtomicBoolean();
+
+    /**
+     * Lock held when the m_clientSender needs to be created and destroyed.
+     */
+     private final Object m_init = new Object();
 
     /**
      * The time (as reported by <code>System.currentTimeMillis()</code>) when the agent was {@link #start() started}.
@@ -451,6 +456,7 @@ public class AgentMain {
                         try {
                             Thread.sleep(60000L);
                         } catch (InterruptedException e1) {
+                            Thread.currentThread().interrupt();
                         }
                     }
                 } else {
@@ -517,7 +523,6 @@ public class AgentMain {
         m_output = new AgentPrintWriter(System.out, true);
         m_stdinInput = true;
         m_configuration = null;
-        m_started = new boolean[] { false };
         m_agentPreferencesNodeName = AgentConfigurationConstants.DEFAULT_PREFERENCE_NODE;
         m_previouslyQueueCommands = null;
         m_registration = null;
@@ -606,7 +611,7 @@ public class AgentMain {
      * @return <code>true</code> if the agent is started; <code>false</code> if it is stopped.
      */
     public boolean isStarted() {
-        return m_started[0];
+        return m_started.get();
     }
 
     /**
@@ -660,7 +665,7 @@ public class AgentMain {
      * @throws Exception if failed to start
      */
     public void start() throws Exception {
-        synchronized (m_started) {
+        synchronized (m_init) {
             if (!isStarted()) {
                 try {
                     if ((m_configuration.getAgentName() == null) || (m_configuration.getAgentName().length() == 0)) {
@@ -745,7 +750,12 @@ public class AgentMain {
      * Shuts down the agent gracefully.
      */
     public void shutdown() {
-        synchronized (m_started) {
+
+        // Temporarily clear the interrupted state to allow clean shutdown
+        // This seems to happen from invoking stop from the command prompt
+        boolean interrupted = Thread.interrupted();
+
+        synchronized (m_init) {
             if (isStarted()) {
                 try {
                     LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
@@ -851,7 +861,7 @@ public class AgentMain {
                 // everything should be down - finalize things and notify our input loop that we've stopped
                 setStarted(false);
 
-                m_started.notifyAll();
+                m_init.notifyAll();
 
                 if ((m_inputLoopThread != null) && m_inputLoopThread.isAlive()) {
                     m_inputLoopThread.interrupt();
@@ -865,6 +875,9 @@ public class AgentMain {
             SystemInfoFactory.shutdown();
         }
 
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
         return;
     }
 
@@ -1516,6 +1529,7 @@ public class AgentMain {
                             retry = false;
                         }
                     } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
                         LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ABORTED);
                         retry = false;
                     } catch (Throwable t) {
@@ -1562,6 +1576,7 @@ public class AgentMain {
             try {
                 thread.join(wait);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -1601,17 +1616,13 @@ public class AgentMain {
      *                                    When this is thrown, the agent is currently in the midst of updating itself.
      */
     public boolean waitForServer(long wait_ms) throws AgentNotSupportedException {
-        // its contents will be non-empty string if the server has come up
-        final StringBuffer flag_and_lock = new StringBuffer();
+        final CountDownLatch latch = new CountDownLatch(1);
 
         // when the sender has started, it means the RHQ Server has come up - here's our listener for that
         ClientCommandSenderStateListener listener = new ClientCommandSenderStateListener() {
             public boolean startedSending(ClientCommandSender sender) {
-                synchronized (flag_and_lock) {
-                    flag_and_lock.append("1"); // length is now non-zero
-                    flag_and_lock.notifyAll();
-                    return false; // no need to keep listening
-                }
+                latch.countDown();
+                return false; // no need to keep listening
             }
 
             public boolean stoppedSending(ClientCommandSender sender) {
@@ -1621,42 +1632,25 @@ public class AgentMain {
 
         ClientCommandSender sender_to_server = getClientCommandSender();
 
-        synchronized (flag_and_lock) {
-            if (sender_to_server != null) {
-                LOG.debug(AgentI18NResourceKeys.WAITING_FOR_SERVER, wait_ms);
-
-                sender_to_server.addStateListener(listener, true);
-
-                // do _not_ wait if the listener was already called (meaning the server is already up)
-                if (flag_and_lock.length() == 0) {
-                    try {
-                        // this craziness about timing is because "spurious wakeups" are occurring (look it up in wikipedia)
-                        long start_time = System.currentTimeMillis();
-
-                        while ((wait_ms > 0) && (flag_and_lock.length() == 0)) {
-                            try {
-                                flag_and_lock.wait(wait_ms);
-                            } catch (InterruptedException e) {
-                                // probably a spurious wakeup - tests are showing that we are getting them here
-                            }
-
-                            // if this agent is updating, break the loop immediately by throwing exception
-                            if (AgentUpdateThread.isUpdatingNow()) {
-                                throw new AgentNotSupportedException();
-                            }
-
-                            wait_ms -= System.currentTimeMillis() - start_time;
-                        }
-                    } finally {
-                        sender_to_server.removeStateListener(listener);
-                    }
+        boolean zero = false;
+        if (sender_to_server != null) {
+            LOG.debug(AgentI18NResourceKeys.WAITING_FOR_SERVER, wait_ms);
+            sender_to_server.addStateListener(listener, true);
+            try {
+                zero = latch.await(wait_ms, TimeUnit.MILLISECONDS);
+                // if this agent is updating, break the loop immediately by throwing exception
+                if (AgentUpdateThread.isUpdatingNow()) {
+                    throw new AgentNotSupportedException();
                 }
-            } else {
-                LOG.debug(AgentI18NResourceKeys.CANNOT_WAIT_FOR_SERVER);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                sender_to_server.removeStateListener(listener);
             }
-
-            return flag_and_lock.length() > 0;
+        } else {
+            LOG.debug(AgentI18NResourceKeys.CANNOT_WAIT_FOR_SERVER);
         }
+        return zero;
     }
 
     /**
@@ -1941,6 +1935,7 @@ public class AgentMain {
                 return false;
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             LOG.warn(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED);
             getOut().println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED));
             return false;
@@ -2618,6 +2613,7 @@ public class AgentMain {
             try {
                 Thread.sleep(sleep_time);
             } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             }
 
             // if this agent was never registered because it is needs to be updated, break the loop immediately
@@ -2897,48 +2893,49 @@ public class AgentMain {
         // we need to start a new thread and run our loop in it; otherwise, our shutdown hook doesn't work
         Runnable loop_runnable = new Runnable() {
             public void run() {
-                while (true) {
-                    // get a command from the user
-                    // if in daemon mode, only get input if reading from an input file; ignore stdin
-                    String cmd;
-                    if ((m_daemonMode == false) || (m_stdinInput == false)) {
-                        cmd = getUserInput(null);
-                    } else {
-                        cmd = null;
-                    }
+                try {
+                    while (true) {
+                        // get a command from the user
+                        // if in daemon mode, only get input if reading from an input file; ignore stdin
+                        String cmd;
+                        if ((m_daemonMode == false) || (m_stdinInput == false)) {
+                            cmd = getUserInput(null);
+                        } else {
+                            cmd = null;
+                        }
 
-                    if (cmd == null) {
-                        // the input stream has been closed or in daemon mode, no more input can be expected so let's just go to sleep forever
-                        synchronized (m_started) {
-                            while (m_started[0]) {
-                                try {
-                                    m_started.wait(60000L);
-                                } catch (InterruptedException e) {
+                        if (cmd == null) {
+                            // the input stream has been closed or in daemon mode
+                            // no more input can be expected so let's just go to sleep forever
+                            synchronized (m_init) {
+                                while (m_started.get()) {
+                                    m_init.wait(0);
                                 }
                             }
+                            break; // break the input loop thread now that the agent has been stopped
                         }
 
-                        break; // break the input loop thread now that the agent has been stopped
-                    }
+                        try {
+                            // parse the command into separate arguments and execute it
+                            String[] cmd_args = parseCommandLine(cmd);
+                            boolean can_continue = executePromptCommand(cmd_args);
 
-                    try {
-                        // parse the command into separate arguments and execute it
-                        String[] cmd_args = parseCommandLine(cmd);
-                        boolean can_continue = executePromptCommand(cmd_args);
-
-                        // break the input loop if the prompt command told us to exit
-                        // if we are not in daemon mode, this really will end up killing the agent
-                        if (!can_continue) {
-                            break;
+                            // break the input loop if the prompt command told us to exit
+                            // if we are not in daemon mode, this really will end up killing the agent
+                            if (!can_continue) {
+                                break;
+                            }
+                        } catch (InterruptedException e) {
+                            throw e;
+                        } catch (Throwable t) {
+                            m_output.println(MSG.getMsg(AgentI18NResourceKeys.COMMAND_FAILURE, cmd,
+                                ThrowableUtil.getAllMessages(t)));
+                            LOG.debug(t, AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
                         }
-                    } catch (Throwable t) {
-                        m_output.println(MSG.getMsg(AgentI18NResourceKeys.COMMAND_FAILURE, cmd,
-                            ThrowableUtil.getAllMessages(t)));
-                        LOG.debug(t, AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
                     }
+                } catch (InterruptedException e) {
+                    // exit the thread
                 }
-
-                return;
             }
         };
 
@@ -3521,7 +3518,7 @@ public class AgentMain {
      * @param started <code>true</code> if the agent has started; <code>false</code> if the agent has stopped
      */
     private void setStarted(boolean started) {
-        m_started[0] = started;
+        m_started.set(started);
         m_startTime = (started) ? System.currentTimeMillis() : 0L;
     }
 

@@ -35,19 +35,19 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
 /**
  * This thread's job is to periodically try to get the agent to point back to
  * its primary server, if it isn't pointing to that server already.
- * 
+ *
  * The "primary server" is the server found at the top of the agent's failover list.
  * If the agent is already talking to this server, or if the agent does not yet have
  * a failover list, nothing needs to be done.
- * 
+ *
  * If the agent is talking to another server, this thread will probe the primary server
  * and if it can, this thread will switch the agent's sender back to point to the primary.
- * 
+ *
  * If the agent is not in sending mode, this thread will not do anything until it is.  The agent
  * will decide what server it should talk to in that case.  This thread is only here
  * to prevent an agent talking to a non-primary server for a long time when the primary
  * server is available.
- * 
+ *
  * @author John Mazzitelli
  */
 public class PrimaryServerSwitchoverThread extends Thread {
@@ -65,7 +65,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
      * Will be <code>true</code> when this thread is told to stop polling. Note that this does not necessarily mean the
      * thread is stopped, it just means this thread was told to stop.
      */
-    private boolean toldToStop = false;
+    private volatile boolean toldToStop = false;
 
     public PrimaryServerSwitchoverThread(AgentMain agent) {
         super("RHQ Primary Server Switchover Thread");
@@ -77,7 +77,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
     public void run() {
         LOG.info(AgentI18NResourceKeys.PRIMARY_SERVER_SWITCHOVER_THREAD_STARTED);
 
-        while (!toldToStop) {
+        while (!isInterrupted() && !toldToStop) {
             try {
                 // Note that if the agent is not sending or the failover list doesn't have any servers,
                 // then we skip this time and wait some more.
@@ -123,7 +123,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
                     wait(interval);
                 }
             } catch (InterruptedException ie) {
-                toldToStop = true;
+                break; // exiting
             } catch (Exception e) {
                 LOG.warn(e, AgentI18NResourceKeys.PRIMARY_SERVER_SWITCHOVER_EXCEPTION, e);
             }
@@ -135,7 +135,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
 
     /**
      * Sets the time (in milliseconds) that this thread sleeps between checks.
-     * 
+     *
      * @param interval sleep time, in milliseconds (must not be less than 1000)
      */
     public void setInterval(long interval) {
@@ -148,9 +148,8 @@ public class PrimaryServerSwitchoverThread extends Thread {
      */
     public void stopChecking() {
         toldToStop = true;
-        synchronized (this) {
-            notifyAll();
-        }
+        interrupt();
+        // no need to notify, wait will exit
     }
 
     /**
@@ -167,11 +166,11 @@ public class PrimaryServerSwitchoverThread extends Thread {
     /**
      * Given the remote communicator (which isn't the one in the agent's command sender), this sends a ping
      * request to the remote endpoint and returns <code>true</code> if the remote endpoint is up.
-     * 
+     *
      * @param comm the communicator used to send the message
-     * 
+     *
      * @return <code>true</code> if the communicator can send the message; <code>false</code> if the remote endpoint is down
-     * 
+     *
      * @throws Throwable
      */
     private boolean ping(RemoteCommunicator comm) {

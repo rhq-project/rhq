@@ -91,6 +91,9 @@ public class BundleManagerTest {
         mockBundleManager = new MockBundleManager();
         mockBundleManager.setConfiguration(pcConfig);
         mockBundleManager.initialize();
+
+        // clear any past interrupted state
+        Thread.interrupted();
     }
 
     @AfterMethod

@@ -185,6 +185,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 }
             } catch (InterruptedException e) {
                 // Log nothing - if we got interrupted, it's probably because the PC is shutting down.
+                Thread.currentThread().interrupt();
             } catch (Throwable e) {
                 LOG.error("Measurement collection shutting down due to error", e);
             } finally {

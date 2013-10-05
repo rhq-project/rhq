@@ -248,6 +248,7 @@ class SendThrottle {
                     m_latchQueue.put(latch);
                 } catch (InterruptedException e) {
                     // unsure when this condition would ever occur; maybe never - but just in case, let's immediately give the OK to send
+                    Thread.currentThread().interrupt();
                     return;
                 }
             }
@@ -257,6 +258,7 @@ class SendThrottle {
             try {
                 latch.await();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 // unsure when this condition would ever occur; maybe never - but just in case, let's immediately give the OK to send
             }
 
@@ -283,6 +285,7 @@ class SendThrottle {
                     }
                 }
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.SEND_THROTTLE_CANNOT_KILL), e);
             }
 
@@ -327,6 +330,7 @@ class SendThrottle {
                 }
             } catch (InterruptedException e) {
                 // kill the thread; unsure when this would ever occur; maybe never - but if it happens, the thread should probably die
+                // no need to interrupt ...
             } finally {
                 // before we exit, let's make sure no one is still waiting - flush the queue and give everyone the go ahead to send
                 // we need to synchronize here so no one sneeks in and adds a latch to the queue after we think we are finished flushing it

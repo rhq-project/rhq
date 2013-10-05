@@ -265,6 +265,7 @@ public class CommandProcessorMetrics implements Serializable {
         try {
             return lock.writeLock().tryLock(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             // don't wait any longer, just return immediately
         } catch (Exception e) {
             lock = new ReentrantReadWriteLock(); // something really bad happened, let's create a new one to be safe

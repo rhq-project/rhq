@@ -560,6 +560,7 @@ public class ResourceContainer implements Serializable {
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 LOG.error("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
                 if (this.transferInterrupt) {
                     future.cancel(true);
@@ -648,6 +649,7 @@ public class ResourceContainer implements Serializable {
                 try {
                     this.lock.lockInterruptibly();
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     throw new RuntimeException(e);
                 }
                 // If we made it here, we have acquired the lock.

@@ -119,11 +119,11 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     /**
      * Returns the availability report that should be sent to the Server.
      *
-     * <p>This will return <code>null</code> if there is nothing committed to inventory. Having no committed inventory 
-     * is rare.  There will be no committed inventory if this is a brand new agent whose inventory hasn't been committed 
-     * yet or if the platform and all its children have been deleted (in which case the agent should be uninstalled, or 
+     * <p>This will return <code>null</code> if there is nothing committed to inventory. Having no committed inventory
+     * is rare.  There will be no committed inventory if this is a brand new agent whose inventory hasn't been committed
+     * yet or if the platform and all its children have been deleted (in which case the agent should be uninstalled, or
      * the user will want to re-import the platform).
-     * 
+     *
      * The report can be empty if there is nothing to report. This can happen for a changesOnly report when there
      * are no changes.</p>
      *
@@ -144,7 +144,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             boolean changesOnly = sendChangesOnlyReport.get();
             availabilityReport = new AvailabilityReport(changesOnly, inventoryManager.getAgent().getName());
 
-            // Follow up full reports with changesOnly reports 
+            // Follow up full reports with changesOnly reports
             if (!changesOnly) {
                 sendChangesOnlyReportNextTime();
             }
@@ -195,6 +195,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             checkInventory(scanRoot, availabilityReport, parentAvailabilityType, false, scan);
         } catch (RuntimeException e) {
             if (Thread.interrupted()) {
+                Thread.currentThread().interrupt();
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Exception occurred during availability check, but this thread has been interrupted, "
                         + "so most likely the plugin container is shutting down: " + e);
@@ -265,7 +266,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         MeasurementScheduleRequest availScheduleRequest = resourceContainer.getAvailabilitySchedule();
 
         // if no avail check is scheduled or we're forcing the check, schedule the next check. Note that a forcedCheck
-        // is "off-schedule" so we need to push out the next check.  
+        // is "off-schedule" so we need to push out the next check.
         if ((null == availabilityScheduleTime) || isForced) {
             // if there is no availability schedule (platform) then just perform the avail check
             // (note, platforms always return UP anyway).
@@ -323,7 +324,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         // If the resource's parent is DOWN, the rules are that the resource and all of the parent's other
         // descendants, must also be DOWN. So, there's no need to even ask the resource component
         // for its current availability - its current avail is set to the parent avail type and that's that.
-        // Otherwise, checkAvail as needed. 
+        // Otherwise, checkAvail as needed.
         if (deferToParent || (DOWN == parentAvailType)) {
             current = parentAvailType;
             ++scan.numDeferToParent;
@@ -381,7 +382,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         current = DOWN;
                     }
                 }
-                // Assume DOWN if for some reason the avail check failed 
+                // Assume DOWN if for some reason the avail check failed
                 if (UNKNOWN == current) {
                     current = DOWN;
                     if (LOG.isTraceEnabled()) {

@@ -74,7 +74,7 @@ public class DiscoveryComponentProxyFactory {
             blacklistDisable = false;
         } // always catch here, always let the class load, use a default if the sysprop is invalid
     }
-    
+
 
     /**
      * Same as {@link #getDiscoveryComponentProxy(org.rhq.core.domain.resource.ResourceType, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, long, org.rhq.core.pc.inventory.ResourceContainer)} except
@@ -234,6 +234,7 @@ public class DiscoveryComponentProxyFactory {
                     log.debug("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
                 }
                 future.cancel(true); // this is a daemon thread, let's try to cancel it
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(invokedMethodString(method, args, "was interrupted."));
             } catch (ExecutionException e) {
                 if (log.isDebugEnabled()) {

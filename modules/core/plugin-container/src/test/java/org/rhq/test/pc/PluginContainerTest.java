@@ -127,6 +127,9 @@ public class PluginContainerTest extends JMockTest {
     protected void initBeforeTest(Object testObject, Method testMethod) {
         super.initBeforeTest(testObject, testMethod);
 
+        // clear any current thread interruptions
+        Thread.interrupted();
+
         CURRENT_SETUP.set(getSetup(testMethod));
 
         if (CURRENT_SETUP.get() != null) {

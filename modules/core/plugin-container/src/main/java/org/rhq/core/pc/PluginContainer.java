@@ -532,6 +532,7 @@ public class PluginContainer {
                 readLock = null;
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             readLock = null;
         }
         return readLock;
@@ -552,6 +553,7 @@ public class PluginContainer {
                 writeLock = null;
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             writeLock = null;
         }
         return writeLock;
@@ -731,6 +733,7 @@ public class PluginContainer {
         try {
             rebootThread.join();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.error("Interrupted while rebooting agent after one or more resource types "
                 + " have been marked for deletion. You may need to manually reboot the agent/plugin container to purge "
                 + "stale types.");
@@ -804,6 +807,7 @@ public class PluginContainer {
                         }
                     }
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.warn("Plugin container was interrupted while waiting for an executor service to terminate.");
                 }
             } else {

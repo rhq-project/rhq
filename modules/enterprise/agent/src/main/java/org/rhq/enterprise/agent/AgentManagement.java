@@ -100,7 +100,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
             public void run() {
                 ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
                 try {
-                    sleep(5000L); // give our restart() caller a chance to return and finish
+                    Thread.sleep(5000L); // give our restart() caller a chance to return and finish
                     Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                     m_agent.shutdown();
                     m_agent.start();
@@ -123,9 +123,11 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
             public void run() {
                 ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
                 try {
-                    sleep(5000L); // give our shutdown() caller a chance to return and finish
+                    Thread.sleep(5000L); // give our shutdown() caller a chance to return and finish
                     Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                     m_agent.shutdown();
+                } catch (InterruptedException e) {
+                    // exit the thread
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalCL);
                 }
@@ -230,12 +232,14 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     public void restartPluginContainer() {
         new Thread(new Runnable() {
             public void run() {
-                sleep(5000L); // give our caller a chance to return and finish
                 ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
                 try {
+                    Thread.sleep(5000L); // give our caller a chance to return and finish
                     Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                     m_agent.shutdownPluginContainer();
                     m_agent.startPluginContainer(500L);
+                } catch (InterruptedException e) {
+                    // exit the thread
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalCL);
                 }
@@ -724,13 +728,6 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         PluginUpdate plugin_update = new PluginUpdate(server, pc_config);
 
         return plugin_update;
-    }
-
-    private void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-        }
     }
 
     // this is here to support the agent plugin - the agent plugin will

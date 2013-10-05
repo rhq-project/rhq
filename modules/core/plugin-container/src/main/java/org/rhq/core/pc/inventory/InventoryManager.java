@@ -44,14 +44,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -106,8 +104,6 @@ import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
-import org.rhq.core.pluginapi.availability.AvailabilityFacet;
-import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
@@ -655,42 +651,33 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    @NotNull
-    public InventoryReport executeServerScanImmediately() {
+    private InventoryReport submit(Callable<InventoryReport> c) {
         try {
-            return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor).get();
+            return inventoryThreadPoolExecutor.submit(c).get();
         } catch (InterruptedException e) {
-            throw new RuntimeException("Server scan execution was interrupted");
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Scan execution was interrupted");
         } catch (ExecutionException e) {
             // Should never happen, reports are always generated, even if they're just to report the error
             throw new RuntimeException("Unexpected exception", e);
         }
+    }
+
+    @NotNull
+    public InventoryReport executeServerScanImmediately() {
+        return submit(serverScanExecutor);
     }
 
     @NotNull
     public InventoryReport executeServiceScanImmediately() {
-        try {
-            return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor).get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Service scan execution was interrupted", e);
-        } catch (ExecutionException e) {
-            // Should never happen, reports are always generated, even if they're just to report the error
-            throw new RuntimeException("Unexpected exception", e);
-        }
+        return submit(serviceScanExecutor);
     }
 
     @NotNull
     public InventoryReport executeServiceScanImmediately(Resource resource) {
-        try {
-            RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
-                resource);
-            return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor).get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Service scan execution was interrupted", e);
-        } catch (ExecutionException e) {
-            // Should never happen, reports are always generated, even if they're just to report the error
-            throw new RuntimeException("Unexpected exception", e);
-        }
+        RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
+            resource);
+        return submit(discoveryExecutor);
     }
 
     public void executeServiceScanDeferred() {
@@ -741,6 +728,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return availabilityReport;
 
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException("Availability scan execution was interrupted", e);
         } catch (ExecutionException e) {
             // Should never happen, reports are always generated, even if they're just to report the error
@@ -768,6 +756,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             return availabilityThreadPoolExecutor.submit((Callable<AvailabilityReport>) availExec).get();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException("Availability scan execution was interrupted", e);
         } catch (ExecutionException e) {
             // Should never happen, reports are always generated, even if they're just to report the error

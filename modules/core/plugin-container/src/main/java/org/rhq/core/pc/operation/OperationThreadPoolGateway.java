@@ -146,6 +146,7 @@ public class OperationThreadPoolGateway {
         try {
             threadPool.awaitTermination(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
 
         // Under rare conditions, it is possible for the thread pool to have popped

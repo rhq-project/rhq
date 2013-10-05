@@ -217,6 +217,7 @@ class CommandQueue implements BlockingQueue<Runnable> {
         try {
             return offer(o, 0L, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return false;
         }
     }
@@ -266,6 +267,7 @@ class CommandQueue implements BlockingQueue<Runnable> {
         try {
             return poll(0, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return null;
         }
     }
@@ -438,6 +440,8 @@ class CommandQueue implements BlockingQueue<Runnable> {
                         m_throttleLock.wait(m_sleepMillis);
                     } catch (InterruptedException e) {
                         // told to wake up, throttling was probably disabled
+                        // exit the thread
+                        break;
                     }
 
                     if (m_throttleSemaphore != null) {

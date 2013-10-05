@@ -36,7 +36,7 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
  * Provides a way to gracefully shutdown the agent.  This can be used
  * as a shutdown hook, and it can also be used to perform some shutdown
  * functions, like attempting to interrupt hanging threads.
- * 
+ *
  * @author John Mazzitelli
  */
 public class AgentShutdownHook extends Thread {
@@ -65,10 +65,10 @@ public class AgentShutdownHook extends Thread {
         showMessage(AgentI18NResourceKeys.EXIT_SHUTTING_DOWN);
 
         try {
-            agent.shutdown();
-
             // set our timebomb to ensure the agent dies
             spawnKillThread(1000L * 60 * 5);
+
+            agent.shutdown();
 
             // try to interrupt all non-daemon threads so they die faster; but only try a fixed number of times
             int threadsStillAlive = waitForNonDaemonThreads();
@@ -89,12 +89,12 @@ public class AgentShutdownHook extends Thread {
     /**
      * If you want the current agent to be dead this method will attept to wait for all
      * other non-daemon threads to die before returning.
-     * 
+     *
      * We log messages if we can't wait for them all for whatever reason.
-     * 
+     *
      * Note that obviously this method will not wait for the calling thread
      * that is currently running this method.
-     * 
+     *
      * @return the number of still active non-daemon threads that haven't died even after waiting
      */
     public int waitForNonDaemonThreads() {
@@ -136,7 +136,7 @@ public class AgentShutdownHook extends Thread {
     /**
      * We need to make sure our VM can die quickly, so this method will send interrupts
      * to most of the threads running in the VM to try to get them to hurry up and die.
-     * 
+     *
      * @return the non-daemon threads that were interrupted
      */
     public List<Thread> interruptAllThreads() {
@@ -176,7 +176,7 @@ public class AgentShutdownHook extends Thread {
      * the thread created by this method will explicitly kill the VM.
      * Calling this method sets a timebomb that will kill the VM after a timer runs out.
      * There is no way to stop this timebomb short of performing 007-type heroics.
-     * 
+     *
      * @param doomsday the number of milliseconds that the VM has left to live; once this
      *        time expires, a kill thread will execute System.exit(0).
      */
@@ -201,7 +201,7 @@ public class AgentShutdownHook extends Thread {
      * Because this object is performing very important and serious things, we will
      * both log the message and output it to the console, to give the user ample
      * notification of what is going on.
-     * 
+     *
      * @param msg
      * @param args
      */
@@ -216,7 +216,7 @@ public class AgentShutdownHook extends Thread {
 
     /**
      * Logs a debug message - it ignores exceptions but won't output anything to the console.
-     *  
+     *
      * @param msg
      * @param args
      */

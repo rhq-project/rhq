@@ -38,22 +38,11 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
  * agent into hibernate mode, which will essentially shutdown the agent,
  * let it pause for some amount of time, then restart the agent. This
  * will hopefully clear up the poor VM condition.
- * 
+ *
  * @author John Mazzitelli
  */
 public class VMHealthCheckThread extends Thread {
     private static final Logger LOG = AgentI18NFactory.getLogger(VMHealthCheckThread.class);
-
-    /**
-     * Will be <code>true</code> when this thread is told to stop checking. Note that this does not necessarily mean the
-     * thread is stopped, it just means this thread was told to stop. See {@link #stopped}.
-     */
-    private boolean stop;
-
-    /**
-     * Will be <code>true</code> when this thread is stopped or will be stopped shortly.
-     */
-    private boolean stopped;
 
     /**
      * The agent that will be hibernated if the VM is critically sick.
@@ -94,8 +83,6 @@ public class VMHealthCheckThread extends Thread {
     public VMHealthCheckThread(AgentMain agent) {
         super("RHQ VM Health Check Thread");
         setDaemon(false);
-        this.stop = false;
-        this.stopped = true;
         this.agent = agent;
 
         AgentConfiguration config = agent.getConfiguration();
@@ -126,30 +113,26 @@ public class VMHealthCheckThread extends Thread {
      * Tells this thread to stop checking. This will block and wait for the thread to die.
      */
     public void stopChecking() {
-        this.stop = true;
-
-        // tell the thread that we flipped the stop flag in case it is waiting in a sleep interval
-        synchronized (this) {
-            while (!this.stopped) {
-                try {
-                    notifyAll();
-                    wait(5000L);
-                } catch (InterruptedException e) {
-                }
-            }
+        interrupt();
+        try {
+            join(interval);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+    }
 
-        return;
+    /**
+     * Returns true if we are out of memory.
+     */
+    boolean isOutOfMemory() {
+        MemoryMXBean memoryMxBean = ManagementFactory.getMemoryMXBean();
+        List<MemoryPoolMXBean> memoryPoolMxBeans = getMemoryPoolMXBeansToMonitor();
+        return checkMemory(memoryMxBean) || checkPoolMemories(memoryPoolMxBeans, memoryMxBean);
     }
 
     @Override
     public void run() {
-        this.stopped = false;
-
         LOG.debug(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_STARTED, this.interval);
-
-        final MemoryMXBean memoryMxBean = ManagementFactory.getMemoryMXBean();
-        final List<MemoryPoolMXBean> memoryPoolMxBeans = getMemoryPoolMXBeansToMonitor();
 
         try {
             // perform an initial sleep to prevent us from trying to stop while agent is still starting
@@ -157,15 +140,9 @@ public class VMHealthCheckThread extends Thread {
                 wait(this.interval);
             }
 
-            while (!this.stop) {
+            while (!isInterrupted()) {
                 try {
-                    if (checkMemory(memoryMxBean)) {
-                        LOG.fatal(AgentI18NResourceKeys.VM_HEALTH_CHECK_SEES_MEM_PROBLEM);
-                        restartAgent(60000L);
-                        continue;
-                    }
-
-                    if (checkPoolMemories(memoryPoolMxBeans, memoryMxBean)) {
+                    if (isOutOfMemory()) {
                         LOG.fatal(AgentI18NResourceKeys.VM_HEALTH_CHECK_SEES_MEM_PROBLEM);
                         restartAgent(60000L);
                         continue;
@@ -187,31 +164,24 @@ public class VMHealthCheckThread extends Thread {
                     // Try to do as little as possible here (no logging, no creating objects)
                     // and immediately try to shutdown our agent and restart it.
                     restartAgent(0L);
-                } catch (InterruptedException e) {
-                    this.stop = true;
                 }
             }
+        } catch (InterruptedException e) {
+            // exit
         } catch (Throwable t) {
             LOG.error(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_EXCEPTION, t);
         }
 
         LOG.debug(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_STOPPED);
-        this.stopped = true;
-
-        return;
     }
 
     /**
      * This will {@link AgentMain#shutdown()} the agent, pause for the given number of milliseconds, then
      * {@link AgentMain#start()} the agent again.
-     * 
+     *
      * @param pause number of milliseconds before restarting the agent after shutting down
      */
     private void restartAgent(long pause) throws Exception {
-        // this method is going to kill our thread by calling stopChecking; to avoid deadlock, set our flags now
-        this.stop = true;
-        this.stopped = true;
-
         // immediately attempt to shutdown the agent which should free up alot of VM resources (memory/threads)
         try {
             this.agent.shutdown();
@@ -219,8 +189,6 @@ public class VMHealthCheckThread extends Thread {
             // this is bad, we can't even shutdown the agent.
             // but this thread is our only hope to recover, so do not stop the thread now
             // let it continue and see if we can recover the next time
-            this.stop = false;
-            this.stopped = false;
             Thread.interrupted(); // clear the interrupted status to ensure our thread doesn't abort
             Thread.sleep(30000L); // give our thread time to breath - do avoid fast infinite looping that might occur
             return;
@@ -241,7 +209,6 @@ public class VMHealthCheckThread extends Thread {
             // uh-oh, we can't start the agent for some reason; our thread is our last and only hope to recover
 
             // first try to shutdown again, in case start() got half way there but couldn't finish
-            // do NOT set stop flags to false yet as this would cause a deadlock
             try {
                 this.agent.shutdown();
                 // TODO: purging spool: agentConfig.getDataDirectory() + agentConfig.getClientSenderCommandSpoolFileName()
@@ -250,8 +217,6 @@ public class VMHealthCheckThread extends Thread {
             }
 
             // do not stop the thread - let it continue and see if we can recover the next time
-            this.stop = false;
-            this.stopped = false;
             Thread.interrupted(); // clear the interrupted status to ensure our thread doesn't abort
             return;
         }
@@ -259,15 +224,16 @@ public class VMHealthCheckThread extends Thread {
         // At this point, we have "rebooted" the agent - our memory usage should be back to normal.
         this.agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.VM_HEALTH_CHECK);
 
-        return;
+        // This thread is done
+        interrupt();
     }
 
     /**
      * Checks the VM's memory subsystem and if it detects the VM is critically
      * low on memory, <code>true</code> will be returned.
-     * 
+     *
      * @param bean the platform MBean that contains the memory statistics
-     * 
+     *
      * @return <code>true</code> if the VM is critically low on memory
      */
     private boolean checkMemory(MemoryMXBean bean) {
@@ -305,10 +271,10 @@ public class VMHealthCheckThread extends Thread {
     /**
      * Checks the given pools' memories and if it detects the pool is critically
      * low on memory, <code>true</code> will be returned.
-     * 
+     *
      * @param memoryPoolMxBeans the MBeans that contain the memory statistics
      * @param memoryMxBean the memory MX bean, used to perform GC if we need to
-     * 
+     *
      * @return <code>true</code> if one of the pools is critically low on memory
      */
 
@@ -357,14 +323,14 @@ public class VMHealthCheckThread extends Thread {
     /**
      * Returns <code>true</code> if the given memory usage indicates that
      * memory is critically low.
-     * 
+     *
      * @param memoryUsage
      * @param d the percentage of used memory to max available memory that is
      *          the threshold to be considered critical. e.g. If this is 0.9, that means
      *          if the used memory is 90% or higher of the max, then there is
      *          a critical shortest of free memory and true will be returned
      * @param type the type of memory
-     *          
+     *
      * @return <code>true</code> if the amount of used memory is over the threshold
      */
     private boolean isCriticallyLow(MemoryUsage memoryUsage, float thresholdPercentage, String type) {
@@ -381,7 +347,7 @@ public class VMHealthCheckThread extends Thread {
 
     /**
      * Gets a list of all the memory pool MBeans that are to be monitored.
-     *  
+     *
      * @return the list of MBeans that need to be monitored
      */
     private List<MemoryPoolMXBean> getMemoryPoolMXBeansToMonitor() {

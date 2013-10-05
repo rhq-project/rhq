@@ -18,7 +18,7 @@
  */
 package org.rhq.coregui.client.inventory.common.graph.graphtype;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph;
+import org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph;
 
 /**
  * Contains the javascript chart definition for a d3 Stacked Bar graph chart.

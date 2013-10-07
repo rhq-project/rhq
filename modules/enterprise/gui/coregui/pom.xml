@@ -270,7 +270,7 @@
             </goals>
           </execution>
           <execution>
-                        <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
+            <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
             <id>default-cli</id>
             <goals>
               <goal>debug</goal>
@@ -320,6 +320,32 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- Override root pom, we don't want to check the client classes because they have been removed after
+           generating the javascript  -->
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>java-api-check</id>
+                  <configuration>
+                      <signature>
+                         <groupId>${animal.sniffer.java.signature.groupId}</groupId>
+                         <artifactId>${animal.sniffer.java.signature.artifactId}</artifactId>
+                         <version>${animal.sniffer.java.signature.version}</version>
+                      </signature>
+                      <ignores>
+                         <ignore>org.rhq.coregui.client.*</ignore>
+                      </ignores>
+                  </configuration>
+                  <phase>verify</phase>
+                  <goals>
+                      <goal>check</goal>
+                  </goals>
+              </execution>
+          </executions>
       </plugin>
 
     </plugins>

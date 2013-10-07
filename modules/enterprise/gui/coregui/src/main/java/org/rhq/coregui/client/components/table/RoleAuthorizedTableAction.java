@@ -49,6 +49,11 @@ public abstract class RoleAuthorizedTableAction extends AbstractTableAction {
     private Boolean isAuthorized;
 
     protected RoleAuthorizedTableAction(Table<?> table, Permission... permissions) {
+        this(table, null, permissions);
+    }
+
+    protected RoleAuthorizedTableAction(Table<?> table, TableActionEnablement enablement, Permission... permissions) {
+        super((null == enablement) ? TableActionEnablement.ALWAYS : enablement);
         this.table = table;
         this.permissions = Arrays.asList(permissions);
     }

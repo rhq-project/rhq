@@ -195,20 +195,10 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                     }
                 });
 
-            // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
-            // select the bundle.
             addTableAction(MSG.view_bundle_deploy(), null, new RoleAuthorizedTableAction(BundlesListView.this,
-                Permission.DEPLOY_BUNDLES, Permission.DEPLOY_BUNDLES_TO_GROUP) {
+                TableActionEnablement.SINGLE, Permission.DEPLOY_BUNDLES, Permission.DEPLOY_BUNDLES_TO_GROUP) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    if (selection.length == 0) {
-                        new BundleDeployWizard().startWizard();
-                        // we can refresh the table buttons immediately since the wizard is a dialog, the
-                        // user can't access enabled buttons anyway.
-                        BundlesListView.this.refreshTableInfo();
-                        return;
-                    }
-
                     BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
                     final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
                     BundleCriteria bc = new BundleCriteria();

@@ -197,11 +197,15 @@ public class SchedulerService implements SchedulerServiceMBean {
     }
 
     public void shutdown() throws SchedulerException {
-        scheduler.shutdown();
+        if (isStarted()) {
+            scheduler.shutdown();
+        }
     }
 
     public void shutdown(boolean waitForJobsToComplete) throws SchedulerException {
-        scheduler.shutdown(waitForJobsToComplete);
+        if (isStarted()) {
+            scheduler.shutdown(waitForJobsToComplete);
+        }
     }
 
     public boolean isShutdown() throws SchedulerException {
@@ -465,7 +469,7 @@ public class SchedulerService implements SchedulerServiceMBean {
     }
 
     public boolean isStarted() throws SchedulerException {
-        return scheduler.isStarted();
+        return scheduler != null && scheduler.isStarted();
     }
 
     public boolean removeGlobalJobListener(String jobName) throws SchedulerException {

@@ -157,9 +157,11 @@ public class ShutdownListener {
      */
     private void stopScheduler() {
         try {
-            log.info("Shutting down the scheduler gracefully - currently running jobs will be allowed to finish...");
-            schedulerBean.shutdown(true);
-            log.info("The scheduler has been shutdown and all jobs are done.");
+            if (schedulerBean.isStarted()) {
+                log.info("Shutting down the scheduler gracefully - currently running jobs will be allowed to finish...");
+                schedulerBean.shutdown(true);
+                log.info("The scheduler has been shutdown and all jobs are done.");
+            } else log.info("No need for shutting down the scheduler, because it is not running.");
         } catch (Throwable t) {
             // only show ugly stack traces if the user runs the server in debug mode
             if (log.isDebugEnabled()) {

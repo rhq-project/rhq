@@ -2489,8 +2489,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             results.setAvailabilityType(foundAvail);
 
         } catch (Exception e) {
-            if (log.isInfoEnabled()) {
-                log.info("Failed to get live availability.", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to get live availability: " + e.getMessage());
             }
         }
 

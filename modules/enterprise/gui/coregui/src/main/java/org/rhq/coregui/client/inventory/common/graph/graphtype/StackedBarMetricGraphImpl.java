@@ -29,7 +29,9 @@ import org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph;
  */
 public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
-
+    /**
+     * GWT constructor for GWT.create() deferred instantiation.
+     */
     public StackedBarMetricGraphImpl() {
         super();
     }
@@ -184,7 +186,11 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     yScale = $wnd.d3.scale.linear()
                             .clamp(true)
                             .rangeRound([height, 0])
-                            .domain([$wnd.d3.min(chartContext.data, function(d) {return d.low;}),$wnd.d3.max(chartContext.data, function(d) {return d.high;})]);
+                            .domain([$wnd.d3.min(chartContext.data, function (d) {
+                                return d.low;
+                            }), $wnd.d3.max(chartContext.data, function (d) {
+                                return d.high;
+                            })]);
 
                     yAxis = $wnd.d3.svg.axis()
                             .scale(yScale)
@@ -216,7 +222,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
                     legendUnDefined = (typeof min === 'undefined') || (typeof avg === 'undefined') || (typeof peak === 'undefined');
-                    if (!(chartContext.hideLegend &&  !useSmallCharts())) {
+                    if (!(chartContext.hideLegend && !useSmallCharts())) {
                         createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     }
                 }
@@ -250,7 +256,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase)
                         .text(highLabel + " - ");
 
-                if(typeof highValue !== 'undefined'){
+                if (typeof highValue !== 'undefined') {
                     chart.append("text")
                             .attr("class", "highText")
                             .attr("x", xValue)
@@ -266,7 +272,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + yInc)
                         .text(avgLabel + " - ");
 
-                if(typeof avgValue !== 'undefined'){
+                if (typeof avgValue !== 'undefined') {
                     chart.append("text")
                             .attr("class", "avgText")
                             .attr("x", xValue)
@@ -281,7 +287,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + 2 * yInc)
                         .text(minLabel + " - ");
 
-                if(typeof minValue !== 'undefined'){
+                if (typeof minValue !== 'undefined') {
                     chart.append("text")
                             .attr("class", "minText")
                             .attr("x", xValue)
@@ -314,15 +320,15 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
 
-            function showFullMetricBarHover(d){
+            function showFullMetricBarHover(d) {
 
                 var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
                         dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                         startDate = new Date(+d.x),
-                        metricGraphTooltipDiv =  $wnd.d3.select("#metricGraphTooltip");
+                        metricGraphTooltipDiv = $wnd.d3.select("#metricGraphTooltip");
 
-                metricGraphTooltipDiv.style("left", + ($wnd.d3.event.pageX) +15 + "px")
-                        .style("top",  ($wnd.d3.event.pageY)+"px");
+                metricGraphTooltipDiv.style("left", +($wnd.d3.event.pageX) + 15 + "px")
+                        .style("top", ($wnd.d3.event.pageY) + "px");
 
                 metricGraphTooltipDiv.select("#metricGraphTooltipTimeLabel")
                         .text(chartContext.timeLabel);
@@ -357,18 +363,22 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
 
                 //Show the tooltip
-                $wnd.jQuery('#metricGraphTooltip').show();
-                setTimeout(function(){$wnd.jQuery('#metricGraphTooltip').hide();},5000);
+                $wnd.d3.select("#metricGraphTooltip").classed("hidden", false);
+
+                setTimeout(function () {
+                    $wnd.jQuery('#metricGraphTooltip').hide();
+                }, 5000);
 
             }
-            function showNoDataBarHover(d){
+
+            function showNoDataBarHover(d) {
                 var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
                         dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                         startDate = new Date(+d.x),
-                        noDataTooltipDiv =  $wnd.d3.select("#noDataTooltip");
+                        noDataTooltipDiv = $wnd.d3.select("#noDataTooltip");
 
-                noDataTooltipDiv.style("left", + ($wnd.d3.event.pageX) + 15 + "px")
-                        .style("top",  ($wnd.d3.event.pageY)+"px");
+                noDataTooltipDiv.style("left", +($wnd.d3.event.pageX) + 15 + "px")
+                        .style("top", ($wnd.d3.event.pageY) + "px");
 
                 noDataTooltipDiv.select("#noDataTooltipTimeLabel")
                         .text(chartContext.timeLabel);
@@ -384,8 +394,10 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .text(chartContext.noDataLabel);
 
                 //Show the tooltip
-                $wnd.jQuery('#noDataTooltip').show();
-                setTimeout(function(){$wnd.jQuery('#noDataTooltip').hide();},5000);
+                $wnd.d3.select("#noDataTooltip").classed("hidden", false);
+                setTimeout(function () {
+                    $wnd.jQuery('#noDataTooltip').hide();
+                }, 5000);
 
             }
 
@@ -422,7 +434,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         })
 
                         .attr("opacity", ".9")
-                        .attr("fill", function (d) {
+                        .attr("fill",function (d) {
                             if (d.down || d.unknown || d.nodata) {
                                 return  "url(#noDataStripes)";
                             }
@@ -434,20 +446,23 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                 showNoDataBarHover(d);
                             }
                             else {
-                                if(+d.high === +d.low){
+                                if (+d.high === +d.low) {
                                     showSingleValueMetricBarHover(d);
-                                } else {
+                                }
+                                else {
                                     showFullMetricBarHover(d);
                                 }
                             }
                         }).on("mouseout", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                $wnd.jQuery('#noDataTooltip').hide();
-                            }else {
-                                if(+d.high === +d.low){
-                                    $wnd.jQuery('#singleValueTooltip').hide();
-                                } else {
-                                    $wnd.jQuery('#metricGraphTooltip').hide();
+                                $wnd.d3.select("#noDataTooltip").classed("hidden", true);
+                            }
+                            else {
+                                if (+d.high === +d.low) {
+                                    $wnd.d3.select("#singleValueTooltip").classed("hidden", true);
+                                }
+                                else {
+                                    $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
                                 }
                             }
                         });
@@ -483,12 +498,12 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             showFullMetricBarHover(d);
                         }).on("mouseout", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                $wnd.jQuery('#noDataTooltip').hide();
-                            }else {
-                                $wnd.jQuery('#metricGraphTooltip').hide();
+                                $wnd.d3.select("#noDataTooltip").classed("hidden", true);
+                            }
+                            else {
+                                $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
                             }
                         });
-
 
 
                 // lower portion representing avg to low
@@ -518,20 +533,21 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             showFullMetricBarHover(d);
                         }).on("mouseout", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                $wnd.jQuery('#noDataTooltip').hide();
-                            }else {
-                                $wnd.jQuery('#metricGraphTooltip').hide();
+                                $wnd.d3.select("#noDataTooltip").classed("hidden", true);
+                            }
+                            else {
+                                $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
                             }
                         });
 
-                function showSingleValueMetricBarHover(d){
+                function showSingleValueMetricBarHover(d) {
                     var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
                             dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                             startDate = new Date(+d.x),
-                            singleValueGraphTooltipDiv =  $wnd.d3.select("#singleValueTooltip");
+                            singleValueGraphTooltipDiv = $wnd.d3.select("#singleValueTooltip");
 
-                    singleValueGraphTooltipDiv.style("left", + ($wnd.d3.event.pageX) + 15 + "px")
-                            .style("top",  ($wnd.d3.event.pageY)+"px");
+                    singleValueGraphTooltipDiv.style("left", +($wnd.d3.event.pageX) + 15 + "px")
+                            .style("top", ($wnd.d3.event.pageY) + "px");
 
                     singleValueGraphTooltipDiv.select("#singleValueTooltipTimeLabel")
                             .text(chartContext.timeLabel);
@@ -550,8 +566,10 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
 
                     //Show the tooltip
-                    $wnd.jQuery('#singleValueTooltip').show();
-                    setTimeout(function(){$wnd.jQuery('#singleValueTooltip').hide();},5000);
+                    $wnd.d3.select("#singleValueTooltip").classed("hidden", false);
+                    setTimeout(function () {
+                        $wnd.jQuery('#singleValueTooltip').hide();
+                    }, 5000);
 
                 }
 
@@ -584,7 +602,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             return  calcBarWidth();
                         })
                         .attr("opacity", 0.9)
-                        .attr("fill", function (d) {
+                        .attr("fill",function (d) {
                             if (d.low === d.high) {
                                 return  "#50505a";
                             }
@@ -594,7 +612,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         }).on("mouseover",function (d) {
                             showSingleValueMetricBarHover(d);
                         }).on("mouseout", function () {
-                            $wnd.jQuery('#singleValueTooltip').hide();
+                            $wnd.d3.select("#singleValueTooltip").classed("hidden", true);
                         });
             }
 
@@ -708,7 +726,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
 
-            function createBrush(){
+            function createBrush() {
 
                 var brush = $wnd.d3.svg.brush()
                                 .x(timeScale)
@@ -736,19 +754,19 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 function brushend() {
                     var s = brush.extent();
                     var startTime = Math.round(s[0].getTime());
-                    var endTime = Math.round(s[1].getTime() );
+                    var endTime = Math.round(s[1].getTime());
                     svg.classed("selecting", !$wnd.d3.event.target.empty());
                     // ignore selections less than 1 minute
-                    if(endTime - startTime >= 60000){
+                    if (endTime - startTime >= 60000) {
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)(startTime, endTime);
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
                     }
                 }
 
-                function updateDateRangeDisplay(startDate, endDate ) {
+                function updateDateRangeDisplay(startDate, endDate) {
                     var formattedDateRange = startDate.format(chartContext.buttonBarDateTimeFormat) + '  -  ' + endDate.format(chartContext.buttonBarDateTimeFormat);
-                    var timeRange = endDate.from(startDate,true);
-                    $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+'('+timeRange+')');
+                    var timeRange = endDate.from(startDate, true);
+                    $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange + '(' + timeRange + ')');
                 }
 
 
@@ -766,7 +784,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         createHeader(chartContext.chartTitle);
 
                         createYAxisGridLines();
-                        if(!chartContext.isPortalGraph){
+                        if (!chartContext.isPortalGraph) {
                             createBrush();
                         }
                         createStackedBars();
@@ -781,10 +799,10 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }; // end public closure
         }();
 
-        if(typeof chartContext.data !== 'undefined' && chartContext.data !== null && chartContext.data.length > 0){
+        if (typeof chartContext.data !== 'undefined' && chartContext.data !== null && chartContext.data.length > 0) {
             metricStackedBarGraph.draw(chartContext);
         }
 
-    }-*/;
+                                       }-*/;
 
 }

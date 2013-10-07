@@ -322,6 +322,37 @@
         </executions>
       </plugin>
 
+      <!-- remove unnecessary client .class files to reduce the size of the webapp and avoid long path names on windows -->
+      <plugin>
+         <artifactId>maven-clean-plugin</artifactId>
+         <executions>
+           <execution>
+            <id>remove-gwt-client-classes</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <verbose>true</verbose>
+              <excludeDefaultDirectories>true</excludeDefaultDirectories>
+              <filesets>
+                <fileset>  <!-- remove the class files of client-only code -->
+                  <directory>${project.build.directory}/classes/org/rhq/coregui/client</directory>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                  <!-- keep the RPC-Service interface, and the entry- point class -->
+                  <excludes>
+                    <exclude>CoreGUI*.class</exclude>
+                    <exclude>gwt/**</exclude>
+                  </excludes>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Override root pom, we don't want to check the client classes because they have been removed after
            generating the javascript  -->
       <plugin>

@@ -137,7 +137,7 @@ public class ServerInstallUtil {
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_JACORB_SSL,
             "rhq.server.socket.binding.port.jacorb-ssl", 2529));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MESSAGING,
-            "rhq.server.socket.binding.port.messaging", 4445, "management"));
+            "rhq.server.socket.binding.port.messaging", 4449, "management"));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MESSAGING_THRUPUT,
             "rhq.server.socket.binding.port.messaging-throughput", 4455, "management"));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_HTTP,

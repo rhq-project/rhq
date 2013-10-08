@@ -35,7 +35,6 @@ import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
@@ -290,13 +289,9 @@ public abstract class AbstractInstall extends ControlCommand {
             executor.execute(commandLine);
 
             // if any errors occur after now, we need to stop the agent
-            addUndoTask(new Runnable() {
-                public void run() {
-                    try {
-                        stopAgent(agentBasedir);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+            addUndoTask(new ControlCommand.UndoTask("Stopping agent") {
+                public void performUndoWork() throws Exception {
+                    stopAgent(agentBasedir);
                 }
             });
 
@@ -445,15 +440,10 @@ public abstract class AbstractInstall extends ControlCommand {
             File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
             final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
+                public void performUndoWork() throws Exception {
                     getServerInstalledMarkerFile(getBaseDir()).delete();
-                    try {
-                        mgmtUserPropertiesReverter.revert();
-                    } catch (Exception e) {
-                        throw new RuntimeException(
-                            "Cannot revert mgmt user - you may have to revert settings manually", e);
-                    }
+                    mgmtUserPropertiesReverter.revert();
                 }
             });
 
@@ -542,8 +532,8 @@ public abstract class AbstractInstall extends ControlCommand {
 
             // if the install fails, we need to delete the data directories that were created and
             // purge the rhq-storage install directory that might have a "half" installed storage node in it.
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Removing storage node data and install directories") {
+                public void performUndoWork() {
                     StorageDataDirectories dataDirs = getStorageDataDirectoriesFromProperties(storageProperties);
                     FileUtil.purge(dataDirs.dataDir, true);
                     FileUtil.purge(dataDirs.commitlogDir, true);
@@ -576,16 +566,12 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected void addUndoTaskToStopComponent(final String componentArgument) {
         // component argument must be one of --storage, --server, --agent (a valid argument to the Stop command)
-        addUndoTask(new Runnable() {
-            public void run() {
-                try {
-                    Stop stopCommand = new Stop();
-                    CommandLineParser parser = new PosixParser();
-                    CommandLine cmdLine = parser.parse(stopCommand.getOptions(), new String[] { componentArgument });
-                    stopCommand.exec(cmdLine);
-                } catch (ParseException e) {
-                    throw new RuntimeException(e);
-                }
+        addUndoTask(new ControlCommand.UndoTask("Stopping component: " + componentArgument) {
+            public void performUndoWork() throws Exception {
+                Stop stopCommand = new Stop();
+                CommandLineParser parser = new PosixParser();
+                CommandLine cmdLine = parser.parse(stopCommand.getOptions(), new String[] { componentArgument });
+                stopCommand.exec(cmdLine);
             }
         });
     }

@@ -91,8 +91,35 @@ public abstract class ControlCommand {
         return;
     }
 
-    protected void addUndoTask(Runnable r) {
+    protected void addUndoTask(UndoTask r) {
         undoTasks.add(r);
+    }
+
+    protected abstract class UndoTask implements Runnable {
+        private final String message;
+
+        public UndoTask() {
+            this(null);
+        }
+
+        public UndoTask(String msg) {
+            this.message = msg;
+        }
+
+        @Override
+        public void run() {
+            if (this.message != null) {
+                log.warn("UNDO: " + this.message);
+            }
+
+            try {
+                performUndoWork();
+            } catch (Exception e) {
+                throw new RuntimeException("Undo task failed: " + ((this.message == null) ? "" : this.message), e);
+            }
+        }
+
+        protected abstract void performUndoWork() throws Exception;
     }
 
     public ControlCommand() {

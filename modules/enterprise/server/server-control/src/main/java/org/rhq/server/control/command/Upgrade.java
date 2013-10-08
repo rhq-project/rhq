@@ -46,6 +46,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -175,13 +176,12 @@ public class Upgrade extends AbstractInstall {
 
             // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
+                public void performUndoWork() throws Exception {
                     try {
                         serverPropFileReverter.revert();
                     } catch (Exception e) {
-                        throw new RuntimeException(
-                            "Cannot reset rhq-server.properties - you may have to revert settings manually", e);
+                        throw new Exception("Cannot reset rhq-server.properties - revert settings manually", e);
                     }
                 }
             });
@@ -271,8 +271,8 @@ public class Upgrade extends AbstractInstall {
                 waitForProcessToStop(getStoragePid());
 
                 // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again later
-                addUndoTask(new Runnable() {
-                    public void run() {
+                addUndoTask(new ControlCommand.UndoTask("Removing new storage node install directory") {
+                    public void performUndoWork() {
                         FileUtil.purge(getStorageBasedir(), true);
                     }
                 });
@@ -640,8 +640,8 @@ public class Upgrade extends AbstractInstall {
                 }
             }
 
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
+                public void performUndoWork() {
                     FileUtil.purge(agentBasedir, true);
                 }
             });

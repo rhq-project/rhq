@@ -45,6 +45,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -128,13 +129,12 @@ public class Install extends AbstractInstall {
 
             // If any failures occur, we know we need to reset rhq-server.properties.
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
+                public void performUndoWork() throws Exception {
                     try {
                         serverPropFileReverter.revert();
                     } catch (Exception e) {
-                        throw new RuntimeException(
-                            "Cannot reset rhq-server.properties - you may have to revert settings manually", e);
+                        throw new Exception("Cannot reset rhq-server.properties - revert settings manually", e);
                     }
                 }
             });
@@ -280,8 +280,8 @@ public class Install extends AbstractInstall {
             putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
 
             // if the install fails, we will completely delete any agent that might have been "half" installed
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
+                public void performUndoWork() {
                     FileUtil.purge(agentBasedir, true);
                 }
             });

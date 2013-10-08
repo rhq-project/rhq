@@ -59,7 +59,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="7" />
+               <entry key="rhq.agent.configuration-schema-version" value="8" />
 
                <!--
                _______________________________________________________________
@@ -1096,6 +1096,15 @@ commands named "config", "setconfig" and "setup" and the command line options
                class.to.instantiate.via.noarg.constructor:interface.to.expose
                -->
                <entry key="rhq.communications.remote-pojos" value="org.rhq.enterprise.communications.PingImpl:org.rhq.enterprise.communications.Ping" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.command-authenticator
+
+               A command authenticator class that will be used to authenticate
+               incoming commands from the server.
+               -->
+               <entry key="rhq.communications.command-authenticator" value="org.rhq.enterprise.agent.SecurityTokenCommandAuthenticator" />
 
             </map>
          </node>

@@ -193,9 +193,9 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         items
             .addAll(buildOneFormRowWithCombobox(
                 FIELD_HEAP_MAX,
-                "Max Heap Size",
+                "Heap Size",
                 configuration.getHeapSize(),
-                "The maximum heap size. This value will be used with the -Xmx JVM option. If you are going to increase/decrease this value, then you should also increase/decrease the new generation proportionally. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
+                "The maximum (and at the same time starting) heap size. This value will be used with the -Xmx and -Xms JVM options. If you are going to increase/decrease this value, then you should also increase/decrease the new generation proportionally. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
         items
             .addAll(buildOneFormRowWithCombobox(
                 FIELD_HEAP_NEW,

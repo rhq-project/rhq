@@ -182,6 +182,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     @Override
     public void onViewRendered() {
         // refresh the graphs on subtab nav because we are a cached view not new
-        availabilityGraph.parentResized();
+        refreshData();
     }
 }

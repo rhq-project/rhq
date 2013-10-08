@@ -91,23 +91,9 @@ public class ContentHandlerBean extends AbstractRestBean {
         File tmpDir = new File(tmpDirName);
         File outFile = File.createTempFile(TMP_FILE_PREFIX, TMP_FILE_SUFFIX,tmpDir);
 
-        FileOutputStream fos = new FileOutputStream(outFile);
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outFile));
 
-        BufferedInputStream bis = new BufferedInputStream(contentStream);
-
-        byte[] buf = new byte[32768]; // 32k
-
-        int data;
-        int off=0;
-        while ((data=bis.read(buf))!=-1) {
-            bos.write(buf,off,data);
-            off+=data;
-        }
-
-        bos.flush();
-        bos.close();
-        bis.close();
+        StreamUtil.copy(contentStream, bos, true);
 
         String fileHandle = outFile.getName();
         StringValue sv = new StringValue(fileHandle);

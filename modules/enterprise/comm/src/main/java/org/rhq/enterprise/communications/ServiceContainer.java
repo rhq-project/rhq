@@ -66,6 +66,7 @@ import org.rhq.enterprise.communications.command.impl.stream.RemoteInputStreamCo
 import org.rhq.enterprise.communications.command.impl.stream.RemoteOutputStreamCommand;
 import org.rhq.enterprise.communications.command.impl.stream.server.RemoteInputStreamCommandService;
 import org.rhq.enterprise.communications.command.impl.stream.server.RemoteOutputStreamCommandService;
+import org.rhq.enterprise.communications.command.server.CommandAuthenticator;
 import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.CommandProcessor;
 import org.rhq.enterprise.communications.command.server.CommandService;
@@ -239,12 +240,57 @@ public class ServiceContainer {
     private ConcurrencyManager m_concurrencyManager;
 
     /**
+     * Custom data is a way to share information across disparate components so long as those components
+     * have access to this service container object. This data is never used by the service container - it
+     * can be null, empty, or chock full of data. No validation is performed on this data.
+     */
+    private Map<String, Object> m_customData;
+
+    /**
      * Private to prevent external instantiation.
      */
     public ServiceContainer() {
         m_discoveryListener = new ServiceContainerNetworkNotificationListener();
         m_senderCreationListeners = new Vector<ServiceContainerSenderCreationListener>(); // synchronized
         m_commandListeners = new ArrayList<CommandListener>();
+        m_customData = new HashMap<String, Object>();
+    }
+
+    /**
+     * Returns custom data identified with the given key. If no data exists that is identified by that key,
+     * null is returned.
+     *
+     * @param key identifies the custom data to return - if null, this method returns null
+     * @return the custom data or null if there is no custom data associated with the given key
+     */
+    public Object getCustomData(String key) {
+        if (key == null) {
+            return null;
+        }
+        synchronized (this.m_customData) {
+            return this.m_customData.get(key);
+        }
+    }
+
+    /**
+     * Stores the given custom data to be identified with the given key. You can retrieve this data
+     * via {@link #getCustomData(String)}.
+     *
+     * @param key identifies the custom data to store - if null, this method does nothing and returns.
+     * @param data custom data to add - it will be associated with the given key.
+     */
+    public void addCustomData(String key, Object data) {
+        if (key == null) {
+            return;
+        }
+        synchronized (this.m_customData) {
+            if (data != null) {
+                this.m_customData.put(key, data);
+            } else {
+                this.m_customData.remove(key);
+            }
+        }
+        return;
     }
 
     /**
@@ -671,6 +717,7 @@ public class ServiceContainer {
         m_discoveryListener.removeAll();
         m_commandListeners.clear();
         m_senderCreationListeners.clear();
+        m_customData.clear();
 
         LOG.info(CommI18NResourceKeys.SERVICE_CONTAINER_SHUTDOWN);
 
@@ -1221,7 +1268,11 @@ public class ServiceContainer {
             handler.addCommandListener(listener);
         }
 
-        handler.setCommandAuthenticator(m_configuration.getCommandAuthenticator());
+        CommandAuthenticator commandAuthenticator = m_configuration.getCommandAuthenticator();
+        if (commandAuthenticator != null) {
+            commandAuthenticator.setServiceContainer(this);
+            handler.setCommandAuthenticator(commandAuthenticator);
+        }
         m_connector.addInvocationHandler(SUBSYSTEM, handler);
         m_connector.start();
 

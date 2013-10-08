@@ -75,12 +75,12 @@ public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanc
     private void createToolstrip() {
         addSpacer(15);
         addToDashboardButton = new IButton(MSG.view_metric_addToDashboard());
+        addToDashboardButton.setWidth(120);
         addToDashboardButton.disable();
 
         dashboardSelectItem = new SelectItem();
         dashboardSelectItem.setTitle(MSG.chart_metrics_add_to_dashboard_label());
-        dashboardSelectItem.setWidth(300);
-        dashboardSelectItem.setPickListWidth(210);
+        dashboardSelectItem.setWidth(260);
         populateDashboardMenu();
         addFormItem(dashboardSelectItem);
         addMember(addToDashboardButton);

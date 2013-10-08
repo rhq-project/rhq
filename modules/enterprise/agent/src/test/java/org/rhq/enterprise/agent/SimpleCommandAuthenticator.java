@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.agent;
 
+import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.server.CommandAuthenticator;
 
@@ -41,8 +42,14 @@ public class SimpleCommandAuthenticator implements CommandAuthenticator {
     /**
      * @see CommandAuthenticator#isAuthenticated(Command)
      */
+    @Override
     public boolean isAuthenticated(Command command) {
         String prop_value = command.getConfiguration().getProperty(AUTHENTICATION_PROP);
         return AUTHENTICATION_PROP_VALUE.equals(prop_value);
+    }
+
+    @Override
+    public void setServiceContainer(ServiceContainer serviceContainer) {
+        // no-op
     }
 }

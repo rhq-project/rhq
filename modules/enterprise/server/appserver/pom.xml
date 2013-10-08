@@ -252,6 +252,32 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-enforcer-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>enforce-file-size</id>
+                  <phase>verify</phase>
+                  <goals>
+                    <goal>enforce</goal>
+                  </goals>
+                  <configuration>
+                    <rules>
+                      <requireFilesSize>
+                        <maxsize>419430400</maxsize> <!-- the final zip should not exceed 400 MB -->
+                        <files>
+                         <file>${project.build.outputDirectory}.zip</file>
+                        </files>
+                      </requireFilesSize>
+                    </rules>
+                  <fail>true</fail>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
         </plugins>
     </build>
 

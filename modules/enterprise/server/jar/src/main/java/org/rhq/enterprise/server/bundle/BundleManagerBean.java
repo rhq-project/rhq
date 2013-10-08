@@ -57,6 +57,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.quartz.JobDetail;
+import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
@@ -114,6 +116,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.scheduler.jobs.BundleDeploymentStatusCheckJob;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -123,11 +126,13 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
  * Manages the creation and usage of bundles.
@@ -172,6 +177,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private SchedulerLocal quartzScheduler;
 
     @Override
     public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
@@ -1375,8 +1383,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
                 BundleScheduleResponse response = bundleAgentService.schedule(request);
 
-                // Handle Schedule Failures. This may include deployment failures for immediate deployment request
-                if (!response.isSuccess()) {
+                if (response.isSuccess()) {
+                    // schedule the bundle deployment completion check. Due to timing issues, we cannot determine
+                    // the overall completion status of the bundle deployment while receiving the individual resource
+                    // deployment statuses. This needs to be done out of band by a quartz job.
+                    // See https://bugzilla.redhat.com/show_bug.cgi?id=1003679 for details.
+                    JobDetail jobDetail = BundleDeploymentStatusCheckJob.getJobDetail(deployment.getId());
+                    Trigger trigger = QuartzUtil.getRepeatingTrigger(jobDetail, 0, 10000);
+
+                    quartzScheduler.scheduleJob(jobDetail, trigger);
+                } else {
+                    // Handle Schedule Failures. This may include deployment failures for immediate deployment request
                     bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                         BundleDeploymentStatus.FAILURE);
                     history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT,
@@ -1503,8 +1520,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // update the status
         resourceDeployment.setStatus(status);
 
+        return resourceDeployment;
+    }
+
+    @Override
+    public BundleDeploymentStatus determineOverallBundleDeploymentStatus(int bundleDeploymentId) {
         // update the status on the overall deployment
-        BundleDeployment deployment = resourceDeployment.getBundleDeployment();
+        BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
 
         List<BundleResourceDeployment> deployments = deployment.getResourceDeployments();
         boolean someInProgress = false;
@@ -1531,7 +1553,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             deployment.setStatus(BundleDeploymentStatus.FAILURE);
         }
 
-        return resourceDeployment;
+        return deployment.getStatus();
     }
 
     @Override

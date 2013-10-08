@@ -39,20 +39,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
  */
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
-    // Initial Deployment, No Bundle Selected
-    public BundleDeployWizard() {
-        this.setInitialDeployment(true);
-
-        List<WizardStep> steps = init();
-        steps.add(new SelectBundleStep(this));
-        steps.add(new GetDestinationStep(this));
-        steps.add(new SelectBundleVersionStep(this));
-        steps.add(new GetDeploymentConfigStep(this));
-        steps.add(new GetDeploymentInfoStep(this));
-        steps.add(new DeployStep(this));
-    }
-
-    // Initial Deployment, Seeded with Bundle
+    // Deployment of specified bundle
     public BundleDeployWizard(int bundleId) {
         this.setInitialDeployment(true);
         this.setBundleId(bundleId);

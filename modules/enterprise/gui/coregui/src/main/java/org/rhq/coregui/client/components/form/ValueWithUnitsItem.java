@@ -113,6 +113,7 @@ public class ValueWithUnitsItem extends CanvasItem {
         } else {
             form.setValue(FIELD_VALUE, (String) null);
         }
+        this.valueUnit = unitType;
         form.setValue(FIELD_UNITS, valueUnit.toString());
 
         setValue(value);

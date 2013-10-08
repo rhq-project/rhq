@@ -140,6 +140,7 @@ public class JMSComponent extends AbstractMessagingComponent implements Configur
             Thread.sleep(5000L);
         } catch (InterruptedException e) {
             log.info("Sleep after datasource create interrupted", e);
+            Thread.currentThread().interrupt();
         }
 
         return report;

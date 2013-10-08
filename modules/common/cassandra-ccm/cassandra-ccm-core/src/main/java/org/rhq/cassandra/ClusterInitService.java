@@ -50,6 +50,18 @@ public final class ClusterInitService {
     private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
 
     /**
+     * Sleep; if interrupted, throw a RuntimeException.
+     */
+    private static void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
      * Pings the storage nodes to verify if they are available and native transport
      * is running.
      *
@@ -79,10 +91,7 @@ public final class ClusterInitService {
                 }
                 return false;
             }
-            try {
-                Thread.sleep(sleep);
-            } catch (InterruptedException ex) {
-            }
+            sleep(sleep);
         }
         return true;
     }
@@ -144,13 +153,10 @@ public final class ClusterInitService {
     public void waitForClusterToStart(String[] storageNodes, int jmxPorts[], int numHosts, long delay,
         int retries, int initialWait) {
         if (initialWait > 0) {
-            try {
-                if (log.isDebugEnabled()) {
-                    log.debug("Waiting before JMX calls to the storage nodes for " + initialWait + " seconds...");
-                }
-                Thread.sleep(initialWait * 1000);
-            } catch (InterruptedException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Waiting before JMX calls to the storage nodes for " + initialWait + " seconds...");
             }
+            sleep(initialWait * 1000);
         }
 
         int connections = 0;
@@ -183,10 +189,7 @@ public final class ClusterInitService {
                         log.debug("Successdully connected to all nodes. Sleeping for 10 seconds to allow for the "
                             + "cassandra superuser set up to complete.");
                     }
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                    }
+                    sleep(10 * 1000);
                     return;
                 }
             } catch (Exception e) {
@@ -199,10 +202,7 @@ public final class ClusterInitService {
                     log.debug("Unable to open connection to cassandra node.");
                 }
             }
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-            }
+            sleep(delay);
             storageNodeIndex = queue.poll();
         }
     }
@@ -239,10 +239,7 @@ public final class ClusterInitService {
                 if (log.isDebugEnabled()) {
                     log.debug("Found the following schema versions: " + schemaVersions);
                 }
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e) {
-                }
+                sleep(sleep);
             } else {
                 String schemaVersion = schemaVersions.iterator().next();
                 if (schemaVersion != null) {
@@ -252,10 +249,7 @@ public final class ClusterInitService {
                         log.info("Schema agreement has not been reached. Unable to get the schema version from cassandra nodes ["
                             + storageNodes + "]");
                     }
-                    try {
-                        Thread.sleep(sleep);
-                    } catch (InterruptedException e) {
-                    }
+                    sleep(sleep);
                 }
             }
 

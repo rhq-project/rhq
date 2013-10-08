@@ -48,7 +48,7 @@ import org.rhq.plugins.jbossas.util.JBossMessagingConfigurationEditor;
 /**
  * Functionality around the JBoss Messaging subsystem
  *
- * @author Heiko W.Rupp 
+ * @author Heiko W.Rupp
  */
 public class JBossMessagingComponent extends AbstractMessagingComponent implements ConfigurationFacet,
     DeleteResourceFacet, MeasurementFacet {
@@ -136,6 +136,7 @@ public class JBossMessagingComponent extends AbstractMessagingComponent implemen
             Thread.sleep(5000L);
         } catch (InterruptedException e) {
             log.info("Sleep after datasource create interrupted", e);
+            Thread.currentThread().interrupt();
         }
 
         return report;

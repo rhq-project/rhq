@@ -379,7 +379,7 @@ public class TomcatServerOperationsDelegate {
         processExecutionEnvironmentVariables.put("CATALINA_TMPDIR", catalinaBase + File.separator + "temp");
 
         // Tomcat, starting with 5.5, requires only a JRE to run. But, if TC is running in debug mode it
-        // requires a JDK.  We always set JRE_HOME above but, if possible, set JAVA_HOME as well if 
+        // requires a JDK.  We always set JRE_HOME above but, if possible, set JAVA_HOME as well if
         // in fact it looks like we have a JDK at our disposal.
         if (jreHomeDir.endsWith("jre")) {
             File jdkHomeDir = new File(jreHomeDir.substring(0, jreHomeDir.length() - 3));
@@ -403,7 +403,7 @@ public class TomcatServerOperationsDelegate {
 
     private void initProcessExecution(ProcessExecution processExecution) {
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(120000L); // 120 seconds - that should be safe? // TODO: make this configurable 
+        processExecution.setWaitForCompletion(120000L); // 120 seconds - that should be safe? // TODO: make this configurable
         processExecution.setKillOnTimeout(false);
     }
 
@@ -481,16 +481,12 @@ public class TomcatServerOperationsDelegate {
 
         while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
             && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
-            try {
-                Thread.sleep(START_WAIT_INTERVAL);
-            } catch (InterruptedException e) {
-                // ignore
-            }
+            Thread.sleep(START_WAIT_INTERVAL);
         }
         return avail;
     }
 
-    private AvailabilityType waitForServerToShutdown() {
+    private AvailabilityType waitForServerToShutdown() throws InterruptedException {
         //detect whether stopWaitMax property has been set.
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
         PropertySimple property = pluginConfig.getSimple(TomcatServerComponent.STOP_WAIT_MAX_PROP);
@@ -502,19 +498,11 @@ public class TomcatServerOperationsDelegate {
             }
         }
         for (long wait = 0L; (wait < STOP_WAIT_MAX) && (AvailabilityType.UP == this.serverComponent.getAvailability()); wait += STOP_WAIT_INTERVAL) {
-            try {
-                Thread.sleep(STOP_WAIT_INTERVAL);
-            } catch (InterruptedException e) {
-                // ignore
-            }
+            Thread.sleep(STOP_WAIT_INTERVAL);
         }
 
         // After the server shows unavailable, wait a little longer to hopefully ensure shutdown is complete.
-        try {
-            Thread.sleep(STOP_WAIT_FINAL);
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        Thread.sleep(STOP_WAIT_FINAL);
 
         return this.serverComponent.getAvailability();
     }

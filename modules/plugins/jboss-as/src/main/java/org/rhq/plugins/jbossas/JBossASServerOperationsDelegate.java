@@ -239,7 +239,7 @@ public class JBossASServerOperationsDelegate {
      * Shuts down the server by dispatching to shutdown via script or JMX. Waits until the server is down.
      * @return The result of the shutdown operation - is successful
      */
-    private String shutdown() {
+    private String shutdown() throws InterruptedException {
         JBossASServerShutdownMethod shutdownMethod = Enum.valueOf(JBossASServerShutdownMethod.class,
             this.serverComponent.getPluginConfiguration().getSimple(JBossASServerComponent.SHUTDOWN_METHOD_CONFIG_PROP)
                 .getStringValue());
@@ -365,21 +365,12 @@ public class JBossASServerOperationsDelegate {
      * Restart the server by first trying a shutdown and then a start. This is fail fast.
      * @return A success message on success
      */
-    private String restart() {
+    private String restart() throws InterruptedException {
 
-        try {
-            shutdown();
-        } catch (Exception e) {
-            throw new RuntimeException("Shutdown may have failed: " + e);
-        }
+        shutdown();
 
-        try {
-            // Perform the restart.
-            start();
-
-        } catch (Exception e) {
-            throw new RuntimeException("Re-Startup may have failed: " + e);
-        }
+        // Perform the restart.
+        start();
 
         return "Server has been restarted.";
 
@@ -400,16 +391,12 @@ public class JBossASServerOperationsDelegate {
 
         while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
             && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
-            try {
-                Thread.sleep(START_WAIT_INTERVAL);
-            } catch (InterruptedException e) {
-                // ignore
-            }
+            Thread.sleep(START_WAIT_INTERVAL);
         }
         return avail;
     }
 
-    private AvailabilityType waitForServerToShutdown() {
+    private AvailabilityType waitForServerToShutdown() throws InterruptedException {
         //detect whether stopWaitMax property has been set.
         Configuration pluginConfig = serverComponent.getPluginConfiguration();
         PropertySimple property = pluginConfig.getSimple(JBossASServerComponent.STOP_WAIT_MAX_PROP);
@@ -422,19 +409,11 @@ public class JBossASServerOperationsDelegate {
         }
 
         for (long wait = 0L; (wait < STOP_WAIT_MAX) && (AvailabilityType.UP == this.serverComponent.getAvailability()); wait += STOP_WAIT_INTERVAL) {
-            try {
-                Thread.sleep(STOP_WAIT_INTERVAL);
-            } catch (InterruptedException e) {
-                // ignore
-            }
+            Thread.sleep(STOP_WAIT_INTERVAL);
         }
 
         // After the server shows unavailable, wait a little longer to hopefully ensure shutdown is complete.
-        try {
-            Thread.sleep(STOP_WAIT_FINAL);
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        Thread.sleep(STOP_WAIT_FINAL);
 
         return this.serverComponent.getAvailability();
     }

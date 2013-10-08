@@ -98,11 +98,10 @@ public class OneWireAdapterComponent implements ResourceComponent {
                 Thread.sleep(700);
                 adapter = new PDKAdapterUSB();
                 adapter.selectPort(port);
-
             } catch (OneWireException e) {
                 log.warn("Exception re-opening the adapter - is it connected?: " ,e);
             } catch (InterruptedException e) {
-                ; // Does not matter
+                Thread.currentThread().interrupt();
             }
         }
     }

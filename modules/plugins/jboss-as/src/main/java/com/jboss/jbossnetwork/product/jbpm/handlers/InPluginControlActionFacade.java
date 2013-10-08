@@ -56,6 +56,7 @@ public class InPluginControlActionFacade implements ControlActionFacade {
         try {
             operationsDelegate.invoke(JBossASServerSupportedOperations.START, null);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.error("Start interrupted", e);
         }
 
@@ -75,6 +76,7 @@ public class InPluginControlActionFacade implements ControlActionFacade {
         try {
             operationsDelegate.invoke(JBossASServerSupportedOperations.SHUTDOWN, null);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.error("Shutdown interrupted", e);
         }
 

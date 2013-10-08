@@ -192,6 +192,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
                 "to verify that the storage node process has exited.");
             result.setErrorMessage("The operation was cancelled or interrupted while trying to verify that the " +
                 "storage node process has exited.");
+            Thread.currentThread().interrupt();
         }
         return result;
     }
@@ -772,15 +773,9 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         return new OperationResult();
     }
 
-    private void waitForTaskToComplete(int initialWaiting, int maxTries, int sleepMillis) {
+    private void waitForTaskToComplete(int initialWaiting, int maxTries, int sleepMillis) throws InterruptedException {
         // initial waiting
-        try {
-            Thread.sleep(initialWaiting);
-        } catch (InterruptedException e) {
-            if (log.isWarnEnabled()) {
-                log.warn(e);
-            }
-        }
+        Thread.sleep(initialWaiting);
         EmsConnection emsConnection = getEmsConnection();
         EmsBean flushWriterBean = emsConnection.getBean("org.apache.cassandra.internal:type=FlushWriter");
         EmsAttribute attribute = flushWriterBean.getAttribute("PendingTasks");
@@ -788,13 +783,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         Long valueObject = (Long) attribute.refresh();
         // wait until org.apache.cassandra.internal:type=FlushWriter / PendingTasks == 0
         while (valueObject > 0 && maxTries-- > 0) {
-            try {
-                Thread.sleep(sleepMillis);
-            } catch (InterruptedException e) {
-                if (log.isWarnEnabled()) {
-                    log.warn(e);
-                }
-            }
+            Thread.sleep(sleepMillis);
             valueObject = (Long) attribute.refresh();
         }
         flushWriterBean.unload();

@@ -231,7 +231,11 @@ case "$1" in
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND}"
            eval $RHQ_AGENT_START_COMMAND
         else
-           eval "$RHQ_AGENT_START_COMMAND > \"${RHQ_AGENT_HOME}/logs/rhq-agent-wrapper.log\" 2>&1"
+           # since the start command may run as non-root user, ensure the old
+           # wrapper (which may be owned by root) is removed
+           wrapper="rhq-agent-wrapper.log"
+           rm -f $RHQ_AGENT_HOME/logs/$wrapper
+           eval "$RHQ_AGENT_START_COMMAND > \"${RHQ_AGENT_HOME}/logs/${wrapper}\" 2>&1"
         fi
 
         sleep 5
@@ -307,9 +311,16 @@ case "$1" in
            kill -TERM $_PID_TO_KILL
         fi
 
+        count=0
         while [ "$_RUNNING" = "1" ]; do
            sleep 2
            check_status_of_pid $_PID_TO_KILL
+           count=`expr $count + 1`
+           if [ $count -gt 150 ]; then
+               echo "RHQ Agent could not be cleanly shutdown"
+               kill -9 $_PID_TO_KILL
+               break
+           fi
         done
 
         remove_pid_file
@@ -346,6 +357,9 @@ case "$1" in
 
 'status')
         echo "$_STATUS"
+        if [ "$_RUNNING" = "0" ]; then
+           exit 1
+        fi
         exit 0
         ;;
 
@@ -354,11 +368,11 @@ case "$1" in
         "${_THIS_SCRIPT}" start
         exit $?
         ;;
-        
+
 'quiet-restart')
         "${_THIS_SCRIPT}" stop >> /dev/null
         "${_THIS_SCRIPT}" start >> /dev/null
-        exit $? 
+        exit $?
         ;;
 *)
         echo "Usage: $0 { start | stop | kill | restart | status | config }"

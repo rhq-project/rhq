@@ -18,9 +18,7 @@
  */
 package org.rhq.bindings.client;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -38,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.util.ClassPoolFactory;
 import org.rhq.bindings.util.ConfigurationClassBuilder;
+import org.rhq.bindings.util.ContentUploader;
 import org.rhq.bindings.util.LazyLoadScenario;
 import org.rhq.bindings.util.ResourceTypeFingerprint;
 import org.rhq.bindings.util.ShortOutput;
@@ -69,7 +68,6 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
@@ -86,7 +84,6 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  * @author Lukas Krejci
  */
 public class ResourceClientProxy {
-
     private static final Log LOG = LogFactory.getLog(ResourceClientProxy.class);
 
     private ResourceClientFactory proxyFactory;
@@ -464,8 +461,6 @@ public class ResourceClientProxy {
 
     public static class ClientProxyMethodHandler implements MethodHandler, ContentBackedResource, PluginConfigurable,
         ResourceConfigurable {
-        private static final int SIZE_32K = 1024 * 32;
-
         ResourceClientProxy resourceClientProxy;
         RhqFacade remoteClient;
 
@@ -558,24 +553,8 @@ public class ResourceClientProxy {
 
             ContentManagerRemote contentManager = remoteClient.getProxy(ContentManagerRemote.class);
 
-            // We will send the file in fragments because sending the whole file at once is memory hungry
-            // Bug 955363 - Uploading of file content using remote API/CLI requires many times more heap then file size
-            // https://bugzilla.redhat.com/show_bug.cgi?id=955363
-            String temporaryContentHandle = contentManager.createTemporaryContentHandle();
-            FileInputStream fileInputStream = null;
-            try {
-                fileInputStream = new FileInputStream(file);
-                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream, SIZE_32K);
-                int len;
-                byte[] bytes = new byte[SIZE_32K];
-                while ((len = bufferedInputStream.read(bytes, 0, bytes.length)) != -1) {
-                    contentManager.uploadContentFragment(temporaryContentHandle, bytes, 0, len);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Could not upload content fragment", e);
-            } finally {
-                StreamUtil.safeClose(fileInputStream);
-            }
+            ContentUploader contentUploader = new ContentUploader(contentManager);
+            String temporaryContentHandle = contentUploader.upload(file);
 
             PackageVersion pv = contentManager.createPackageVersionWithDisplayVersion(remoteClient.getSubject(),
                 oldPackage.getPackageVersion().getGeneralPackage().getName(), oldPackage.getPackageVersion()

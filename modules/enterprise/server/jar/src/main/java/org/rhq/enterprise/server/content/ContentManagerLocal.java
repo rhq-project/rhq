@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -443,4 +444,12 @@ public interface ContentManagerLocal extends ContentManagerRemote {
 
     void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails);
 
+    /**
+     * Get the file denoted by this <code>temporaryContentHandle</code>.
+     *
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
+     * @param temporaryContentHandle
+     * @return the file denoted by this <code>temporaryContentHandle</code>
+     */
+    File getTemporaryContentFile(String temporaryContentHandle);
 }

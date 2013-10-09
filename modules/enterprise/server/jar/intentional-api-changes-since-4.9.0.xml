@@ -64,4 +64,18 @@
     <justification> While this is technically a welcome change (because impl  of that method returned the PageList anyway), it breaks the strongly typed clients, because the methods are linked by their full signature and hence a library compiled against JON312GA version of that remote will fail to find the method with the new signature and will fail with NoSuchMethodError at runtime.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.bundle.BundleVersion createBundleVersionViaContentHandle(org.rhq.core.domain.auth.Subject, java.lang.String)</method>
+    <justification>Adding a method to a remote API interface is safe.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/resource/ResourceFactoryManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.resource.CreateResourceHistory createPackageBackedResourceViaContentHandle(org.rhq.core.domain.auth.Subject, int, int, java.lang.String, org.rhq.core.domain.configuration.Configuration, java.lang.String, java.lang.String, java.lang.Integer, org.rhq.core.domain.configuration.Configuration, java.lang.String, java.lang.Integer)</method>
+    <justification>Adding a method to a remote API interface is safe.</justification>
+  </difference>
+
 </differences>

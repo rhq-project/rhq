@@ -21,8 +21,8 @@ var util = require('./util');
  * the RHQ server.
  */
 exports.createBundleVersion = function(pathToBundleZipFile) {
-	var bytes = getFileBytes(pathToBundleZipFile)
-	return BundleManager.createBundleVersionViaByteArray(bytes)
+    var contentHandle = scriptUtil.uploadContent(pathToBundleZipFile);
+    return BundleManager.createBundleVersionViaContentHandle(contentHandle);
 }
 
 /**

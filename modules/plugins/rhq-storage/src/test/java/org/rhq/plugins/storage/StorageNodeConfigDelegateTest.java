@@ -37,7 +37,7 @@ public class StorageNodeConfigDelegateTest {
         File dir = new File(getClass().getResource(".").toURI());
         basedir = new File(dir, getClass().getSimpleName() + "/" + test.getName());
         FileUtil.purge(basedir, true);
-        configDelegate = new StorageNodeConfigDelegate(basedir);
+        configDelegate = new StorageNodeConfigDelegate(basedir, null);
 
         cassandraYamlFile = new File(confDir(), "cassandra.yaml");
         InputStream inputStream = getClass().getResourceAsStream("/cassandra.yaml");

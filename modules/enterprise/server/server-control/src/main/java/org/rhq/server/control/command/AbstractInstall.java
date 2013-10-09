@@ -594,8 +594,8 @@ public abstract class AbstractInstall extends ControlCommand {
             putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
 
             // if the install fails, we will completely delete any agent that might have been "half" installed
-            addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
-                public void performUndoWork() {
+            addUndoTask(new Runnable() {
+                public void run() {
                     FileUtil.purge(agentBasedir, true);
                 }
             });

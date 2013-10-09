@@ -80,12 +80,12 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        return new StorageNodeConfigDelegate(getBasedir()).loadResourceConfiguration();
+        return new StorageNodeConfigDelegate(getBasedir(), this).loadResourceConfiguration();
     }
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
-        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir());
+        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir(), this);
         configDelegate.updateResourceConfiguration(configurationUpdateReport);
     }
 
@@ -220,50 +220,23 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private OperationResult updateConfiguration(Configuration params) {
-        boolean restartIsRequired = false;
-
-        OperationResult result = new OperationResult("Configuration updated.");
-
-        //update storage node jvm settings
+        //update storage node jvm settings only
         Configuration config = new Configuration();
         config.put(new PropertySimple("jmxPort", params.getSimpleValue("jmxPort")));
         config.put(new PropertySimple("minHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("maxHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("heapNewSize", params.getSimpleValue("heapNewSize")));
         config.put(new PropertySimple("threadStackSize", params.getSimpleValue("threadStackSize")));
+        
+        // copy the restartIfRequired flag
+        config.put(new PropertySimple("restartIfRequired", params.getSimpleValue("restartIfRequired")));
 
-        ConfigurationUpdateReport configurationUpdate = new ConfigurationUpdateReport(config);
-        this.updateResourceConfiguration(configurationUpdate);
-
-        if (!configurationUpdate.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
-            result.setErrorMessage(configurationUpdate.getErrorMessage());
-        } else {
-            if (params.getSimpleValue("heapSize") != null
-                || params.getSimpleValue("heapNewSize") != null
-                || params.getSimpleValue("threadStackSize") != null) {
-                restartIsRequired = true;
-            }
+        ConfigurationUpdateReport configurationUpdateReport = new ConfigurationUpdateReport(config);
+        this.updateResourceConfiguration(configurationUpdateReport);
+        OperationResult result = new OperationResult("Configuration updated.");
+        if (!configurationUpdateReport.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
+            result.setErrorMessage(configurationUpdateReport.getErrorMessage());
         }
-
-        //restart the server if:
-        //- requested by the user
-        //- the updates done require restart
-        boolean restartIfRequiredConfig = false;
-        if (params.getSimpleValue("restartIfRequired") != null) {
-            restartIfRequiredConfig = Boolean.parseBoolean(params.getSimpleValue("restartIfRequired"));
-        }
-
-        if (restartIfRequiredConfig && restartIsRequired) {
-            try {
-                OperationResult restartResult = this.invokeOperation("restart", null);
-                if (restartResult.getErrorMessage() != null) {
-                    result.setErrorMessage(restartResult.getErrorMessage());
-                }
-            } catch (Exception e) {
-                result.setErrorMessage(e.getMessage());
-            }
-        }
-
         return result;
     }
 

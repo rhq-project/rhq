@@ -334,6 +334,13 @@ public class StorageInstaller {
             } else {
                 installerInfo.hostname = InetAddress.getLocalHost().getHostAddress();
             }
+
+            if (InetAddress.getByName(installerInfo.hostname).isLoopbackAddress()) {
+                log.warn("This Storage Node is bound to the loopback address " + installerInfo.hostname + " . "
+                    + "It will not be able to communicate with Storage Nodes on other machines,"
+                    + " and it can only receive client requests from this machine.");
+            }
+
             deploymentOptions.setListenAddress(installerInfo.hostname);
             deploymentOptions.setRpcAddress(installerInfo.hostname);
 

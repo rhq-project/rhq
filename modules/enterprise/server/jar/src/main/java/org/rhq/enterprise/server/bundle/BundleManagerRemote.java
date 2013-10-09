@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.bundle;
 
@@ -283,6 +283,16 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      */
     BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception;
+
+    /**
+     * Like {@link #createBundleVersionViaFile(org.rhq.core.domain.auth.Subject, java.io.File)} except that this method
+     * takes a <code>temporaryContentHandle</code> as parameter instead of a file.
+     *
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see #createBundleVersionViaFile(org.rhq.core.domain.auth.Subject, java.io.File)
+     */
+    BundleVersion createBundleVersionViaContentHandle(Subject subject, String temporaryContentHandle) throws Exception;
 
     /**
      * Like #createBundleVersionViaFile except this method will assume this is a new bundle and is responsible
@@ -638,7 +648,7 @@ public interface BundleManagerRemote {
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for the relevant bundle group
      * </pre> 
      * @param subject
-     * @param bundleGroupId
+     * @param bundleGroupIds
      * @param bundleIds
      */
     void unassignBundlesFromBundleGroups(Subject subject, int[] bundleGroupIds, int[] bundleIds);

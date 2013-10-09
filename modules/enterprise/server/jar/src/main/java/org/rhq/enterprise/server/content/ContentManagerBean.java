@@ -2179,11 +2179,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
-    private File getTemporaryContentFile(String handle) {
+    @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public File getTemporaryContentFile(String temporaryContentHandle) {
         File tempDirectory = getTempDirectory();
-        File file = new File(tempDirectory, handle);
+        File file = new File(tempDirectory, temporaryContentHandle);
         if (!file.isFile()) {
-            throw new RuntimeException("handle [" + handle + "] does not denote a file");
+            throw new RuntimeException("Handle [" + temporaryContentHandle + "] does not denote a file");
         }
         return file;
     }

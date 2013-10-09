@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.resource;
 
@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -82,6 +83,19 @@ public interface ResourceFactoryManagerRemote {
     CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
         Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout);
+
+    /**
+     * Like {@link #createPackageBackedResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, String, String, Integer, org.rhq.core.domain.configuration.Configuration, byte[], Integer)}
+     * except that this method takes a <code>temporaryContentHandle</code> as parameter instead of a byte array.
+     *
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see #createPackageBackedResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, String, String, Integer, org.rhq.core.domain.configuration.Configuration, byte[], Integer)
+     */
+    CreateResourceHistory createPackageBackedResourceViaContentHandle(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration, String packageName,
+        String packageVersion, Integer architectureId, Configuration deploymentTimeConfiguration,
+        String temporaryContentHandle, Integer timeout);
 
     /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
@@ -150,7 +164,7 @@ public interface ResourceFactoryManagerRemote {
      * @param  subject          the user making the request
      * @param  parentResourceId resource to check for deleted child resources
      * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
-     * @param  endate           filter used to show only results occurring before this epoch millis parameter, nullable
+     * @param  endDate           filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pageControl      control for pagination
      *
      * @return list of requests

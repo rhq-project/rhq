@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.bindings.util;
 
@@ -43,6 +39,7 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
@@ -51,6 +48,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  *
  * @author Lukas Krejci
  */
+@SuppressWarnings("UnusedDeclaration")
 public class ScriptUtil {
 
     private RhqFacade remoteClient;
@@ -219,5 +217,13 @@ public class ScriptUtil {
         } else {
             return globalBindings.get(identifier);
         }
+    }
+    
+    public String uploadContent(String filename) {
+        if (remoteClient == null) {
+            throw new IllegalStateException("The uploadContent method requires a connection to the RHQ server.");
+        }
+        ContentUploader contentUploader = new ContentUploader(remoteClient.getProxy(ContentManagerRemote.class));
+        return contentUploader.upload(filename);
     }
 }

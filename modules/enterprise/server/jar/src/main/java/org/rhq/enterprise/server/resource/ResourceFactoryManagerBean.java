@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,12 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.resource;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -543,6 +545,22 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
             packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(
                 packageBits), (Map<String, String>) null, timeout);
+    }
+
+    @Override
+    public CreateResourceHistory createPackageBackedResourceViaContentHandle(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration, String packageName,
+        String packageVersion, Integer architectureId, Configuration deploymentTimeConfiguration,
+        String temporaryContentHandle, Integer timeout) {
+        FileInputStream packageBitStream = null;
+        try {
+            packageBitStream = new FileInputStream(contentManager.getTemporaryContentFile(temporaryContentHandle));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
+            packageName, packageVersion, architectureId, deploymentTimeConfiguration, packageBitStream,
+            (Map<String, String>) null, timeout);
     }
 
     @Override

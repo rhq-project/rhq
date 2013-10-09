@@ -218,100 +218,108 @@ public class StorageInstaller {
         if (cmdLine.hasOption("h")) {
             printUsage();
             return STATUS_SHOW_USAGE;
-        } else {
-            InstallerInfo installerInfo = null;
+        }
 
-            try {
-                if (cmdLine.hasOption("upgrade")) {
-                    installerInfo = upgrade(new File(cmdLine.getOptionValue("upgrade", "")));
-                } else {
-                    installerInfo = install(cmdLine);
-                }
-            } catch (StorageInstallerError e) {
-                log.error("An unexpected error occurred", e);
-                log.error("The storage installer will exit due to previous errors");
-                return e.getErrorCode();
-            } catch (StorageInstallerException e) {
-                log.warn(e.getMessage());
-                log.warn("The storage installer will exit due to previous errors");
-                return e.getErrorCode();
+        InstallerInfo installerInfo = null;
+
+        try {
+            if (cmdLine.hasOption("upgrade")) {
+                installerInfo = upgrade(new File(cmdLine.getOptionValue("upgrade", "")));
+            } else {
+                installerInfo = install(cmdLine);
+            }
+        } catch (StorageInstallerError e) {
+            log.error("An unexpected error occurred", e);
+            log.error("The storage installer will exit due to previous errors");
+            return e.getErrorCode();
+        } catch (StorageInstallerException e) {
+            log.warn(e.getMessage());
+            log.warn("The storage installer will exit due to previous errors");
+            return e.getErrorCode();
+        }
+
+        log.info("Updating rhq-server.properties...");
+        PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+        Properties properties = new Properties();
+
+        properties.setProperty("rhq.storage.nodes", installerInfo.hostname);
+        properties.setProperty(StorageProperty.CQL_PORT.property(), Integer.toString(installerInfo.cqlPort));
+        properties.setProperty(StorageProperty.GOSSIP_PORT.property(), Integer.toString(installerInfo.gossipPort));
+
+        serverPropertiesUpdater.update(properties);
+
+        // start node (and install windows service) if necessary 
+        File binDir = null;
+        if (isWindows()) {
+            File basedir = new File(System.getProperty("rhq.server.basedir"));
+            basedir = (null == basedir) ? installerInfo.basedir.getParentFile() : basedir;
+            binDir = new File(basedir, "bin/internal");
+        } else {
+            binDir = new File(installerInfo.basedir, "bin");
+        }
+
+        boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
+        String startupErrors = startNodeIfNecessary(binDir, startNode);
+
+        if (startupErrors != null) {
+            log.warn("The storage node reported the following errors while trying to start:\n\n" + startupErrors + "\n");
+
+            if (startupErrors.contains("Port already in use: " + installerInfo.jmxPort)) {
+                log.warn("There is a conflict with the JMX port that prevented the storage node JVM "
+                    + "from starting.");
+                File confDir = new File(storageBasedir, "conf");
+                File confFile = new File(confDir, "cassandra-jvm.properties");
+                log.info("Change the jmx_port property in " + confFile + " to have the storage node listen "
+                    + "on a different port for JMX connections.");
+
+                return STATUS_JMX_PORT_CONFLICT;
             }
 
-            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
-            log.info("Updating rhq-server.properties...");
-            Properties properties = new Properties();
-            properties.setProperty("rhq.storage.nodes", installerInfo.hostname);
-            properties.setProperty(StorageProperty.CQL_PORT.property(), Integer.toString(installerInfo.cqlPort));
-            properties.setProperty(StorageProperty.GOSSIP_PORT.property(), Integer.toString(installerInfo.gossipPort));
+            if (startupErrors.contains("java.net.UnknownHostException")) {
+                int from = startupErrors.indexOf("java.net.UnknownHostException:")
+                    + "java.net.UnknownHostException:".length();
+                String hostname = startupErrors.substring(from, startupErrors.indexOf(':', from));
+                log.error("Failed to resolve requested binding address. Please check the installation "
+                    + "instructions and host DNS settings"
+                    + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts.")
+                    + " Unknown host: " + hostname);
+                log.error("The storage installer will exit due to previous errors");
+                return STATUS_UNKNOWN_HOST;
+            }
 
-            serverPropertiesUpdater.update(properties);
+            log.warn("Please review your configuration for possible sources of errors such as port "
+                + "conflicts or invalid arguments/options passed to the java executable.");
+        }
 
-            boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
-            if (startNode) {
-                log.info("Starting RHQ Storage Node");
-                File binDir;
-                if (isWindows()) {
-                    File basedir = new File(System.getProperty("rhq.server.basedir"));
-                    basedir = (null == basedir) ? installerInfo.basedir.getParentFile() : basedir;
-                    binDir = new File(basedir, "bin/internal");
+        if (startNode) {
+            boolean checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("check-status", "true"));
+            if (checkStatus || isWindows()) { // no reliable pid file on windows
+                if (verifyNodeIsUp(installerInfo.hostname, installerInfo.jmxPort, 5, 3000)) {
+                    log.info("RHQ Storage Node is up and running and ready to service client requests");
+                    log.info("Installation of the storage node has completed successfully.");
+                    return STATUS_NO_ERRORS;
+
                 } else {
-                    binDir = new File(installerInfo.basedir, "bin");
-                }
-                String startupErrors = startNode(binDir);
-                if (startupErrors != null) {
-                    log.warn("The storage node reported the following errors while trying to start:\n\n"
-                        + startupErrors + "\n");
-                    if (startupErrors.contains("Port already in use: " + installerInfo.jmxPort)) {
-                        log.warn("There is a conflict with the JMX port that prevented the storage node JVM "
-                            + "from starting.");
-                        File confDir = new File(storageBasedir, "conf");
-                        File confFile = new File(confDir, "cassandra-jvm.properties");
-                        log.info("Change the jmx_port property in " + confFile + " to have the storage node listen "
-                            + "on a different port for JMX connections.");
-
-                        return STATUS_JMX_PORT_CONFLICT;
-                    }
-                    if (startupErrors.contains("java.net.UnknownHostException")) {
-                        int from = startupErrors.indexOf("java.net.UnknownHostException:")
-                            + "java.net.UnknownHostException:".length();
-                        String hostname = startupErrors.substring(from, startupErrors.indexOf(':', from));
-                        log.error("Failed to resolve requested binding address. Please check the installation "
-                            + "instructions and host DNS settings" 
-                            + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts." ) 
-                            + " Unknown host: " + hostname);
-                        log.error("The storage installer will exit due to previous errors");
-                        return STATUS_UNKNOWN_HOST;
-                    }
-                    log.warn("Please review your configuration for possible sources of errors such as port "
-                        + "conflicts or invalid arguments/options passed to the java executable.");
-                }
-                boolean checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("check-status", "true"));
-                if (checkStatus || isWindows()) { // no reliable pid file on windows
-                    if (verifyNodeIsUp(installerInfo.hostname, installerInfo.jmxPort, 5, 3000)) {
-                        log.info("RHQ Storage Node is up and running and ready to service client requests");
-                        log.info("Installation of the storage node has completed successfully.");
-                        return STATUS_NO_ERRORS;
-                    } else {
-                        log.warn("Could not verify that the node is up and running.");
-                        log.warn("Check the log file at " + installerInfo.logFile + " for errors.");
-                        log.warn("The storage installer will now exit");
-                        return STATUS_FAILED_TO_VERIFY_NODE_UP;
-                    }
-                } else {
-                    if (isRunning()) {
-                        log.info("Installation of the storage node is complete. The node should be up and " + "running");
-                        return STATUS_NO_ERRORS;
-                    } else {
-                        log.warn("Installation of the storage node is complete, but the node does not appear to "
-                            + "be running. No start up errors were reported.  Check the log file at "
-                            + installerInfo.logFile + " for any other possible errors.");
-                        return STATUS_STORAGE_NOT_RUNNING;
-                    }
+                    log.warn("Could not verify that the node is up and running.");
+                    log.warn("Check the log file at " + installerInfo.logFile + " for errors.");
+                    log.warn("The storage installer will now exit");
+                    return STATUS_FAILED_TO_VERIFY_NODE_UP;
                 }
             } else {
-                log.info("Installation of the storage node is complete");
-                return STATUS_NO_ERRORS;
+                if (isRunning()) {
+                    log.info("Installation of the storage node is complete. The node should be up and " + "running");
+                    return STATUS_NO_ERRORS;
+
+                } else {
+                    log.warn("Installation of the storage node is complete, but the node does not appear to "
+                        + "be running. No start up errors were reported.  Check the log file at "
+                        + installerInfo.logFile + " for any other possible errors.");
+                    return STATUS_STORAGE_NOT_RUNNING;
+                }
             }
+        } else {
+            log.info("Installation of the storage node is complete");
+            return STATUS_NO_ERRORS;
         }
     }
 
@@ -460,9 +468,8 @@ public class StorageInstaller {
         } catch (UnknownHostException unknownHostException) {
             throw new StorageInstallerException(
                 "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings"
-                + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts." )
-                + " Unknown host "
-                    + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
+                    + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts.")
+                    + " Unknown host " + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
         } catch (IOException e) {
             throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
                 STATUS_IO_ERROR);
@@ -579,9 +586,8 @@ public class StorageInstaller {
         } catch (UnknownHostException unknownHostException) {
             throw new StorageInstallerException(
                 "Failed to resolve requested binding address. Please check the installation instructions and host DNS settings"
-                + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts." )
-                + " Unknown host "
-                    + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
+                    + (isWindows() ? "." : " also make sure the hostname alias is set in /etc/hosts.")
+                    + " Unknown host " + unknownHostException.getMessage(), unknownHostException, STATUS_UNKNOWN_HOST);
         } catch (IOException e) {
             throw new StorageInstallerError("The upgrade cannot proceed. An unexpected I/O error occurred", e,
                 STATUS_IO_ERROR);
@@ -668,7 +674,7 @@ public class StorageInstaller {
         return new PropertiesFileUpdate(file.getAbsolutePath());
     }
 
-    private String startNode(File binDir) throws Exception {
+    private String startNodeIfNecessary(File binDir, boolean startNode) throws Exception {
         org.apache.commons.exec.CommandLine cmdLine;
         String errOutput;
 
@@ -695,7 +701,7 @@ public class StorageInstaller {
                 return errOutput;
             }
 
-            // Third installer the service
+            // Third install the service
             cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
             cmdLine.addArgument("/C");
             cmdLine.addArgument("rhq-storage.bat");
@@ -706,18 +712,24 @@ public class StorageInstaller {
                 return errOutput;
             }
 
-            // Fourth, start the service
-            cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
-            cmdLine.addArgument("/C");
-            cmdLine.addArgument("rhq-storage.bat");
-            cmdLine.addArgument("start");
-            errOutput = exec(binDir, cmdLine);
+            // Fourth, start the service if necessary
+            if (startNode) {
+                log.info("Starting RHQ Storage Node");
 
-            if (!errOutput.isEmpty()) {
-                return errOutput;
+                cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
+                cmdLine.addArgument("/C");
+                cmdLine.addArgument("rhq-storage.bat");
+                cmdLine.addArgument("start");
+                errOutput = exec(binDir, cmdLine);
+
+                if (!errOutput.isEmpty()) {
+                    return errOutput;
+                }
             }
 
-        } else {
+        } else if (startNode) {
+            log.info("Starting RHQ Storage Node");
+
             cmdLine = new org.apache.commons.exec.CommandLine("./cassandra");
             cmdLine.addArgument("-p");
             cmdLine.addArgument(new File(binDir, "cassandra.pid").getAbsolutePath());

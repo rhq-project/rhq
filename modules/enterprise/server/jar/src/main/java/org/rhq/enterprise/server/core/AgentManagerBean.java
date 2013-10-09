@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core;
 
@@ -85,7 +85,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  */
 @Stateless
 public class AgentManagerBean implements AgentManagerLocal {
-    private final Log log = LogFactory.getLog(AgentManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(AgentManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -121,8 +121,9 @@ public class AgentManagerBean implements AgentManagerLocal {
     @ExcludeDefaultInterceptors
     public void createAgent(Agent agent) {
         entityManager.persist(agent);
-
-        log.debug("Persisted new agent: " + agent);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Persisted new agent: " + agent);
+        }
     }
 
     @ExcludeDefaultInterceptors
@@ -131,7 +132,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         failoverListManager.deleteServerListsForAgent(agent);
         entityManager.remove(agent);
         destroyAgentClient(agent);
-        log.info("Removed agent: " + agent);
+        LOG.info("Removed agent: " + agent);
     }
 
     @ExcludeDefaultInterceptors
@@ -139,17 +140,21 @@ public class AgentManagerBean implements AgentManagerLocal {
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
         try {
             bootstrap.destroyKnownAgentClient(agent);
-            log.debug("agent client destroyed for agent: " + agent);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("agent client destroyed for agent: " + agent);
+            }
         } catch (Exception e) {
             // certain unit tests won't create the agentClient
-            log.warn("Could not destroy agent client for agent [" + agent + "]: " + ThrowableUtil.getAllMessages(e));
+            LOG.warn("Could not destroy agent client for agent [" + agent + "]: " + ThrowableUtil.getAllMessages(e));
         }
     }
 
     @ExcludeDefaultInterceptors
     public Agent updateAgent(Agent agent) {
         agent = entityManager.merge(agent);
-        log.debug("Updated agent: " + agent);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Updated agent: " + agent);
+        }
         return agent;
     }
 
@@ -165,7 +170,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             // so let's start the sender automatically for the caller so it doesn't need to remember to do it
             client.startSending();
         } catch (Throwable t) {
-            log.debug("Could not get agent client for " + agent);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not get agent client for " + agent, t);
+            }
         }
 
         return client;
@@ -178,7 +185,9 @@ public class AgentManagerBean implements AgentManagerLocal {
         Agent agent = getAgentByResourceId(subject, resourceId);
 
         if (agent == null) {
-            log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
+            }
             return null;
         }
 
@@ -191,7 +200,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         ServerCommunicationsServiceMBean server_bootstrap = ServerCommunicationsServiceUtil.getService();
         server_bootstrap.removeDownedAgent(downedAgent.getRemoteEndpoint());
-        log.info("Agent with name [" + agentName + "] just went down");
+        LOG.info("Agent with name [" + agentName + "] just went down");
 
         agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), agentName, downedAgent.getId());
         return;
@@ -214,7 +223,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             ServerCommunicationsServiceMBean server_comm = ServerCommunicationsServiceUtil.getService();
             server_comm.addStartedAgent(agent);
         } catch (Exception e) {
-            log.info("Cannot flag the agent as started for some reason", e);
+            LOG.info("Cannot flag the agent as started for some reason", e);
         }
 
         return;
@@ -223,7 +232,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     @SuppressWarnings("unchecked")
     @ExcludeDefaultInterceptors
     public void checkForSuspectAgents() {
-        log.debug("Checking to see if there are agents that we suspect are down...");
+        LOG.debug("Checking to see if there are agents that we suspect are down...");
 
         long maximumQuietTimeAllowed = 300000L;
         try {
@@ -233,7 +242,7 @@ public class AgentManagerBean implements AgentManagerLocal {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
             }
         } catch (Exception e) {
-            log.warn("Agent quiet time config is invalid in DB, defaulting to: " + maximumQuietTimeAllowed, e);
+            LOG.warn("Agent quiet time config is invalid in DB, defaulting to: " + maximumQuietTimeAllowed, e);
         }
 
         List<AgentLastAvailabilityPingComposite> records;
@@ -270,15 +279,15 @@ public class AgentManagerBean implements AgentManagerLocal {
             // If it turns out we do not want to be that noisy, just move that warn message down in here so we only ever log
             // about a downed agent once, at the time it is first backfilled.
             if (!record.isBackFilled()) {
-                log.info("Have not heard from agent [" + record.getAgentName() + "] since ["
-                    + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
+                LOG.info("Have not heard from agent [" + record.getAgentName() + "] since ["
+                        + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
 
                 agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), record.getAgentName(),
                     record.getAgentId());
             }
         }
 
-        log.debug("Finished checking for suspected agents");
+        LOG.debug("Finished checking for suspected agents");
 
         return;
     }
@@ -355,7 +364,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("agentToken", token);
             agent = (Agent) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent - none exist with token [" + token + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent - none exist with token [" + token + "] : " + e);
+            }
             agent = null;
         }
 
@@ -371,7 +382,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("name", agentName);
             agent = (Agent) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent - none exist with name [" + agentName + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent - none exist with name [" + agentName + "] : " + e);
+            }
             agent = null;
         }
 
@@ -393,7 +406,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("port", port);
             agent = (Agent) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Agent not found with address/port: " + address + "/" + port);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Agent not found with address/port: " + address + "/" + port);
+            }
             agent = null;
         }
 
@@ -417,7 +432,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("resourceId", resourceId);
             agent = (Agent) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            }
             agent = null;
         }
 
@@ -433,7 +450,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("resourceId", resourceId);
             agentId = (Integer) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            }
             agentId = null;
         }
 
@@ -449,7 +468,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("name", agentName);
             agentId = (Integer) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent for name of [" + agentName + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent for name of [" + agentName + "] : " + e);
+            }
             agentId = null;
         }
 
@@ -465,7 +486,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             query.setParameter("scheduleId", scheduleId);
             agentId = (Integer) query.getSingleResult();
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent for resource with ID of [" + scheduleId + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent for resource with ID of [" + scheduleId + "] : " + e);
+            }
             agentId = null;
         }
 
@@ -493,7 +516,7 @@ public class AgentManagerBean implements AgentManagerLocal {
                 return agent.equals(server) && agentVersionInfo.getBuild().equals(supportedAgentBuild);
             }
         } catch (Exception e) {
-            log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
+            LOG.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
             return false; // assume we can't talk to it
         }
     }
@@ -659,7 +682,9 @@ public class AgentManagerBean implements AgentManagerLocal {
             pingResults = client.ping(5000L);
 
         } catch (NoResultException e) {
-            log.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            }
             agent = null;
         }
 

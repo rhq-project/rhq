@@ -58,7 +58,6 @@ public class Upgrade extends AbstractInstall {
 
     private static final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
     private static final String FROM_SERVER_DIR_OPTION = "from-server-dir";
-    private static final String START_OPTION = "start";
     private static final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     private static final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
     private static final String RUN_DATA_MIGRATION = "run-data-migrator";
@@ -590,7 +589,7 @@ public class Upgrade extends AbstractInstall {
         return (null != path) ? path.replace('\\', '/') : null;
     }
 
-    private void upgradeAgent(CommandLine rhqctlCommandLine) throws IOException {
+    private void upgradeAgent(CommandLine rhqctlCommandLine) throws Exception {
         try {
             File oldAgentDir;
             if (rhqctlCommandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
@@ -608,7 +607,11 @@ public class Upgrade extends AbstractInstall {
                     }
                 }
                 if (!oldAgentDir.isDirectory()) {
-                    log.info("No agent found in the old server location... skipping agent upgrade");
+                    log.info("No " + FROM_AGENT_DIR_OPTION
+                        + " option specified and no agent found in the default location ["
+                        + oldAgentDir.getAbsolutePath()
+                        + "]. Installing agent in the default location as part of the upgrade.");
+                    installAgent(oldAgentDir, rhqctlCommandLine);
                     return;
                 }
             }

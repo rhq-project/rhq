@@ -154,7 +154,8 @@ public class Simulator implements ShutdownManager {
     private void createSchema(String[] nodes, int cqlPort) {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, 9142);
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes,
+                cqlPort);
             schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);

@@ -71,6 +71,7 @@ public class MeasurementAggregator implements Runnable {
                     shutdownManager.shutdown(1);
                 } finally {
                     context.stop();
+                    metrics.totalAggregationRuns.inc();
                 }
             }
         });

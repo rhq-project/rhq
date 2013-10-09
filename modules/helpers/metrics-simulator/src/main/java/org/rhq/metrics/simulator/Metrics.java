@@ -2,6 +2,7 @@ package org.rhq.metrics.simulator;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -29,6 +30,8 @@ public class Metrics {
 
     public final Timer yearResourceQueryTime;
 
+    public final Counter totalAggregationRuns;
+
     public Metrics() {
         registry = new MetricRegistry();
 
@@ -40,6 +43,7 @@ public class Metrics {
         twoWeekResourceQueryTime = registry.timer(name(MeasurementReader.class, "twoWeekResourceQueryData"));
         monthResourceQueryTime = registry.timer(name(MeasurementReader.class, "monthResourceQueryTime"));
         yearResourceQueryTime = registry.timer(name(MeasurementReader.class, "yearResourceQueryTime"));
+        totalAggregationRuns = registry.counter(name(MeasurementAggregator.class, "totalAggregationRuns"));
     }
 
 }

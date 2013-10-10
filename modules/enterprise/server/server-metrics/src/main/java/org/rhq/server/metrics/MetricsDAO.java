@@ -111,7 +111,7 @@ public class MetricsDAO {
             "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
 
         insertTwentyFourHourData = storageSession.prepare("INSERT INTO " + MetricsTable.TWENTY_FOUR_HOUR + "(schedule_id, " +
-            "time, type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
+            "time, type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getTwentyFourHourTTL());
 
         updateMetricsIndex = storageSession.prepare("INSERT INTO " + MetricsTable.INDEX + " (bucket, time, schedule_id) " +
             "VALUES (?, ?, ?)");

@@ -13,15 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.cloud;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -93,17 +91,11 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 criteria.addSortName(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
                 criteria.setPaging(0, pageSize);
 
-                // the List is used because of the access from the anonymous class
-                final List<Integer> pagesFlipped = new ArrayList<Integer>();
-                pagesFlipped.add(0);
-
                 // iterate over the results with CriteriaQuery
                 CriteriaQueryExecutor<Server, ServerCriteria> queryExecutor = new CriteriaQueryExecutor<Server, ServerCriteria>() {
                     @Override
                     public PageList<Server> execute(ServerCriteria criteria) {
-                        pagesFlipped.set(0, pagesFlipped.get(0) + 1);
-                        PageList<Server> list = topologyManager.findServersByCriteria(overlord, criteria);
-                        return list;
+                        return topologyManager.findServersByCriteria(overlord, criteria);
                     }
                 };
 
@@ -120,12 +112,6 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                     actualCount++;
                     serverNames.remove(s.getName());
                 }
-
-                final int finderCallCounter = (int) Math.ceil((double) serverCount / pageSize);
-                // check if the page was flipped the correct amount of times (this formula works only for this particular case)
-                assertTrue("While iterating the servers, the findServersByCriteria() should be called "
-                    + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
-                    pagesFlipped.get(0) == finderCallCounter);
 
                 // test that entire list parsed spanning multiple pages
                 assertTrue("Expected resourceNames to be empty. Still " + serverNames.size() + " name(s).",
@@ -194,17 +180,11 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 criteria.addSortName(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
                 criteria.setPaging(0, pageSize);
 
-                // the List is used because of the access from the anonymous class
-                final List<Integer> pagesFlipped = new ArrayList<Integer>();
-                pagesFlipped.add(0);
-
                 // iterate over the results with CriteriaQuery
                 CriteriaQueryExecutor<Server, ServerCriteria> queryExecutor = new CriteriaQueryExecutor<Server, ServerCriteria>() {
                     @Override
                     public PageList<Server> execute(ServerCriteria criteria) {
-                        pagesFlipped.set(0, pagesFlipped.get(0) + 1);
-                        PageList<Server> list = topologyManager.findServersByCriteria(overlord, criteria);
-                        return list;
+                        return topologyManager.findServersByCriteria(overlord, criteria);
                     }
                 };
 
@@ -224,12 +204,6 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                     }
                     serverNames.remove(s.getName());
                 }
-
-                final int finderCallCounter = (int) Math.ceil((double) (3 * serverCount / 5) / pageSize);
-                // check if the page was flipped the correct amount of times (this formula works only for this particular case)
-                assertTrue("While iterating the servers, the findServersByCriteria() should be called "
-                    + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
-                    pagesFlipped.get(0) == finderCallCounter);
 
                 // test that entire list parsed spanning multiple pages
                 assertTrue("Expected resourceNames to be empty. Still " + serverNames.size() + " name(s).",
@@ -280,17 +254,11 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 criteria.setStrict(true);
                 criteria.setPaging(startPage, pageSize);
 
-                // the List is used because of the access from the anonymous class
-                final List<Integer> pagesFlipped = new ArrayList<Integer>();
-                pagesFlipped.add(0);
-
                 // iterate over the results with CriteriaQuery
                 CriteriaQueryExecutor<Server, ServerCriteria> queryExecutor = new CriteriaQueryExecutor<Server, ServerCriteria>() {
                     @Override
                     public PageList<Server> execute(ServerCriteria criteria) {
-                        pagesFlipped.set(0, pagesFlipped.get(0) + 1);
-                        PageList<Server> list = topologyManager.findServersByCriteria(overlord, criteria);
-                        return list;
+                        return topologyManager.findServersByCriteria(overlord, criteria);
                     }
                 };
 
@@ -307,12 +275,6 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                     actualCount++;
                     serverNames.remove(s.getName());
                 }
-
-                final int finderCallCounter = 1;
-                // check if the page was flipped the correct amount of times (this formula works only for this particular case)
-                assertTrue("While iterating the servers, the findServersByCriteria() should be called "
-                    + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
-                    pagesFlipped.get(0) == finderCallCounter);
 
                 // test that entire list parsed spanning multiple pages
                 assertTrue("Expected resourceNames to be empty. Still " + serverNames.size() + " name(s).",
@@ -507,17 +469,11 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 criteria.addSortName(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
                 criteria.setPaging(startPage, pageSize);
 
-                // the List is used because of the access from the anonymous class
-                final List<Integer> pagesFlipped = new ArrayList<Integer>();
-                pagesFlipped.add(0);
-
                 // iterate over the results with CriteriaQuery
                 CriteriaQueryExecutor<Server, ServerCriteria> queryExecutor = new CriteriaQueryExecutor<Server, ServerCriteria>() {
                     @Override
                     public PageList<Server> execute(ServerCriteria criteria) {
-                        pagesFlipped.set(0, pagesFlipped.get(0) + 1);
-                        PageList<Server> list = topologyManager.findServersByCriteria(overlord, criteria);
-                        return list;
+                        return topologyManager.findServersByCriteria(overlord, criteria);
                     }
                 };
 
@@ -534,11 +490,6 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                     actualCount++;
                     serverNames.remove(s.getName());
                 }
-
-                final int finderCallCounter = (int) Math.ceil((double) shouldBeFoundCount / pageSize);
-                assertTrue("While iterating the servers, the findServersByCriteria() should be called "
-                    + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
-                    pagesFlipped.get(0) == finderCallCounter);
 
                 // test that entire list parsed spanning multiple pages
                 assertTrue("Expected resourceNames to be empty. Still " + serverNames.size() + " name(s).",

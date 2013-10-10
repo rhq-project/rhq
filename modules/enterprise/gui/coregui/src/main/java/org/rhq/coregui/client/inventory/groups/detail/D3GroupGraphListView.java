@@ -40,6 +40,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
@@ -52,7 +53,7 @@ import org.rhq.coregui.client.util.async.CountDownLatch;
  * Build the Group version of the View that shows the individual graph views.
  * @author Mike Thompson
  */
-public final class D3GroupGraphListView extends AbstractD3GraphListView implements AutoRefresh {
+public final class D3GroupGraphListView extends AbstractD3GraphListView implements AutoRefresh, AbstractTwoLevelTabSetView.ViewRenderedListener {
 
     private final ResourceGroup resourceGroup;
     private VLayout graphsVLayout;
@@ -180,6 +181,11 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
                 }
             });
 
+    }
+
+    @Override
+    public void onViewRendered() {
+        refreshData();
     }
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition,

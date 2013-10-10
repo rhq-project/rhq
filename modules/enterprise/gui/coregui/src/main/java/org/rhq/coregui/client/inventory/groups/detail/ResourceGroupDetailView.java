@@ -204,7 +204,12 @@ public class ResourceGroupDetailView extends
 
     @Override
     protected D3GroupGraphListView createD3GraphListView() {
+
         graphListView = new D3GroupGraphListView(groupComposite.getResourceGroup(), true);
+
+        // this listener handles the subtab navigation
+        addViewRenderedListener(graphListView);
+
         return graphListView;
     }
 

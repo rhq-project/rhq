@@ -86,6 +86,10 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertMetricDataEquals(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, expected);
     }
 
+    protected void assert24HourDataEquals(int scheduleId, AggregateNumericMetric... expected) {
+        assertMetricDataEquals(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, asList(expected));
+    }
+
     private void assertMetricDataEquals(MetricsTable columnFamily, int scheduleId,
         List<AggregateNumericMetric> expected) {
         List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));

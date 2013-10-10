@@ -43,6 +43,7 @@ import com.datastax.driver.core.Row;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -470,7 +471,7 @@ public class MetricsServer {
         long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
             configuration.getSixHourTimeSliceDuration()).getMillis();
 
-        Iterable<AggregateNumericMetric> newOneHourAggregates = null;
+        List<AggregateNumericMetric> newOneHourAggregates = null;
 
         Stopwatch stopwatch = new Stopwatch().start();
         List<AggregateNumericMetric> updatedSchedules = aggregateRawData(lastHour);

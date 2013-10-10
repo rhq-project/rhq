@@ -45,7 +45,7 @@ public class Aggregator {
     private Set<AggregateNumericMetric> oneHourAggregates = new ConcurrentSkipListSet<AggregateNumericMetric>(new Comparator<AggregateNumericMetric>() {
         @Override
         public int compare(AggregateNumericMetric left, AggregateNumericMetric right) {
-            return Integer.compare(left.getScheduleId(), right.getScheduleId());
+            return (left.getScheduleId() < right.getScheduleId()) ? -1 : ((left.getScheduleId() == right.getScheduleId()) ? 0 : 1);
         }
     });
 

@@ -29,8 +29,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
-
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -285,10 +285,12 @@ class VersionManager extends AbstractManager {
                     + ". Storage clutser has been updated beyond the capability of the current server installation.");
                 throw new InstalledSchemaTooAdvancedException();
             }
-        } catch (NoHostAvailableException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (NoHostAvailableException e1) {
+            throw e1;
+        } catch (AuthenticationException e2) {
+            throw e2;
+        } catch (Exception e3) {
+            throw new RuntimeException(e3);
         } finally {
             shutdownClusterConnection();
 

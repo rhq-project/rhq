@@ -1,22 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License as published by
- *  * the Free Software Foundation version 2 of the License.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * along with this program; if not, write to the Free Software
- *  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.util;
 
@@ -104,19 +102,24 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
                 PageControl pcCurrent = currentPage.getPageControl();
                 PageControl pcOverrides = criteria.getPageControlOverrides();
 
-                if (null != pcOverrides) {
-                    pcOverrides.setPageNumber(pcOverrides.getPageNumber() + 1);
+                if (pcCurrent == null && pcOverrides == null) {
+                    // Without any indication on paging, iterate only on the initially provided list
+                    reachedEnd = true;
                 } else {
-                    criteria.setPaging(pcCurrent.getPageNumber() + 1, pcCurrent.getPageSize());
+                    if (pcOverrides != null) {
+                        pcOverrides.setPageNumber(pcOverrides.getPageNumber() + 1);
+                    } else {
+                        criteria.setPaging(pcCurrent.getPageNumber() + 1, pcCurrent.getPageSize());
+                    }
+
+                    //help out the GC.
+                    currentPage.clear();
+
+                    currentPage = queryExecutor.execute(criteria);
+                    iterator = currentPage.iterator();
+                    reachedEnd = !iterator.hasNext(); //if we got an empty collection as a result for obtaining the next page
+                                                      //we can be pretty sure we're past the number of available results
                 }
-
-                //help out the GC.
-                currentPage.clear();
-
-                currentPage = queryExecutor.execute(criteria);
-                iterator = currentPage.iterator();
-                reachedEnd = !iterator.hasNext(); //if we got an empty collection as a result for obtaining the next page
-                                                  //we can be pretty sure we're past the number of available results
             }
 
             return iterator.hasNext();

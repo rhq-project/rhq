@@ -769,6 +769,10 @@ public class DBSetup {
 
             for (View view : views) {
                 try {
+                    String viewName = view.getName();
+                    if (null == viewName || viewName.trim().isEmpty()) {
+                        continue;
+                    }
                     view.drop();
                     uninstalled_views++;
                     log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DROPPED_VIEW, view.getName());
@@ -787,6 +791,10 @@ public class DBSetup {
 
             for (Table table : tables) {
                 try {
+                    String tableName = table.getName();
+                    if (null == tableName || tableName.trim().isEmpty()) {
+                        continue;
+                    }
                     table.drop();
                     modified_tables++;
                     log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DROPPED_TABLE, table.getName());

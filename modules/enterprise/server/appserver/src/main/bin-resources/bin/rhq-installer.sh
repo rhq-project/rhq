@@ -1,3 +1,8 @@
 #!/bin/sh
-echo "This script is obsolete and no longer used.  Use rhqctl instead."
+echo >&2 "ERROR: $0 has been replaced by rhqctl."
+cat <<EOF
+Please use rhqctl. For help on the new command try:
+
+    rhqctl --help
+EOF
 exit 1

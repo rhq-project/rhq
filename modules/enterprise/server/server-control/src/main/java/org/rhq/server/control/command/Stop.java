@@ -122,7 +122,6 @@ public class Stop extends AbstractInstall {
             commandLine = getCommandLine("rhq-storage", "stop");
             try {
                 executor.execute(commandLine);
-                System.out.println("RHQ storage node has stopped");
 
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, script returns 1

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.bundle;
@@ -129,7 +129,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     protected void beforeMethod() throws Exception {
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
-
+        prepareScheduler();
         this.bpc = new TestBundlePluginComponent();
         this.ps = new TestBundleServerPluginService(getTempDir(), bpc);
         prepareCustomServerPluginService(this.ps);
@@ -145,12 +145,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     @Override
     protected void afterMethod() throws Exception {
         unprepareForTestAgents();
-
         try {
             this.ps = null;
             cleanupDatabase();
         } finally {
             unprepareServerPluginService();
+            unprepareScheduler();
         }
     }
 
@@ -620,7 +620,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assert results.get(0).getVersionsCount().longValue() == 3L;
 
         BundleVersionCriteria c = new BundleVersionCriteria();
-        PageList<BundleVersion> bvs = null;
+        PageList<BundleVersion> bvs;
 
         c.addFilterId(bv1.getId()); // 1.0
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
@@ -838,16 +838,14 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleDestination dest1 = createDestination(b1, "one", "/test", platformResourceGroup);
         assertNotNull(dest1);
         Configuration config = new Configuration();
-        BundleDeployment bd1;
         try {
-            bd1 = createDeployment("one", bv1, dest1, config);
+            createDeployment("one", bv1, dest1, config);
             fail("Bad config was accepted");
         } catch (Exception e) {
             // expected due to bad config
         }
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-        bd1 = createDeployment("one", bv1, dest1, config);
-        assertNotNull(bd1);
+        assertNotNull(createDeployment("one", bv1, dest1, config));
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -949,9 +947,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
         BundleCriteria c = new BundleCriteria();
-        PageList<Bundle> bundles = null;
-        Bundle b = null;
-        String name = null;
+        PageList<Bundle> bundles;
+        Bundle b;
+        String name;
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
@@ -1009,7 +1007,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         Bundle b10 = createBundle("name10");
 
         BundleCriteria c = new BundleCriteria();
-        PageList<Bundle> bs = null;
+        PageList<Bundle> bs;
 
         // return first 5
         c.addFilterName(TEST_PREFIX);
@@ -1066,14 +1064,10 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         criteria.setPaging(0, pageSize);
         criteria.addSortName(PageOrdering.DESC);
 
-        final List<Integer> pagesFlipped = new ArrayList<Integer>();
-        pagesFlipped.add(0);
-
         // iterate over the results with CriteriaQuery
         CriteriaQueryExecutor<Bundle, BundleCriteria> queryExecutor = new CriteriaQueryExecutor<Bundle, BundleCriteria>() {
             @Override
             public PageList<Bundle> execute(BundleCriteria criteria) {
-                pagesFlipped.set(0, pagesFlipped.get(0) + 1);
                 return bundleManager.findBundlesByCriteria(overlord, criteria);
             }
         };
@@ -1097,10 +1091,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             bundleManager.deleteBundle(overlord, id);
         }
 
-        // check if the page was flipped the correct amount of times
-        assertTrue("While iterating the bundles, the findBundlesByCriteria should be called " + bundleCount / pageSize
-            + " times" + pageSize, pagesFlipped.get(0) == bundleCount / pageSize);
-
         // check if the last name is equal to "name01" 
         assertEquals("The name should be \"name01\"", b01.getName(), prevName);
 
@@ -1109,11 +1099,10 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             bundleNames.isEmpty());
 
         // check if everything is deleted
-        PageList<Bundle> bvs = null;
         criteria = new BundleCriteria();
         criteria.addFilterName(TEST_PREFIX);
         criteria.clearPaging(); // fetch all
-        bvs = bundleManager.findBundlesByCriteria(overlord, criteria);
+        PageList<Bundle> bvs = bundleManager.findBundlesByCriteria(overlord, criteria);
         assertNotNull(bvs);
         assertTrue(bvs.isEmpty());
     }
@@ -1125,8 +1114,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv2 = createBundleVersion(b1.getName(), "2.0", b1);
         BundleVersion bv3 = createBundleVersion(b1.getName(), "2.1", b1);
         BundleVersionCriteria c = new BundleVersionCriteria();
-        PageList<BundleVersion> bvs = null;
-        BundleVersion bvOut = null;
+        PageList<BundleVersion> bvs;
+        BundleVersion bvOut;
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
@@ -1166,7 +1155,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv60 = createBundleVersion(b1.getName(), "1.60", b1);
 
         BundleVersionCriteria c = new BundleVersionCriteria();
-        PageList<BundleVersion> bvs = null;
+        PageList<BundleVersion> bvs;
         BundleVersion bvOut = null;
 
         // return first ten
@@ -1207,15 +1196,10 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         criteria.setPaging(0, pageSize);
         criteria.addSortId(PageOrdering.DESC);
 
-        // the List is used because of the access from the anonymous class
-        final List<Integer> pagesFlipped = new ArrayList<Integer>();
-        pagesFlipped.add(0);
-
         // iterate over the results with CriteriaQuery
         CriteriaQueryExecutor<BundleVersion, BundleVersionCriteria> queryExecutor = new CriteriaQueryExecutor<BundleVersion, BundleVersionCriteria>() {
             @Override
             public PageList<BundleVersion> execute(BundleVersionCriteria criteria) {
-                pagesFlipped.set(0, pagesFlipped.get(0) + 1);
                 return bundleManager.findBundleVersionsByCriteria(overlord, criteria);
             }
         };
@@ -1235,10 +1219,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             bundleVersionVersions.remove(String.valueOf(bv.getVersion()));
         }
 
-        // check if the page was flipped the correct amount of times (this formula works only for this particular case)
-        assertTrue("While iterating the bundle versions, the findBundleVersionsByCriteria() should be called "
-            + bundleVersionCount / pageSize + " times" + pageSize, pagesFlipped.get(0) == bundleVersionCount / pageSize);
-
         // delete all
         for (int id : toDelete) {
             bundleManager.deleteBundleVersion(overlord, id, true);
@@ -1253,11 +1233,10 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             bundleVersionVersions.isEmpty());
 
         // check if everything is deleted
-        PageList<BundleVersion> bvs = null;
         criteria = new BundleVersionCriteria();
         criteria.addFilterName(TEST_PREFIX);
         criteria.clearPaging(); // fetch all
-        bvs = bundleManager.findBundleVersionsByCriteria(overlord, criteria);
+        PageList<BundleVersion> bvs = bundleManager.findBundleVersionsByCriteria(overlord, criteria);
         assertNotNull(bvs);
         assertTrue(bvs.isEmpty());
     }
@@ -1286,20 +1265,18 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // find the previously created bundle
         BundleCriteria c = new BundleCriteria();
-        PageList<Bundle> bundles1 = null;
         c.addFilterName(TEST_PREFIX + "-bundle-one");
         c.setStrict(true);
-        bundles1 = bundleManager.findBundlesByCriteria(overlord, c);
+        PageList<Bundle> bundles1 = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles1);
         assertEquals(1, bundles1.size());
         Bundle fetchedBundle1 = bundles1.get(0);
 
         // find the newly created bundle
         c = new BundleCriteria();
-        PageList<Bundle> bundles2 = null;
         c.addFilterName(fullName);
         c.setStrict(true);
-        bundles2 = bundleManager.findBundlesByCriteria(overlord, c);
+        PageList<Bundle> bundles2 = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles2);
         assertEquals(1, bundles2.size());
     }
@@ -1315,10 +1292,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // find the newly created bundle
         BundleCriteria c = new BundleCriteria();
-        PageList<Bundle> bundles = null;
         c.addFilterName(fullName);
         c.setStrict(true);
-        bundles = bundleManager.findBundlesByCriteria(overlord, c);
+        PageList<Bundle> bundles = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
     }
@@ -2180,7 +2156,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         ResourceGroup resourceGroup = null;
-        Resource resource = null;
+        Resource resource;
 
         try {
             // Naming this with TEST_PREFIX allows cleanupDatabase to blow away these test resources along

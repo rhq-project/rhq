@@ -2,17 +2,23 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
@@ -20,6 +26,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 
@@ -31,6 +38,8 @@ public class AggregationTests extends MetricsTest {
     private Aggregates schedule1 = new Aggregates();
     private Aggregates schedule2 = new Aggregates();
     private Aggregates schedule3 = new Aggregates();
+    private Aggregates schedule4 = new Aggregates();
+    private Aggregates schedule5 = new Aggregates();
 
     private ListeningExecutorService workers;
 
@@ -43,6 +52,8 @@ public class AggregationTests extends MetricsTest {
         schedule1.id = 100;
         schedule2.id = 101;
         schedule3.id = 102;
+        schedule4.id = 104;
+        schedule5.id = 105;
     }
 
     @Test
@@ -270,6 +281,70 @@ public class AggregationTests extends MetricsTest {
         assert24HourMetricsIndexEmpty(hour(0));
     }
 
+    @Test(dependsOnMethods = "runAggregationForHour24")
+    public void resetDBForFailureScenarios() throws Exception {
+        purgeDB();
+    }
+
+    @Test(dependsOnMethods = "resetDBForFailureScenarios")
+    public void failToFetchRawDataIndexDuringAggregationForHour12() throws Exception {
+        currentHour = hour(12);
+        AggregatorTestStub aggregator = new AggregatorTestStub(hour(11), new MetricsDAO(storageSession, configuration) {
+            @Override
+            public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
+                if (table == MetricsTable.ONE_HOUR) {
+                    return new FailedStorageResultSetFuture(new Exception("Failed to fetch raw data index"));
+                } else {
+                    return super.findMetricsIndexEntriesAsync(table,
+                        timestamp);
+                }
+            }
+        });
+
+        insertRawData(
+            new MeasurementDataNumeric(hour(12).plusMinutes(10).getMillis(), schedule4.id, 7.456),
+            new MeasurementDataNumeric(hour(12).plusMinutes(14).getMillis(), schedule5.id, 29.3)
+        ).await("Failed to insert raw data");
+
+        updateIndex(
+            new IndexUpdate(MetricsTable.ONE_HOUR, schedule4.id, hour(12)),
+            new IndexUpdate(MetricsTable.ONE_HOUR, schedule5.id, hour(12))
+        ).await("Failed to update raw data index");
+
+        insert1HourData(
+            new AggregateNumericMetric(schedule4.id, 26.6, 18.33, 29.02, hour(10).getMillis()),
+            new AggregateNumericMetric(schedule4.id, 25.2, 21.12, 28.05, hour(11).getMillis())
+        ).await("Failed to insert 1 hour data");
+
+        updateIndex(new IndexUpdate(MetricsTable.SIX_HOUR, schedule4.id, hour(6)))
+            .await("Failed to update 1 hr data index");
+
+        schedule4.oneHourData.put(hour(10), new AggregateNumericMetric(schedule4.id, 26.6, 18.33, 29.02,
+            hour(10).getMillis()));
+        schedule4.oneHourData.put(hour(11), new AggregateNumericMetric(schedule4.id, 25.2, 21.12, 28.05,
+            hour(11).getMillis()));
+        schedule4.sixHourData.put(hour(6), new AggregateNumericMetric(schedule4.id,
+            avg(schedule4.oneHourData, hour(10), hour(11)),
+            min(schedule4.oneHourData, hour(10), hour(11)),
+            max(schedule4.oneHourData, hour(10), hour(11)),
+            hour(6).getMillis()));
+
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+        List<AggregateNumericMetric> emptyAggregates = Collections.emptyList();
+
+        assertTrue(oneHourData.isEmpty(), "Did not expect to get back any one hour aggregates");
+        // verify values in db
+        assert1HourDataEquals(schedule4.id, schedule4.oneHourData.get(hour(10)), schedule4.oneHourData.get(hour(11)));
+        assert1HourDataEquals(schedule5.id, emptyAggregates);
+        assert6HourDataEquals(schedule4.id, schedule4.sixHourData.get(hour(6)));
+        assert6HourDataEmpty(schedule5.id);
+        assert24HourDataEmpty(schedule4.id);
+        assert24HourDataEmpty(schedule5.id);
+        assert1HourMetricsIndexEmpty(hour(11));
+        assert6HourMetricsIndexEmpty(hour(6));
+        assert24HourIndexEquals(hour(0), schedule4.id);
+    }
+
     private WaitForWrite insertRawData(MeasurementDataNumeric... data) {
         WaitForWrite waitForRawInserts = new WaitForWrite(data.length);
         for (MeasurementDataNumeric raw : data) {
@@ -277,6 +352,24 @@ public class AggregationTests extends MetricsTest {
             Futures.addCallback(resultSetFuture, waitForRawInserts);
         }
         return waitForRawInserts;
+    }
+
+    private WaitForWrite insert1HourData(AggregateNumericMetric... data) {
+        WaitForWrite waitForWrite = new WaitForWrite(data.length * 3);
+        for (AggregateNumericMetric datum : data) {
+            StorageResultSetFuture future = dao.insertOneHourDataAsync(datum.getScheduleId(), datum.getTimestamp(),
+                AggregateType.AVG, datum.getAvg());
+            Futures.addCallback(future, waitForWrite);
+
+            future = dao.insertOneHourDataAsync(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MIN,
+                datum.getMin());
+            Futures.addCallback(future, waitForWrite);
+
+            future = dao.insertOneHourDataAsync(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MAX,
+                datum.getMax());
+            Futures.addCallback(future, waitForWrite);
+        }
+        return waitForWrite;
     }
 
     private WaitForWrite updateIndex(IndexUpdate... updates) {
@@ -341,6 +434,10 @@ public class AggregationTests extends MetricsTest {
             super(workers, dao, configuration, dateTimeService, startTime);
         }
 
+        public AggregatorTestStub(DateTime startTime, MetricsDAO dao) {
+            super(workers, dao, configuration, dateTimeService, startTime);
+        }
+
         @Override
         protected DateTime currentHour() {
             return currentHour;
@@ -366,4 +463,27 @@ public class AggregationTests extends MetricsTest {
         Map<DateTime, AggregateNumericMetric> twentyFourHourData = new HashMap<DateTime, AggregateNumericMetric>();
     }
 
+    private class FailedStorageResultSetFuture extends StorageResultSetFuture implements ListenableFuture<ResultSet> {
+
+        private SettableFuture future;
+
+        private Throwable t;
+
+        public FailedStorageResultSetFuture(Throwable t) {
+            super(null, null);
+            future = SettableFuture.create();
+            this.t = t;
+            assertTrue(future.setException(t), "Failed to set exception for future");
+        }
+
+        @Override
+        public void addListener(Runnable listener, Executor executor) {
+            future.addListener(listener, executor);
+        }
+
+        @Override
+        public ResultSet get() {
+            throw new AssertionError();
+        }
+    }
 }

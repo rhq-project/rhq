@@ -32,18 +32,16 @@
 #                            neither is set, it is assumed the AS bundled
 #                            under RHQ_SERVER_HOME/jbossas is to be used.
 #
-#    RHQ_SERVER_JAVA_HOME - The location of the JRE that the server will
-#                           use. This will be ignored if
-#                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
-#                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-#                           not set, JAVA_HOME will be used.
+#    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
+#                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
+#                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
+#                    JAVA_HOME will be used.
 #
-#    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-#                                    executable to use. If this is set,
-#                                    RHQ_SERVER_JAVA_HOME is ignored.
-#                                    If this is not set, then
-#                                    $RHQ_SERVER_JAVA_HOME/bin/java
-#                                    is used.
+#    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
+#                             use. If this is set, RHQ_JAVA_HOME is ignored.
+#                             If this is not set, then $RHQ_JAVA_HOME/bin/java
+#                             is used. If this and RHQ_JAVA_HOME are not set,
+#                             then $JAVA_HOME/bin/java will be used.
 #
 #    RHQ_SERVER_JAVA_OPTS - Java VM command line options to be
 #                           passed into the Server's VM. If this is not defined
@@ -104,8 +102,8 @@
 
 # RHQ_SERVER_HOME=/path/to/server/home
 # RHQ_SERVER_DEBUG=true
-# JAVA_HOME=/path/to/java/installation
-# RHQ_SERVER_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
+# RHQ_JAVA_HOME=/path/to/java/installation
+# RHQ_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
 # RHQ_SERVER_JAVA_OPTS=VM options
 # RHQ_SERVER_ADDITIONAL_JAVA_OPTS=additional VM options
 # RHQ_SERVER_CMDLINE_OPTS=standalone.sh options
@@ -343,26 +341,38 @@ fi
 
 # ----------------------------------------------------------------------
 # Find the Java executable and verify we have a VM available
+# Note that RHQ_SERVER_JAVA_* props are still handled for back compat
 # ----------------------------------------------------------------------
-
-if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
-   if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
-      debug_msg "No JRE found - will try to use JAVA_HOME: $JAVA_HOME"
-      RHQ_SERVER_JAVA_HOME="$JAVA_HOME"
+if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
+   if [ ! -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
+      RHQ_JAVA_EXE_FILE_PATH="$RHQ_SERVER_JAVA_EXE_FILE_PATH"
    fi
-   debug_msg "RHQ_SERVER_JAVA_HOME: $RHQ_SERVER_JAVA_HOME"
-   RHQ_SERVER_JAVA_EXE_FILE_PATH="${RHQ_SERVER_JAVA_HOME}/bin/java"
 fi
-debug_msg "RHQ_SERVER_JAVA_EXE_FILE_PATH: $RHQ_SERVER_JAVA_EXE_FILE_PATH"
+if [ -z "$RHQ_JAVA_HOME" ]; then
+   if [ ! -z "$RHQ_SERVER_JAVA_HOME" ]; then
+      RHQ_JAVA_HOME="$RHQ_SERVER_JAVA_HOME"
+   fi
+fi
 
-if [ ! -f "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
+if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
+   if [ -z "$RHQ_JAVA_HOME" ]; then
+      debug_msg "No RHQ JAVA property set, defaulting to JAVA_HOME: $JAVA_HOME"
+      RHQ_JAVA_HOME="$JAVA_HOME"
+   fi
+   debug_msg "RHQ_JAVA_HOME: $RHQ_JAVA_HOME"
+   RHQ_JAVA_EXE_FILE_PATH="${RHQ_JAVA_HOME}/bin/java"
+fi
+
+debug_msg "RHQ_JAVA_EXE_FILE_PATH: $RHQ_JAVA_EXE_FILE_PATH"
+
+if [ ! -f "$RHQ_JAVA_EXE_FILE_PATH" ]; then
    echo "There is no JVM available."
-   echo "Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately."
+   echo "Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately."
    exit 1
 fi
 
 # standalone.sh will use JAVA as the full java command
-JAVA="$RHQ_SERVER_JAVA_EXE_FILE_PATH"
+JAVA="$RHQ_JAVA_EXE_FILE_PATH"
 export JAVA
 
 # ----------------------------------------------------------------------

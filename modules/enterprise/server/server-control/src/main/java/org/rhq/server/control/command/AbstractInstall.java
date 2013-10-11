@@ -600,7 +600,10 @@ public abstract class AbstractInstall extends ControlCommand {
                 }
             });
 
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
+            // Make sure we use the appropriate java version, don't just fall back to PATH
+            String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath)
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
                 .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath())
                 .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log"));

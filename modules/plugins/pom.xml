@@ -217,6 +217,7 @@
            <module>kickstart</module>
            <module>pattern-generator</module>
            <module>cassandra</module>
+           <module>OpenShift-support</module>
         </modules>
     </profile>
 

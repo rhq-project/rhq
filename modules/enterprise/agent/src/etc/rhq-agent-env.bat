@@ -24,24 +24,24 @@ rem                     directory of the directory where this script lives.
 rem
 rem set RHQ_AGENT_HOME=C:\opt\rhq-agent
 
-rem    RHQ_AGENT_JAVA_HOME - The location of the JRE that the agent will
-rem                          use. This will be ignored if
-rem                          RHQ_AGENT_JAVA_EXE_FILE_PATH is set.
-rem                          If this and RHQ_AGENT_JAVA_EXE_FILE_PATH are
-rem                          not set, the agent's embedded JRE will be used.
+rem    RHQ_JAVA_HOME - The location of the JRE that the agent will
+rem                    use. This will be ignored if
+rem                    RHQ_JAVA_EXE_FILE_PATH is set.
+rem                    If this and RHQ_JAVA_EXE_FILE_PATH are
+rem                    not set, JAVA_HOME will be used.
 rem
-rem set RHQ_AGENT_JAVA_HOME=C:\opt\java
+rem set RHQ_JAVA_HOME=C:\opt\java
 
-rem    RHQ_AGENT_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-rem                                   executable to use. If this is set,
-rem                                   RHQ_AGENT_JAVA_HOME is ignored.
-rem                                   If this is not set, then
-rem                                   %RHQ_AGENT_JAVA_HOME%\bin\java.exe
-rem                                   is used. If this and
-rem                                   RHQ_AGENT_JAVA_HOME are not set, the
-rem                                   agent's embedded JRE will be used.
+rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java
+rem                             executable to use. If this is set,
+rem                             RHQ_JAVA_HOME is ignored.
+rem                             If this is not set, then
+rem                             %RHQ_JAVA_HOME%\bin\java.exe
+rem                             is used. If this and
+rem                             RHQ_JAVA_HOME are not set, then
+rem                             JAVA_HOME will be used.
 rem
-rem set RHQ_AGENT_JAVA_EXE_FILE_PATH=C:\WINDOWS\system32\java.exe
+rem set RHQ_JAVA_EXE_FILE_PATH=C:\WINDOWS\system32\java.exe
 
 rem ===========================================================================
 rem THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent.bat SCRIPT

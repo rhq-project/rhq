@@ -73,22 +73,36 @@ if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_HOME: %RHQ_AGENT_HOME%
 
 rem ----------------------------------------------------------------------
 rem Find the Java executable and verify we have a VM available
+rem Note that RHQ_AGENT_JAVA_* props are still handled for back compat
 rem ----------------------------------------------------------------------
 
-if not defined RHQ_AGENT_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_AGENT_JAVA_HOME call :prepare_embedded_jre
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if defined RHQ_AGENT_JAVA_EXE_FILE_PATH (
+      set RHQ_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%
+   )
+)
+if not defined RHQ_JAVA_HOME (
+   if defined RHQ_AGENT_JAVA_HOME (
+      set RHQ_JAVA_HOME=%RHQ_AGENT_JAVA_HOME%
+   )
 )
 
-if not defined RHQ_AGENT_JAVA_EXE_FILE_PATH (
-   set RHQ_AGENT_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_HOME%\bin\java.exe
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if not defined RHQ_JAVA_HOME (
+      if defined RHQ_AGENT_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: %JAVA_HOME%
+      set RHQ_JAVA_HOME=%JAVA_HOME%
+   )
+)
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   set RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_HOME%\bin\java.exe
 )
 
-if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_HOME: %RHQ_AGENT_JAVA_HOME%
-if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_EXE_FILE_PATH: %RHQ_AGENT_JAVA_EXE_FILE_PATH%
+if defined RHQ_AGENT_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%
+if defined RHQ_AGENT_DEBUG echo RHQ_JAVA_EXE_FILE_PATH: %RHQ_JAVA_EXE_FILE_PATH%
 
-if not exist "%RHQ_AGENT_JAVA_EXE_FILE_PATH%" (
+if not exist "%RHQ_JAVA_EXE_FILE_PATH%" (
    echo There is no JVM available.
-   echo Please set RHQ_AGENT_JAVA_HOME or RHQ_AGENT_JAVA_EXE_FILE_PATH appropriately.
+   echo Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately.
    exit /B 1
 )
 
@@ -102,7 +116,7 @@ for /R "%RHQ_AGENT_HOME%\lib" %%G in ("*.jar") do (
    call :append_classpath "%%G"
    if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: %%G
 )
-for %%G in ("%RHQ_AGENT_JAVA_HOME%\lib\tools.jar" "%RHQ_AGENT_JAVA_HOME%\..\lib\tools.jar") do (
+for %%G in ("%RHQ_JAVA_HOME%\lib\tools.jar" "%RHQ_JAVA_HOME%\..\lib\tools.jar") do (
    if exist "%%G" (
       call :append_classpath "%%G"
       if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: %%G
@@ -177,8 +191,8 @@ if not defined RHQ_AGENT_MAINCLASS (
 
 rem note - currently not using custom Java Prefs as the default, use commented command line to activate. If installing
 rem note - the agent as a windows service, you must also uncomment lines in wrapper/rhq-agent-wrapper.conf.
-rem set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %_JAVA_PREFERENCES_FACTORY_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
-set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
+rem set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %_JAVA_PREFERENCES_FACTORY_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
+set CMD="%RHQ_AGENT_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
 
 if not defined _SETENV_ONLY (
    rem log4j 1.2.8 does not create the directory for us (later versions do)
@@ -208,26 +222,13 @@ if not defined CLASSPATH (
 goto :eof
 
 rem ----------------------------------------------------------------------
-rem CALL subroutine that prepares to use the embedded JRE
-rem ----------------------------------------------------------------------
-
-:prepare_embedded_jre
-set RHQ_AGENT_JAVA_HOME=%RHQ_AGENT_HOME%\jre
-if defined RHQ_AGENT_DEBUG echo Using the embedded JRE
-if not exist "%RHQ_AGENT_JAVA_HOME%" (
-   if defined RHQ_AGENT_DEBUG echo No embedded JRE found - will try to use JAVA_HOME: %JAVA_HOME%
-   set RHQ_AGENT_JAVA_HOME=%JAVA_HOME%
-)
-goto :eof
-
-rem ----------------------------------------------------------------------
 rem CALL subroutine that exits this script normally
 rem ----------------------------------------------------------------------
 
 :done
 if defined RHQ_AGENT_DEBUG echo %0 done.
 if defined _SETENV_ONLY (
-endlocal & SET "RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" & SET "RHQ_AGENT_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%" & SET "RHQ_AGENT_JAVA_OPTS=%RHQ_AGENT_JAVA_OPTS%" & SET "RHQ_AGENT_ADDITIONAL_JAVA_OPTS=%RHQ_AGENT_ADDITIONAL_JAVA_OPTS%" & SET "RHQ_AGENT_BIN_DIR_PATH=%RHQ_AGENT_BIN_DIR_PATH%"
+endlocal & SET "RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" & SET "RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" & SET "RHQ_AGENT_JAVA_OPTS=%RHQ_AGENT_JAVA_OPTS%" & SET "RHQ_AGENT_ADDITIONAL_JAVA_OPTS=%RHQ_AGENT_ADDITIONAL_JAVA_OPTS%" & SET "RHQ_AGENT_BIN_DIR_PATH=%RHQ_AGENT_BIN_DIR_PATH%"
 ) else (
 endlocal
 )

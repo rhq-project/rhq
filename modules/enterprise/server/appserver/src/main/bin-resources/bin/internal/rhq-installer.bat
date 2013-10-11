@@ -17,20 +17,16 @@ rem                      If not defined, it will be assumed to be the parent
 rem                      directory of the directory where this script lives.
 rem
 rem
-rem    RHQ_SERVER_JAVA_HOME - The location of the JRE that the Server will
-rem                           use. This will be ignored if
-rem                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
-rem                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-rem                           not set, the Server's embedded JRE will be used.
+rem    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
+rem                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
+rem                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
+rem                    JAVA_HOME will be used.
 rem
-rem    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-rem                                    executable to use. If this is set,
-rem                                    RHQ_SERVER_JAVA_HOME is ignored.
-rem                                    If this is not set, then
-rem                                    %RHQ_SERVER_JAVA_HOME%\bin\java.exe
-rem                                    is used. If this and
-rem                                    RHQ_SERVER_JAVA_HOME are not set, the
-rem                                    Server's embedded JRE will be used.
+rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
+rem                             use. If this is set, RHQ_JAVA_HOME is ignored.
+rem                             If this is not set, then $RHQ_JAVA_HOME/bin/java
+rem                             is used. If this and RHQ_JAVA_HOME are not set,
+rem                             then $JAVA_HOME/bin/java will be used.
 rem
 rem    RHQ_SERVER_INSTALLER_JAVA_OPTS - Java VM command line options to be
 rem                         passed into the Java VM. If this is not defined
@@ -78,23 +74,40 @@ set RHQ_SERVER_HOME=%CD%
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_HOME: %RHQ_SERVER_HOME%
 
 rem ----------------------------------------------------------------------
-rem Find the Java executable and verify we have a VM available.
+rem Find the Java executable and verify we have a VM available
+rem Note that RHQ_SERVER_JAVA_* props are still handled for back compat
 rem ----------------------------------------------------------------------
 
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_SERVER_JAVA_HOME call :prepare_embedded_jre
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
+      set RHQ_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%
+   )
+)
+if not defined RHQ_JAVA_HOME (
+   if defined RHQ_SERVER_JAVA_HOME (
+      set RHQ_JAVA_HOME=%RHQ_SERVER_JAVA_HOME%
+   )
 )
 
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH set RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_HOME%\bin\java.exe
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if not defined RHQ_JAVA_HOME (
+      if defined RHQ_SERVER_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: %JAVA_HOME%
+      set RHQ_JAVA_HOME=%JAVA_HOME%
+   )
+)
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   set RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_HOME%\bin\java.exe
+)
 
-if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_JAVA_HOME: %RHQ_SERVER_JAVA_HOME%
-if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_JAVA_EXE_FILE_PATH: %RHQ_SERVER_JAVA_EXE_FILE_PATH%
+if defined RHQ_SERVER_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%
+if defined RHQ_SERVER_DEBUG echo RHQ_JAVA_EXE_FILE_PATH: %RHQ_JAVA_EXE_FILE_PATH%
 
-if not exist "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" (
+if not exist "%RHQ_JAVA_EXE_FILE_PATH%" (
    echo There is no JVM available.
-   echo Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately.
+   echo Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately.
    exit /B 1
 )
+
 
 if not exist "%RHQ_SERVER_HOME%\jbossas\jboss-modules.jar" (
    echo ERROR! RHQ_SERVER_HOME is not pointing to a valid RHQ instance
@@ -134,22 +147,9 @@ set _JBOSS_MODULEPATH=%_RHQ_MODULES_PATH%;%_INTERNAL_MODULES_PATH%
 if defined RHQ_SERVER_DEBUG echo _JBOSS_MODULEPATH: %_JBOSS_MODULEPATH%
 
 rem start the AS instance with our main installer module
-"%RHQ_SERVER_JAVA_EXE_FILE_PATH%" %RHQ_SERVER_INSTALLER_JAVA_OPTS% %RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_HOME%\jbossas\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-installer-util %*
+"%RHQ_JAVA_EXE_FILE_PATH%" %RHQ_SERVER_INSTALLER_JAVA_OPTS% %RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_HOME%\jbossas\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-installer-util %*
 
 goto :done
-
-rem ----------------------------------------------------------------------
-rem CALL subroutine that prepares to use the embedded JRE
-rem ----------------------------------------------------------------------
-
-:prepare_embedded_jre
-set RHQ_SERVER_JAVA_HOME=%RHQ_SERVER_HOME%\jre
-if defined RHQ_SERVER_DEBUG echo Using the embedded JRE
-if not exist "%RHQ_SERVER_JAVA_HOME%" (
-   if defined RHQ_SERVER_DEBUG echo No embedded JRE found - will try to use JAVA_HOME: %JAVA_HOME%
-   set RHQ_SERVER_JAVA_HOME=%JAVA_HOME%
-)
-goto :eof
 
 rem ----------------------------------------------------------------------
 rem CALL subroutine that exits this script normally

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.agent;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -222,14 +221,23 @@ public class AgentUpdateThread extends Thread {
      * @throws Exception if the Java executable could not be found
      */
     private String findJavaExe() throws Exception {
-        final String envName = "RHQ_AGENT_JAVA_EXE_FILE_PATH";
+        // try the expected env var
+        String envName = "RHQ_JAVA_EXE_FILE_PATH";
         String envString = System.getenv(envName);
         if (envString != null) {
             showMessage(AgentI18NResourceKeys.UPDATE_THREAD_USING_JAVA_EXE, envString);
             return envString;
         }
 
-        // that RHQ environment variable should always be there. But in the odd case where it isn't
+        // try the legacy env var name for back compat
+        envName = "RHQ_AGENT_JAVA_EXE_FILE_PATH";
+        envString = System.getenv(envName);
+        if (envString != null) {
+            showMessage(AgentI18NResourceKeys.UPDATE_THREAD_USING_JAVA_EXE, envString);
+            return envString;
+        }
+
+        // one of the above RHQ environment variables should always be there. But in the odd case where it isn't
         // let's try to guess where we can find the Java executable using another method
         showMessage(AgentI18NResourceKeys.UPDATE_THREAD_LOOKING_FOR_JAVA_EXE, envName);
         String javaExe = "java"; // fallback to this if we can't find it - let's hope its in our path

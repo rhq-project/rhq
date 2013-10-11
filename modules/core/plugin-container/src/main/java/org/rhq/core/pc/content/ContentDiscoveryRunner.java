@@ -1,32 +1,28 @@
  /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 package org.rhq.core.pc.content;
 
-import java.util.concurrent.Callable;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+ import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 
-import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
+ import java.util.concurrent.Callable;
 
  /**
  * Thread run by the {@link ContentManager} to perform content discoveries. Much of the logic in these discoveries takes
@@ -36,9 +32,9 @@ import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
  * @author Jason Dobies
  */
 public class ContentDiscoveryRunner implements Runnable, Callable<ContentDiscoveryReport> {
-    // Attributes  --------------------------------------------
+     private static final Log LOG = LogFactory.getLog(ContentDiscoveryRunner.class);
 
-    private final Log log = LogFactory.getLog(ContentDiscoveryRunner.class);
+    // Attributes  --------------------------------------------
 
     /**
      * If specified, this constrains this instance to running the described discovery. If this is not present, this
@@ -89,7 +85,7 @@ public class ContentDiscoveryRunner implements Runnable, Callable<ContentDiscove
         try {
             call();
         } catch (Exception e) {
-            log.error("Content discovery runner failed", e);
+            LOG.error("Content discovery runner failed", e);
         }
     }
 
@@ -110,19 +106,21 @@ public class ContentDiscoveryRunner implements Runnable, Callable<ContentDiscove
             // Check to see if the discovery is executing too far past its next scheduled discovery
             // If it is, skip this discovery and increment its next discovery.
             if ((System.currentTimeMillis() - 120000L) > info.getNextDiscovery()) {
-                log.debug("Content discovery is falling behind. Missed discovery for " + info + " by: "
+                LOG.debug("Content discovery is falling behind. Missed discovery for " + info + " by: "
                     + (System.currentTimeMillis() - info.getNextDiscovery()) + "ms");
             }
         }
 
-        log.debug("Performing discovery: " + info);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Performing discovery: " + info);
+        }
 
         // Catch any error that may occur on the plugin
         ContentDiscoveryReport result = null;
         try {
             result = contentManager.performContentDiscovery(info.getResourceId(), info.getPackageType());
         } catch (Throwable throwable) {
-            log.warn("Exception received from component while attempting content retrieval", throwable);
+            LOG.warn("Exception received from component while attempting content retrieval", throwable);
         } finally {
             // Reschedule after this report has been sent (or failed). Putting this here will delay further discoveries
             // if the limited concurrency puts off sending this message for a while.

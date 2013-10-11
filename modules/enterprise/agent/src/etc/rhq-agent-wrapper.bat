@@ -55,7 +55,7 @@ rem agent start script.
 rem This script will set up the following environment variables for us:
 rem    RHQ_AGENT_HOME
 rem    RHQ_AGENT_BIN_DIR_PATH
-rem    RHQ_AGENT_JAVA_EXE_FILE_PATH
+rem    RHQ_JAVA_EXE_FILE_PATH
 rem Some other RHQ_AGENT_ variables might also be set due to the
 rem calling of the custom environment script earlier.
 rem ----------------------------------------------------------------------
@@ -127,7 +127,7 @@ if defined RHQ_AGENT_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice
 if not defined RHQ_AGENT_PASSWORD_PROMPT set RHQ_AGENT_PASSWORD_PROMPT=true
 
 if /i "%1"=="install" (
-   "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%" "set.RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" "set.RHQ_AGENT_INSTANCE_NAME=%RHQ_AGENT_INSTANCE_NAME%" "set.RHQ_AGENT_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%" "set.RHQ_AGENT_OS_PLATFORM=%RHQ_AGENT_OS_PLATFORM%" "set.RHQ_AGENT_WRAPPER_LOG_DIR_PATH=%RHQ_AGENT_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%" "set.RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" "set.RHQ_AGENT_INSTANCE_NAME=%RHQ_AGENT_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_AGENT_OS_PLATFORM=%RHQ_AGENT_OS_PLATFORM%" "set.RHQ_AGENT_WRAPPER_LOG_DIR_PATH=%RHQ_AGENT_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
    if ERRORLEVEL 1 goto error
    goto done
 )

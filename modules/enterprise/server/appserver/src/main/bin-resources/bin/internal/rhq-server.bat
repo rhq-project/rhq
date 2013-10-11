@@ -19,18 +19,16 @@ rem    RHQ_SERVER_HOME - Defines where the Server's home install directory is.
 rem                      If not defined, it will be assumed to be the parent
 rem                      directory of the directory where this script lives.
 rem
-rem    RHQ_SERVER_JAVA_HOME - The location of the JRE that the Server will
-rem                           use. This will be ignored if
-rem                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
-rem                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-rem                           not set, JAVA_HOME will be used.
+rem    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
+rem                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
+rem                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
+rem                    JAVA_HOME will be used.
 rem
-rem    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-rem                                    executable to use. If this is set,
-rem                                    RHQ_SERVER_JAVA_HOME is ignored.
-rem                                    If this is not set, then
-rem                                    %RHQ_SERVER_JAVA_HOME%\bin\java.exe
-rem                                    is used.
+rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
+rem                             use. If this is set, RHQ_JAVA_HOME is ignored.
+rem                             If this is not set, then $RHQ_JAVA_HOME/bin/java
+rem                             is used. If this and RHQ_JAVA_HOME are not set,
+rem                             then $JAVA_HOME/bin/java will be used.
 rem
 rem    RHQ_SERVER_INSTANCE_NAME - The name of the Windows Service; it must
 rem                               conform to the Windows Service naming
@@ -88,24 +86,36 @@ if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_HOME: %RHQ_SERVER_HOME%
 
 rem ----------------------------------------------------------------------
 rem Find the Java executable and verify we have a VM available
+rem Note that RHQ_SERVER_JAVA_* props are still handled for back compat
 rem ----------------------------------------------------------------------
 
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_SERVER_JAVA_HOME (
-      if defined RHQ_STORAGE_DEBUG echo No JRE found - will try to use JAVA_HOME: %JAVA_HOME%
-      set RHQ_SERVER_JAVA_HOME=%JAVA_HOME%
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
+      set RHQ_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%
    )
 )
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-   set RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_HOME%\bin\java.exe
+if not defined RHQ_JAVA_HOME (
+   if defined RHQ_SERVER_JAVA_HOME (
+      set RHQ_JAVA_HOME=%RHQ_SERVER_JAVA_HOME%
+   )
 )
 
-if defined RHQ_STORAGE_DEBUG echo RHQ_SERVER_JAVA_HOME: %RHQ_SERVER_JAVA_HOME%
-if defined RHQ_STORAGE_DEBUG echo RHQ_SERVER_JAVA_EXE_FILE_PATH: %RHQ_SERVER_JAVA_EXE_FILE_PATH%
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if not defined RHQ_JAVA_HOME (
+      if defined RHQ_SERVER_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: %JAVA_HOME%
+      set RHQ_JAVA_HOME=%JAVA_HOME%
+   )
+)
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   set RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_HOME%\bin\java.exe
+)
 
-if not exist "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" (
+if defined RHQ_SERVER_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%
+if defined RHQ_SERVER_DEBUG echo RHQ_JAVA_EXE_FILE_PATH: %RHQ_JAVA_EXE_FILE_PATH%
+
+if not exist "%RHQ_JAVA_EXE_FILE_PATH%" (
    echo There is no JVM available.
-   echo Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately.
+   echo Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately.
    exit /B 1
 )
 
@@ -176,12 +186,12 @@ if not defined RHQ_SERVER_PASSWORD_PROMPT set RHQ_SERVER_PASSWORD_PROMPT=false
 
 if /i "%1"=="console" (
    rem START SERVER
-   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
    goto done
 )
 
 if /i "%1"=="install" (
-   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
    goto done
 )
 

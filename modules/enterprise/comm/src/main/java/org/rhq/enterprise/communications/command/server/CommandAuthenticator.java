@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.communications.command.server;
 
+import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.command.Command;
 
 /**
@@ -37,4 +38,13 @@ public interface CommandAuthenticator {
      *         processing of the command should take place
      */
     boolean isAuthenticated(Command command);
+
+    /**
+     * This sets the object that is handling the communications and is what received the command that needs to be authenticated.
+     * This service container contains {@link ServiceContainer#getCustomData(String) custom data} that can be retrieved by the
+     * authenticator if needed. This method is only called once when the authenticator object is created.
+     *
+     * @param serviceContainer
+     */
+    void setServiceContainer(ServiceContainer serviceContainer);
 }

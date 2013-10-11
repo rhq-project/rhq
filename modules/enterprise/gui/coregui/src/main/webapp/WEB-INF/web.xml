@@ -29,7 +29,7 @@
 
     <filter>
        <filter-name>CacheControlFilter</filter-name>
-       <filter-class>org.rhq.enterprise.gui.coregui.server.filter.CacheControlFilter</filter-class>
+       <filter-class>org.rhq.coregui.server.filter.CacheControlFilter</filter-class>
     </filter>
     <filter-mapping>
        <filter-name>CacheControlFilter</filter-name>
@@ -46,164 +46,164 @@
     </filter-mapping>
 
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RoleGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI RoleGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.RoleGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI SubjectGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.SubjectGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SystemGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SystemGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI SystemGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.SystemGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ResourceGroupGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ResourceGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ConfigurationGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ConfigurationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ResourceTypeGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.MeasurementDataGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementChartsGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.MeasurementChartsGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementScheduleGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementScheduleGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI MeasurementScheduleGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.MeasurementScheduleGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI AlertGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.AlertGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertDefinitionGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.AlertDefinitionGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertTemplateGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertTemplateGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI AlertTemplateGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.AlertTemplateGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.GroupAlertDefinitionGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.GroupAlertDefinitionGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupDefinitionExpressionBuilderGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.GroupDefinitionExpressionBuilderGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI GroupDefinitionExpressionBuilderGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.GroupDefinitionExpressionBuilderGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI OperationGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.OperationGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI OperationGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.OperationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI BundleGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.BundleGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI FileUploadServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.FileUploadServlet</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI FileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.FileUploadServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleFileUploadServlet</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.BundleFileUploadServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BundleDistributionFileUploadServlet</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.BundleDistributionFileUploadServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginFileUploadServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PluginFileUploadServlet</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI PluginFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.PluginFileUploadServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PackageVersionFileUploadServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PackageVersionFileUploadServlet</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI PackageVersionFileUploadServlet</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.PackageVersionFileUploadServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceBossGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ResourceBossGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AuthorizationGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI AuthorizationGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.AuthorizationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AvailabilityGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI AvailabilityGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.AvailabilityGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TagGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI TagGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.TagGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RemoteInstallGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.RemoteInstallGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SearchGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SearchGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI SearchGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.SearchGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RepoGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RepoGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI RepoGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.RepoGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ContentGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ContentGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ContentGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ContentGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DashboardGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.DashboardGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI DashboardGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.DashboardGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI EventGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.EventGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI EventGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.EventGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ClusterGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI ClusterGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.ClusterGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI LdapGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.LdapGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI LdapGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.LdapGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AgentGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AgentGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI AgentGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.AgentGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PluginGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI PluginGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.PluginGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.DriftGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI DriftGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.DriftGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI StorageGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.StorageGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI StorageGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.StorageGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TopologyGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TopologyGWTServiceImpl</servlet-class>
+        <servlet-name>org.rhq.coregui.CoreGUI TopologyGWTService</servlet-name>
+        <servlet-class>org.rhq.coregui.server.gwt.TopologyGWTServiceImpl</servlet-class>
     </servlet>
 
 
@@ -220,171 +220,171 @@
 
         <!--<init-param>-->
             <!--<param-name>javax.ws.rs.Application</param-name>-->
-            <!--<param-value>org.rhq.enterprise.gui.coregui.server.reports.ReportsApplication</param-value>-->
+            <!--<param-value>org.rhq.coregui.server.reports.ReportsApplication</param-value>-->
         <!--</init-param>-->
     </servlet>
 
 
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RoleGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI RoleGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/RoleGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SubjectGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI SubjectGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/SubjectGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SystemGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SystemGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI SystemGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/SystemGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceGroupGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ResourceGroupGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ResourceGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ConfigurationGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ConfigurationGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ConfigurationGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceTypeGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ResourceTypeGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementDataGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/MeasurementDataGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementChartsGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/MeasurementChartsGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementScheduleGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementScheduleGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI MeasurementScheduleGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/MeasurementScheduleGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI AlertGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/AlertGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertDefinitionGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI AlertDefinitionGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/AlertDefinitionGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertTemplateGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertTemplateGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI AlertTemplateGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/AlertTemplateGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/GroupAlertDefinitionGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/GroupAlertDefinitionGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupDefinitionExpressionBuilderGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/GroupDefinitionExpressionBuilderGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI GroupDefinitionExpressionBuilderGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/GroupDefinitionExpressionBuilderGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI OperationGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/OperationGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI OperationGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/OperationGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI BundleGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/BundleGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI FileUploadServlet</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/FileUploadServlet</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI FileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/FileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleFileUploadServlet</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI BundleFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/BundleFileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/BundleDistributionFileUploadServlet</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI BundleDistributionFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/BundleDistributionFileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginFileUploadServlet</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PluginFileUploadServlet</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI PluginFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/PluginFileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PackageVersionFileUploadServlet</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PackageVersionFileUploadServlet</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI PackageVersionFileUploadServlet</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/PackageVersionFileUploadServlet</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceBossGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceBossGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ResourceBossGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ResourceBossGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AuthorizationGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AuthorizationGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI AuthorizationGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/AuthorizationGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AvailabilityGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AvailabilityGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI AvailabilityGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/AvailabilityGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TagGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/TagGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI TagGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/TagGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RemoteInstallGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI RemoteInstallGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/RemoteInstallGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SearchGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SearchGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI SearchGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/SearchGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RepoGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RepoGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI RepoGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/RepoGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ContentGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ContentGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ContentGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ContentGWTService</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DashboardGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/DashboardGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI DashboardGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/DashboardGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI EventGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/EventGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI EventGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/EventGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ClusterGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ClusterGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI ClusterGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/ClusterGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI LdapGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/LdapGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI LdapGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/LdapGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AgentGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AgentGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI AgentGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/AgentGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PluginGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI PluginGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/PluginGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/DriftGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI DriftGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/DriftGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI StorageGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/StorageGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI StorageGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/StorageGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TopologyGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/TopologyGWTService</url-pattern>
+        <servlet-name>org.rhq.coregui.CoreGUI TopologyGWTService</servlet-name>
+        <url-pattern>/org.rhq.coregui.CoreGUI/TopologyGWTService</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

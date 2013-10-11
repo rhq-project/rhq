@@ -16,6 +16,8 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 
@@ -29,11 +31,13 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
     private File jvmOptsFile;
     private File wrapperEnvFile;
     private File cassandraYamlFile;
+    private OperationFacet invoker;
 
-    public StorageNodeConfigDelegate(File basedir) {
+    public StorageNodeConfigDelegate(File basedir, OperationFacet invoker) {
         File confDir = new File(basedir, "conf");
         jvmOptsFile = new File(confDir, "cassandra-jvm.properties");
         cassandraYamlFile = new File(confDir, "cassandra.yaml");
+        this.invoker = invoker;
 
         // for windows, config props also get propagated to the wrapper env
         if (isWindows()) {
@@ -155,7 +159,6 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             if (isWindows()) {
                 updateWrapperEnv(config);
             }
-
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (IllegalArgumentException e) {
             configurationUpdateReport.setErrorMessage("No configuration update was applied: " + e.getMessage());
@@ -163,6 +166,38 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         } catch (ConfigEditorException e) {
             configurationUpdateReport.setErrorMessageFromThrowable(e);
+        }
+        restartIfNecessary(configurationUpdateReport);
+    }
+    
+    private void restartIfNecessary(ConfigurationUpdateReport configurationUpdateReport) {
+        boolean restartIsRequired = false;
+        Configuration params = configurationUpdateReport.getConfiguration();
+        if (configurationUpdateReport.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
+            if (params.getSimpleValue("maxHeapSize") != null
+                || params.getSimpleValue("heapNewSize") != null
+                || params.getSimpleValue("threadStackSize") != null) {
+                restartIsRequired = true;
+            }
+        }
+
+        //restart the server if:
+        //- requested by the user
+        //- the updates done require restart
+        boolean restartIfRequiredConfig = false;
+        if (params.getSimpleValue("restartIfRequired") != null) {
+            restartIfRequiredConfig = Boolean.parseBoolean(params.getSimpleValue("restartIfRequired"));
+        }
+
+        if (restartIfRequiredConfig && restartIsRequired && invoker != null) {
+            try {
+                OperationResult restartResult = invoker.invokeOperation("restart", null);
+                if (restartResult.getErrorMessage() != null) {
+                    configurationUpdateReport.setErrorMessage(restartResult.getErrorMessage());
+                }
+            } catch (Exception e) {
+                configurationUpdateReport.setErrorMessage(e.getMessage());
+            }
         }
     }
 

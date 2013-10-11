@@ -26,16 +26,20 @@
 package org.rhq.server.control.command;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
+import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
@@ -48,6 +52,7 @@ import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -58,7 +63,16 @@ import org.rhq.server.control.RHQControlException;
  */
 public abstract class AbstractInstall extends ControlCommand {
 
+    protected final String AGENT_CONFIG_OPTION = "agent-config";
+    protected final String START_OPTION = "start";
+
+    protected final String AGENT_PREFERENCE = "agent-preference";
     protected final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
+
+    // some known agent preference setting names
+    private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
+    private static final String PREF_RHQ_AGENT_AUTO_UPDATE_FLAG = "rhq.agent.agent-update.enabled";
+    private static final String PREF_RHQ_AGENT_SECURITY_TOKEN = "rhq.agent.security-token";
 
     protected void installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
         throws Exception {
@@ -150,13 +164,13 @@ public abstract class AbstractInstall extends ControlCommand {
                     long totalWait = (now - timerStart);
 
                     if (totalWait < problemMessageInterval) {
-                        log.info("Still waiting for server to start...");
+                        log.info("Still waiting for server to initialize...");
 
                     } else {
                         long minutes = totalWait / 60000;
                         log.info("It has been over ["
                             + minutes
-                            + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
+                            + "] minutes - you may want to ensure your server initialization is proceeding as expected. You can check the log at ["
                             + new File(getBaseDir(), "logs/server.log").getPath() + "].");
 
                         timerStart = now;
@@ -202,7 +216,7 @@ public abstract class AbstractInstall extends ControlCommand {
             reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
             String line = reader.readLine();
             while (line != null) {
-                if (line.contains("Server started")) {
+                if (line.contains("Server initialized")) {
                     return true;
                 }
                 line = reader.readLine();
@@ -228,16 +242,51 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    /**
-     * Same as <pre>startAgent(agentBasedir, false);</pre>
-     * @param agentBasedir
-     * @throws Exception
-     */
-    protected void startAgent(File agentBasedir) throws Exception {
-        startAgent(agentBasedir, false);
+    protected void updateWindowsAgentService(final File agentBasedir) throws Exception {
+        if (!isWindows()) {
+            return;
+        }
+
+        try {
+            File agentBinDir = new File(agentBasedir, "bin");
+            if (!agentBinDir.exists()) {
+                throw new IllegalArgumentException("No Agent found for base directory [" + agentBasedir.getPath() + "]");
+            }
+
+            log.info("Updating RHQ Agent Service...");
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(agentBinDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine;
+
+            // Ensure the windows service is up to date. [re-]install the windows service.
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist or be running, , script returns 1
+                log.debug("Failed to stop agent service", e);
+            }
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "remove");
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist, script returns 1
+                log.debug("Failed to uninstall agent service", e);
+            }
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "install");
+            executor.execute(commandLine);
+
+        } catch (IOException e) {
+            log.error("An error occurred while updating the agent service: " + e.getMessage());
+            throw e;
+        }
     }
 
-    protected void startAgent(final File agentBasedir, boolean updateWindowsService) throws Exception {
+    protected void startAgent(final File agentBasedir) throws Exception {
         try {
             File agentBinDir = new File(agentBasedir, "bin");
             if (!agentBinDir.exists()) {
@@ -250,41 +299,14 @@ public abstract class AbstractInstall extends ControlCommand {
             executor.setStreamHandler(new PumpStreamHandler());
             org.apache.commons.exec.CommandLine commandLine;
 
-            if (isWindows() && updateWindowsService) {
-                // Ensure the windows service is up to date beFore starting. [re-]install the windows service.
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                try {
-                    executor.execute(commandLine);
-                } catch (Exception e) {
-                    // Ignore, service may not exist or be running, , script returns 1
-                    log.debug("Failed to stop agent service", e);
-                }
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "remove");
-                try {
-                    executor.execute(commandLine);
-                } catch (Exception e) {
-                    // Ignore, service may not exist, script returns 1
-                    log.debug("Failed to uninstall agent service", e);
-                }
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "install");
-                executor.execute(commandLine);
-            }
-
             // For *nix, just start the server in the background, for Win, now that the service is installed, start it
             commandLine = getCommandLine("rhq-agent-wrapper", "start");
             executor.execute(commandLine);
 
             // if any errors occur after now, we need to stop the agent
-            addUndoTask(new Runnable() {
-                public void run() {
-                    try {
-                        stopAgent(agentBasedir);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+            addUndoTask(new ControlCommand.UndoTask("Stopping agent") {
+                public void performUndoWork() throws Exception {
+                    stopAgent(agentBasedir);
                 }
             });
 
@@ -324,11 +346,11 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void stopServer(File serverBasedir) throws Exception {
+    protected void stopServer() throws Exception {
 
-        File serverBinDir = new File(serverBasedir, "bin/internal");
+        File serverBinDir = getBinDir();
         if (!serverBinDir.exists()) {
-            throw new IllegalArgumentException("No Server found for base directory [" + serverBasedir.getPath() + "]");
+            throw new IllegalArgumentException("No Server found for base directory [" + getBaseDir().getPath() + "]");
         }
 
         log.debug("Stopping RHQ server...");
@@ -433,15 +455,10 @@ public abstract class AbstractInstall extends ControlCommand {
             File mgmtUserPropertiesFile = new File(getBaseDir(),
                 "jbossas/standalone/configuration/mgmt-users.properties");
             final FileReverter mgmtUserPropertiesReverter = new FileReverter(mgmtUserPropertiesFile);
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Removing server-installed marker file and management user") {
+                public void performUndoWork() throws Exception {
                     getServerInstalledMarkerFile(getBaseDir()).delete();
-                    try {
-                        mgmtUserPropertiesReverter.revert();
-                    } catch (Exception e) {
-                        throw new RuntimeException(
-                            "Cannot revert mgmt user - you may have to revert settings manually", e);
-                    }
+                    mgmtUserPropertiesReverter.revert();
                 }
             });
 
@@ -504,7 +521,8 @@ public abstract class AbstractInstall extends ControlCommand {
         return storageDataDirs;
     }
 
-    protected int installStorageNode(final File storageBasedir, CommandLine rhqctlCommandLine) throws IOException {
+    protected int installStorageNode(final File storageBasedir, CommandLine rhqctlCommandLine, boolean start)
+        throws IOException {
         try {
             log.info("Preparing to install RHQ storage node.");
 
@@ -513,7 +531,7 @@ public abstract class AbstractInstall extends ControlCommand {
             final Properties storageProperties = loadStorageProperties();
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
-                storageBasedir.getAbsolutePath());
+                storageBasedir.getAbsolutePath(), "--start", Boolean.valueOf(start).toString());
 
             if (rhqctlCommandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 StorageDataDirectories dataDirs;
@@ -529,8 +547,8 @@ public abstract class AbstractInstall extends ControlCommand {
 
             // if the install fails, we need to delete the data directories that were created and
             // purge the rhq-storage install directory that might have a "half" installed storage node in it.
-            addUndoTask(new Runnable() {
-                public void run() {
+            addUndoTask(new ControlCommand.UndoTask("Removing storage node data and install directories") {
+                public void performUndoWork() {
                     StorageDataDirectories dataDirs = getStorageDataDirectoriesFromProperties(storageProperties);
                     FileUtil.purge(dataDirs.dataDir, true);
                     FileUtil.purge(dataDirs.commitlogDir, true);
@@ -561,18 +579,181 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
+    protected void installAgent(final File agentBasedir, final CommandLine commandLine) throws Exception {
+        clearAgentPreferences();
+        installAgent(agentBasedir);
+        configureAgent(agentBasedir, commandLine);
+    }
+
+    private void installAgent(final File agentBasedir) throws IOException {
+        try {
+            log.info("Installing RHQ agent");
+
+            File agentInstallerJar = getAgentInstaller();
+
+            putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+
+            // if the install fails, we will completely delete any agent that might have been "half" installed
+            addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {
+                public void performUndoWork() {
+                    FileUtil.purge(agentBasedir, true);
+                }
+            });
+
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
+                .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
+                .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath())
+                .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log"));
+
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(getBaseDir());
+            executor.setStreamHandler(new PumpStreamHandler());
+
+            int exitValue = executor.execute(commandLine);
+            log.info("The agent installer finished running with exit value " + exitValue);
+        } catch (IOException e) {
+            log.error("An error occurred while running the agent installer: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    private File getAgentInstaller() {
+        File agentDownloadDir = new File(getBaseDir(),
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
+        return agentDownloadDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().contains("rhq-enterprise-agent");
+            }
+        })[0];
+    }
+
+    private void clearAgentPreferences() throws Exception {
+        log.info("Removing any existing agent preferences from default preference node");
+
+        // remove everything EXCEPT the security token
+        Preferences agentPrefs = getAgentPreferences();
+        String[] prefKeys = null;
+
+        try {
+            prefKeys = agentPrefs.keys();
+        } catch (Exception e) {
+            log.warn("Failed to get agent preferences - cannot clear them: " + e);
+        }
+
+        if (prefKeys != null && prefKeys.length > 0) {
+            for (String prefKey : prefKeys) {
+                if (!prefKey.equals(PREF_RHQ_AGENT_SECURITY_TOKEN)) {
+                    agentPrefs.remove(prefKey);
+                }
+            }
+            agentPrefs.flush();
+            Preferences.userRoot().sync();
+        }
+    }
+
+    private Preferences getAgentPreferences() {
+        Preferences agentPrefs = Preferences.userRoot().node("rhq-agent/default");
+        return agentPrefs;
+    }
+
+    private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
+        // If the user provided us with an agent config file, we will use it.
+        // Otherwise, we are going to use the out-of-box agent config file.
+        //
+        // Because we want to accept all defaults and consider the agent fully configured, we need to set
+        //    rhq.agent.configuration-setup-flag=true
+        // This tells the agent not to ask any setup questions at startup.
+        // We do this whether using a custom config file or the default config file - this is because
+        // we cannot allow the agent to ask the setup questions (rhqctl doesn't support that).
+        //
+        // Note that agent preferences found in the config file can be overridden with
+        // the AGENT_PREFERENCE settings (you can set more than one).
+        try {
+            File agentConfDir = new File(agentBasedir, "conf");
+            File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
+
+            if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+                log.info("Configuring the RHQ agent with custom configuration file: "
+                    + commandLine.getOptionValue(AGENT_CONFIG_OPTION));
+                replaceAgentConfigIfNecessary(commandLine);
+            } else {
+                log.info("Configuring the RHQ agent with default configuration file: " + agentConfigFile);
+            }
+
+            // we require our agent preference node to be the user node called "default"
+            Preferences preferencesNode = getAgentPreferences();
+
+            // read the comments in AgentMain.loadConfigurationFile(String) to know why we do all of this
+            String securityToken = preferencesNode.get(PREF_RHQ_AGENT_SECURITY_TOKEN, null);
+            ByteArrayOutputStream rawConfigFileData = new ByteArrayOutputStream();
+            StreamUtil.copy(new FileInputStream(agentConfigFile), rawConfigFileData, true);
+            String newConfig = rawConfigFileData.toString().replace("${rhq.agent.preferences-node}", "default");
+            ByteArrayInputStream newConfigInputStream = new ByteArrayInputStream(newConfig.getBytes());
+            Preferences.importPreferences(newConfigInputStream);
+            if (securityToken != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SECURITY_TOKEN, securityToken);
+            }
+
+            overrideAgentPreferences(commandLine, preferencesNode);
+
+            // set some prefs that must be a specific value
+            // - do not tell this agent to auto-update itself - this agent must be managed by rhqctl only
+            // - set the config setup flag to true to prohibit the agent from asking setup questions at startup
+            String agentUpdateEnabledPref = PREF_RHQ_AGENT_AUTO_UPDATE_FLAG;
+            preferencesNode.putBoolean(agentUpdateEnabledPref, false);
+            String setupPref = PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG;
+            preferencesNode.putBoolean(setupPref, true);
+
+            preferencesNode.flush();
+            preferencesNode.sync();
+
+            log.info("Finished configuring the agent");
+        } catch (Exception e) {
+            log.error("An error occurred while configuring the agent: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    private void overrideAgentPreferences(CommandLine commandLine, Preferences preferencesNode) {
+        // override the out of box config with user custom agent preference values
+        String[] customPrefs = commandLine.getOptionValues(AGENT_PREFERENCE);
+        if (customPrefs != null && customPrefs.length > 0) {
+            for (String nameValuePairString : customPrefs) {
+                String[] nameValuePairArray = nameValuePairString.split("=", 2);
+                String prefName = nameValuePairArray[0];
+                String prefValue = nameValuePairArray.length == 1 ? "true" : nameValuePairArray[1];
+                log.info("Overriding agent preference: " + prefName + "=" + prefValue);
+                preferencesNode.put(prefName, prefValue);
+            }
+        }
+        return;
+    }
+
+    private void replaceAgentConfigIfNecessary(CommandLine commandLine) {
+        if (!commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+            return;
+        }
+        File newConfigFile = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
+
+        File confDir = new File(getAgentBasedir(), "conf");
+        File defaultConfigFile = new File(confDir, "agent-configuration.xml");
+        defaultConfigFile.delete();
+        try {
+            StreamUtil.copy(new FileReader(newConfigFile), new FileWriter(defaultConfigFile));
+        } catch (IOException e) {
+            throw new RHQControlException(("Failed to replace " + defaultConfigFile + " with " + newConfigFile));
+        }
+    }
+
     protected void addUndoTaskToStopComponent(final String componentArgument) {
         // component argument must be one of --storage, --server, --agent (a valid argument to the Stop command)
-        addUndoTask(new Runnable() {
-            public void run() {
-                try {
-                    Stop stopCommand = new Stop();
-                    CommandLineParser parser = new PosixParser();
-                    CommandLine cmdLine = parser.parse(stopCommand.getOptions(), new String[] { componentArgument });
-                    stopCommand.exec(cmdLine);
-                } catch (ParseException e) {
-                    throw new RuntimeException(e);
-                }
+        addUndoTask(new ControlCommand.UndoTask("Stopping component: " + componentArgument) {
+            public void performUndoWork() throws Exception {
+                Stop stopCommand = new Stop();
+                CommandLineParser parser = new PosixParser();
+                CommandLine cmdLine = parser.parse(stopCommand.getOptions(), new String[] { componentArgument });
+                stopCommand.exec(cmdLine);
             }
         });
     }

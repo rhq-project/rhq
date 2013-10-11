@@ -50,7 +50,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupConnectionPropertyUpdateDetailsDataModel(
+            dataModel = new A(
                 PageControlView.GroupConnectionPropertyUpdateDetails, MANAGED_BEAN_NAME);
         }
 
@@ -75,11 +75,12 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
         return FacesContextUtility.getRequiredRequestParameter("apcuId", Integer.class);
     }
 
-    private class ListGroupConnectionPropertyUpdateDetailsDataModel extends
+    // intentially short class for win path issues. This whole class is soon going away with portal war
+    private class A extends
         PagedListDataModel<ConfigurationUpdateComposite> {
         private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
-        public ListGroupConnectionPropertyUpdateDetailsDataModel(PageControlView view, String beanName) {
+        public A(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

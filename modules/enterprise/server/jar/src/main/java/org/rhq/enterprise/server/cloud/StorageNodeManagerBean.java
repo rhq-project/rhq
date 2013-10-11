@@ -49,6 +49,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -64,7 +66,9 @@ import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
@@ -346,78 +350,82 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         // find the aggregates and enrich the result instance
         if (!scheduleIdsMap.isEmpty()) {
-            if ((scheduleId = scheduleIdsMap.get(METRIC_TOKENS)) != null) {
-                MeasurementAggregate tokensAggregate = measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime,
-                    endTime);
-                result.setTokens(tokensAggregate);
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_OWNERSHIP)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits ownershipAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
-                result.setActuallyOwns(ownershipAggregateWithUnits);
-            }
+            try {
+                if ((scheduleId = scheduleIdsMap.get(METRIC_TOKENS)) != null) {
+                    MeasurementAggregate tokensAggregate = measurementManager.getMeasurementAggregate(subject,
+                        scheduleId, beginTime, endTime);
+                    result.setTokens(tokensAggregate);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_OWNERSHIP)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits ownershipAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                    result.setActuallyOwns(ownershipAggregateWithUnits);
+                }
 
-            //calculated disk space related metrics
-            if ((scheduleId = scheduleIdsMap.get(METRIC_DATA_DISK_USED_PERCENTAGE)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits dataDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
-                result.setDataDiskUsedPercentage(dataDiskUsedPercentageAggregateWithUnits);
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_DISK_USED_PERCENTAGE)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
-                result.setTotalDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_FREE_DISK_TO_DATA_RATIO)) != null) {
-                MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getMeasurementAggregate(subject,
-                    scheduleId, beginTime, endTime);
-                result.setFreeDiskToDataSizeRatio(freeDiskToDataRatioAggregate);
-            }
+                //calculated disk space related metrics
+                if ((scheduleId = scheduleIdsMap.get(METRIC_DATA_DISK_USED_PERCENTAGE)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits dataDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                    result.setDataDiskUsedPercentage(dataDiskUsedPercentageAggregateWithUnits);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_DISK_USED_PERCENTAGE)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                    result.setTotalDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_FREE_DISK_TO_DATA_RATIO)) != null) {
+                    MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getMeasurementAggregate(
+                        subject, scheduleId, beginTime, endTime);
+                    result.setFreeDiskToDataSizeRatio(freeDiskToDataRatioAggregate);
+                }
 
-            if ((scheduleId = scheduleIdsMap.get(METRIC_LOAD)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
-                result.setLoad(loadAggregateWithUnits);
+                if ((scheduleId = scheduleIdsMap.get(METRIC_LOAD)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
+                    result.setLoad(loadAggregateWithUnits);
 
-                updateAggregateTotal(totalDiskUsedAggregate, loadAggregateWithUnits.getAggregate());
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
-                updateAggregateTotal(totalDiskUsedAggregate,
-                    measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime, endTime));
+                    updateAggregateTotal(totalDiskUsedAggregate, loadAggregateWithUnits.getAggregate());
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
+                    updateAggregateTotal(totalDiskUsedAggregate,
+                        measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime, endTime));
 
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
-                updateAggregateTotal(totalDiskUsedAggregate,
-                    measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime, endTime));
-            }
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
+                    updateAggregateTotal(totalDiskUsedAggregate,
+                        measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime, endTime));
+                }
 
-            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
-                updateAggregateTotal(totalDiskUsedAggregate,
-                    measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime, endTime));
-            }
-            if (totalDiskUsedAggregate.getMax() > 0) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
-                    totalDiskUsedAggregate, MeasurementUnits.BYTES);
-                totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedAggregate,
-                    MeasurementUnits.BYTES));
-                result.setDataDiskUsed(totalDiskUsedAggregateWithUnits);
-            }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
+                    updateAggregateTotal(totalDiskUsedAggregate,
+                        measurementManager.getMeasurementAggregate(subject, scheduleId, beginTime, endTime));
+                }
+                if (totalDiskUsedAggregate.getMax() > 0) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                        totalDiskUsedAggregate, MeasurementUnits.BYTES);
+                    totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedAggregate,
+                        MeasurementUnits.BYTES));
+                    result.setDataDiskUsed(totalDiskUsedAggregateWithUnits);
+                }
 
-            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_COMMITED)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits heapCommittedAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
-                result.setHeapCommitted(heapCommittedAggregateWithUnits);
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
-                result.setHeapUsed(heapUsedAggregateWithUnits);
-            }
-            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED_PERCENTAGE)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
-                    endTime);
-                result.setHeapPercentageUsed(heapUsedPercentageAggregateWithUnits);
+                if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_COMMITED)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits heapCommittedAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
+                    result.setHeapCommitted(heapCommittedAggregateWithUnits);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
+                    result.setHeapUsed(heapUsedAggregateWithUnits);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED_PERCENTAGE)) != null) {
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+                        subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                    result.setHeapPercentageUsed(heapUsedPercentageAggregateWithUnits);
+                }
+            } catch (NoHostAvailableException nhae) {
+                // storage cluster went down while performing this method
+                return new StorageNodeLoadComposite(node, beginTime, endTime);
             }
         }
 
@@ -742,56 +750,106 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
         try {
-            StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(
-                storageNodeConfiguration.getStorageNode().getAddress()));
+            StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(storageNodeConfiguration
+                .getStorageNode().getAddress()));
+            if (storageNode == null || storageNode.getResource() == null || !storageNodeConfiguration.validate())
+                return false;
 
-            if (storageNode != null && storageNode.getResource() != null) {
+            // 1. upgrade the resource configuration if there was a change
+            Resource storageNodeResource = storageNode.getResource();
+            Configuration existingStorageNodeResourceConfig = configurationManager.getResourceConfiguration(subject,
+                storageNodeResource.getId());
+
+            String existingHeapSize = existingStorageNodeResourceConfig.getSimpleValue("maxHeapSize");
+            String newHeapSize = storageNodeConfiguration.getHeapSize();
+            String existingHeapNewSize = existingStorageNodeResourceConfig.getSimpleValue("heapNewSize");
+            String newHeapNewSize = storageNodeConfiguration.getHeapNewSize();
+            String existingThreadStackSize = existingStorageNodeResourceConfig.getSimpleValue("threadStackSize");
+            String newThreadStackSize = storageNodeConfiguration.getThreadStackSize();
+            boolean resourceConfigNeedsUpdate = !existingHeapSize.equals(newHeapSize)
+                || !existingHeapNewSize.equals(newHeapNewSize) || !existingThreadStackSize.equals(newThreadStackSize);
+
+            ResourceConfigurationUpdate resourceUpdate = null;
+            if (resourceConfigNeedsUpdate) {
                 Configuration parameters = new Configuration();
                 parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
                 if (storageNodeConfiguration.getHeapSize() != null) {
-                    parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
+                    parameters.setSimpleValue("maxHeapSize", newHeapSize + "");
+                    parameters.setSimpleValue("minHeapSize", newHeapSize + "");
                 }
                 if (storageNodeConfiguration.getHeapNewSize() != null) {
-                    parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
+                    parameters.setSimpleValue("heapNewSize", newHeapNewSize + "");
                 }
                 if (storageNodeConfiguration.getThreadStackSize() != null) {
-                    parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
+                    parameters.setSimpleValue("threadStackSize", newThreadStackSize + "");
                 }
                 parameters.setSimpleValue("restartIfRequired", "true");
 
-                Resource storageNodeResource = storageNode.getResource();
-
-                boolean result = runOperationAndWaitForResult(subject, storageNodeResource, UPDATE_CONFIGURATION_OPERATION,
+                resourceUpdate = configurationManager.updateResourceConfiguration(subject, storageNodeResource.getId(),
                     parameters);
-
-                if (result) {
-                    //2. Update the plugin configuration to talk with the new server
-                    Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
-                        storageNodeResource.getId());
-
-                    String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
-                    String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
-
-                    if (!existingJMXPort.equals(newJMXPort)) {
-                        storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
-
-                        String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
-                        String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
-                            + storageNodeConfiguration.getJmxPort() + "/");
-                        storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
-
-                        configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
-                            storageNodePluginConfig);
-                    }
-
-                    return result;
-                }
             }
 
-            return false;
+            Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
+                storageNodeResource.getId());
+
+            String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
+            String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
+
+            if (!existingJMXPort.equals(newJMXPort)) {
+                // 2. upgrade the plugin configuration if there was a change
+                storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
+                String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
+                String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
+                    + storageNodeConfiguration.getJmxPort() + "/");
+                storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
+
+                if (resourceConfigNeedsUpdate) {
+                    // wait for storage node to restart
+                    ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+                    criteria.addFilterId(resourceUpdate.getId());
+                    criteria.addFilterStartTime(System.currentTimeMillis() - (5 * 60 * 1000));
+                    // initial waiting before the first check
+                    try {
+                        Thread.sleep(2000L);
+                    } catch (InterruptedException e) {
+                        // nothing
+                    }
+                    boolean success = waitForConfigurationUpdateToFinish(subject, criteria, 10);
+                    if (!success)
+                        return false;
+                }
+                configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
+                    storageNodePluginConfig);
+                return true;
+            } else
+                return true;
         } catch (UnknownHostException e) {
             throw new RuntimeException("Failed to resolve address for " + storageNodeConfiguration, e);
         }
+    }
+    
+    private boolean waitForConfigurationUpdateToFinish(Subject subject, ResourceConfigurationUpdateCriteria criteria,
+        int maxAttempts) {
+        if (maxAttempts == 0)
+            return false;
+
+        PageList<ResourceConfigurationUpdate> configUpdates = configurationManager
+            .findResourceConfigurationUpdatesByCriteria(subject, criteria);
+        switch (configUpdates.get(0).getStatus()) {
+        case INPROGRESS:
+            // try it again in 4.5 sec
+            break;
+        case FAILURE:
+            return false;
+        default:
+            return true;
+        }
+        try {
+            Thread.sleep(4500L);
+        } catch (InterruptedException e) {
+            return false;
+        }
+        return waitForConfigurationUpdateToFinish(subject, criteria, maxAttempts - 1);
     }
 
     @Override

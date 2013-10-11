@@ -25,8 +25,8 @@
  * the RHQ server.
  */
 function createBundleVersion(pathToBundleZipFile) {
-	var bytes = getFileBytes(pathToBundleZipFile)
-	return BundleManager.createBundleVersionViaByteArray(bytes)
+    var contentHandle = scriptUtil.uploadContent(pathToBundleZipFile);
+	return BundleManager.createBundleVersionViaContentHandle(contentHandle);
 }
 
 /**

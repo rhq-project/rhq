@@ -174,6 +174,9 @@ public class StartupBean implements StartupLocal {
      */
     @Override
     public void init() throws RuntimeException {
+
+        checkTempDir();
+
         secureNaming();
 
         initialized = false;
@@ -228,6 +231,26 @@ public class StartupBean implements StartupLocal {
 
         initialized = true;
         return;
+    }
+
+    private void checkTempDir() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        if (!tmpDir.exists()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
+                + "' does not exist");
+        }
+        if (!tmpDir.isDirectory()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
+                + "' is not a directory");
+        }
+        if (!tmpDir.canRead() || !tmpDir.canExecute()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
+                + "' is not readable");
+        }
+        if (!tmpDir.canWrite()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
+                + "' is not writable");
+        }
     }
 
     private long readShutdownTimeLogFile() throws Exception {

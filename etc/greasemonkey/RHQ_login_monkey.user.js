@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        RHQ login monkey
-// @namespace   org.rhq.enterprise.gui.coregui
+// @namespace   org.rhq.coregui
 // @description Types in the credentials when pressing ALT+C on the login page. This script works also for Chrome/Chromium with the extension called Tampermonkey.
 // @include     *:7080/coregui/*
 // @include     *:7080/coregui/#LogOut

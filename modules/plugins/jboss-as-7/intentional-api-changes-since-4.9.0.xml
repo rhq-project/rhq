@@ -1,0 +1,8 @@
+<differences>
+  <difference>
+    <className>org/rhq/modules/plugins/jbossas7/JBossProductType</className>
+    <differenceType>6001</differenceType>
+    <field>EPP</field>
+    <justification>EPP is not EAP6 based and conflicts with JPP (same product-name)</justification>
+  </difference>
+</differences>

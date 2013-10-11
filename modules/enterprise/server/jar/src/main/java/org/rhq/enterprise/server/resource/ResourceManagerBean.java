@@ -2451,7 +2451,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         try {
             // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
-            AgentClient client = agentManager.getAgentClient(subject, res.getId());
+            AgentClient client = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             if (client == null) {
                 throw new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             }
@@ -2489,8 +2489,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             results.setAvailabilityType(foundAvail);
 
         } catch (Exception e) {
-            if (log.isInfoEnabled()) {
-                log.info("Failed to get live availability.", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to get live availability: " + e.getMessage());
             }
         }
 

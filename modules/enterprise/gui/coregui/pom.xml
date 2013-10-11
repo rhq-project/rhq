@@ -66,7 +66,7 @@
 
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
-             src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
+             src/main/resources/org/rhq/coregui/client/. For example, the "ja" locale has
              Messages_ja.properties and MessageConstants_ja.properties. -->
     <gwt.locale>en,de,ja,pt,zh,ru,cs,ko</gwt.locale>
 
@@ -251,8 +251,8 @@
           <hostedWebapp>target/hostedWar</hostedWebapp>
           <debugSuspend>false</debugSuspend>
           <servicePattern>**/gwt/*GWTService.java</servicePattern>
-          <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
-          <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
+          <i18nMessagesBundle>org.rhq.coregui.client.Messages</i18nMessagesBundle>
+          <i18nConstantsWithLookupBundle>org.rhq.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
           <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
           <style>${gwt.style}</style>
           <strict>true</strict>
@@ -270,13 +270,13 @@
             </goals>
           </execution>
           <execution>
-                        <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
+            <!-- This id is what does the trick, don't change it. For this to work maven 2.2.0 and later is needed. -->
             <id>default-cli</id>
             <goals>
               <goal>debug</goal>
             </goals>
             <configuration>
-              <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
+              <module>org.rhq.coregui.CoreGUI</module>
             </configuration>
           </execution>
         </executions>
@@ -322,6 +322,62 @@
         </executions>
       </plugin>
 
+      <!-- remove unnecessary client .class files to reduce the size of the webapp and avoid long path names on windows -->
+      <plugin>
+         <artifactId>maven-clean-plugin</artifactId>
+         <executions>
+           <execution>
+            <id>remove-gwt-client-classes</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <verbose>true</verbose>
+              <excludeDefaultDirectories>true</excludeDefaultDirectories>
+              <filesets>
+                <fileset>  <!-- remove the class files of client-only code -->
+                  <directory>${project.build.directory}/classes/org/rhq/coregui/client</directory>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                  <!-- keep the RPC-Service interface, and the entry- point class -->
+                  <excludes>
+                    <exclude>CoreGUI*.class</exclude>
+                    <exclude>gwt/**</exclude>
+                  </excludes>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Override root pom, we don't want to check the client classes because they have been removed after
+           generating the javascript  -->
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>java-api-check</id>
+                  <configuration>
+                      <signature>
+                         <groupId>${animal.sniffer.java.signature.groupId}</groupId>
+                         <artifactId>${animal.sniffer.java.signature.artifactId}</artifactId>
+                         <version>${animal.sniffer.java.signature.version}</version>
+                      </signature>
+                      <ignores>
+                         <ignore>org.rhq.coregui.client.*</ignore>
+                      </ignores>
+                  </configuration>
+                  <phase>verify</phase>
+                  <goals>
+                      <goal>check</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
 
     </plugins>
 
@@ -429,7 +485,7 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
               <includes>
-                <include>org/rhq/enterprise/gui/coregui/client/Messages*.java</include>
+                <include>org/rhq/coregui/client/Messages*.java</include>
               </includes>
             </configuration>
           </plugin>

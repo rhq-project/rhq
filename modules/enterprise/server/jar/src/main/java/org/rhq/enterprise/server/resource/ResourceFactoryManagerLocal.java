@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.resource;
 
@@ -40,7 +40,7 @@ import org.rhq.core.domain.util.PageList;
  * @author Jason Dobies
  */
 @Local
-public interface ResourceFactoryManagerLocal {
+public interface ResourceFactoryManagerLocal extends ResourceFactoryManagerRemote {
     // Calls from the agent  --------------------------------------------
 
     /**
@@ -173,65 +173,23 @@ public interface ResourceFactoryManagerLocal {
      */
     void checkForTimedOutRequests();
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     /**
-     * @see {@link ResourceFactoryManagerRemote#createResource(Subject,int,int,String,Configuration,Configuration) 
+     * @see {@link ResourceFactoryManagerRemote#createResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, org.rhq.core.domain.configuration.Configuration, Integer)}.
      */
     CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
         String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration);
 
     /**
-     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, String, String, Integer, org.rhq.core.domain.configuration.Configuration, byte[], Integer)}.
      */
     CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
         Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits);
 
     /**
-     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int) 
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, org.rhq.core.domain.configuration.Configuration, int, Integer)}.
      */
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
         Configuration deploymentTimeConfiguration, int packageVersionId);
-
-    /**
-     * @see {@link ResourceFactoryManagerRemote#createResource(Subject,int,int,String,Configuration,Configuration,Integer) 
-     */
-    CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
-        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout);
-
-    /**
-     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[],Integer) 
-     */
-    CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
-        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
-        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout);
-
-    /**
-     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int, Integer) 
-     */
-    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
-        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
-        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout);
-
-    /**
-     * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int) 
-     */
-    DeleteResourceHistory deleteResource(Subject subject, int resourceId);
-
-    /**
-     * @see {@link ResourceFactoryManagerRemote.deleteResources(Subject,int[]) 
-     */
-    List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds);
-
-    PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
-        Long beginDate, Long endDate, PageControl pageControl);
-
-    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
-        Long beginDate, Long endDate, PageControl pageControl);
 }

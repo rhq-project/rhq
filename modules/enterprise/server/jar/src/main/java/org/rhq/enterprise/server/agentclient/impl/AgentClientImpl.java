@@ -46,6 +46,12 @@ import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
  */
 public class AgentClientImpl implements AgentClient {
     /**
+     * This is the name of the command configuration property that will get assigned the security token string.
+     * All commands sent to the agent will get this command property set which contains the agent's token.
+     */
+    private static final String CMDCONFIG_PROP_SECURITY_TOKEN = "rhq.security-token";
+
+    /**
      * The agent that this client communicates with.
      */
     private final Agent agent;
@@ -87,7 +93,7 @@ public class AgentClientImpl implements AgentClient {
         this.agent = agent;
         this.sender = sender;
         this.clientRemotePojoFactory = sender.getClientRemotePojoFactory();
-        this.sender.setSendCallbacks(new SendCallback[] { new ExternalizableStrategySendCallback() });
+        this.sender.setSendCallbacks(new SendCallback[] { new AgentSendCallback(agent) });
         // enforce the restriction (instituted in 1.1 due to multi-server HA concerns) 
         // that no server->agent calls use guaranteedDelivery
         this.clientRemotePojoFactory.setDeliveryGuaranteed(ClientRemotePojoFactory.GuaranteedDelivery.DISABLED);
@@ -230,22 +236,29 @@ public class AgentClientImpl implements AgentClient {
      *  
      * @author jshaughnessy
      */
-    private static class ExternalizableStrategySendCallback implements SendCallback {
+    private static class AgentSendCallback implements SendCallback {
 
-        public ExternalizableStrategySendCallback() {
-        };
+        private final String token;
+
+        public AgentSendCallback(Agent targetAgent) {
+            token = targetAgent.getAgentToken();
+        }
 
         public void sending(Command command) {
-            //            long start = System.currentTimeMillis();
             try {
                 HibernateDetachUtility.nullOutUninitializedFields(command,
                     HibernateDetachUtility.SerializationType.SERIALIZATION);
-                //                System.out.println("HDU: " + (System.currentTimeMillis() - start));
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+            if (token != null) {
+                command.getConfiguration().setProperty(CMDCONFIG_PROP_SECURITY_TOKEN, token);
+            }
+
+            return;
         }
 
         public CommandResponse sent(Command command, CommandResponse response) {

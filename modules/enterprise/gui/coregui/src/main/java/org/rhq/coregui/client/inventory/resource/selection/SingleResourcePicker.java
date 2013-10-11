@@ -1,0 +1,56 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.coregui.client.inventory.resource.selection;
+
+import java.util.Set;
+
+/**
+ * A window dialog box that lets you pick a single resource.
+ * 
+ * @author John Mazzitelli
+ */
+public class SingleResourcePicker extends ResourcePicker {
+
+    public SingleResourcePicker(OkHandler okHandler, CancelHandler cancelHandler) {
+        super(okHandler, cancelHandler);
+    }
+
+    @Override
+    protected String getDefaultTitle() {
+        return MSG.widget_resourceSelector_selectResource();
+    }
+
+    @Override
+    protected ResourceSelector createResourceSelector() {
+        return new SingleResourceSelector();
+    }
+
+    protected void ok() {
+        OkHandler handler = getOkHandler();
+        Set<Integer> selection = getResourceSelector().getSelection();
+
+        if (selection == null || selection.size() != 1) {
+            showWarningMessage(MSG.widget_resourceSelector_pleaseSelectResource());
+        } else {
+            if (handler.ok(selection)) {
+                markForDestroy();
+            }
+        }
+    }
+}

@@ -75,13 +75,21 @@ public class JBossAS7JMXComponent<T extends ResourceComponent<?>> implements Res
     @Override
     public AvailabilityType getAvailability() {
 
-        // TODO (jshaughn): Figure out why this hangs, it seems so innocuous :)
-        //EmsConnection conn = getEmsConnection();
-        //ConnectionProvider connectionProvider = (null != conn) ? conn.getConnectionProvider() : null;
-        //return (null != connectionProvider && connectionProvider.isConnected()) ? AvailabilityType.UP
-        //    : AvailabilityType.DOWN;
-
-        return AvailabilityType.UP;
+        try {
+            EmsConnection conn = getEmsConnection();
+            if (conn == null) {
+                return AvailabilityType.DOWN;
+            }
+            conn.queryBeans("java.lang:*"); // just make a request over the connection to make sure its valid
+            return AvailabilityType.UP;
+        } catch (Throwable t) {
+            try {
+                this.connection.close(); // try to clean up
+            } catch (Throwable ignore) {
+            }
+            this.connection = null;
+            return AvailabilityType.DOWN;
+        }
     }
 
     @Override

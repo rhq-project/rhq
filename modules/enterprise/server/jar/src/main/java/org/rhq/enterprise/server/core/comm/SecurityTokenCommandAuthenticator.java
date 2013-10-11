@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.core.comm;
 
 import java.util.Hashtable;
 import java.util.Map;
+
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.command.server.CommandAuthenticator;
@@ -74,6 +76,7 @@ public class SecurityTokenCommandAuthenticator implements CommandAuthenticator {
     /**
      * @see CommandAuthenticator#isAuthenticated(Command)
      */
+    @Override
     public boolean isAuthenticated(Command command) {
         String security_token = command.getConfiguration().getProperty(CMDCONFIG_PROP_SECURITY_TOKEN);
 
@@ -109,6 +112,11 @@ public class SecurityTokenCommandAuthenticator implements CommandAuthenticator {
         }
 
         return true;
+    }
+
+    @Override
+    public void setServiceContainer(ServiceContainer serviceContainer) {
+        // don't need this, no need to store it
     }
 
     /**

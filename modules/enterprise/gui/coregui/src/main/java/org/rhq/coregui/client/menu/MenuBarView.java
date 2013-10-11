@@ -125,6 +125,7 @@ public class MenuBarView extends EnhancedVLayout {
 
         userLabel = new Label(UserSessionManager.getSessionSubject().getName());
         userLabel.setAutoWidth();
+        userLabel.setWrap(false);
 
         Label lineLabel = new Label(" | ");
         lineLabel.setWidth("12px");

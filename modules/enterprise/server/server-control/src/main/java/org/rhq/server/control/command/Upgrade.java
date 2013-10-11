@@ -621,7 +621,10 @@ public class Upgrade extends AbstractInstall {
             final File agentBasedir = getAgentBasedir();
             File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
+            // Make sure we use the appropriate java version, don't just fall back to PATH
+            String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath) //
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
                 .addArgument("--update=" + oldAgentDir.getAbsolutePath()) //
                 .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log")) //

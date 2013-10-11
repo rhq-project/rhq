@@ -112,32 +112,37 @@ debug_msg "RHQ_AGENT_HOME: $RHQ_AGENT_HOME"
 # ----------------------------------------------------------------------
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
-
-if [ -z "$RHQ_AGENT_JAVA_EXE_FILE_PATH" ]; then
-   if [ -z "$RHQ_AGENT_JAVA_HOME" ]; then
-      RHQ_AGENT_JAVA_HOME="${RHQ_AGENT_HOME}/jre"
-      if [ -d "$RHQ_AGENT_JAVA_HOME" ]; then
-         debug_msg "Using the embedded JRE"
-      else
-         set_java_home
-         debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
-         RHQ_AGENT_JAVA_HOME="$JAVA_HOME"
-      fi
+if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
+   if [ ! -z "$RHQ_AGENT_JAVA_EXE_FILE_PATH" ]; then
+      RHQ_JAVA_EXE_FILE_PATH="$RHQ_AGENT_JAVA_EXE_FILE_PATH"
    fi
-   debug_msg "RHQ_AGENT_JAVA_HOME: $RHQ_AGENT_JAVA_HOME"
-   RHQ_AGENT_JAVA_EXE_FILE_PATH="${RHQ_AGENT_JAVA_HOME}/bin/java"
-else
-   # Infer RHQ_AGENT_JAVA_HOME from RHQ_AGENT_JAVA_EXE_FILE_PATH
-   # RHQ_AGENT_JAVA_HOME will be used later to find JDK's tools.jar if available
-   _RHQ_AGENT_JAVA_BIN_DIR=`dirname "$RHQ_AGENT_JAVA_EXE_FILE_PATH"`
-   RHQ_AGENT_JAVA_HOME=`dirname "$_RHQ_AGENT_JAVA_BIN_DIR"`
-   debug_msg "RHQ_AGENT_JAVA_HOME (inferred from RHQ_AGENT_JAVA_EXE_FILE_PATH): $RHQ_AGENT_JAVA_HOME"
 fi
-debug_msg "RHQ_AGENT_JAVA_EXE_FILE_PATH: $RHQ_AGENT_JAVA_EXE_FILE_PATH"
+if [ -z "$RHQ_JAVA_HOME" ]; then
+   if [ ! -z "$RHQ_AGENT_JAVA_HOME" ]; then
+      RHQ_JAVA_HOME="$RHQ_AGENT_JAVA_HOME"
+   fi
+fi
 
-if [ ! -f "$RHQ_AGENT_JAVA_EXE_FILE_PATH" ]; then
+if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
+   if [ -z "$RHQ_JAVA_HOME" ]; then
+      set_java_home
+      debug_msg "No RHQ JAVA property set, defaulting to JAVA_HOME: $JAVA_HOME"
+      RHQ_JAVA_HOME="$JAVA_HOME"
+   fi
+   debug_msg "RHQ_JAVA_HOME: $RHQ_JAVA_HOME"
+   RHQ_JAVA_EXE_FILE_PATH="${RHQ_JAVA_HOME}/bin/java"
+else
+   # Infer RHQ_JAVA_HOME from RHQ_JAVA_EXE_FILE_PATH
+   # RHQ_JAVA_HOME will be used later to find JDK's tools.jar if available
+   _RHQ_JAVA_BIN_DIR=`dirname "$RHQ_JAVA_EXE_FILE_PATH"`
+   RHQ_JAVA_HOME=`dirname "$_RHQ_JAVA_BIN_DIR"`
+   debug_msg "RHQ_JAVA_HOME (inferred from RHQ_JAVA_EXE_FILE_PATH): $RHQ_JAVA_HOME"
+fi
+debug_msg "RHQ_JAVA_EXE_FILE_PATH: $RHQ_JAVA_EXE_FILE_PATH"
+
+if [ ! -f "$RHQ_JAVA_EXE_FILE_PATH" ]; then
    echo There is no JVM available.
-   echo Please set RHQ_AGENT_JAVA_HOME or RHQ_AGENT_JAVA_EXE_FILE_PATH appropriately.
+   echo Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately.
    exit 1
 fi
 
@@ -160,7 +165,7 @@ for _JAR in $_JAR_FILES ; do
    fi
    debug_msg "CLASSPATH entry: $_JAR"
 done
-for _TOOLS_JAR in "${RHQ_AGENT_JAVA_HOME}/lib/tools.jar" "${RHQ_AGENT_JAVA_HOME}/../lib/tools.jar" "${RHQ_AGENT_JAVA_HOME}/Classes/classes.jar" "${RHQ_AGENT_JAVA_HOME}/../Classes/classes.jar"; do
+for _TOOLS_JAR in "${RHQ_JAVA_HOME}/lib/tools.jar" "${RHQ_JAVA_HOME}/../lib/tools.jar" "${RHQ_JAVA_HOME}/Classes/classes.jar" "${RHQ_JAVA_HOME}/../Classes/classes.jar"; do
    if [ -f "${_TOOLS_JAR}" ]; then
       debug_msg "CLASSPATH entry: ${_TOOLS_JAR}"
       CLASSPATH="${CLASSPATH}:${_TOOLS_JAR}"
@@ -286,8 +291,8 @@ fi
 
 # Build the command line that starts the VM
 # note - currently not using custom Java Prefs as the default, use commented command line to activate
-# CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JAVA_PREFERENCES_FACTORY_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
-CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
+# CMD="\"${RHQ_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JAVA_PREFERENCES_FACTORY_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
+CMD="\"${RHQ_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"

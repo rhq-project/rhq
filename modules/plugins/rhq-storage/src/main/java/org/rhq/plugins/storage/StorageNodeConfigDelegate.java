@@ -150,6 +150,11 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
+        updateResourceConfigurationAndRestartIfNecessary(configurationUpdateReport, false);
+    }
+
+    public void updateResourceConfigurationAndRestartIfNecessary(ConfigurationUpdateReport configurationUpdateReport,
+        boolean restartIfNecessary) {
         try {
             Configuration config = configurationUpdateReport.getConfiguration();
 
@@ -167,7 +172,9 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         } catch (ConfigEditorException e) {
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         }
-        restartIfNecessary(configurationUpdateReport);
+        if (restartIfNecessary) {
+            restartIfNecessary(configurationUpdateReport);
+        }
     }
     
     private void restartIfNecessary(ConfigurationUpdateReport configurationUpdateReport) {
@@ -180,16 +187,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
                 restartIsRequired = true;
             }
         }
-
-        //restart the server if:
-        //- requested by the user
-        //- the updates done require restart
-        boolean restartIfRequiredConfig = false;
-        if (params.getSimpleValue("restartIfRequired") != null) {
-            restartIfRequiredConfig = Boolean.parseBoolean(params.getSimpleValue("restartIfRequired"));
-        }
-
-        if (restartIfRequiredConfig && restartIsRequired && invoker != null) {
+        if (restartIsRequired && invoker != null) {
             try {
                 OperationResult restartResult = invoker.invokeOperation("restart", null);
                 if (restartResult.getErrorMessage() != null) {

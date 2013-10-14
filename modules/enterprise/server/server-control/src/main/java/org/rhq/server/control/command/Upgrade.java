@@ -132,10 +132,6 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
-            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
-            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
-            log.info("Stopping any running RHQ components...");
-
             // If using non-default agent location then save it so it will be applied to all subsequent rhqctl commands.
             boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
             if (hasFromAgentOption) {
@@ -150,13 +146,18 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
+            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
+            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
+            log.info("Stopping any running RHQ components...");
+
             // Stop the agent, if running.
             if (hasFromAgentOption) {
-                stopAgent(getFromAgentDir(commandLine)); // this is validate the path as well
+                killAgent(getFromAgentDir(commandLine)); // this validates the path as well
             }
 
-            // If rhqctl exists in the old version, use it to stop server and storage node, otherwise, just try and stop the server
-            // using the legacy script. If there is no rhqctl, there is no storage node anyway, so we just stop server in that case.
+            // If rhqctl exists in the old version, use it to stop old components, otherwise, just try and stop the
+            // server using the legacy script. If there is no rhqctl, there is no storage node anyway, so we just
+            // stop server in that case.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
             org.apache.commons.exec.CommandLine rhqctlStop = isRhq48OrLater(commandLine) ? getCommandLine(false,
                 "rhqctl", "stop") : getCommandLine("rhq-server", "stop");

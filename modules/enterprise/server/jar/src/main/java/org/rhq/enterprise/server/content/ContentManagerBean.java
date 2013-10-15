@@ -101,6 +101,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -2102,31 +2103,28 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             LOG.warn("PackageBits insufficiently initialized. No data to write out.");
             return;
         }
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet results = null;
         try {
             //open connection
-            Connection conn = dataSource.getConnection();
+            conn = dataSource.getConnection();
 
             //prepared statement for retrieval of Blob.bits
-            PreparedStatement ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
-            try {
-                ps.setInt(1, bits.getId());
-                ResultSet results = ps.executeQuery();
-                try {
-                    if (results.next()) {
-                        //retrieve the Blob
-                        Blob blob = results.getBlob(1);
-                        //now copy the contents to the stream passed in
-                        StreamUtil.copy(blob.getBinaryStream(), stream, closeStreams);
-                    }
-                } finally {
-                    results.close();
-                }
-            } finally {
-                ps.close();
+            ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
+            ps.setInt(1, bits.getId());
+            results = ps.executeQuery();
+            if (results.next()) {
+                //retrieve the Blob
+                Blob blob = results.getBlob(1);
+                //now copy the contents to the stream passed in
+                StreamUtil.copy(blob.getBinaryStream(), stream, closeStreams);
             }
         } catch (Exception ex) {
             LOG.error("An error occurred while writing Blob contents out to stream :" + ex.getMessage());
             ex.printStackTrace();
+        } finally {
+            JDBCUtil.safeClose(conn, ps, results);
         }
     }
 

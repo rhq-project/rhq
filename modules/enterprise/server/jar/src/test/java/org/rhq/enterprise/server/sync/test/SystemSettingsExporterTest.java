@@ -64,7 +64,7 @@ public class SystemSettingsExporterTest extends JMockTest {
         
         context.checking(new Expectations() {
             {
-                allowing(systemManager).getObfuscatedSystemSettings(true);
+                allowing(systemManager).getObfuscatedSystemSettings(false);
                 will(returnValue(getFakeSystemSettings()));
             }
         });

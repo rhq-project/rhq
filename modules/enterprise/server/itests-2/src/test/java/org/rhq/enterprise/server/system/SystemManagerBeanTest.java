@@ -100,7 +100,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         //These two still co-exist together in the codebase
         //so let's make sure the values correspond to each other.
 
-        SystemSettings settings = systemManager.getUnmaskedSystemSettings(true);
+        SystemSettings settings = systemManager.getUnmaskedSystemSettings(false);
         Properties config = systemManager.getSystemConfiguration(overlord);
 
         SystemSettings origSettings = new SystemSettings(settings);
@@ -117,7 +117,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
 
             systemManager.setSystemSettings(overlord, settings);
 
-            settings = systemManager.getUnmaskedSystemSettings(true);
+            settings = systemManager.getUnmaskedSystemSettings(false);
             config = systemManager.getSystemConfiguration(overlord);
 
             checkFormats(settings, config);

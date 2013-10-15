@@ -102,7 +102,9 @@ public class StorageClientManagerBean {
         log.info("Initializing storage client subsystem");
 
         // Always get the creds from the DB, system props may not be up to date at install time
-        SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
+        // the code assumes the passwords to be obfuscated, because they can also come that way from other sources
+        // (like property files). So let's make our lives easy and always use obfuscated passwords.
+        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
         final String username = settings.get(SystemSetting.STORAGE_USERNAME);
         final String password = settings.get(SystemSetting.STORAGE_PASSWORD);
 

@@ -60,6 +60,9 @@ public interface SystemManagerRemote {
     /**
      * Get the server cloud configuration. These are the server configurations that will be
      * the same for all servers in the HA server cloud.
+     * <p/>
+     * Note that any password fields in the returned settings will be masked (i.e. will not correspond to the actual
+     * value stored in the database), see {@link org.rhq.core.domain.configuration.PropertySimple#MASKED_VALUE}.
      *
      * @param subject user making the request
      *

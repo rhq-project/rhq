@@ -1176,7 +1176,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
-        String baseUrl = systemManager.getSystemSettings(subjectManager.getOverlord()).get(SystemSetting.BASE_URL);
+        String baseUrl = systemManager.getUnmaskedSystemSettings(true).get(SystemSetting.BASE_URL);
         builder.append(baseUrl);
         if (!baseUrl.endsWith("/")) {
             builder.append("/");

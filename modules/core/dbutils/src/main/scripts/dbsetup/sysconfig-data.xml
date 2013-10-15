@@ -17,8 +17,9 @@
               DEFAULT_PROPERTY_VALUE="@@@BASEURL@@@" FREAD_ONLY="FALSE"/>
         <data ID="9" PROPERTY_KEY="CAM_HELP_USER" PROPERTY_VALUE="web"
               DEFAULT_PROPERTY_VALUE="web" FREAD_ONLY="FALSE"/>
-        <data ID="10" PROPERTY_KEY="CAM_HELP_PASSWORD" PROPERTY_VALUE="user"
-              DEFAULT_PROPERTY_VALUE="user" FREAD_ONLY="FALSE"/>
+        <!-- 4c01cff24a6e9ab7 == obfuscated "user" -->
+        <data ID="10" PROPERTY_KEY="CAM_HELP_PASSWORD" PROPERTY_VALUE="4c01cff24a6e9ab7"
+              DEFAULT_PROPERTY_VALUE="4c01cff24a6e9ab7" FREAD_ONLY="FALSE"/>
 
         <!-- default LDAP configuration options -->
         <data ID="11" PROPERTY_KEY="CAM_LDAP_NAMING_FACTORY_INITIAL"

@@ -26,6 +26,9 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
@@ -97,7 +100,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         //These two still co-exist together in the codebase
         //so let's make sure the values correspond to each other.
 
-        SystemSettings settings = systemManager.getSystemSettings(overlord);
+        SystemSettings settings = systemManager.getUnmaskedSystemSettings(true);
         Properties config = systemManager.getSystemConfiguration(overlord);
 
         SystemSettings origSettings = new SystemSettings(settings);
@@ -114,13 +117,56 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
 
             systemManager.setSystemSettings(overlord, settings);
 
-            settings = systemManager.getSystemSettings(overlord);
+            settings = systemManager.getUnmaskedSystemSettings(true);
             config = systemManager.getSystemConfiguration(overlord);
 
             checkFormats(settings, config);
         } finally {
             systemManager.setSystemSettings(overlord, origSettings);
         }
+    }
+
+    public void testPasswordFieldsObfuscation() {
+        SystemSettings masked = systemManager.getSystemSettings(overlord);
+        SystemSettings unmasked = systemManager.getUnmaskedSystemSettings(true);
+        SystemSettings obfuscated = systemManager.getObfuscatedSystemSettings(true);
+
+        for(SystemSetting setting : SystemSetting.values()) {
+            if (setting.getType() == PropertySimpleType.PASSWORD) {
+                if (masked.containsKey(setting) && masked.get(setting) != null) {
+                    assertEquals("Unexpected unmasked value", PropertySimple.MASKED_VALUE, masked.get(setting));
+                    assertEquals("Unmasked and obfuscated values don't correspond", obfuscated.get(setting), PicketBoxObfuscator.encode(
+                        unmasked.get(setting)));
+                }
+            }
+        }
+
+        systemManager.deobfuscate(obfuscated);
+
+        assertEquals(unmasked, obfuscated);
+    }
+
+    public void testPasswordMaskingDoesNotPersistBack() throws Exception {
+        SystemSettings settings = systemManager.getSystemSettings(overlord);
+        SystemSettings copy = (SystemSettings) settings.clone();
+
+        systemManager.setSystemSettings(overlord, settings);
+
+        settings = systemManager.getSystemSettings(overlord);
+
+        assertEquals("Password masking should not modify the database", copy, settings);
+    }
+
+    public void testPersistingDeobfuscatedSettingsDoesNotChangeTheValues() throws Exception {
+        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
+        SystemSettings copy = (SystemSettings) settings.clone();
+
+        systemManager.deobfuscate(settings);
+        systemManager.setSystemSettings(overlord, settings);
+
+        settings = systemManager.getObfuscatedSystemSettings(true);
+
+        assertEquals("Password obfuscation should not modify the database if deobfuscated first", copy, settings);
     }
 
     private void checkFormats(SystemSettings settings, Properties config) {

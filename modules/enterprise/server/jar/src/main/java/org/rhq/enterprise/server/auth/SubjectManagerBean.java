@@ -845,13 +845,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     private boolean isLdapAuthenticationEnabled() {
-        SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
+        SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
         String value = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
         return (value != null) ? Boolean.valueOf(value) : false;
     }
 
     private boolean isLdapAuthorizationEnabled() {
-        SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
+        SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
         String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
         String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
         return ((groupFilter != null) && (groupFilter.trim().length() > 0))

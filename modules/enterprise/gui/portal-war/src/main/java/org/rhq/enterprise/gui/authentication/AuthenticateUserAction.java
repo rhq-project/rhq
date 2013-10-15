@@ -43,7 +43,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -208,7 +207,7 @@ public class AuthenticateUserAction extends TilesAction {
         String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
 
         if (provider == null) {
-            SystemSettings systemSettings = LookupUtil.getSystemManager().getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
+            SystemSettings systemSettings = LookupUtil.getSystemManager().getUnmaskedSystemSettings(true);
             provider = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }

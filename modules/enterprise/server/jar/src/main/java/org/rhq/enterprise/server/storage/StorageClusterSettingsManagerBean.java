@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.storage;
 
-import java.util.Map;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
@@ -25,29 +23,28 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageClusterSettings getClusterSettings(Subject subject) {
-        SystemSettings settings = systemManager.getSystemSettings(subject);
-        Map<String, String> settingsMap = settings.toMap();
+        SystemSettings settings = systemManager.getUnmaskedSystemSettings(true);
         StorageClusterSettings clusterSettings = new StorageClusterSettings();
 
-        if (!settingsMap.containsKey(SystemSetting.STORAGE_CQL_PORT.getInternalName())) {
+        if (!settings.containsKey(SystemSetting.STORAGE_CQL_PORT)) {
             return null;
         } else {
-            clusterSettings.setCqlPort(Integer.parseInt(settingsMap.get(
-                SystemSetting.STORAGE_CQL_PORT.getInternalName())));
+            clusterSettings.setCqlPort(Integer.parseInt(settings.get(
+                SystemSetting.STORAGE_CQL_PORT)));
         }
 
-        if (!settingsMap.containsKey(SystemSetting.STORAGE_GOSSIP_PORT.getInternalName())) {
+        if (!settings.containsKey(SystemSetting.STORAGE_GOSSIP_PORT)) {
             return null;
         } else {
-            clusterSettings.setGossipPort(Integer.parseInt(settingsMap.get(
-                SystemSetting.STORAGE_GOSSIP_PORT.getInternalName())));
+            clusterSettings.setGossipPort(Integer.parseInt(settings.get(
+                SystemSetting.STORAGE_GOSSIP_PORT)));
         }
         
-        if (!settingsMap.containsKey(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT.getInternalName())) {
+        if (!settings.containsKey(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT)) {
             return null;
         } else {
-            clusterSettings.setAutomaticDeployment(Boolean.parseBoolean(settingsMap
-                .get(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT.getInternalName())));
+            clusterSettings.setAutomaticDeployment(Boolean.parseBoolean(settings
+                .get(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT)));
         }
 
         return clusterSettings;

@@ -236,7 +236,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         long maximumQuietTimeAllowed = 300000L;
         try {
-            String prop = systemManager.getSystemSettings(subjectManager.getOverlord()).get(
+            String prop = systemManager.getUnmaskedSystemSettings(true).get(
                 SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED);
             if (prop != null) {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
@@ -302,7 +302,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             agentManager.setAgentBackfilled(agentId, true);
 
             // This marks the top-level platform DOWN since we have not heard from it and all
-            // child resources UNKNOWN since they are not reporting and may very well be up            
+            // child resources UNKNOWN since they are not reporting and may very well be up
             availabilityManager.updateAgentResourceAvailabilities(agentId, AvailabilityType.DOWN,
                 AvailabilityType.UNKNOWN);
 
@@ -636,7 +636,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     public PingRequest handlePingRequest(PingRequest request) {
 
         // set the ping time without delay, so the return time is as close to the request time as possible,
-        // for clock sync reasons. 
+        // for clock sync reasons.
         long now = System.currentTimeMillis();
 
         if (request.isRequestUpdateAvailability()) {
@@ -653,7 +653,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     private void updateLastAvailabilityPing(String agentName, long now) {
         /*
-         * since we already know we have to update the agent row with the last avail ping time, might as well 
+         * since we already know we have to update the agent row with the last avail ping time, might as well
          * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
          */
         String updateStatement = "" //
@@ -690,7 +690,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         return pingResults;
     }
-    
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);

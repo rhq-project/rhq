@@ -22,12 +22,14 @@ package org.rhq.enterprise.server.sync.test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.jmock.Expectations;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.sync.entity.SystemSettings;
@@ -48,23 +50,20 @@ public class SystemSettingsImporterTest extends JMockTest {
         SystemSettingsImporter importer = new SystemSettingsImporter(null, systemManager);
 
         final HashMap<String, String> settings = new HashMap<String, String>();
-        settings.put("CAM_BASE_URL", "url");
-        settings.put("SOME_UNKNOWN_PROPERTY", "asdf");
-        String[] importableProps = SystemSettingsImporter.DEFAULT_IMPORTED_PROPERTIES_LIST.split("\\s*,\\s*");
-        for (String p : importableProps) {
-            settings.put(p, "value");
-        }
+        settings.put(SystemSetting.BASE_URL.getInternalName(), "url");
+        addImportableProps(settings);
         final SystemSettings importedSettings = new SystemSettings(settings);
 
         context.checking(new Expectations() {
             {
-                Properties expectedImport = new Properties();
-                expectedImport.putAll(settings);
-                //base url is not imported by default
-                expectedImport.remove("CAM_BASE_URL");
-                expectedImport.remove("SOME_UNKNOWN_PROPERTY");
+                org.rhq.core.domain.common.composite.SystemSettings expectedImport = org.rhq.core.domain.common
+                    .composite.SystemSettings.fromMap(settings);
 
-                oneOf(systemManager).setSystemConfiguration(with(any(Subject.class)), with(expectedImport), with(true));
+                //base url is not imported by default
+                expectedImport.remove(SystemSetting.BASE_URL);
+
+                oneOf(systemManager).deobfuscate(with(any(org.rhq.core.domain.common.composite.SystemSettings.class)));
+                oneOf(systemManager).setSystemSettings(with(any(Subject.class)), with(expectedImport));
             }
         });
 
@@ -83,9 +82,7 @@ public class SystemSettingsImporterTest extends JMockTest {
         String[] importableProps = SystemSettingsImporter.DEFAULT_IMPORTED_PROPERTIES_LIST.split("\\s*,\\s*");
 
         final HashMap<String, String> settings = new HashMap<String, String>();
-        for (String p : importableProps) {
-            settings.put(p, "value");
-        }
+        addImportableProps(settings);
         final SystemSettings importedSettings = new SystemSettings(settings);
 
         final List<String> allowedSettings = new ArrayList<String>();
@@ -97,12 +94,13 @@ public class SystemSettingsImporterTest extends JMockTest {
 
         context.checking(new Expectations() {
             {
-                Properties expectedImport = new Properties();
+                org.rhq.core.domain.common.composite.SystemSettings expectedImport = new org.rhq.core.domain.common.composite.SystemSettings();
                 for (String s : allowedSettings) {
-                    expectedImport.put(s, settings.get(s));
+                    expectedImport.put(SystemSetting.getByInternalName(s), settings.get(s));
                 }
 
-                oneOf(systemManager).setSystemConfiguration(with(any(Subject.class)), with(expectedImport), with(true));
+                oneOf(systemManager).deobfuscate(with(any(org.rhq.core.domain.common.composite.SystemSettings.class)));
+                oneOf(systemManager).setSystemSettings(with(any(Subject.class)), with(expectedImport));
             }
         });
 
@@ -115,5 +113,20 @@ public class SystemSettingsImporterTest extends JMockTest {
         importer.update(null, importedSettings);
         
         importer.finishImport();
+    }
+
+    private void addImportableProps(Map<String, String> settings) {
+        String[] importableProps = SystemSettingsImporter.DEFAULT_IMPORTED_PROPERTIES_LIST.split("\\s*,\\s*");
+        for (String p : importableProps) {
+            String value;
+            switch(SystemSetting.getByInternalName(p).getType()) {
+            case BOOLEAN: value = "true"; break;
+            case INTEGER: case LONG: value = "1"; break;
+            case PASSWORD: value = "password"; break;
+            default:
+                value = "value";
+            }
+            settings.put(p, value);
+        }
     }
 }

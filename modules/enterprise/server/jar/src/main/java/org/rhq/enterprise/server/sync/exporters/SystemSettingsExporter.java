@@ -20,13 +20,12 @@
 package org.rhq.enterprise.server.sync.exporters;
 
 import java.util.Collections;
-import java.util.Properties;
+import java.util.Map;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * 
@@ -61,8 +60,8 @@ public class SystemSettingsExporter implements Exporter<NoSingleEntity, SystemSe
     
     @Override
     public ExportingIterator<SystemSettings> getExportingIterator() {
-        Properties systemProps = systemManager.getSystemConfiguration(subject);
-                
+        Map<String, String> systemProps = systemManager.getObfuscatedSystemSettings(false).toMap();
+
         SystemSettings settings = new SystemSettings(systemProps);
         
         return new SystemSettingsExportingIterator(settings);

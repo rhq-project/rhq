@@ -2283,6 +2283,9 @@
               </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.142">
+                <schema-javaTask className="SystemSettingsPasswordObfuscationTask" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

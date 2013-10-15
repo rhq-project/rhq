@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.sync.importers;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -79,7 +80,11 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
         PropertyDefinitionSimple props =
             new PropertyDefinitionSimple(
                 PROPERTIES_TO_IMPORT_PROPERTY,
-                "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database",
+                "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database." +
+                    " If you include any property that stores a password (such as CAM_LDAP_BIND_PW)," +
+                    " you need to make sure the values are OBFUSCATED. You can obtain an obfuscated value of your" +
+                    " password by running the \"rhq-encode-password.(sh|bat)\" script located in the \"bin\" directory" +
+                    " of your RHQ server installation.",
                 true, PropertySimpleType.STRING);
         props.setDefaultValue(DEFAULT_IMPORTED_PROPERTIES_LIST);
         def.put(props);
@@ -112,7 +117,7 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     
     @Override
     public void update(NoSingleEntity entity, SystemSettings exportedEntity) throws Exception {
-        Properties props = exportedEntity.toProperties();
+        Map<String, String> props = exportedEntity.toMap();
 
         Set<String> propsToImport = getSettingNamesConfiguredForImport(importConfiguration);
 
@@ -129,7 +134,12 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
             props.remove(p);
         }
 
-        systemManager.setSystemConfiguration(subject, props, true);
+        org.rhq.core.domain.common.composite.SystemSettings settings =
+            org.rhq.core.domain.common.composite.SystemSettings.fromMap(props);
+
+        systemManager.deobfuscate(settings);
+
+        systemManager.setSystemSettings(subject, settings);
     }
 
     @Override

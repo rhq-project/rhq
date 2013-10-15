@@ -152,4 +152,41 @@ public interface SystemManagerLocal extends SystemManagerRemote {
      */
     void setStorageClusterSettings(Subject subject, SystemSettings settings);
 
+    /**
+     * The {@link SystemManagerRemote#getSystemSettings(org.rhq.core.domain.auth.Subject)} returns the system settings
+     * with all the password fields masked so that remote clients cannot get hold of the passwords in it. It also excludes
+     * non-public system settings from the results.
+     * <p/>
+     * If the password or a non-public setting is needed inside some SLSB, use this method to obtain the system settings
+     * with all the fields and the passwords in clear text.
+     * <p />
+     * Note that the returned instance MUST NOT leak out of the RHQ server.
+     *
+     * @return the system settings with the password fields in clear.
+     * @param includePrivateSettings whether or not to include the private system settings (i.e.
+     * {@link org.rhq.core.domain.common.composite.SystemSetting#isPublic()} returns false)
+     */
+    SystemSettings getUnmaskedSystemSettings(boolean includePrivateSettings);
+
+    /**
+     * The {@link #getUnmaskedSystemSettings(boolean)} returns the system settings with all the passwords in clear text.
+     * If you want to obtain an instance where the passwords would neither be clear text, nor would they be masked away,
+     * you can use this method, that will return the system settings with the passwords obfuscated.
+     * <p/>
+     * Note that such instance <b>CANNOT</b> be passed to {@link #setSystemSettings(org.rhq.core.domain.auth.Subject,
+       org.rhq.core.domain.common.composite.SystemSettings)}!!! Storing the obfuscated passwords would obfuscate them
+     * again!!! To be able to persist an instance, you first need to
+     * {@link #deobfuscate(org.rhq.core.domain.common.composite.SystemSettings) deobfuscate} it.
+     * <p />
+     * Note that the returned instance MUST NOT leak out of the RHQ server. It contains the passwords in a decodable
+     * form and also non-public system settings.
+     *
+     * @param includePrivateSettings whether or not to include the private system settings (i.e.
+     * {@link org.rhq.core.domain.common.composite.SystemSetting#isPublic()} returns false)
+     *
+     * @return an instance of system settings with all the passwords obfuscated.
+     */
+    SystemSettings getObfuscatedSystemSettings(boolean includePrivateSettings);
+
+    void deobfuscate(SystemSettings systemSettings);
 }

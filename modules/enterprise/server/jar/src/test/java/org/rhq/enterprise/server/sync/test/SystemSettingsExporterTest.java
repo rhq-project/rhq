@@ -21,16 +21,11 @@ package org.rhq.enterprise.server.sync.test;
 
 import static org.testng.Assert.assertEquals;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -45,9 +40,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.sync.ExporterMessages;
-import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.SynchronizationConstants;
 import org.rhq.enterprise.server.sync.Synchronizer;
@@ -70,8 +64,8 @@ public class SystemSettingsExporterTest extends JMockTest {
         
         context.checking(new Expectations() {
             {
-                allowing(systemManager).getSystemConfiguration(with(any(Subject.class)));
-                will(returnValue(getFakeSystemConfiguration()));
+                allowing(systemManager).getObfuscatedSystemSettings(true);
+                will(returnValue(getFakeSystemSettings()));
             }
         });
         
@@ -94,7 +88,7 @@ public class SystemSettingsExporterTest extends JMockTest {
 //                <entity>
 //                    <data>
 //                        <systemSettings referencedEntityId="0">
-//                            <entry key="BaseUrl">herethereandeverywhere</entry>
+//                            <entry key="CAM_BASE_URL">herethereandeverywhere</entry>
 //                        </systemSettings>
 //                    </data>
 //                </entity>
@@ -126,8 +120,8 @@ public class SystemSettingsExporterTest extends JMockTest {
             
             Element baseURL = (Element) entries.item(0);
             
-            assertEquals(baseURL.getAttribute("key"), "BaseURL");
-            assertEquals(baseURL.getTextContent(), "herethereandeverywhere", "Unexpected value of baseURL");
+            assertEquals(baseURL.getAttribute("key"), "CAM_BASE_URL");
+            assertEquals(baseURL.getTextContent(), "herethereandeverywhere", "Unexpected value of CAM_BASE_URL");
         }
     }
 
@@ -156,11 +150,10 @@ public class SystemSettingsExporterTest extends JMockTest {
         return null;
     }
 
-    private static Properties getFakeSystemConfiguration() {
+    private static SystemSettings getFakeSystemSettings() {
         HashMap<String, String> values = new HashMap<String, String>();
-        values.put("BaseURL", "herethereandeverywhere");
-        SystemSettings settings = new SystemSettings(values);
+        values.put("CAM_BASE_URL", "herethereandeverywhere");
 
-        return settings.toProperties();
+        return SystemSettings.fromMap(values);
     }
 }

@@ -32,7 +32,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.ejb.Singleton;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
@@ -57,9 +57,11 @@ import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.util.StopWatch;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -73,7 +75,7 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
-@Stateless
+@Singleton
 public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemote {
     private final String SQL_VACUUM = "VACUUM ANALYZE {0}";
 
@@ -92,7 +94,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private final String[] ORA_INDEXES_TO_REBUILD = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
         "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK" };
 
-    private Log log = LogFactory.getLog(SystemManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(SystemManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -117,17 +119,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     //@IgnoreDependency
     private SystemInfoManagerLocal systemInfoManager;
 
-    private static SystemSettings cachedSystemSettings = null;
+    private SystemSettings cachedSystemSettings = null;
 
+    @Override
     public void scheduleConfigCacheReloader() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
         for (Timer existingTimer : timers) {
-            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            LOG.debug("Found timer - attempting to cancel: " + existingTimer.toString());
             try {
                 existingTimer.cancel();
             } catch (Exception e) {
-                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+                LOG.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
             }
         }
 
@@ -147,10 +150,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             //       all its rows is really not going to effect performance much.
             systemManager.loadSystemConfigurationCacheInNewTx();
         } catch (Throwable t) {
-            log.error("Failed to reload the system config cache - will try again later. Cause: " + t);
+            LOG.error("Failed to reload the system config cache - will try again later. Cause: " + t);
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public DatabaseType getDatabaseType() {
         Connection conn = null;
@@ -166,45 +170,111 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 try {
                     conn.close();
                 } catch (SQLException e) {
-                    log.warn("Failed to close temporary connection", e);
+                    LOG.warn("Failed to close temporary connection", e);
                 }
             }
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Override
     @Deprecated
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public Properties getSystemConfiguration(Subject subject) {
         Properties copy = new Properties();
 
-        SystemSettings settings = getSystemSettings(subject);
+        SystemSettings settings = getUnmaskedSystemSettings(true);
         for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
             //transform the value back to the database format, because that's
-            //what this method always returned
-            String value = transformSystemConfigurationProperty(e.getKey(), e.getValue(), false);
+            //what this method always returned.
+            //Leave the password fields as they are though, because now (as of 4.10)
+            //the passwords are stored obfuscated, but are kept clear in memory.
+            //The legacy behavior was to store the values in clear text, too,
+            //so the expected output of this method is to have passwords in clear.
 
-            copy.put(e.getKey().getInternalName(), value);
+            if (e.getKey().isPublic()) {
+                String value = e.getValue();
+                if (e.getKey().getType() != PropertySimpleType.PASSWORD) {
+                    value = transformSystemConfigurationPropertyToDb(e.getKey(), e.getValue(), e.getValue());
+                }
+
+                copy.put(e.getKey().getInternalName(), value);
+            }
         }
 
         return copy;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public SystemSettings getSystemSettings(Subject subject) {
+        SystemSettings ret = new SystemSettings();
+        SystemSettings unmasked = getUnmaskedSystemSettings(true);
+
+        for(Map.Entry<SystemSetting, String> entry : unmasked.entrySet()) {
+            if (entry.getKey().isPublic()) {
+                if (entry.getKey().getType() == PropertySimpleType.PASSWORD) {
+                    entry.setValue(PropertySimple.MASKED_VALUE);
+                }
+
+                ret.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return ret;
+    }
+
+    @Override
+    public SystemSettings getUnmaskedSystemSettings(boolean includePrivateSettings) {
         if (cachedSystemSettings == null) {
             loadSystemConfigurationCache();
         }
 
-        return new SystemSettings(cachedSystemSettings);
+        return includePrivateSettings ? new SystemSettings(cachedSystemSettings) :
+            removePrivateSettings(cachedSystemSettings);
     }
 
+    @Override
+    public void deobfuscate(SystemSettings systemSettings) {
+        for(Map.Entry<SystemSetting, String> entry : systemSettings.entrySet()) {
+            String value = entry.getValue();
+            if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
+                entry.setValue(PicketBoxObfuscator.decode(value));
+            }
+        }
+    }
+
+    @Override
+    public SystemSettings getObfuscatedSystemSettings(boolean includePrivateSettings) {
+        SystemSettings settings = getUnmaskedSystemSettings(includePrivateSettings);
+
+        for(Map.Entry<SystemSetting, String> entry : settings.entrySet()) {
+            String value = entry.getValue();
+            if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
+                entry.setValue(PicketBoxObfuscator.encode(value));
+            }
+        }
+
+        return settings;
+    }
+
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setSystemSettings(Subject subject, SystemSettings settings) {
-        setSystemSettings(settings, false, false);
+        setSystemSettings(removePrivateSettings(settings), false, false);
     }
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    private SystemSettings removePrivateSettings(SystemSettings settings) {
+        SystemSettings cleansed = new SystemSettings(settings);
+        for(SystemSetting s : SystemSetting.values()) {
+            if (!s.isPublic()) {
+                cleansed.remove(s);
+            }
+        }
+        return cleansed;
+    }
+
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setStorageClusterSettings(Subject subject, SystemSettings settings) {
         for (SystemSetting setting : settings.keySet()) {
             if (!isStorageSetting(setting)) {
@@ -231,15 +301,16 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
         for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
             SystemSetting prop = e.getKey();
+
             String value = e.getValue();
 
-            if (skipValidation == false) {
+            if (!skipValidation) {
                 verifyNewSystemConfigurationProperty(prop, value, settings);
             }
 
             SystemConfiguration existingConfig = existingConfigMap.get(prop.getInternalName());
             if (existingConfig == null) {
-                value = transformSystemConfigurationProperty(prop, value, false);
+                value = transformSystemConfigurationPropertyToDb(prop, value, null);
                 existingConfig = new SystemConfiguration(prop.getInternalName(), value);
                 entityManager.persist(existingConfig);
             } else {
@@ -252,8 +323,14 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 //them to "false"/"true" and store that value to database. This is a one way operation
                 //and therefore we need to compare the database-agnostic (i.e. "true"/"false") and
                 //not database specific.
-                String existingValue = transformSystemConfigurationProperty(prop, existingConfig.getPropertyValue(),
-                    true);
+                //
+                //More importantly though, we store the password fields obfuscated, so we need to compare apples with
+                //apples here.
+                String existingValue = transformSystemConfigurationPropertyFromDb(prop,
+                    existingConfig.getPropertyValue(), true);
+                //we need to unmask the new value so that we can compare for changes. only after that can we transform
+                //it into the DB format.
+                value = unmask(prop, value, existingValue);
 
                 //also for oracle, treat null and empty string as the same.
                 if ((isEmpty(existingValue) && !isEmpty(value))
@@ -268,7 +345,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                     }
 
                     //transform to the database-specific format
-                    value = transformSystemConfigurationProperty(prop, value, false);
+                    value = transformSystemConfigurationPropertyToDb(prop, value, existingValue);
 
                     existingConfig.setPropertyValue(value);
                     entityManager.merge(existingConfig);
@@ -314,7 +391,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             if (prop != null) {
                 //this is a legacy method that supplies values in the DB-specific format.
                 //we therefore have to transform the values as if they came from the database.
-                String value = transformSystemConfigurationProperty(prop, e.getValue(), true);
+                String value = transformSystemConfigurationPropertyFromDb(prop, e.getValue(), false);
                 e.setValue(value);
             }
         }
@@ -336,25 +413,27 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private DriftServerPluginManager getDriftServerPluginManager() {
         MasterServerPluginContainer masterPC = LookupUtil.getServerPluginService().getMasterPluginContainer();
         if (masterPC == null) {
-            log.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
+            LOG.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
             return null;
         }
 
         DriftServerPluginContainer pc = masterPC.getPluginContainerByClass(DriftServerPluginContainer.class);
         if (pc == null) {
-            log.warn(DriftServerPluginContainer.class + " has not been loaded by the " + masterPC.getClass() + " yet");
+            LOG.warn(DriftServerPluginContainer.class + " has not been loaded by the " + masterPC.getClass() + " yet");
             return null;
         }
 
         return (DriftServerPluginManager) pc.getPluginManager();
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void loadSystemConfigurationCacheInNewTx() {
         // this is used by our timer, so any exceptions coming out here doesn't throw away our timer
         loadSystemConfigurationCache();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void loadSystemConfigurationCache() {
         // After this is done, the cachedSystemSettings contains the latest config.
@@ -366,7 +445,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         for (SystemConfiguration config : configs) {
             SystemSetting prop = SystemSetting.getByInternalName(config.getPropertyKey());
             if (prop == null) {
-                log.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
+                LOG.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
                     + "].");
                 continue;
             }
@@ -375,11 +454,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
                 // if there isn't even a persisted default, just use an empty string.
                 String defaultValue = config.getDefaultPropertyValue();
-                defaultValue = transformSystemConfigurationProperty(prop, defaultValue, true);
+                defaultValue = transformSystemConfigurationPropertyFromDb(prop, defaultValue, true);
                 settings.put(prop, (defaultValue != null) ? defaultValue : "");
             } else {
                 String value = config.getPropertyValue();
-                value = transformSystemConfigurationProperty(prop, value, true);
+                value = transformSystemConfigurationPropertyFromDb(prop, value, true);
                 settings.put(prop, value);
             }
         }
@@ -389,8 +468,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         cachedSystemSettings = settings;
     }
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Override
     @Deprecated
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception {
         Map<String, String> map = toMap(properties);
 
@@ -401,6 +481,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         setSystemSettings(settings, skipValidation, false);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void validateSystemConfiguration(Subject subject, Properties properties)
         throws InvalidSystemConfigurationException {
@@ -419,55 +500,91 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     /**
      * Call this to transform a system setting to a more appropriate value.
+     * Importantly, this (de)obfuscates the password fields as they go from and to the DB. We use the
+     * @{link PicketBoxObfuscator} so that people are able encode their passwords in the system settings export files
+     * using the "rhq-encode-password.sh" script.
      */
-    private String transformSystemConfigurationProperty(SystemSetting prop, String value, boolean fromDb) {
-        if (fromDb) {
-            // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
-            switch (prop) {
-            case LDAP_BASED_JAAS_PROVIDER:
-                if (RHQConstants.JDBCJAASProvider.equals(value)) {
-                    return Boolean.toString(false);
-                } else if (RHQConstants.LDAPJAASProvider.equals(value)) {
-                    return Boolean.toString(true);
-                }
-                break;
-            case USE_SSL_FOR_LDAP:
-                if (RHQConstants.LDAP_PROTOCOL_SECURED.equals(value)) {
-                    return Boolean.toString(true);
+    private String transformSystemConfigurationPropertyFromDb(SystemSetting prop, String value, boolean unobfuscate) {
+        // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
+        switch (prop) {
+        case LDAP_BASED_JAAS_PROVIDER:
+            if (RHQConstants.JDBCJAASProvider.equals(value)) {
+                return Boolean.toString(false);
+            } else if (RHQConstants.LDAPJAASProvider.equals(value)) {
+                return Boolean.toString(true);
+            } else {
+                return value;
+            }
+        case USE_SSL_FOR_LDAP:
+            if (RHQConstants.LDAP_PROTOCOL_SECURED.equals(value)) {
+                return Boolean.toString(true);
+            } else {
+                return Boolean.toString(false);
+            }
+        default:
+            switch(prop.getType()) {
+            case BOOLEAN:
+                if ("0".equals(value)) {
+                    return Boolean.FALSE.toString();
+                } else if ("1".equals(value)) {
+                    return Boolean.TRUE.toString();
                 } else {
-                    return Boolean.toString(false);
+                    return value;
+                }
+            case PASSWORD:
+                if (unobfuscate && value != null && value.trim().length() > 0) {
+                    return PicketBoxObfuscator.decode(value);
+                } else {
+                    return value;
                 }
             default:
-                if (prop.getType() == PropertySimpleType.BOOLEAN) {
-                    if ("0".equals(value)) {
-                        return Boolean.FALSE.toString();
-                    } else if ("1".equals(value)) {
-                        return Boolean.TRUE.toString();
-                    }
-                }
-            }
-        } else {
-            //toDB
-            //the 0,1 -> true false scenario is no problem here, because the values are stored
-            //as string anyway (so no conversion is done). I assume the above is a historical
-            //code that could be safely eliminated.
-            switch (prop) {
-            case LDAP_BASED_JAAS_PROVIDER:
-                if (Boolean.parseBoolean(value)) {
-                    return RHQConstants.LDAPJAASProvider;
-                } else {
-                    return RHQConstants.JDBCJAASProvider;
-                }
-            case USE_SSL_FOR_LDAP:
-                if (Boolean.parseBoolean(value)) {
-                    return RHQConstants.LDAP_PROTOCOL_SECURED;
-                } else {
-                    return RHQConstants.LDAP_PROTOCOL_UNSECURED;
-                }
+                return value;
             }
         }
+    }
 
-        return value;
+    /**
+     * Call this to transform a system setting to a more appropriate value.
+     * Importantly, this (de)obfuscates the password fields as they go from and to the DB. We use the
+     * @{link PicketBoxObfuscator} so that people are able encode their passwords in the system settings export files
+     * using the "rhq-encode-password.sh" script.
+     */
+    private String transformSystemConfigurationPropertyToDb(SystemSetting prop, String newValue, String oldValue) {
+        //the 0,1 -> true false scenario is no problem here, because the values are stored
+        //as string anyway (so no conversion is done). I assume the above is a historical
+        //code that could be safely eliminated.
+        switch (prop) {
+        case LDAP_BASED_JAAS_PROVIDER:
+            if (Boolean.parseBoolean(newValue)) {
+                return RHQConstants.LDAPJAASProvider;
+            } else {
+                return RHQConstants.JDBCJAASProvider;
+            }
+        case USE_SSL_FOR_LDAP:
+            if (Boolean.parseBoolean(newValue)) {
+                return RHQConstants.LDAP_PROTOCOL_SECURED;
+            } else {
+                return RHQConstants.LDAP_PROTOCOL_UNSECURED;
+            }
+        default:
+            if (prop.getType() == PropertySimpleType.PASSWORD && newValue != null) {
+                if (PropertySimple.MASKED_VALUE.equals(newValue)) {
+                    return oldValue;
+                } else {
+                    return PicketBoxObfuscator.encode(newValue);
+                }
+            } else {
+                return newValue;
+            }
+        }
+    }
+
+    private String unmask(SystemSetting prop, String newValue, String currentValue) {
+        if (prop.getType() == PropertySimpleType.PASSWORD && PropertySimple.MASKED_VALUE.equals(newValue)) {
+            newValue = currentValue;
+        }
+
+        return newValue;
     }
 
     /**
@@ -504,10 +621,12 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return;
     }
 
+    @Override
     public void enableHibernateStatistics() {
         PersistenceUtility.enableHibernateStatistics(this.entityManager, ManagementFactory.getPlatformMBeanServer());
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void reconfigureSystem(Subject whoami) {
         try {
@@ -521,6 +640,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long analyze(Subject whoami) {
@@ -536,7 +656,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             long duration = doCommand(dbtype, conn, SQL_ANALYZE, null);
             return duration;
         } catch (Exception e) {
-            log.error("Error analyzing database", e);
+            LOG.error("Error analyzing database", e);
             throw new RuntimeException("Error analyzing database", e);
         } finally {
             if (dbtype != null) {
@@ -545,6 +665,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long reindex(Subject whoami) {
@@ -568,7 +689,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
             return duration;
         } catch (Exception e) {
-            log.error("Error reindexing database", e);
+            LOG.error("Error reindexing database", e);
             throw new RuntimeException("Error reindexing database", e);
         } finally {
             if (dbtype != null) {
@@ -577,12 +698,14 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long vacuum(Subject whoami) {
         return vacuum(whoami, null);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long vacuum(Subject whoami, String[] tableNames) {
@@ -608,7 +731,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
             return duration;
         } catch (Exception e) {
-            log.error("Error vacuuming database: " + e.getMessage(), e);
+            LOG.error("Error vacuuming database: " + e.getMessage(), e);
             return duration;
         } finally {
             if (dbtype != null) {
@@ -617,6 +740,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long vacuumAppdef(Subject whoami) {
@@ -633,8 +757,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         command = command.replace("{0}", table);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Execute command: " + command);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Execute command: " + command);
         }
 
         try {
@@ -642,7 +766,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             stmt.execute(command);
             return watch.getElapsed();
         } catch (SQLException e) {
-            log.error("Error in command: " + command + ": " + e, e);
+            LOG.error("Error in command: " + command + ": " + e, e);
             return watch.getElapsed();
         } finally {
             dbtype.closeStatement(stmt);
@@ -653,6 +777,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * Ensures the installer is no longer deployed.
      * @deprecated
      */
+    @Override
     @Deprecated
     public void undeployInstaller() {
         // No need for this anymore - the new RHQ installer in AS7 detects it already installed things and will point the user to login screen
@@ -669,10 +794,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return;
     }
 
+    @Override
     public boolean isDebugModeEnabled() {
         try {
-            Subject su = this.subjectManager.getOverlord();
-            String setting = getSystemSettings(su).get(SystemSetting.DEBUG_MODE_ENABLED);
+            String setting = getUnmaskedSystemSettings(true).get(SystemSetting.DEBUG_MODE_ENABLED);
             if (setting == null) {
                 setting = "false";
             }
@@ -682,10 +807,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @Override
     public boolean isExperimentalFeaturesEnabled() {
         try {
-            Subject su = this.subjectManager.getOverlord();
-            String setting = getSystemSettings(su).get(SystemSetting.EXPERIMENTAL_FEATURES_ENABLED);
+            String setting = getUnmaskedSystemSettings(true).get(SystemSetting.EXPERIMENTAL_FEATURES_ENABLED);
             if (setting == null) {
                 setting = "false";
             }
@@ -695,9 +820,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    @Override
     public boolean isLdapAuthorizationEnabled() {
-        Subject su = this.subjectManager.getOverlord();
-        SystemSettings settings = getSystemSettings(su);
+        SystemSettings settings = getUnmaskedSystemSettings(true);
 
         String ldapAuthValue = settings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
 
@@ -711,6 +836,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 .trim().length() > 0));
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ServerDetails getServerDetails(Subject subject) {
         CoreServerMBean coreServerMBean = LookupUtil.getCoreServer();
@@ -739,6 +865,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return serverDetails;
     }
 
+    @Override
     public ProductInfo getProductInfo(Subject subject) {
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         ProductInfo productInfo = coreServer.getProductInfo();

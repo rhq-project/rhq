@@ -38,6 +38,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
+import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
@@ -521,32 +523,42 @@ public class InstallerServiceImpl implements InstallerService {
         // what's currently in the server properties file, and then continue with storage schema setup
         Map<String, String> storageProperties = ServerInstallUtil.fetchStorageClusterSettings(serverProperties,
             clearTextDbPassword);
-        String storageUsernameSetting = storageProperties.get(ServerProperties.PROP_STORAGE_USERNAME);
-        String storagePasswordSetting = storageProperties.get(ServerProperties.PROP_STORAGE_PASSWORD);
-        if (!(StringUtil.isBlank(storageUsernameSetting) || storageUsernameSetting.equals(UNSET))) {
-            serverProperties.put(ServerProperties.PROP_STORAGE_USERNAME, storageUsernameSetting);
-        }
-        if (!(StringUtil.isBlank(storagePasswordSetting) || storagePasswordSetting.equals(UNSET))) {
-            serverProperties.put(ServerProperties.PROP_STORAGE_PASSWORD, storagePasswordSetting);
+        String[] properties = new String[] { ServerProperties.PROP_STORAGE_USERNAME,
+            ServerProperties.PROP_STORAGE_PASSWORD, ServerProperties.PROP_STORAGE_NODES,
+            ServerProperties.PROP_STORAGE_GOSSIP_PORT, ServerProperties.PROP_STORAGE_CQL_PORT };
+        for (String property : properties) {
+            if (!StringUtil.isBlank(storageProperties.get(property))
+                && !storageProperties.get(property).equals("UNSET")) {
+                serverProperties.put(property, storageProperties.get(property));
+            }
         }
 
         SchemaManager storageNodeSchemaManager = null;
         try {
             storageNodeSchemaManager = createStorageNodeSchemaManager(serverProperties);
+
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
-                    log("Cassandra schema exists but installer was told to overwrite it - a the existing  schema will be "
+                    log("Storage cluster schema exists but installer was told to overwrite it - a the existing  schema will be "
                         + "created now.");
                     storageNodeSchemaManager.drop();
                 }
-                log("Install RHQ schema along with updates to Cassandra.");
-                storageNodeSchemaManager.install();
-                storageNodeSchemaManager.updateTopology();
+
+                try{
+                    storageNodeSchemaManager.checkCompatibility();
+                }catch(SchemaNotInstalledException e1){
+                    log("Install RHQ schema along with updates to storage nodes.");
+                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.updateTopology();
+                } catch (InstalledSchemaTooOldException e2) {
+                    log("Install RHQ schema updates to storage cluster.");
+                    storageNodeSchemaManager.install();
+                }
             } else {
-                log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
+                log("Ignoring storage cluster schema - installer will assume it exists and is already up-to-date.");
             }
         } catch (Exception e) {
-            String msg = "Could not complete Cassandra schema installation: " + ThrowableUtil.getRootMessage(e);
+            String msg = "Could not complete storage cluster schema installation: " + ThrowableUtil.getRootMessage(e);
             log.error(msg, e);
             throw new Exception(msg, e);
         }
@@ -1179,7 +1191,7 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
-    private List<StorageNode> parseNodeInformation(HashMap<String, String> serverProps) {
+    private List<StorageNode> parseNodeInformation(Map<String, String> serverProps) {
         String[] nodes = serverProps.get(ServerProperties.PROP_STORAGE_NODES).split(",");
         String cqlPort = serverProps.get(ServerProperties.PROP_STORAGE_CQL_PORT);
 
@@ -1194,7 +1206,7 @@ public class InstallerServiceImpl implements InstallerService {
         return parsedNodes;
     }
 
-    private SchemaManager createStorageNodeSchemaManager(HashMap<String, String> serverProps) {
+    private SchemaManager createStorageNodeSchemaManager(Map<String, String> serverProps) {
         String username = serverProps.get(ServerProperties.PROP_STORAGE_USERNAME);
         String password = serverProps.get(ServerProperties.PROP_STORAGE_PASSWORD);
 

@@ -202,6 +202,13 @@ public class ServerProperties {
         OPTIONAL_PROPERTIES.add(PROP_CONNECTOR_BIND_PORT);
     }
 
+    // this list contains all the non-STRING properties that can be set to "unused" (for oracle support) 
+    private static final Set<String> UNUSED_PROPERTIES;
+    static {
+        UNUSED_PROPERTIES = new HashSet<String>();
+        UNUSED_PROPERTIES.add(PROP_DATABASE_PORT);
+    }
+
     public static final Set<String> CLIENT_AUTH_MODES;
     static {
         CLIENT_AUTH_MODES = new HashSet<String>();
@@ -272,6 +279,9 @@ public class ServerProperties {
             if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
                 continue;
             }
+            if ("unused".equalsIgnoreCase(val) && UNUSED_PROPERTIES.contains(name)) {
+                continue;
+            }
             if (!("true".equals(val) || "false".equals(val))) {
                 dataErrors.append("[" + name + "] must exist and be set 'true' or 'false' : [" + val + "]\n");
             }
@@ -280,6 +290,9 @@ public class ServerProperties {
         for (String name : ServerProperties.INTEGER_PROPERTIES) {
             String val = serverProperties.get(name);
             if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
+                continue;
+            }
+            if ("unused".equalsIgnoreCase(val) && UNUSED_PROPERTIES.contains(name)) {
                 continue;
             }
             try {

@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleNotFoundException;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -59,7 +60,8 @@ public class BundleDistributionFileUploadServlet extends FileUploadServlet {
             writeExceptionResponse(response, "BundleNotFoundException " + e.getMessage(), e); // clients will look for this string!
             return;
         } catch (Exception e) {
-            writeExceptionResponse(response, "Failed to upload bundle distribution file", e); // clients will look for this string!
+            writeExceptionResponse(response,
+                "Failed to upload bundle distribution file : " + ThrowableUtil.getAllMessages(e), e);
             return;
         }
 

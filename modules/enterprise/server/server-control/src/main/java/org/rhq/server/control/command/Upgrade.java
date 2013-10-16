@@ -512,6 +512,14 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
+        // for oracle, ensure the unused properties are set to unused otherwise prop file validation may fail
+        String dbType = oldServerProps.getProperty("rhq.server.database.type-mapping");
+        if (null != dbType && dbType.toLowerCase().contains("oracle")) {
+            oldServerProps.setProperty("rhq.server.database.server-name", "unused");
+            oldServerProps.setProperty("rhq.server.database.port", "unused");
+            oldServerProps.setProperty("rhq.server.database.db-name", "unused");
+        }
+
         // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = new File(getBaseDir(), "bin/rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);

@@ -24,6 +24,7 @@
        type="integer"/>
 
       <rhq:deployment-unit name="appserver"
+                           compliance="full"
                            preinstallTarget="appserver-preinstall" postinstallTarget="appserver-postinstall">
         <rhq:system-service name="jbossas-petstore" scriptFile="jbossas-init-script"
                      configFile="jbossas-init-config" overwriteScript="true"

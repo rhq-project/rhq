@@ -34,6 +34,7 @@ import com.datastax.driver.core.ProtocolOptions.Compression;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
@@ -184,6 +185,8 @@ abstract class AbstractManager {
                 return !resultSet.all().isEmpty();
             }
             return false;
+        } catch (AuthenticationException exp) {
+            throw exp;
         } catch (Exception e) {
             log.error(e);
             throw new RuntimeException(e);

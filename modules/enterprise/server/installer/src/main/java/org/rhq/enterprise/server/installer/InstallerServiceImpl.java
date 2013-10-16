@@ -32,6 +32,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.datastax.driver.core.exceptions.AuthenticationException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -546,11 +548,15 @@ public class InstallerServiceImpl implements InstallerService {
 
                 try{
                     storageNodeSchemaManager.checkCompatibility();
-                }catch(SchemaNotInstalledException e1){
+                } catch (AuthenticationException e1) {
                     log("Install RHQ schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install();
                     storageNodeSchemaManager.updateTopology();
-                } catch (InstalledSchemaTooOldException e2) {
+                } catch (SchemaNotInstalledException e2) {
+                    log("Install RHQ schema along with updates to storage nodes.");
+                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.updateTopology();
+                } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
                     storageNodeSchemaManager.install();
                 }

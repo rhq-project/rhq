@@ -20,20 +20,16 @@ package org.rhq.coregui.client.components;
 
 import com.smartgwt.client.Version;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.HTMLPane;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.Messages;
-import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.PopupWindow;
 
 /**
  * The "About RHQ" modal window.
@@ -41,75 +37,70 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
  * @author Ian Springer
  * @author Joseph Marques
  */
-public class AboutModalWindow extends Window {
+public class AboutModalWindow extends PopupWindow {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
-    public AboutModalWindow() {
-        super();
-
-        setWidth(300);
-        setHeight(300);
-        setOverflow(Overflow.VISIBLE);
-        setShowMinimizeButton(false);
-        setIsModal(true);
-        setShowModalMask(true);
-        setCanDragResize(false);
-        setCanDragReposition(false);
-        setAlign(VerticalAlignment.TOP);
-        centerInPage();
+    public AboutModalWindow(ProductInfo productInfo) {
+        super(buildAboutCanvas(productInfo));
+        setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
+        setHeight(100);
+        setWidth(100);
+        setAutoSize(true);
     }
 
-    @Override
-    protected void onInit() {
-        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+    private static Canvas buildAboutCanvas(ProductInfo productInfo) {
 
-        setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
+        DynamicForm form = new DynamicForm();
+        form.setPadding(10);
 
-        EnhancedVLayout contentPane = new EnhancedVLayout();
-        contentPane.setPadding(10);
+        StaticTextItem logoItem = new StaticTextItem("logo");
+        logoItem.setValue("<img src=\"" + ImageManager.getFullImagePath("header/rhq_logo_28px.png") + "\"/>");
+        logoItem.setHeight(28);
+        logoItem.setShowTitle(false);
+        logoItem.setColSpan(2);
+        logoItem.setWrap(false);
+        logoItem.setWrapTitle(false);
+        logoItem.setAlign(Alignment.CENTER);
 
-        // TODO (ips, 09/06/11): Convert this raw HTML to SmartGWT widgets.
-        HTMLPane htmlPane = new HTMLPane();
-        String html = "<span class=\"DisplaySubhead\">\n" + "  <a href=\"" + productInfo.getUrl() + "\" title=\""
-            + productInfo.getFullName() + " " + productInfo.getUrl() + "\" target=\"_blank\">"
-            + productInfo.getFullName() + "</a>\n" + "</span><br/>\n" + "<span class=\"DisplayLabel\">"
-            + MSG.view_aboutBox_version() + " " + productInfo.getVersion() + "</span><br/>\n"
-            + "<span class=\"DisplayLabel\">" + MSG.view_aboutBox_buildNumber() + " " + productInfo.getBuildNumber()
-            + "</span><p/>\n" + "<span class=\"DisplayLabel\">GWT " + MSG.common_title_version() + ": "
-            + MSG.common_buildInfo_gwtVersion() + "</span><br/>\n" + "<span class=\"DisplayLabel\">SmartGWT "
-            + MSG.common_title_version() + ": " + Version.getVersion() + "</span><br/>\n"
-            + "<p><a href=\"http://jboss.org/\" title=\"JBoss " + MSG.view_aboutBox_homepage() + "\">\n"
-            + "  <img height=\"55\" alt=\"" + MSG.view_aboutBox_jbossByRedHat()
-            + "\" src=\"/images/jboss_logo.png\">\n" + "</a></p>\n" + "<div style=\"top-margin: 10px\">"
-            + MSG.view_aboutBox_allRightsReserved() + "</div>\n";
-        htmlPane.setContents(html);
-        htmlPane.setHeight(220);
-        contentPane.addMember(htmlPane);
+        LinkItem productUrl = new LinkItem("url");
+        productUrl.setValue(productInfo.getUrl());
+        productUrl.setLinkTitle(productInfo.getUrl());
+        productUrl.setTitle(productInfo.getFullName());
+        productUrl.setTarget("_blank");
+        productUrl.setWrap(false);
+        productUrl.setWrapTitle(false);
 
-        EnhancedHLayout buttonBar = new EnhancedHLayout();
-        buttonBar.setHeight(30);
-        buttonBar.setAlign(Alignment.RIGHT);
+        StaticTextItem version = new StaticTextItem("version", MSG.view_aboutBox_version());
+        version.setValue(productInfo.getVersion());
+        version.setWrap(false);
+        version.setWrapTitle(false);
 
-        EnhancedIButton closeButton = new EnhancedIButton(MSG.common_button_close());
-        closeButton.setShowRollOver(true);
-        closeButton.setShowDown(true);
-        closeButton.setWidth(60);
-        closeButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                hide();
-            }
-        });
-        buttonBar.addMember(closeButton);
+        StaticTextItem buildNumber = new StaticTextItem("buildnumber", MSG.view_aboutBox_buildNumber());
+        buildNumber.setValue(productInfo.getBuildNumber());
+        buildNumber.setWrap(false);
+        buildNumber.setWrapTitle(false);
 
-        VLayout bottom = new VLayout();
-        bottom.setAlign(VerticalAlignment.BOTTOM);
-        bottom.addMember(buttonBar);
-        contentPane.addMember(bottom);
+        StaticTextItem gwtVersion = new StaticTextItem("gwtversion", "GWT " + MSG.common_title_version());
+        gwtVersion.setValue(MSG.common_buildInfo_gwtVersion());
+        gwtVersion.setWrap(false);
+        gwtVersion.setWrapTitle(false);
 
-        // NOTE: Since this is a subclass of Window, we MUST use addItem(), rather than addMember() from the
-        //       Layout class.
-        addItem(contentPane);
+        StaticTextItem smartGwtVersion = new StaticTextItem("smartgwtversion", "SmartGWT " + MSG.common_title_version());
+        smartGwtVersion.setValue(Version.getVersion());
+        smartGwtVersion.setWrap(false);
+        smartGwtVersion.setWrapTitle(false);
+
+        StaticTextItem allRightsReserved = new StaticTextItem();
+        allRightsReserved.setValue(MSG.view_aboutBox_allRightsReserved());
+        allRightsReserved.setShowTitle(false);
+        allRightsReserved.setColSpan(2);
+        allRightsReserved.setWrap(false);
+        allRightsReserved.setWrapTitle(false);
+        allRightsReserved.setAlign(Alignment.CENTER);
+
+        form.setItems(logoItem, productUrl, version, buildNumber, gwtVersion, smartGwtVersion, allRightsReserved);
+        return form;
     }
 
 }

@@ -123,9 +123,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                     new AsyncCallback<Map<Integer, Integer>>() {
                         @Override
                         public void onFailure(Throwable caught) {
-                            if (UserSessionManager.isLoggedOut()) {
-                                stopRefreshing();
-                            } else {
+                            if (!UserSessionManager.isLoggedOut()) {
                                 CoreGUI.getErrorHandler().handleError(
                                     "Unable to render storage node alert view: " + caught.getMessage(), caught);
                             }
@@ -221,19 +219,17 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
         isRefreshing = true;
         GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
             @Override
-                public void onSuccess(Integer result) {
-                    Log.info("Running the task for fetching the number of ALL unack alerts...");
-                    alerts.setTitle(StorageNodeAdminView.getAlertsString(alerts.getTitle(), result));
-                    isRefreshing = false;
-                }
+            public void onSuccess(Integer result) {
+                Log.info("Running the task for fetching the number of ALL unack alerts...");
+                alerts.setTitle(StorageNodeAdminView.getAlertsString(alerts.getTitle(), result));
+                isRefreshing = false;
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    if (UserSessionManager.isLoggedOut()) {
-                        stopRefreshing();
-                    }
+            @Override
+            public void onFailure(Throwable caught) {
+                if (!UserSessionManager.isLoggedOut()) {
                     Log.error("Unable to fetch the unack alerts: " + caught.getMessage());
-                    isRefreshing = false;
+                }
             }
         });
     }

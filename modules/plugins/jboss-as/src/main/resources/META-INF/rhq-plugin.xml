@@ -1157,7 +1157,7 @@
                 </c:group>
 
                 <c:group name="securityConf" displayName="Security Role Configurations">
-                   <c:list-property name="SecurityConf" max="4" min="2"
+                   <c:list-property name="SecurityConf" max="4"
                                     displayName="Security Configurations"
                                     description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
                       <c:map-property name="role"
@@ -1499,7 +1499,7 @@
                 </c:group>
 
                 <c:group name="securityConf" displayName="Security Role Configurations">
-                   <c:list-property name="SecurityConf" max="4" min="2"
+                   <c:list-property name="SecurityConf" max="4"
                                     displayName="Security Configurations"
                                     description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
                       <c:map-property name="role"
@@ -1722,7 +1722,7 @@
                </c:group>
 
                <c:group name="securityConf" displayName="Security Role Configurations">
-                  <c:list-property name="SecurityConfig" max="4" min="2"
+                  <c:list-property name="SecurityConfig" max="4"
                                    displayName="Security Configurations"
                                    description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
                      <c:map-property name="role"
@@ -1950,7 +1950,7 @@
                </c:group>
 
                <c:group name="securityConf" displayName="Security Role Configurations">
-                  <c:list-property name="SecurityConfig" max="4" min="2"
+                  <c:list-property name="SecurityConfig" max="4"
                                    displayName="Security Configurations"
                                    description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
                      <c:map-property name="role"

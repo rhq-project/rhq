@@ -1886,7 +1886,7 @@
             </c:constraint>
           </c:simple-property>
 
-          <c:list-property name="securityConfig" max="4" min="2" displayName="Security Configurations"
+          <c:list-property name="securityConfig" max="4" displayName="Security Configurations"
             description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
             <c:map-property name="role" displayName="Security Configuration Attributes"
               description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
@@ -2203,7 +2203,7 @@
             </c:constraint>
           </c:simple-property>
 
-          <c:list-property name="securityConfig" max="4" min="2" displayName="Security Configurations"
+          <c:list-property name="securityConfig" max="4" displayName="Security Configurations"
             description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
             <c:map-property name="role" displayName="Security Configuration Attributes"
               description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">

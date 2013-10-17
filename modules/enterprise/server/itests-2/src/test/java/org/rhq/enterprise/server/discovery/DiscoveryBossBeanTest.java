@@ -13,14 +13,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.discovery;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,6 +31,7 @@ import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -37,6 +40,8 @@ import java.util.UUID;
 import javax.ejb.EJBException;
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
@@ -64,6 +69,7 @@ import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFly
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -75,6 +81,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
@@ -82,6 +89,7 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
  * A unit test for {@link DiscoveryBossBean}.
  */
 public class DiscoveryBossBeanTest extends AbstractEJB3Test {
+    private static final Log LOG = LogFactory.getLog(DiscoveryBossBeanTest.class);
 
     private DiscoveryBossLocal discoveryBoss;
 
@@ -501,6 +509,70 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assertEquals(InventoryStatus.COMMITTED, storageNode.getInventoryStatus());
     }
 
+    @Test(groups = "integration.ejb3")
+    public void testPersistUserSuppliedResourceNameOnCreatedResource() throws Exception {
+
+        // First inventory the platform and the server
+        InventoryReport inventoryReport = new InventoryReport(agent);
+
+        Resource platform = new Resource(prefix("userPlatform"), prefix("platform"), platformType);
+        platform.setUuid(String.valueOf(new Random().nextInt()));
+        Resource server = new Resource(prefix("userServer"), prefix("server"), serverType);
+        server.setUuid(String.valueOf(new Random().nextInt()));
+        platform.addChildResource(server);
+
+        inventoryReport.addAddedRoot(platform);
+
+        MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assertNotNull(results);
+        assertNull("nothing should have been ignored in this test", results.getIgnoredResourceTypes());
+        final ResourceSyncInfo firstDiscoverySyncInfo = results.getResourceSyncInfo();
+        assertNotNull(firstDiscoverySyncInfo);
+
+        // Then simulate a create resource request
+        final String userSuppliedResourceName = prefix("User Supplied Resource Name");
+        final String newResourceKey = prefix("Created Resource Key");
+        ResourceSyncInfo serverSyncInfo = firstDiscoverySyncInfo.getChildSyncInfos().iterator().next();
+        final int serverResourceId = serverSyncInfo.getId();
+
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                Resource serverResource = getEntityManager().find(Resource.class, serverResourceId);
+                CreateResourceHistory createResourceHistory = new CreateResourceHistory(serverResource, serviceType1,
+                    subjectManager.getOverlord().getName(), new Configuration());
+                createResourceHistory.setCreatedResourceName(userSuppliedResourceName);
+                createResourceHistory.setNewResourceKey(newResourceKey);
+                createResourceHistory.setStatus(SUCCESS);
+                getEntityManager().persist(createResourceHistory);
+                serverResource.addCreateChildResourceHistory(createResourceHistory);
+                getEntityManager().flush();
+            }
+        });
+
+        // Eventually inventory the newly discovered service
+
+        inventoryReport = new InventoryReport(agent);
+        Resource service1 = new Resource(newResourceKey, prefix("Plugin Computed Resource Name"), serviceType1);
+        service1.setUuid(String.valueOf(new Random().nextInt()));
+        server.setId(serverResourceId);
+        server.addChildResource(service1);
+        inventoryReport.addAddedRoot(server);
+
+        results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assertNotNull(results);
+        assertNull("nothing should have been ignored in this test", results.getIgnoredResourceTypes());
+        ResourceSyncInfo secondDiscoverySyncInfo = results.getResourceSyncInfo();
+        assertNotNull(secondDiscoverySyncInfo);
+
+        // Check that the resource ends with the user supplied name in inventory
+
+        serverSyncInfo = secondDiscoverySyncInfo.getChildSyncInfos().iterator().next();
+        ResourceSyncInfo service1SyncInfo = serverSyncInfo.getChildSyncInfos().iterator().next();
+        Resource service1Resource = getEntityManager().find(Resource.class, service1SyncInfo.getId());
+        assertEquals(userSuppliedResourceName, service1Resource.getName());
+    }
+
     /**
      * Use this to fake like your remoting objects. Can be used to keep your own copy of objects locally transient.
      *
@@ -513,7 +585,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(object);
-            System.out.println("****** Size of serialized object: " + baos.size());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("****** Size of serialized object: " + baos.size());
+            }
 
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
             Object transfered = ois.readObject();
@@ -559,14 +633,22 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 if (storageNode != null) {
                     storageNode.setResource(null);
                 }
-                System.out.println("Deleting resource " + res);
+                for (Iterator<CreateResourceHistory> historyIterator = res.getCreateChildResourceRequests().iterator(); historyIterator
+                    .hasNext();) {
+                    CreateResourceHistory history = historyIterator.next();
+                    historyIterator.remove();
+                    em.remove(history);
+                }
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Deleting resource " + res);
+                }
                 ResourceTreeHelper.deleteResource(em, res);
             }
             em.flush();
             getTransactionManager().commit();
         } catch (Exception e) {
             try {
-                System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
+                LOG.error("CANNOT CLEAN UP TEST: Cause: " + e);
                 getTransactionManager().rollback();
             } catch (Exception ignore) {
             }

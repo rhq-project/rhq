@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.discovery;
 
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
+import static org.rhq.core.domain.util.PageOrdering.DESC;
+import static org.rhq.core.util.StringUtil.isBlank;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,6 +76,7 @@ import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -80,6 +85,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.server.PersistenceUtility;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -1199,12 +1205,27 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
         }
 
+        ResourceType resourceType = resource.getResourceType();
+
+        if (resourceType.isCreatable()) {
+            // If a newly discovered resource is of a creatable type, search for a matching CreateResourceHistory.
+            // If it exists, then this resource comes from the resource creation process and we must give it the name
+            // initially supplied by the user.
+            CreateResourceHistory matchingHistory = findMatchingCreateResourceHistory(parentId,
+                resource.getResourceKey());
+            if (matchingHistory != null) {
+                String userSuppliedResourceName = matchingHistory.getCreatedResourceName();
+                if (!isBlank(userSuppliedResourceName) && !userSuppliedResourceName.equals(resource.getName())) {
+                    resource.setName(userSuppliedResourceName);
+                }
+            }
+        }
+
         entityManager.persist(resource);
 
         // Add a product version entry for the new resource.
         if ((resource.getVersion() != null) && (resource.getVersion().length() > 0)) {
-            ResourceType type = resource.getResourceType();
-            ProductVersion productVersion = productVersionManager.addProductVersion(type, resource.getVersion());
+            ProductVersion productVersion = productVersionManager.addProductVersion(resourceType, resource.getVersion());
             resource.setProductVersion(productVersion);
         }
 
@@ -1220,6 +1241,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (null != parentResource) {
             groupManager.updateImplicitGroupMembership(overlord, resource);
         }
+    }
+
+    private CreateResourceHistory findMatchingCreateResourceHistory(Integer parentId, String resourceKey) {
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            CreateResourceHistory.QUERY_FIND_BY_CHILD_RESOURCE_KEY, new PageControl(0, 1, new OrderingField("mtime",
+                DESC)));
+        query.setParameter("parentResourceId", parentId);
+        query.setParameter("newResourceKey", resourceKey);
+        Iterator iterator = query.getResultList().iterator();
+        if (iterator.hasNext()) {
+            CreateResourceHistory next = (CreateResourceHistory) iterator.next();
+            if (next.getStatus() == SUCCESS) {
+                return next;
+            }
+        }
+        return null;
     }
 
     // Resources are set to either NEW or COMMITTED

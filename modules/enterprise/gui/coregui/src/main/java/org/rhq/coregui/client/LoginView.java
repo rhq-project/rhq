@@ -578,5 +578,13 @@ public class LoginView extends Canvas {
         }
         loginButton.setDisabled(false);
     }
+    
+    /**
+     * Call this method to find out if the login dialog is shown
+     * @return true if it is shown
+     */
+    public static boolean isLoginShowing() {
+        return loginShowing;
+    }
 
 }

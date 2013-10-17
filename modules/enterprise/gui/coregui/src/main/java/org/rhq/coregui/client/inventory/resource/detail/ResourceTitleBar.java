@@ -182,9 +182,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
                     public void onFailure(Throwable caught) {
                         pluginErrors.setVisible(false);
 
-                        if (UserSessionManager.isLoggedOut()) {
-                            availAndErrorRefresher.stop();
-                        } else {
+                        if (!UserSessionManager.isLoggedOut()) {
                             CoreGUI.getErrorHandler().handleError(
                                 MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
                                     .getId())), caught);
@@ -219,9 +217,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
                     public void onFailure(Throwable caught) {
                         availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
 
-                        if (UserSessionManager.isLoggedOut()) {
-                            availAndErrorRefresher.stop();
-                        } else {
+                        if (!UserSessionManager.isLoggedOut()) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
                         }
 

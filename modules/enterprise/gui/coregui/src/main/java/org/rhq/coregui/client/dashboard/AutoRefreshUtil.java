@@ -22,6 +22,7 @@ package org.rhq.coregui.client.dashboard;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.coregui.client.LoginView;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.MeasurementUtility;
@@ -57,9 +58,10 @@ public class AutoRefreshUtil {
 
                     // if the autoRefresh component is already refreshing or is not currently on screen then
                     // don't bother doing the work. this protects against unnecessary or unwanted db queries
-                    // being performed in the background.
-                    if (!autoRefresh.isRefreshing() && autoRefreshCanvas.isDrawn()
-                        && autoRefreshCanvas.isVisible()) {
+                    // being performed in the background. Also, avoid refresh if the session has expired and we're
+                    // waiting for the user to login and refresh his session.
+                    if (!autoRefresh.isRefreshing() && autoRefreshCanvas.isDrawn() && autoRefreshCanvas.isVisible()
+                        && !autoRefreshCanvas.isDisabled() && !LoginView.isLoginShowing()) {
 
                         autoRefresh.refresh();
                     }

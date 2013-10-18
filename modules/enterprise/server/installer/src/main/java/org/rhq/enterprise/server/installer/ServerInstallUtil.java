@@ -184,6 +184,8 @@ public class ServerInstallUtil {
         String val = buildExpression(ServerProperties.PROP_LOG_LEVEL, serverProperties, true);
         client.setLoggerLevel("org.rhq", val);
         LOG.info("Logging category org.rhq set to [" + val + "]");
+
+        client.setLoggerLevel("org.jboss.as.config", "INFO"); // BZ 1004730
     }
 
     /**

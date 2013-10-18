@@ -348,6 +348,10 @@
         <available file="${jboss.conf.dir}/rhq.keystore" type="file" property="rhq.keystore.exists" />
         <antcall target="generate-rhq-ssl-key" />
 
+        <replace file="${jboss.conf.dir}/logging.properties"
+                 token="logger.org.jboss.as.config.level=DEBUG"
+                 value="logger.org.jboss.as.config.level=INFO"/>
+
         <echo>Delete the various working directories if they happen to exist</echo>
         <delete dir="${jboss.home}/standalone/data" />
         <delete dir="${jboss.home}/standalone/log" />

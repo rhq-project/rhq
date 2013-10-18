@@ -30,7 +30,9 @@
 
         <rhq:deployment-unit name="fixedForNow"
                              preinstallTarget="preinstall"
-                             postinstallTarget="postinstall">
+                             postinstallTarget="postinstall"
+                             compliance="full"
+                >
 
             <rhq:archive name="${props.bundleFile}">
                <#if props.replacePattern??>

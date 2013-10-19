@@ -53,6 +53,7 @@ public interface ContentManagerRemote {
      * @param packageTypeId  identifies the type of package in case the general package needs to be created
      * @param version        identifies the version to be create
      * @param architectureId architecture of the newly created package version. If null then no architecture restriction.
+     * @param packageBytes
      *
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
@@ -73,7 +74,9 @@ public interface ContentManagerRemote {
      * @param packageName    parent package name; uniquely identifies the package under which this version goes
      * @param packageTypeId  identifies the type of package in case the general package needs to be created
      * @param version        identifies the version to be create
+     * @param displayVersion
      * @param architectureId architecture of the newly created package version. If null then no architecture restriction.
+     * @param packageBytes
      *
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
@@ -87,6 +90,7 @@ public interface ContentManagerRemote {
      * @param subject             The logged in subject
      * @param resourceId          identifies the resource from which the packages should be deleted
      * @param installedPackageIds identifies all of the packages to be deleted
+     * @param requestNotes
      */
     void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes);
 
@@ -95,11 +99,10 @@ public interface ContentManagerRemote {
      * deleted. If it is referenced by a content source, repo or installed package it must be removed via the
      * higher level construct and this call will have no effect.
      *
-     * @param subject             The logged in subject
-     * @param packageVersionId    The PackageVersion to delete.
+     * @param subject            The logged in subject
+     * @param packageVersionId   The package version to delete
      */
-    public void deletePackageVersion(//
-        Subject subject, int resourceId);
+    public void deletePackageVersion(Subject subject, int packageVersionId);
 
     /**
      * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
@@ -109,6 +112,7 @@ public interface ContentManagerRemote {
      * @param subject           The logged in subject
      * @param resourceIds       identifies the resources against which the package will be deployed
      * @param packageVersionIds packageVersions we want to install
+     * @deprecated
      */
     @Deprecated
     void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds);
@@ -139,34 +143,35 @@ public interface ContentManagerRemote {
      *
      * @param subject          The logged in subject
      * @param resourceTypeName The resource type in question
+     * @param pluginName
      *
      * @return The requested list of package types. Can be empty.
+     * @throws ResourceTypeNotFoundException
      */
     List<PackageType> findPackageTypes(Subject subject, String resourceTypeName, String pluginName)
         throws ResourceTypeNotFoundException;
 
     /**
-     * This re tries to find a package type of given name defined by the resource type
-     * provided. 
+     * This re tries to find a package type of given name defined by the resource type provided.
      * <p>
-     * The resource type id can be null, in which case only the serverside defined package types
+     * The resource type id can be null, in which case only the server-side defined package types
      * are searched for.
-     * 
+     *
      * @param subject the authenticated user
-     * @param resourceTypeId the id of the resource type associated with the package type or null  if only server-side package types should be searched for 
+     * @param resourceTypeId the id of the resource type associated with the package type or null  if only server-side package types should be searched for
      * @param packageTypeName the name of the package type to find
-     * @return
+     * @return the package type or null if not found
      */
     PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
 
     /**
      * Similar to {@link #findPackageType(Subject, Integer, String)} but
      * returns the package type along with the version format specification.
-     * 
+     *
      * @param subject
      * @param resourceTypeId
      * @param packageTypeName
-     * @return
+     * @return the composite or null if not found
      */
     PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject, Integer resourceTypeId,
         String packageTypeName);
@@ -179,10 +184,10 @@ public interface ContentManagerRemote {
     PageList<InstalledPackage> findInstalledPackagesByCriteria(Subject subject, InstalledPackageCriteria criteria);
 
     /**
-     * If a resourceId filter is not set via {@link PackageVersionCriteria.addFilterResourceId()} then
+     * If a resourceId filter is not set via {@link PackageVersionCriteria#addFilterResourceId(Integer)} then
      * this method requires InventoryManager permissions. When set the user must have permission to view
      * the resource.
-     * 
+     *
      * @param subject
      * @param criteria
      * @return Installed PackageVersions for the resource
@@ -191,13 +196,13 @@ public interface ContentManagerRemote {
     PageList<PackageVersion> findPackageVersionsByCriteria(Subject subject, PackageVersionCriteria criteria);
 
     /**
-     * If the criteria object filters on repo id, the subject needs to be able to 
-     * access that repo. If there is no filter on repos, the subject needs to have 
+     * If the criteria object filters on repo id, the subject needs to be able to
+     * access that repo. If there is no filter on repos, the subject needs to have
      * MANAGE_REPOSITORIES permission.
-     * 
+     *
      * @param subject
      * @param criteria
-     * @return
+     * @return the packages, not null
      */
     PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria);
 
@@ -206,10 +211,10 @@ public interface ContentManagerRemote {
      * determines the latest version of the returned packages.
      * <p>
      * The provided criteria has to be limited to a specific repo using {@link PackageCriteria#addFilterRepoId(Integer)}.
-     * 
+     *
      * @param subject
      * @param criteria
-     * @return
+     * @return the composites, not null
      * @throws IllegalArgumentException if the criteria doesn't define a repo filter
      */
     PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject, PackageCriteria criteria);
@@ -218,6 +223,7 @@ public interface ContentManagerRemote {
      * For a resource that is content-backed (aka package-backed), this call will return InstalledPackage information
      * for the backing content (package).
      *
+     * @param subject
      * @param resourceId a valid resource
      * @return The InstalledPackage object for the content-packed resource. Or null for non-existent or non-package backed resource.
      */
@@ -247,6 +253,8 @@ public interface ContentManagerRemote {
      *
      * @param temporaryContentHandle temporary file handle
      * @param fragment fragment bytes
+     * @param off the offset
+     * @param len
      */
     void uploadContentFragment(String temporaryContentHandle, byte[] fragment, int off, int len);
 
@@ -254,7 +262,7 @@ public interface ContentManagerRemote {
      * Creates a new package version in the system with content denoted by the <code>temporaryContentHandle</code>.
      *
      * Use this method instead of {@link #createPackageVersionWithDisplayVersion(org.rhq.core.domain.auth.Subject, String, int, String, String, Integer, byte[])}
-     * to avoid passing content files as byte array paramaters.<br>
+     * to avoid passing content files as byte array parameters.<br>
      * <br>
      * Sample code:<br>
      * <pre>
@@ -264,6 +272,14 @@ public interface ContentManagerRemote {
      * }
      * PackageVersion pv = contentManager.createPackageVersionWithDisplayVersion(..., temporaryContentHandle);
      * </pre>
+     * @param subject
+     * @param packageName
+     * @param packageTypeId
+     * @param version
+     * @param displayVersion
+     * @param architectureId
+     * @param temporaryContentHandle
+     * @return the package version
      *
      * @see ContentManagerRemote#createPackageVersionWithDisplayVersion(org.rhq.core.domain.auth.Subject, String, int, String, String, Integer, byte[])
      */

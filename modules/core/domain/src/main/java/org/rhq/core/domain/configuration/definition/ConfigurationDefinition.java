@@ -53,8 +53,10 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.configuration.Configuration;
+
 /**
- * The entire definition for a {@link import javax.persistence.CascadeType.Configuration}. This includes mapped property
+ * The entire definition for a {@link Configuration}. This includes mapped property
  * definitions of arbitrary complexity, made up of {@link PropertyDefinitionSimple}s, {@link PropertyDefinitionList}s,
  * and {@link PropertyDefinitionMap}s.
  *
@@ -168,7 +170,7 @@ public class ConfigurationDefinition implements Serializable {
      * Get the properties for this configuration. This is the only method that returns a Collection, where an update
      * will be reflected in the database.
      *
-     * @return
+     * @return the property definitions, not a copy
      */
     @NotNull
     public Map<String, PropertyDefinition> getPropertyDefinitions() {
@@ -268,7 +270,6 @@ public class ConfigurationDefinition implements Serializable {
      *
      * @return the set of properties that are not in a group
      *
-     * @see    #propertyDefinitions
      * @see    #getPropertyDefinitions()
      */
     @NotNull

@@ -28,11 +28,16 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * @author Jay Shaughnessy 
+ * @author Jay Shaughnessy
  */
 @Remote
 public interface ResourceGroupManagerRemote {
 
+    /**
+     * @param subject
+     * @param groupId
+     * @param resourceIds
+     */
     void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds);
 
     /**
@@ -43,24 +48,75 @@ public interface ResourceGroupManagerRemote {
      */
     ResourceGroup createResourceGroup(Subject subject, ResourceGroup resourceGroup);
 
+    /**
+     * @param subject
+     * @param groupId
+     * @throws ResourceGroupNotFoundException
+     * @throws ResourceGroupDeleteException
+     */
     void deleteResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException;
 
+    /**
+     * @param subject
+     * @param groupIds
+     * @throws ResourceGroupNotFoundException
+     * @throws ResourceGroupDeleteException
+     */
     void deleteResourceGroups(Subject subject, int[] groupIds) throws ResourceGroupNotFoundException,
         ResourceGroupDeleteException;
 
-    ResourceGroup getResourceGroup(Subject subject, int groupId);
+    /**
+     * @param subject
+     * @param groupId
+     * @return the resource group
+     * @throws ResourceGroupNotFoundException
+     */
+    ResourceGroup getResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException;
 
-    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
+    /**
+     * @param subject
+     * @param groupId
+     * @return the composite
+     * @throws ResourceGroupNotFoundException
+     */
+    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId)
+        throws ResourceGroupNotFoundException;
 
+    /**
+     * @param subject
+     * @param roleId
+     * @param pc
+     * @return not null
+     */
     PageList<ResourceGroup> findResourceGroupsForRole(Subject subject, int roleId, PageControl pc);
 
+    /**
+     * @param subject
+     * @param groupId
+     * @param resourceIds
+     */
     void removeResourcesFromGroup(Subject subject, int groupId, int[] resourceIds);
 
+    /**
+     * @param subject
+     * @param groupId
+     * @param isRecursive
+     */
     void setRecursive(Subject subject, int groupId, boolean isRecursive);
 
+    /**
+     * @param subject
+     * @param newResourceGroup
+     * @return the updated resource group
+     */
     ResourceGroup updateResourceGroup(Subject subject, ResourceGroup newResourceGroup);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria);
 
 }

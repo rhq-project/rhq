@@ -72,9 +72,7 @@ public class MeasurementAggregate implements Serializable {
     }
 
     /**
-     * Return true if the aggregate has "no real data" I.e. when all values are Not A Number.
-     *
-     * @return
+     * @return true if the aggregate has "no real data" I.e. when all values are Not A Number.
      */
     public boolean isEmpty() {
         return min.isNaN() && avg.isNaN() && max.isNaN();

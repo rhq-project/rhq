@@ -38,7 +38,6 @@ import javax.persistence.OneToMany;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.IndexColumn;
@@ -123,7 +122,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     /**
      * Return all the constraints on this simple-property no matter how they are grouped together in the XML.
      *
-     * @return
+     * @return the constraints, not null
      */
     @NotNull
     public Set<Constraint> getConstraints() {
@@ -146,6 +145,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
 
     /**
      * Get the &lt;options&gt; within &lt;property-options&gt; for a &lt;simple-property&gt;
+     * @return not null
      */
     @NotNull
     public List<PropertyDefinitionEnumeration> getEnumeratedValues() {

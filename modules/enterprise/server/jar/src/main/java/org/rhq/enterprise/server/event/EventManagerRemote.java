@@ -26,16 +26,52 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public API for working with Events.
+ */
 @Remote
 public interface EventManagerRemote {
 
+    /**
+     * @param subject
+     * @param resourceId
+     * @param begin in millis
+     * @param end in millis
+     * @param numBuckets
+     * @return not null
+     * @deprecated use {@link #findEventsByCriteria(Subject, EventCriteria)}
+     */
     EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
 
+    /**
+     * @param subject
+     * @param parentResourceId
+     * @param resourceTypeId
+     * @param begin in millis
+     * @param end in millis
+     * @param numBuckets
+     * @return not null
+     * @deprecated use {@link #findEventsByCriteria(Subject, EventCriteria)}
+     */
     EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, int numBuckets);
 
+    /**
+     * @param subject
+     * @param resourceGroupId
+     * @param begin in millis
+     * @param end in millis
+     * @param numBuckets
+     * @return not null
+     * @deprecated use {@link #findEventsByCriteria(Subject, EventCriteria)}
+     */
     EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
         int numBuckets);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
 }

@@ -83,7 +83,7 @@ public class BundleVersionCriteria extends TaggedCriteria {
      * Unless called by an InventoryManager the deployments will be filtered to those the caller can view, based
      * on the resource groups associated with his roles and the destination associated with the deployments.
      *  
-     * @param fetchDestinations
+     * @param fetchBundleDeployments
      */
     public void fetchBundleDeployments(boolean fetchBundleDeployments) {
         this.fetchBundleDeployments = fetchBundleDeployments;

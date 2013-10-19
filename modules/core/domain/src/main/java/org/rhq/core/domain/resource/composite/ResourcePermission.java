@@ -28,10 +28,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Permission.Target;
 
 /**
  * A set of permissions that apply to a particular Resource or ResourceGroup (i.e. {@link Permission}s where
- * {@link Permission#getTarget()} is {@link Permission.Target#RESOURCE}
+ * {@link Permission#getTarget()} is {@link Target#RESOURCE}
  *
  * @author Joseph Marques
  * @author Greg Hinkle

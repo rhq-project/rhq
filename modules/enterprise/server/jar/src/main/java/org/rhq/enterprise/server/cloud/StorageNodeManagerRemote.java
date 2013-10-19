@@ -25,7 +25,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
-import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.util.PageList;
 
@@ -99,8 +98,9 @@ public interface StorageNodeManagerRemote {
      * 
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
-     * @param subject   user that must have proper permissions
-     * @return          storage nodes alerts not acknowledged
+     * @param subject     user that must have proper permissions
+     * @param storageNode the storage node
+     * @return            storage nodes alerts not acknowledged
      */
     PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode);
 
@@ -119,8 +119,9 @@ public interface StorageNodeManagerRemote {
      * 
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
-     * @param subject   user that must have proper permissions
-     * @return          all storage nodes alerts
+     * @param subject     user that must have proper permissions
+     * @param storageNode the storage node
+     * @return            all storage nodes alerts
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
 

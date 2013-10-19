@@ -139,7 +139,7 @@ public class RepoGroup implements Serializable {
      *
      * @return the mapping entities
      *
-     * @see    #getRepoGroup()
+     * @see    #getRepos()
      */
     public Set<RepoRepoGroup> getRepoRepoGroups() {
         return repoRepoGroups;

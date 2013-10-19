@@ -35,6 +35,9 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public API for measurement data.
+ */
 @Remote
 public interface MeasurementDataManagerRemote {
 
@@ -44,18 +47,18 @@ public interface MeasurementDataManagerRemote {
      *
      * @param subject    the user requesting the aggregate
      * @param scheduleId the id of the {@link MeasurementSchedule} for which this aggregate is being requested
-     * @param start      the start time
-     * @param end        the end time
+     * @param startTime
+     * @param endTime
      *
      * @return MeasurementAggregate bean with the data
      *
-     * @throws FetchException if the schedule does not reference numerical data or if the user is not allowed to view
-     *                        the {@link Resource} corresponding to this scheduleId
      * @deprecated       class {@link org.rhq.enterprise.server.measurement.MeasurementAggregate} has been deprecated
      *                   since RHQ 4.8, therefore this method was deprecated as well and
      *                   replaced by {@link #getMeasurementAggregate(org.rhq.core.domain.auth.Subject,int,long,long)}
      */
-    org.rhq.enterprise.server.measurement.MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime);
+    @Deprecated
+    org.rhq.enterprise.server.measurement.MeasurementAggregate getAggregate(Subject subject, int scheduleId,
+        long startTime, long endTime);
 
     /**
      * Get the aggregate values of the numerical values for a given schedule.  This can only provide aggregates for data
@@ -63,19 +66,21 @@ public interface MeasurementDataManagerRemote {
      *
      * @param subject    the user requesting the aggregate
      * @param scheduleId the id of the {@link MeasurementSchedule} for which this aggregate is being requested
-     * @param start      the start time
-     * @param end        the end time
+     * @param startTime in millis
+     * @param endTime  in millis
      *
      * @return MeasurementAggregate bean with the data
      *
-     * @throws FetchException if the schedule does not reference numerical data or if the user is not allowed to view
+     * @throws MeasurementException if the schedule does not reference numerical data or if the user is not allowed to view
      *                        the {@link Resource} corresponding to this scheduleId
      */
-    MeasurementAggregate getMeasurementAggregate(Subject subject, int scheduleId, long startTime, long endTime);
+    MeasurementAggregate getMeasurementAggregate(Subject subject, int scheduleId, long startTime, long endTime)
+        throws MeasurementException;
 
     /**
      * Return all known trait data for the passed schedule, defined by resourceId and definitionId
      *
+     * @param subject
      * @param  resourceId   PK of a {@link Resource}
      * @param  definitionId PK of a {@link MeasurementDefinition}
      *
@@ -83,6 +88,12 @@ public interface MeasurementDataManagerRemote {
      */
     List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId);
 
+    /**
+     * @param subject
+     * @param resourceId
+     * @param displayType
+     * @return not null
+     */
     List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId, DisplayType displayType);
 
     /**
@@ -98,15 +109,26 @@ public interface MeasurementDataManagerRemote {
     // Deprecating this for 4.7, we don't want clients generating live data requests, it's not efficient or reliable
     // It will be moved to the Local
     /**
-     * @deprecated use {@link #findDataForResource(Subject, int, int[], long, long, int)} 
+     * @param subject
+     * @param resourceId
+     * @param definitionIds
+     * @return not null
+     * @deprecated use {@link #findDataForResource(Subject, int, int[], long, long, int)}
      */
+    @Deprecated
     Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds);
 
     // Deprecating this for 4.7, we don't want clients generating live data requests, it's not efficient or reliable
-    // It will be moved to the Local    
+    // It will be moved to the Local
     /**
-     * @deprecated use {@link #findDataForCompatibleGroup(Subject, int, int, long, long, int)} 
+     * @param subject
+     * @param groupId
+     * @param resourceIds
+     * @param definitionIds
+     * @return not null
+     * @deprecated use {@link #findDataForCompatibleGroup(Subject, int, int, long, long, int)}
      */
+    @Deprecated
     Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceIds, int[] definitionIds);
 
     /**
@@ -115,12 +137,12 @@ public interface MeasurementDataManagerRemote {
      *
      * @param  subject
      * @param  groupId
-     * @param  definitionId measurement definition id for numeric metric associated with the given compatible group                                 
+     * @param  definitionId measurement definition id for numeric metric associated with the given compatible group
      * @param  beginTime
      * @param  endTime
      * @param  numPoints
      *
-     * @return
+     * @return not null
      */
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
         int definitionId, long beginTime, long endTime, int numPoints);
@@ -136,7 +158,7 @@ public interface MeasurementDataManagerRemote {
      * @param  endTime
      * @param  numPoints
      *
-     * @return
+     * @return not null
      */
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numPoints);

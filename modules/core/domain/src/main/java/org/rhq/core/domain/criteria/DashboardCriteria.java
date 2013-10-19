@@ -68,7 +68,7 @@ public class DashboardCriteria extends Criteria {
     }
 
     /**
-     * If not set explicitly this defaults to {@link DashboardCategory.INVENTORY}.
+     * If not set explicitly this defaults to {@link DashboardCategory#INVENTORY}.
      * @param category
      */
     public void addFilterCategory(DashboardCategory category) {

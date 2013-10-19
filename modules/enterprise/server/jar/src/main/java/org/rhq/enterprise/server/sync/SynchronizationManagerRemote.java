@@ -31,6 +31,8 @@ import org.rhq.core.domain.sync.ImportConfigurationDefinition;
 import org.rhq.core.domain.sync.ImportReport;
 
 /**
+ * Public API for synchronization manager.
+ *
  * @author Lukas Krejci
  */
 
@@ -40,7 +42,7 @@ public interface SynchronizationManagerRemote {
     /**
      * This exports the configuration data of all supported subsystems in RHQ.
      * <p>
-     * The returned report contains the data bytes themselves as well as a map of 
+     * The returned report contains the data bytes themselves as well as a map of
      * messages and notes produced by the different subsystem exporters so that
      * the caller of this method is able to determine possible problems of the export
      * file without needing to deserialize and read it (the same messages are also included
@@ -49,36 +51,43 @@ public interface SynchronizationManagerRemote {
      * The export data is a zipped XML.
      * <p>
      * The export requires the user to have {@link Permission#MANAGE_INVENTORY} permission.
-     * 
+     *
      * @param subject the logged in user
      * @return the export report
      */
     ExportReport exportAllSubsystems(Subject subject);
-    
+
+    /**
+     * @param subject
+     * @param exportFile
+     * @throws ValidationException
+     */
     void validate(Subject subject, byte[] exportFile) throws ValidationException;
 
     /**
      * Returns the configuration definition of the import for synchronizer of given type.
      * @param synchronizerClass
-     * @return
+     * @return null if class not found
      */
     ImportConfigurationDefinition getImportConfigurationDefinition(String synchronizerClass);
-    
+
     /**
      * Returns the configuration definitions of all known importers.
-     * @return
+     * @return not null
      */
     List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers();
-    
+
     /**
      * Imports everything from the export file.
-     * 
+     *
      * @param subject the authenticated user
      * @param exportFile the contents of the export file
      * @param importerConfigurations the configurations of individual importers to be used when importing or null
      *        if the default configurations should be used for all the importers.
-     *        
+     *
      * @return the report describing the result of the import
+     * @throws ValidationException
+     * @throws ImportException
      */
     ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
         List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;

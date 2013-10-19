@@ -23,7 +23,6 @@ import java.util.List;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -32,8 +31,8 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
-/*
- * @author Jay Shaughnessy
+/**
+ * Public ResourceFactory API.
  */
 @Remote
 public interface ResourceFactoryManagerRemote {
@@ -53,7 +52,8 @@ public interface ResourceFactoryManagerRemote {
      * @param resourceName          name of the resource being created
      * @param pluginConfiguration   optional plugin configuration that may be needed in order to create the new resource
      * @param resourceConfiguration resource configuration for the new resource
-     * @param timeout               number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.  
+     * @param timeout               number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.
+     * @return                      the create resource history record
      */
     CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
         String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout);
@@ -75,10 +75,11 @@ public interface ResourceFactoryManagerRemote {
      *                                    resource
      * @param packageName                 name of the package that will be created as a result of this resource create
      * @param packageVersion              The string version of the package. If null will be set to system timestamp (long)
-     * @param architectureId              Id of the target architecture of the package, null indicates NoArch (any). 
+     * @param architectureId              Id of the target architecture of the package, null indicates NoArch (any).
      * @param deploymentTimeConfiguration dictates how the package will be deployed
      * @param packageBits                 content of the package to create
-     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default. 
+     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.
+     * @return                            the create resource history record
      */
     CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
@@ -87,6 +88,20 @@ public interface ResourceFactoryManagerRemote {
     /**
      * Like {@link #createPackageBackedResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, String, String, Integer, org.rhq.core.domain.configuration.Configuration, byte[], Integer)}
      * except that this method takes a <code>temporaryContentHandle</code> as parameter instead of a byte array.
+     *
+     * @param subject                     user requesting the creation
+     * @param parentResourceId            parent resource under which the new resource should be created
+     * @param newResourceTypeId           identifies the type of resource being created
+     * @param newResourceName             Ignored, pass null. This is determined from the package.
+     * @param pluginConfiguration         optional plugin configuration that may be needed in order to create the new
+     *                                    resource
+     * @param packageName                 name of the package that will be created as a result of this resource create
+     * @param packageVersion              The string version of the package. If null will be set to system timestamp (long)
+     * @param architectureId              Id of the target architecture of the package, null indicates NoArch (any).
+     * @param deploymentTimeConfiguration dictates how the package will be deployed
+     * @param temporaryContentHandle      content handle of the package to create
+     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.
+     * @return                            the create resource history record
      *
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
@@ -114,7 +129,8 @@ public interface ResourceFactoryManagerRemote {
      *                                    resource
      * @param deploymentTimeConfiguration dictates how the package will be deployed
      * @param packageVersionId            An existing package version to back this resource
-     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default. 
+     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.
+     * @return                            the create resource history record
      */
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
@@ -127,6 +143,7 @@ public interface ResourceFactoryManagerRemote {
      *
      * @param subject    user requesting the deletion. must have resource delete perm on the resource.
      * @param resourceId resource being deleted
+     * @return           the delete resource history record
      */
     DeleteResourceHistory deleteResource(Subject subject, int resourceId);
 
@@ -137,6 +154,7 @@ public interface ResourceFactoryManagerRemote {
      *
      * @param subject    user requesting the deletion. must have resource delete perm on the resources.
      * @param resourceIds the resources being deleted
+     * @return not null
      */
     List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds);
 

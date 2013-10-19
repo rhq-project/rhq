@@ -29,9 +29,9 @@ import java.util.HashMap;
 /**
  * Provides simple strings to describe certain server details, useful for end users that have a need to see
  * this data. This is meant to be used as a read-only pojo to be shared to clients.
- * 
+ *
  * Some of the fields in this pojo may be empty if the user didn't have permissions to see those fields.
- * 
+ *
  * @author John Mazzitelli
  */
 public class ServerDetails implements Serializable {
@@ -46,7 +46,7 @@ public class ServerDetails implements Serializable {
         SERVER_TIMEZONE, //
         SERVER_LOCAL_TIME, //
         SERVER_INSTALL_DIR, // where RHQ is installed, the top directory where everything else is
-        SERVER_HOME_DIR, // where the RHQ server's JBossAS deployment is; this is under the install dir 
+        SERVER_HOME_DIR, // where the RHQ server's JBossAS deployment is; this is under the install dir
 
         /**
          * @deprecated this is no longer used or exposed by the server. The measurements are not stored in the database
@@ -83,6 +83,7 @@ public class ServerDetails implements Serializable {
      * Returns details about the server that returned this object. The keys are one of the
      * {@link Detail} enums. You are not guaranteed to have all details in the returned map;
      * if the user doesn't have the permissions necessary, some details will not be available.
+     * @return HashMap of the details
      */
     public HashMap<Detail, String> getDetails() {
         return this.details;

@@ -24,9 +24,21 @@ import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.resource.Resource;
 
+/**
+ * Public API for measurement baselines.
+ */
 @Remote
 public interface MeasurementBaselineManagerRemote {
 
+    /**
+     * Return a list of {@link MeasurementBaseline} objects for the {@link Resource} represented by the given id.
+     *
+     * @param subject    the user request to view the baseline history for the given resource
+     * @param resourceId the id of the resource whose baselines are to be returned
+     *
+     * @return a list of baselines for all measurements scheduled on the given resource
+     */
     List<MeasurementBaseline> findBaselinesForResource(Subject subject, int resourceId);
 }

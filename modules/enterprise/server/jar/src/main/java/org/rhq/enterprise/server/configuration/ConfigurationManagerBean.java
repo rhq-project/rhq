@@ -2329,9 +2329,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         propertiesQuery.executeUpdate();
     }
 
-    /**
-     * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
-     */
     @Override
     public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
@@ -2347,9 +2344,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    /**
-     * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
-     */
     @Override
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId) {

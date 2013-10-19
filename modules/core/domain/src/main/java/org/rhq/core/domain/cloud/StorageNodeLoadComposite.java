@@ -128,7 +128,7 @@ public class StorageNodeLoadComposite implements Serializable {
     }
 
     /**
-     * @deprecated use {@link #getPartitionDiskUsedPercentage() getPartitionDiskUsedPercentage()} instead
+     * @deprecated use {@link #getDataDiskUsedPercentage() getPartitionDiskUsedPercentage()} instead
      *
      * @return partitionDiskUsedPercentage
      */
@@ -137,9 +137,9 @@ public class StorageNodeLoadComposite implements Serializable {
     }
 
     /**
-     * @deprecated use {@link #setPartitionDiskUsedPercentage() setPartitionDiskUsedPercentage()} instead
+     * @deprecated use {@link #setDataDiskUsedPercentage(MeasurementAggregateWithUnits)} instead
      *
-     * @param partitionDiskUsedPercentage
+     * @param diskUsedPercentage
      */
     public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskUsedPercentage) {
         setDataDiskUsedPercentage(diskUsedPercentage);
@@ -243,7 +243,6 @@ public class StorageNodeLoadComposite implements Serializable {
         builder.append("actuallyOwns=").append(actuallyOwns);
         return builder.toString();
     }
-
 
     public static class MeasurementAggregateWithUnits implements Serializable {
         private static final long serialVersionUID = 1L;

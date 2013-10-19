@@ -57,7 +57,7 @@ public class ClusterKey implements Serializable {
     public ClusterKey() {
     }
 
-    /** Construct ClusterKey with to-be-defined Hierarcrhy */
+    /** Construct ClusterKey with to-be-defined Hierarchy */
     public ClusterKey(int clusterResourceGroupId) {
         this.clusterGroupId = clusterResourceGroupId;
         this.hierarchy = new ArrayList<ClusterKey.Node>();

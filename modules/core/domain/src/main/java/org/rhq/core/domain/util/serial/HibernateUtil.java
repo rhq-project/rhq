@@ -33,7 +33,7 @@ public class HibernateUtil {
      * for ensuring that we don't serialize Hibernate types.
      * @param <T>
      * @param list
-     * @return
+     * @return the safe list
      */
     public static <T> List<T> safeList(List<T> list) {
         if (null == list) {
@@ -48,7 +48,7 @@ public class HibernateUtil {
      * for ensuring that we don't serialize Hibernate types.
      * @param <T>
      * @param set
-     * @return
+     * @return the safe set
      */
     public static <T> Set<T> safeSet(Set<T> set) {
         if (null == set) {
@@ -63,7 +63,7 @@ public class HibernateUtil {
      * for ensuring that we don't serialize Hibernate types.
      * @param <T>
      * @param collection
-     * @return
+     * @return the safe collection
      */
     public static <T> Collection<T> safeCollection(Collection<T> collection) {
         if (null == collection) {
@@ -79,7 +79,7 @@ public class HibernateUtil {
      * @param <K>
      * @param <V>
      * @param map
-     * @return
+     * @return the safe map
      */
     public static <K, V> Map<K, V> safeMap(Map<K, V> map) {
         if (null == map) {

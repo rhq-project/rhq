@@ -75,8 +75,8 @@ public class MeasurementSummary implements java.io.Serializable {
     /**
      * @param availUp The availUp to set
      */
-    public void setAvailUp(Integer currentConfigured) {
-        this.availUp = currentConfigured;
+    public void setAvailUp(Integer availUp) {
+        this.availUp = availUp;
     }
 
     /**
@@ -89,8 +89,8 @@ public class MeasurementSummary implements java.io.Serializable {
     /**
      * @param availDown The availDown to set
      */
-    public void setAvailDown(Integer unavailConfigured) {
-        this.availDown = unavailConfigured;
+    public void setAvailDown(Integer availDown) {
+        this.availDown = availDown;
     }
 
     /**
@@ -104,8 +104,8 @@ public class MeasurementSummary implements java.io.Serializable {
      * Sets the availUnknown.
      * @param availUnknown The availUnknown to set
      */
-    public void setAvailUnknown(Integer totalConfigured) {
-        this.availUnknown = totalConfigured;
+    public void setAvailUnknown(Integer availUnknown) {
+        this.availUnknown = availUnknown;
     }
 
     /**

@@ -35,37 +35,48 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
 
 /**
- * @author Greg Hinkle
+ * Public API for AutoCluster management.
  */
 @Remote
 public interface ClusterManagerRemote {
 
     /**
      * Given a cluster key create a backing group.
+     * @param subject
      * @param clusterKey
      * @param addResources If true, the new group will be assigned the current resources defined by the clusterKey.
      * Otherwise no resources will be assigned to the new group.
+     * @return the backing group
      * @throws IllegalArgumentException if a backing group exists for this clusterKey
      * @throws IllegalStateException if the cluster group is not a compatible group
+     * @deprecated this method will be moved to private API unless a case is made to keep it public.
      */
+    @Deprecated
     ResourceGroup createAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey, boolean addResources);
 
     /**
      * Return the backing group for the supplied cluster key.  Resource membership will represent the resources
-     * last set for the group and may not reflect current membership. See {@link #getAutoClusterResources(String)}
+     * last set for the group and may not reflect current membership. See {@link #getAutoClusterResources(Subject, ClusterKey)}
+     * @param subject
      * @param clusterKey
      * @return The backing group, or null if the key does not have a backing group.
+     * @deprecated this method will be moved to private API unless a case is made to keep it public.
      */
+    @Deprecated
     @Nullable
     ResourceGroup getAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey);
 
     /**
      * Given a cluster key get the auto cluster resource membership. The membership is always determined
      * at call time, regardless of whether a backing group exists. To get the backing group, if it exists,
-     * for a cluster key then call {@link #getAutoClusterBackingGroup(String)}.
+     * for a cluster key then call {@link #getAutoClusterBackingGroup(Subject, ClusterKey)}.
+     * @param subject
+     * @param clusterKey
+     * @return not null
+     * @deprecated this method will be moved to private API unless a case is made to keep it public.
      */
+    @Deprecated
     List<Resource> getAutoClusterResources(Subject subject, ClusterKey clusterKey);
-
 
     /**
      * Load a fully populated tree view of the "cluster nodes" for a cluster group. These are
@@ -73,8 +84,10 @@ public interface ClusterManagerRemote {
      *
      * @param subject
      * @param groupId
-     * @return
+     * @return the tree
+     * @deprecated this method will be moved to private API unless a case is made to keep it public.
      */
+    @Deprecated
     ClusterFlyweight getClusterTree(Subject subject, int groupId);
 
 }

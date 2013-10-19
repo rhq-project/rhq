@@ -39,8 +39,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
-import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -466,11 +464,7 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(Subject subject,
         PluginConfigurationUpdateCriteria criteria);
 
-    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
-        GroupResourceConfigurationUpdateCriteria criteria);
 
-    PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
-        GroupPluginConfigurationUpdateCriteria criteria);
 
     ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
                                                                  int parentResourceId, ConfigurationDefinition def);

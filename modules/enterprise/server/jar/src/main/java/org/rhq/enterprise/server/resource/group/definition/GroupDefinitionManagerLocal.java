@@ -21,52 +21,31 @@ package org.rhq.enterprise.server.resource.group.definition;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
-import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
-import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
-import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionDeleteException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
-import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
-import org.rhq.core.domain.resource.group.InvalidExpressionException;
 
 @Local
-public interface GroupDefinitionManagerLocal {
+public interface GroupDefinitionManagerLocal extends GroupDefinitionManagerRemote {
 
     void recalculateDynaGroups(Subject subject);
 
     GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException;
-
-    GroupDefinition createGroupDefinition(Subject subject, GroupDefinition newGroupDefinition)
-        throws GroupDefinitionAlreadyExistsException, GroupDefinitionCreateException;
-
-    GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition updated)
-        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
-        ResourceGroupUpdateException;
-
-    void calculateGroupMembership(Subject subject, int groupDefinitionId) throws ResourceGroupDeleteException,
-        GroupDefinitionDeleteException, GroupDefinitionNotFoundException, InvalidExpressionException;
 
     Integer calculateGroupMembership_helper(Subject subject, int groupDefinitionId, ExpressionEvaluator.Result result)
         throws ResourceGroupDeleteException, GroupDefinitionNotFoundException, GroupDefinitionNotFoundException;
 
     PageList<GroupDefinition> getGroupDefinitions(Subject subject, PageControl pc);
 
-    PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject, ResourceGroupDefinitionCriteria criteria);
-
     int getGroupDefinitionCount(Subject subject);
 
     int getAutoRecalculationGroupDefinitionCount(Subject subject);
 
     int getDynaGroupCount(Subject subject);
-
-    void removeGroupDefinition(Subject subject, Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
-        GroupDefinitionDeleteException;
 
     void removeManagedResource_helper(Subject subject, int groupDefinitionId, Integer doomedGroupId)
         throws GroupDefinitionDeleteException, GroupDefinitionNotFoundException;

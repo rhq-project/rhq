@@ -24,7 +24,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * A manager for {@link MeasurementBaseline}s.
@@ -34,7 +33,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Joseph Marques
  */
 @Local
-public interface MeasurementBaselineManagerLocal {
+public interface MeasurementBaselineManagerLocal extends MeasurementBaselineManagerRemote {
     /**
      * This is the entry point which calls out to all other *calculateAutoBaselines* methods seen
      * in this interface.  This is the method that should be called on a regular basis by some sort
@@ -137,20 +136,4 @@ public interface MeasurementBaselineManagerLocal {
      * @param definitionIds measurement definition IDs
      */
     void enableAutoBaselineCalculation(Subject subject, Integer[] resourceIds, Integer[] definitionIds);
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /**
-     * Return a list of {@link MeasurementBaseline} objects for the {@link Resource} represented by the given id.
-     *
-     * @param subject    the user request to view the baseline history for the given resource
-     * @param resourceId the id of the resource whose baselines are to be returned
-     *
-     * @return a list of baselines for all measurements scheduled on the given resource
-     */
-    List<MeasurementBaseline> findBaselinesForResource(Subject subject, int resourceId);
 }

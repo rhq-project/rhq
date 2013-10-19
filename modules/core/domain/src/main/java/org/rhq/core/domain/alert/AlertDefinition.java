@@ -131,15 +131,15 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                        FROM Alert a " //
         + "                        JOIN a.alertDefinition alertDef )"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
-        + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" //
         + "        ( ad, parent.id, parent.name ) " //
         + "     FROM AlertDefinition ad " //
         + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
-        /* 
+        /*
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
-         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
-         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the
+         * fetched association was not present in the select list"...even though it clearly is  ;/
          */
         //+ "     JOIN FETCH ad.conditions ac " //
         + "    WHERE ad.deleted = false " //
@@ -148,19 +148,19 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "      AND (ad.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (ad.ctime < :endTime OR :endTime IS NULL) " //
         + "      AND (ad.id IN ( SELECT aad.id FROM AlertDefinition aad " //
-        + "                       JOIN aad.conditions aadc " // 
+        + "                       JOIN aad.conditions aadc " //
         + "                      WHERE aadc.category = :category ) " //
         + "           OR :category IS NULL) "), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_COMPOSITES, query = "" //
-        + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" //
         + "        ( ad, parent.id, parent.name ) " //
         + "     FROM AlertDefinition ad " //
         + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
-        /* 
+        /*
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
-         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
-         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the
+         * fetched association was not present in the select list"...even though it clearly is  ;/
          */
         //+ "     JOIN FETCH ad.conditions ac " //
         + "    WHERE ad.deleted = false " //
@@ -172,7 +172,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "      AND (ad.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (ad.ctime < :endTime OR :endTime IS NULL) " //
         + "      AND (ad.id IN ( SELECT aad.id FROM AlertDefinition aad " //
-        + "                       JOIN aad.conditions aadc " // 
+        + "                       JOIN aad.conditions aadc " //
         + "                      WHERE aadc.category = :category ) " //
         + "           OR :category IS NULL) "), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID, query = "" //
@@ -532,15 +532,19 @@ public class AlertDefinition implements Serializable {
     }
 
     /**
+     * @return the group
      * @deprecated use getGroup()
      */
+    @Deprecated
     public ResourceGroup getResourceGroup() {
         return group;
     }
 
     /**
+     * @param resourceGroup
      * @deprecated use setGroup(ResourceGroup)
      */
+    @Deprecated
     public void setResourceGroup(ResourceGroup resourceGroup) {
         this.group = resourceGroup;
     }
@@ -646,7 +650,7 @@ public class AlertDefinition implements Serializable {
      * If "read only" is true, then changes to the parent group/template alert definition will not
      * change this resource alert def. If read only is false, changes to the parent propagate to the
      * child resource alert.
-     *  
+     *
      * @return read only flag
      */
     public boolean isReadOnly() {

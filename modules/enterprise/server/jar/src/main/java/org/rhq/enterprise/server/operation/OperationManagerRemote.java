@@ -22,8 +22,6 @@ import java.util.List;
 
 import javax.ejb.Remote;
 
-import org.quartz.SchedulerException;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -38,6 +36,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
 
+/**
+ * Public Operation Manager remote.
+ */
 @Remote
 public interface OperationManagerRemote {
 
@@ -58,7 +59,7 @@ public interface OperationManagerRemote {
      *
      * @param subject
      *            The logged in user's subject.
-     * @param historyId
+     * @param operationHistoryId
      *            the ID of the history item identifying the in-progress operation
      * @param ignoreAgentErrors
      *            if <code>true</code> this will still flag the history items in the database as canceled, even if the
@@ -80,7 +81,7 @@ public interface OperationManagerRemote {
      *
      * @param subject
      *            The logged in user's subject.
-     * @param historyId
+     * @param operationHistoryId
      *            the ID of the history to be deleted
      * @param purgeInProgress
      *            if <code>true</code>, even if the operation is in progress, the history entity will be deleted. You
@@ -118,7 +119,7 @@ public interface OperationManagerRemote {
     ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
         throws ScheduleException;
-    
+
     /**
      * Schedules a Resource operation for execution using the cron expression.
      *
@@ -142,23 +143,23 @@ public interface OperationManagerRemote {
      *   0 15 10 L * ?             Fire at 10:15am on the last day of every month
      *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
      *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
-     *   0 15 10 ? * 6L 2002-2005  at 10:15am on every last friday of every month during the years
+     *   0 15 10 ? * 6L 2002-2005  at 10:15am on every last Friday of every month during the years
      *   0 15 10 ? * 6#3           Fire at 10:15am on the third Friday of every month
      *   0 11 11 11 11 ?           Fire every November 11th at 11:11am.
      * </pre>
      * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
-     * @param  parameters     the names parameters for the operation. 
+     * @param  parameters     the names parameters for the operation.
      * @param  description    user-entered description of the job to be scheduled
      *
      * @return the information on the new schedule
      *
-     * @throws SchedulerException if failed to schedule the operation
+     * @throws ScheduleException if failed to schedule the operation
      */
     ResourceOperationSchedule scheduleResourceOperationUsingCron(Subject subject, int resourceId, String operationName,
         String cronExpression, int timeout, Configuration parameters, String description) throws ScheduleException;
 
     /**
-     * Unschedules the resource operation identified with the given job ID.
+     * Unschedule the resource operation identified with the given job ID.
      *
      * @param subject
      *            The logged in user's subject.
@@ -167,7 +168,7 @@ public interface OperationManagerRemote {
      * @param resourceId
      *            the ID of the resource whose operation is getting unscheduled
      * @throws UnscheduleException TODO
-     * @throws Exception
+     * @throws UnscheduleException
      */
     void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException;
 
@@ -183,7 +184,7 @@ public interface OperationManagerRemote {
      * @param repeatCount
      * @param timeout
      * @param description
-     * @return
+     * @return The group operation schedule
      * @throws ScheduleException
      */
     GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
@@ -196,7 +197,7 @@ public interface OperationManagerRemote {
      *
      * @param  subject                   the user who is asking to schedule the job
      * @param  groupId                   the compatible group whose member resources are the target of the operation
-     * @param  executionOrderResourceIds optional order of exection - if not<code>null</code>, these are group members
+     * @param  executionOrderResourceIds optional order of execution - if not<code>null</code>, these are group members
      *                                   resource IDs in the order in which the operations are invoked
      * @param  haltOnFailure             if <code>true</code>, the group operation will halt whenever one individual
      *                                   resource fails to execute. When executing in order, this means once a failure
@@ -223,7 +224,7 @@ public interface OperationManagerRemote {
      *   0 15 10 L * ?             Fire at 10:15am on the last day of every month
      *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
      *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
-     *   0 15 10 ? * 6L 2002-2005  at 10:15am on every last friday of every month during the years
+     *   0 15 10 ? * 6L 2002-2005  at 10:15am on every last Friday of every month during the years
      *   0 15 10 ? * 6#3           Fire at 10:15am on the third Friday of every month
      *   0 11 11 11 11 ?           Fire every November 11th at 11:11am.
      * </pre>
@@ -233,29 +234,28 @@ public interface OperationManagerRemote {
      *
      * @return the information  on the new schedule
      *
-     * @throws SchedulerException if failed to schedule the operation
+     * @throws ScheduleException if failed to schedule the operation
      */
     GroupOperationSchedule scheduleGroupOperationUsingCron(Subject subject, int groupId,
         int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
         String cronExpression, int timeout, String description) throws ScheduleException;
-    
+
     /**
-     * Unschedules the group operation identified with the given job ID.
+     * Unschedule the group operation identified with the given job ID.
      *
      * @param  subject          the user who is asking to unschedule the operation
      * @param  jobId           identifies the operation to unschedule
      * @param  resourceGroupId the ID of the group whose operation is getting unscheduled
      * @throws UnscheduleException TODO
      */
-    void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId)//
-        throws UnscheduleException;
+    void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 
     /**
      * Returns the list of scheduled operations for the given resource. This only includes scheduled jobs on the
      * individual resource - it will not include schedules from groups, even if the resource is a member of a group that
      * has scheduled jobs.
      *
-     * @param user
+     * @param subject
      *            The logged in user's subject.
      * @param resourceId
      *
@@ -265,6 +265,18 @@ public interface OperationManagerRemote {
      */
     List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId) throws Exception;
 
+    /**
+     * Returns the list of scheduled operations for the given resource group. This only includes scheduled jobs on the
+     * individual resource group.
+     *
+     * @param subject
+     *            The logged in user's subject.
+     * @param groupId
+     *
+     * @return resource scheduled operations
+     * @throws Exception TODO
+     * @throws Exception
+     */
     List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
     /**
@@ -276,9 +288,19 @@ public interface OperationManagerRemote {
      */
     List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria);
 }

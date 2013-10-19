@@ -33,12 +33,15 @@ import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * The public API for Drift Management.
+ */
 @Remote
 public interface DriftManagerRemote {
 
     /**
      * Remove the provided driftDef (identified by name) on the specified entityContext.
-     * Agents, if available, will be notified of the change. 
+     * Agents, if available, will be notified of the change.
      * @param subject
      * @param entityContext
      * @param driftDefName
@@ -50,10 +53,16 @@ public interface DriftManagerRemote {
      * @param subject
      * @param criteria
      * @return The DriftChangeSets matching the criteria
+     * @throws Exception
      */
     PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria)
         throws Exception;
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
 
     /**
@@ -61,6 +70,7 @@ public interface DriftManagerRemote {
      * @param subject
      * @param criteria
      * @return The Drifts matching the criteria
+     * @throws Exception
      */
     PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) throws Exception;
 
@@ -69,6 +79,7 @@ public interface DriftManagerRemote {
      * modified file, a Drift object references the current and previous versions of the
      * file. This method generates a diff of the two versions.
      *
+     * @param subject
      * @param drift Specifies the two files that will be compared
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
@@ -80,6 +91,7 @@ public interface DriftManagerRemote {
      * specifically, the files referenced by {@link org.rhq.core.domain.drift.Drift#getNewDriftFile()}
      * are compared.
      *
+     * @param subject
      * @param drift1 References the first file to be compared
      * @param drift2 References the second file to be compared
      * @return A report containing a unified diff of the two files compared
@@ -88,9 +100,9 @@ public interface DriftManagerRemote {
 
     /**
      * Generates a unified diff of the two file versions referenced by drift ids.
-     *
-     * @param drift1Id the "new" version of the first drift
-     * @param drift2Id the "new" version of the second drift 
+     * @param subject
+     * @param driftId1 the "new" version of the first drift
+     * @param driftId2 the "new" version of the second drift
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
      */
@@ -99,16 +111,22 @@ public interface DriftManagerRemote {
     /**
      * Returns the content associated with the specified hash as a string
      *
+     * @param subject
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
     String getDriftFileBits(Subject subject, String hash);
 
+    /**
+     * @param subject
+     * @param hash
+     * @return the byteArray, not null
+     */
     byte[] getDriftFileAsByteArray(Subject subject, String hash);
 
     /**
      * Calculate and return requested Drift Snapshot.
-     *  
+     *
      * @param subject
      * @param request
      * @return The DriftSnapshot Not null but version is set to -1 if the drift definition does not yet
@@ -117,6 +135,11 @@ public interface DriftManagerRemote {
      */
     DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request);
 
+    /**
+     * @param subject
+     * @param driftDefId
+     * @param snapshotVersion
+     */
     void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion);
 
     /**

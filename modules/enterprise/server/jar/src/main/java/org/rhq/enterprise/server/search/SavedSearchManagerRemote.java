@@ -39,15 +39,13 @@ public interface SavedSearchManagerRemote {
      *
      * @param subject       the logged in user requesting the {@link SavedSearch} deletion
      * @param savedSearch   the primary key of the {@link SavedSearch} to be deleted
+     * @return              the SavedSearch id
      *
      * @throws PermissionException if the user is not authorized to create the {@link SavedSearch}.  Only inventory
      *         managers can create global saved searches.  Regular users can only create {@link SavedSearch}es against
      *         their own accounts.
      */
-
-    public int createSavedSearch( //
-        Subject subject, //
-        SavedSearch savedSearch);
+    public int createSavedSearch(Subject subject, SavedSearch savedSearch);
 
     /**
      * Saves all changes to the passed {@link SavedSearch} database, correlating it to the record already
@@ -62,9 +60,7 @@ public interface SavedSearchManagerRemote {
      *         their own accounts.
      */
 
-    public boolean updateSavedSearch( //
-        Subject subject, //
-        SavedSearch savedSearch);
+    public boolean updateSavedSearch(Subject subject, SavedSearch savedSearch);
 
     /**
      * Deletes the {@link SavedSearch} with the given primary key
@@ -77,9 +73,7 @@ public interface SavedSearchManagerRemote {
      *         their own accounts.
      */
 
-    public void deleteSavedSearch( //
-        Subject subject, //
-        int savedSearchId);
+    public void deleteSavedSearch(Subject subject, int savedSearchId);
 
     /**
      * Returns the {@link SavedSearch} with the given primary key

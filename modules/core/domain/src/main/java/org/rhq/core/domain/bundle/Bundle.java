@@ -199,7 +199,7 @@ public class Bundle implements Serializable {
 
     /**
      * This does not set the inverse relationship. You may want {@link BundleGroup#addBundle(Bundle)}.
-     * @param bundleGroups
+     * @param bundleGroup
      */
     public void addBundleGroup(BundleGroup bundleGroup) {
         getBundleGroups().add(bundleGroup);
@@ -207,7 +207,8 @@ public class Bundle implements Serializable {
 
     /**
      * This does not set the inverse relationship. You may want {@link BundleGroup#removeBundle(Bundle)}.
-     * @param bundleGroups
+     * @param bundleGroup
+     * @return true if bundle group is removed, otherwise false
      */
     public boolean removeBundleGroup(BundleGroup bundleGroup) {
         return getBundleGroups().remove(bundleGroup);

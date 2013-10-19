@@ -26,17 +26,48 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Alert Manager Remote API.
+ */
 @Remote
 public interface AlertManagerRemote {
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return no null
+     */
     PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
 
+    /**
+     * @param subject
+     * @param alertIds
+     * @return number of deleted alerts
+     */
     int deleteAlerts(Subject subject, int[] alertIds);
 
+    // TODO (jshaughn) Should this be deprecated, seems an odd method to expose.
+    /**
+     * Requires Manage Settings permission.
+     *
+     * @param subject
+     * @param context
+     * @return number of deleted alerts
+     */
     int deleteAlertsByContext(Subject subject, EntityContext context);
 
+    /**
+     * @param subject
+     * @param alertIds
+     * @return number of acknowledged alerts
+     */
     int acknowledgeAlerts(Subject subject, int[] alertIds);
 
+    /**
+     * @param subject
+     * @param context
+     * @return number of acknowledged alerts
+     */
     int acknowledgeAlertsByContext(Subject subject, EntityContext context);
 
 }

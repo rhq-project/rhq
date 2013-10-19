@@ -84,7 +84,7 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
     void setVersion(int version);
 
     /**
-     * Retturns the category that identifies the change set type.
+     * Returns the category that identifies the change set type.
      * @return The change set category
      * @see DriftChangeSetCategory
      */
@@ -104,7 +104,7 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
      * value must be stored with the change set such that it can be applied consistently when 
      * handling the associated drift.
      *
-     * @return The {@link DriftDefinition.DriftHandlingMode} mode
+     * @return The {@link DriftHandlingMode} mode
      */
     DriftHandlingMode getDriftHandlingMode();
 
@@ -114,7 +114,7 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
      * value set on the owning drift definition can change, the value must be stored with 
      * the change set such that it can be applied consistently when handling the associated drift.
      *
-     * @param driftHandlingMode The {@link DriftDefinition.DriftHandlingMode} mode
+     * @param driftHandlingMode The {@link DriftHandlingMode} mode
      */
     void setDriftHandlingMode(DriftHandlingMode driftHandlingMode);
 

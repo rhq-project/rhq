@@ -1099,7 +1099,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     /**
-     * Constructor that allows the caller to choose what Set impl is used for the {@link #childResources} field.
+     * Constructor that allows the caller to choose what Set implementation is used for the <code>childResources</code> field.
      * 
      * @param childResources the Set that will be used to hold this Resource's child Resources
      */

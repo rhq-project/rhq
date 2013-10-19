@@ -255,7 +255,7 @@ public class Dashboard implements Serializable {
      * This can be used to safely add a portlet without knowing the current portlet positioning on the
      * Dashboard. It adds the portlet to the bottom of column with the least portlets.
      * 
-     * @param storedPortlet, MODIFIED with assigned column, index
+     * @param storedPortlet  MODIFIED with assigned column, index
      */
     public void addPortlet(DashboardPortlet storedPortlet) {
         int[] columnCounts = new int[getColumns()];
@@ -280,7 +280,7 @@ public class Dashboard implements Serializable {
     /**
      * Call this only if you are sure the column and index are valid, not already used and not leaving gaps.
      * 
-     * @param storedPortlet, MODIFIED with assigned column, index
+     * @param storedPortlet MODIFIED with assigned column, index
      * @param column
      * @param index
      */

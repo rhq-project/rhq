@@ -20,37 +20,10 @@ package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Local;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-
 /**
  * A manager for working with problems such as out-of-bounds measurements.
  */
 @Local
-public interface MeasurementProblemManagerLocal {
-    /**
-     * Returns a list of all "problem resources" where a problem resource has one or more of the following statements
-     * true:
-     *
-     * <ul>
-     *   <li>it is known to be {@link AvailabilityType#DOWN down}</li>
-     *   <li>one or more of its alerts were triggered</li>
-     *   <li>one or more of its measurements were out-of-bounds (compared to their baselines)</li>
-     * </ul>
-     *
-     * If one or more of those are true for any resource, and they became true at or after the given <code>
-     * oldestDate</code> time (specified in epoch milliseconds), that resource is returned in the list (assuming the
-     * given user has access to view that resource).
-     *
-     * @param  subject    the user asking for the data
-     * @param  oldestDate no problems will be returned that started before this time
-     * @param  maxResources the maximum number of resources that should be returned
-     * 
-     * @return the problems resources (only those resources visible to the user will be returned)
-     */
-    PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc);
+public interface MeasurementProblemManagerLocal extends MeasurementProblemManagerRemote {
 
 }

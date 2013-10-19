@@ -34,24 +34,26 @@ import org.rhq.core.domain.common.composite.SystemSettings;
 @Remote
 public interface SystemManagerRemote {
     /**
-     * Provides product information suitable for "About" details. 
-     * 
+     * Provides product information suitable for "About" details.
+     *
      * @param subject user making the request
-     * 
+     *
      * @return the product info
      */
     ProductInfo getProductInfo(Subject subject);
 
     /**
-     * Provides details (such as product version) of the server processing the request.  Requires MANAGE_SETTINGS. 
-     * 
+     * Provides details (such as product version) of the server processing the request.  Requires MANAGE_SETTINGS.
+     *
      * @param subject user making the request
-     * 
+     *
      * @return server details
      */
     ServerDetails getServerDetails(Subject subject);
 
     /**
+     * @param subject
+     * @return system config
      * @deprecated use {@link #getSystemSettings(Subject)} instead
      */
     @Deprecated
@@ -71,6 +73,10 @@ public interface SystemManagerRemote {
     SystemSettings getSystemSettings(Subject subject);
 
     /**
+     * @param subject
+     * @param properties
+     * @param skipValidation
+     * @throws Exception
      * @deprecated use {@link #setSystemSettings(Subject, SystemSettings)} instead
      */
     @Deprecated
@@ -82,6 +88,7 @@ public interface SystemManagerRemote {
      *
      * @param subject        the user who wants to change the settings
      * @param settings     the new system configuration settings
+     * @throws Exception
      */
     void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
 }

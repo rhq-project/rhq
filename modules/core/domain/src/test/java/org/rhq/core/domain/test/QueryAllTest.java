@@ -319,7 +319,7 @@ public class QueryAllTest extends AbstractEJB3Test {
      *
      * @param  entity
      *
-     * @return
+     * @return not null
      */
     public List<NamedQuery> getNamedQueriesForEntity(String entity) {
         List<NamedQuery> lnq = new ArrayList<NamedQuery>();

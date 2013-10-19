@@ -44,7 +44,7 @@ public class JobTrigger implements Serializable {
     private Date startDate;
 
     // Fields used by recurrenceType=REPEAT_INTERVAL triggers
-    private Long repeatInterval;    
+    private Long repeatInterval;
     // endDate and repeatCount are mutually exclusive - only one can have a non-null value;
     // if both are null, the repetition is indefinite.
     private Date endDate;
@@ -156,6 +156,7 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run now and repeat on interval indefinitely.
      *
+     * @param repeatInterval
      * @return a trigger that will run now and repeat on interval indefinitely
      */
     public static JobTrigger createNowAndRepeatTrigger(long repeatInterval) {
@@ -165,6 +166,8 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run now and repeat on interval until end date/time.
      *
+     * @param repeatInterval
+     * @param endDate
      * @return a trigger that will run now and repeat on interval until end date/time
      */
     public static JobTrigger createNowAndRepeatTrigger(long repeatInterval, Date endDate) {
@@ -174,6 +177,8 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run now and repeat on interval n times.
      *
+     * @param repeatInterval
+     * @param repeatCount
      * @return a trigger that will run now and repeat on interval n times
      */
     public static JobTrigger createNowAndRepeatTrigger(long repeatInterval, int repeatCount) {
@@ -183,6 +188,7 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run at specified date/time, once.
      *
+     * @param startDate
      * @return a trigger that will run at specified date/time, once
      */
     public static JobTrigger createLaterTrigger(Date startDate) {
@@ -192,6 +198,8 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run at specified date/time and then repeat on interval indefinitely.
      *
+     * @param startDate
+     * @param repeatInterval
      * @return a trigger that will run at specified date/time and then repeat on interval indefinitely
      */
     public static JobTrigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval) {
@@ -201,6 +209,9 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run at specified date/time and then repeat on interval until end date/time.
      *
+     * @param startDate
+     * @param repeatInterval
+     * @param endDate
      * @return a trigger that will run at specified date/time and then repeat on interval until end date/time
      */
     public static JobTrigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval, Date endDate) {
@@ -210,6 +221,9 @@ public class JobTrigger implements Serializable {
     /**
      * Create a trigger that will run at specified date/time and then repeat on interval n times.
      *
+     * @param startDate
+     * @param repeatInterval
+     * @param repeatCount
      * @return a trigger that will run at specified date/time and then repeat on interval n times
      */
     public static JobTrigger createLaterAndRepeatTrigger(Date startDate, long repeatInterval, int repeatCount) {
@@ -221,6 +235,7 @@ public class JobTrigger implements Serializable {
      * <a href="http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html">Quartz
      * cron expression syntax</a>, which is a bit different than Unix cron expression syntax.
      *
+     * @param cronExpression
      * @return a trigger that will run on the schedule specified by a cron expression
      */
     public static JobTrigger createCronTrigger(String cronExpression) {

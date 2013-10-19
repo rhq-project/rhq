@@ -198,6 +198,7 @@ public enum SystemSetting {
      * Whether or not is this setting present in the publicly accessible. If a property is NOT public, its value
      * cannot be obtained remotely and cannot be updated through the SystemManager. Other mechanism must exist in the
      * RHQ server to update such settings.
+     * @return true if public, otherwise false
      */
     public boolean isPublic() {
         return isPublic;

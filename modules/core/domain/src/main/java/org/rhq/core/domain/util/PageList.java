@@ -28,8 +28,6 @@ import java.util.Collection;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.criteria.Criteria;
-
 /**
  * Tracks the result set for a paginated data lookup. Includes the data and the total rows that are available.
  *
@@ -74,7 +72,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
      * @param totalSize the total number of records of which this instance contains a subset of
      * @param pageControl defines what subset of data is contained in this instance
      *
-     * @see Criteria.Restriction#COUNT_ONLY
+     * @see org.rhq.core.domain.criteria.Criteria.Restriction#COUNT_ONLY
      */
     public PageList(int totalSize, PageControl pageControl) {
         super();
@@ -92,7 +90,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
      *                   this instance
      * @param pageControl defines what subset of the total number of items is present in this instance
      *
-     * @see Criteria.Restriction#COLLECTION_ONLY
+     * @see org.rhq.core.domain.criteria.Criteria.Restriction#COLLECTION_ONLY
      */
     public PageList(Collection<? extends E> collection, PageControl pageControl) {
         super(collection);
@@ -147,6 +145,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
      * Returns the total size of the "master list" that this page is a subset of.
      * <p/>
      * <b>Note:</b> This method merely returns the size of this list if it is {@link #isUnbounded() unbounded}.
+     * @return the total size
      */
     public int getTotalSize() {
         return Math.max(this.size(), this.totalSize);
@@ -178,7 +177,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
     }
 
     /**
-     * @see {@link PageControl#isConsistentWith(PageList)}
+     * @see PageControl#isConsistentWith(PageList)
      *
      * @return true if this page list is consistent with its page control
      */

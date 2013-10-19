@@ -62,7 +62,7 @@ public class FlyweightCache {
     }
 
     /**
-     * @see #constructResource(int, String, String, Integer, int, AvailabilityType)
+     * @see #constructResource(int, String, String, String, Integer, int, AvailabilityType)
      * 
      * @param original the resource
      * @return the initialized resource flyweight
@@ -140,7 +140,7 @@ public class FlyweightCache {
     }
 
     /**
-     * @see #constructSubCategory(int, String, Integer, FlyweightCache)
+     * @see #constructSubCategory(int, String, Integer, String)
      * 
      * @param original
      * @return a fully initialized resource sub category flyweight
@@ -167,7 +167,6 @@ public class FlyweightCache {
      * @param name
      * @param parentSubCategoryId
      * @param parentSubCategoryName
-     * @param cache
      * @return a fully initialized resource sub category flyweight
      */
     public ResourceSubCategoryFlyweight constructSubCategory(int id, String name, Integer parentSubCategoryId,
@@ -196,7 +195,7 @@ public class FlyweightCache {
     }
 
     /**
-     * @see #construct(int, String, String, ResourceCategory, Integer, FlyweightCache)
+     * @see #constructResourceType(int, String, String, boolean, ResourceCategory, Integer)
      * 
      * @param original the original resource type
      * @return a fully initialized resource type flyweight
@@ -228,8 +227,7 @@ public class FlyweightCache {
      * @param singleton true if the resource type is a singleton
      * @param category the resource type category
      * @param subCategory the id of the resource type sub category or null
-     * @param cache the flyweight cache
-     * @return
+     * @return the resource type flyweight
      */
     public ResourceTypeFlyweight constructResourceType(int id, String name, String plugin, boolean singleton,
         ResourceCategory category, Integer subCategory) {

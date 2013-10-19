@@ -27,18 +27,47 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public API for Drift Template Management.
+ */
 @Remote
 public interface DriftTemplateManagerRemote {
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
         DriftDefinitionTemplateCriteria criteria);
 
+    /**
+     * @param subject
+     * @param resourceTypeId
+     * @param isUserDefined
+     * @param definition
+     * @return The new {@link DriftDefinitionTemplate}
+     */
     DriftDefinitionTemplate createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined,
         DriftDefinition definition);
 
+    /**
+     * @param subject
+     * @param templateId
+     * @param snapshotDriftDefId
+     * @param snapshotVersion
+     */
     void pinTemplate(Subject subject, int templateId, int snapshotDriftDefId, int snapshotVersion);
 
+    /**
+     * @param subject
+     * @param template
+     */
     void updateTemplate(Subject subject, DriftDefinitionTemplate template);
 
+    /**
+     * @param subject
+     * @param templateId
+     */
     void deleteTemplate(Subject subject, int templateId);
 }

@@ -36,7 +36,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
  * the bundle destination base directory definitions (the base locations where bundles can be deployed for resources that
  * are of the given type). Rather than expect users of this object to know the internal properties stored in the config, this
  * object has strongly-typed methods to extract the properties into more easily consumable POJOs, such as
- * {@link #getBundleDestinationBaseDirectory()} and {@link #addBundleDestinationBaseDirectory(String, String, String, String)}.
+ * {@link #getBundleDestinationBaseDirectories()} and {@link #addBundleDestinationBaseDirectory(String, String, String, String)}.
  * 
  * @author John Mazzitelli
  */
@@ -63,7 +63,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
 
     /**
      * Returns the actual, raw configuration. Callers should rarely want to use this - use the more
-     * strongly typed methods such as {@link #getBundleDestinationBaseDirectory()}.
+     * strongly typed methods such as {@link #getBundleDestinationBaseDirectories()}.
      * 
      * @return the raw bundle configuration object
      */

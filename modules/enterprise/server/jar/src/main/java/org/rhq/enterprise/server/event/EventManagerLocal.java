@@ -45,7 +45,7 @@ import org.rhq.core.domain.util.PageList;
  *
  */
 @Local
-public interface EventManagerLocal {
+public interface EventManagerLocal extends EventManagerRemote {
 
     /**
      * Add the passed events to the database
@@ -99,20 +99,4 @@ public interface EventManagerLocal {
 
     EventSeverity[] getSeverityBucketsByContext(Subject subject, EntityContext context, long begin, long end,
         int bucketCount);
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria);
-
-    EventSeverity[] getSeverityBuckets(Subject subject, int resourceId, long begin, long end, int numBuckets);
-
-    EventSeverity[] getSeverityBucketsForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
-        long begin, long end, int numBuckets);
-
-    EventSeverity[] getSeverityBucketsForCompGroup(Subject subject, int resourceGroupId, long begin, long end,
-        int numBuckets);
 }

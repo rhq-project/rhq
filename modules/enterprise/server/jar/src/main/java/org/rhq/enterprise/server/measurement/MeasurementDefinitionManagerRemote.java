@@ -25,11 +25,28 @@ import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public API for measurement definitions.
+ */
 @Remote
 public interface MeasurementDefinitionManagerRemote {
 
+    /**
+     * Returns a MeasurementDefinition by its id or null.
+     *
+     * @param  subject      user that is calling this method
+     * @param  definitionId id of the desired {@link MeasurementDefinition} to fetch
+     *
+     * @return the MeasurementDefinition or null if not found
+     */
     MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId);
 
-    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(//
-        Subject subject, MeasurementDefinitionCriteria criteria);
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
+    PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
+        MeasurementDefinitionCriteria criteria);
+
 }

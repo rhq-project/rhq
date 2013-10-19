@@ -74,14 +74,22 @@ public interface RoleManagerRemote {
 
     /**
      * Get all roles assigned for a certain subject
-     * 
+     *
      * @param subject The logged in user's subject
-     * @param subjectId The subject ID to find the associated roles for 
+     * @param subjectId The subject ID to find the associated roles for
      * @param pc PageControl
      * @return A page list of assigned
      */
     PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc);
 
+    /**
+     * Get all roles eligible to be assigned to the user.
+     *
+     * @param subject
+     * @param subjectId
+     * @param pc
+     * @return not null
+     */
     PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc);
 
     /**
@@ -94,7 +102,7 @@ public interface RoleManagerRemote {
     void addRolesToSubject(Subject subject, int subjectId, int[] roleIds);
 
     /**
-     * Disassociates particular roles from a subject. Once complete, the subject will no longer be authorized with the
+     * Remove particular roles from a subject. Once complete, the subject will no longer be authorized with the
      * given roles.
      *
      * @param subject The logged in user's subject.
@@ -114,7 +122,7 @@ public interface RoleManagerRemote {
 
     /**
      * Dissociate particular subjects from a role.
-     * 
+     *
      * @param subject The logged in user's subject.
      * @param roleId The role ID to dissociate the roles from
      * @param subjectIds The IDs of the subjects to remove from the specified Role
@@ -147,12 +155,36 @@ public interface RoleManagerRemote {
      */
     void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds);
 
+    /**
+     * @param subject
+     * @param bundleGroupId
+     * @param roleIds
+     */
     void addRolesToBundleGroup(Subject subject, int bundleGroupId, int[] roleIds);
 
+    /**
+     * @param subject
+     * @param groupId
+     * @param roleIds
+     */
     void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds);
 
+    /**
+     * Set the specified bundle groups on the role, replacing the previous set of bundle groups.
+     *
+     * @param subject
+     * @param roleId
+     * @param bundleGroupIds
+     */
     void setAssignedBundleGroups(Subject subject, int roleId, int[] bundleGroupIds);
 
+    /**
+     * Set the specified resource groups on the role, replacing the previous set of resource groups.
+     *
+     * @param subject
+     * @param roleId
+     * @param groupIds
+     */
     void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds);
 
     /**
@@ -173,10 +205,29 @@ public interface RoleManagerRemote {
      */
     void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds);
 
+    /**
+     * Remove the bundle group from the specified roles.
+     *
+     * @param subject
+     * @param bundleGroupId
+     * @param roleIds
+     */
     void removeRolesFromBundleGroup(Subject subject, int bundleGroupId, int[] roleIds);
 
+    /**
+     * Remove the resource group from the specified roles.
+     *
+     * @param subject
+     * @param groupId
+     * @param roleIds
+     */
     void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria);
 
 }

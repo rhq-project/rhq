@@ -178,7 +178,7 @@ public class ResourceCriteria extends TaggedCriteria {
     /**
      * Note, setting this filter will set filterInventoryStatus to null since that is a mutually exclusive filter.
      *  
-     * @param filterInventoryStatus
+     * @param filterInventoryStatuses
      */
     public void addFilterInventoryStatuses(List<InventoryStatus> filterInventoryStatuses) {
         this.filterInventoryStatuses = filterInventoryStatuses;

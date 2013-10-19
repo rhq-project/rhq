@@ -23,10 +23,8 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
-import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -36,7 +34,7 @@ import org.rhq.core.domain.util.PageList;
  * @author Joseph Marques
  */
 @Local
-public interface AlertDefinitionManagerLocal {
+public interface AlertDefinitionManagerLocal extends AlertDefinitionManagerRemote {
     PageList<AlertDefinition> findAlertDefinitions(Subject subject, int resourceId, PageControl pageControl);
 
     AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId);
@@ -64,9 +62,8 @@ public interface AlertDefinitionManagerLocal {
      * @throws InvalidAlertDefinitionException
      */
     AlertDefinition createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition,
-        Integer resourceId, boolean finalizeNotificationConfiguration)
-        throws InvalidAlertDefinitionException;
-    
+        Integer resourceId, boolean finalizeNotificationConfiguration) throws InvalidAlertDefinitionException;
+
     /**
      * This is exactly the same as {@link #createAlertDefinitionInNewTransaction(Subject, AlertDefinition, Integer, boolean)} but
      * assumes the resource is part of a group (or has given resource type for templates) for which
@@ -128,32 +125,15 @@ public interface AlertDefinitionManagerLocal {
      * @throws InvalidAlertDefinitionException
      * @throws AlertDefinitionUpdateException
      */
-    AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
+    AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId,
+        AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException,
+        AlertDefinitionUpdateException;
 
     int purgeUnusedAlertDefinitions();
 
     void purgeInternals(int alertDefinitionId);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId);
-
-    PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
-
-    int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
-
-    int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
-
-    int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds);
-
-    String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications);
-
     AlertDefinition updateAlertDefinitionInternal(Subject subject, int alertDefinitionId,
-                                                  AlertDefinition alertDefinition, boolean resetMatching,
-                                                  boolean checkPerms, boolean finalizeNotifications) throws InvalidAlertDefinitionException,
-        AlertDefinitionUpdateException;
+        AlertDefinition alertDefinition, boolean resetMatching, boolean checkPerms, boolean finalizeNotifications)
+        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 }

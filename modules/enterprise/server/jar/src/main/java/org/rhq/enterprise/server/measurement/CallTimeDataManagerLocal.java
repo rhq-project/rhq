@@ -36,11 +36,8 @@ import org.rhq.core.domain.util.PageList;
  * The manager for call-time metric data.
  */
 @Local
-public interface CallTimeDataManagerLocal {
+public interface CallTimeDataManagerLocal extends CallTimeDataManagerRemote {
     void addCallTimeData(Set<CallTimeData> callTimeDataSet);
-
-    PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
-        long endTime, PageControl pageControl);;
 
     PageList<CallTimeDataComposite> findCallTimeDataForCompatibleGroup(Subject subject, int groupId, long beginTime,
         long endTime, PageControl pageControl);

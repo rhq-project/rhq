@@ -25,14 +25,39 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * ResourceType remote API.
+ */
 @Remote
 public interface ResourceTypeManagerRemote {
 
+    /**
+     * @param subject
+     * @param resourceTypeId
+     * @param ignoreFlag
+     */
     void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag);
 
+    /**
+     * @param subject
+     * @param resourceTypeId
+     * @return the type
+     * @throws ResourceTypeNotFoundException
+     */
     ResourceType getResourceTypeById(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException;
 
+    /**
+     * @param subject
+     * @param name
+     * @param plugin
+     * @return null if not found
+     */
     ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria);
 }

@@ -26,24 +26,52 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public API for Alert Definitions.
+ */
 @Remote
 public interface AlertDefinitionManagerRemote {
 
-    AlertDefinition getAlertDefinition(//
-        Subject subject, int alertDefinitionId);
+    /**
+     * @param subject
+     * @param alertDefinitionId
+     * @return the alert definition or null
+     */
+    AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
 
-    int enableAlertDefinitions(// 
-        Subject subject, int[] alertDefinitionIds);
+    /**
+     * @param subject
+     * @param alertDefinitionIds
+     * @return number of modified definitions
+     */
+    int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
-    int disableAlertDefinitions(// 
-        Subject subject, int[] alertDefinitionIds);
+    /**
+     * @param subject
+     * @param alertDefinitionIds
+     * @return number of modified definitions
+     */
+    int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
-    int removeAlertDefinitions(// 
-        Subject subject, int[] alertDefinitionIds);
+    /**
+     * @param subject
+     * @param alertDefinitionIds
+     * @return number of removed definitions
+     */
+    int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
-    String[] getAlertNotificationConfigurationPreview(//
-        Subject subject, AlertNotification[] notifications);
+    /**
+     * @param subject
+     * @param notifications
+     * @return not null
+     */
+    String[] getAlertNotificationConfigurationPreview(Subject subject, AlertNotification[] notifications);
 
 }

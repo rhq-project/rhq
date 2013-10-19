@@ -132,7 +132,7 @@ public class PackageVersionCriteria extends Criteria {
 
     /**
      * Requires MANAGE_INVENTORY permission.
-     * @param fetchInstalledPackages
+     * @param  fetchInstalledPackageHistory
      */
     public void fetchInstalledPackageHistory(boolean fetchInstalledPackageHistory) {
         this.fetchInstalledPackageHistory = fetchInstalledPackageHistory;

@@ -44,12 +44,16 @@ public interface MeasurementScheduleManagerRemote {
 
     /**
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     *
+     * @param subject
+     * @param groupId
+     * @param measurementDefinitionIds
      */
     void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Requires MANAGE_SETTINGS global permission.
-     *  
+     *
      * @param subject
      * @param measurementDefinitionIds
      * @param updateExistingSchedules
@@ -58,8 +62,12 @@ public interface MeasurementScheduleManagerRemote {
         boolean updateExistingSchedules);
 
     /**
-     * @deprecated use {@link #disableSchedulesForResourceType(Subject, int[], boolean)  
+     * @param subject
+     * @param measurementDefinitionIds
+     *
+     * @deprecated use {@link #disableSchedulesForResourceType(Subject, int[], boolean)}
      */
+    @Deprecated
     void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
 
     /**
@@ -72,12 +80,16 @@ public interface MeasurementScheduleManagerRemote {
 
     /**
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
+     *
+     * @param subject
+     * @param groupId
+     * @param measurementDefinitionIds
      */
     void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Requires MANAGE_SETTINGS global permission.
-     * 
+     *
      * @param subject
      * @param measurementDefinitionIds
      * @param updateExistingSchedules
@@ -85,21 +97,41 @@ public interface MeasurementScheduleManagerRemote {
     void enableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds, boolean updateExistingSchedules);
 
     /**
-     * @deprecated use {@link #enableSchedulesForResourceType(Subject, int[], boolean)  
+     * @param subject
+     * @param measurementDefinitionIds
+     *
+     * @deprecated use {@link #enableSchedulesForResourceType(Subject, int[], boolean)}
      */
+    @Deprecated
     void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
 
+    /**
+     * @param subject
+     * @param measurementSchedule
+     */
     void updateSchedule(Subject subject, MeasurementSchedule measurementSchedule);
 
+    /**
+     * @param subject
+     * @param resourceId
+     * @param measurementDefinitionIds
+     * @param collectionInterval
+     */
     void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
         long collectionInterval);
 
+    /**
+     * @param subject
+     * @param groupId
+     * @param measurementDefinitionIds
+     * @param collectionInterval
+     */
     void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
         long collectionInterval);
 
     /**
      * Requires MANAGE_SETTINGS global permission.
-     *      
+     *
      * @param subject
      * @param measurementDefinitionIds
      * @param collectionInterval
@@ -109,9 +141,18 @@ public interface MeasurementScheduleManagerRemote {
         boolean updateExistingSchedules);
 
     /**
-     * @deprecated use {@link #updateSchedulesForResourceType(Subject, int[], boolean)  
+     * @param subject
+     * @param measurementDefinitionIds
+     * @param collectionInterval
+     * @deprecated use {@link #updateSchedulesForResourceType(Subject, int[], long, boolean)}
      */
+    @Deprecated
     void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 }

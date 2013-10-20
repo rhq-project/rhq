@@ -18,6 +18,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.SettableFuture;
 
 import org.joda.time.DateTime;
@@ -41,19 +42,26 @@ public class AggregationTests extends MetricsTest {
     private Aggregates schedule4 = new Aggregates();
     private Aggregates schedule5 = new Aggregates();
 
-    private ListeningExecutorService workers;
+    private ListeningExecutorService aggregationTasks;
 
     private DateTime currentHour;
 
+    private RateLimiter writePermits;
+    private RateLimiter readPermits;
+
     @BeforeClass
     public void setUp() throws Exception {
-        workers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         purgeDB();
+
         schedule1.id = 100;
         schedule2.id = 101;
         schedule3.id = 102;
         schedule4.id = 104;
         schedule5.id = 105;
+
+        aggregationTasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        writePermits = RateLimiter.create(500);
+        readPermits = RateLimiter.create(350);
     }
 
     @Test
@@ -146,15 +154,15 @@ public class AggregationTests extends MetricsTest {
         assert1HourDataEquals(schedule1.id, schedule1.oneHourData.get(hour(16)), schedule1.oneHourData.get(hour(17)));
         assert1HourDataEquals(schedule2.id, schedule2.oneHourData.get(hour(16)), schedule2.oneHourData.get(hour(17)));
         assert1HourDataEquals(schedule3.id, schedule3.oneHourData.get(hour(16)));
-        assert6HourMetricsIndexEmpty(hour(12));
         assert6HourDataEquals(schedule1.id, schedule1.sixHourData.get(hour(12)));
         assert6HourDataEquals(schedule2.id, schedule2.sixHourData.get(hour(12)));
         assert6HourDataEquals(schedule3.id, schedule3.sixHourData.get(hour(12)));
         assert24HourDataEmpty(schedule1.id);
         assert24HourDataEmpty(schedule2.id);
         assert24HourDataEmpty(schedule3.id);
-        assert24HourIndexEquals(hour(0), schedule1.id, schedule2.id, schedule3.id);
         assert1HourMetricsIndexEmpty(hour(17));
+        assert6HourMetricsIndexEmpty(hour(12));
+        assert24HourIndexEquals(hour(0), schedule1.id, schedule2.id, schedule3.id);
     }
 
     @Test(dependsOnMethods = "runAggregationForHour17")
@@ -448,11 +456,11 @@ public class AggregationTests extends MetricsTest {
     private class AggregatorTestStub extends Aggregator {
 
         public AggregatorTestStub(DateTime startTime) {
-            super(workers, dao, configuration, dateTimeService, startTime);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits);
         }
 
         public AggregatorTestStub(DateTime startTime, MetricsDAO dao) {
-            super(workers, dao, configuration, dateTimeService, startTime);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits);
         }
 
         @Override

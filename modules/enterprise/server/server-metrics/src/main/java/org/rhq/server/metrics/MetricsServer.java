@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
@@ -42,6 +41,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -71,14 +71,22 @@ public class MetricsServer {
 
     private MetricsConfiguration configuration;
 
-    private Semaphore semaphore = new Semaphore(100);
+    private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
+        System.getProperty("rhq.storage.read-limit", "1200")));
+
+    private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
+        System.getProperty("rhq.storage.write-limit", "3100")));
 
     private boolean pastAggregationMissed;
 
     private Long mostRecentRawDataPriorToStartup;
 
     private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
-        Executors.newFixedThreadPool(10));
+        Executors.newFixedThreadPool(5));
+
+    private int aggregationBatchSize;
+
+    private boolean useAsyncAggregation;
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -90,6 +98,30 @@ public class MetricsServer {
 
     public void setDateTimeService(DateTimeService dateTimeService) {
         this.dateTimeService = dateTimeService;
+    }
+
+    public void setAggregationBatchSize(int batchSize) {
+        aggregationBatchSize = batchSize;
+    }
+
+    public void setUseAsyncAggregation(boolean useAsyncAggregation) {
+        this.useAsyncAggregation = useAsyncAggregation;
+    }
+
+    public RateLimiter getReadPermits() {
+        return readPermits;
+    }
+
+    public void setReadPermits(RateLimiter readPermits) {
+        this.readPermits = readPermits;
+    }
+
+    public RateLimiter getWritePermits() {
+        return writePermits;
+    }
+
+    public void setWritePermits(RateLimiter writePermits) {
+        this.writePermits = writePermits;
     }
 
     public void init() {
@@ -146,6 +178,7 @@ public class MetricsServer {
     }
 
     public void shutdown() {
+        aggregationWorkers.shutdown();
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
@@ -323,7 +356,7 @@ public class MetricsServer {
             final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
             for (final MeasurementDataNumeric data : dataSet) {
-                semaphore.acquire();
+                writePermits.acquire();
                 StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
                 Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
                     @Override
@@ -341,7 +374,6 @@ public class MetricsServer {
                                     throwable.getClass().getName() + ": " + throwable.getMessage());
                         }
                         callback.onFailure(throwable);
-                        semaphore.release();
                     }
                 });
             }
@@ -356,6 +388,7 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
+        writePermits.acquire();
         StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
             timeSlice);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
@@ -369,7 +402,6 @@ public class MetricsServer {
                     }
                     callback.onFinish();
                 }
-                semaphore.release();
             }
 
             @Override
@@ -377,7 +409,6 @@ public class MetricsServer {
                 log.error("An error occurred while trying to update " + MetricsTable.INDEX + " for raw data " +
                     rawData);
                 callback.onFailure(throwable);
-                semaphore.release();
             }
         });
     }
@@ -394,15 +425,21 @@ public class MetricsServer {
         DateTime theHour = currentHour();
 
         if (pastAggregationMissed) {
-            calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());
+            theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
             pastAggregationMissed = false;
-            return calculateAggregates(theHour.getMillis());
+        }
+
+        if (useAsyncAggregation) {
+            DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
+            return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+                aggregationBatchSize, writePermits, readPermits).run();
         } else {
             return calculateAggregates(theHour.getMillis());
         }
     }
 
     private Iterable<AggregateNumericMetric> calculateAggregates(long startTime) {
+        long start = System.currentTimeMillis();
         DateTime dt = new DateTime(startTime);
         DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
         DateTime lastHour = currentHour.minus(configuration.getRawTimeSliceDuration());
@@ -443,6 +480,7 @@ public class MetricsServer {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR, twentyFourHourTimeSlice);
         }
 
+        log.info("Finished aggregation in " + (System.currentTimeMillis() - start) + " ms");
         return newOneHourAggregates;
     }
 

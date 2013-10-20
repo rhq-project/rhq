@@ -194,6 +194,11 @@ public class MetricsDAO {
         }
     }
 
+    public ResultSet findRawMetricsSync(int scheduleId, long startTime, long endTime) {
+        BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return storageSession.execute(boundStatement);
+    }
+
     public StorageResultSetFuture findRawMetricsAsync(int scheduleId, long startTime, long endTime) {
         BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
         return storageSession.executeAsync(boundStatement);

@@ -28,6 +28,8 @@ import java.util.concurrent.CountDownLatch;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -78,6 +80,12 @@ public class CassandraIntegrationTest {
             .addContactPoints("127.0.0.1")
             .withCredentialsObfuscated(RHQADMIN, RHQADMIN_PASSWORD)
             .build();
+
+        PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+        poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 24);
+        poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 24);
+        poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL, 32);
+        poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, 32);
 
         cluster.register(new Host.StateListener() {
             @Override

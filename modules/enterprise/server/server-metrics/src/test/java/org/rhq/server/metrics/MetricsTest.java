@@ -54,7 +54,7 @@ public class MetricsTest extends CassandraIntegrationTest {
             MathContext.DECIMAL64).doubleValue();
     }
 
-    protected void purgeDB() throws Exception {
+    protected void purgeDB() {
         session.execute("TRUNCATE " + MetricsTable.RAW);
         session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
         session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
@@ -37,7 +38,8 @@ public class AggregatorTest extends MetricsTest {
 
         public AggregatorTestStub(ListeningExecutorService workers, MetricsDAO dao, MetricsConfiguration configuration,
             DateTimeService dtService, DateTime startTime) {
-            super(workers, dao, configuration, dtService, startTime);
+            //super(workers, dao, configuration, dtService, startTime, semaphore);
+            super(null, null, null, null, null, 0, null, null);
         }
 
         @Override
@@ -49,6 +51,8 @@ public class AggregatorTest extends MetricsTest {
     private DateTime currentHour;
 
     private ListeningExecutorService workers;
+
+    private Semaphore semaphore = new Semaphore(50);
 
     @BeforeClass
     public void initClass() {

@@ -62,6 +62,7 @@ public class MeasurementAggregator implements Runnable {
             @Override
             public void run() {
                 Timer.Context context = metrics.totalAggregationTime.time();
+                long start = System.currentTimeMillis();
                 try {
                     log.debug("Starting metrics aggregation");
                     metricsServer.calculateAggregates();
@@ -71,6 +72,7 @@ public class MeasurementAggregator implements Runnable {
                     shutdownManager.shutdown(1);
                 } finally {
                     context.stop();
+                    log.debug("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
                     metrics.totalAggregationRuns.inc();
                 }
             }

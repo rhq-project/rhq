@@ -98,6 +98,9 @@ public class SimulationPlanner {
         simulation.setNodes(nodes);
 
         simulation.setCqlPort(getInt(root.get("cqlPort"), 9142));
+        simulation.setAggregationBatchSize(getInt(root.get("aggregationBatchSize"), 25));
+        simulation.setAggregationType(SimulationPlan.AggregationType.fromText(getString(root.get("aggregationType"),
+            "sync")));
 
         return simulation;
     }

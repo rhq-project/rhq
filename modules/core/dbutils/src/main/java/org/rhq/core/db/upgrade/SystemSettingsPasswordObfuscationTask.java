@@ -56,6 +56,10 @@ public class SystemSettingsPasswordObfuscationTask implements DatabaseUpgradeTas
             String value = (String) row[1];
             String defaultValue = (String) row[2];
 
+            if (value == null && defaultValue == null) {
+                continue;
+            }
+
             sql = "UPDATE rhq_system_config SET ";
             try {
                 if (value != null) {
@@ -74,7 +78,11 @@ public class SystemSettingsPasswordObfuscationTask implements DatabaseUpgradeTas
 
             sql += " WHERE id = " + settingId;
 
-            type.executeSql(connection, sql);
+            try {
+                type.executeSql(connection, sql);
+            } catch (SQLException e) {
+                throw new SQLException("Failed to update the password field. The SQL statement was: " + sql, e);
+            }
         }
     }
 }

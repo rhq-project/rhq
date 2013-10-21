@@ -72,7 +72,7 @@ public class SystemSettingsPasswordObfuscationTask implements DatabaseUpgradeTas
                 throw new SQLException("Failed to obfuscate password system settings.", e);
             }
 
-            sql += "WHERE id = " + settingId;
+            sql += " WHERE id = " + settingId;
 
             type.executeSql(connection, sql);
         }

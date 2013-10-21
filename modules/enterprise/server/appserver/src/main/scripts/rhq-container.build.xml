@@ -540,8 +540,8 @@
 # Database Settings
 # -----------------
 # INSTALLATION ACTION REQUIRED!
-#   All properties must be explicitly set for the desired database vendor:
-# 
+#   All properties must be explicitly set for the desired database vendor.
+#
 # These should point to the database that your RHQ Server will use as
 # its backend RDBMS storage.
 # If you are using Oracle:

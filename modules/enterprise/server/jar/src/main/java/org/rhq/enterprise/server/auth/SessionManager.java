@@ -33,20 +33,20 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * purpose is to provide session IDs to logged in {@link Subject}s. It will timeout those sessions regardless of any
  * container-provided session-timeout mechanism.
  * <p>
- * Because this is a very security-sensitive class, any public method requires the caller to 
+ * Because this is a very security-sensitive class, any public method requires the caller to
  * have the {@link AllowEjbAccessPermission} as any other calls to the EJB layer. This is so that the
  * malicious users can't trick the EJB layer into thinking that some users are logged in or log out other
  * users.
  * <p>
  * Also, for security reasons, this class is final so that malicious code can't subclass it and modify its
  * behavior.
- * 
+ *
  * <p>This object is a {@link #getInstance() singleton}.</p>
  */
 public final class SessionManager {
-    
+
     private static final AllowRhqServerInternalsAccessPermission ACCESS_PERMISSION = new AllowRhqServerInternalsAccessPermission();
-    
+
     /**
      * Our source for random session IDs.
      */
@@ -90,7 +90,7 @@ public final class SessionManager {
 
     /**
      * Return the singleton object.
-     * 
+     *
      * @return the {@link SessionManager}
      */
     public static SessionManager getInstance() {
@@ -188,6 +188,13 @@ public final class SessionManager {
      */
     public synchronized void invalidate(int sessionId) {
         checkPermission();
+
+        // we currently use a shared session for overlord.  don't log it out as it could affect another caller's use
+        // of the overlord user.  The session will expire if unused by any caller for the overlord timeout period.
+        if (overlordSubject != null && (overlordSubject.getSessionId() == sessionId)) {
+            return;
+        }
+
         _cache.remove(new Integer(sessionId));
 
         // while we are here, let's go through the entire session cache and remove expired sessions
@@ -292,9 +299,10 @@ public final class SessionManager {
 
         return copy;
     }
-    
+
     private static void checkPermission() {
-         SecurityManager sm = System.getSecurityManager();
-         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkPermission(ACCESS_PERMISSION);
     }
 }

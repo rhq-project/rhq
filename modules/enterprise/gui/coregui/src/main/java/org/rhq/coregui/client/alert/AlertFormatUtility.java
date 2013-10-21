@@ -97,8 +97,14 @@ public class AlertFormatUtility {
             long longValue = Long.valueOf(condition.getOption());
             MeasurementNumericValueAndUnits valueWithUnits;
             if (longValue % 3600 == 0) {
-                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.SECONDS,
+                if (longValue == 3600) {
+                    valueWithUnits = new MeasurementNumericValueAndUnits(1.0d, MeasurementUnits.HOURS);
+                } else {
+                    valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.SECONDS,
                         MeasurementUnits.HOURS, MeasurementUnits.HOURS);
+                }
+            } else if (longValue == 60) {
+                valueWithUnits = new MeasurementNumericValueAndUnits(1.0d, MeasurementUnits.MINUTES);
             } else {
                 valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.SECONDS,
                         MeasurementUnits.MINUTES, MeasurementUnits.MINUTES);

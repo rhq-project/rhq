@@ -72,8 +72,7 @@ public interface OperationManagerLocal {
      *         scheduled operation
      */
     int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule);
-    
-    
+
     /**
      * Schedules a Resource operation for execution using the cron expression.
      *
@@ -102,7 +101,7 @@ public interface OperationManagerLocal {
      *   0 11 11 11 11 ?           Fire every November 11th at 11:11am.
      * </pre>
      * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
-     * @param  parameters     the names parameters for the operation. 
+     * @param  parameters     the names parameters for the operation.
      * @param  description    user-entered description of the job to be scheduled
      *
      * @return the information on the new schedule
@@ -229,7 +228,7 @@ public interface OperationManagerLocal {
     /**
      * Given a Resource operation job's details, this returns a schedule POJO corresponding to that job.
      *
-     * @param subject 
+     * @param subject
      * @param jobDetail
      *
      * @return the object that encapsulates the resource schedule, or null if the specified job is no longer scheduled
@@ -240,7 +239,7 @@ public interface OperationManagerLocal {
     /**
      * Given a resource job's id, this returns the schedule for that resource job.
      *
-     * @param subject 
+     * @param subject
      * @param jobId
      *
      * @return the object that encapsulates the resource schedule
@@ -252,7 +251,7 @@ public interface OperationManagerLocal {
     /**
      * Given a group operation job's details, this returns a schedule POJO corresponding to that job.
      *
-     * @param subject 
+     * @param subject
      * @param jobDetail
      *
      * @return the object that encapsulates the group schedule, , or null if the specified job is no longer scheduled
@@ -263,7 +262,7 @@ public interface OperationManagerLocal {
     /**
      * Given a group job's id, this returns the schedule for that group job.
      *
-     * @param subject 
+     * @param subject
      * @param jobId
      *
      * @return the object that encapsulates the group schedule
@@ -326,26 +325,26 @@ public interface OperationManagerLocal {
      * AlertConditionCacheManager using that corresponding group history element.</p>
      *
      * @param  subject  the user that the job is executing under
-     * @param  history the history with the data to be updated
-     *
-     * @return the updated history
+     * @param  history the history with the data to be updated.  The history record will be created if id is set to 0.
+     * Otherwise the record must already exist and will be updated.
+     * @return the updated or newly created history
      */
     OperationHistory updateOperationHistory(Subject subject, OperationHistory history);
 
     /**
      * This is, for all intents and purposes, and internal method.  It should be called just after updating any
      * OperationHistory element.  To date, this includes two places:
-     * 
+     *
      * a) post-processing hook to updateOperationHistory(Subject whoami, OperationHistory history)
      * b) embedded inside the logic for checkForTimedOutOperations(Subject)
-     * 
+     *
      * This method will perform the following logic:
-     * 
+     *
      * 1) checks whether the entity corresponding to the passed id is part of a larger GroupOperationHistory
      * 2) if #1 is true, it will further check whether that entity was the last element from the group to complete
      * 3) if #2 is true, it will perform the necessary logic to moving the associated GroupOperationHistory entity
      *    to the appropriate termination state
-     * 
+     *
      * @param historyId the integer id of the OperationHistory entity that needs to be checked
      */
     void checkForCompletedGroupOperation(int historyId);
@@ -635,8 +634,7 @@ public interface OperationManagerLocal {
      * @return resource scheduled operations
      * @throws Exception TODO
      */
-    List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId)
-        throws Exception;
+    List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId) throws Exception;
 
     /**
      * Returns the definitions of all the operations supported by the given resource.
@@ -665,9 +663,9 @@ public interface OperationManagerLocal {
      * @param  operationName  the actual operation to invoke
      * @param  delay          the number of milliseconds to delay this operation, 0 for immediate start.
      * @param  repeatInterval the number of milliseconds after completion to repeat this operation. 0 for no repeat.
-     * @param  repeatCount    the number of times to repeat this operation. -1 infinite, 0 for no repeat. 
+     * @param  repeatCount    the number of times to repeat this operation. -1 infinite, 0 for no repeat.
      * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
-     * @param  parameters     the names parameters for the operation. 
+     * @param  parameters     the names parameters for the operation.
      * @param  description    user-entered description of the job to be scheduled
      *
      * @return the information on the new schedule
@@ -676,7 +674,7 @@ public interface OperationManagerLocal {
     ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
         throws ScheduleException;
-  
+
     /**
      * Schedules an operation for execution on members of the given group using the cron expression.
      *
@@ -740,7 +738,8 @@ public interface OperationManagerLocal {
      */
     void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 
-    PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
+    PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
+        OperationDefinitionCriteria criteria);
 
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria);

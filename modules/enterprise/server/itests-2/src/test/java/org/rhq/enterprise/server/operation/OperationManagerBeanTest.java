@@ -79,7 +79,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class OperationManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;
-    private static final String PREFIX = OperationManagerBeanTest.class.getSimpleName();
+    private static final String PREFIX = OperationManagerBeanTest.class.getSimpleName() + "_";
 
     private ConfigurationManagerLocal configurationManager;
     private OperationManagerLocal operationManager;
@@ -132,8 +132,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         try {
             deleteNewResource(newResource);
         } finally {
-            unprepareForTestAgents();
             unprepareScheduler();
+            unprepareForTestAgents();
         }
     }
 
@@ -610,10 +610,11 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             Thread.sleep(SECONDS.toMillis(5));
             results = operationManager.findCompletedGroupOperationHistories(overlord(), newGroup.getId(),
                 PageControl.getUnlimitedInstance());
-            testOpComplete = results != null && results.size() == 1;
+            testOpComplete = !results.isEmpty();
         } while (!testOpComplete && (nanoTime() - start) < MINUTES.toNanos(2));
 
         assert testOpComplete;
+        assertEquals(1, results.size());
         GroupOperationHistory history = results.get(0);
         assert history.getId() > 0 : history;
         assert history.getJobId() != null : history;
@@ -1974,20 +1975,30 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 getTransactionManager().begin();
                 em = getEntityManager();
 
+                ResourceGroup group = null;
                 Resource res = em.find(Resource.class, resource.getId());
-                ResourceGroup group = res.getExplicitGroups().iterator().next();
-
+                if (null != res) {
+                    if (res.getExplicitGroups().iterator().hasNext()) {
+                        group = res.getExplicitGroups().iterator().next();
+                    }
+                }
                 getTransactionManager().commit();
 
-                // then invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
-                // perform in-band and out-of-band work in quick succession
-                List<Integer> deletedIds = resourceManager.uninventoryResource(overlord(), resource.getId());
-                for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.uninventoryResourceAsyncWork(overlord(), deletedResourceId);
+                Subject overlord = overlord();
+
+                // delete the group if necessary
+                if (null != group) {
+                    resourceGroupManager.deleteResourceGroup(overlord, group.getId());
                 }
 
-                // then kill the group via the RG manager, it also handles cleanup of non hibernate model info
-                resourceGroupManager.deleteResourceGroup(overlord(), group.getId());
+                // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
+                // perform in-band and out-of-band work in quick succession
+                if (null != res) {
+                    List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, res.getId());
+                    for (Integer deletedResourceId : deletedIds) {
+                        resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
+                    }
+                }
 
                 // now dispose of other hibernate entities
                 getTransactionManager().begin();

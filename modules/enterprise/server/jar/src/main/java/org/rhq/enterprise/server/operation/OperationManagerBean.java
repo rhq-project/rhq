@@ -232,7 +232,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         ensureControlPermission(subject, resource);
 
-        OperationDefinition opDef = validateOperationNameAndParameters(resource.getResourceType(), operationName, parameters);
+        OperationDefinition opDef = validateOperationNameAndParameters(resource.getResourceType(), operationName,
+            parameters);
 
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
@@ -289,7 +290,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // we need a copy to avoid constraint violations upon delete
             parameters == null ? null : parameters.deepCopy(false), schedule.getResource(), null);
 
-        updateOperationHistory(subject,history);
+        updateOperationHistory(subject, history);
 
         return newSchedule;
     }
@@ -701,7 +702,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         OperationHistory history = entityManager.find(OperationHistory.class, historyId);
 
         if (history == null) {
-            throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
+            throw new IllegalArgumentException("Cannot get history - it does not exist: " + historyId);
         }
 
         if (history.getParameters() != null) {
@@ -905,21 +906,28 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             ensureControlPermission(subject, history);
         }
 
-
         // The history item may have been created already, so find it in the database and
         // set the new state from our input
-        if (history.getId()!=0) {
-            OperationHistory existingHistoryItem =entityManager.find(OperationHistory.class,history.getId());
+        if (history.getId() != 0) {
+            OperationHistory existingHistoryItem = entityManager.find(OperationHistory.class, history.getId());
+            if (null == existingHistoryItem) {
+                throw new IllegalArgumentException(
+                    "Can not update operation history, history record not found. This call creates a new operation history record only if the supplied history argument has id set to 0. ["
+                        + history + "]");
+            }
+
             existingHistoryItem.setStatus(history.getStatus());
             existingHistoryItem.setErrorMessage(history.getErrorMessage());
-            if (existingHistoryItem.getStartedTime()==0) {
+            if (existingHistoryItem.getStartedTime() == 0) {
                 existingHistoryItem.setStartedTime(history.getStartedTime());
             }
             if (history instanceof ResourceOperationHistory) {
-                ((ResourceOperationHistory)existingHistoryItem).setResults(((ResourceOperationHistory) history).getResults());
+                ((ResourceOperationHistory) existingHistoryItem).setResults(((ResourceOperationHistory) history)
+                    .getResults());
             }
             history = existingHistoryItem;
         }
+
         // we do not cascade add the param config (we probably can add that but), so let's persist it now if needed
         Configuration parameters = history.getParameters();
         if ((parameters != null) && (parameters.getId() == 0)) {
@@ -2026,8 +2034,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         OperationDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner<OperationDefinition>(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner<OperationDefinition>(criteria,
+            generator, entityManager);
         return queryRunner.execute();
     }
 
@@ -2039,8 +2047,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceOperationHistory> queryRunner = new CriteriaQueryRunner<ResourceOperationHistory>(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<ResourceOperationHistory> queryRunner = new CriteriaQueryRunner<ResourceOperationHistory>(
+            criteria, generator, entityManager);
         return queryRunner.execute();
     }
 
@@ -2052,8 +2060,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 subject.getId());
         }
 
-        CriteriaQueryRunner<GroupOperationHistory> queryRunner = new CriteriaQueryRunner<GroupOperationHistory>(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<GroupOperationHistory> queryRunner = new CriteriaQueryRunner<GroupOperationHistory>(
+            criteria, generator, entityManager);
         return queryRunner.execute();
     }
 
@@ -2170,9 +2178,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return trigger;
     }
 
-    private OperationDefinition validateOperationNameAndParameters(ResourceType resourceType,
-                                                                          String operationName,
-                                                                          Configuration parameters) {
+    private OperationDefinition validateOperationNameAndParameters(ResourceType resourceType, String operationName,
+        Configuration parameters) {
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         OperationDefinition matchingOperationDefinition = null;
         for (OperationDefinition operationDefinition : operationDefinitions) {

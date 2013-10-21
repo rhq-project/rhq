@@ -15,9 +15,9 @@ import org.apache.commons.logging.LogFactory;
 /**
  * @author John Sanda
  */
-public class Aggregate1HourData implements Runnable {
+public class Aggregate6HourData implements Runnable {
 
-    private final Log log = LogFactory.getLog(Aggregate1HourData.class);
+    private final Log log = LogFactory.getLog(Aggregate6HourData.class);
 
     private MetricsDAO dao;
 
@@ -27,7 +27,7 @@ public class Aggregate1HourData implements Runnable {
 
     private List<StorageResultSetFuture> queryFutures;
 
-    public Aggregate1HourData(MetricsDAO dao, AggregationState state, Set<Integer> scheduleIds,
+    public Aggregate6HourData(MetricsDAO dao, AggregationState state, Set<Integer> scheduleIds,
         List<StorageResultSetFuture> queryFutures) {
         this.dao = dao;
         this.state = state;
@@ -42,31 +42,25 @@ public class Aggregate1HourData implements Runnable {
         Futures.withFallback(queriesFuture, new FutureFallback<List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
-                log.error("An error occurred while fetching one hour data", t);
+                log.error("An error occurred while fetching 6 hour data", t);
                 return Futures.immediateFailedFuture(t);
             }
         });
         ListenableFuture<List<ResultSet>> computeFutures = Futures.transform(queriesFuture,
-            state.getCompute6HourData(), state.getAggregationTasks());
+            state.getCompute24HourData(), state.getAggregationTasks());
         Futures.addCallback(computeFutures, new FutureCallback<List<ResultSet>>() {
             @Override
             public void onSuccess(List<ResultSet> result) {
-                log.debug("Finished aggregating 1 hour data for " + result.size() + " schedules in " +
+                log.debug("Finished aggregating 6 hour data for " + result.size() + " schedules in " +
                     (System.currentTimeMillis() - start) + " ms");
-                state.getRemaining1HourData().addAndGet(-scheduleIds.size());
+                state.getRemaining6HourData().addAndGet(-scheduleIds.size());
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("Failed to aggregate 1 hour data", t);
-                state.getRemaining1HourData().addAndGet(-scheduleIds.size());
+                log.warn("Failed to aggregate 6 hour data", t);
+                state.getRemaining6HourData().addAndGet(-scheduleIds.size());
             }
         });
-    }
-
-    private void start6HourDataAggregationIfNecessary() {
-        if (state.is24HourTimeSliceFinished()) {
-            // TODO
-        }
     }
 }

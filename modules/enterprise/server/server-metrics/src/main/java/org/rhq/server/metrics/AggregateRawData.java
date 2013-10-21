@@ -70,13 +70,6 @@ public class AggregateRawData implements Runnable {
         }, state.getAggregationTasks());
     }
 
-//    private void updateRawAggregationState() {
-//        if (state.getRemainingRawData().addAndGet(-scheduleIds.size()) == 0) {
-//            //state.getCompletionOfRawDataAggregation().countDown();
-//        }
-//        log.debug("Remaining raw data = " + state.getRemainingRawData());
-//    }
-
     private void start1HourDataAggregationIfNecessary() {
         log.debug("Aggregating 1 hour data for schedule ids " + scheduleIds);
         if (state.is6HourTimeSliceFinished()) {

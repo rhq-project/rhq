@@ -52,7 +52,7 @@ public class SystemSettingsPasswordObfuscationTask implements DatabaseUpgradeTas
         List<Object[]> results = type.executeSelectSql(connection, sql);
 
         for(Object[] row : results) {
-            int settingId = (Integer) row[0];
+            Number settingId = (Number) row[0];
             String value = (String) row[1];
             String defaultValue = (String) row[2];
 

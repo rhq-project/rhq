@@ -48,7 +48,7 @@ public class Aggregator {
 
     private DateTime startTime;
 
-    private CountDownLatch rawDataIndexEntriesArrival;
+    private SignalingCountDownLatch rawDataIndexEntriesArrival;
 
     private RateLimiter readPermits;
     private RateLimiter writePermits;
@@ -72,7 +72,7 @@ public class Aggregator {
         this.writePermits = writePermits;
         this.batchSize = batchSize;
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
-        rawDataIndexEntriesArrival = new CountDownLatch(1);
+        rawDataIndexEntriesArrival = new SignalingCountDownLatch(new CountDownLatch(1));
         remainingIndexEntries = new AtomicInteger(1);
 
         DateTime sixHourTimeSlice = get6HourTimeSlice();
@@ -87,15 +87,14 @@ public class Aggregator {
             .setTwentyFourHourTimeSliceEnd(twentyFourHourTimeSlice.plus(configuration.getSixHourTimeSliceDuration()))
             .setCompute1HourData(new Compute1HourData(startTime, sixHourTimeSlice, writePermits, dao, oneHourData))
             .setCompute6HourData(new Compute6HourData(sixHourTimeSlice, twentyFourHourTimeSlice, writePermits, dao))
+            .setCompute24HourData(new Compute24HourData(twentyFourHourTimeSlice, writePermits, dao))
             .set6HourTimeSliceFinished(hasTimeSliceEnded(sixHourTimeSlice, configuration.getOneHourTimeSliceDuration()))
             .set24HourTimeSliceFinished(hasTimeSliceEnded(twentyFourHourTimeSlice,
                 configuration.getSixHourTimeSliceDuration()))
             .setOneHourIndexEntries(new TreeSet<Integer>())
             .setSixHourIndexEntries(new TreeSet<Integer>())
             .setOneHourIndexEntriesLock(new ReentrantReadWriteLock())
-            .setSixHourIndexEntriesLock(new ReentrantReadWriteLock())
-            .setCompletionOfRawDataAggregation(new CountDownLatch(1))
-            .setCompletionOf1HourDataAggregation(new CountDownLatch(1));
+            .setSixHourIndexEntriesLock(new ReentrantReadWriteLock());
 
         if (state.is6HourTimeSliceFinished()) {
             state.setOneHourIndexEntriesArrival(new SignalingCountDownLatch(new CountDownLatch(1)));
@@ -176,7 +175,8 @@ public class Aggregator {
             public void onFailure(Throwable t) {
                 log.warn("Failed to retrieve raw data index entries. Raw data aggregation for time slice [" +
                     startTime + "] cannot proceed.", t);
-                state.getRemainingRawData().getAndSet(0);
+                state.setRemainingRawData(new AtomicInteger(0));
+                rawDataIndexEntriesArrival.abort();
                 deleteIndexEntries(MetricsTable.ONE_HOUR);
             }
         }, state.getAggregationTasks());
@@ -184,7 +184,7 @@ public class Aggregator {
         if (state.is6HourTimeSliceFinished()) {
             log.debug("Fetching 1 hour index entries");
             StorageResultSetFuture oneHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.SIX_HOUR,
-                get6HourTimeSlice().getMillis());
+                state.getSixHourTimeSlice().getMillis());
             Futures.addCallback(oneHourFuture, new FutureCallback<ResultSet>() {
                 @Override
                 public void onSuccess(ResultSet resultSet) {
@@ -204,46 +204,46 @@ public class Aggregator {
                         get6HourTimeSlice() + "]. Some six hour aggregates may not get generated.");
                     state.getOneHourIndexEntriesArrival().abort();
                 }
-            });
+            }, state.getAggregationTasks());
         }
 
-//        if (state.is24HourTimeSliceFinished()) {
-//            deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
-//            log.debug("Fetching 6 hour index entries");
-//            StorageResultSetFuture sixHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
-//                get24HourTimeSlice().getMillis());
-//            Futures.addCallback(sixHourFuture, new FutureCallback<ResultSet>() {
-//                @Override
-//                public void onSuccess(ResultSet result) {
-//                    List<Row> rows = result.all();
-//                    if (rows.isEmpty()) {
-//                        deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
-//                    } else {
-//                        MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.TWENTY_FOUR_HOUR);
-//
-//                        for (Row row : rows) {
-//                            MetricsIndexEntry indexEntry = mapper.map(row);
-//                            state.getSixHourIndexEntries().add(indexEntry.getScheduleId());
-//                        }
-//                        state.setRemaining6HourData(new AtomicInteger(state.getSixHourIndexEntries().size()));
-//                    }
-//                    state.getSixHourIndexEntriesArrival().countDown();
-//                    log.debug("Finished loading 6 hour index entries");
-//                }
-//
-//                @Override
-//                public void onFailure(Throwable t) {
-//                    log.warn("Failed to retrieve 6 hour aggregate index entries for time slice [" +
-//                        get24HourTimeSlice() + "]. Some 24 hour aggregates may not get generated.");
-//                    state.getSixHourIndexEntriesArrival().abort();
-//                    deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
-//                }
-//            });
-//        }
+        if (state.is24HourTimeSliceFinished()) {
+            log.debug("Fetching 6 hour index entries");
+            StorageResultSetFuture sixHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
+                state.getTwentyFourHourTimeSlice().getMillis());
+            Futures.addCallback(sixHourFuture, new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(ResultSet resultSet) {
+                    for (Row row : resultSet) {
+                        // No need to get the write lock here because there won't be concurrent writes until after
+                        // state.getSixHourIndexEntriesArrival().countDown() is called
+                        state.getSixHourIndexEntries().add(row.getInt(1));
+                    }
+                    state.setRemaining6HourData(new AtomicInteger(state.getSixHourIndexEntries().size()));
+                    state.getSixHourIndexEntriesArrival().countDown();
+                    log.debug("Finished loading 6 hour index entrie");
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.warn("Failed to retrieve 6 hour index entries for time slice " +
+                        state.getTwentyFourHourTimeSlice() + ". Some 24 hour aggregates may not get generated.", t);
+                    state.getSixHourIndexEntriesArrival().abort();
+                }
+            }, state.getAggregationTasks());
+        }
 
         try {
             if (state.is6HourTimeSliceFinished()) {
-                rawDataIndexEntriesArrival.await();
+                // TODO do we need to wait for raw index entries arrival?
+                try {
+                    log.debug("Waiting for arrival of raw data index entries");
+                    rawDataIndexEntriesArrival.await();
+                } catch (AbortedException e) {
+                    log.warn("Failed to load raw data index entries. Proceeding with 1 hour data aggregation.");
+                    log.warn("Remaining raw data: " + state.getRemainingRawData());
+                }
+                log.debug("Waiting for raw aggregation to complete");
                 waitForRawAggregationToComplete();
                 deleteIndexEntries(MetricsTable.SIX_HOUR);
                 // Now queue up remaining 1 hour data aggregation
@@ -276,7 +276,40 @@ public class Aggregator {
                 }
             }
 
-            while (remainingIndexEntries.get() > 0 || state.getRemaining1HourData().get() > 0) {
+            if (state.is24HourTimeSliceFinished()) {
+                waitFor1HourAggregationToComplete();
+                deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
+                try {
+                    log.debug("Remaining scheulde ids for 6 hour aggregation: " + state.getSixHourIndexEntries());
+                    List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
+                    Set<Integer> scheduleIds = new TreeSet<Integer>();
+                    state.getSixHourIndexEntriesLock().writeLock().lock();
+                    for (Integer scheduleId : state.getSixHourIndexEntries()) {
+                        queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, state.getTwentyFourHourTimeSlice().getMillis(),
+                            state.getTwentyFourHourTimeSliceEnd().getMillis()));
+                        scheduleIds.add(scheduleId);
+                        if (queryFutures.size() == batchSize) {
+                            log.debug("Submitting 6 hour aggregation task for schedule ids " + scheduleIds);
+                            state.getAggregationTasks().submit(new Aggregate6HourData(dao, state, scheduleIds,
+                                queryFutures));
+                            queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
+                            scheduleIds = new TreeSet<Integer>();
+                        }
+                    }
+                    if (!queryFutures.isEmpty()) {
+                        log.debug("Submitting 6 hour aggregation task for schedule ids " + scheduleIds);
+                        state.getAggregationTasks().submit(new Aggregate6HourData(dao, state, scheduleIds,
+                            queryFutures));
+                        queryFutures = null;
+                        scheduleIds = null;
+                    }
+                } finally {
+                    state.getSixHourIndexEntriesLock().writeLock().unlock();
+                }
+            }
+
+            while (remainingIndexEntries.get() > 0 || state.getRemaining1HourData().get() > 0 ||
+                state.getRemaining6HourData().get() > 0) {
                 Thread.sleep(50);
             }
             log.debug("Aggregation is done. There are " + remainingIndexEntries.get() + " remaining index entries");
@@ -288,6 +321,12 @@ public class Aggregator {
 
     private void waitForRawAggregationToComplete() throws InterruptedException {
         while (state.getRemainingRawData().get() > 0) {
+            Thread.sleep(50);
+        }
+    }
+
+    private void waitFor1HourAggregationToComplete() throws InterruptedException {
+        while (state.getRemaining1HourData().get() > 0) {
             Thread.sleep(50);
         }
     }

@@ -1,7 +1,6 @@
 package org.rhq.server.metrics;
 
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -52,9 +51,7 @@ public class AggregationState {
 
     private Compute6HourData compute6HourData;
 
-    private CountDownLatch completionOfRawDataAggregation;
-
-    private CountDownLatch completionOf1HourDataAggregation;
+    private Compute24HourData compute24HourData;
 
     public ListeningExecutorService getAggregationTasks() {
         return aggregationTasks;
@@ -227,21 +224,12 @@ public class AggregationState {
         return this;
     }
 
-    public CountDownLatch getCompletionOfRawDataAggregation() {
-        return completionOfRawDataAggregation;
+    public Compute24HourData getCompute24HourData() {
+        return compute24HourData;
     }
 
-    public AggregationState setCompletionOfRawDataAggregation(CountDownLatch completionOfRawDataAggregation) {
-        this.completionOfRawDataAggregation = completionOfRawDataAggregation;
-        return this;
-    }
-
-    public CountDownLatch getCompletionOf1HourDataAggregation() {
-        return completionOf1HourDataAggregation;
-    }
-
-    public AggregationState setCompletionOf1HourDataAggregation(CountDownLatch completionOf1HourDataAggregation) {
-        this.completionOf1HourDataAggregation = completionOf1HourDataAggregation;
+    public AggregationState setCompute24HourData(Compute24HourData compute24HourData) {
+        this.compute24HourData = compute24HourData;
         return this;
     }
 }

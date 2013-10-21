@@ -109,18 +109,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         setListGridFields(fields.toArray(new ListGridField[0]));
 
         if (!rendered) {
-            addTableAction(MSG.view_measureTable_getLive(), new TableAction() {
-                @Override
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    return true;
-                }
-
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    refresh();
-                }
-            });
-
             addExtraWidget(addToDashboardComponent, false);
             addToDashboardComponent.disableAddToDashboardButton();
             metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {

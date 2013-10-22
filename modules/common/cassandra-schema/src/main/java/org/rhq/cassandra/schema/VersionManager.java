@@ -78,19 +78,11 @@ class VersionManager extends AbstractManager {
     public void install() throws Exception {
         log.info("Preparing to install storage schema");
 
-        boolean clusterSessionInitialized = false;
         try {
             initClusterSession();
-            clusterSessionInitialized = true;
         } catch (AuthenticationException e) {
             log.debug("Authentication exception. Will now attempt to create the storage schema.");
             log.debug(e);
-            shutdownClusterConnection();
-        } finally {
-            //shutdownClusterConnection();
-        }
-
-        if (!clusterSessionInitialized) {
             create();
         }
 
@@ -114,6 +106,10 @@ class VersionManager extends AbstractManager {
          */
         //1. Execute the creation of RHQ schema, version table, admin user.
         try {
+            //shutdown existing connection
+            shutdownClusterConnection();
+
+            //re-initialize the cluster connection with default cassandra password
             initClusterSession(DEFAULT_CASSANDRA_USER, DEFAULT_CASSANDRA_PASSWORD);
 
             updateFolder = new UpdateFolder(Task.Create.getFolder());

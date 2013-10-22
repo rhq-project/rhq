@@ -294,7 +294,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(subject, groupId, null);
 
-        // create a copy of the collection in order to avoid ConcurrentModificationException 
+        // create a copy of the collection in order to avoid ConcurrentModificationException
         // (as a consequence of iterating and modifying it at once).
         Set<Role> roles = new HashSet<Role>(group.getRoles());
         for (Role doomedRoleRelationship : roles) {
@@ -337,7 +337,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      *       entity anymore because there are now two cases where group constructs need to be destroyed:
      *
      *          1) compatible group deletion - a group is deleted, all history removed, entity is gone from the system
-     *          2) dynagroup recomputation - a group definition is recalculation, a compatible group turns into a mixed
+     *          2) dynagroup recomputation - a group definition is recalculated, a compatible group turns into a mixed
      *                                       group, compatible constructs need to be removed, but the entity survives
      *
      *       For now, this implementation should suffice for -- https://bugzilla.redhat.com/show_bug.cgi?id=535671
@@ -1431,7 +1431,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
         Query query = entityManager.createQuery(queryString);
         query.setParameter("groupId", groupId);
-        List<Object[]> results = (List<Object[]>) query.getResultList();
+        List<Object[]> results = query.getResultList();
 
         if (results.size() == 0) {
             throw new ResourceGroupNotFoundException(groupId);
@@ -1558,7 +1558,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS explicitCount," // explicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS implicitCount," // implicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail
@@ -1572,7 +1572,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS explicitCount," // explicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS explicitDown," // explicit member count with DOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS explicitUnknown," // explicit member count with UNKNOWN avail
-                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail                
+                + "   ( SELECT COUNT(avail) FROM %alias%.explicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 3 ) AS explicitDisabled," // explicit member count with DISABLED avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' ) AS implicitCount," // implicit member count
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 0 ) AS implicitDown," // implicit member count with DOWN avail
                 + "   ( SELECT COUNT(avail) FROM %alias%.implicitResources res JOIN res.currentAvailability avail WHERE res.inventoryStatus = 'COMMITTED' AND avail.availabilityType = 2 ) AS implicitUnknown," // implicit member count with UNKNOWN avail

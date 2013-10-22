@@ -381,11 +381,26 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
             ensureControlPermission(subject, resource);
 
-            ResourceOperationSchedule schedule = getResourceOperationSchedule(subject, jobId);
+            // while unscheduling, be aware that the job could complete at any time
+            ResourceOperationSchedule schedule = null;
+            try {
+                schedule = getResourceOperationSchedule(subject, jobId);
+            } catch (SchedulerException e) {
+                // The schedule must have completed, so ignore the request to unschedule it.
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Assuming job [" + jobId
+                        + "] has completed, ignoring request to unschedule resource operation for resource ["
+                        + resourceId + "]");
+                }
+                return;
+            }
+
             if (schedule.getParameters() != null) {
                 Integer configId = schedule.getParameters().getId();
                 Configuration parameters = configurationManager.getConfigurationById(configId);
-                entityManager.remove(parameters);
+                if (null != parameters) {
+                    entityManager.remove(parameters);
+                }
             }
 
             ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
@@ -413,11 +428,26 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
             getCompatibleGroupIfAuthorized(subject, resourceGroupId); // just want to do this to check for permissions
 
-            GroupOperationSchedule schedule = getGroupOperationSchedule(subject, jobId);
+            // while unscheduling, be aware that the job could complete at any time
+            GroupOperationSchedule schedule = null;
+            try {
+                schedule = getGroupOperationSchedule(subject, jobId);
+            } catch (SchedulerException e) {
+                // The schedule must have completed, so ignore the request to unschedule it.
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Assuming job [" + jobId
+                        + "] has completed, ignoring request to unschedule group operation for group ["
+                        + resourceGroupId + "]");
+                }
+                return;
+            }
+
             if (schedule.getParameters() != null) {
                 Integer configId = schedule.getParameters().getId();
                 Configuration parameters = configurationManager.getConfigurationById(configId);
-                entityManager.remove(parameters);
+                if (null != parameters) {
+                    entityManager.remove(parameters);
+                }
             }
 
             ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
@@ -534,6 +564,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
+        // if the jobDetail is null assume the job is no longer scheduled
+        if (null == jobDetail) {
+            return null;
+        }
+
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         String jobName = jobDetail.getName();
@@ -606,6 +641,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, String jobId)
         throws SchedulerException {
+
         JobId jobIdObject = new JobId(jobId);
         JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
         ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(subject, jobDetail);
@@ -616,6 +652,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, JobDetail jobDetail) {
+        // if the jobDetail is null assume the job is no longer scheduled
+        if (null == jobDetail) {
+            return null;
+        }
+
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         String description = jobDetail.getDescription();

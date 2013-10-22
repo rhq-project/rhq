@@ -51,16 +51,19 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     private final String objectFileName = "pluginIds.obj";
     private Set<Integer> pluginIds;
 
-    /** 
+    /**
      * <pre>IMPORTANT NOTE FOR SUBCLASS IMPLEMENTORS
      * Arquillian (1.0.2) executes @AfterXXX after each test. The work below would normally be done in
-     * an AfterClass method, but instead we'll use mock tests, that perform last for each subclass, to
-     * perform this cleanup code. 
+     * an AfterClass method, but instead we'll use a "special" test that performs last for each subclass, to
+     * perform this cleanup code.
      * </pre>
      * Need to delete rows from RHQ_PLUGINS because subsequent tests in server/jar would otherwise fail. Some tests look
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
-     * 
+     *
+     * Note that using this for cleanup is discouraged in favor or beforeMethod and afterMethod overrides.  Remember
+     * that tests and test classes can execute in any order. This only guarantees clean up at some point, other tests
+     * [in other test classes] may encounter data that is left for cleanup by this mechanism.
      */
     protected void afterClassWork() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
@@ -262,7 +265,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
     /**
      * This actually creates a .jar file on the file system but doesn't register it.
-     * 
+     *
      * @param jarName the name to be given to the new jar file
      * @param descriptorXmlFilename where the descriptor XML can be found on the test classloader
      * @return the location of the new jar file

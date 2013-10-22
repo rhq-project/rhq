@@ -288,7 +288,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored";
+        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
+            + mergeResults.getIgnoredResourceTypes();
         ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
         assert platformSyncInfo != null;
 
@@ -420,7 +421,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report to get platform and servers in NEW state
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored";
+        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
+            + mergeResults.getIgnoredResourceTypes();
         ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
         assert platformSyncInfo != null;
 
@@ -484,18 +486,16 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         storageNode.setUuid(String.valueOf(new Random().nextInt()));
         storagePlatform.addChildResource(storageNode);
 
-        storageNode.setPluginConfiguration(Configuration.builder()
-            .addSimple("nativeTransportPort", 9142)
-            .addSimple("storagePort", 7100)
-            .addSimple("host", "localhost")
-            .build());
+        storageNode.setPluginConfiguration(Configuration.builder().addSimple("nativeTransportPort", 9142)
+            .addSimple("storagePort", 7100).addSimple("host", "localhost").build());
 
         inventoryReport.addAddedRoot(storagePlatform);
 
         // Merge this inventory report
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored";
+        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
+            + mergeResults.getIgnoredResourceTypes();
         ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
         assert platformSyncInfo != null;
 
@@ -668,8 +668,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     }
 
     private StorageNode findStorageNode(Resource resource) {
-        List<StorageNode> storageNodes = em.createQuery("SELECT s FROM StorageNode s where s.resource = :resource",
-            StorageNode.class).setParameter("resource", resource).getResultList();
+        List<StorageNode> storageNodes = em
+            .createQuery("SELECT s FROM StorageNode s where s.resource = :resource", StorageNode.class)
+            .setParameter("resource", resource).getResultList();
         if (storageNodes.isEmpty()) {
             return null;
         }

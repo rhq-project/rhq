@@ -28,8 +28,8 @@ import java.io.Serializable;
 import org.rhq.core.domain.resource.ResourceCategory;
 
 /**
- * A flyweight representation of the resource type intended for the display purposes. 
- * 
+ * A flyweight representation of the resource type intended for the display purposes.
+ *
  * @author Lukas Krejci
  */
 public class ResourceTypeFlyweight implements Serializable {
@@ -86,7 +86,7 @@ public class ResourceTypeFlyweight implements Serializable {
     public void setSubCategory(ResourceSubCategoryFlyweight subCategory) {
         this.subCategory = subCategory;
     }
-    
+
     public boolean isSingleton() {
         return singleton;
     }
@@ -119,5 +119,11 @@ public class ResourceTypeFlyweight implements Serializable {
             result = 31 * id;
         }
         return result;
-    }    
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceTypeFlyweight [id=" + id + ", name=" + name + ", plugin=" + plugin + "]";
+    }
+
 }

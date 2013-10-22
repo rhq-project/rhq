@@ -7,20 +7,33 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * This class uses the single test design pattern.  This helps eliminate intra-test dependencies, minimizes
+ * setup/cleanup and eliminates lag time between test completion and test class cleanup.
+ * </p>
+ * Therefore, this class does not implement an afterClassWorkTest(), instead that logic is moved to afterMethod().
+ * </p>
+ * This design is specifically used here because we can't allow ignored test resource types to exist in
+ * the DB waiting for cleanup, it affects any calls to mergeInventoryReport that may be don in other test classes.
+ */
 @Test(groups = { "plugin.metadata.ignoretypes" })
 public class MetadataUpdateWithIgnoredTypesTest extends MetadataBeanTest {
 
     private static final String PLUGIN_NAME = "RemoveIgnoredTypesPlugin";
 
+    @Override
+    protected void afterMethod() throws Exception {
+        // because we use the single test design pattern we can immediately perform the typical afterClass
+        // cleanup work in the afterMethod, which is guaranteed to run immediately after the test.
+        afterClassWork();
+
+        super.afterMethod();
+    }
+
+    // This must be the only test in this class.
     @Test
     public void upgradePluginWithIgnoredTypes() throws Exception {
         performTest(true);
-    }
-
-    // required cleanup
-    @Test(priority = 10, alwaysRun = true)
-    public void afterClassWorkTest() throws Exception {
-        afterClassWork();
     }
 
     private void performTest(boolean ignoreTypes) throws Exception {

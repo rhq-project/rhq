@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Properties;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ProtocolOptions.Compression;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -40,7 +39,6 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
@@ -65,18 +63,21 @@ abstract class AbstractManager {
 
     private Cluster cluster;
     private Session session;
+    private SessionManager sessionManager;
     private final String username;
     private final String password;
     private final int cqlPort;
     private final String[] nodes;
     private final UpdateFile managementTasks;
 
-    protected AbstractManager(String username, String password, String[] nodes, int cqlPort) {
+    protected AbstractManager(String username, String password, String[] nodes, int cqlPort,
+        SessionManager sessionManager) {
         try {
             this.username = username;
             this.password = password;
             this.cqlPort = cqlPort;
             this.nodes = nodes;
+            this.sessionManager = sessionManager;
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("Unable create storage node session.", e);
         }
@@ -104,17 +105,7 @@ abstract class AbstractManager {
      * @param password
      */
     protected void initClusterSession(String username, String password) {
-        shutdownClusterConnection();
-
-        log.info("Initializing storage node session.");
-
-        cluster = new ClusterBuilder().addContactPoints(nodes).withCredentialsObfuscated(username, password)
-            .withPort(this.getCqlPort()).withCompression(Compression.NONE).build();
-
-        log.info("Cluster connection configured.");
-
-        session = cluster.connect("system");
-        log.info("Cluster connected.");
+        sessionManager.initSession(username, password, cqlPort, nodes);
     }
 
     /**
@@ -122,18 +113,14 @@ abstract class AbstractManager {
      */
     protected void shutdownClusterConnection() {
         log.info("Shutting down existing cluster connections");
-        if (cluster != null) {
-            cluster.shutdown();
-        }
+        sessionManager.shutdownCluster();
     }
 
     /**
-     * Get storage cluster size.
-     *
-     * @return cluster size
+     * @return The actual size of the cluster which includes both specified and discovered nodes
      */
-    protected int getClusterSize() {
-        return nodes.length;
+    protected int getActualClusterSize() {
+        return sessionManager.getSession().getCluster().getMetadata().getAllHosts().size();
     }
 
     /**
@@ -222,9 +209,10 @@ abstract class AbstractManager {
      */
     protected int calculateNewReplicationFactor() {
         int replicationFactor;
-        if (getClusterSize() < 3) {
-            replicationFactor = getClusterSize();
-        } else if (getClusterSize() < 4) {
+        int actualClusterSize = getActualClusterSize();
+        if (actualClusterSize < 3) {
+            replicationFactor = actualClusterSize;
+        } else if (actualClusterSize < 4) {
             replicationFactor = 2;
         } else {
             replicationFactor = 3;
@@ -362,7 +350,8 @@ abstract class AbstractManager {
      * @return result for the query
      */
     protected ResultSet execute(String query) {
-        return session.execute(query);
+//        return session.execute(query);
+        return sessionManager.getSession().execute(query);
     }
 
 }

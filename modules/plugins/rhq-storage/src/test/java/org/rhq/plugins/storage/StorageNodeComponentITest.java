@@ -120,34 +120,6 @@ public class StorageNodeComponentITest {
         deploymentOptions.setHeapNewSize("64M");
 
         deploymentOptions.load();
-
-//        Deployer deployer = new Deployer();
-//        deployer.setDeploymentOptions(deploymentOptions);
-//
-//        deployer.unzipDistro();
-//        deployer.applyConfigChanges();
-//        deployer.updateFilePerms();
-//        deployer.updateStorageAuthConf(Sets.newHashSet(node1Address, node2Address));
-//
-//        File confDir = new File(basedir, "conf");
-//        File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
-//        PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(cassandraJvmPropsFile.getAbsolutePath());
-//        Properties properties = propertiesUpdater.loadExistingProperties();
-//
-//        String jvmOpts = properties.getProperty("JVM_OPTS");
-//        jvmOpts = jvmOpts.substring(0, jvmOpts.lastIndexOf("\""));
-//        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=100\"";
-//        properties.setProperty("JVM_OPTS", jvmOpts);
-//
-//        propertiesUpdater.update(properties);
-//
-//        File binDir = new File(basedir, "bin");
-//        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-//
-//        ProcessExecution processExecution = getProcessExecution(binDir);
-//        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
-//
-//        assertEquals(results.getExitCode(), (Integer) 0, "Cassandra failed to start: " + results.getCapturedOutput());
         doDeployment(deploymentOptions);
 
         String[] addresses = new String[] {"127.0.0.1"};
@@ -158,8 +130,12 @@ public class StorageNodeComponentITest {
 
         SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             addresses, 9142);
-        schemaManager.install();
-        schemaManager.updateTopology();
+        try {
+            schemaManager.install();
+            schemaManager.updateTopology();
+        } finally {
+            schemaManager.shutdown();
+        }
     }
 
     private void doDeployment(DeploymentOptions deploymentOptions) throws Exception {

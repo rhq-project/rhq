@@ -103,77 +103,80 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
+                    SchemaManager schemaManager = null;
+                    try {
+                        ClusterInitService clusterInitService = new ClusterInitService();
 
-                    SchemaManager schemaManager;
-                    ClusterInitService clusterInitService = new ClusterInitService();
+                        String[] nodes = null;
+                        int[] jmxPorts = null;
+                        int cqlPort = -1;
 
-                    String[] nodes = null;
-                    int[] jmxPorts = null;
-                    int cqlPort = -1;
+                        if (!Boolean.valueOf(System.getProperty("itest.use-external-storage-node", "false"))) {
 
-                    if (!Boolean.valueOf(System.getProperty("itest.use-external-storage-node", "false"))) {
+                            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+                            DeploymentOptions options = factory.newDeploymentOptions();
+                            File basedir = new File("target");
+                            File clusterDir = new File(basedir, "cassandra");
 
-                        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
-                        DeploymentOptions options = factory.newDeploymentOptions();
-                        File basedir = new File("target");
-                        File clusterDir = new File(basedir, "cassandra");
+                            options.setUsername("rhqadmin");
+                            options.setPassword("1eeb2f255e832171df8592078de921bc");
+                            options.setClusterDir(clusterDir.getAbsolutePath());
+                            options.setHeapSize("256M");
+                            options.setHeapNewSize("64M");
+                            options.setStartRpc(true);
 
-                        options.setUsername("rhqadmin");
-                        options.setPassword("1eeb2f255e832171df8592078de921bc");
-                        options.setClusterDir(clusterDir.getAbsolutePath());
-                        options.setHeapSize("256M");
-                        options.setHeapNewSize("64M");
-                        options.setStartRpc(true);
+                            ccm = new CassandraClusterManager(options);
+                            ccm.createCluster();
 
-                        ccm = new CassandraClusterManager(options);
-                        ccm.createCluster();
+                            nodes = ccm.getNodes();
+                            jmxPorts = ccm.getJmxPorts();
+                            cqlPort = ccm.getCqlPort();
 
-                        nodes = ccm.getNodes();
-                        jmxPorts = ccm.getJmxPorts();
-                        cqlPort = ccm.getCqlPort();
+                            ccm.startCluster(false);
 
-                        ccm.startCluster(false);
+                            try {
+                                clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 2000, 20, 10);
+                                schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes,
+                                    cqlPort);
+                            } catch (Exception e) {
+                                if (null != ccm) {
+                                    ccm.shutdownCluster();
+                                }
+                                throw new RuntimeException("Cassandra cluster initialization failed", e);
+                            }
+                        } else {
+                            try {
+                                String nodesString = System.getProperty("rhq.storage.nodes", "127.0.0.1");
+                                nodes = nodesString.split(",");
 
+                                String cqlPortString = System.getProperty("rhq.storage.cql-port", "9042");
+                                cqlPort = Integer.parseInt(cqlPortString);
+
+                                String jmxPortString = System.getProperty("rhq.storage.jmx-port", "7299");
+                                jmxPorts = new int[] { Integer.parseInt(jmxPortString) };
+
+                                schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, cqlPort);
+
+                            } catch (Exception e) {
+                                throw new RuntimeException("External Cassandra initialization failed", e);
+                            }
+                        }
                         try {
-                            clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 2000, 20, 10);
-                            schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, cqlPort);
-
+                            schemaManager.install();
+                            clusterInitService.waitForSchemaAgreement(nodes, jmxPorts);
+                            schemaManager.updateTopology();
                         } catch (Exception e) {
                             if (null != ccm) {
                                 ccm.shutdownCluster();
                             }
-                            throw new RuntimeException("Cassandra cluster initialization failed", e);
+                            throw new RuntimeException("Cassandra schema initialization failed", e);
                         }
-                    } else {
-                        try {
-                            String nodesString = System.getProperty("rhq.storage.nodes", "127.0.0.1");
-                            nodes = nodesString.split(",");
-
-                            String cqlPortString = System.getProperty("rhq.storage.cql-port", "9042");
-                            cqlPort = Integer.parseInt(cqlPortString);
-
-                            String jmxPortString = System.getProperty("rhq.storage.jmx-port", "7299");
-                            jmxPorts = new int[] { Integer.parseInt(jmxPortString) };
-
-                            schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, cqlPort);
-
-                        } catch (Exception e) {
-                            throw new RuntimeException("External Cassandra initialization failed", e);
+                        return null;
+                    } finally {
+                        if (schemaManager != null) {
+                            schemaManager.shutdown();
                         }
                     }
-
-                    try {
-                        schemaManager.install();
-                        clusterInitService.waitForSchemaAgreement(nodes, jmxPorts);
-                        schemaManager.updateTopology();
-                    } catch (Exception e) {
-                        if (null != ccm) {
-                            ccm.shutdownCluster();
-                        }
-                        throw new RuntimeException("Cassandra schema initialization failed", e);
-                    }
-
-                    return null;
                 }
             });
         }

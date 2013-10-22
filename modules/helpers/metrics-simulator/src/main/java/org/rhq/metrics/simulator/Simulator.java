@@ -62,6 +62,9 @@ public class Simulator implements ShutdownManager {
         final ScheduledExecutorService readers = Executors.newScheduledThreadPool(plan.getNumReaders(),
             new SimulatorThreadFactory());
 
+        Metrics metrics = new Metrics();
+        final ConsoleReporter consoleReporter = createConsoleReporter(metrics, plan.getMetricsReportInterval());
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -69,6 +72,7 @@ public class Simulator implements ShutdownManager {
                 shutdown(readers, "readers", 5);
                 shutdown(aggregators, "aggregators", 1);
                 shutdown(aggregationQueue, "aggregationQueue", Integer.MAX_VALUE);
+                consoleReporter.stop();
             }
         });
 
@@ -84,12 +88,8 @@ public class Simulator implements ShutdownManager {
 
         metricsServer.setDateTimeService(plan.getDateTimeService());
 
-        Metrics metrics = new Metrics();
-
         MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics,
             aggregationQueue);
-
-        ConsoleReporter consoleReporter = createConsoleReporter(metrics, plan.getMetricsReportInterval());
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
@@ -153,12 +153,15 @@ public class Simulator implements ShutdownManager {
     }
 
     private void createSchema(String[] nodes, int cqlPort) {
+        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes,
+            cqlPort);
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, 9142);
             schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);
+        } finally {
+            schemaManager.shutdown();
         }
     }
 

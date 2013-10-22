@@ -63,8 +63,9 @@ class VersionManager extends AbstractManager {
         }
     }
 
-    public VersionManager(String username, String password, String[] nodes, int cqlPort) throws Exception {
-        super(username, password, nodes, cqlPort);
+    public VersionManager(String username, String password, String[] nodes, int cqlPort, SessionManager sessionManager)
+        throws Exception {
+        super(username, password, nodes, cqlPort, sessionManager);
     }
 
     /**
@@ -84,8 +85,9 @@ class VersionManager extends AbstractManager {
         } catch (AuthenticationException e) {
             log.debug("Authentication exception. Will now attempt to create the storage schema.");
             log.debug(e);
-        } finally {
             shutdownClusterConnection();
+        } finally {
+            //shutdownClusterConnection();
         }
 
         if (!clusterSessionInitialized) {
@@ -101,13 +103,8 @@ class VersionManager extends AbstractManager {
      * @throws Exception
      */
     private void create() throws Exception {
-        UpdateFolder updateFolder = new UpdateFolder(Task.Create.getFolder());
-
-        Properties properties = new Properties(System.getProperties());
-        properties.put("replication_factor", calculateNewReplicationFactor() + "");
-        properties.put("cassandra_user_password", UUID.randomUUID() + "");
-        properties.put("rhq_admin_username", getUsername());
-        properties.put("rhq_admin_password", getPassword());
+        UpdateFolder updateFolder = null;
+        Properties properties = null;
 
         /**
          * NOTE: Before applying any schema, we need to create the rhqadmin user. If we have more
@@ -118,6 +115,15 @@ class VersionManager extends AbstractManager {
         //1. Execute the creation of RHQ schema, version table, admin user.
         try {
             initClusterSession(DEFAULT_CASSANDRA_USER, DEFAULT_CASSANDRA_PASSWORD);
+
+            updateFolder = new UpdateFolder(Task.Create.getFolder());
+
+            properties = new Properties(System.getProperties());
+            properties.put("replication_factor", calculateNewReplicationFactor() + "");
+            properties.put("cassandra_user_password", UUID.randomUUID() + "");
+            properties.put("rhq_admin_username", getUsername());
+            properties.put("rhq_admin_password", getPassword());
+
             if (!schemaExists()) {
                 execute(updateFolder.getUpdateFiles().get(0), properties);
             } else {
@@ -131,12 +137,8 @@ class VersionManager extends AbstractManager {
         }
 
         //2. Change Cassandra default user privileges and password.
-        try {
-            initClusterSession();
-            execute(updateFolder.getUpdateFiles().get(1), properties);
-        } finally {
-            shutdownClusterConnection();
-        }
+        initClusterSession();
+        execute(updateFolder.getUpdateFiles().get(1), properties);
     }
 
     /**
@@ -145,52 +147,49 @@ class VersionManager extends AbstractManager {
      * @throws Exception
      */
     private void update() throws Exception {
-        try {
-            initClusterSession();
+        initClusterSession();
 
-            if (!schemaExists()) {
-                log.error("Storage schema not installed.");
-                throw new RuntimeException("Storage schema not installed propertly, cannot apply schema updates.");
-            }
+        if (!schemaExists()) {
+            log.error("Storage schema not installed.");
+            throw new RuntimeException("Storage schema not installed propertly, cannot apply schema updates.");
+        }
 
-            UpdateFolder updateFolder = new UpdateFolder(Task.Update.getFolder());
+        UpdateFolder updateFolder = new UpdateFolder(Task.Update.getFolder());
 
-            int installedSchemaVersion = getInstalledSchemaVersion();
-            log.info("Installed storage schema version is " + installedSchemaVersion);
+        int installedSchemaVersion = getInstalledSchemaVersion();
+        log.info("Installed storage schema version is " + installedSchemaVersion);
 
-            int requiredSchemaVersion = updateFolder.getLatestVersion();
-            log.info("Required storage schema version is " + requiredSchemaVersion);
+        int requiredSchemaVersion = updateFolder.getLatestVersion();
+        log.info("Required storage schema version is " + requiredSchemaVersion);
 
-            if (requiredSchemaVersion == installedSchemaVersion) {
-                log.info("Storage schema version is current ( " + installedSchemaVersion + " ). No updates applied.");
-            } else if (requiredSchemaVersion < installedSchemaVersion) {
-                log.error("Installed storage cluster schema version: " + installedSchemaVersion +
-                    ". Required schema version: " + requiredSchemaVersion
-                    + ". Storage cluster schema has been updated beyond the capability of the existing server installation.");
-                throw new InstalledSchemaTooAdvancedException();
+        if (requiredSchemaVersion == installedSchemaVersion) {
+            log.info("Storage schema version is current ( " + installedSchemaVersion + " ). No updates applied.");
+        } else if (requiredSchemaVersion < installedSchemaVersion) {
+            log.error("Installed storage cluster schema version: " + installedSchemaVersion +
+                ". Required schema version: " + requiredSchemaVersion
+                +
+                ". Storage cluster schema has been updated beyond the capability of the existing server installation.");
+            throw new InstalledSchemaTooAdvancedException();
+        } else {
+            log.info("Storage schema requires udpates. Updating from version " + installedSchemaVersion
+                + " to version " + requiredSchemaVersion + ".");
+
+            updateFolder.removeAppliedUpdates(installedSchemaVersion);
+
+            if (updateFolder.getUpdateFiles().size() == 0) {
+                log.info("Storage schema is current! No updates applied.");
             } else {
-                log.info("Storage schema requires udpates. Updating from version " + installedSchemaVersion
-                    + " to version " + requiredSchemaVersion + ".");
+                for (UpdateFile updateFile : updateFolder.getUpdateFiles()) {
+                    execute(updateFile);
 
-                updateFolder.removeAppliedUpdates(installedSchemaVersion);
+                    Properties versionProperties = new Properties();
+                    versionProperties.put("version", updateFile.extractVersion() + "");
+                    versionProperties.put("time", System.currentTimeMillis() + "");
+                    executeManagementQuery(Query.INSERT_SCHEMA_VERSION, versionProperties);
 
-                if (updateFolder.getUpdateFiles().size() == 0) {
-                    log.info("Storage schema is current! No updates applied.");
-                } else {
-                    for (UpdateFile updateFile : updateFolder.getUpdateFiles()) {
-                        execute(updateFile);
-
-                        Properties versionProperties = new Properties();
-                        versionProperties.put("version", updateFile.extractVersion() + "");
-                        versionProperties.put("time", System.currentTimeMillis() + "");
-                        executeManagementQuery(Query.INSERT_SCHEMA_VERSION, versionProperties);
-
-                        log.info("Storage schema update " + updateFile + " applied.");
-                    }
+                    log.info("Storage schema update " + updateFile + " applied.");
                 }
             }
-        } finally {
-            shutdownClusterConnection();
         }
     }
 
@@ -246,8 +245,6 @@ class VersionManager extends AbstractManager {
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
-        } finally {
-            shutdownClusterConnection();
         }
     }
 
@@ -292,8 +289,6 @@ class VersionManager extends AbstractManager {
         } catch (Exception e3) {
             throw new RuntimeException(e3);
         } finally {
-            shutdownClusterConnection();
-
             log.info("Completed storage schema compatibility check.");
         }
     }

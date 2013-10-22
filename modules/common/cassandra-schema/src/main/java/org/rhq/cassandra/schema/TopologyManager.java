@@ -52,8 +52,9 @@ class TopologyManager extends AbstractManager {
         }
     }
 
-    public TopologyManager(String username, String password, String[] nodes, int cqlPort) {
-        super(username, password, nodes, cqlPort);
+    public TopologyManager(String username, String password, String[] nodes, int cqlPort,
+        SessionManager sessionManager) {
+        super(username, password, nodes, cqlPort, sessionManager);
     }
 
     /**
@@ -64,17 +65,13 @@ class TopologyManager extends AbstractManager {
      * @return true if update successful, false otherwise.
      */
     public void updateTopology() {
-        try {
-            initClusterSession();
-            if (schemaExists()) {
-                log.info("Applying topology updates...");
-                updateReplicationFactor();
-                updateGCGrace();
-            } else {
-                log.info("Topology updates cannot be applied because the schema is not installed.");
-            }
-        } finally {
-            shutdownClusterConnection();
+        initClusterSession();
+        if (schemaExists()) {
+            log.info("Applying topology updates...");
+            updateReplicationFactor();
+            updateGCGrace();
+        } else {
+            log.info("Topology updates cannot be applied because the schema is not installed.");
         }
     }
 
@@ -106,7 +103,7 @@ class TopologyManager extends AbstractManager {
         log.info("Starting to execute " + Task.UpdateGCGrace + " task.");
 
         int gcGraceSeconds = 864000;
-        if (getClusterSize() == 1) {
+        if (getActualClusterSize() == 1) {
             gcGraceSeconds = 0;
         } else {
             gcGraceSeconds = 691200; // 8 days

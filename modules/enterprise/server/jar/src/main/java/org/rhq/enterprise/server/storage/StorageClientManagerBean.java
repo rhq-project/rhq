@@ -176,6 +176,8 @@ public class StorageClientManagerBean {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
+        } finally {
+            schemaManager.shutdown();
         }
     }
 

@@ -308,8 +308,7 @@ public class Aggregator {
                 }
             }
 
-            while (remainingIndexEntries.get() > 0 || state.getRemaining1HourData().get() > 0 ||
-                state.getRemaining6HourData().get() > 0) {
+            while (!isAggregationFinished()) {
                 Thread.sleep(50);
             }
             log.debug("Aggregation is done. There are " + remainingIndexEntries.get() + " remaining index entries");
@@ -329,6 +328,24 @@ public class Aggregator {
         while (state.getRemaining1HourData().get() > 0) {
             Thread.sleep(50);
         }
+    }
+
+    private boolean isAggregationFinished() throws InterruptedException {
+        try {
+            rawDataIndexEntriesArrival.await();
+        }  catch (AbortedException e) {
+        }
+        try {
+            state.getOneHourIndexEntriesArrival().await();
+        } catch (AbortedException e) {
+
+        }
+        try {
+            state.getSixHourIndexEntriesArrival().await();
+        } catch (AbortedException e) {
+        }
+        return state.getRemainingRawData().get() <= 0 && state.getRemaining1HourData().get() <= 0 &&
+            state.getRemaining6HourData().get() <= 0 && remainingIndexEntries.get() <= 0;
     }
 
     private void deleteIndexEntries(final MetricsTable table) {

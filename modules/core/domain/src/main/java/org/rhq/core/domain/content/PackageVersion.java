@@ -44,7 +44,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlTransient;
 
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.util.OSGiVersionComparator;
@@ -70,7 +69,7 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + " WHERE pv.generalPackage.name = :packageName " //
         + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //
-        + "   AND pv.sha256 = :sha "
+        + "   AND pv.sha256 = :sha " //
         + " ORDER BY pv.id DESC "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
@@ -668,7 +667,7 @@ public class PackageVersion implements Serializable {
     /**
      * Directly assign this package version to the given repo.
      *
-     * @param  packageVersion
+     * @param repo
      *
      * @return the mapping that was added
      */
@@ -744,7 +743,7 @@ public class PackageVersion implements Serializable {
      *
      * @return the mapping entities
      *
-     * @see    #getPackageVersions()
+     * @see    #getProductVersions()
      */
     public Set<ProductVersionPackageVersion> getProductVersionPackageVersions() {
         return productVersionPackageVersions;

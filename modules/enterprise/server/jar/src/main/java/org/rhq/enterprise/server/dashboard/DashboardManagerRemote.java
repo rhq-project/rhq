@@ -30,14 +30,30 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * @author Jay Shaughnessy
+ * Public API for working with Dashboards.
  */
 @Remote
 public interface DashboardManagerRemote {
 
+    /**
+     * @param subject  the subject
+     * @param criteria the criteria
+     * @return not null
+     */
     public PageList<Dashboard> findDashboardsByCriteria(Subject subject, DashboardCriteria criteria);
 
+    /**
+     * Create or update a dashboard.
+     *
+     * @param subject the subject
+     * @param dashboard the dashboard
+     * @return The dashboard
+     */
     public Dashboard storeDashboard(Subject subject, Dashboard dashboard);
 
+    /**
+     * @param subject the subject
+     * @param dashboardId the dashboardId
+     */
     public void removeDashboard(Subject subject, int dashboardId);
 }

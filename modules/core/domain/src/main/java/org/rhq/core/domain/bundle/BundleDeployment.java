@@ -267,7 +267,7 @@ public class BundleDeployment implements Serializable {
 
     /**
      * The duration of the configuration update request which simply is the difference between the
-     * {@link #getCreatedTime()} and the {@link #getModifiedTime()}. If the request hasn't completed yet, this will be
+     * {@link #getCtime()} and the {@link #getMtime()}. If the request hasn't completed yet, this will be
      * the difference between the current time and the created time.
      *
      * @return the duration of time that the request took or is taking to complete

@@ -137,7 +137,7 @@ public class GroupOperationJob extends OperationJob {
                 ResourceOperationSchedule resourceSchedule = createScheduleForResource(schedule, jobDetail.getGroup(),
                     user, nextResourceToOperateOn);
 
-                // crate the resource-level history entity for the newly created non-quartz schedule entity
+                // create the resource-level history entity for the newly created non-quartz schedule entity
                 // this method also does the persisting
                 ResourceOperationHistory resourceHistory = createOperationHistory(resourceSchedule.getJobName(),
                     resourceSchedule.getJobGroup(), resourceSchedule, groupHistory, operationManager);
@@ -171,11 +171,25 @@ public class GroupOperationJob extends OperationJob {
                         invokeOperationOnResource(composite, operationManager);
 
                         int resourceHistoryId = composite.history.getId();
-                        OperationHistory updatedOperationHistory;
+                        OperationHistory updatedOperationHistory = null;
+                        long sleep = 1000L; // quick sleep for fast ops, then slow down
+                        long maxSleep = 5000L;
                         do {
-                            Thread.sleep(5000);
-                            updatedOperationHistory = operationManager.getOperationHistoryByHistoryId(
-                                getUserWithSession(user, true), resourceHistoryId);
+                            Thread.sleep(sleep);
+                            sleep = (sleep == maxSleep) ? sleep : sleep + 1000L;
+
+                            // it's unlikely but possible that a client program could actually query for, process, and
+                            // delete the history before this code gets a chance to run.  If the record is gone just
+                            // assume things were handled externally.
+                            try {
+                                updatedOperationHistory = operationManager.getOperationHistoryByHistoryId(
+                                    getUserWithSession(user, true), resourceHistoryId);
+                            } catch (IllegalArgumentException e) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("Failed to find operation history", e);
+                                }
+                                break;
+                            }
 
                             // if the duration was ridiculously long, let's break out of here. this will rarely
                             // be triggered because our operation manager will timeout long running operations for us
@@ -189,7 +203,8 @@ public class GroupOperationJob extends OperationJob {
                         } while (updatedOperationHistory.getStatus() == OperationRequestStatus.INPROGRESS);
 
                         // halt the rest if we got a failure and were told not to go on
-                        if ((updatedOperationHistory.getStatus() != OperationRequestStatus.SUCCESS)
+                        if (null != updatedOperationHistory
+                            && (updatedOperationHistory.getStatus() != OperationRequestStatus.SUCCESS)
                             && schedule.isHaltOnFailure()) {
                             hadFailure = true;
                         }

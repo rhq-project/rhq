@@ -32,7 +32,7 @@ import org.rhq.core.domain.resource.composite.DisambiguationReport.ResourceType;
  * It supports a simple templating mechanism to configure the representation's format.
  * <p>
  * In the {@link DisambiguationReport}, a resource (either the resource being disambiguated or one of its parents)
- * is represented by an instance of {@link DisambiguationReport.Resource}. The template uses this instance and its
+ * is represented by an instance of {@link org.rhq.core.domain.resource.composite.DisambiguationReport.Resource}. The template uses this instance and its
  * properties:
  * <ul>
  * <li>id - the resource id

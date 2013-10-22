@@ -27,6 +27,10 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 
+/**
+ * Subject manager remote API.  Typically requires <code>MANAGE_SECURITY</code> permission.
+ *
+ */
 @Remote
 public interface SubjectManagerRemote {
 
@@ -45,9 +49,8 @@ public interface SubjectManagerRemote {
      *
      * @param  subject  The logged in user's subject.
      * @param  username The username part of the principal
-     * @param  password The password part ofthe principal
-     *
-     * @throws Exception if the principal could not be added
+     * @param  password The password part of the principal
+     * @throws SubjectException if the principal could not be added
      */
     void createPrincipal(Subject subject, String username, String password) throws SubjectException;
 
@@ -59,6 +62,7 @@ public interface SubjectManagerRemote {
      * @param  subjectToCreate The subject to be created.
      *
      * @return the newly persisted {@link Subject}
+     * @throws SubjectException
      */
     Subject createSubject(Subject subject, Subject subjectToCreate) throws SubjectException;
 
@@ -68,8 +72,6 @@ public interface SubjectManagerRemote {
      *
      * @param  subject    The logged in user's subject.
      * @param  subjectIds identifies the subject IDs for all the users that are to be deleted
-     *
-     * @throws Exception if failed to delete one or more users
      */
     void deleteSubjects(Subject subject, int[] subjectIds);
 
@@ -79,11 +81,12 @@ public interface SubjectManagerRemote {
      * @param  username the name of the subject to look for
      *
      * @return the subject that was found or <code>null</code> if not found
-     * 
+     *
      * @deprecated This method should be avoided as it may be removed in
      * a future release.  Given that multiple sessions may exist for a
      * single user the result of this call is non-deterministic.
      */
+    @Deprecated
     Subject getSubjectByName(String username);
 
     /**
@@ -93,7 +96,7 @@ public interface SubjectManagerRemote {
      * @param sessionId The sessionId of the desired Subject.
      *
      * @return The Subject that was found
-     * 
+     *
      * @throws Exception if the sessionId is not valid
      */
     Subject getSubjectByNameAndSessionId(String username, int sessionId) throws Exception;
@@ -129,5 +132,10 @@ public interface SubjectManagerRemote {
      */
     Subject updateSubject(Subject subject, Subject subjectToModify);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
 }

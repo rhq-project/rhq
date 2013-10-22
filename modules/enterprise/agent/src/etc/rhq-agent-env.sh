@@ -24,24 +24,22 @@
 #
 #RHQ_AGENT_HOME="/opt/rhq-agent" 
 
-#    RHQ_AGENT_JAVA_HOME - The location of the JRE that the agent will
-#                          use. This will be ignored if
-#                          RHQ_AGENT_JAVA_EXE_FILE_PATH is set.
-#                          If this and RHQ_AGENT_JAVA_EXE_FILE_PATH are
-#                          not set, the agent's embedded JRE will be used.
+#    RHQ_JAVA_HOME - The location of the JRE that the agent will
+#                    use. This will be ignored if
+#                    RHQ_JAVA_EXE_FILE_PATH is set.
+#                    If this and RHQ_JAVA_EXE_FILE_PATH are
+#                    not set, JAVA_HOME will be used.
 #
-#RHQ_AGENT_JAVA_HOME="/usr/lib/jvm/jre"
+#RHQ_JAVA_HOME="/usr/lib/jvm/jre"
 
-#    RHQ_AGENT_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-#                                   executable to use. If this is set,
-#                                   RHQ_AGENT_JAVA_HOME is ignored.
-#                                   If this is not set, then
-#                                   $RHQ_AGENT_JAVA_HOME/bin/java
-#                                   is used. If this and
-#                                   RHQ_AGENT_JAVA_HOME are not set, the
-#                                   agent's embedded JRE will be used.
+#    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java
+#                             executable to use. If this is set,
+#                             RHQ_JAVA_HOME is ignored. If this is 
+#                             not set, then $RHQ_JAVA_HOME/bin/java
+#                             is used. If this and RHQ_JAVA_HOME are
+#                             not set, then JAVA_HOME will be used.
 #
-#RHQ_AGENT_JAVA_EXE_FILE_PATH="/usr/local/bin/java"
+#RHQ_JAVA_EXE_FILE_PATH="/usr/local/bin/java"
 
 #    RHQ_AGENT_JAVA_OPTS - Java VM command line options to be
 #                          passed into the agent's VM. If this is not defined

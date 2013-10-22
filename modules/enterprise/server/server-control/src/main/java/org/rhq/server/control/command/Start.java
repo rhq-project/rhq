@@ -26,6 +26,8 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -124,11 +126,20 @@ public class Start extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
+        // Cassandra looks for JAVA_HOME or then defaults to PATH.  We want it to use the Java
+        // defined for RHQ, so make sure JAVA_HOME is set, and set to the RHQ Java for the executor
+        // environment.
+        String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+        String javaHome = javaExeFilePath.replace('\\', '/').replace("/bin/java", "");
+
+        Map<String, String> env = new HashMap<String, String>(System.getenv());
+        env.put("JAVA_HOME", javaHome);
+        
         if (isWindows()) {
             executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "start");
             try {
-                executor.execute(commandLine);
+                executor.execute(commandLine, env);
 
             } catch (Exception e) {
                 // Ignore, service may not exist or may already be running, script returns 1
@@ -147,7 +158,7 @@ public class Start extends ControlCommand {
                 commandLine = getCommandLine(false, "cassandra", "-p", pidFile.getAbsolutePath());
                 executor.setWorkingDirectory(storageBinDir);
 
-                executor.execute(commandLine);
+                executor.execute(commandLine, env);
             }
         }
     }

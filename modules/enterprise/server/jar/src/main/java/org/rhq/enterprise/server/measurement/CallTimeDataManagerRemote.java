@@ -25,21 +25,21 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public API for CallTime Data.
+ */
 @Remote
 public interface CallTimeDataManagerRemote {
 
+    /**
+     * @param subject
+     * @param scheduleId The MeasurementSchedule id
+     * @param beginTime in millis
+     * @param endTime in millis
+     * @param pc
+     * @return not null
+     */
     PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pc);
 
-    /* this method was never implemented, and so won't be in the remote api yet
-    
-    PageList<CallTimeDataComposite> getCallTimeDataForCompatibleGroup(
-         Subject subject, 
-         int groupId,
-         int measurementDefinitionId,
-         long beginTime,
-         long endTime,
-         PageControl pageControl)
-        throws FetchException;
-        */
 }

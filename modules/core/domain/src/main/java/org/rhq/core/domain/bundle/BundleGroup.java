@@ -132,6 +132,7 @@ public class BundleGroup implements Serializable {
     /**
      * This also updates the inverse relation (remove this bundle group from bundle)
      * @param bundle
+     * @return true if bundle was removed, otherwise false
      */
     public boolean removeBundle(Bundle bundle) {
         boolean result = getBundles().remove(bundle);
@@ -141,7 +142,7 @@ public class BundleGroup implements Serializable {
 
     /**
      * This also updates the inverse relations
-     * @param bundle
+     * @param bundles
      */
     public void setBundles(Set<Bundle> bundles) {
         for (Bundle bundle : getBundles()) {
@@ -176,6 +177,7 @@ public class BundleGroup implements Serializable {
     /**
      * This also updates the inverse relation (remove this bundle group from role)
      * @param role
+     * @return true if role was removed, otherwise false
      */
     public boolean removeRole(Role role) {
         role.removeBundleGroup(this);

@@ -24,7 +24,6 @@ package org.rhq.enterprise.server.tagging;
 
 import java.util.Set;
 
-import javax.ejb.Local;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
@@ -39,26 +38,73 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface TagManagerRemote {
 
-
+    /**
+     * @param subject
+     * @param tagCriteria
+     * @return not null
+     */
     PageList<Tag> findTagsByCriteria(Subject subject, TagCriteria tagCriteria);
 
+    /**
+     * @param subject
+     * @param tags
+     * @return the added Tags
+     */
     Set<Tag> addTags(Subject subject, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param tags
+     */
     void removeTags(Subject subject, Set<Tag> tags);
 
-
+    /**
+     * @param subject
+     * @param resourceId
+     * @param tags
+     */
     void updateResourceTags(Subject subject, int resourceId, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param resourceGroupId
+     * @param tags
+     */
     void updateResourceGroupTags(Subject subject, int resourceGroupId, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param bundleId
+     * @param tags
+     */
     void updateBundleTags(Subject subject, int bundleId, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param bundleVersionId
+     * @param tags
+     */
     void updateBundleVersionTags(Subject subject, int bundleVersionId, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param bundleDeploymentId
+     * @param tags
+     */
     void updateBundleDeploymentTags(Subject subject, int bundleDeploymentId, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param bundleDestinationId
+     * @param tags
+     */
     void updateBundleDestinationTags(Subject subject, int bundleDestinationId, Set<Tag> tags);
 
+    /**
+     * @param subject
+     * @param tagCriteria
+     * @return not null
+     */
     PageList<TagReportComposite> findTagReportCompositesByCriteria(Subject subject, TagCriteria tagCriteria);
 
 }

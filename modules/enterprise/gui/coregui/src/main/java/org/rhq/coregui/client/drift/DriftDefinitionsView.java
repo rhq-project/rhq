@@ -50,8 +50,8 @@ import org.rhq.coregui.client.util.message.Message;
 /**
  * A list view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftDefinition}s. It has offers various
  * options on the list like filtering (maybe) and sorting, add new/delete. Double-click drills down to the carousel view for
- * inspecting drift for the definition. Also, allows an edit view for the def's underlying Config. This view full respects 
- * the user's authorization, and will not allow actions on the drift defs unless the user is either the inventory 
+ * inspecting drift for the definition. Also, allows an edit view for the def's underlying Config. This view full respects
+ * the user's authorization, and will not allow actions on the drift defs unless the user is either the inventory
  * manager or has MANAGE_DRIFT permission on every resource corresponding to the drift defs being operated on.
  *
  * @author Jay Shaughnessy
@@ -135,7 +135,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
         TableActionEnablement detectNowEnablement = hasWriteAccess ? TableActionEnablement.SINGLE
             : TableActionEnablement.NEVER;
 
-        addTableAction("New", MSG.common_button_new(), null, new TableAction() {
+        addTableAction(MSG.common_button_new(), null, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasWriteAccess;
             }
@@ -164,7 +164,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction("DetectNow", MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
+        addTableAction(MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
             detectNowEnablement) {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -247,7 +247,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
     @Override
     public void renderView(ViewPath viewPath) {
         // we have three detail views for drift defs, the carousel, the the config editor, and the initial snapshot.
-        // Figure out which one we're dealing with. The default is the carousel. 
+        // Figure out which one we're dealing with. The default is the carousel.
         this.detailsView = DetailView.Carousel;
 
         if (!viewPath.isEnd() && !viewPath.isNextEnd()) {

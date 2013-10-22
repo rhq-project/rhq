@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<plugin name="RHQ-OpenShift"
+        displayName="RHQ-OpenShiftPlugin"
+        description="PoC for OpenShift"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        package="org.rhq.modules.plugins.openshift"
+    >
+
+  <depends plugin="JBossAS7" useClasses="true"/>
+
+  <service name="OpenShift"
+      class="OpenshiftComponent"
+      discovery="OpenshiftDiscovery"
+      description="OpenShift specific information"
+      singleton="true"
+      >
+    <runs-inside>
+          <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+    </runs-inside>
+
+    <metric property="appuid" dataType="trait" displayType="summary" defaultOn="true" defaultInterval="300000"/>
+
+  </service>
+
+</plugin>

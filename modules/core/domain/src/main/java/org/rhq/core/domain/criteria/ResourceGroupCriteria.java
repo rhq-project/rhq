@@ -150,7 +150,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     /**
      * Requires MANAGE_INVENTORY.  Use addFilterPrivate(true) to filter on the caller's private groups.
-     * @param filterSubjectId.
+     * @param filterSubjectId
      */
     public void addFilterSubjectId(Integer filterSubjectId) {
         this.filterSubjectId = filterSubjectId;

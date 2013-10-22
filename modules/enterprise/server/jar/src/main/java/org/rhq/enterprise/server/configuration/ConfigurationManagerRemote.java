@@ -23,14 +23,16 @@ import java.util.Map;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**
@@ -43,8 +45,40 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 @Remote
 public interface ConfigurationManagerRemote {
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     * @since 4.10
+     */
+    PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
+        GroupPluginConfigurationUpdateCriteria criteria);
+
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     * @since 4.10
+     */
+    PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
+        GroupResourceConfigurationUpdateCriteria criteria);
+
+    /**
+     * @param subject
+     * @param configurationUpdateId
+     * @return object
+     * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
+     */
+    @Deprecated
     GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
 
+    /**
+     * @param subject
+     * @param configurationUpdateId
+     * @return object
+     * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
+     */
+    @Deprecated
     GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     /**
@@ -56,7 +90,6 @@ public interface ConfigurationManagerRemote {
      *
      * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
      *         resource's configuration is not yet initialized
-     * @throws FetchException
      */
     Configuration getPluginConfiguration(Subject subject, int resourceId);
 
@@ -64,15 +97,22 @@ public interface ConfigurationManagerRemote {
      * Get the current Resource configuration.
      * @param  subject             The logged in user's subject.
      * @param resourceId        A resource id.
-     * @return The specified configuration.
-     * 
-     * @throws FetchException In case where there was a problem fetching the resource configuration
+     * @return The specified configuration or null
      */
-    Configuration getResourceConfiguration(//
-        Subject subject, int resourceId);
+    Configuration getResourceConfiguration(Subject subject, int resourceId);
 
+    /**
+     * @param subject
+     * @param resourceId
+     * @return the most recent plugin configuration update
+     */
     PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
 
+    /**
+     * @param subject
+     * @param resourceId
+     * @return the most recent resource configuration update
+     */
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
     /**
@@ -80,12 +120,22 @@ public interface ConfigurationManagerRemote {
      * @param subject          The logged in user's subject.
      * @param resourceId       A resource id.
      * @return True if in progress, else False.
-     * @throws FetchException
      */
     boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
 
+    /**
+     * @param subject
+     * @param resourceGroupId
+     * @return True if in progress, else False
+     */
     boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int resourceGroupId);
 
+    /**
+     * @param subject
+     * @param compatibleGroupId
+     * @param newResourceConfigurationMap
+     * @return GroupResourceConfigurationUpdate id
+     */
     int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> newResourceConfigurationMap);
 
@@ -99,6 +149,7 @@ public interface ConfigurationManagerRemote {
      * @param  newConfiguration the new plugin configuration
      *
      * @return the plugin configuration update item corresponding to this request
+     * @throws ResourceNotFoundException
      */
     PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
         throws ResourceNotFoundException;
@@ -108,19 +159,18 @@ public interface ConfigurationManagerRemote {
      * the user does not have the proper permissions to change the resource's configuration, an exception is thrown.
      *
      * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
-     * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completedResourceConfigurationUpdate(AbstractResourceConfigurationUpdate)}.</p>
+     * sent.</p>
      *
      * @param  subject          The logged in user's subject.
      * @param  resourceId       identifies the resource to be updated
      * @param  newConfiguration the resource's desired new configuration
      *
      * @return the resource configuration update item corresponding to this request
+     * @throws ResourceNotFoundException
+     * @throws ConfigurationUpdateStillInProgressException
      */
-
     ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-
-    Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+        Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
@@ -130,7 +180,7 @@ public interface ConfigurationManagerRemote {
      * @param subject    The logged in user's subject.
      * @param resourceId resourceId
      * @param pingAgentFirst
-     * 
+     *
      * @return the live configuration
      *
      * @throws Exception if failed to get the configuration from the agent
@@ -187,6 +237,16 @@ public interface ConfigurationManagerRemote {
      */
     ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
 
+    /**
+     * @param subject
+     * @param resourceId
+     * @param configuration
+     * @param fromStructured
+     * @return the translated configuration
+     * @throws ResourceNotFoundException
+     * @deprecated this feature was never full implemented and will be removed.
+     */
+    @Deprecated
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException;
 }

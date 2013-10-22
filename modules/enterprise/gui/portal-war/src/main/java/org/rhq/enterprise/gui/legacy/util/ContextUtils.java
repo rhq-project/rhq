@@ -255,7 +255,7 @@ public class ContextUtils {
         String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
 
         if (provider == null) {
-            SystemSettings systemSettings = LookupUtil.getSystemManager().getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
+            SystemSettings systemSettings = LookupUtil.getSystemManager().getUnmaskedSystemSettings(true);
             provider = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }

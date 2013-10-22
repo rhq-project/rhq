@@ -95,8 +95,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about()),
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
-                    final AboutModalWindow aboutModalWindow = new AboutModalWindow();
-                    aboutModalWindow.setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
+                    final AboutModalWindow aboutModalWindow = new AboutModalWindow(productInfo);
                     aboutModalWindow.show();
                     return aboutModalWindow;
                 }

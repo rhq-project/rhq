@@ -26,6 +26,7 @@ package org.rhq.server.control;
 
 import java.io.Console;
 import java.io.File;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -73,7 +74,7 @@ public class RHQControl {
                 String commandName = findCommand(commands, args);
                 command = commands.get(commandName);
 
-                validateInstallCommand(command);
+                validateInstallCommand(command, args);
 
                 // in case the installer gets killed, prepare the shutdown hook to try the undo
                 abortHook.setCommand(command);
@@ -118,57 +119,76 @@ public class RHQControl {
         return;
     }
 
-    private void validateInstallCommand(ControlCommand command) {
+    private void validateInstallCommand(ControlCommand command, String[] args) {
         if (!"install".equalsIgnoreCase(command.getName())) {
             return;
         }
 
-        // perform any up front validation we can at this point.  Not that after this point we
+        // just return if we're asking for help
+        List<String> argsList = Arrays.asList(args);
+        if (argsList.contains("--help")) {
+            return;
+        }
+
+        // don't perform validation for components not involved in the command
+        boolean validateServer = argsList.contains("--server")
+            || (!argsList.contains("--storage") && !argsList.contains("--agent"));
+        boolean validateStorage = argsList.contains("--storage")
+            || (!argsList.contains("--server") && !argsList.contains("--agent"));
+
+        // perform any up front validation we can at this point.  Note that after this point we
         // lose stdin due to the use of ProcessExecutions.
-        File serverPropertiesFile = new File("bin/rhq-server.properties");
-        File storagePropertiesFile = new File("bin/rhq-storage.properties");
 
-        if (!serverPropertiesFile.isFile()) {
-            throw new RHQControlException(
-                "The required rhq-server.properties file can not be found in the expected location ["
-                    + serverPropertiesFile.getAbsolutePath() + "]. Installation is canceled.");
+        if (validateServer) {
+            File serverPropertiesFile = new File("bin/rhq-server.properties");
+
+            if (validateServer && !serverPropertiesFile.isFile()) {
+                throw new RHQControlException(
+                    "The required rhq-server.properties file can not be found in the expected location ["
+                        + serverPropertiesFile.getAbsolutePath() + "]. Installation is canceled.");
+            }
+
+            // Prompt for critical required values, if not yet set.
+            try {
+                PropertiesFileUpdate pfu = new PropertiesFileUpdate(serverPropertiesFile);
+                Properties props = pfu.loadExistingProperties();
+
+                promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_JBOSS_BIND_ADDRESS,
+                    false);
+                promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_DATABASE_PASSWORD,
+                    true);
+
+            } catch (Throwable t) {
+                throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
+                    + t.getMessage());
+            }
+
+            // Now, validate the property settings
+            try {
+                ServerProperties.validate(serverPropertiesFile);
+
+            } catch (Throwable t) {
+                throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
+                    + t.getMessage());
+            }
         }
 
-        if (!storagePropertiesFile.isFile()) {
-            throw new RHQControlException(
-                "The required rhq-storage.properties file can not be found in the expected location ["
-                    + storagePropertiesFile.getAbsolutePath() + "]. Installation is canceled.");
-        }
+        if (validateStorage) {
+            try {
+                File storagePropertiesFile = new File("bin/rhq-storage.properties");
 
-        // Prompt for critical required values, if not yet set.
-        try {
-            PropertiesFileUpdate pfu = new PropertiesFileUpdate(serverPropertiesFile);
-            Properties props = pfu.loadExistingProperties();
+                if (validateStorage && !storagePropertiesFile.isFile()) {
+                    throw new RHQControlException(
+                        "The required rhq-storage.properties file can not be found in the expected location ["
+                            + storagePropertiesFile.getAbsolutePath() + "]. Installation is canceled.");
+                }
 
-            promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_JBOSS_BIND_ADDRESS,
-                false);
-            promptForProperty(pfu, props, serverPropertiesFile.getName(), ServerProperties.PROP_DATABASE_PASSWORD, true);
+                StorageProperty.validate(storagePropertiesFile);
 
-        } catch (Throwable t) {
-            throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
-                + t.getMessage());
-        }
-
-        // Now, validate the property settings
-        try {
-            ServerProperties.validate(serverPropertiesFile);
-
-        } catch (Throwable t) {
-            throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
-                + t.getMessage());
-        }
-
-        try {
-            StorageProperty.validate(storagePropertiesFile);
-
-        } catch (Throwable t) {
-            throw new RHQControlException("The rhq-storage.properties file is not valid. Installation is canceled: "
-                + t.getMessage());
+            } catch (Throwable t) {
+                throw new RHQControlException(
+                    "The rhq-storage.properties file is not valid. Installation is canceled: " + t.getMessage());
+            }
         }
     }
 

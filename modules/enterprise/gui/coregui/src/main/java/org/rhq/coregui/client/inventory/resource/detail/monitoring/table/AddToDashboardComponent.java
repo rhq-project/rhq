@@ -73,14 +73,15 @@ public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanc
     }
 
     private void createToolstrip() {
-        addSpacer(15);
-        addToDashboardButton = new IButton(MSG.view_metric_addToDashboard());
-        addToDashboardButton.setWidth(120);
+        addSpacer(10);
+        addToDashboardButton = new IButton(MSG.chart_metrics_add_to_dashboard_button());
+        addToDashboardButton.setWidth(80);
         addToDashboardButton.disable();
 
         dashboardSelectItem = new SelectItem();
         dashboardSelectItem.setTitle(MSG.chart_metrics_add_to_dashboard_label());
-        dashboardSelectItem.setWidth(260);
+        dashboardSelectItem.setWidth(240);
+        dashboardSelectItem.setWrapTitle(false);
         populateDashboardMenu();
         addFormItem(dashboardSelectItem);
         addMember(addToDashboardButton);
@@ -101,7 +102,7 @@ public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanc
                         .getMetricDefinitions()) {
                         if (measurementDefinition.getId() == selectedRecord
                             .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID)) {
-                            Log.info("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
+                            Log.debug("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
                                 + selectedDashboard.getName());
                             storeDashboardMetric(selectedDashboard, resource, measurementDefinition);
                             break;
@@ -136,8 +137,7 @@ public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanc
                 public void onSuccess(PageList<Dashboard> dashboards) {
                     if(dashboards.size() > 0){
                         for (final Dashboard dashboard : dashboards) {
-                            dashboardMenuMap.put(String.valueOf(dashboard.getId()),
-                                MSG.view_tree_common_contextMenu_addChartToDashboard(dashboard.getName()));
+                            dashboardMenuMap.put(String.valueOf(dashboard.getId()), dashboard.getName());
                             dashboardMap.put(dashboard.getId(), dashboard);
                         }
                         selectedDashboard = dashboards.get(0);
@@ -158,7 +158,7 @@ public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanc
 
     private void storeDashboardMetric(Dashboard dashboard, Resource resource, MeasurementDefinition definition) {
         DashboardPortlet dashboardPortlet = new DashboardPortlet(MSG.view_tree_common_contextMenu_resourceGraph(),
-            ResourceD3GraphPortlet.KEY, 250);
+            ResourceD3GraphPortlet.KEY, 200);
         dashboardPortlet.getConfiguration().put(
             new PropertySimple(ResourceD3GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
         dashboardPortlet.getConfiguration().put(

@@ -3,11 +3,14 @@ package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.InvocationException;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
@@ -17,8 +20,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
@@ -28,6 +33,7 @@ import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
 import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
@@ -52,7 +58,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     public static final String FIELD_MIN_VALUE = "min";
     public static final String FIELD_MAX_VALUE = "max";
     public static final String FIELD_AVG_VALUE = "avg";
-    public static final String FIELD_LAST_VALUE = "last";
+    public static final String FIELD_LIVE_VALUE = "live";
     public static final String FIELD_METRIC_DEF_ID = "defId";
     public static final String FIELD_METRIC_SCHED_ID = "schedId";
     public static final String FIELD_METRIC_UNITS = "units";
@@ -61,7 +67,10 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     private final Resource resource;
     private List<MetricDisplaySummary> metricDisplaySummaries;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
+    private Set<MeasurementData> liveMeasurementDataSet;
     private int[] definitionArrayIds;
+    private int[] scheduleIds;
+    private HashMap<Integer, MeasurementUnits> scheduleToMeasurementUnitMap = new HashMap<Integer, MeasurementUnits>();
     private final MeasurementUserPreferences measurementUserPrefs;
 
     public MetricsViewDataSource(Resource resource) {
@@ -112,7 +121,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         avgField.setWidth("15%");
         fields.add(avgField);
 
-        ListGridField lastField = new ListGridField(FIELD_LAST_VALUE, MSG.view_resource_monitor_table_last());
+        ListGridField lastField = new ListGridField(FIELD_LIVE_VALUE, MSG.view_resource_monitor_table_last());
         lastField.setWidth("15%");
         fields.add(lastField);
 
@@ -143,7 +152,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
         record.setAttribute(FIELD_MAX_VALUE, getMetricStringValue(from.getMaxMetric()));
         record.setAttribute(FIELD_AVG_VALUE, getMetricStringValue(from.getAvgMetric()));
-        record.setAttribute(FIELD_LAST_VALUE, getMetricStringValue(from.getLastMetric()));
+        record.setAttribute(FIELD_LIVE_VALUE, buildLiveValue(from));
         record.setAttribute(FIELD_METRIC_DEF_ID, from.getDefinitionId());
         record.setAttribute(FIELD_METRIC_SCHED_ID, from.getScheduleId());
         record.setAttribute(FIELD_METRIC_UNITS, from.getUnits());
@@ -152,12 +161,34 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         return record;
     }
 
+    private String buildLiveValue(MetricDisplaySummary from) {
+        StringBuilder sb = new StringBuilder();
+        for (MeasurementData measurementData : liveMeasurementDataSet) {
+            if (from.getScheduleId() == measurementData.getScheduleId()) {
+                double doubleValue;
+                if (measurementData.getValue() instanceof Number) {
+                    doubleValue = ((Number) measurementData.getValue()).doubleValue();
+                } else {
+                    doubleValue = Double.parseDouble(measurementData.getValue().toString());
+                }
+
+                String value = MeasurementConverterClient.formatToSignificantPrecision(new double[] { doubleValue },
+                    MeasurementUnits.valueOf(from.getUnits()), true)[0];
+
+                sb.append(value);
+
+                break;
+            }
+        }
+
+        return sb.toString();
+    }
+
     private String getCsvMetricsForSparkline(int definitionId) {
         StringBuilder sb = new StringBuilder();
         List<MeasurementDataNumericHighLowComposite> selectedMetricsList = getMeasurementsForMeasurementDefId(definitionId);
 
-        for (int i = 0; i < selectedMetricsList.size(); i++) {
-            MeasurementDataNumericHighLowComposite measurementData = selectedMetricsList.get(i);
+        for (MeasurementDataNumericHighLowComposite measurementData : selectedMetricsList) {
             if (!Double.isNaN(measurementData.getValue())) {
                 sb.append((int) measurementData.getValue());
                 sb.append(",");
@@ -170,15 +201,15 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         // handle the case where we have just installed the server so not much history
         // and our date range is set such that only one value returns which the
         // sparkline graph will not plot anything, so we need at least 2 values
-        if(!sb.toString().contains(",")){
+        if (!sb.toString().contains(",")) {
             // append another value just so we have 2 values and it will graph
-            return "0,"+sb.toString();
+            return "0," + sb.toString();
         }
 
         return sb.toString();
     }
 
-    List<MeasurementDataNumericHighLowComposite> getMeasurementsForMeasurementDefId(int definitionId) {
+    private List<MeasurementDataNumericHighLowComposite> getMeasurementsForMeasurementDefId(int definitionId) {
         int selectedIndex = 0;
 
         // find the ordinal position as specified when querying the metrics
@@ -209,26 +240,23 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
             DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
                 @Override
                 public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
-                    int[] scheduleIds = new int[measurementSchedules.size()];
+                    scheduleIds = new int[measurementSchedules.size()];
                     int i = 0;
                     for (MeasurementSchedule measurementSchedule : measurementSchedules) {
                         scheduleIds[i++] = measurementSchedule.getId();
                     }
 
+                    // This latch is the last thing that gets executed after we have executed the
+                    // 2 queries in Parallel
                     final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
 
                         @Override
                         public void execute() {
-                            response.setData(buildRecords(metricDisplaySummaries));
-                            processResponse(request.getRequestId(), response);
+                            // we needed the ResourceMetrics query and Metric Display Summary
+                            // to finish before we can query the live metrics and populate the
+                            // result response
+                            queryLiveMetrics(request, response);
 
-                            new Timer() {
-
-                                @Override
-                                public void run() {
-                                    BrowserUtility.graphSparkLines();
-                                }
-                            }.schedule(150);
                         }
                     });
 
@@ -241,6 +269,46 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
+                }
+            });
+    }
+
+    private void queryLiveMetrics(final DSRequest request, final DSResponse response) {
+
+        // actually go out and ask the agents for the data
+        GWTServiceLookup.getMeasurementDataService(60000).findLiveData(resource.getId(), definitionArrayIds,
+            new AsyncCallback<Set<MeasurementData>>() {
+                @Override
+                public void onSuccess(Set<MeasurementData> result) {
+                    if (result == null) {
+                        result = new HashSet<MeasurementData>(0);
+                    }
+                    liveMeasurementDataSet = result;
+                    response.setData(buildRecords(metricDisplaySummaries));
+                    processResponse(request.getRequestId(), response);
+
+                    new Timer() {
+
+                        @Override
+                        public void run() {
+                            BrowserUtility.graphSparkLines();
+                        }
+                    }.schedule(150);
+                }
+
+                /**
+                 * Called when an asynchronous call fails to complete normally. {@link IncompatibleRemoteServiceException}s, {@link
+                 * InvocationException}s, or checked exceptions thrown by the service method are examples of the type of failures that
+                 * can be passed to this method.
+                 * <p/>
+                 * <p> If <code>caught</code> is an instance of an {@link IncompatibleRemoteServiceException} the application should
+                 * try to get into a state where a browser refresh can be safely done. </p>
+                 *
+                 * @param caught failure encountered while executing a remote procedure call
+                 */
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
                 }
             });
     }
@@ -269,9 +337,18 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    public void queryResourceMetrics(final Resource resource, Long startTime, Long endTime,
+    public void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
         final CountDownLatch countDownLatch) {
         Set<MeasurementDefinition> definitions = resource.getResourceType().getMetricDefinitions();
+
+        // create a mapping of schedules ids to MeasurementUnits
+        for (MeasurementDefinition definition : definitions) {
+            if (null != definition.getSchedules()) {
+                for (MeasurementSchedule schedule : definition.getSchedules()) {
+                    scheduleToMeasurementUnitMap.put(schedule.getId(), definition.getUnits());
+                }
+            }
+        }
 
         //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
         final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
@@ -311,4 +388,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
             });
 
     }
+
 }
+

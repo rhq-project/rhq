@@ -302,7 +302,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#getSubjectByName(String)
      */
     public Subject getSubjectByName(String username) {
-        //TODO: this method needs to be modified to require a Subject and probably MANAGE_SECURITY 
+        //TODO: this method needs to be modified to require a Subject and probably MANAGE_SECURITY
         //      permissions to defend against unrestricted access to subjects.
 
         SubjectCriteria c = new SubjectCriteria();
@@ -430,11 +430,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /**This method is applied to Subject instances that may require LDAP auth/authz processing.
      * Called from both SLSB and SubjectGWTServiceImpl and:
      * -if Subject passed in has Principal(not LDAP account) then we immediately return Subject as no processing needed.
-     * -if Subject for LDAP account 
-     * 
+     * -if Subject for LDAP account
+     *
      * @param subject Authenticated subject.
      * @return same or new Subject returned from LDAP processing.
-     * @throws LoginException 
+     * @throws LoginException
      */
     public Subject processSubjectForLdap(Subject subject, String subjectPassword) throws LoginException {
         if (subject != null) {//null check
@@ -481,7 +481,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                         // We've verified that this user has valid session, and is using ldap. Safe to elevate search here.
                         PageList<Subject> subjectsLocated = findSubjectsByCriteria(getOverlord(), subjectCriteria);
                         //if subject variants located then take the first one with a principal otherwise do nothing
-                        //To defend against the case where they create an account with the same name but not 
+                        //To defend against the case where they create an account with the same name but not
                         //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
                         if ((!subjectsLocated.isEmpty())
                             && (!subjectsLocated.get(0).getName().equals(subject.getName()))) {//then case insensitive username matches found. Try to use instead.
@@ -530,7 +530,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             + "] with LDAP groups [" + groupNames + "]...");
                         ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
                     }
-                } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail 
+                } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail
                     throw new LoginException("You are authenticated for LDAP, but LDAP is not configured.");
                 }
             }
@@ -543,7 +543,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public void logout(Subject subject) {
         try {
-            // make sure the Subject is valid by pairing the name and sessionId            
+            // make sure the Subject is valid by pairing the name and sessionId
             Subject s = getSubjectByNameAndSessionId(subject.getName(), subject.getSessionId());
             sessionManager.invalidate(s.getSessionId());
         } catch (Exception e) {
@@ -640,6 +640,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public Subject loginUnauthenticated(String username) throws LoginException {
 
+        // we currently use a shared session for overlord.  ensure we use the shared session if the overlord user is
+        // requested.
+        if ("admin".equals(username)) {
+            return getOverlord();
+        }
+
         Subject subject = getSubjectByName(username);
 
         if (subject == null) {
@@ -650,7 +656,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new LoginException("User account has been disabled. [" + username + "]");
         }
 
-        // make sure we return the Subject returned from this call, which may differ from the one passed in 
+        // make sure we return the Subject returned from this call, which may differ from the one passed in
         subject = sessionManager.put(subject, 1000L * 60 * 2); // 2mins only
         return subject;
     }
@@ -699,7 +705,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     if (log.isDebugEnabled()) {
                         log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds), t);
                     } else {
-                        log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds) + ": " + t.getMessage());
+                        log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds) + ": "
+                            + t.getMessage());
                     }
                 }
             }
@@ -708,7 +715,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             SavedSearchCriteria savedSearchCriteria = new SavedSearchCriteria();
             savedSearchCriteria.addFilterSubjectId(doomedSubjectId);
             savedSearchCriteria.clearPaging();
-            PageList<SavedSearch> savedSearches = savedSearchManager.findSavedSearchesByCriteria(subject, savedSearchCriteria);
+            PageList<SavedSearch> savedSearches = savedSearchManager.findSavedSearchesByCriteria(subject,
+                savedSearchCriteria);
             for (SavedSearch savedSearch : savedSearches) {
                 savedSearchManager.deleteSavedSearch(subject, savedSearch.getId());
             }
@@ -845,13 +853,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     private boolean isLdapAuthenticationEnabled() {
-        SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
+        SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
         String value = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
         return (value != null) ? Boolean.valueOf(value) : false;
     }
 
     private boolean isLdapAuthorizationEnabled() {
-        SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
+        SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
         String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
         String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
         return ((groupFilter != null) && (groupFilter.trim().length() > 0))
@@ -863,23 +871,23 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         //       http://www.openldap.org/devel/gitweb.cgi?p=openldap.git;a=blob;f=servers/slapd/schema/core.ldif
         Map<String, String> ldapUserAttributes = ldapManager.findLdapUserDetails(subject.getName());
 
-        String givenName = (ldapUserAttributes.get("givenName") != null) ?
-            ldapUserAttributes.get("givenName") : ldapUserAttributes.get("gn");
+        String givenName = (ldapUserAttributes.get("givenName") != null) ? ldapUserAttributes.get("givenName")
+            : ldapUserAttributes.get("gn");
         subject.setFirstName(givenName);
 
-        String surname = (ldapUserAttributes.get("sn") != null) ?
-            ldapUserAttributes.get("sn") : ldapUserAttributes.get("surname");
+        String surname = (ldapUserAttributes.get("sn") != null) ? ldapUserAttributes.get("sn") : ldapUserAttributes
+            .get("surname");
         subject.setLastName(surname);
 
         String telephoneNumber = ldapUserAttributes.get("telephoneNumber");
         subject.setPhoneNumber(telephoneNumber);
 
-        String mail = (ldapUserAttributes.get("mail") != null) ?
-            ldapUserAttributes.get("mail") : ldapUserAttributes.get("rfc822Mailbox");
+        String mail = (ldapUserAttributes.get("mail") != null) ? ldapUserAttributes.get("mail") : ldapUserAttributes
+            .get("rfc822Mailbox");
         subject.setEmailAddress(mail);
 
-        String organizationalUnit = (ldapUserAttributes.get("ou") != null) ?
-            ldapUserAttributes.get("ou") : ldapUserAttributes.get("organizationalUnitName");
+        String organizationalUnit = (ldapUserAttributes.get("ou") != null) ? ldapUserAttributes.get("ou")
+            : ldapUserAttributes.get("organizationalUnitName");
         subject.setDepartment(organizationalUnit);
 
         return;

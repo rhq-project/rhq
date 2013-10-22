@@ -116,7 +116,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
             public void onCellClick(CellClickEvent event) {
                 Record record = event.getRecord();
                 String title = record.getAttribute(GroupMetricsTableDataSource.FIELD_METRIC_LABEL);
-                ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
+                ChartViewWindow window = new ChartViewWindow("", title);
                 int defId = record.getAttributeAsInt(GroupMetricsTableDataSource.FIELD_METRIC_DEF_ID);
 
                 CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(groupId, defId, isAutogroup);

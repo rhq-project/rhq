@@ -74,7 +74,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     @Override
     public String getSessionTimeout() throws RuntimeException {
         try {
-            SystemSettings systemSettings = systemManager.getSystemSettings(subjectManager.getOverlord());
+            SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
             String sessionTimeout = systemSettings.get(SystemSetting.RHQ_SESSION_TIMEOUT);
             return sessionTimeout;
         } catch (Throwable t) {

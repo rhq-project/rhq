@@ -122,7 +122,7 @@ public class RepoRelationship implements Serializable {
      *
      * @return the mapping entities
      *
-     * @see    #getRepoRelationship()
+     * @see    #getRelatedRepos()
      */
     public Set<RepoRepoRelationship> getRepoRepoRelationships() {
         return repoRepoRelationships;

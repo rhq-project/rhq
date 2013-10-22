@@ -78,4 +78,18 @@
     <justification>Adding a method to a remote API interface is safe.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.util.PageList findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)</method>
+    <justification>Adding a method to a remote API interface is safe.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.util.PageList findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)</method>
+    <justification>Adding a method to a remote API interface is safe.</justification>
+  </difference>
+
 </differences>

@@ -36,11 +36,10 @@ import org.rhq.core.domain.util.PageList;
 public interface AvailabilityManagerRemote {
 
     /**
-     * @param subject
-     * @param resourceId
-     * @param pc
-     * @return
-     * @throws FetchException
+     * @param subject the subject
+     * @param resourceId the resource
+     * @param pc page control
+     * @return not null
      * @Deprecated use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
      */
     @Deprecated
@@ -49,15 +48,18 @@ public interface AvailabilityManagerRemote {
     /**
      * Gets the last known Availability for the given resource - which includes whether it is currently up (i.e.
      * available) or down and the last time it was known to have changed to that state.
-     * 
-     * @param  subject
-     * @param  resourceId
+     *
+     * @param subject the subject
+     * @param resourceId the resource
      *
      * @return the full and current status of the resource
-     * @throws FetchException TODO
-     * @throws FetchException
      */
     public Availability getCurrentAvailabilityForResource(Subject subject, int resourceId);
 
+    /**
+     * @param subject
+     * @param criteria
+     * @return not null
+     */
     PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria);
 }

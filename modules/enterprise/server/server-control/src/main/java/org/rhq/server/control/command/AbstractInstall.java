@@ -306,7 +306,7 @@ public abstract class AbstractInstall extends ControlCommand {
             // if any errors occur after now, we need to stop the agent
             addUndoTask(new ControlCommand.UndoTask("Stopping agent") {
                 public void performUndoWork() throws Exception {
-                    stopAgent(agentBasedir);
+                    killAgent(agentBasedir);
                 }
             });
 
@@ -317,7 +317,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void stopAgent(File agentBasedir) throws Exception {
+    protected void killAgent(File agentBasedir) throws Exception {
 
         File agentBinDir = new File(agentBasedir, "bin");
         if (!agentBinDir.exists()) {
@@ -329,10 +329,10 @@ public abstract class AbstractInstall extends ControlCommand {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
 
         if (isWindows()) {
             try {
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
                 executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
@@ -341,6 +341,7 @@ public abstract class AbstractInstall extends ControlCommand {
         } else {
             String pid = getAgentPid();
             if (pid != null) {
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "kill");
                 executor.execute(commandLine);
             }
         }
@@ -600,7 +601,10 @@ public abstract class AbstractInstall extends ControlCommand {
                 }
             });
 
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
+            // Make sure we use the appropriate java version, don't just fall back to PATH
+            String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath)
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
                 .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath())
                 .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log"));

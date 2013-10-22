@@ -645,13 +645,13 @@ public class TabularWriter {
                     }
                 }
 
-                out.print("\n");
+                out.println("");
 
                 for (int i = 1; i < width; i++) {
                     out.print("-");
                 }
             }
-            out.print("\n");
+            out.println("");
 
         }
 
@@ -669,12 +669,13 @@ public class TabularWriter {
                         out.print(" ");
                     }
                 }
-                out.print("\n");
+                out.println("");
             }
         }
 
         if (!hideRowCount) {
-            out.print(data.length + " rows\n");
+            out.print(data.length + " rows");
+            out.println("");
         }
     }
 

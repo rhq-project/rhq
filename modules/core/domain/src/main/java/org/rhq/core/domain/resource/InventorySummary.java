@@ -23,9 +23,8 @@ import java.io.Serializable;
 /**
  * A summary of inventoried {@link org.rhq.core.domain.resource.Resource}s and
  * {@link org.rhq.core.domain.resource.group.Group}s that are viewable by the specified user. The summary includes the
- * total number of platforms, servers, services, {@link org.rhq.core.domain.resource.group.CompatibleGroup}s, and
- * {@link org.rhq.core.domain.resource.group.MixedGroup}s. Only Resources with an inventory status of COMMITTED are
- * tallied.
+ * total number of platforms, servers, services, compatible groups, and mixed groups.
+ * Only Resources with an inventory status of COMMITTED are tallied.
  *
  * @author Ian Springer
  */

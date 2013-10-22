@@ -222,17 +222,26 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     private OperationResult updateConfiguration(Configuration params) {
         //update storage node jvm settings only
         Configuration config = new Configuration();
+        Configuration.builder().addSimple("jmxPort", params.getSimpleValue("jmxPort"))
+        .addSimple("jmxPort", params.getSimpleValue("jmxPort"))
+        .addSimple("minHeapSize", params.getSimpleValue("heapSize"))
+        .addSimple("maxHeapSize", params.getSimpleValue("heapSize"))
+        .addSimple("heapNewSize", params.getSimpleValue("heapNewSize"))
+        .addSimple("threadStackSize", params.getSimpleValue("threadStackSize"))
+        .addSimple("maxHeapSize", params.getSimpleValue("heapSize")).build();
+        
         config.put(new PropertySimple("jmxPort", params.getSimpleValue("jmxPort")));
         config.put(new PropertySimple("minHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("maxHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("heapNewSize", params.getSimpleValue("heapNewSize")));
         config.put(new PropertySimple("threadStackSize", params.getSimpleValue("threadStackSize")));
         
-        // copy the restartIfRequired flag
-        config.put(new PropertySimple("restartIfRequired", params.getSimpleValue("restartIfRequired")));
+        String restartIfRequiredString = params.getSimpleValue("restartIfRequired");
+        boolean restartIfRequired = restartIfRequiredString != null && Boolean.parseBoolean(restartIfRequiredString);
 
         ConfigurationUpdateReport configurationUpdateReport = new ConfigurationUpdateReport(config);
-        this.updateResourceConfiguration(configurationUpdateReport);
+        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir(), this);
+        configDelegate.updateResourceConfigurationAndRestartIfNecessary(configurationUpdateReport, restartIfRequired);
         OperationResult result = new OperationResult("Configuration updated.");
         if (!configurationUpdateReport.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
             result.setErrorMessage(configurationUpdateReport.getErrorMessage());

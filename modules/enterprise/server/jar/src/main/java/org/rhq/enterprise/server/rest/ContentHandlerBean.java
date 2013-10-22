@@ -98,8 +98,6 @@ public class ContentHandlerBean extends AbstractRestBean {
         String fileHandle = outFile.getName();
         StringValue sv = new StringValue(fileHandle);
 
-        System.out.println("Uploaded content to " + outFile.getAbsolutePath());
-
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/content/{handle}");
         URI uri = uriBuilder.build(fileHandle);

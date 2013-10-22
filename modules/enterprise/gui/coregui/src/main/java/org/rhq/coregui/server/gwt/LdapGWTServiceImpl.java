@@ -171,7 +171,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
      */
     public Boolean checkLdapConfiguredStatus() throws RuntimeException {
         try {
-            SystemSettings systemSettings = systemManager.getSystemSettings(subjectManager.getOverlord());
+            SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
             String value = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
             boolean result = (value != null) ? Boolean.valueOf(value) : false;
             return result;

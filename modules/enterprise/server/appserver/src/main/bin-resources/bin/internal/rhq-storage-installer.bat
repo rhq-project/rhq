@@ -23,18 +23,16 @@ rem                            set, JBOSS_HOME is used as a fallback. If
 rem                            neither is set, it is assumed the AS bundled
 rem                            under RHQ_SERVER_HOME\jbossas is to be used.
 rem
-rem    RHQ_SERVER_JAVA_HOME - The location of the JRE that the server will
-rem                           use. This will be ignored if
-rem                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
-rem                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-rem                           not set, JAVA_HOME will be used.
+rem    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
+rem                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
+rem                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
+rem                    JAVA_HOME will be used.
 rem
-rem    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-rem                                    executable to use. If this is set,
-rem                                    RHQ_SERVER_JAVA_HOME is ignored.
-rem                                    If this is not set, then
-rem                                    $RHQ_SERVER_JAVA_HOME\bin\java
-rem                                    is used.
+rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
+rem                             use. If this is set, RHQ_JAVA_HOME is ignored.
+rem                             If this is not set, then $RHQ_JAVA_HOME/bin/java
+rem                             is used. If this and RHQ_JAVA_HOME are not set,
+rem                             then $JAVA_HOME/bin/java will be used.
 rem
 rem    RHQ_STORAGE_INSTALLER_JAVA_OPTS - Java VM command line options to be
 rem                        passed into the Java VM. If this is not defined
@@ -132,24 +130,36 @@ if not exist "%_LOG_DIR_PATH%" (
 
 rem ----------------------------------------------------------------------
 rem Find the Java executable and verify we have a VM available
+rem Note that RHQ_SERVER_JAVA_* props are still handled for back compat
 rem ----------------------------------------------------------------------
 
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_SERVER_JAVA_HOME (
-      if defined RHQ_STORAGE_DEBUG echo No JRE found - will try to use JAVA_HOME: %JAVA_HOME%
-      set RHQ_SERVER_JAVA_HOME=%JAVA_HOME%
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
+      set RHQ_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%
    )
 )
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-   set RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_HOME%\bin\java.exe
+if not defined RHQ_JAVA_HOME (
+   if defined RHQ_SERVER_JAVA_HOME (
+      set RHQ_JAVA_HOME=%RHQ_SERVER_JAVA_HOME%
+   )
 )
 
-if defined RHQ_STORAGE_DEBUG echo RHQ_SERVER_JAVA_HOME: %RHQ_SERVER_JAVA_HOME%
-if defined RHQ_STORAGE_DEBUG echo RHQ_SERVER_JAVA_EXE_FILE_PATH: %RHQ_SERVER_JAVA_EXE_FILE_PATH%
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if not defined RHQ_JAVA_HOME (
+      if defined RHQ_STORAGE_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: %JAVA_HOME%
+      set RHQ_JAVA_HOME=%JAVA_HOME%
+   )
+)
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   set RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_HOME%\bin\java.exe
+)
 
-if not exist "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" (
+if defined RHQ_STORAGE_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%
+if defined RHQ_STORAGE_DEBUG echo RHQ_JAVA_EXE_FILE_PATH: %RHQ_JAVA_EXE_FILE_PATH%
+
+if not exist "%RHQ_JAVA_EXE_FILE_PATH%" (
    echo There is no JVM available.
-   echo Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately.
+   echo Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately.
    exit /B 1
 )
 
@@ -194,7 +204,7 @@ echo "Starting RHQ Storage Installer ..."
 
 rem start the AS instance with our main installer module
 
-"%RHQ_SERVER_JAVA_EXE_FILE_PATH%" %RHQ_STORAGE_INSTALLER_JAVA_OPTS% %RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_JBOSS_HOME%\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-cassandra-installer %*
+"%RHQ_JAVA_EXE_FILE_PATH%" %RHQ_STORAGE_INSTALLER_JAVA_OPTS% %RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_JBOSS_HOME%\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-cassandra-installer %*
 if not errorlevel 1 goto done
 exit /B %ERRORLEVEL%
 

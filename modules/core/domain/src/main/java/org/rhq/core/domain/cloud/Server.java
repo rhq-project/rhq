@@ -319,6 +319,7 @@ public class Server implements Serializable {
      * by the various {@link Status} elements), then that change should be added via this method.
      * Periodically, a background job will come along, check the status, and possibly perform
      * work on behalf of this server based on the type of change.
+     * @param newStatus
      */
     public void addStatus(Status newStatus) {
         this.status |= newStatus.mask;

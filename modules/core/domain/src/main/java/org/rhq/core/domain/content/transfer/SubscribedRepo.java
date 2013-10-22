@@ -39,7 +39,7 @@ public class SubscribedRepo implements Serializable {
     }
 
     /**
-     * @param repoName the repo name to set
+     * @param name the repo name to set
      */
     public void setName(String name) {
         this.name = name;

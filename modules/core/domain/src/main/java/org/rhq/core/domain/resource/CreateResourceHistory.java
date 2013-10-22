@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.domain.resource;
 
@@ -53,7 +49,7 @@ import org.rhq.core.domain.content.InstalledPackage;
  * @author Jason Dobies
  */
 @Entity(name = "CreateResourceHistory")
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_WITH_STATUS, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.status = :status"),
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "" //
         + "SELECT crh " //
@@ -62,7 +58,12 @@ import org.rhq.core.domain.content.InstalledPackage;
         + "   AND ( crh.ctime > :startTime OR :startTime IS NULL ) " //
         + "   AND ( crh.mtime < :endTime OR :endTime IS NULL ) "),
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.id = :id"),
-    @NamedQuery(name = CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM CreateResourceHistory crh WHERE crh.parentResource.id IN ( :resourceIds ) )") })
+    @NamedQuery(name = CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM CreateResourceHistory crh WHERE crh.parentResource.id IN ( :resourceIds ) )"),
+    @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_CHILD_RESOURCE_KEY, query = "" //
+        + "SELECT crh " //
+        + "  FROM CreateResourceHistory AS crh " //
+        + " WHERE crh.parentResource.id = :parentResourceId " //
+        + "   AND crh.newResourceKey = :newResourceKey ") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CREATE_RES_HIST_ID_SEQ", sequenceName = "RHQ_CREATE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_CREATE_RES_HIST")
 public class CreateResourceHistory implements Serializable {
@@ -74,6 +75,7 @@ public class CreateResourceHistory implements Serializable {
     public static final String QUERY_FIND_BY_PARENT_RESOURCE_ID = "CreateResourceHistory.findByParentResourceId";
     public static final String QUERY_FIND_BY_ID = "CreateResourceHistory.findById";
     public static final String QUERY_DELETE_BY_RESOURCES = "CreateResourceHistory.deleteByResources";
+    public static final String QUERY_FIND_BY_CHILD_RESOURCE_KEY = "CreateResourceHistory.findByChildResourceKey";
 
     // Attributes  --------------------------------------------
 

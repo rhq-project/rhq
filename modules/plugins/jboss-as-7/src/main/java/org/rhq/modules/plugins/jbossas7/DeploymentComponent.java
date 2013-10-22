@@ -170,8 +170,6 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
-        new CreateResourceReport("", resourceType, new Configuration(), new Configuration(), detail);
-
         try {
             redeployOnServer(detail.getKey().getName(), hash);
             response.setOverallRequestResult(ContentResponseResult.SUCCESS);

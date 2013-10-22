@@ -32,13 +32,16 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
+/**
+ * Public Repo API.
+ */
 @Remote
 public interface RepoManagerRemote {
 
     /**
      * Associates the package versions (identified by their IDs) to the given repo (also identified by its ID).
      *
-     * @param subject           The logged in user's subject.
+     * @param subject        The logged in user's subject.
      * @param repoId         the ID of the repo
      * @param packageVersionIds the list of package version IDs to add to the repo
      */
@@ -52,7 +55,7 @@ public interface RepoManagerRemote {
      * @param repo a new repo object.
      *
      * @return the newly created repo
-     * @throws RepoException if a repo already exists with the same name 
+     * @throws RepoException if a repo already exists with the same name
      */
     Repo createRepo(Subject subject, Repo repo) throws RepoException;
 
@@ -79,7 +82,7 @@ public interface RepoManagerRemote {
      *
      * @param subject  user making the query
      * @param criteria describes how the query should function; may not be <code>null</code>
-     * @return any repos that match the given criteria; empty list if none match 
+     * @return any repos that match the given criteria; empty list if none match
      */
     PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria);
 
@@ -107,11 +110,11 @@ public interface RepoManagerRemote {
      * <li>determine the comparator using the package type behavior if one is setup for the package type
      * <li>If no package behavior exists, use {@link PackageVersion#DEFAULT_COMPARATOR}
      * </ol>
-     * 
+     *
      * @param subject the authenticated user
      * @param packageId the id of the package to find the latest version for.
      * @param repoId the repo where to take the package versions of the package from
-     * @return
+     * @return the package version or null
      */
     PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId);
 
@@ -124,6 +127,7 @@ public interface RepoManagerRemote {
      * @param repo to be updated
      *
      * @return Repo that was updated
+     * @throws RepoException
      */
     Repo updateRepo(Subject subject, Repo repo) throws RepoException;
 
@@ -140,18 +144,18 @@ public interface RepoManagerRemote {
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
-     * Deletes package versions from a repo if they are not referenced by 
+     * Deletes package versions from a repo if they are not referenced by
      * a content source.
      * <p>
      * The package versions themselves are not deleted until some content source or repository
      * is deleted at which point orphans detection is performed.
-     *  
+     *
      * @param subject
      * @param repoId
      * @param packageVersionIds
      * @return true if all the package versions were successfully deleted, false if some references exist.
      */
-    boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionId);
+    boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionIds);
 
     /**
      * Gets all resources that are subscribed to the given repo.
@@ -192,12 +196,18 @@ public interface RepoManagerRemote {
      */
     void unsubscribeResourceFromRepos(Subject subject, int resourceId, int[] repoIds);
 
+    /**
+     * @param subject
+     * @param repoIds
+     * @return number of synchronized repos
+     * @throws Exception
+     */
     int synchronizeRepos(Subject subject, int[] repoIds) throws Exception;
 
     /**
-     * This method allows for downloading the bytes of an arbitrary package version. This call can be dangerous with 
+     * This method allows for downloading the bytes of an arbitrary package version. This call can be dangerous with
      * large packages because it will attempt to load the whole package in memory.
-     * 
+     *
      * @param subject
      * @param repoId
      * @param packageVersionId

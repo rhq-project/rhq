@@ -88,6 +88,8 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
  */
 @Stateless
 public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, ResourceFactoryManagerRemote {
+    private static final Log LOG = LogFactory.getLog(ResourceFactoryManagerBean.class);
+
     // Constants  --------------------------------------------
 
     /**
@@ -96,8 +98,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     private static final int REQUEST_TIMEOUT = 1000 * 60 * 60;
 
     // Attributes  --------------------------------------------
-
-    private final Log log = LogFactory.getLog(ResourceFactoryManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -124,14 +124,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeCreateResource(CreateResourceResponse response) {
-        log.debug("Received call to complete create resource: " + response);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Received call to complete create resource: " + response);
+        }
 
         // Load the persisted history entry
         CreateResourceHistory history = entityManager.find(CreateResourceHistory.class, response.getRequestId());
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
+            LOG.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
 
@@ -144,36 +146,20 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         if (response.getResourceConfiguration() != null) {
             entityManager.merge(response.getResourceConfiguration());
         }
-
-        // RHQ-666 - The resource name will likely come from the plugin. If both the user indicated a name at
-        // creation time (which would be in the history item), use that to override what the plugin indicates
-        String newResourceName = response.getResourceName();
-
-        if (history.getCreatedResourceName() != null) {
-            newResourceName = history.getCreatedResourceName();
-        }
-
-        // If the plugin reports it as successful, create the resource and mark it as committed
-        // Currently commented out because of https://jira.jboss.org/jira/browse/JBNADM-3451
-        // basically: this prevented getting a version of the resource with correct pluginConfig
-        //    from autodiscovery back into the inventory
-        //
-        //        if (response.getStatus() == CreateResourceStatus.SUCCESS) {
-        //            resourceFactoryManager.createInventoryResource(history.getParentResource().getId(), history
-        //                .getResourceType().getId(), newResourceName, response.getResourceKey());
-        //        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeDeleteResourceRequest(DeleteResourceResponse response) {
-        log.debug("Received call to complete delete resource: " + response);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Received call to complete delete resource: " + response);
+        }
 
         // Load the persisted history entry
         DeleteResourceHistory history = entityManager.find(DeleteResourceHistory.class, response.getRequestId());
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
+            LOG.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
 
@@ -224,8 +210,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
                 // If the duration exceeds the timeout threshold, mark it as timed out
                 if (duration > REQUEST_TIMEOUT) {
-                    log.debug("Timing out request after duration: " + duration + " Request: " + request);
-
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Timing out request after duration: " + duration + " Request: " + request);
+                    }
                     request.setErrorMessage("Request with duration " + duration + " exceeded the timeout threshold of "
                         + REQUEST_TIMEOUT);
                     request.setStatus(CreateResourceStatus.TIMED_OUT);
@@ -246,15 +233,16 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
                 // If the duration exceeds the timeout threshold, mark it as timed out
                 if (duration > REQUEST_TIMEOUT) {
-                    log.debug("Timing out request after duration: " + duration + " Request: " + request);
-
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Timing out request after duration: " + duration + " Request: " + request);
+                    }
                     request.setErrorMessage("Request with duration " + duration + " exceeded the timeout threshold of "
                         + REQUEST_TIMEOUT);
                     request.setStatus(DeleteResourceStatus.TIMED_OUT);
                 }
             }
         } catch (Throwable e) {
-            log.error("Error while processing timed out requests", e);
+            LOG.error("Error while processing timed out requests", e);
         }
     }
 
@@ -426,7 +414,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream,
         Map<String, String> packageUploadDetails, Integer timeout) {
 
-        log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
+        LOG.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
 
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
 
@@ -485,8 +473,11 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     public CreateResourceHistory createResource(Subject user, int parentResourceId, int resourceTypeId,
         String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout) {
-        log.debug("Received call to create configuration backed resource under parent: " + parentResourceId
-            + " of type: " + resourceTypeId);
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Received call to create configuration backed resource under parent: " + parentResourceId
+                + " of type: " + resourceTypeId);
+        }
 
         ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
@@ -524,7 +515,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             return persistedHistory;
         } catch (Exception e) {
-            log.error("Error while sending create resource request to agent service", e);
+            LOG.error("Error while sending create resource request to agent service", e);
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
@@ -648,7 +639,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             return null;
             //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
         } catch (CannotConnectException e) {
-            log.error("Error while sending create resource request to agent service", e);
+            LOG.error("Error while sending create resource request to agent service", e);
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
@@ -658,7 +649,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             throw new CannotConnectToAgentException("Error while sending create resource request to agent service", e);
         } catch (Exception e) {
-            log.error("Error while sending create resource request to agent service", e);
+            LOG.error("Error while sending create resource request to agent service", e);
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
@@ -684,7 +675,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {
-        log.debug("Received call to delete resource: " + resourceId);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Received call to delete resource: " + resourceId);
+        }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
@@ -708,7 +701,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             return persistedHistory;
         } catch (CannotConnectException e) {
-            log.error("Error while sending delete resource request to agent service", e);
+            LOG.error("Error while sending delete resource request to agent service", e);
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
@@ -718,7 +711,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             throw new CannotConnectToAgentException("Error while sending delete resource request to agent service", e);
         } catch (Exception e) {
-            log.error("Error while sending delete resource request to agent service", e);
+            LOG.error("Error while sending delete resource request to agent service", e);
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);

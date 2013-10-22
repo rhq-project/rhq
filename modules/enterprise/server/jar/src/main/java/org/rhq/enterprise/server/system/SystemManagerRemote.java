@@ -34,24 +34,26 @@ import org.rhq.core.domain.common.composite.SystemSettings;
 @Remote
 public interface SystemManagerRemote {
     /**
-     * Provides product information suitable for "About" details. 
-     * 
+     * Provides product information suitable for "About" details.
+     *
      * @param subject user making the request
-     * 
+     *
      * @return the product info
      */
     ProductInfo getProductInfo(Subject subject);
 
     /**
-     * Provides details (such as product version) of the server processing the request.  Requires MANAGE_SETTINGS. 
-     * 
+     * Provides details (such as product version) of the server processing the request.  Requires MANAGE_SETTINGS.
+     *
      * @param subject user making the request
-     * 
+     *
      * @return server details
      */
     ServerDetails getServerDetails(Subject subject);
 
     /**
+     * @param subject
+     * @return system config
      * @deprecated use {@link #getSystemSettings(Subject)} instead
      */
     @Deprecated
@@ -60,6 +62,9 @@ public interface SystemManagerRemote {
     /**
      * Get the server cloud configuration. These are the server configurations that will be
      * the same for all servers in the HA server cloud.
+     * <p/>
+     * Note that any password fields in the returned settings will be masked (i.e. will not correspond to the actual
+     * value stored in the database), see {@link org.rhq.core.domain.configuration.PropertySimple#MASKED_VALUE}.
      *
      * @param subject user making the request
      *
@@ -68,6 +73,10 @@ public interface SystemManagerRemote {
     SystemSettings getSystemSettings(Subject subject);
 
     /**
+     * @param subject
+     * @param properties
+     * @param skipValidation
+     * @throws Exception
      * @deprecated use {@link #setSystemSettings(Subject, SystemSettings)} instead
      */
     @Deprecated
@@ -79,6 +88,7 @@ public interface SystemManagerRemote {
      *
      * @param subject        the user who wants to change the settings
      * @param settings     the new system configuration settings
+     * @throws Exception
      */
     void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
 }

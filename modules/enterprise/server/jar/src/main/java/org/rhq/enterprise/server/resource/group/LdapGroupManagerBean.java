@@ -109,7 +109,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
     public Set<Map<String, String>> findAvailableGroups() {
         //load current system properties
-        Properties systemConfig = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+        Properties systemConfig = populateProperties(systemManager.getUnmaskedSystemSettings(true));
         //reset group query details
         resetGroupQueryDetails();
 
@@ -154,7 +154,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
-        Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+        Properties options = populateProperties(systemManager.getUnmaskedSystemSettings(true));
         String groupFilter = options.getProperty(SystemSetting.LDAP_GROUP_FILTER.name(), "");
         String groupMember = options.getProperty(SystemSetting.LDAP_GROUP_MEMBER.name(), "");
         String groupUsePosix = options.getProperty(SystemSetting.LDAP_GROUP_USE_POSIX.name(), "false");
@@ -333,7 +333,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
     public Map<String, String> findLdapUserDetails(String userName) {
         // Load our LDAP specific properties
-        Properties systemConfig = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+        Properties systemConfig = populateProperties(systemManager.getUnmaskedSystemSettings(true));
 
         HashMap<String, String> userDetails = new HashMap<String, String>();
 

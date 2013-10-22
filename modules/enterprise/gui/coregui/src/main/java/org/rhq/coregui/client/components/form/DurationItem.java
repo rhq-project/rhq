@@ -241,8 +241,14 @@ public class DurationItem extends CanvasItem {
         } else {
             MeasurementNumericValueAndUnits valueWithUnits;
             if (longValue % HOUR_IN_MILLIS == 0) {
-                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
-                    MeasurementUnits.HOURS, MeasurementUnits.HOURS);
+                if (longValue == HOUR_IN_MILLIS) {
+                    valueWithUnits = new MeasurementNumericValueAndUnits(1.0d, MeasurementUnits.HOURS);
+                } else {
+                    valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
+                        MeasurementUnits.HOURS, MeasurementUnits.HOURS);
+                }
+            } else if (longValue == MINUTE_IN_MILLIS) {
+                valueWithUnits = new MeasurementNumericValueAndUnits(1.0d, MeasurementUnits.MINUTES);
             } else {
                 valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
                     MeasurementUnits.MINUTES, MeasurementUnits.MINUTES);

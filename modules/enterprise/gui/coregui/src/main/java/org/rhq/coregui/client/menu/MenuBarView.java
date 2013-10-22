@@ -36,6 +36,8 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.bundle.BundleTopView;
@@ -98,7 +100,8 @@ public class MenuBarView extends EnhancedVLayout {
     }
 
     private Canvas getLogoSection() {
-        final AboutModalWindow aboutModalWindow = new AboutModalWindow();
+        final ProductInfo productInfo = CoreGUI.get().getProductInfo();
+        final AboutModalWindow aboutModalWindow = new AboutModalWindow(productInfo);
         HLayout logoSection = new HLayout();
         logoSection.setOverflow(Overflow.VISIBLE);
 
@@ -125,6 +128,7 @@ public class MenuBarView extends EnhancedVLayout {
 
         userLabel = new Label(UserSessionManager.getSessionSubject().getName());
         userLabel.setAutoWidth();
+        userLabel.setWrap(false);
 
         Label lineLabel = new Label(" | ");
         lineLabel.setWidth("12px");

@@ -373,7 +373,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * a RuntimeException is thrown, indicating whether no results, or multiple results were found.
      *
      * @param result
-     * @return
+     * @return the single result
      * @throws RuntimeException In not exactly one result is found.  The message will include either the String
      * "NoResultException" or "NonUniqueResultException", appropriately.  The JPA exceptions are not used so that there
      * is no dependency on a JPA implementation jar for the caller.

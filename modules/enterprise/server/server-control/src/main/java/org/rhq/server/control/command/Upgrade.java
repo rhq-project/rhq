@@ -132,10 +132,6 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
-            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
-            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
-            log.info("Stopping any running RHQ components...");
-
             // If using non-default agent location then save it so it will be applied to all subsequent rhqctl commands.
             boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
             if (hasFromAgentOption) {
@@ -150,13 +146,18 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
+            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
+            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
+            log.info("Stopping any running RHQ components...");
+
             // Stop the agent, if running.
             if (hasFromAgentOption) {
-                stopAgent(getFromAgentDir(commandLine)); // this is validate the path as well
+                killAgent(getFromAgentDir(commandLine)); // this validates the path as well
             }
 
-            // If rhqctl exists in the old version, use it to stop server and storage node, otherwise, just try and stop the server
-            // using the legacy script. If there is no rhqctl, there is no storage node anyway, so we just stop server in that case.
+            // If rhqctl exists in the old version, use it to stop old components, otherwise, just try and stop the
+            // server using the legacy script. If there is no rhqctl, there is no storage node anyway, so we just
+            // stop server in that case.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
             org.apache.commons.exec.CommandLine rhqctlStop = isRhq48OrLater(commandLine) ? getCommandLine(false,
                 "rhqctl", "stop") : getCommandLine("rhq-server", "stop");
@@ -511,6 +512,14 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
+        // for oracle, ensure the unused properties are set to unused otherwise prop file validation may fail
+        String dbType = oldServerProps.getProperty("rhq.server.database.type-mapping");
+        if (null != dbType && dbType.toLowerCase().contains("oracle")) {
+            oldServerProps.setProperty("rhq.server.database.server-name", "unused");
+            oldServerProps.setProperty("rhq.server.database.port", "unused");
+            oldServerProps.setProperty("rhq.server.database.db-name", "unused");
+        }
+
         // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = new File(getBaseDir(), "bin/rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
@@ -621,7 +630,10 @@ public class Upgrade extends AbstractInstall {
             final File agentBasedir = getAgentBasedir();
             File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
+            // Make sure we use the appropriate java version, don't just fall back to PATH
+            String javaExeFilePath = System.getProperty("rhq.java-exe-file-path");
+
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(javaExeFilePath) //
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
                 .addArgument("--update=" + oldAgentDir.getAbsolutePath()) //
                 .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log")) //

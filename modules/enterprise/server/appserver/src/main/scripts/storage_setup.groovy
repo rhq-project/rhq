@@ -137,6 +137,7 @@ def prepareAdditionalStorageInstallations() {
       }
       log.info "Updating permissions in $basedir/bin"
       ant.chmod(dir: "$basedir/bin", perm: "ug+x", includes: "*.sh,rhqctl", verbose: true)
+      ant.chmod(dir: "$basedir/bin/internal", perm: "ug+x", includes: "*.sh,rhqctl", verbose: true)
 
       createRhqctlPropertiesFile(basedir)
       createStoragePropertiesFile(basedir, nodeId)

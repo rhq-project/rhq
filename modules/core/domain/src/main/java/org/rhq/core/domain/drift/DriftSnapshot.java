@@ -89,7 +89,7 @@ public class DriftSnapshot implements Serializable {
 
     /**
      * @param changeSet The drifts must be set for the changeSet
-     * @return
+     * @return the snapshot
      */
     public DriftSnapshot addChangeSet(DriftChangeSet<? extends Drift<?, ?>> changeSet) {
 

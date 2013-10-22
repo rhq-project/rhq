@@ -23,20 +23,16 @@
 #                            neither is set, it is assumed the AS bundled
 #                            under RHQ_SERVER_HOME/jbossas is to be used.
 #
-#    RHQ_SERVER_JAVA_HOME - The location of the JRE that the server will
-#                           use. This will be ignored if
-#                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
-#                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-#                           not set, the Server's embedded JRE will be used.
+#    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
+#                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
+#                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
+#                    JAVA_HOME will be used.
 #
-#    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-#                                    executable to use. If this is set,
-#                                    RHQ_SERVER_JAVA_HOME is ignored.
-#                                    If this is not set, then
-#                                    $RHQ_SERVER_JAVA_HOME/bin/java
-#                                    is used. If this and
-#                                    RHQ_SERVER_JAVA_HOME are not set, the
-#                                    Server's embedded JRE will be used.
+#    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
+#                             use. If this is set, RHQ_JAVA_HOME is ignored.
+#                             If this is not set, then $RHQ_JAVA_HOME/bin/java
+#                             is used. If this and RHQ_JAVA_HOME are not set,
+#                             then $JAVA_HOME/bin/java will be used.
 #
 #    RHQ_STORAGE_INSTALLER_JAVA_OPTS - Java VM command line options to be
 #                        passed into the Java VM. If this is not defined
@@ -177,24 +173,20 @@ fi
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
 
-if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
-   if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
-      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"
-      if [ -d "$RHQ_SERVER_JAVA_HOME" ]; then
-         debug_msg "Using the embedded JRE"
-      else
-         debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
-         RHQ_SERVER_JAVA_HOME="$JAVA_HOME"
-      fi
+if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
+   if [ -z "$RHQ_JAVA_HOME" ]; then
+      debug_msg "No RHQ JAVA property set, defaulting to JAVA_HOME: $JAVA_HOME"
+      RHQ_JAVA_HOME="$JAVA_HOME"
    fi
-   debug_msg "RHQ_SERVER_JAVA_HOME: $RHQ_SERVER_JAVA_HOME"
-   RHQ_SERVER_JAVA_EXE_FILE_PATH="${RHQ_SERVER_JAVA_HOME}/bin/java"
+   debug_msg "RHQ_JAVA_HOME: $RHQ_JAVA_HOME"
+   RHQ_JAVA_EXE_FILE_PATH="${RHQ_JAVA_HOME}/bin/java"
 fi
-debug_msg "RHQ_SERVER_JAVA_EXE_FILE_PATH: $RHQ_SERVER_JAVA_EXE_FILE_PATH"
 
-if [ ! -f "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
+debug_msg "RHQ_JAVA_EXE_FILE_PATH: $RHQ_JAVA_EXE_FILE_PATH"
+
+if [ ! -f "$RHQ_JAVA_EXE_FILE_PATH" ]; then
    echo "There is no JVM available."
-   echo "Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately."
+   echo "Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately."
    exit 1
 fi
 
@@ -237,7 +229,7 @@ debug_msg "_JBOSS_MODULEPATH: $_JBOSS_MODULEPATH"
 echo "Starting RHQ Storage Installer ..."
 
 # start the AS instance with our main installer module
-"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_STORAGE_INSTALLER_JAVA_OPTS} ${RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-cassandra-installer "$@"
+"$RHQ_JAVA_EXE_FILE_PATH" ${RHQ_STORAGE_INSTALLER_JAVA_OPTS} ${RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-cassandra-installer "$@"
 
 _EXIT_STATUS=$?
 exit $_EXIT_STATUS

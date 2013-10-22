@@ -1,25 +1,21 @@
  /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 package org.rhq.core.clientapi.server.inventory;
 
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
@@ -38,9 +34,12 @@ public interface ResourceFactoryServerService {
      * which correlates to the requestId passed into the original agent service call. If the request was successful, the
      * resource key of the newly created resource should be returned as well.
      *
+     * It needs to be synchronous because we want the server to update the CreateResourceHistory entity
+     * <strong>BEFORE</strong> a new service discovery is started by the PC (the entity will be read when the inventory
+     * report is merged).
+     *
      * @param response carries information on the status and results of the create call
      */
-    @Asynchronous(guaranteedDelivery = true)
     void completeCreateResource(CreateResourceResponse response);
 
     /**

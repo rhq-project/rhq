@@ -66,15 +66,7 @@ public class Compute1HourData implements AsyncFunction<List<ResultSet>, List<Res
                 insertFutures.add(dao.updateMetricsIndex(MetricsTable.SIX_HOUR, aggregate.getScheduleId(),
                     sixHourTimeSlice.getMillis()));
             }
-            ListenableFuture<List<ResultSet>> resultSetFutures = Futures.successfulAsList(insertFutures);
-//            return Futures.withFallback(resultSetFutures, new FutureFallback<List<ResultSet>>() {
-//                @Override
-//                public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
-//                    log.error("An error occurred while inserting one hour data", t);
-//                    return Futures.immediateFailedFuture(t);
-//                }
-//            });
-            return resultSetFutures;
+            return Futures.successfulAsList(insertFutures);
         } finally {
             if (log.isDebugEnabled()) {
                 log.debug("Finished computing and storing 1 hour data for " + rawDataResultSets.size() +

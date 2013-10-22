@@ -203,6 +203,7 @@ public class Aggregator {
                     log.warn("Failed to retrieve one hour aggregate index entries for time slice [" +
                         get6HourTimeSlice() + "]. Some six hour aggregates may not get generated.");
                     state.getOneHourIndexEntriesArrival().abort();
+                    state.setRemaining1HourData(new AtomicInteger(0));
                 }
             }, state.getAggregationTasks());
         }
@@ -229,6 +230,7 @@ public class Aggregator {
                     log.warn("Failed to retrieve 6 hour index entries for time slice " +
                         state.getTwentyFourHourTimeSlice() + ". Some 24 hour aggregates may not get generated.", t);
                     state.getSixHourIndexEntriesArrival().abort();
+                    state.setRemaining6HourData(new AtomicInteger(0));
                 }
             }, state.getAggregationTasks());
         }

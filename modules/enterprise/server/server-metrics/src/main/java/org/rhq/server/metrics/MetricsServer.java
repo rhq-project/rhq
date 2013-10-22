@@ -75,11 +75,17 @@ public class MetricsServer {
 
     private MetricsConfiguration configuration;
 
+//    private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
+//        System.getProperty("rhq.storage.read-limit", "1000")));
+//
+//    private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
+//        System.getProperty("rhq.storage.write-limit", "2500")));
+
     private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
         System.getProperty("rhq.storage.read-limit", "1200")));
 
     private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
-        System.getProperty("rhq.storage.write-limit", "3100")));
+        System.getProperty("rhq.storage.write-limit", "3000")));
 
     private boolean pastAggregationMissed;
 

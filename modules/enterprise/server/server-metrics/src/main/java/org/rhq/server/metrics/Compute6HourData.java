@@ -6,7 +6,6 @@ import java.util.List;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.RateLimiter;
@@ -63,14 +62,7 @@ public class Compute6HourData implements AsyncFunction<List<ResultSet>, List<Res
                 insertFutures.add(dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, aggregate.getScheduleId(),
                     twentyFourHourTimeSlice.getMillis()));
             }
-            ListenableFuture<List<ResultSet>> resultSetFutures = Futures.allAsList(insertFutures);
-            return Futures.withFallback(resultSetFutures, new FutureFallback<List<ResultSet>>() {
-                @Override
-                public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
-                    log.error("An error occurred while inserting six hour data", t);
-                    return Futures.immediateFailedFuture(t);
-                }
-            });
+            return Futures.successfulAsList(insertFutures);
         } finally {
             if (log.isDebugEnabled()) {
                 log.debug("Finished computing and storing 6 hour data for " + oneHourDataResultSets.size() +

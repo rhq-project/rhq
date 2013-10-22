@@ -29,12 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,8 +58,6 @@ abstract class AbstractManager {
         }
     }
 
-    private Cluster cluster;
-    private Session session;
     private SessionManager sessionManager;
     private final String username;
     private final String password;
@@ -72,15 +67,12 @@ abstract class AbstractManager {
 
     protected AbstractManager(String username, String password, String[] nodes, int cqlPort,
         SessionManager sessionManager) {
-        try {
-            this.username = username;
-            this.password = password;
-            this.cqlPort = cqlPort;
-            this.nodes = nodes;
-            this.sessionManager = sessionManager;
-        } catch (NoHostAvailableException e) {
-            throw new RuntimeException("Unable create storage node session.", e);
-        }
+
+        this.username = username;
+        this.password = password;
+        this.cqlPort = cqlPort;
+        this.nodes = nodes;
+        this.sessionManager = sessionManager;
 
         try {
             UpdateFolder managementFolder = new UpdateFolder(MANAGEMENT_BASE_FOLDER);

@@ -119,11 +119,15 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes,
             ccm.getCqlPort());
-        schemaManager.install();
-        if (annotation.waitForSchemaAgreement()) {
-            clusterInitService.waitForSchemaAgreement(nodes, jmxPorts);
+        try {
+            schemaManager.install();
+            if (annotation.waitForSchemaAgreement()) {
+                clusterInitService.waitForSchemaAgreement(nodes, jmxPorts);
+            }
+            schemaManager.updateTopology();
+        } finally {
+            schemaManager.shutdown();
         }
-        schemaManager.updateTopology();
     }
 
     private void shutdownCluster() throws Exception {

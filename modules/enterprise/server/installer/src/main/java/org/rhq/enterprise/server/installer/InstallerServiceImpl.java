@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,10 +31,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -536,9 +540,9 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         SchemaManager storageNodeSchemaManager = null;
+        Set<String> storageNodeAddresses = Collections.emptySet();
         try {
             storageNodeSchemaManager = createStorageNodeSchemaManager(serverProperties);
-
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
                     log("Storage cluster schema exists but installer was told to overwrite it - a the existing  schema will be "
@@ -552,13 +556,18 @@ public class InstallerServiceImpl implements InstallerService {
                     log("Install RHQ schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install();
                     storageNodeSchemaManager.updateTopology();
+                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 } catch (SchemaNotInstalledException e2) {
                     log("Install RHQ schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install();
                     storageNodeSchemaManager.updateTopology();
+                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
                     storageNodeSchemaManager.install();
+                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
+                } finally {
+                    storageNodeSchemaManager.shutdown();
                 }
             } else {
                 log("Ignoring storage cluster schema - installer will assume it exists and is already up-to-date.");
@@ -572,7 +581,7 @@ public class InstallerServiceImpl implements InstallerService {
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
         ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
-            parseNodeInformation(serverProperties));
+            parseNodeInformation(serverProperties, storageNodeAddresses));
         ServerInstallUtil.persistStorageClusterSettingsIfNecessary(serverProperties, clearTextDbPassword);
 
         // For sanity, make sure the server props file is in sync with the db settings.
@@ -1197,26 +1206,35 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
-    private List<StorageNode> parseNodeInformation(Map<String, String> serverProps) {
-        String[] nodes = serverProps.get(ServerProperties.PROP_STORAGE_NODES).split(",");
-        String cqlPort = serverProps.get(ServerProperties.PROP_STORAGE_CQL_PORT);
+    private Set<StorageNode> parseNodeInformation(Map<String, String> serverProps, Set<String> storageNodeAddresses) {
+        int cqlPort = Integer.parseInt(serverProps.get(ServerProperties.PROP_STORAGE_CQL_PORT));
 
-        List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
-        for (String node : nodes) {
-            StorageNode storageNode = new StorageNode();
-            storageNode.setAddress(node);
-            storageNode.setCqlPort(Integer.parseInt(cqlPort));
-            parsedNodes.add(storageNode);
+        Set<StorageNode> parsedNodes = new TreeSet<StorageNode>(new Comparator<StorageNode>() {
+            @Override
+            public int compare(StorageNode left, StorageNode right) {
+                return left.getAddress().compareTo(right.getAddress());
+            }
+        });
+        for (String address : storageNodeAddresses) {
+            StorageNode node = new StorageNode();
+            node.setAddress(address);
+            node.setCqlPort(cqlPort);
+            parsedNodes.add(node);
         }
 
         return parsedNodes;
+    }
+
+    private Set<StorageNode> parseNodeInformation(Map<String, String> serverProps) {
+        return parseNodeInformation(serverProps, ImmutableSet.copyOf(serverProps.get(
+            ServerProperties.PROP_STORAGE_NODES).split(",")));
     }
 
     private SchemaManager createStorageNodeSchemaManager(Map<String, String> serverProps) {
         String username = serverProps.get(ServerProperties.PROP_STORAGE_USERNAME);
         String password = serverProps.get(ServerProperties.PROP_STORAGE_PASSWORD);
 
-        List<StorageNode> storageNodes = this.parseNodeInformation(serverProps);
+        List<StorageNode> storageNodes = new ArrayList<StorageNode>(parseNodeInformation(serverProps));
         String[] nodes = new String[storageNodes.size()];
         for (int index = 0; index < storageNodes.size(); index++) {
             nodes[index] = storageNodes.get(index).getAddress();

@@ -27,6 +27,7 @@ package org.rhq.cassandra.schema;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -60,6 +61,8 @@ public class SchemaManager {
      */
     private final int cqlPort;
 
+    private SessionManager sessionManager;
+
     /**
     *
     * @param username The username RHQ will use to connect to the storage cluster
@@ -73,6 +76,7 @@ public class SchemaManager {
         this.password = password;
         this.cqlPort = cqlPort;
         this.nodes = nodes;
+        sessionManager = new SessionManager();
     }
 
     /**
@@ -84,10 +88,7 @@ public class SchemaManager {
      * @param cqlPort The native CQL port for the storage cluster
      */
     public SchemaManager(String username, String password, List<String> nodes, int cqlPort) {
-        this.username = username;
-        this.password = password;
-        this.cqlPort = cqlPort;
-        this.nodes = nodes.toArray(new String[nodes.size()]);
+        this(username, password, nodes.toArray(new String[nodes.size()]), cqlPort);
     }
 
     /**
@@ -96,7 +97,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void install() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
         version.install();
     }
 
@@ -107,7 +108,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void checkCompatibility() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
         version.checkCompatibility();
     }
 
@@ -117,7 +118,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void drop() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes, cqlPort);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
         version.drop();
     }
 
@@ -129,8 +130,12 @@ public class SchemaManager {
      * @throws Exception
      */
     public void updateTopology() throws Exception {
-        TopologyManager topology = new TopologyManager(username, password, nodes, cqlPort);
+        TopologyManager topology = new TopologyManager(username, password, nodes, cqlPort, sessionManager);
         topology.updateTopology();
+    }
+
+    public void shutdown() {
+        sessionManager.shutdownCluster();
     }
 
     /**
@@ -140,6 +145,10 @@ public class SchemaManager {
      */
     protected String[] getStorageNodes() {
         return nodes;
+    }
+
+    public Set<String> getStorageNodeAddresses() {
+        return sessionManager.getNodeAdresses();
     }
 
     /**

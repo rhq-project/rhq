@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.security.auth.login.AppConfigurationEntry;
 
@@ -912,7 +913,7 @@ public class ServerInstallUtil {
      * @throws Exception
      */
     public static void persistStorageNodesIfNecessary(HashMap<String, String> serverProperties, String password,
-        List<StorageNode> storageNodes) throws Exception {
+        Set<StorageNode> storageNodes) throws Exception {
         DatabaseType db = null;
         Connection connection = null;
         Statement queryStatement = null;

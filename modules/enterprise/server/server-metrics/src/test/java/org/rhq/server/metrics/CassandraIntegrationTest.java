@@ -75,7 +75,7 @@ public class CassandraIntegrationTest {
         dateTimeService = new DateTimeService();
 
         Cluster cluster = new ClusterBuilder()
-            .addContactPoints("127.0.0.1", "127.0.0.2")
+            .addContactPoints("127.0.0.1")
             .withCredentialsObfuscated(RHQADMIN, RHQADMIN_PASSWORD)
             .build();
 

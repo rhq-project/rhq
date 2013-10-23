@@ -1,5 +1,6 @@
 package org.rhq.server.metrics;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -54,19 +55,43 @@ public class Aggregate1HourData implements Runnable {
                 log.debug("Finished aggregating 1 hour data for " + result.size() + " schedules in " +
                     (System.currentTimeMillis() - start) + " ms");
                 state.getRemaining1HourData().addAndGet(-scheduleIds.size());
+                start6HourDataAggregationIfNecessary();
             }
 
             @Override
             public void onFailure(Throwable t) {
                 log.warn("Failed to aggregate 1 hour data", t);
                 state.getRemaining1HourData().addAndGet(-scheduleIds.size());
+                start6HourDataAggregationIfNecessary();
             }
         });
     }
 
     private void start6HourDataAggregationIfNecessary() {
         if (state.is24HourTimeSliceFinished()) {
-            // TODO
+            log.debug("Starting 6 hour data aggregation for " + scheduleIds.size() + " schedules");
+            try {
+                state.getSixHourIndexEntriesArrival().await();
+                try {
+                    state.getSixHourIndexEntriesLock().writeLock().lock();
+                    state.getSixHourIndexEntries().removeAll(scheduleIds);
+                } finally {
+                    state.getSixHourIndexEntriesLock().writeLock().unlock();
+                }
+            } catch (InterruptedException e) {
+                log.warn("An interrupt occurred waiting for 6 hour index entries", e);
+            } catch (AbortedException e) {
+                // This means we failed to retrieve the index entries. We can however
+                // continue generating 6 hour data because we do not need the index
+                // here since we already have 6 hour data to aggregate along with the
+                // schedule ids.
+            }
+            List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(scheduleIds.size());
+            for (Integer scheduleId : scheduleIds) {
+                queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, state.getTwentyFourHourTimeSlice().getMillis(),
+                    state.getTwentyFourHourTimeSliceEnd().getMillis()));
+            }
+            state.getAggregationTasks().submit(new Aggregate6HourData(dao, state, scheduleIds, queryFutures));
         }
     }
 }

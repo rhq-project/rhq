@@ -75,17 +75,11 @@ public class MetricsServer {
 
     private MetricsConfiguration configuration;
 
-//    private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
-//        System.getProperty("rhq.storage.read-limit", "1000")));
-//
-//    private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
-//        System.getProperty("rhq.storage.write-limit", "2500")));
-
     private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
-        System.getProperty("rhq.storage.read-limit", "1200")));
+        System.getProperty("rhq.storage.read-limit", "1000")), 3, TimeUnit.MINUTES);
 
     private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
-        System.getProperty("rhq.storage.write-limit", "3000")));
+        System.getProperty("rhq.storage.write-limit", "2500")), 3, TimeUnit.MINUTES);
 
     private boolean pastAggregationMissed;
 
@@ -98,7 +92,7 @@ public class MetricsServer {
 
     private int aggregationBatchSize;
 
-    private boolean useAsyncAggregation;
+    private boolean useAsyncAggregation = System.getProperty("rhq.metrics.aggregation.async") != null;
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -137,6 +131,9 @@ public class MetricsServer {
     }
 
     public void init() {
+        if (log.isDebugEnabled() && useAsyncAggregation) {
+            log.debug("Async aggregation is enabled");
+        }
         determineMostRecentRawDataSinceLastShutdown();
     }
 
@@ -480,19 +477,24 @@ public class MetricsServer {
      * for subsequently computing baselines.
      */
     public Iterable<AggregateNumericMetric> calculateAggregates() {
-        DateTime theHour = currentHour();
+        long start = System.currentTimeMillis();
+        try {
+            DateTime theHour = currentHour();
 
-        if (pastAggregationMissed) {
-            theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
-            pastAggregationMissed = false;
-        }
+            if (pastAggregationMissed) {
+                theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
+                pastAggregationMissed = false;
+            }
 
-        if (useAsyncAggregation) {
-            DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
-            return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                aggregationBatchSize, writePermits, readPermits).run();
-        } else {
-            return calculateAggregates(theHour.getMillis());
+            if (useAsyncAggregation) {
+                DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
+                return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+                    aggregationBatchSize, writePermits, readPermits).run();
+            } else {
+                return calculateAggregates(theHour.getMillis());
+            }
+        } finally {
+            log.info("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
         }
     }
 
@@ -541,7 +543,6 @@ public class MetricsServer {
         totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
         stopwatch.reset();
 
-        log.info("Finished aggregation in " + (System.currentTimeMillis() - start) + " ms");
         return newOneHourAggregates;
     }
 

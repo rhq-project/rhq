@@ -134,7 +134,7 @@ public class Aggregator {
     }
 
     public Set<AggregateNumericMetric> run() {
-        log.debug("There are " + remainingIndexEntries.get() + " remaining index entries");
+        log.info("Starting aggregation for time slice " + startTime);
         readPermits.acquire();
         StorageResultSetFuture rawFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR,
             startTime.getMillis());

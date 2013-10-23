@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
@@ -71,17 +72,11 @@ public class MetricsServer {
 
     private MetricsConfiguration configuration;
 
-//    private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
-//        System.getProperty("rhq.storage.read-limit", "1000")));
-//
-//    private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
-//        System.getProperty("rhq.storage.write-limit", "2500")));
-
     private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
-        System.getProperty("rhq.storage.read-limit", "1200")));
+        System.getProperty("rhq.storage.read-limit", "1000")), 3, TimeUnit.MINUTES);
 
     private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
-        System.getProperty("rhq.storage.write-limit", "3000")));
+        System.getProperty("rhq.storage.write-limit", "2500")), 3, TimeUnit.MINUTES);
 
     private boolean pastAggregationMissed;
 
@@ -92,7 +87,7 @@ public class MetricsServer {
 
     private int aggregationBatchSize;
 
-    private boolean useAsyncAggregation;
+    private boolean useAsyncAggregation = System.getProperty("rhq.metrics.aggregation.async") != null;
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -131,6 +126,9 @@ public class MetricsServer {
     }
 
     public void init() {
+        if (log.isDebugEnabled() && useAsyncAggregation) {
+            log.debug("Async aggregation is enabled");
+        }
         determineMostRecentRawDataSinceLastShutdown();
     }
 
@@ -428,24 +426,28 @@ public class MetricsServer {
      * for subsequently computing baselines.
      */
     public Iterable<AggregateNumericMetric> calculateAggregates() {
-        DateTime theHour = currentHour();
+        long start = System.currentTimeMillis();
+        try {
+            DateTime theHour = currentHour();
 
-        if (pastAggregationMissed) {
-            theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
-            pastAggregationMissed = false;
-        }
+            if (pastAggregationMissed) {
+                theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
+                pastAggregationMissed = false;
+            }
 
-        if (useAsyncAggregation) {
-            DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
-            return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                aggregationBatchSize, writePermits, readPermits).run();
-        } else {
-            return calculateAggregates(theHour.getMillis());
+            if (useAsyncAggregation) {
+                DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
+                return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+                    aggregationBatchSize, writePermits, readPermits).run();
+            } else {
+                return calculateAggregates(theHour.getMillis());
+            }
+        } finally {
+            log.info("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
         }
     }
 
     private Iterable<AggregateNumericMetric> calculateAggregates(long startTime) {
-        long start = System.currentTimeMillis();
         DateTime dt = new DateTime(startTime);
         DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
         DateTime lastHour = currentHour.minus(configuration.getRawTimeSliceDuration());
@@ -486,7 +488,6 @@ public class MetricsServer {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR, twentyFourHourTimeSlice);
         }
 
-        log.info("Finished aggregation in " + (System.currentTimeMillis() - start) + " ms");
         return newOneHourAggregates;
     }
 

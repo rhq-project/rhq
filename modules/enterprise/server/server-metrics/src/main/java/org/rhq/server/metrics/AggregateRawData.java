@@ -38,7 +38,6 @@ public class AggregateRawData implements Runnable {
 
     @Override
     public void run() {
-        log.debug("Aggregating raw data for schedule ids " + scheduleIds);
         final long start = System.currentTimeMillis();
         ListenableFuture<List<ResultSet>> rawDataFutures = Futures.successfulAsList(queryFutures);
         Futures.withFallback(rawDataFutures, new FutureFallback<List<ResultSet>>() {
@@ -71,8 +70,8 @@ public class AggregateRawData implements Runnable {
     }
 
     private void start1HourDataAggregationIfNecessary() {
-        log.debug("Aggregating 1 hour data for schedule ids " + scheduleIds);
         if (state.is6HourTimeSliceFinished()) {
+            log.debug("Starting 1 hour data aggregation for " + scheduleIds.size() + " schedules");
             try {
                 state.getOneHourIndexEntriesArrival().await();
                 try {
@@ -86,11 +85,10 @@ public class AggregateRawData implements Runnable {
                 return;
             } catch (AbortedException e) {
                 // This means we failed to retrieve the index entries. We can however
-                // continue generating 6 hour data because we do not need the index
+                // continue generating 1 hour data because we do not need the index
                 // here since we already have 1 hour data to aggregate along with the
                 // schedule ids.
             }
-            log.debug("Fetching 1 hour data");
             List<StorageResultSetFuture> oneHourDataQueryFutures = new ArrayList<StorageResultSetFuture>(
                 scheduleIds.size());
             for (Integer scheduleId : scheduleIds) {

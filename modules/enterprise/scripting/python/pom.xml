@@ -3,10 +3,10 @@
     <parent>
         <artifactId>rhq-scripting-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.9.0.JON320ER3</version>
+        <version>4.9.0.JON320ER4</version>
     </parent>
     <artifactId>rhq-scripting-python</artifactId>
-    <version>4.9.0.JON320ER3</version>
+    <version>4.9.0.JON320ER4</version>
     <name>RHQ Python support</name>
     <description>Provides RHQ scripting in Python using Jython</description>
 

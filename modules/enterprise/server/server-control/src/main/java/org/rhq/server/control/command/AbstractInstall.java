@@ -50,6 +50,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -73,6 +74,10 @@ public abstract class AbstractInstall extends ControlCommand {
     private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
     private static final String PREF_RHQ_AGENT_AUTO_UPDATE_FLAG = "rhq.agent.agent-update.enabled";
     private static final String PREF_RHQ_AGENT_SECURITY_TOKEN = "rhq.agent.security-token";
+    private static final String PREF_RHQ_AGENT_SERVER_TRANSPORT = "rhq.agent.server.transport";
+    private static final String PREF_RHQ_AGENT_SERVER_BINDADDRESS = "rhq.agent.server.bind-address";
+    private static final String PREF_RHQ_AGENT_SERVER_BINDPORT = "rhq.agent.server.bind-port";
+    private static final String PREF_RHQ_AGENT_SERVER_TRANSPORTPARAMS = "rhq.agent.server.transport-params";
 
     protected void installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
         throws Exception {
@@ -699,6 +704,26 @@ public abstract class AbstractInstall extends ControlCommand {
                 preferencesNode.put(PREF_RHQ_AGENT_SECURITY_TOKEN, securityToken);
             }
 
+            // get the configured server endpoint information and tell the agent so it knows where the server is.
+            Properties serverEndpoint = getAgentServerEndpoint();
+            String endpointTransport = serverEndpoint.getProperty(PREF_RHQ_AGENT_SERVER_TRANSPORT);
+            String endpointAddress = serverEndpoint.getProperty(PREF_RHQ_AGENT_SERVER_BINDADDRESS);
+            String endpointPort = serverEndpoint.getProperty(PREF_RHQ_AGENT_SERVER_BINDPORT);
+            String endpointParams = serverEndpoint.getProperty(PREF_RHQ_AGENT_SERVER_TRANSPORTPARAMS);
+            if (endpointTransport != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SERVER_TRANSPORT, endpointTransport);
+            }
+            if (endpointAddress != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SERVER_BINDADDRESS, endpointAddress);
+            }
+            if (endpointPort != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SERVER_BINDPORT, endpointPort);
+            }
+            if (endpointParams != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SERVER_TRANSPORTPARAMS, endpointParams);
+            }
+
+            // if the user provided any overrides to the agent config, use them.
             overrideAgentPreferences(commandLine, preferencesNode);
 
             // set some prefs that must be a specific value
@@ -717,6 +742,65 @@ public abstract class AbstractInstall extends ControlCommand {
             log.error("An error occurred while configuring the agent: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * Returns the server endpoint that the agent should use when connecting to the server.
+     *
+     * @return properties with the values - only those values that could be determined will be in here
+     *
+     * @throws Exception if could not determine the values due to a runtime error
+     */
+    private Properties getAgentServerEndpoint() throws Exception {
+        Properties endpointData = new Properties();
+
+        // load in the server properties file to find out how the server will be listening for agent messages
+        File serverPropsFile = getServerPropertiesFile();
+        Properties serverProps = new PropertiesFileUpdate(serverPropsFile).loadExistingProperties();
+
+        // transport and transport params
+        String transport = serverProps.getProperty("rhq.communications.connector.transport", "servlet");
+        endpointData.put(PREF_RHQ_AGENT_SERVER_TRANSPORT, transport);
+
+        String params = serverProps.getProperty("rhq.communications.connector.transport-params");
+        if (params != null && params.trim().length() > 0) {
+            endpointData.setProperty(PREF_RHQ_AGENT_SERVER_TRANSPORTPARAMS, params.trim());
+        }
+
+        //  address and port depends on the transport
+        if (transport.contains("servlet")) {
+            String port;
+            if (transport.contains("ssl")) {
+                port = serverProps.getProperty("rhq.server.socket.binding.port.https");
+            } else {
+                port = serverProps.getProperty("rhq.server.socket.binding.port.http");
+            }
+            if (port != null && port.trim().length() > 0) {
+                endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDPORT, port.trim());
+            }
+
+            String address = serverProps.getProperty("jboss.bind.address");
+            if (address != null && address.trim().length() > 0) {
+                endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDADDRESS, address.trim());
+            }
+        } else {
+            String port = serverProps.getProperty("rhq.communications.connector.bind-port");
+            if (port != null && port.trim().length() > 0) {
+                endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDPORT, port.trim());
+            }
+            String address = serverProps.getProperty("rhq.communications.connector.bind-address");
+            if (address != null && address.trim().length() > 0) {
+                endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDADDRESS, address.trim());
+            }
+        }
+
+        // the public endpoint will override anything that was done above
+        String publicEndpoint = serverProps.getProperty("rhq.autoinstall.public-endpoint-address");
+        if (publicEndpoint != null && publicEndpoint.trim().length() > 0) {
+            endpointData.setProperty(PREF_RHQ_AGENT_SERVER_BINDADDRESS, publicEndpoint.trim());
+        }
+
+        return endpointData;
     }
 
     private void overrideAgentPreferences(CommandLine commandLine, Preferences preferencesNode) {

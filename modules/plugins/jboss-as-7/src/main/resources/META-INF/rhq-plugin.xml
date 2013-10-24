@@ -10063,7 +10063,7 @@
              singleton="true">
 
       <plugin-configuration>
-        <c:simple-property name="path" default="hibernate-persistance-unit" readOnly="true"/>
+        <c:simple-property name="path" default="hibernate-persistence-unit" readOnly="true"/>
       </plugin-configuration>
 
       <operation name="subsystem:clear" description="Clear statistics.">

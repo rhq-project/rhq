@@ -24,12 +24,9 @@ import static org.rhq.core.domain.util.ResourceTypeUtility.getMeasurementDefinit
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -66,6 +63,7 @@ import org.rhq.core.domain.util.MeasurementDefinitionFilter;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.DiscoveredResources;
@@ -80,32 +78,6 @@ import org.rhq.test.arquillian.ServerServicesSetup;
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class DeploymentTest extends AbstractJBossAS7PluginTest {
-
-    private enum TestDeployments {
-        DEPLOYMENT_1("test-simple.war"), DEPLOYMENT_2("test-simple-2.war");
-
-        private String deploymentName;
-        private String resourcePath;
-        private byte[] hash;
-
-        private TestDeployments(String warName) {
-            this.deploymentName = warName;
-            this.resourcePath = "itest/" + warName;
-            hash = computeHash(DeploymentTest.class.getClassLoader().getResourceAsStream(resourcePath));
-        }
-
-        public String getDeploymentName() {
-            return deploymentName;
-        }
-
-        public String getResourcePath() {
-            return resourcePath;
-        }
-
-        public byte[] getHash() {
-            return hash;
-        }
-    }
 
     @ResourceComponentInstances(plugin = PLUGIN_NAME, resourceType = "JBossAS7 Standalone Server")
     private Set<StandaloneASComponent> standalones;
@@ -122,19 +94,6 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     private Set<Resource> webRuntimeResources;
 
     private static TestDeployments DEPLOYMENT_TO_SERVE = TestDeployments.DEPLOYMENT_1;
-
-    private static long copyStreamAndReturnCount(InputStream in, OutputStream out) throws IOException {
-        int data;
-        long cnt = 0;
-        while ((data = in.read()) != -1) {
-            if (out != null) {
-                out.write(data);
-            }
-            cnt++;
-        }
-
-        return cnt;
-    }
 
     //this is no test method
     @ServerServicesSetup
@@ -278,41 +237,9 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         measurementFacet.getValues(report, measurementScheduleRequests);
         assertEquals(report.getCallTimeData().size(), 0, "No calltime data was requested");
         assertTrue(
-            report.getNumericData().size() + report.getTraitData().size() == measurementScheduleRequests.size(),
-            "Some requested measurements are missing: "
-                + getMissingMeasurements(measurementScheduleRequests, report.getNumericData(), report.getTraitData()));
-    }
-
-    private Set<String> getMissingMeasurements(Set<MeasurementScheduleRequest> measurementScheduleRequests,
-        Set<MeasurementDataNumeric> numericData, Set<MeasurementDataTrait> traitData) {
-        Set<String> missingMeasurements = new HashSet<String>();
-        for (MeasurementScheduleRequest measurementScheduleRequest : measurementScheduleRequests) {
-            missingMeasurements.add(measurementScheduleRequest.getName());
-        }
-        for (MeasurementDataNumeric measurementDataNumeric : numericData) {
-            missingMeasurements.remove(measurementDataNumeric.getName());
-        }
-        for (MeasurementDataTrait measurementDataTrait : traitData) {
-            missingMeasurements.remove(measurementDataTrait.getName());
-        }
-        return missingMeasurements;
-    }
-
-    private Set<MeasurementScheduleRequest> getMeasurementScheduleRequests(Resource webRuntimeResource) {
-        Set<MeasurementDefinition> measurementDefinitions = getMeasurementDefinitions(
-            webRuntimeResource.getResourceType(), new MeasurementDefinitionFilter() {
-                private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
-
-                public boolean accept(MeasurementDefinition measurementDefinition) {
-                    return acceptableDataTypes.contains(measurementDefinition.getDataType());
-                }
-            });
-        Set<MeasurementScheduleRequest> measurementScheduleRequests = new HashSet<MeasurementScheduleRequest>();
-        for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
-            measurementScheduleRequests.add(new MeasurementScheduleRequest(-1, measurementDefinition.getName(), -1,
-                true, measurementDefinition.getDataType(), measurementDefinition.getRawNumericType()));
-        }
-        return measurementScheduleRequests;
+                report.getNumericData().size() + report.getTraitData().size() == measurementScheduleRequests.size(),
+                "Some requested measurements are missing: "
+                        + getMissingMeasurements(measurementScheduleRequests, report.getNumericData(), report.getTraitData()));
     }
 
     @Test(priority = 16)
@@ -344,6 +271,14 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
                     return null;
                 }
+
+                private byte[] computeHash(InputStream data) {
+                    try {
+                        return MessageDigestGenerator.getDigest(data);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             })
             .when(serverServices.getContentServerService())
             .completeRetrievePackageBitsRequest(Mockito.any(ContentServiceResponse.class),
@@ -365,39 +300,55 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         }
     }
 
-    private ResourcePackageDetails getTestDeploymentPackageDetails(TestDeployments deployment) {
+    static long copyStreamAndReturnCount(InputStream in, OutputStream out) throws IOException {
+        int data;
+        long cnt = 0;
+        while ((data = in.read()) != -1) {
+            if (out != null) {
+                out.write(data);
+            }
+            cnt++;
+        }
+        return cnt;
+    }
+
+    static ResourcePackageDetails getTestDeploymentPackageDetails(TestDeployments deployment) {
         ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(
             deployment.getDeploymentName(), "1.0", "file", "noarch"));
         details.setFileName(deployment.getDeploymentName());
         details.setDeploymentTimeConfiguration(new Configuration());
-
         return details;
-
     }
 
-    private static byte[] computeHash(InputStream str) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            int data;
-            while ((data = str.read()) != -1) {
-                out.write(data);
-            }
-
-            return MessageDigest.getInstance("md5").digest(out.toByteArray());
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not determine the MD5 of the test deployment.", e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(
-                "Could not instantiate MD5 message digest algorithm, this should not happen.", e);
-        } finally {
-            try {
-                out.close();
-            } catch (IOException e) {
-            }
-            try {
-                str.close();
-            } catch (IOException e) {
-            }
+    static Set<String> getMissingMeasurements(Set<MeasurementScheduleRequest> measurementScheduleRequests,
+                                              Set<MeasurementDataNumeric> numericData, Set<MeasurementDataTrait> traitData) {
+        Set<String> missingMeasurements = new HashSet<String>();
+        for (MeasurementScheduleRequest measurementScheduleRequest : measurementScheduleRequests) {
+            missingMeasurements.add(measurementScheduleRequest.getName());
         }
+        for (MeasurementDataNumeric measurementDataNumeric : numericData) {
+            missingMeasurements.remove(measurementDataNumeric.getName());
+        }
+        for (MeasurementDataTrait measurementDataTrait : traitData) {
+            missingMeasurements.remove(measurementDataTrait.getName());
+        }
+        return missingMeasurements;
+    }
+
+    static Set<MeasurementScheduleRequest> getMeasurementScheduleRequests(Resource webRuntimeResource) {
+        Set<MeasurementDefinition> measurementDefinitions = getMeasurementDefinitions(
+                webRuntimeResource.getResourceType(), new MeasurementDefinitionFilter() {
+            private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
+
+            public boolean accept(MeasurementDefinition measurementDefinition) {
+                return acceptableDataTypes.contains(measurementDefinition.getDataType());
+            }
+        });
+        Set<MeasurementScheduleRequest> measurementScheduleRequests = new HashSet<MeasurementScheduleRequest>();
+        for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
+            measurementScheduleRequests.add(new MeasurementScheduleRequest(-1, measurementDefinition.getName(), -1,
+                    true, measurementDefinition.getDataType(), measurementDefinition.getRawNumericType()));
+        }
+        return measurementScheduleRequests;
     }
 }

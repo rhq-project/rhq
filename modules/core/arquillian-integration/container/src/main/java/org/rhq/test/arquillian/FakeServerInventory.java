@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.test.arquillian;
 
 import java.lang.reflect.Field;
@@ -113,7 +114,7 @@ public class FakeServerInventory {
         private void setDepth(int resourceTreeDepth) {
             synchronized (sync) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Current tree depth is " + resourceTreeDepth + ", while this checker is waiting for "
+                    LOG.debug("Current tree depth is " + resourceTreeDepth + ", this checker is waiting for "
                         + expectedDepth + " on " + this);
                 }
                 if (!depthReached && resourceTreeDepth >= expectedDepth) {

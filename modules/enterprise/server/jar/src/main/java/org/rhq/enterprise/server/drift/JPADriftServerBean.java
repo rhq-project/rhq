@@ -87,7 +87,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
- * 
+ *
  * @author Jay Shaughnessy
  * @author John Sanda
  */
@@ -153,7 +153,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         JPADriftChangeSetCriteria jpaCriteria = (criteria instanceof JPADriftChangeSetCriteria) ? (JPADriftChangeSetCriteria) criteria
             : new JPADriftChangeSetCriteria(criteria);
 
-        // If looking for the initial change set make sure version is to to 0 
+        // If looking for the initial change set make sure version is to to 0
         if (criteria.getFilterCategory() != null && criteria.getFilterCategory() == COVERAGE) {
 
             // If fetching Drifts then make sure we go through the DriftSet. Note that there is no guarantee
@@ -313,7 +313,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
         // a List to be populated by storeChangeSetInNewTransaction for use in ackChangeSetInNewTransaction
         List<JPADriftFile> driftFilesToRequest = new ArrayList<JPADriftFile>();
-        // a 1 element array so storeChangeSetInNewTransaction can return the Headers for use in ackChangeSetInNewTransaction 
+        // a 1 element array so storeChangeSetInNewTransaction can return the Headers for use in ackChangeSetInNewTransaction
         Headers[] headers = new Headers[1];
 
         DriftChangeSetSummary result = JPADriftServer.storeChangeSetInNewTransaction(subject, resourceId, changeSetZip,
@@ -482,7 +482,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         result = entityManager.find(JPADriftFile.class, sha256);
         // if the JPADriftFile is not yet in the db then persist it, and mark it requested if content is to be fetched
         // note - by immediately setting the initial status to REQUESTED we avoid a future update and a
-        // potential deadlock scenario where the REQUESTED and LOADED status updates can happen simultaneously 
+        // potential deadlock scenario where the REQUESTED and LOADED status updates can happen simultaneously
         if (null == result) {
             JPADriftFile driftFile = new JPADriftFile(sha256);
             if (addToList) {
@@ -521,7 +521,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
         String zipFileName = filesZip.getName();
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-        File dir = new File(tmpDir, zipFileName.substring(0, zipFileName.indexOf(".")));
+        File dir = FileUtil.createTempDirectory(zipFileName.substring(0, zipFileName.indexOf(".")),null,tmpDir);
         dir.mkdir();
 
         ZipUtil.unzipFile(filesZip, dir);

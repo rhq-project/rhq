@@ -35,6 +35,18 @@
     </layout>
   </appender>
 
+  <category name="org.apache.http">
+    <priority value="ERROR"/>
+  </category>
+
+  <category name="org.apache.http.wire">
+    <priority value="ERROR"/>
+  </category>
+
+  <category name="org.apache.http.headers">
+    <priority value="ERROR"/>
+  </category>
+
   <category name="org.rhq.modules.plugins">
     <priority value="DEBUG"/>
   </category>

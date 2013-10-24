@@ -615,6 +615,7 @@
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/WebConnectorComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>-->

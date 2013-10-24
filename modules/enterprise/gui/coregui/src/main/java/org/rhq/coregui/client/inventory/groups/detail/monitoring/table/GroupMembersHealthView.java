@@ -78,7 +78,7 @@ public class GroupMembersHealthView extends MembersView {
                 }
 
                 //build portal.war chart page to iFrame
-                String destination = "/resource/common/monitor/Visibility.do?mode=compareMetrics&&groupId=" + groupId;
+                String destination = "/portal/resource/common/monitor/Visibility.do?mode=compareMetrics&&groupId=" + groupId;
                 for (int rId : resourceIds) {
                     destination += "&r=" + rId;
                 }

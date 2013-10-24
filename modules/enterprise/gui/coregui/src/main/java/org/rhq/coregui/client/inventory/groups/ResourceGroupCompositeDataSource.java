@@ -259,7 +259,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />", up));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;<img src=\"/images/blank.png\" width=\"12px\" height=\"12px\" />"));
+                    "&nbsp;<img src=\""+ImageManager.getBlankIcon()+"\" width=\"12px\" height=\"12px\" />"));
             }
 
             if (down > 0) {
@@ -268,7 +268,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />", down));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;<img src=\"/images/blank.png\" width=\"12px\" height=\"12px\" />"));
+                    "&nbsp;<img src=\""+ImageManager.getBlankIcon()+"\" width=\"12px\" height=\"12px\" />"));
             }
 
             if (disabled > 0) {
@@ -278,7 +278,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                     disabled));
             } else {
                 results.append(getColumn(false,
-                    "&nbsp;<img src=\"/images/blank.png\" width=\"12px\" height=\"12px\" />"));
+                    "&nbsp;<img src=\""+ImageManager.getBlankIcon()+"\" width=\"12px\" height=\"12px\" />"));
             }
 
             if (unknown > 0) {
@@ -288,7 +288,7 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                     unknown));
             } else {
                 results
-                    .append(getColumn(false, "&nbsp;<img src=\"/images/blank.png\" width=\"1px\" height=\"1px\" />"));
+                    .append(getColumn(false, "&nbsp;<img src=\""+ImageManager.getBlankIcon()+"\" width=\"1px\" height=\"1px\" />"));
             }
         }
         results.append("</tr></table>");

@@ -25,6 +25,8 @@
 
 package org.rhq.server.metrics;
 
+import static org.rhq.server.metrics.MetricsUtil.indexPartitionKey;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -65,6 +67,8 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
+
+    public static final int METRICS_INDEX_ROW_SIZE = 5000;
 
     private DateTimeService dateTimeService = new DateTimeService();
 
@@ -392,8 +396,9 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
+        String partitionKey = indexPartitionKey(MetricsTable.ONE_HOUR, rawData.getScheduleId());
         writePermits.acquire();
-        StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
+        StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(partitionKey, rawData.getScheduleId(),
             timeSlice);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
             @Override
@@ -438,7 +443,7 @@ public class MetricsServer {
             if (useAsyncAggregation) {
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
                 return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                    aggregationBatchSize, writePermits, readPermits).run();
+                    aggregationBatchSize, writePermits, readPermits, 0, 0).run();
             } else {
                 return calculateAggregates(theHour.getMillis());
             }

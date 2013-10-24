@@ -1,5 +1,7 @@
 package org.rhq.server.metrics;
 
+import static org.rhq.server.metrics.MetricsUtil.indexPartitionKey;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +54,7 @@ public class Compute6HourData implements AsyncFunction<List<ResultSet>, List<Res
                 new ArrayList<StorageResultSetFuture>(oneHourDataResultSets.size());
             for (ResultSet resultSet : oneHourDataResultSets) {
                 AggregateNumericMetric aggregate = calculateAggregate(resultSet);
+                String partitionKey = indexPartitionKey(MetricsTable.TWENTY_FOUR_HOUR, aggregate.getScheduleId());
                 writePermits.acquire(4);
                 insertFutures.add(dao.insertSixHourDataAsync(aggregate.getScheduleId(), aggregate.getTimestamp(),
                     AggregateType.MIN, aggregate.getMin()));
@@ -59,7 +62,7 @@ public class Compute6HourData implements AsyncFunction<List<ResultSet>, List<Res
                     AggregateType.MAX, aggregate.getMax()));
                 insertFutures.add(dao.insertSixHourDataAsync(aggregate.getScheduleId(), aggregate.getTimestamp(),
                     AggregateType.AVG, aggregate.getAvg()));
-                insertFutures.add(dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, aggregate.getScheduleId(),
+                insertFutures.add(dao.updateMetricsIndex(partitionKey, aggregate.getScheduleId(),
                     twentyFourHourTimeSlice.getMillis()));
             }
             return Futures.successfulAsList(insertFutures);

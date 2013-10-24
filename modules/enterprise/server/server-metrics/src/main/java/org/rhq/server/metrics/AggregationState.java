@@ -1,6 +1,7 @@
 package org.rhq.server.metrics;
 
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -14,6 +15,8 @@ import org.joda.time.DateTime;
 public class AggregationState {
 
     private ListeningExecutorService aggregationTasks;
+
+    private CountDownLatch rawIndexEntriesArrival;
 
     private SignalingCountDownLatch oneHourIndexEntriesArrival;
 
@@ -34,6 +37,8 @@ public class AggregationState {
     private ReentrantReadWriteLock sixHourIndexEntriesLock;
 
     private DateTime oneHourTimeSlice;
+
+    private DateTime oneHourTimeSliceEnd;
 
     private DateTime sixHourTimeSlice;
 
@@ -59,6 +64,15 @@ public class AggregationState {
 
     public AggregationState setAggregationTasks(ListeningExecutorService aggregationTasks) {
         this.aggregationTasks = aggregationTasks;
+        return this;
+    }
+
+    public CountDownLatch getRawIndexEntriesArrival() {
+        return rawIndexEntriesArrival;
+    }
+
+    public AggregationState setRawIndexEntriesArrival(CountDownLatch rawIndexEntriesArrival) {
+        this.rawIndexEntriesArrival = rawIndexEntriesArrival;
         return this;
     }
 
@@ -149,6 +163,15 @@ public class AggregationState {
 
     public AggregationState setOneHourTimeSlice(DateTime oneHourTimeSlice) {
         this.oneHourTimeSlice = oneHourTimeSlice;
+        return this;
+    }
+
+    public DateTime getOneHourTimeSliceEnd() {
+        return oneHourTimeSliceEnd;
+    }
+
+    public AggregationState setOneHourTimeSliceEnd(DateTime oneHourTimeSliceEnd) {
+        this.oneHourTimeSliceEnd = oneHourTimeSliceEnd;
         return this;
     }
 

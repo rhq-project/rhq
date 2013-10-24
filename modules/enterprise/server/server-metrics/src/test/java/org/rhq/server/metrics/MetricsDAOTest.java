@@ -26,10 +26,11 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
+import static org.rhq.server.metrics.MetricsUtil.indexPartitionKey;
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,9 +40,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
 import org.apache.commons.logging.Log;
@@ -346,34 +345,31 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test(enabled = ENABLED)
-    public void updateAndFindOneHourIndexEntries() {
+    public void updateAndFindOneHourIndexEntries() throws Exception {
         DateTime hour0 = hour0();
-        int scheduleId1 = 1;
-        int scheduleId2 = 2;
+        int scheduleId1 = 12500;
+        String partitionKey1 = indexPartitionKey(MetricsTable.ONE_HOUR, scheduleId1);
 
-        Map<Integer, Long> updates = new HashMap<Integer, Long>();
-        updates.put(scheduleId1, hour0.getMillis());
-        updates.put(scheduleId2, hour0.getMillis());
+        WaitForWrite waitForUpdates = new WaitForWrite(1);
+        StorageResultSetFuture updateFuture;
 
-        dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
-        final List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId1),
-            new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId2));
+        updateFuture = dao.updateMetricsIndex(partitionKey1, scheduleId1, hour0.getMillis());
+        Futures.addCallback(updateFuture, waitForUpdates);
+        waitForUpdates.await("Failed to update metrics index for raw data");
 
-        StorageResultSetFuture future = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR, hour0.getMillis());
-        Futures.addCallback(future, new FutureCallback<ResultSet>() {
-            @Override
-            public void onSuccess(ResultSet result) {
-                MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.ONE_HOUR);
-                List<MetricsIndexEntry> actual = mapper.mapAll(result);
+        final List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0,
+            scheduleId1));
 
-                assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
-            }
+        MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.ONE_HOUR);
+        WaitForRead<MetricsIndexEntry> waitForReads = new WaitForRead<MetricsIndexEntry>(mapper);
 
-            @Override
-            public void onFailure(Throwable t) {
-                fail("Failed to retrieve one hour index entries", t);
-            }
-        });
+        StorageResultSetFuture queryFuture;
+        queryFuture = dao.findMetricsIndexEntriesAsync(partitionKey1, hour0.getMillis());
+        Futures.addCallback(queryFuture, waitForReads);
+
+        waitForReads.await("Failed to fetch raw data index entries");
+
+        assertCollectionEqualsNoOrder(expected, waitForReads.getResults(), "Raw data index entries do not match");
     }
 
     @Test(enabled = ENABLED)

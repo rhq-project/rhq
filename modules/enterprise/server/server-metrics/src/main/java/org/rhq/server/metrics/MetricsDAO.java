@@ -281,6 +281,11 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
+    public StorageResultSetFuture findMetricsIndexEntriesAsync(String partitionKey, long timestamp) {
+        BoundStatement statement = findIndexEntries.bind(partitionKey, new Date(timestamp));
+        return storageSession.executeAsync(statement);
+    }
+
     public ResultSet setFindTimeSliceForIndex(MetricsTable table, long timestamp) {
         BoundStatement statement = findTimeSliceForIndex.bind(table.toString(), new Date(timestamp));
         return storageSession.execute(statement);
@@ -299,9 +304,17 @@ public class MetricsDAO {
         return storageSession.executeAsync(statement);
     }
 
+    public StorageResultSetFuture updateMetricsIndex(String partitionKey, int scheduleId, long timestamp) {
+        return storageSession.executeAsync(updateMetricsIndex.bind(partitionKey, new Date(timestamp), scheduleId));
+    }
+
     public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {
         BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
         storageSession.execute(statement);
+    }
+
+    public StorageResultSetFuture deleteMetricsIndexEntriesAsync(String partitionKey, long timestamp) {
+        return storageSession.executeAsync(deleteIndexEntries.bind(partitionKey, new Date(timestamp)));
     }
 
     public StorageResultSetFuture deleteMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {

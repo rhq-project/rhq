@@ -95,6 +95,7 @@ public class AggregateRawData implements Runnable {
                 oneHourDataQueryFutures.add(dao.findOneHourMetricsAsync(scheduleId,
                     state.getSixHourTimeSlice().getMillis(), state.getSixHourTimeSliceEnd().getMillis()));
             }
+            log.debug("Starting 1 hour aggregation for schedule ids " + scheduleIds);
             state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds, oneHourDataQueryFutures));
         }
     }

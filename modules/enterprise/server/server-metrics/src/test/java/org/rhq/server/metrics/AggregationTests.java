@@ -1,7 +1,9 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
+import static org.rhq.server.metrics.MetricsUtil.indexPartitionKey;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
+import org.rhq.server.metrics.domain.MetricsIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
@@ -54,10 +57,10 @@ public class AggregationTests extends MetricsTest {
         purgeDB();
 
         schedule1.id = 100;
-        schedule2.id = 101;
-        schedule3.id = 102;
-        schedule4.id = 104;
-        schedule5.id = 105;
+        schedule2.id = 5100;
+        schedule3.id = 11001;
+        schedule4.id = 18022;
+        schedule5.id = 21303;
 
         aggregationTasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         writePermits = RateLimiter.create(500);
@@ -383,8 +386,8 @@ public class AggregationTests extends MetricsTest {
     private WaitForWrite updateIndex(IndexUpdate... updates) {
         WaitForWrite waitForWrite = new WaitForWrite(updates.length);
         for (IndexUpdate update : updates) {
-            StorageResultSetFuture future = dao.updateMetricsIndex(update.table, update.scheduleId,
-                update.time.getMillis());
+            StorageResultSetFuture future = dao.updateMetricsIndex(indexPartitionKey(update.table, update.scheduleId),
+                update.scheduleId, update.time.getMillis());
             Futures.addCallback(future, waitForWrite);
         }
         return waitForWrite;
@@ -440,8 +443,8 @@ public class AggregationTests extends MetricsTest {
         for (int scheduleId : scheduleIds) {
             indexEntries.add(new MetricsIndexEntry(MetricsTable.SIX_HOUR, timeSlice, scheduleId));
         }
-        assertMetricsIndexEquals(MetricsTable.SIX_HOUR, timeSlice.getMillis(), indexEntries,
-            "The 6 hour index is wrong");
+        List<MetricsIndexEntry> actual = loadIndexEntries(timeSlice, MetricsTable.SIX_HOUR, scheduleIds);
+        assertCollectionMatchesNoOrder("The 6 hour index is wrong", indexEntries, actual);
     }
 
     protected void assert24HourIndexEquals(DateTime timeSlice, int... scheduleIds) {
@@ -449,18 +452,32 @@ public class AggregationTests extends MetricsTest {
         for (int scheduleId : scheduleIds) {
             indexEntries.add(new MetricsIndexEntry(MetricsTable.TWENTY_FOUR_HOUR, timeSlice, scheduleId));
         }
-        assertMetricsIndexEquals(MetricsTable.TWENTY_FOUR_HOUR, timeSlice.getMillis(), indexEntries,
-            "The 24 hour index is wrong");
+        List<MetricsIndexEntry> actual = loadIndexEntries(timeSlice, MetricsTable.TWENTY_FOUR_HOUR, scheduleIds);
+        assertCollectionMatchesNoOrder("The 24 hour index is wrong", indexEntries, actual);
+    }
+
+    private List<MetricsIndexEntry> loadIndexEntries(DateTime timeSlice, MetricsTable table, int... scheduleIds) {
+        List<MetricsIndexEntry> indexEntries = new ArrayList<MetricsIndexEntry>();
+        MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(table);
+        for (int scheduleId : scheduleIds) {
+            String partitionKey = indexPartitionKey(table, scheduleId);
+            StorageResultSetFuture indexFuture = dao.findMetricsIndexEntriesAsync(partitionKey, timeSlice.getMillis());
+            indexEntries.addAll(mapper.mapAll(indexFuture.get()));
+        }
+
+        return indexEntries;
     }
 
     private class AggregatorTestStub extends Aggregator {
 
         public AggregatorTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits,
+                schedule1.id, schedule5.id);
         }
 
         public AggregatorTestStub(DateTime startTime, MetricsDAO dao) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits,
+                schedule1.id, schedule5.id);
         }
 
         @Override

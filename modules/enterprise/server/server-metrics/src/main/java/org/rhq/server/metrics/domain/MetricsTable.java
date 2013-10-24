@@ -61,4 +61,20 @@ public enum MetricsTable {
     public String toString() {
         return this.tableName;
     }
+
+    public static MetricsTable fromTableName(String table) {
+        if (table.equals(INDEX.tableName)) {
+            return INDEX;
+        } else if (table.equals(RAW.tableName)) {
+            return RAW;
+        } else if (table.equals(ONE_HOUR.tableName)) {
+            return ONE_HOUR;
+        } else if (table.equals(SIX_HOUR.tableName)) {
+            return SIX_HOUR;
+        } else if (table.equals(TWENTY_FOUR_HOUR.tableName)) {
+            return TWENTY_FOUR_HOUR;
+        } else {
+            throw new IllegalArgumentException(table + " is not a recognized table name");
+        }
+    }
 }

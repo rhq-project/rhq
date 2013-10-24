@@ -594,6 +594,10 @@ public class ImageManager {
         return "subsystems/inventory/CreateChild_16.png";
     }
 
+    public static String getBlankIcon() {
+        return IMAGES_DIR+"blank.png";
+    }
+
     public static String getChildCreateIcon(CreateResourceStatus createStatus) {
         if (createStatus == null) {
             return getChildCreateIcon();

@@ -368,7 +368,7 @@ public class AgentMain {
     private VMHealthCheckThread m_vmHealthCheckThread;
 
     /**
-     * Counts the number of times the agent has been restarted and holds the reason for the last restart. 
+     * Counts the number of times the agent has been restarted and holds the reason for the last restart.
      */
     private final AgentRestartCounter m_agentRestartCounter = new AgentRestartCounter();
 
@@ -378,7 +378,7 @@ public class AgentMain {
     private boolean m_disableNativeSystem;
 
     /**
-     * Thread used to repeatedly ping the server for connectivity, agent avail update, and clock sync   
+     * Thread used to repeatedly ping the server for connectivity, agent avail update, and clock sync
      */
     private ScheduledThreadPoolExecutor m_pingThreadPoolExecutor;
 
@@ -465,6 +465,62 @@ public class AgentMain {
         return;
     }
 
+    private void checkTempDir() {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        if (!tmpDir.exists()) {
+            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] does not exist.");
+            useLocalTmpDir();
+            return;
+        }
+        if (!tmpDir.isDirectory()) {
+            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not a directory");
+            useLocalTmpDir();
+            return;
+        }
+        if (!tmpDir.canRead() || !tmpDir.canExecute()) {
+            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not readable");
+            useLocalTmpDir();
+            return;
+        }
+        if (!tmpDir.canWrite()) {
+            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not writable");
+            useLocalTmpDir();
+            return;
+        }
+    }
+
+    private void useLocalTmpDir() {
+        File localTmpDir = null;
+        try {
+            localTmpDir = new File(new File(getAgentHomeDirectory()), "temp");
+            LOG.info("Using alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
+            if (!localTmpDir.exists()) {
+                LOG.info("Creating alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
+                localTmpDir.mkdir();
+            }
+            System.setProperty("java.io.tmpdir", localTmpDir.getAbsolutePath());
+        } catch (Throwable t) {
+            throw new RuntimeException("Startup failed: Could not create or set local java.io.tmpdir ["
+                + localTmpDir.getAbsolutePath() + "]", t);
+        }
+        if (!localTmpDir.exists()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] does not exist");
+        }
+        if (!localTmpDir.isDirectory()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] is not a directory");
+        }
+        if (!localTmpDir.canRead() || !localTmpDir.canExecute()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] is not readable");
+        }
+        if (!localTmpDir.canWrite()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] is not writable");
+        }
+    }
+
     /**
      * Constructor for {@link AgentMain} that loads the agent configuration and prepare some additional internal data.
      *
@@ -517,13 +573,15 @@ public class AgentMain {
 
         prepareNativeSystem();
 
+        checkTempDir();
+
         return;
     }
 
     /**
      * Returns the directory that is considered the "agent home" (i.e. the directory
      * where the agent is installed).
-     * 
+     *
      * @return agent home directory, or empty string if it cannot be determined
      */
     public String getAgentHomeDirectory() {
@@ -614,7 +672,7 @@ public class AgentMain {
     /**
      * This method should be called whenever the server time is known. This helps
      * keep the {@link #getAgentServerClockDifference()} up-to-date.
-     * 
+     *
      * @param serverTime the currently know value of the server clock (epoch millis)
      */
     public void serverClockNotification(long serverTime) {
@@ -920,7 +978,7 @@ public class AgentMain {
     /**
      * This will enable/disable agent-server communication tracing. This is for
      * use mainly in development but can also be used for troubleshooting problems.
-     *  
+     *
      * @param enabled whether or not to turn on agent comm tracing
      */
     public void agentServerCommunicationsTrace(boolean enabled) {
@@ -952,7 +1010,7 @@ public class AgentMain {
      * This will hot-deploy a new log4j log configuration file.  Use this to change, at runtime,
      * the log settings so you can, for example, begin logging DEBUG messages to help troubleshoot
      * problems.
-     * 
+     *
      * @param logFilePath the path to the log file - relative to the classloader or filesystem
      *
      * @throws Exception if failed to hot deploy the new log config
@@ -985,7 +1043,7 @@ public class AgentMain {
     /**
      * Returns an iteratable list of servers that can be used as backups when this agent needs to failover
      * to another server.
-     * 
+     *
      * @return list of servers (may be empty but will not be <code>null</code>)
      */
     public FailoverListComposite getServerFailoverList() {
@@ -1029,8 +1087,8 @@ public class AgentMain {
     /**
      * Downloads a new server failover list from the server and returns the failover list
      * that is now in effect.
-     * @return 
-     * 
+     * @return
+     *
      * @return the server failover list that is now in effect
      */
     public FailoverListComposite downloadServerFailoverList() {
@@ -1568,7 +1626,7 @@ public class AgentMain {
      * @param  wait_ms maximum number of milliseconds to wait
      *
      * @return <code>true</code> if the server is up, <code>false</code> if it is not yet up or the agent has shutdown
-     * 
+     *
      * @throws AgentNotSupportedException If the server is up but it told us we are the wrong version, then this is thrown.
      *                                    When this is thrown, the agent is currently in the midst of updating itself.
      */
@@ -1940,9 +1998,9 @@ public class AgentMain {
      * port and transport parameters being used to talk to the current server
      * will stay the same.  Otherwise, it will be assumed the server is a
      * full endpoint URL.
-     * 
+     *
      * @param server the host of the server to switch to, or a full server endpoint URL
-     * 
+     *
      * @return <code>true</code> if successfully switched, <code>false</code> otherwise
      */
     public boolean switchToServer(String server) {
@@ -1996,9 +2054,9 @@ public class AgentMain {
 
     /**
      * Switches the agent to talk to the next server in the failover list.
-     * 
+     *
      * This is package-scoped so the failover callback can call this.
-     *  
+     *
      * @param comm the communicator object whose endpoint needs to be switched to the next server
      *             the caller must ensure the remote communicator provided to this method is the
      *             same communicator used by this agent's {@link #getClientCommandSender() sender}.
@@ -2036,12 +2094,12 @@ public class AgentMain {
 
     /**
      * Immediately switches the given communicator to the given server.
-     * 
+     *
      * @param comm the communicator whose server is switched
      * @param newServer the endpoint of the new server
      * @param transport the transport that should be used in the new remote endpoint URL
      * @param transportParams the transport params that should be used in the new remote endpoint URL
-     * 
+     *
      * @return <code>true</code> if successfully switched; <code>false</code> otherwise
      */
     private boolean switchCommServer(RemoteCommunicator comm, ServerEntry newServer, String transport,
@@ -2096,12 +2154,12 @@ public class AgentMain {
      * is making the server its primary server and will begin sending it messages. The request
      * is sent such that the communicator's initialize callback will never be invoked, however,
      * the caller can ask for the request to attempt failover.
-     * 
+     *
      * <p>This is package scoped so the initialize callback can call this</p>
-     *  
+     *
      * @param comm the communicator used to send the message to the server
      * @param attemptFailover if <code>true</code>, and the connect command fails, server failover will be attempted
-     * 
+     *
      * @throws Throwable
      */
     void sendConnectRequestToServer(RemoteCommunicator comm, boolean attemptFailover) throws Throwable {
@@ -2203,7 +2261,7 @@ public class AgentMain {
 
     /**
      * Returns the agent restart counter object.
-     * 
+     *
      * @return the agent restart counter
      */
     public AgentRestartCounter getAgentRestartCounter() {
@@ -2351,7 +2409,7 @@ public class AgentMain {
         m_commServices.start(m_configuration.getPreferences(), m_configuration.getClientCommandSenderConfiguration());
 
         // prime the sender so it can be prepared to start sending messages.
-        // if auto-discovery is enabled, then the auto-discovery listener will tell the sender when its OK to start 
+        // if auto-discovery is enabled, then the auto-discovery listener will tell the sender when its OK to start
         // sending.  Otherwise start polling and let the poller tell the sender when it is ok to start sending.
         if (!isAutoDiscoveryEnabled()) {
             LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
@@ -2402,7 +2460,7 @@ public class AgentMain {
 
     /**
      * This will prepare the auto-discovery listener, if server auto-detection is enabled.
-     * 
+     *
      * @throws Exception
      */
     private void prepareAutoDiscoveryListener() throws Exception {
@@ -2638,17 +2696,17 @@ public class AgentMain {
 
     /**
      * Creates a raw remote communicator that can talk to the given endpoint.
-     * 
+     *
      * This is public-scoped so the {@link PrimaryServerSwitchoverThread} can use this
      * and the {@link IdentifyPromptCommand} can use this.
-     * 
+     *
      * @param transport
      * @param address
      * @param port
      * @param transportParams
-     * 
+     *
      * @return the remote communicator
-     * 
+     *
      * @throws Exception if the communicator could not be created
      */
     public RemoteCommunicator createServerRemoteCommunicator(String transport, String address, int port,
@@ -2741,7 +2799,7 @@ public class AgentMain {
      * Given a failover list, this makes very rudimentary connection attempts to each server to see if
      * this agent can at least reach the server endpoints. If an endpoint cannot be reached,
      * a warning is logged.
-     * 
+     *
      * @param failoverList the list of servers this agent will potentially need to talk to.
      * @return the servers that failed to be connected to
      */
@@ -2804,7 +2862,7 @@ public class AgentMain {
      * Given a failover list, this will persist it so the agent can recover it if the agent itself fails.
      * If this method fails to persist the list, an error is logged but otherwise this method
      * returns normally.
-     * 
+     *
      * @param failoverList the failover list to persist (may be <code>null</code>)
      */
     private void storeServerFailoverList(FailoverListComposite failoverList) {
@@ -3184,7 +3242,7 @@ public class AgentMain {
         }
 
         if (m_daemonMode) {
-            AgentInputReaderFactory.setConsoleType(AgentInputReaderFactory.ConsoleType.java); // don't use native libs, no need and jline causes problems            
+            AgentInputReaderFactory.setConsoleType(AgentInputReaderFactory.ConsoleType.java); // don't use native libs, no need and jline causes problems
         } else if (console_type != null) {
             AgentInputReaderFactory.setConsoleType(console_type);
         }
@@ -3373,7 +3431,7 @@ public class AgentMain {
         return args.toArray(new String[args.size()]);
     }
 
-    // perform any other massaging 
+    // perform any other massaging
     private String safeArg(String arg) {
         // remove trailing '=' from long option args. For example --plugin= should just be --plugin for
         // downstream processing.
@@ -3642,7 +3700,7 @@ public class AgentMain {
      * </ol>
      * By restarting the plugin container in such conditions, we essentially re-run the resource upgrade
      * and let the plugin container try to re-merge with the server that we know has just connected.
-     * 
+     *
      * @author Lukas Krejci
      */
     private class PluginContainerConditionalRestartListener implements ClientCommandSenderStateListener {
@@ -3750,7 +3808,7 @@ public class AgentMain {
             try {
                 // if we can't send to the server ignore the ping
                 if (!m_clientSender.isSending()) {
-                    // An unlikely state, but if we're not sending, not polling and not performing autoDiscovery 
+                    // An unlikely state, but if we're not sending, not polling and not performing autoDiscovery
                     // (multicast), then start polling to we eventually get out of this state.
                     if (!(m_clientSender.isServerPolling() || isAutoDiscoveryEnabled())) {
                         LOG.info(AgentI18NResourceKeys.PING_EXECUTOR_STARTING_POLLING);
@@ -3760,7 +3818,7 @@ public class AgentMain {
                     return;
                 }
 
-                // we are in sending mode, so make sure the poller is off 
+                // we are in sending mode, so make sure the poller is off
                 if (m_clientSender.isServerPolling()) {
                     LOG.info(AgentI18NResourceKeys.PING_EXECUTOR_STOPPING_POLLING_RESUME_PING);
                     m_clientSender.stopServerPolling();

@@ -236,20 +236,56 @@ public class StartupBean implements StartupLocal {
     private void checkTempDir() {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         if (!tmpDir.exists()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
-                + "' does not exist");
+            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] does not exist.");
+            useLocalTmpDir();
+            return;
         }
         if (!tmpDir.isDirectory()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
-                + "' is not a directory");
+            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not a directory");
+            useLocalTmpDir();
+            return;
         }
         if (!tmpDir.canRead() || !tmpDir.canExecute()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
-                + "' is not readable");
+            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not readable");
+            useLocalTmpDir();
+            return;
         }
         if (!tmpDir.canWrite()) {
-            throw new RuntimeException("Startup failed: java.io.tmpdir '" + tmpDir.getAbsolutePath()
-                + "' is not writable");
+            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not writable");
+            useLocalTmpDir();
+            return;
+        }
+    }
+
+    private void useLocalTmpDir() {
+        File localTmpDir = null;
+        try {
+            localTmpDir = new File(LookupUtil.getCoreServer().getInstallDir(), "temp");
+            log.info("Using alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
+            if (!localTmpDir.exists()) {
+                log.info("Creating alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
+                localTmpDir.mkdir();
+            }
+            System.setProperty("java.io.tmpdir", localTmpDir.getAbsolutePath());
+        } catch (Throwable t) {
+            throw new RuntimeException("Startup failed: Could not create or set local java.io.tmpdir ["
+                + localTmpDir.getAbsolutePath() + "]", t);
+        }
+        if (!localTmpDir.exists()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] does not exist");
+        }
+        if (!localTmpDir.isDirectory()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] is not a directory");
+        }
+        if (!localTmpDir.canRead() || !localTmpDir.canExecute()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] is not readable");
+        }
+        if (!localTmpDir.canWrite()) {
+            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+                + "] is not writable");
         }
     }
 
@@ -546,19 +582,19 @@ public class StartupBean implements StartupLocal {
         }
     }
 
-   /**
-     * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
-     * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
-     * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
-     * delivered might trigger the agents to send messages back to the server.
-     *
-     * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
-     * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
-     * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
-     * take some time to initialize. If we don't call this, it speeds up start up, and doesn't bloat memory with
-     * clients we might not ever need (since agents might have affinity to other servers). Agent clients
-     * can be created lazily at runtime when the server needs it.
-     */
+    /**
+      * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
+      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
+      * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
+      * delivered might trigger the agents to send messages back to the server.
+      *
+      * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
+      * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
+      * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
+      * take some time to initialize. If we don't call this, it speeds up start up, and doesn't bloat memory with
+      * clients we might not ever need (since agents might have affinity to other servers). Agent clients
+      * can be created lazily at runtime when the server needs it.
+      */
     private void startAgentClients() {
         log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");
 
@@ -598,7 +634,7 @@ public class StartupBean implements StartupLocal {
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
             schedulerBean.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
-                    initialDelay, interval);
+                initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule asynchronous resource deletion job.", e);
         }
@@ -636,7 +672,7 @@ public class StartupBean implements StartupLocal {
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 60;
             schedulerBean.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
-                    interval);
+                interval);
         } catch (Exception e) {
             log.error("Cannot schedule DynaGroup auto-recalculation job.", e);
         }
@@ -738,9 +774,9 @@ public class StartupBean implements StartupLocal {
                 log.error("Cannot create storage cluster init job", e);
             }
         }
-        
+
         try {
-            String cronString = "0 30 0 ? * SUN *";  // every sunday starting at 00:30.
+            String cronString = "0 30 0 ? * SUN *"; // every sunday starting at 00:30.
             schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
         } catch (Exception e) {
             log.error("Cannot create storage cluster read repair job", e);
@@ -754,6 +790,7 @@ public class StartupBean implements StartupLocal {
      *
      * @deprecated we don't have an embedded agent anymore, leaving this in case we resurrect it
      */
+    @Deprecated
     private void startEmbeddedAgent() throws RuntimeException {
         // we can't use EmbeddedAgentBootstrapServiceMBean because if the embedded agent
         // isn't installed, that class will not be available; we must use JMX API

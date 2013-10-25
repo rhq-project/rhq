@@ -33,10 +33,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
@@ -73,6 +76,8 @@ public class MetricsServer {
     private boolean pastAggregationMissed;
 
     private Long mostRecentRawDataPriorToStartup;
+
+    private AtomicLong totalAggregationTime = new AtomicLong();
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -140,6 +145,14 @@ public class MetricsServer {
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
         log.debug("Querying for most recent raw metrics for [scheduleId: " + scheduleId + "]");
         return dao.findLatestRawMetric(scheduleId);
+    }
+
+    /**
+     * @return The total aggregation time in milliseconds since server start. This property is updated after each of
+     * raw, one hour, and six hour data are aggregated.
+     */
+    public long getTotalAggregationTime() {
+        return totalAggregationTime.get();
     }
 
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
@@ -391,7 +404,7 @@ public class MetricsServer {
         }
     }
 
-    private Iterable<AggregateNumericMetric> calculateAggregates(long startTime) {
+    private List<AggregateNumericMetric> calculateAggregates(long startTime) {
         DateTime dt = new DateTime(startTime);
         DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
         DateTime lastHour = currentHour.minus(configuration.getRawTimeSliceDuration());
@@ -419,15 +432,20 @@ public class MetricsServer {
         // The last step in the work flow is to update the metrics
         // index for the newly persisted aggregates.
 
-        Iterable<AggregateNumericMetric> newOneHourAggregates = null;
+        List<AggregateNumericMetric> newOneHourAggregates = null;
 
+        Stopwatch stopwatch = new Stopwatch().start();
         List<AggregateNumericMetric> updatedSchedules = aggregateRawData(lastHour);
         newOneHourAggregates = updatedSchedules;
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, lastHour.getMillis());
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
         }
+        stopwatch.stop();
+        totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        stopwatch.reset();
 
+        stopwatch.start();
         updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, sixHourTimeSlice,
             configuration.getOneHourTimeSliceDuration());
         if (!updatedSchedules.isEmpty()) {
@@ -435,12 +453,19 @@ public class MetricsServer {
             updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules,
                 configuration.getSixHourTimeSliceDuration());
         }
+        stopwatch.stop();
+        totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        stopwatch.reset();
 
+        stopwatch.start();
         updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
             twentyFourHourTimeSlice, configuration.getSixHourTimeSliceDuration());
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR, twentyFourHourTimeSlice);
         }
+        stopwatch.stop();
+        totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        stopwatch.reset();
 
         return newOneHourAggregates;
     }

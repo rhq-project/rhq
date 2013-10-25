@@ -47,8 +47,6 @@ public interface MeasurementMonitorMBean {
 
     long getMeasurementCompressionTime();
 
-    void incrementMeasurementCompressionTime(long delta);
-
     long getBaselineCalculationTime();
 
     void incrementBaselineCalculationTime(long delta);

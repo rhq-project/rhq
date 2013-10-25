@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.rhq.core.util.StringUtil.arrayToString;
 import static org.rhq.core.util.StringUtil.isNotBlank;
 
@@ -205,6 +207,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String apiVersion = hostConfig.getDomainApiVersion();
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
         serverPluginConfig.setProductType(productType);
+        pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
         ProcessInfo agentProcess = discoveryContext.getSystemInformation().getThisProcess();
@@ -458,6 +461,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         pluginConfig.put(new PropertySimple("manuallyAdded", true));
         pluginConfig.put(new PropertySimple("productType",productType.name()));
+        pluginConfig.setSimpleValue("expectedRuntimeProductName", productType.PRODUCT_NAME);
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, pluginConfig, null);
@@ -471,26 +475,36 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         Configuration pluginConfiguration = inventoriedResource.getPluginConfiguration();
         ServerPluginConfiguration serverPluginConfiguration = new ServerPluginConfiguration(pluginConfiguration);
 
-        if (currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX)
-            || currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX)) {
-            // Resource key already in right format 
-            return null;
-        }
-
         ResourceUpgradeReport report = new ResourceUpgradeReport();
+        Boolean upgraded = FALSE;
 
-        if (new File(currentResourceKey).isDirectory()) {
-            // Old key format for a local resource (key is base dir)
-            report.setNewResourceKey(createKeyForLocalResource(serverPluginConfiguration));
-        } else if (currentResourceKey.contains(":")) {
-            // Old key format for a remote (manually added) resource (key is base dir)
-            report.setNewResourceKey(createKeyForRemoteResource(currentResourceKey));
-        } else {
-            log.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
-            return null;
+        if (!currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX)
+            && !currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX)) {
+            // Resource key in wrong format 
+            upgraded = TRUE;
+            if (new File(currentResourceKey).isDirectory()) {
+                // Old key format for a local resource (key is base dir)
+                report.setNewResourceKey(createKeyForLocalResource(serverPluginConfiguration));
+            } else if (currentResourceKey.contains(":")) {
+                // Old key format for a remote (manually added) resource (key is base dir)
+                report.setNewResourceKey(createKeyForRemoteResource(currentResourceKey));
+            } else {
+                upgraded = FALSE;
+                log.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
+            }
         }
 
-        return report;
+        if (pluginConfiguration.getSimpleValue("expectedRuntimeProductName") == null) {
+            upgraded = TRUE;
+            pluginConfiguration.setSimpleValue("expectedRuntimeProductName",
+                serverPluginConfiguration.getProductType().PRODUCT_NAME);
+            report.setNewPluginConfiguration(pluginConfiguration);
+        }
+
+        if (upgraded == TRUE) {
+            return report;
+        }
+        return null;
     }
 
     private String createKeyForRemoteResource(String hostPort) {

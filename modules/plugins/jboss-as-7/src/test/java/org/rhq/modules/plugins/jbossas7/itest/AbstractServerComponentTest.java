@@ -63,6 +63,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     static {
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0", "7.1.2.Final-redhat-1");
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.1", "7.1.3.Final-redhat-4");
+        EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.1.0", "7.2.0.Final-redhat-8");
     }
 
     private static final String RELEASE_VERSION_TRAIT_NAME = "_skm:release-version";
@@ -124,9 +125,13 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "
                 + "start() method due to invalid baseDir.");
 
-        // Change the productType prop.
-        JBossProductType originalProductType = serverPluginConfig.getProductType();
-        serverPluginConfig.setProductType(originalProductType == JBossProductType.AS ? JBossProductType.EAP : JBossProductType.AS);
+        // Change the expectedRuntimeProductName property
+        String originalExpectedRuntimeProductName = pluginConfig.getSimpleValue("expectedRuntimeProductName");
+        if (originalExpectedRuntimeProductName.equals(JBossProductType.AS.PRODUCT_NAME)) {
+            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.EAP.PRODUCT_NAME);
+        } else {
+            pluginConfig.setSimpleValue("expectedRuntimeProductName", JBossProductType.AS.PRODUCT_NAME);
+        }
 
         // Restart the server ResourceComponent so it picks up the changes we just made to the plugin config.
         inventoryManager.deactivateResource(getServerResource());
@@ -137,9 +142,9 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
             ipce = e;
         }
 
-        // Set the productType back to the original value and restart the component before making any assertions, to ensure
-        // things aren't left in a corrupt state for remaining test methods.
-        serverPluginConfig.setProductType(originalProductType);
+        // Set the expectedRuntimeProductName property back to the original value and restart the component before
+        // making any assertions, to ensure things aren't left in a corrupt state for remaining test methods.
+        pluginConfig.setSimpleValue("expectedRuntimeProductName", originalExpectedRuntimeProductName);
         inventoryManager.activateResource(getServerResource(), serverContainer, true);
 
         Assert.assertNotNull(ipce, "InvalidPluginConfigurationException was not thrown by server component's "

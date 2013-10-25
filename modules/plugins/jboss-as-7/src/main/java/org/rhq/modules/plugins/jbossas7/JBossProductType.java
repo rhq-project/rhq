@@ -32,7 +32,7 @@ public enum JBossProductType {
 
     AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
-    ISPN("ISPN", "Infinispan Server", "Infinispan Server", "ISPN"),
+    ISPN("ISPN", "Infinispan Server", "Infinispan Server", "Infinispan Server"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
     SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "Red Hat JBoss Fuse Service Works"),

@@ -41,11 +41,14 @@
  * return: A org.rhq.core.domamin.drift.DriftSnapshot object
  *
  * usage:
- *   // generates a snapshot that includes all change sets belonging to the
- *   // mydrift drift configuration.
- *   createSnapshot(123, 'mydrift') 
+ *   // Here is an example to generate a snapshot for a resource with id 123
+ *   // and having a drift definition named mydrift. The snapshot includes all
+ *   // change sets belonging to the drift definition.
+ *   //
+ *   createSnapshot(123, 'mydrift')
  *
- *   // generates a snapshot that includes change sets 3 through 5 inclusive.
+ *   // Here is an example that includes change sets 3 through 5 inclusive.
+ *   //
  *   createSnapshot(123, 'mydrift', {startVersion: 3, endVersion: 5})
  */
 function createSnapshot(rid, defName) {
@@ -149,17 +152,17 @@ function diff(s1, s2) {
 /**
  * description: Generates and returns the drift history for a file being
  * monitored for drift. This function takes three arguments. The first two, the
- * resource id drift configuration name, uniquely identify the drift
- * configuration. The third argument specifies a path that is set up for
- * monitoring by the drift configuration.
+ * resource id drift definition name, uniquely identify the drift
+ * definition. The third argument specifies a path that is set up for
+ * monitoring by the drift definition.
  *
  * arguments:
  *   rid: A resource id
  *
- *   configName: A drift configuration name
+ *   configName: A drift definition name
  *
  *   path: A path that is set up for drift monitoring by the drift
- *   configuration that is identified by the first two arguments. The path
+ *   definition that is identified by the first two arguments. The path
  *   should be specified as relative to the base directory from which
  *   monitoring is done.
  *

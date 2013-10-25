@@ -427,24 +427,34 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
-            try {
-                syncInfo = entityManager.find(ResourceSyncInfo.class, platform.getId());
-                agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
-            } catch (Exception e) {
-                LOG.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
-                    + "]", e);
+            if (agentClient != null) {
+                try {
+                    syncInfo = entityManager.find(ResourceSyncInfo.class, platform.getId());
+                    agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
+                } catch (Exception e) {
+                    LOG.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
+                        + "]", e);
+                }
+            } else {
+                LOG.warn("Could not perform commit sync with agent for platform [" + platform.getName()
+                    + "]; will expect agent to do it later");
             }
         }
         for (Resource server : servers) {
             // Only update servers if they haven't already been updated at the platform level
             if (!platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
-                try {
-                    syncInfo = entityManager.find(ResourceSyncInfo.class, server.getId());
-                    agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
-                } catch (Exception e) {
-                    LOG.warn("Could not perform commit synchronization with agent for server [" + server.getName()
-                        + "]", e);
+                if (agentClient != null) {
+                    try {
+                        syncInfo = entityManager.find(ResourceSyncInfo.class, server.getId());
+                        agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
+                    } catch (Exception e) {
+                        LOG.warn("Could not perform commit synchronization with agent for server [" + server.getName()
+                            + "]", e);
+                    }
+                } else {
+                    LOG.warn("Could not perform commit sync with agent for server [" + server.getName()
+                        + "]; will expect agent to do it later");
                 }
             }
         }
@@ -709,10 +719,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
 
             // If provided, assume the new plugin config should replace the old plugin config in its entirety.
-            // Use a deep copy without ids as the updgardeRequest config may contain entity config props. 
+            // Use a deep copy without ids as the updgardeRequest config may contain entity config props.
             // Note: we explicitly do not call configurationManager.updatePluginConfiguration() because the
             // agent is already updated to the new configuration. Instead we call the dedicated local method
-            // supporting this use case.   
+            // supporting this use case.
             Configuration pluginConfig = upgradeRequest.getNewPluginConfiguration();
             if (null != pluginConfig) {
                 pluginConfig = pluginConfig.deepCopy(false);

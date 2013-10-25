@@ -22,8 +22,13 @@
  */
 package org.rhq.plugins.storage;
 
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -37,6 +42,8 @@ import org.rhq.plugins.cassandra.CassandraNodeDiscoveryComponent;
  * @author Stefan Negrea
  */
 public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryComponent {
+
+    private final Log log = LogFactory.getLog(StorageNodeDiscoveryComponent.class);
 
     private static final String RESOURCE_NAME = "RHQ Storage Node";
 
@@ -56,6 +63,16 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
 
                 discoveredResource.setResourceKey(resourceKey);
                 discoveredResource.setResourceName(resourceName);
+
+                try {
+                    Properties properties = new Properties();
+                    properties.load(getClass().getResourceAsStream("/rhq-storage.properties"));
+
+                    discoveredResource.setResourceDescription(properties.getProperty("rhq.storage.description"));
+                    discoveredResource.setResourceVersion(properties.getProperty("rhq.storage.version"));
+                } catch (IOException e) {
+                    log.warn("Failed to load rhq-storage.properties. Some resource details will not be set.", e);
+                }
 
                 storageNodes.add(discoveredResource);
             }

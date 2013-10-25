@@ -772,7 +772,8 @@
                   name="sharedExecutorName"
                   type="string"
                   description="If this Connector is configured to use a shared Executor for its thread pool, this is the name of that Executor. This is required to successfully collect threadpool metrics for the Connector. Leave this unset if the Connector is not using a shared Executor for its threadpool."
-                  required="false" />
+                  required="false"
+                  readOnly="true" />
             </c:group>
 
             <c:group
@@ -855,35 +856,45 @@
                <c:simple-property
                   name="allowTrace"
                   type="boolean"
-                  description="A boolean value which can be used to enable or disable the TRACE HTTP method. If not specified, this attribute is set to false." />
+                  description="A boolean value which can be used to enable or disable the TRACE HTTP method. If not specified, this attribute is set to false."
+                  required="false"
+                  default="false" />
                <c:simple-property
                   name="connectionTimeout"
                   type="integer"
                   description="HTTP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is 60000 (i.e. 60 seconds). AJP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is infinite (i.e. no timeout)."
-                  required="false" />
+                  required="false"
+                  default="-1" />
                <c:simple-property
                   name="emptySessionPath"
                   type="boolean"
                   description="If set to true, all paths for session cookies will be set to /. This can be useful for portlet specification implementations, but will greatly affect performance if many applications are accessed on a given server by the client. If not specified, this attribute is set to false. Note: Does not exist in Tomcat 7" 
-                  required="false" />
+                  required="false"
+                  default="false" />
                <c:simple-property
                   name="enableLookups"
                   type="boolean"
-                  description="Set to true if you want calls to request.getRemoteHost() to perform DNS lookups in order to return the actual host name of the remote client. Set to false to skip the DNS lookup and return the IP address in String form instead (thereby improving performance). By default, DNS lookups are enabled." />
+                  description="Set to true if you want calls to request.getRemoteHost() to perform DNS lookups in order to return the actual host name of the remote client. Set to false to skip the DNS lookup and return the IP address in String form instead (thereby improving performance). By default, DNS lookups are enabled."
+                  required="false"
+                  default="false" />
                <c:simple-property
                   name="keepAliveTimeout"
                   type="integer"
                   description="Ignored prior to Tomcat 6. HTTP: The number of milliseconds this Connector will wait for another HTTP request before closing the connection. The default value is to use the value that has been set for the connectionTimeout attribute. AJP: The number of milliseconds this Connector will wait for another AJP request before closing the connection. The default value is to use the value that has been set for the connectionTimeout attribute."
-                  required="false" />
+                  required="false"
+                  default="-1" />
                <c:simple-property
                   name="maxPostSize"
                   type="integer"
-                  description="The maximum size in bytes of the POST which will be handled by the container FORM URL parameter parsing. The limit can be disabled by setting this attribute to a value less than or equal to 0. If not specified, this attribute is set to 2097152 (2 megabytes)." />
+                  description="The maximum size in bytes of the POST which will be handled by the container FORM URL parameter parsing. The limit can be disabled by setting this attribute to a value less than or equal to 0. If not specified, this attribute is set to 2097152 (2 megabytes)."
+                  required="false"
+                  default="2097152" />
                <c:simple-property
                   name="maxThreads"
                   type="integer"
                   description="HTTP: The maximum number of request processing threads to be created by this Connector, which therefore determines the maximum number of simultaneous requests that can be handled. If not specified, this attribute is set to 40. If an executor is associated with this connector, this attribute is ignored as the connector will execute tasks using the executor rather than an internal thread pool. AJP: The maximum number of request processing threads to be created by this Connector, which therefore determines the maximum number of simultaneous requests that can be handled. If not specified, this attribute is set to 200. If an executor is associated with this connector, this attribute is ignored as the connector will execute tasks using the executor rather than an internal thread pool."
-                  required="false" />                  
+                  required="false"
+                  default="200" />                  
                <c:simple-property
                   name="protocol"
                   type="string"
@@ -897,11 +908,14 @@
                   name="proxyPort"
                   type="integer"
                   description="If this Connector is being used in a proxy configuration, configure this attribute to specify the server port to be returned for calls to request.getServerPort()."
-                  required="false" />
+                  required="false"
+                  default="0" />
                <c:simple-property
                   name="redirectPort"
                   type="integer"
-                  description="If this Connector is supporting non-SSL requests, and a request is received for which a matching security-constraint requires SSL transport, Catalina will automatically redirect the request to the port number specified here." />
+                  description="If this Connector is supporting non-SSL requests, and a request is received for which a matching security-constraint requires SSL transport, Catalina will automatically redirect the request to the port number specified here."
+                  required="false"
+                  default="0" />
                <c:simple-property
                   name="scheme"
                   type="string"
@@ -911,82 +925,108 @@
                   name="secure"
                   type="boolean"
                   description="Set this attribute to true if you wish to have calls to request.isSecure() to return true  for requests received by this Connector. You would want this on an SSL Connector or a non SSL connector that is receiving data from a SSL accelerator, like a crypto card, a SSL appliance or even a webserver. The default value is false"
-                  required="false" />
+                  required="false"
+                  default="false" />
                <c:simple-property
                   name="tcpNoDelay"
                   displayName="TCP NoDelay"
                   type="boolean"
                   description="If set to true, the TCP_NO_DELAY option will be set on the server socket, which improves performance under most circumstances. This is set to true by default."
+                  default="true"
                   required="false" />                  
                <c:simple-property
                   name="URIEncoding"
                   displayName="URI Encoding"
                   type="string"
                   description="This specifies the character encoding used to decode the URI bytes, after %xx decoding the URL. If not specified, ISO-8859-1 will be used. "                  
-                  required="false" />                  
+                  required="false"
+                  default="ISO-8859-1" />                  
                <c:simple-property
                   name="useBodyEncodingForURI"
                   displayName="Use Body Encoding for URI"
                   type="boolean"
-                  description="This specifies if the encoding specified in contentType should be used for URI query parameters, instead of using the URIEncoding. This setting is present for compatibility with Tomcat 4.1.x." />
+                  description="This specifies if the encoding specified in contentType should be used for URI query parameters, instead of using the URIEncoding. This setting is present for compatibility with Tomcat 4.1.x."
+                  default="false" />
                <c:simple-property
                   name="xpoweredBy"
                   displayName="X-Powered-By"
                   type="boolean"
-                  description="Set this attribute to true to cause Tomcat to advertise support for the Servlet specification using the header recommended in the specification. The default value is false." />
-            </c:group>
-
-            <c:group name="HTTP" hiddenByDefault="true">
+                  description="Set this attribute to true to cause Tomcat to advertise support for the Servlet specification using the header recommended in the specification. The default value is false."
+                  required="false"
+                  default="false" />
                <c:simple-property
                   name="acceptCount"
                   type="integer"
                   description="The maximum queue length for incoming connection requests when all possible request processing threads are in use. Any requests received when the queue is full will be refused. The default value is 10."
-                  required="false" />
+                  required="false"
+                  default="100" />
                <c:simple-property
-                  name="compression"
+                  name="address"
                   type="string"
-                  description="The Connector may use HTTP/1.1 GZIP compression in an attempt to save server bandwidth. The acceptable values for the parameter is 'off' (disable compression), 'on' (allow compression, which causes text data to be compressed), 'force' (forces compression in all cases), or a numerical integer value (which is equivalent to 'on', but specifies the minimum amount of data before the output is compressed). If the content-length is not known and compression is set to 'on' or more aggressive, the output will also be compressed. If not specified, this attribute is set to 'off'."
-                  required="false" />                  
+                  description="For servers with more than one IP address, this attribute specifies which address will be used for listening on the specified port. By default, this port will be used on all IP addresses associated with the server." 
+                  required="false" />
                <c:simple-property
                   name="connectionLinger"
                   type="integer"
                   description="The number of milliseconds during which the sockets used by this Connector will linger when they are closed. (-1 socket linger is disabled)."
+                  required="false"
+                  default="-1" />
+               <c:simple-property
+                  name="sharedExecutorName"
+                  type="string"
+                  description="If this Connector is configured to use a shared Executor for its thread pool, this is the name of that Executor. This is required to successfully collect threadpool metrics for the Connector. Leave this unset if the Connector is not using a shared Executor for its threadpool."
                   required="false" />
                <c:simple-property
                   name="disableUploadTimeout"
                   type="boolean"
                   description="This flag allows the servlet container to use a different, longer connection timeout while a servlet is being executed, which in the end allows either the servlet a longer amount of time to complete its execution, or a longer timeout during data upload. If not specified, this attribute is set to true."
-                  required="false" />                  
+                  required="false"
+                  default="true" />                  
                <c:simple-property
                   name="maxHttpHeaderSize"
                   type="integer"
                   description="The maximum size of the request and response HTTP header, specified in bytes. If not specified, this attribute is set to 4096 (4 KB)."
-                  required="false" />
+                  required="false"
+                  default="8192" />
                <c:simple-property
                   name="maxKeepAliveRequests"
                   type="integer"
                   description="The maximum number of HTTP requests which can be pipelined until the connection is closed by the server. Setting this attribute to 1 will disable HTTP/1.0 keep-alive, as well as HTTP/1.1 keep-alive and pipelining. Setting this to -1 will allow an unlimited amount of pipelined or keep-alive HTTP requests. If not specified, this attribute is set to 100."
-                  required="false" />
+                  required="false"
+                  default="100" />
                <c:simple-property
                   name="maxSpareThreads"
                   type="integer"
                   description="The maximum number of unused request processing threads that will be allowed to exist until the thread pool starts stopping the unnecessary threads. The default value is 50."
-                  required="false" />
+                  required="false"
+                  default="50" />
                <c:simple-property
                   name="minSpareThreads"
                   type="integer"
                   description="The number of request processing threads that will be created when this Connector is first started. The connector will also make sure it has the specified number of idle processing threads available. This attribute should be set to a value smaller than that set for maxThreads. The default value is 4."
-                  required="false" />
+                  required="false"
+                  default="4" />                  
                <c:simple-property
                   name="strategy"
                   type="string"
                   description="The thread pooling strategy which will be used. The default strategy does not use a master thread, but a more conventional strategy using a master listener thread can be used by setting 'ms' as this attribute's value. The master strategy will work significantly better using the threadPriority attribute, which will apply only to the thread which listens on the server socket. This is set to 'lf' by default."
-                  required="false" />                  
+                  required="false"
+                  default="lf" />                  
                <c:simple-property
                   name="threadPriority"
                   type="integer"
                   description="The priority of the request processing threads within the JVM. The default value is java.lang.Thread#NORM_PRIORITY. See the JavaDoc for the java.lang.Thread class for more details on what this priority means."
-                  required="false" />
+                  required="false"
+                  default="5" />
+            </c:group>
+
+            <c:group name="HTTP" hiddenByDefault="true">
+               <c:simple-property
+                  name="compression"
+                  type="string"
+                  description="The Connector may use HTTP/1.1 GZIP compression in an attempt to save server bandwidth. The acceptable values for the parameter is 'off' (disable compression), 'on' (allow compression, which causes text data to be compressed), 'force' (forces compression in all cases), or a numerical integer value (which is equivalent to 'on', but specifies the minimum amount of data before the output is compressed). If the content-length is not known and compression is set to 'on' or more aggressive, the output will also be compressed. If not specified, this attribute is set to 'off'."
+                  required="false"
+                  default="true" />                  
             </c:group>
 
             <c:group name="HTTP SSL" hiddenByDefault="true">

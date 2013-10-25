@@ -166,13 +166,13 @@ public class AgentManagerBean implements AgentManagerLocal {
                 // so let's start the sender automatically for the caller so it doesn't need to remember to do it
                 client.startSending();
             } else {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("There is no agent client for agent: " + agent);
+                if (log.isDebugEnabled()) {
+                    log.debug("There is no agent client for agent: " + agent);
                 }
             }
         } catch (Throwable t) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Could not get agent client for agent: " + agent, t);
+            if (log.isDebugEnabled()) {
+                log.debug("Could not get agent client for agent: " + agent, t);
             }
         }
 

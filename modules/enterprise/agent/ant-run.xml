@@ -186,7 +186,7 @@ Ant Script that provides ways to package the Agent.
 
     <copy todir="${agent.distro.dir}/bin/wrapper">
        <fileset dir="${basedir}/src/etc/java-service-wrapper"
-                includes="rhq-agent-wrapper.conf"/>
+                includes="rhq-agent-wrapper.*"/>
     </copy>
 
     <copy todir="${agent.distro.dir}/bin/wrapper/windows-x86_32">

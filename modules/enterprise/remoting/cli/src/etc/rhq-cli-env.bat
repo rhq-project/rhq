@@ -16,22 +16,18 @@ rem                     directory of the directory where this script lives.
 rem
 rem set RHQ_CLI_HOME=C:\opt\rhq-cli
 
-rem    RHQ_CLI_JAVA_HOME - The location of the JRE that the CLI will
-rem                          use. This will be ignored if
-rem                          RHQ_CLI_JAVA_EXE_FILE_PATH is set.
-rem                          If this and RHQ_CLI_JAVA_EXE_FILE_PATH are
-rem                          not set, the CLI will default to JAVA_HOME.
-rem
-rem set RHQ_CLI_JAVA_HOME=
+rem    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
+rem                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
+rem                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
+rem                    JAVA_HOME will be used.
+rem set RHQ_JAVA_HOME=
 
-rem    RHQ_CLI_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-rem                                   executable to use. If this is set,
-rem                                   RHQ_CLI_JAVA_HOME is ignored.
-rem                                   If this is not set, then
-rem                                   %RHQ_CLI_JAVA_HOME%\bin\java.exe
-rem                                   is used.
-rem
-rem set RHQ_CLI_JAVA_EXE_FILE_PATH=C:\WINDOWS\system32\java.exe
+rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
+rem                             use. If this is set, RHQ_JAVA_HOME is ignored.
+rem                             If this is not set, then $RHQ_JAVA_HOME/bin/java
+rem                             is used. If this and RHQ_JAVA_HOME are not set,
+rem                             then $JAVA_HOME/bin/java will be used.
+rem set RHQ_JAVA_EXE_FILE_PATH=
 
 rem    RHQ_CLI_JAVA_OPTS - Java VM command line options to be
 rem                          passed into the CLI's VM. If this is not defined

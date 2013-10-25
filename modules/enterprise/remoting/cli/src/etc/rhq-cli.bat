@@ -11,7 +11,7 @@ rem are described in comments in rhq-cli-env.bat. The variables can also be
 rem set via rhq-cli-env.bat, which is sourced by this script.
 rem ===========================================================================
 
-setlocal
+setlocal enabledelayedexpansion
 
 title RHQ CLI
 
@@ -56,22 +56,36 @@ if defined RHQ_CLI_DEBUG echo RHQ_CLI_HOME: %RHQ_CLI_HOME%
 
 rem ----------------------------------------------------------------------
 rem Find the Java executable and verify we have a VM available
+rem Note that RHQ_CLI_JAVA_* props are still handled for back compat
 rem ----------------------------------------------------------------------
 
-if not defined RHQ_CLI_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_CLI_JAVA_HOME call :prepare_embedded_jre
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if defined RHQ_CLI_JAVA_EXE_FILE_PATH (
+      set RHQ_JAVA_EXE_FILE_PATH=!RHQ_CLI_JAVA_EXE_FILE_PATH!
+   )
+)
+if not defined RHQ_JAVA_HOME (
+   if defined RHQ_CLI_JAVA_HOME (
+      set RHQ_JAVA_HOME=!RHQ_CLI_JAVA_HOME!
+   )
 )
 
-if not defined RHQ_CLI_JAVA_EXE_FILE_PATH (
-   set RHQ_CLI_JAVA_EXE_FILE_PATH=%RHQ_CLI_JAVA_HOME%\bin\java.exe
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   if not defined RHQ_JAVA_HOME (
+      if defined RHQ_CLI_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: !JAVA_HOME!
+      set RHQ_JAVA_HOME=!JAVA_HOME!
+   )
+)
+if not defined RHQ_JAVA_EXE_FILE_PATH (
+   set RHQ_JAVA_EXE_FILE_PATH=!RHQ_JAVA_HOME!\bin\java.exe
 )
 
-if defined RHQ_CLI_DEBUG echo RHQ_CLI_JAVA_HOME: %RHQ_CLI_JAVA_HOME%
-if defined RHQ_CLI_DEBUG echo RHQ_CLI_JAVA_EXE_FILE_PATH: %RHQ_CLI_JAVA_EXE_FILE_PATH%
+if defined RHQ_CLI_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%
+if defined RHQ_CLI_DEBUG echo RHQ_JAVA_EXE_FILE_PATH: %RHQ_JAVA_EXE_FILE_PATH%
 
-if not exist "%RHQ_CLI_JAVA_EXE_FILE_PATH%" (
+if not exist "%RHQ_JAVA_EXE_FILE_PATH%" (
    echo There is no JVM available.
-   echo Please set RHQ_CLI_JAVA_HOME or RHQ_CLI_JAVA_EXE_FILE_PATH appropriately.
+   echo Please set RHQ_JAVA_HOME or RHQ_JAVA_EXE_FILE_PATH appropriately.
    exit /B 1
 )
 
@@ -159,19 +173,6 @@ if not defined CLASSPATH (
    set CLASSPATH=%_entry:"=%
 ) else (
    set CLASSPATH=%CLASSPATH%;%_entry:"=%
-)
-goto :eof
-
-rem ----------------------------------------------------------------------
-rem CALL subroutine that prepares to use the embedded JRE
-rem ----------------------------------------------------------------------
-
-:prepare_embedded_jre
-set RHQ_CLI_JAVA_HOME=%RHQ_CLI_HOME%\jre
-if defined RHQ_CLI_DEBUG echo Using the embedded JRE
-if not exist "%RHQ_CLI_JAVA_HOME%" (
-   if defined RHQ_CLI_DEBUG echo No embedded JRE found - will try to use JAVA_HOME: %JAVA_HOME%
-   set RHQ_CLI_JAVA_HOME=%JAVA_HOME%
 )
 goto :eof
 

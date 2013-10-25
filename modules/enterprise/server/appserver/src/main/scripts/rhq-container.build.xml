@@ -1008,7 +1008,7 @@ ${comment}rhq.storage.verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empt
 
     <target name="copy-dev-resources" if="copy.dev.resources">
         <echo>Copying dev-only resources ...</echo>
-        <copy todir="${project.build.outputDirectory}" verbose="true">
+        <copy todir="${project.build.outputDirectory}" overwrite="true" verbose="true">
             <fileset dir="src/main/dev-resources" />
         </copy>
       <loadproperties>

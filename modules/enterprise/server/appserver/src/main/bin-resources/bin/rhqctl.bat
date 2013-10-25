@@ -49,7 +49,7 @@ rem                                       left unset if it is not needed.
 
 rem =============================================================================
 
-setlocal
+setlocal enabledelayedexpansion
 
 rem if debug variable is set, it is assumed to be on, unless its value is false
 if "%RHQ_CONTROL_DEBUG%" == "false" (
@@ -134,23 +134,23 @@ rem ----------------------------------------------------------------------
 
 if not defined RHQ_JAVA_EXE_FILE_PATH (
    if defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-      set RHQ_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%
+      set RHQ_JAVA_EXE_FILE_PATH=!RHQ_SERVER_JAVA_EXE_FILE_PATH!
    )
 )
 if not defined RHQ_JAVA_HOME (
    if defined RHQ_SERVER_JAVA_HOME (
-      set RHQ_JAVA_HOME=%RHQ_SERVER_JAVA_HOME%
+      set RHQ_JAVA_HOME=!RHQ_SERVER_JAVA_HOME!
    )
 )
 
 if not defined RHQ_JAVA_EXE_FILE_PATH (
    if not defined RHQ_JAVA_HOME (
-      if defined RHQ_CONTROL_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: %JAVA_HOME%
-      set RHQ_JAVA_HOME=%JAVA_HOME%
+      if defined RHQ_CONTROL_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: !JAVA_HOME!
+      set RHQ_JAVA_HOME=!JAVA_HOME!
    )
 )
 if not defined RHQ_JAVA_EXE_FILE_PATH (
-   set RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_HOME%\bin\java.exe
+   set RHQ_JAVA_EXE_FILE_PATH=!RHQ_JAVA_HOME!\bin\java.exe
 )
 
 if defined RHQ_CONTROL_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%
@@ -178,7 +178,7 @@ if defined RHQ_CONTROL_DEBUG (
    set _RHQ_LOGLEVEL=INFO
 )
 
-rem set some of the base required options
+rem Set some of the base required options
 set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Djava.awt.headless=true -Drhq.server.properties-file="%RHQ_SERVER_HOME%\bin\rhq-server.properties" -Drhq.control.logdir="%RHQ_SERVER_HOME%\logs" -Drhq.control.loglevel=%_RHQ_LOGLEVEL% -Drhq.server.basedir="%RHQ_SERVER_HOME%" -Drhqctl.properties-file="%RHQ_SERVER_HOME%\bin\rhqctl.properties" -Drhq.java-exe-file-path="%RHQ_JAVA_EXE_FILE_PATH%"
 
 rem Sample JPDA settings for remote socket debugging

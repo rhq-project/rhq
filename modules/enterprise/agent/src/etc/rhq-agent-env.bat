@@ -30,7 +30,7 @@ rem                    RHQ_JAVA_EXE_FILE_PATH is set.
 rem                    If this and RHQ_JAVA_EXE_FILE_PATH are
 rem                    not set, JAVA_HOME will be used.
 rem
-rem set RHQ_JAVA_HOME=C:\opt\java
+rem set RHQ_JAVA_HOME=
 
 rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 rem                             executable to use. If this is set,
@@ -41,11 +41,13 @@ rem                             is used. If this and
 rem                             RHQ_JAVA_HOME are not set, then
 rem                             JAVA_HOME will be used.
 rem
-rem set RHQ_JAVA_EXE_FILE_PATH=C:\WINDOWS\system32\java.exe
+rem set RHQ_JAVA_EXE_FILE_PATH=
 
 rem ===========================================================================
-rem THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent.bat SCRIPT
-rem THESE ARE NOT USED/IGNORED BY rhq-agent-wrapper.bat SCRIPT
+rem THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent.bat SCRIPT,
+rem THEY ARE IGNORED BY rhq-agent-wrapper.bat SCRIPT. See the
+rem   rhq-agent-wrapper.conf and rhq-agent-wrapper.inc for more
+rem   on setting Java options.
 
 rem    RHQ_AGENT_JAVA_OPTS - Java VM command line options to be
 rem                          passed into the agent's VM. If this is not defined

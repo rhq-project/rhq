@@ -19,7 +19,7 @@ rem If the embedded JRE is to be used but is not available, the fallback
 rem JRE to be used will be determined by the JAVA_HOME environment variable.
 rem ===========================================================================
 
-setlocal
+setlocal enabledelayedexpansion
 
 if "%1"=="_SETENV_ONLY" (
    set _SETENV_ONLY=true
@@ -78,23 +78,23 @@ rem ----------------------------------------------------------------------
 
 if not defined RHQ_JAVA_EXE_FILE_PATH (
    if defined RHQ_AGENT_JAVA_EXE_FILE_PATH (
-      set RHQ_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%
+      set RHQ_JAVA_EXE_FILE_PATH=!RHQ_AGENT_JAVA_EXE_FILE_PATH!
    )
 )
 if not defined RHQ_JAVA_HOME (
    if defined RHQ_AGENT_JAVA_HOME (
-      set RHQ_JAVA_HOME=%RHQ_AGENT_JAVA_HOME%
+      set RHQ_JAVA_HOME=!RHQ_AGENT_JAVA_HOME!
    )
 )
 
 if not defined RHQ_JAVA_EXE_FILE_PATH (
    if not defined RHQ_JAVA_HOME (
-      if defined RHQ_AGENT_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: %JAVA_HOME%
-      set RHQ_JAVA_HOME=%JAVA_HOME%
+      if defined RHQ_AGENT_DEBUG echo No RHQ JAVA property set, defaulting to JAVA_HOME: !JAVA_HOME!
+      set RHQ_JAVA_HOME=!JAVA_HOME!
    )
 )
 if not defined RHQ_JAVA_EXE_FILE_PATH (
-   set RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_HOME%\bin\java.exe
+   set RHQ_JAVA_EXE_FILE_PATH=!RHQ_JAVA_HOME!\bin\java.exe
 )
 
 if defined RHQ_AGENT_DEBUG echo RHQ_JAVA_HOME: %RHQ_JAVA_HOME%

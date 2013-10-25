@@ -45,7 +45,6 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
-import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -205,22 +204,20 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
 
         // Validate the product type (e.g. AS or EAP).
-        JBossProductType runtimeType;
+        String expectedRuntimeProductName = pluginConfiguration.getSimpleValue("expectedRuntimeProductName");
         try {
-            String runtimeTypeString = readAttribute(getHostAddress(), "product-name");
-            runtimeType = (runtimeTypeString != null && !runtimeTypeString.isEmpty()) ? JBossProductType
-                .getValueByProductName(runtimeTypeString) : JBossProductType.AS;
-        } catch (Exception e) {
-            runtimeType = null;
-            log.error("Failed to validate product type for " + getResourceDescription() + ".", e);
-        }
-        if (runtimeType != null) {
-            JBossProductType type = serverPluginConfig.getProductType();
-            if (runtimeType != type) {
-                throw new InvalidPluginConfigurationException(
-                    "The original product type discovered for this AS7 server was " + type
-                        + ", but the server is now reporting its product type is [" + runtimeType + "].");
+            String runtimeProductName = readAttribute(getHostAddress(), "product-name");
+            if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
+                runtimeProductName = JBossProductType.AS.PRODUCT_NAME;
             }
+            if (!runtimeProductName.equals(expectedRuntimeProductName)) {
+                throw new InvalidPluginConfigurationException(
+                    "The original product type discovered for this server was " + expectedRuntimeProductName
+                        + ", but the server is now reporting its product type is [" + runtimeProductName + "]");
+            }
+        } catch (Exception e) {
+            throw new InvalidPluginConfigurationException("Failed to validate product type for "
+                + getResourceDescription(), e);
         }
     }
 

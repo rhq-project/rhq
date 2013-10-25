@@ -963,11 +963,6 @@
                   required="false"
                   default="-1" />
                <c:simple-property
-                  name="sharedExecutorName"
-                  type="string"
-                  description="If this Connector is configured to use a shared Executor for its thread pool, this is the name of that Executor. This is required to successfully collect threadpool metrics for the Connector. Leave this unset if the Connector is not using a shared Executor for its threadpool."
-                  required="false" />
-               <c:simple-property
                   name="disableUploadTimeout"
                   type="boolean"
                   description="This flag allows the servlet container to use a different, longer connection timeout while a servlet is being executed, which in the end allows either the servlet a longer amount of time to complete its execution, or a longer timeout during data upload. If not specified, this attribute is set to true."

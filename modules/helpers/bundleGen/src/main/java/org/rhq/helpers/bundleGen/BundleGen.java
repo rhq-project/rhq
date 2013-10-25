@@ -43,6 +43,7 @@ import freemarker.template.TemplateException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -76,15 +77,20 @@ public class BundleGen {
 
       String bundleTargetDirectory = "/tmp"; // TODO ask user?
 
-      String tmpDirPath = System.getProperty("java.io.tmpdir");
-      log.debug("Java Tmp dir is " + tmpDirPath);
 
-      String genPath = tmpDirPath + "/" + "bundleGen";
-      File tmpDir = new File(genPath); // TODO path separator
-      if (!tmpDir.exists() && !tmpDir.mkdir()) {
-         log.error(resourceBundle.getString("no.tmp.dir"));
-         System.exit(1);
-      }
+       File tmpDir = null;
+       try {
+           String tmpDirPath = System.getProperty("java.io.tmpdir");
+           tmpDir = FileUtil.createTempDirectory("bundle", null, new File(tmpDirPath));
+           tmpDir.setReadable(true);
+           tmpDir.setWritable(true);
+           tmpDir.setExecutable(true);
+           tmpDir.deleteOnExit();
+       } catch (IOException e) {
+           log.error(resourceBundle.getString("no.tmp.dir"));
+           System.exit(1);
+       }
+       String genPath = tmpDir.getAbsolutePath();
 
       createFile(props,"deployMain","deploy.xml", genPath);
 
@@ -101,10 +107,12 @@ public class BundleGen {
 
          File targetFile = new File(bundleTargetDirectory + "/" + "generatedBundle.zip");
          boolean success = outFile.renameTo(targetFile);
-         if (success)
+         if (success) {
+             targetFile.setReadable(true);
             log.info(MessageFormat.format(resourceBundle.getString("bundle.ready"), targetFile.getAbsolutePath()));
+         }
          else {
-            log.debug("Could not rename file to ["+ targetFile.getAbsolutePath()+"]");
+            log.debug("Could not rename file to [" + targetFile.getAbsolutePath() + "]");
             log.info(MessageFormat.format(resourceBundle.getString("bundle.ready"), outFile.getAbsolutePath()));
          }
 

@@ -24,6 +24,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -34,8 +35,10 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
 import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.server.metrics.MetricsServer;
 
 /**
  * @author Greg Hinkle
@@ -47,6 +50,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class MeasurementMonitor implements MeasurementMonitorMBean {
     private static final ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=MeasurementMonitor");
+
+    @EJB
+    private StorageClientManagerBean storageClientManager;
 
     private AtomicLong measurementInsertTime = new AtomicLong();
 
@@ -63,8 +69,6 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
     private AtomicLong changesOnlyAvailabilityReports = new AtomicLong();
 
     private AtomicLong fullAvailabilityReports = new AtomicLong();
-
-    private AtomicLong compressionTime = new AtomicLong();
 
     private AtomicLong purgeTime = new AtomicLong();
 
@@ -179,11 +183,7 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
     }
 
     public long getMeasurementCompressionTime() {
-        return compressionTime.get();
-    }
-
-    public void incrementMeasurementCompressionTime(long delta) {
-        this.compressionTime.addAndGet(delta);
+        return storageClientManager.getMetricsServer().getTotalAggregationTime();
     }
 
     public long getPurgeTime() {

@@ -264,7 +264,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             watch.reset();
             rows = insStmt.executeUpdate();
 
-            MeasurementMonitor.getMBean().incrementMeasurementCompressionTime(watch.getElapsed());
         } finally {
             JDBCUtil.safeClose(conn, insStmt, null);
         }

@@ -192,7 +192,7 @@ if not defined RHQ_AGENT_MAINCLASS (
 rem note - currently not using custom Java Prefs as the default, use commented command line to activate. If installing
 rem note - the agent as a windows service, you must also uncomment lines in wrapper/rhq-agent-wrapper.conf.
 rem set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %_JAVA_PREFERENCES_FACTORY_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
-set CMD="%RHQ_AGENT_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
+set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
 
 if not defined _SETENV_ONLY (
    rem log4j 1.2.8 does not create the directory for us (later versions do)

@@ -149,7 +149,7 @@ if defined RHQ_CLI_DEBUG (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 )
 
-set CMD="%RHQ_CLI_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_CLI_JAVA_OPTS% %RHQ_CLI_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.client.ClientMain %RHQ_CLI_CMDLINE_OPTS%
+set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_CLI_JAVA_OPTS% %RHQ_CLI_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.client.ClientMain %RHQ_CLI_CMDLINE_OPTS%
 
 rem log4j 1.2.8 does not create the directory for us (later versions do)
 if not exist "%RHQ_CLI_HOME%\logs" (

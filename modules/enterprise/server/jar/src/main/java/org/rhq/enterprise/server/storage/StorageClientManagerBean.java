@@ -88,6 +88,10 @@ public class StorageClientManagerBean {
     private boolean initialized;
     private StorageClusterMonitor storageClusterMonitor;
 
+    private String cachedStorageUsername;
+    private String cachedStoragePassword;
+
+
     /**
      * @return true if the storage subsystem is running
      */
@@ -101,37 +105,9 @@ public class StorageClientManagerBean {
 
         log.info("Initializing storage client subsystem");
 
-        // Always get the creds from the DB, system props may not be up to date at install time
-        // the code assumes the passwords to be obfuscated, because they can also come that way from other sources
-        // (like property files). So let's make our lives easy and always use obfuscated passwords.
-        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
-        final String username = settings.get(SystemSetting.STORAGE_USERNAME);
-        final String password = settings.get(SystemSetting.STORAGE_PASSWORD);
-
-        List<StorageNode> storageNodes = new ArrayList<StorageNode>();
-        for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
-            // We only want clustered nodes here because we won't be able to connect to
-            // node that is not part of the cluster. The filtering here on the operation
-            // mode is somewhat convservative because we could also include ADD_MAINTENANCE
-            // and REMOVE_MAINTENANCE, but this errors on the side of being safe. Lastly,
-            // if a storage node does not have a resource, then that means it was was
-            // deployed prior to installing the server.
-            if (storageNode.getOperationMode() == StorageNode.OperationMode.NORMAL
-                || storageNode.getOperationMode() == StorageNode.OperationMode.MAINTENANCE
-                || storageNode.getResource() == null) {
-                storageNodes.add(storageNode);
-            }
-        }
-
-        if (storageNodes.isEmpty()) {
-            throw new IllegalStateException(
-                "There is no storage node metadata stored in the relational database. This may have happened as a "
-                    + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
-                    + "storage node to fix this issue.");
-        }
-
+        Session wrappedSession;
         try {
-            checkSchemaCompability(username, password, storageNodes);
+            wrappedSession = createSession();
         } catch (NoHostAvailableException e) {
             initialized = false;
             log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
@@ -139,7 +115,8 @@ public class StorageClientManagerBean {
                 + " as soon as possible.");
             return initialized;
         }
-        Session wrappedSession = createSession(username, password, storageNodes);
+
+        wrappedSession = createSession();
         session = new StorageSession(wrappedSession);
 
         storageClusterMonitor = new StorageClusterMonitor();
@@ -153,6 +130,40 @@ public class StorageClientManagerBean {
         initialized = true;
         log.info("Storage client subsystem is now initialized");
         return initialized;
+    }
+
+    public synchronized boolean refreshCredentialsAndSession() {
+        if (!initialized) {
+            if (log.isDebugEnabled()) {
+                log.debug("Storage client subsystem not initialized. Skipping session refresh.");
+            }
+            return false;
+        }
+
+        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
+        String username = settings.get(SystemSetting.STORAGE_USERNAME);
+        String password = settings.get(SystemSetting.STORAGE_PASSWORD);
+
+        if ((username != null && !username.equals(this.cachedStorageUsername))
+            || (password != null && !password.equals(this.cachedStoragePassword))) {
+
+            Session wrappedSession;
+            try {
+                wrappedSession = createSession();
+            } catch (NoHostAvailableException e) {
+                initialized = false;
+                log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
+                    + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
+                    + " as soon as possible.");
+                return initialized;
+            }
+
+            session.registerNewSession(wrappedSession);
+            initialized = true;
+            return true;
+        }
+
+        return true;
     }
 
     /**
@@ -229,7 +240,38 @@ public class StorageClientManagerBean {
         return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
     }
 
-    private Session createSession(String username, String password, List<StorageNode> storageNodes) {
+    private Session createSession() {
+        // Always get the creds from the DB, system props may not be up to date at install time
+        // the code assumes the passwords to be obfuscated, because they can also come that way from other sources
+        // (like property files). So let's make our lives easy and always use obfuscated passwords.
+        SystemSettings settings = systemManager.getObfuscatedSystemSettings(true);
+        this.cachedStorageUsername = settings.get(SystemSetting.STORAGE_USERNAME);
+        this.cachedStoragePassword = settings.get(SystemSetting.STORAGE_PASSWORD);
+
+        List<StorageNode> storageNodes = new ArrayList<StorageNode>();
+        for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
+            // We only want clustered nodes here because we won't be able to connect to
+            // node that is not part of the cluster. The filtering here on the operation
+            // mode is somewhat convservative because we could also include ADD_MAINTENANCE
+            // and REMOVE_MAINTENANCE, but this errors on the side of being safe. Lastly,
+            // if a storage node does not have a resource, then that means it was was
+            // deployed prior to installing the server.
+            if (storageNode.getOperationMode() == StorageNode.OperationMode.NORMAL
+                || storageNode.getOperationMode() == StorageNode.OperationMode.MAINTENANCE
+                || storageNode.getResource() == null) {
+                storageNodes.add(storageNode);
+            }
+        }
+
+        if (storageNodes.isEmpty()) {
+            throw new IllegalStateException(
+                "There is no storage node metadata stored in the relational database. This may have happened as a "
+                    + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
+                    + "storage node to fix this issue.");
+        }
+
+        checkSchemaCompability(this.cachedStorageUsername, this.cachedStoragePassword, storageNodes);
+
         if (log.isDebugEnabled()) {
             log.debug("Initializing session to connect to storage node cluster");
         }
@@ -252,7 +294,7 @@ public class StorageClientManagerBean {
         }
 
         cluster = new ClusterBuilder().addContactPoints(hostNames.toArray(new String[hostNames.size()]))
-            .withCredentialsObfuscated(username, password).withPort(port)
+            .withCredentialsObfuscated(this.cachedStorageUsername, this.cachedStoragePassword).withPort(port)
             .withLoadBalancingPolicy(new RoundRobinPolicy())
             .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE)).withCompression(compression).build();
 

@@ -10,6 +10,7 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.server.metrics.StorageSession;
 
 /**
  * @author John Sanda
@@ -17,8 +18,13 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 @Stateless
 public class StorageClusterSettingsManagerBean implements StorageClusterSettingsManagerLocal {
 
+    private static final String UPDATE_PASSWORD_QUERY = "ALTER USER '%s' WITH PASSWORD '%s'";
+
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    private StorageClientManagerBean storageClienManager;
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -76,9 +82,20 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
             settings.put(SystemSetting.STORAGE_USERNAME, clusterSettings.getUsername());
         }
         if (clusterSettings.getPasswordHash() != null) {
+            this.updateStorageClusterCredentials(clusterSettings);
             settings.put(SystemSetting.STORAGE_PASSWORD, clusterSettings.getPasswordHash());
         }
         systemManager.setStorageClusterSettings(subject, settings);
     }
 
+    private void updateStorageClusterCredentials(StorageClusterSettings newClusterSettings) {
+        SystemSettings currentSettings = systemManager.getUnmaskedSystemSettings(true);
+        String currentPassword = currentSettings.get(SystemSetting.STORAGE_PASSWORD);
+
+        if (!currentPassword.equals(newClusterSettings.getPasswordHash())) {
+            StorageSession session = this.storageClienManager.getSession();
+            session.execute(String.format(UPDATE_PASSWORD_QUERY, currentSettings.get(SystemSetting.STORAGE_USERNAME),
+                newClusterSettings.getPasswordHash()));
+        }
+    }
 }

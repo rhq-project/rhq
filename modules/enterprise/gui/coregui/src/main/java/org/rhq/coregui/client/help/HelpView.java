@@ -79,7 +79,6 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
-        // TODO: Help icon.
         TitleBar titleBar = new TitleBar(MSG.common_title_help(), VIEW_ID.getIcon().getIcon24x24Path());
         vLayout.addMember(titleBar);
 
@@ -92,8 +91,8 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
 
     private NavigationSection buildProductSection() {
 
-        NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about()),
-            "[SKIN]/../actions/help.png", new ViewFactory() {
+        NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about(),
+            IconEnum.HELP), new ViewFactory() {
                 public Canvas createView() {
                     final AboutModalWindow aboutModalWindow = new AboutModalWindow(productInfo);
                     aboutModalWindow.show();
@@ -122,10 +121,10 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 try {
                     icon = this.getContent("view_help_section_" + i + "_propIcon_" + j);
                     if (icon == null) {
-                        icon = "[SKIN]/../headerIcons/document.png";
+                        icon = IconEnum.HELP.getIcon16x16Path();
                     }
                 } catch (MissingResourceException e) {
-                    icon = "[SKIN]/../headerIcons/document.png";
+                    icon = IconEnum.HELP.getIcon16x16Path();
                 }
 
                 final String itemName = "Section" + i + "Item" + j;

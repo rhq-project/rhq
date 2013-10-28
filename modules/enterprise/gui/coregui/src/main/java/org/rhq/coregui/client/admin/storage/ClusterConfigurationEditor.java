@@ -147,7 +147,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
     private void prepareForms() {
         setWidth100();
-        clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'><b>Cluster Settings</b></span><br/>On save, these setting will not be propagated to existing Storage"
+        clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
+            + "<b>Cluster Settings</b></span><br/>On save, these setting will not be propagated to existing Storage"
             + " Nodes. Please review the documentation on how update the CQL and Gossip ports for all Storage Nodes.</div>");
 
         List<FormItem> items = buildHeaderItems();
@@ -182,7 +183,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(gossipPortItems);
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'><b>Deployment Settings</b></span><br/>Only applies to new installations.</div>");
+        deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
+            + "<b>Deployment Settings</b></span><br/>Only applies to new installations.</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
 
@@ -206,7 +208,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(automaticDeploymentItems);
         deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        credentialsForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'><b>Cluster Credentials</b></span><br/>Password changes are propagated to the Storage Cluster.</div>");
+        credentialsForm = buildForm("<div align='left'><span style='text-align: left; font-family: Arial, Verdana, sans-serif !important;'>"
+            + "<b>Cluster Credentials</b></span><br/>Password changes are propagated to the Storage Cluster.</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
 
@@ -223,6 +226,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
         // password field
         StringLengthValidator passwordValidator1 = new StringLengthValidator(6, 100, false);
+        passwordValidator1.setErrorMessage("The password length must be at least 6 characters.");
+        // due to SmartGWT bug that changes focus after each input (https://code.google.com/p/smartgwt/issues/detail?id=309)
+        passwordValidator1.setValidateOnChange(false);
         builder = new FormItemBuilder();
         List<FormItem> passwordItems = builder
             .withName(FIELD_PASSWORD)
@@ -237,9 +243,14 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
         // password_verify field
         builder = new FormItemBuilder();
+        passwordValidator1 = new StringLengthValidator(6, 100, false);
+        passwordValidator1.setErrorMessage("The password length must be at least 6 characters.");
         MatchesFieldValidator passwordValidator2 = new MatchesFieldValidator();
         passwordValidator2.setOtherField(FIELD_PASSWORD);
         passwordValidator2.setErrorMessage("This should be the same string as in the Password field.");
+        // due to same bug in SmartGWT as above
+        passwordValidator1.setValidateOnChange(false);
+        passwordValidator2.setValidateOnChange(false);
         List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
             .withValue(settings.getPasswordHash()).withDescription("Validation (needs to match Password)")
             .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)

@@ -367,11 +367,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private boolean isStorageSetting(SystemSetting setting) {
         switch (setting) {
         case STORAGE_CQL_PORT:
-            return true;
         case STORAGE_GOSSIP_PORT:
-            return true;
         case STORAGE_AUTOMATIC_DEPLOYMENT:
-            return true;
+        case STORAGE_PASSWORD:
+        case STORAGE_USERNAME:
+            return true;        
         default:
             return false;
         }

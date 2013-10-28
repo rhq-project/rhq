@@ -46,6 +46,18 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
             clusterSettings.setAutomaticDeployment(Boolean.parseBoolean(settings
                 .get(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT)));
         }
+        
+        if (!settings.containsKey(SystemSetting.STORAGE_USERNAME)) {
+            return null;
+        } else {
+            clusterSettings.setUsername(settings.get(SystemSetting.STORAGE_USERNAME));
+        }
+        
+        if (!settings.containsKey(SystemSetting.STORAGE_PASSWORD)) {
+            return null;
+        } else {
+            clusterSettings.setPasswordHash(settings.get(SystemSetting.STORAGE_PASSWORD));
+        }
 
         return clusterSettings;
     }
@@ -59,6 +71,12 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
         if (clusterSettings.getAutomaticDeployment() != null) {
             settings.put(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT,
                 Boolean.toString(clusterSettings.getAutomaticDeployment()));
+        }
+        if (clusterSettings.getUsername() != null) { 
+            settings.put(SystemSetting.STORAGE_USERNAME, clusterSettings.getUsername());
+        }
+        if (clusterSettings.getPasswordHash() != null) {
+            settings.put(SystemSetting.STORAGE_PASSWORD, clusterSettings.getPasswordHash());
         }
         systemManager.setStorageClusterSettings(subject, settings);
     }

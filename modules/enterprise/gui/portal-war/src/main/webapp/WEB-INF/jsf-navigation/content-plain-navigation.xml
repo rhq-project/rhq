@@ -237,7 +237,7 @@
    </navigation-rule>
 
    <navigation-rule>
-      <from-view-id>rhq/content/importRepos-plain.xhtml</from-view-id>
+      <from-view-id>/rhq/content/importRepos-plain.xhtml</from-view-id>
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>

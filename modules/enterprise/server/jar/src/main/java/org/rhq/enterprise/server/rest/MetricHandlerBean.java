@@ -663,6 +663,10 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         if (startTime < now - SEVEN_DAYS)
             throw new IllegalArgumentException("(Computed) start time is older than 7 days");
 
+        if (startTime == endTime) {
+            endTime++; // add 1ms, as otherwise the backend fails to find a value at the startTime
+        }
+
         // Check if the schedule exists
         obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
@@ -885,9 +889,9 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     }
 
     /**
-     * Write the numeric data points to the output stream in JSON encoding
-     * without creating tons of objects in the middle to have them marshalled
-     * by JAX-RS
+     * Write the numeric data points to the output stream in the encoding
+     * requested from the mediaType without creating tons of objects in the
+     * middle to have them marshalled by JAX-RS
      */
     private class RawNumericStreamingOutput implements StreamingOutput {
 

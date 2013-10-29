@@ -65,7 +65,7 @@ public class AboutModalWindow extends PopupWindow {
 
         LinkItem productUrl = new LinkItem("url");
         productUrl.setValue(productInfo.getUrl());
-        productUrl.setLinkTitle(productInfo.getUrl());
+        productUrl.setLinkTitle(MSG.common_label_link());
         productUrl.setTitle(productInfo.getFullName());
         productUrl.setTarget("_blank");
         productUrl.setWrap(false);

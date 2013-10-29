@@ -83,7 +83,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(
-                    "Unable to load common storage cluster configuration: " + caught.getMessage(), caught);
+                    MSG.view_adminTopology_storageNodes_clusterSettings_message_cantLoad() + caught.getMessage(),
+                    caught);
             }
 
             @Override
@@ -98,12 +99,14 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         updateSettings();
         GWTServiceLookup.getStorageService().updateClusterSettings(settings, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                Message msg = new Message("Storage cluster settings were successfully updated.", Message.Severity.Info);
+                Message msg = new Message(MSG.view_adminTopology_storageNodes_clusterSettings_message_updateSuccess(),
+                    Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(msg);
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Unable to update the storage node settings.", caught);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_adminTopology_storageNodes_clusterSettings_message_updateFail(), caught);
             }
         });
     }
@@ -148,56 +151,44 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private void prepareForms() {
         setWidth100();
         clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>Cluster Settings</b></span><br/>Before changing these settings, storage nodes require updates to have equivalent port numbers. "
-            + "Port changes below will only be saved in the RHQ server configuration.</div>");
+            + "<b>" + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings() + "</b></span><br/>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_desc() + "</div>");
 
         List<FormItem> items = buildHeaderItems();
         IsIntegerValidator validator = new IsIntegerValidator();
 
         // cql port field
         FormItemBuilder builder = new FormItemBuilder();
-        List<FormItem> cqlPortItems = builder
-            .withName(FIELD_CQL_PORT)
-            .withTitle("CQL Port")
+        List<FormItem> cqlPortItems = builder.withName(FIELD_CQL_PORT).withTitle("CQL Port")
             .withValue(String.valueOf(settings.getCqlPort()))
-            .withDescription(
-                "Port on which the Storage Nodes listen for CQL client connections. On save this setting"
-                    + " will not be propagated to existing Storage Nodes. Please review the documentation on how update"
-                    + " the CQL port for all Storage Nodes. <b>Warning:</b> if this setting does not match the configured"
-                    + " Storage Cluster CQL port, the server will not be able to communicate with the Storage Cluster"
-                    + " and will go into maintenance mode.").withValidators(validator).build();
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_cqlPort())
+            .withValidators(validator).build();
         items.addAll(cqlPortItems);
 
         // gossip port field
         builder = new FormItemBuilder();
-        List<FormItem> gossipPortItems = builder
-            .withName(FIELD_GOSSIP_PORT)
-            .withTitle("Gossip Port")
+        List<FormItem> gossipPortItems = builder.withName(FIELD_GOSSIP_PORT).withTitle("Gossip Port")
             .withValue(String.valueOf(settings.getGossipPort()))
-            .withDescription(
-                "The port used for internode communication in the Storage Cluster. On save this setting"
-                    + " will not be propagated to existing Storage Nodes. Please review the documentation on how update"
-                    + " the Gossip port for all Storage Nodes. <b>Warning:</b> if this setting does not match the"
-                    + " configured Storage Cluster Gossip port, any new Storage Nodes will be able to communicate"
-                    + " and be part of the existing Storage Cluster.").withValidators(validator).build();
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_gossipPort())
+            .withValidators(validator).build();
         items.addAll(gossipPortItems);
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
         deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>New Deployment Settings</b></span><br/>Only applies to new installations.</div>");
+            + "<b>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_deployments()
+            + "</b></span><br/>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_deployments_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
 
         // automatic deployment field
         builder = new FormItemBuilder();
-        List<FormItem> automaticDeploymentItems = builder
-            .withName(FIELD_AUTOMATIC_DEPLOYMENT)
-            .withTitle("Automatic Deployment")
+        List<FormItem> automaticDeploymentItems = builder.withName(FIELD_AUTOMATIC_DEPLOYMENT)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_deployments_autoDeploy_title())
             .withValue(Boolean.toString(settings.getAutomaticDeployment()))
-            .withDescription(
-                "If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster."
-                    + " It only applies to new installations.").withReadOnlySetTo(readOnly)
-            .build((FormItem) GWT.create(RadioGroupItem.class));
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_deployments_autoDeploy())
+            .withReadOnlySetTo(readOnly).build((FormItem) GWT.create(RadioGroupItem.class));
         RadioGroupItem autoDeployRadio = (RadioGroupItem) automaticDeploymentItems.get(1);
         autoDeployRadio.setVertical(false);
         LinkedHashMap<String, String> values = new LinkedHashMap<String, String>(2);
@@ -209,34 +200,31 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
         credentialsForm = buildForm("<div align='left'><span style='text-align: left; font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>Cluster Credentials</b></span><br/>Password changes are propagated to the Storage Cluster.</div>");
+            + "<b>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_credentials()
+            + "</b></span><br/>"
+            + MSG.view_adminTopology_storageNodes_clusterSettings_credentials_desc() + "</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
 
         // username field
         StringLengthValidator usernameValidator = new StringLengthValidator(4, 100, false);
         builder = new FormItemBuilder();
-        List<FormItem> usernameItems = builder
-            .withName(FIELD_USERNAME)
-            .withTitle("Username")
-            .withDescription(
-                "Username for Storage Node. This property is read-only because changes to the username are not allowed.")
+        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_username_title())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_username())
             .withValue(settings.getUsername()).withReadOnlySetTo(true).withValidators(usernameValidator).build();
         items.addAll(usernameItems);
 
         // password field
         StringLengthValidator passwordValidator1 = new StringLengthValidator(6, 100, false);
-        passwordValidator1.setErrorMessage("The password length must be at least 6 characters.");
+        passwordValidator1.setErrorMessage(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_err1());
         // due to SmartGWT bug that changes focus after each input (https://code.google.com/p/smartgwt/issues/detail?id=309)
         passwordValidator1.setValidateOnChange(false);
         builder = new FormItemBuilder();
-        List<FormItem> passwordItems = builder
-            .withName(FIELD_PASSWORD)
-            .withTitle("Password")
-            .withDescription(
-                "Password for all Storage Node CQL authentication. Changing will get propagated to the all deployed"
-                    + " Storage Nodes and appliad to newly installed nodes. All HA servers will have Storage Cluster"
-                    + " sessions refreshed automatically to use the new password.")
+        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password_title())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_password())
             .withValue(settings.getPasswordHash()).withReadOnlySetTo(readOnly).withValidators(passwordValidator1)
             .build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordItems);
@@ -244,15 +232,17 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         // password_verify field
         builder = new FormItemBuilder();
         passwordValidator1 = new StringLengthValidator(6, 100, false);
-        passwordValidator1.setErrorMessage("The password length must be at least 6 characters.");
+        passwordValidator1.setErrorMessage(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_err1());
         MatchesFieldValidator passwordValidator2 = new MatchesFieldValidator();
         passwordValidator2.setOtherField(FIELD_PASSWORD);
-        passwordValidator2.setErrorMessage("This should be the same string as in the Password field.");
+        passwordValidator2.setErrorMessage(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_err2());
         // due to same bug in SmartGWT as above
         passwordValidator1.setValidateOnChange(false);
         passwordValidator2.setValidateOnChange(false);
-        List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
-            .withValue(settings.getPasswordHash()).withDescription("Validation (needs to match Password)")
+        List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY)
+            .withTitle(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_verify_title())
+            .withValue(settings.getPasswordHash())
+            .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_credentials_verify())
             .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)
             .build((FormItem) GWT.create(PasswordItem.class));
 
@@ -280,8 +270,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (clusterForm.validate() && deploymentForm.validate() && credentialsForm.validate()) {
-                    SC.ask(
-                        "Changing the cluster wide configuration will eventually affect all the storage nodes. Do you want to continue?",
+                    SC.ask(MSG.view_adminTopology_storageNodes_clusterSettings_message_confirmation(),
                         new BooleanCallback() {
                             @Override
                             public void execute(Boolean value) {

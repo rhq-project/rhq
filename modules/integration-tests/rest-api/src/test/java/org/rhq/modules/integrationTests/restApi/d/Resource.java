@@ -39,6 +39,7 @@ public class Resource {
     String ancestry;
     String location;
     String description;
+    String availability;
 
     public Resource() {
     }
@@ -129,5 +130,13 @@ public class Resource {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(String availability) {
+        this.availability = availability;
     }
 }

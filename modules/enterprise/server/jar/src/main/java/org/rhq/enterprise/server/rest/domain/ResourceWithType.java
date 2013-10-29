@@ -45,6 +45,7 @@ public class ResourceWithType {
     String pluginName;
     Integer parentId;
     String status;
+    String availability;
     List<Link> links = new ArrayList<Link>();
     private String ancestry;
     private String location;
@@ -144,6 +145,16 @@ public class ResourceWithType {
     @ApiProperty("The ancestry gives the path to the root resource")
     public String getAncestry() {
         return ancestry;
+    }
+
+    @ApiProperty("The availability of the resource at the time of retrieval. " +
+        "Please note that when caching the resource, this value may become outdated.")
+    public String getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(String availability) {
+        this.availability = availability;
     }
 
     @Override

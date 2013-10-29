@@ -276,6 +276,7 @@ public class AbstractRestBean {
         rwt.setStatus(res.getInventoryStatus().name());
         rwt.setLocation(res.getLocation());
         rwt.setDescription(res.getDescription());
+        rwt.setAvailability(res.getCurrentAvailability().getAvailabilityType().toString());
         Resource parent = res.getParentResource();
         if (parent != null) {
             rwt.setParentId(parent.getId());

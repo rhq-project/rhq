@@ -148,8 +148,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private void prepareForms() {
         setWidth100();
         clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>Cluster Settings</b></span><br/>On save, these setting will not be propagated to existing Storage"
-            + " Nodes. Please review the documentation on how update the CQL and Gossip ports for all Storage Nodes.</div>");
+            + "<b>Cluster Settings</b></span><br/>Before changing these settings, storage nodes require updates to have equivalent port numbers. "
+            + "Port changes below will only be saved in the RHQ server configuration.</div>");
 
         List<FormItem> items = buildHeaderItems();
         IsIntegerValidator validator = new IsIntegerValidator();
@@ -184,7 +184,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         clusterForm.setFields(items.toArray(new FormItem[items.size()]));
 
         deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'>"
-            + "<b>Deployment Settings</b></span><br/>Only applies to new installations.</div>");
+            + "<b>New Deployment Settings</b></span><br/>Only applies to new installations.</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
 

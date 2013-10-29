@@ -342,6 +342,62 @@ public class MetricsTest extends AbstractBase {
 
     }
 
+    /**
+     * Submit data points for arbitrary metrics, identified by
+     * their schedule ids. We want to exactly retrieve that one
+     * data point submitted
+     *
+     * @throws Exception on error
+     */
+    @Test
+    public void testPostGetRawData3() throws Exception {
+
+        long now = System.currentTimeMillis();
+
+        MDataPoint dataPoint = new MDataPoint();
+        dataPoint.setScheduleId(numericScheduleId);
+        dataPoint.setTimeStamp(now);
+        dataPoint.setValue(1.5);
+        List<MDataPoint> points = new ArrayList<MDataPoint>(1);
+        points.add(dataPoint);
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(points)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .post("/metric/data/raw");
+
+        Response response =
+        given()
+            .header(acceptJson)
+            .pathParam("id", numericScheduleId)
+            .queryParam("startTime",now)
+            .queryParam("endTime",now)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("", not(emptyIterable()))
+        .when()
+            .get("/metric/data/{id}/raw");
+
+        List<Map<String,Object>> list = response.as(List.class);
+        assert  list.size()>0 : "No data retrieved";
+
+        boolean found = false;
+        for (Map<String, Object> map : list) {
+            MDataPoint mp = new MDataPoint(map);
+            if (mp.equals(dataPoint))
+                found = true;
+        }
+        assert found;
+
+    }
+
+
     @Test
     public void testUpdateSchedule() throws Exception {
 

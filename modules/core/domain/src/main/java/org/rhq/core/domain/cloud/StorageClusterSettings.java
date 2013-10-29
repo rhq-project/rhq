@@ -88,6 +88,6 @@ public class StorageClusterSettings implements Serializable {
     @Override
     public String toString() {
         return "StorageClusterSettings[cqlPort=" + cqlPort + ", gossipPort=" + gossipPort + ", automaticDeployment="
-            + automaticDeployment + ", username=" + username + ", passwordHash=********]";
+            + automaticDeployment + ", username (read-only)=" + username + ", passwordHash=********]";
     }
 }

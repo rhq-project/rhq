@@ -93,9 +93,8 @@ import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
-@Api(value = "Endpoints for operations - EXPERIMENTAL",
-    description = "These endpoints deal with scheduling of operations and retrieval of operation results. " +
-        "These are working, but may still change in the next RHQ release.")
+@Api(value = "Endpoints for operations.",
+    description = "These endpoints deal with scheduling of operations and retrieval of operation results. ")
 public class OperationsHandlerBean extends AbstractRestBean  {
 
     @EJB

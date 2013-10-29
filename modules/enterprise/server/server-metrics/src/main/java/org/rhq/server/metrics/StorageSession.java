@@ -34,6 +34,24 @@ public class StorageSession implements Host.StateListener {
         this.wrappedSession.getCluster().register(this);
     }
 
+    public void registerNewSession(Session newWrappedSession) {
+        Session oldWrappedSession = this.wrappedSession;
+
+
+        this.wrappedSession = newWrappedSession;
+        this.wrappedSession.getCluster().register(this);
+
+        oldWrappedSession.getCluster().unregister(this);
+
+        // initial waiting before the first check
+        try {
+            Thread.sleep(60000L);
+        } catch (InterruptedException e) {
+            // nothing
+        }
+        oldWrappedSession.shutdown();
+    }
+
     public void addStorageStateListener(StorageStateListener listener) {
         listeners.add(listener);
     }

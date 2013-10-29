@@ -59,7 +59,8 @@ import org.rhq.coregui.client.util.message.Message;
  */
 public class ClusterConfigurationEditor extends EnhancedVLayout implements RefreshableView {
 
-    private EnhancedDynamicForm form;
+    private EnhancedDynamicForm clusterForm;
+    private EnhancedDynamicForm deploymentForm;
     private EnhancedDynamicForm credentialsForm;
     private EnhancedIButton saveButton;
     private StorageClusterSettings settings;
@@ -123,6 +124,21 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         return unsetHeader;
     }
 
+    private EnhancedDynamicForm buildForm(String groupTitle) {
+        EnhancedDynamicForm form = new EnhancedDynamicForm();
+        form.setHiliteRequiredFields(true);
+        form.setNumCols(3);
+        form.setCellPadding(5);
+        form.setColWidths(190, 220, "*");
+        form.setIsGroup(true);
+        form.setGroupTitle(groupTitle);
+        form.setBorder("1px solid #AAA");
+        form.setWidth100();
+        form.setOverflow(Overflow.VISIBLE);
+        form.setExtraSpace(15);
+        return form;
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -131,38 +147,44 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
     private void prepareForms() {
         setWidth100();
-        form = new EnhancedDynamicForm();
-        form.setHiliteRequiredFields(true);
-        form.setNumCols(3);
-        form.setCellPadding(5);
-        form.setColWidths(190, 220, "*");
-        form.setIsGroup(true);
-        form.setGroupTitle("Cluster Wide Settings");
-        form.setBorder("1px solid #AAA");
-        form.setWidth100();
-        form.setOverflow(Overflow.VISIBLE);
-        form.setExtraSpace(10);
+        clusterForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'><b>Cluster Settings</b></span><br/>On save, these setting will not be propagated to existing Storage"
+            + " Nodes. Please review the documentation on how update the CQL and Gossip ports for all Storage Nodes.</div>");
 
         List<FormItem> items = buildHeaderItems();
         IsIntegerValidator validator = new IsIntegerValidator();
-        
+
         // cql port field
         FormItemBuilder builder = new FormItemBuilder();
-        List<FormItem> cqlPortItems = builder.withName(FIELD_CQL_PORT).withTitle("CQL Port")
+        List<FormItem> cqlPortItems = builder
+            .withName(FIELD_CQL_PORT)
+            .withTitle("CQL Port")
             .withValue(String.valueOf(settings.getCqlPort()))
-            .withDescription("The port on which the Storage Nodes listens for CQL client connections.")
-            .withValidators(validator).build();
+            .withDescription(
+                "Port on which the Storage Nodes listen for CQL client connections. On save this setting"
+                    + " will not be propagated to existing Storage Nodes. Please review the documentation on how update"
+                    + " the CQL port for all Storage Nodes. <b>Warning:</b> if this setting does not match the configured"
+                    + " Storage Cluster CQL port, the server will not be able to communicate with the Storage Cluster"
+                    + " and will go into maintenance mode.").withValidators(validator).build();
         items.addAll(cqlPortItems);
 
         // gossip port field
         builder = new FormItemBuilder();
-        List<FormItem> gossipPortItems = builder.withName(FIELD_GOSSIP_PORT).withTitle("Gossip Port")
+        List<FormItem> gossipPortItems = builder
+            .withName(FIELD_GOSSIP_PORT)
+            .withTitle("Gossip Port")
             .withValue(String.valueOf(settings.getGossipPort()))
-            .withDescription("The port used for internode communication in the storage cluster.")
-            .withValidators(validator).build();
+            .withDescription(
+                "The port used for internode communication in the Storage Cluster. On save this setting"
+                    + " will not be propagated to existing Storage Nodes. Please review the documentation on how update"
+                    + " the Gossip port for all Storage Nodes. <b>Warning:</b> if this setting does not match the"
+                    + " configured Storage Cluster Gossip port, any new Storage Nodes will be able to communicate"
+                    + " and be part of the existing Storage Cluster.").withValidators(validator).build();
         items.addAll(gossipPortItems);
-        
-        
+        clusterForm.setFields(items.toArray(new FormItem[items.size()]));
+
+        deploymentForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'><b>Deployment Settings</b></span><br/>Only applies to new installations.</div>");
+        FormItemBuilder.resetOddRow();
+        items = buildHeaderItems();
 
         // automatic deployment field
         builder = new FormItemBuilder();
@@ -171,8 +193,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withTitle("Automatic Deployment")
             .withValue(Boolean.toString(settings.getAutomaticDeployment()))
             .withDescription(
-                "If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster.")
-            .withReadOnlySetTo(readOnly).build((FormItem) GWT.create(RadioGroupItem.class));
+                "If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster."
+                    + " It only applies to new installations.").withReadOnlySetTo(readOnly)
+            .build((FormItem) GWT.create(RadioGroupItem.class));
         RadioGroupItem autoDeployRadio = (RadioGroupItem) automaticDeploymentItems.get(1);
         autoDeployRadio.setVertical(false);
         LinkedHashMap<String, String> values = new LinkedHashMap<String, String>(2);
@@ -181,58 +204,57 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         autoDeployRadio.setValueMap(values);
         autoDeployRadio.setValue(settings.getAutomaticDeployment());
         items.addAll(automaticDeploymentItems);
-        
-        form.setFields(items.toArray(new FormItem[items.size()]));
+        deploymentForm.setFields(items.toArray(new FormItem[items.size()]));
 
-        credentialsForm = new EnhancedDynamicForm();
-        credentialsForm.setHiliteRequiredFields(true);
-        credentialsForm.setNumCols(3);
-        credentialsForm.setCellPadding(5);
-        credentialsForm.setColWidths(190, 220, "*");
-        credentialsForm.setIsGroup(true);
-        credentialsForm.setGroupTitle("Storage Cluster Credentials");
-        credentialsForm.setBorder("1px solid #AAA");
-        credentialsForm.setWidth100();
-        credentialsForm.setOverflow(Overflow.VISIBLE);
-        
+        credentialsForm = buildForm("<div align='left'><span style='font-family: Arial, Verdana, sans-serif !important;'><b>Cluster Credentials</b></span><br/>Password changes are propagated to the Storage Cluster.</div>");
         FormItemBuilder.resetOddRow();
         items = buildHeaderItems();
 
         // username field
         StringLengthValidator usernameValidator = new StringLengthValidator(4, 100, false);
         builder = new FormItemBuilder();
-        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME).withTitle("Username")
-            .withValue(settings.getUsername()).withDescription("Username").withReadOnlySetTo(readOnly)
-            .withValidators(usernameValidator).build();
+        List<FormItem> usernameItems = builder
+            .withName(FIELD_USERNAME)
+            .withTitle("Username")
+            .withDescription(
+                "Username for Storage Node. This property is read-only because changes to the username are not allowed.")
+            .withValue(settings.getUsername()).withReadOnlySetTo(true).withValidators(usernameValidator).build();
         items.addAll(usernameItems);
 
         // password field
         StringLengthValidator passwordValidator1 = new StringLengthValidator(6, 100, false);
         builder = new FormItemBuilder();
-        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle("Password")
-            .withValue(settings.getPasswordHash()).withDescription("Password").withReadOnlySetTo(readOnly)
-            .withValidators(passwordValidator1).build((FormItem) GWT.create(PasswordItem.class));
+        List<FormItem> passwordItems = builder
+            .withName(FIELD_PASSWORD)
+            .withTitle("Password")
+            .withDescription(
+                "Password for all Storage Node CQL authentication. Changing will get propagated to the all deployed"
+                    + " Storage Nodes and appliad to newly installed nodes. All HA servers will have Storage Cluster"
+                    + " sessions refreshed automatically to use the new password.")
+            .withValue(settings.getPasswordHash()).withReadOnlySetTo(readOnly).withValidators(passwordValidator1)
+            .build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordItems);
 
         // password_verify field
         builder = new FormItemBuilder();
         MatchesFieldValidator passwordValidator2 = new MatchesFieldValidator();
         passwordValidator2.setOtherField(FIELD_PASSWORD);
-        passwordValidator2.setErrorMessage("This should be the same string as the Password.");
+        passwordValidator2.setErrorMessage("This should be the same string as in the Password field.");
         List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
-            .withValue(settings.getPasswordHash()).withDescription("This should be the same string as the Password.")
+            .withValue(settings.getPasswordHash()).withDescription("Validation (needs to match Password)")
             .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)
             .build((FormItem) GWT.create(PasswordItem.class));
-        
+
         items.addAll(passwordVerifyItems);
         credentialsForm.setFields(items.toArray(new FormItem[items.size()]));
-        
+
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setWidth100();
 
         ToolStrip toolStrip = buildToolStrip();
-        setMembers(form, credentialsForm, spacer, toolStrip);
-        form.validate();
+        setMembers(clusterForm, deploymentForm, credentialsForm, spacer, toolStrip);
+        clusterForm.validate();
+        deploymentForm.validate();
         credentialsForm.validate();
         markForRedraw();
     }
@@ -246,7 +268,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate() && credentialsForm.validate()) {
+                if (clusterForm.validate() && deploymentForm.validate() && credentialsForm.validate()) {
                     SC.ask(
                         "Changing the cluster wide configuration will eventually affect all the storage nodes. Do you want to continue?",
                         new BooleanCallback() {
@@ -271,10 +293,12 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     }
 
     private StorageClusterSettings updateSettings() {
-        settings.setCqlPort(Integer.parseInt(form.getValueAsString(FIELD_CQL_PORT)));
-        settings.setGossipPort(Integer.parseInt(form.getValueAsString(FIELD_GOSSIP_PORT)));
-        settings.setAutomaticDeployment(Boolean.parseBoolean(form.getValueAsString(FIELD_AUTOMATIC_DEPLOYMENT)));
-        
+        settings.setCqlPort(Integer.parseInt(clusterForm.getValueAsString(FIELD_CQL_PORT)));
+        settings.setGossipPort(Integer.parseInt(clusterForm.getValueAsString(FIELD_GOSSIP_PORT)));
+
+        settings.setAutomaticDeployment(Boolean.parseBoolean(deploymentForm
+            .getValueAsString(FIELD_AUTOMATIC_DEPLOYMENT)));
+
         // set the credentials only if there was a change
         String wannabeUsername = credentialsForm.getValueAsString(FIELD_USERNAME);
         settings.setUsername(wannabeUsername.equals(settings.getUsername()) ? null : wannabeUsername);
@@ -282,7 +306,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         settings.setPasswordHash(wannabePassword.equals(settings.getPasswordHash()) ? null : wannabePassword);
         return settings;
     }
-    
+
     private static class FormItemBuilder {
         private String name;
         private String title;
@@ -290,47 +314,47 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         private String description;
         private Validator[] validators;
         private boolean readOnly;
-        
+
         private static boolean oddRow = true;
-        
+
         public static void resetOddRow() {
             oddRow = true;
         }
-        
+
         public FormItemBuilder withName(String name) {
             this.name = name;
             return this;
         }
-        
+
         public FormItemBuilder withTitle(String title) {
             this.title = title;
             return this;
         }
-        
+
         public FormItemBuilder withValue(String value) {
             this.value = value;
             return this;
         }
-        
+
         public FormItemBuilder withDescription(String description) {
             this.description = description;
             return this;
         }
-        
+
         public FormItemBuilder withValidators(Validator... validators) {
             this.validators = validators;
             return this;
         }
-        
+
         public FormItemBuilder withReadOnlySetTo(boolean readOnly) {
             this.readOnly = readOnly;
             return this;
         }
-        
+
         public List<FormItem> build() {
             return build(new TextItem());
         }
-        
+
         // GWT doesn't support reflection by default, therefore this "hack"
         public List<FormItem> build(FormItem valueItem) {
             List<FormItem> fields = new ArrayList<FormItem>();
@@ -365,6 +389,6 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             oddRow = !oddRow;
             return fields;
         }
-    
+
     }
 }

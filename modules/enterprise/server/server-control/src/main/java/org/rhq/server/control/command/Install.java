@@ -127,7 +127,7 @@ public class Install extends AbstractInstall {
 
             if (installStorage) {
                 if (isStorageInstalled()) {
-                    log.info("The RHQ storage node is already installed in [" + new File(getBaseDir(), "storage")
+                    log.info("The RHQ storage node is already installed in [" + new File(getBaseDir(), "rhq-storage")
                         + "]. It will not be installed.");
 
                     if (isWindows()) {

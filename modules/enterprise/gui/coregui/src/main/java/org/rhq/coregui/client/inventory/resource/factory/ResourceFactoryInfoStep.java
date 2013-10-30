@@ -18,8 +18,6 @@
  */
 package org.rhq.coregui.client.inventory.resource.factory;
 
-import static java.lang.Boolean.FALSE;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,7 +30,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
@@ -102,13 +99,6 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
                     }
                 });
                 formItems.add(nameItem);
-
-                StaticTextItem commentItem = new StaticTextItem("resourceNameComment");
-                commentItem.setWidth(300);
-                commentItem.setTextBoxStyle("InlineInfo");
-                commentItem.setShowTitle(FALSE);
-                commentItem.setValue(MSG.widget_resourceFactoryWizard_nameComment());
-                formItems.add(commentItem);
             }
 
             if (null != versionPrompt) {

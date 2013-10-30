@@ -23,6 +23,7 @@
 package org.rhq.coregui.client.inventory.resource;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,6 +52,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.TableUtility;
@@ -63,6 +65,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 public class ResourceCompositeSearchView extends ResourceSearchView {
 
     private final ResourceComposite parentResourceComposite;
+    private ResourceType parentResourceType;
     private boolean initialized;
     private List<Resource> singletonChildren;
     private Set<ResourceType> creatableChildTypes;
@@ -86,20 +89,28 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void onInit() {
-
+        initMenus(true);
+    }
+    
+    private void initMenus(boolean firstCall) {
         // To properly filter Create Child and Import menus we need existing singleton child resources. If the
         // user has create permission and the parent type has singleton child types and creatable or importable child
         // types, perform an async call to fetch the singleton children. If we make the async call don't declare this
         // instance initialized until after it completes as we must have the children before the menu buttons can be drawn.
 
         final Resource parentResource = parentResourceComposite.getResource();
-        ResourceType parentType = parentResource.getResourceType();
-        creatableChildTypes = getCreatableChildTypes(parentType);
-        importableChildTypes = getImportableChildTypes(parentType);
+        if (parentResourceType == null && firstCall) {
+            fetchResourceType();
+            return;
+        } else if (parentResourceType == null) {
+            Log.error("Failed to load resources type for resource [" + parentResource + "]");
+            return;
+        }
+        creatableChildTypes = getCreatableChildTypes(parentResourceType);
+        importableChildTypes = getImportableChildTypes(parentResourceType);
         hasCreatableTypes = !creatableChildTypes.isEmpty();
         hasImportableTypes = !importableChildTypes.isEmpty();
         refreshSingletons(parentResource, new AsyncCallback<PageList<Resource>>() {
-
             public void onFailure(Throwable caught) {
                 ResourceCompositeSearchView.super.onInit();
                 initialized = true;
@@ -109,9 +120,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 ResourceCompositeSearchView.super.onInit();
                 initialized = true;
             }
-
         });
-
     }
 
     private void refreshSingletons(final Resource parentResource, final AsyncCallback<PageList<Resource>> callback) {
@@ -400,6 +409,24 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
             }
         });
 
+    }
+    
+    public void fetchResourceType() {
+        // make sure we have all the Type information necessary to render the menus
+        ResourceType type = parentResourceComposite.getResource().getResourceType();
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            type.getId(),
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
+                ResourceTypeRepository.MetadataType.subCategory,
+                ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
+                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
+                ResourceTypeRepository.MetadataType.measurements), new ResourceTypeRepository.TypeLoadedCallback() {
+
+                public void onTypesLoaded(ResourceType type) {
+                    parentResourceType = type;
+                    initMenus(false);
+                }
+            });
     }
 
 }

@@ -70,6 +70,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -930,7 +931,6 @@ public class ServerInstallUtil {
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
             }
 
-            connection = getDatabaseConnection(dbUrl, userName, password);
             queryStatement = connection.createStatement();
             resultSet = queryStatement.executeQuery("SELECT count(id) FROM rhq_storage_node");
             resultSet.next();
@@ -983,10 +983,11 @@ public class ServerInstallUtil {
     public static Map<String, String> fetchStorageClusterSettings(HashMap<String, String> serverProperties,
         String password) throws Exception {
 
-        Map<String, String> result = new HashMap<String, String>(4);
+        Map<String, String> result = new HashMap<String, String>(5);
         DatabaseType db = null;
         Connection connection = null;
         PreparedStatement statement = null;
+        ResultSet resultSet = null;
 
         try {
             String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
@@ -998,39 +999,64 @@ public class ServerInstallUtil {
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
             }
 
-            connection = getDatabaseConnection(dbUrl, userName, password);
-            connection.setAutoCommit(false);
+            try {
+                statement = connection.prepareStatement("" //
+                    + "SELECT property_key, property_value FROM rhq_system_config " //
+                    + " WHERE property_key LIKE 'STORAGE%' " //
+                    + "   AND NOT property_value IS NULL ");
+                resultSet = statement.executeQuery();
 
-            statement = connection.prepareStatement("" //
-                + "SELECT property_key, property_value FROM rhq_system_config " //
-                + " WHERE property_key LIKE 'STORAGE%' " //
-                + "   AND NOT property_value IS NULL ");
-            ResultSet rs = statement.executeQuery();
+                while (resultSet.next()) {
+                    String key = resultSet.getString(1);
+                    String value = resultSet.getString(2);
 
-            while (rs.next()) {
-                String key = rs.getString(1);
-                String value = rs.getString(2);
-
-                if (key.equals("STORAGE_USERNAME")) {
-                    result.put(ServerProperties.PROP_STORAGE_USERNAME, value);
-                } else if (key.equals("STORAGE_PASSWORD")) {
-                    result.put(ServerProperties.PROP_STORAGE_PASSWORD, value);
-                } else if (key.equals("STORAGE_GOSSIP_PORT")) {
-                    result.put(ServerProperties.PROP_STORAGE_GOSSIP_PORT, value);
-                } else if (key.equals("STORAGE_CQL_PORT")) {
-                    result.put(ServerProperties.PROP_STORAGE_CQL_PORT, value);
+                    if (key.equals("STORAGE_USERNAME")) {
+                        result.put(ServerProperties.PROP_STORAGE_USERNAME, value);
+                    } else if (key.equals("STORAGE_PASSWORD")) {
+                        result.put(ServerProperties.PROP_STORAGE_PASSWORD, value);
+                    } else if (key.equals("STORAGE_GOSSIP_PORT")) {
+                        result.put(ServerProperties.PROP_STORAGE_GOSSIP_PORT, value);
+                    } else if (key.equals("STORAGE_CQL_PORT")) {
+                        result.put(ServerProperties.PROP_STORAGE_CQL_PORT, value);
+                    }
                 }
+            } finally {
+                db.closeResultSet(resultSet);
+                db.closeStatement(statement);
             }
 
-            connection.commit();
+            try {
+                statement = connection.prepareStatement("" //
+                    + "SELECT address FROM rhq_storage_node " //
+                    + " WHERE operation_mode in " + "('" + OperationMode.NORMAL.name()
+                    + "', '"
+                    + OperationMode.INSTALLED.name() + "') ");
+                resultSet = statement.executeQuery();
 
+                StringBuffer addressList = new StringBuffer();
+                while (resultSet.next()) {
+                    String address = resultSet.getString(1);
+
+                    if(address != null && !address.trim().isEmpty()){
+                        if (addressList.length() != 0) {
+                            addressList.append(',');
+                        }
+                        addressList.append(address);
+                    }
+                }
+
+                if (addressList.length() != 0) {
+                    result.put(ServerProperties.PROP_STORAGE_NODES, addressList.toString());
+                }
+            } finally {
+                db.closeResultSet(resultSet);
+                db.closeStatement(statement);
+            }
         } catch (SQLException e) {
-            LOG.error("Failed to fetch storage cluster settings. Transaction will be rolled back.", e);
-            connection.rollback();
+            LOG.error("Failed to fetch storage cluster settings.", e);
             throw e;
         } finally {
             if (db != null) {
-                db.closeStatement(statement);
                 db.closeConnection(connection);
             }
         }
@@ -1631,9 +1657,9 @@ public class ServerInstallUtil {
      * Create an rhqadmin management user so when discovered, the AS7 plugin can use it to connect
      * to the RHQ Server.  The password is set in rhq-server.properties.  Because the plugin can't guess
      * the password, if not set to the default then the AS7 plugin will fail to connect, and the
-     * RHQ Server resource connection properties will need to be updated after discovery and import.  
+     * RHQ Server resource connection properties will need to be updated after discovery and import.
      *
-     * @param password the management password 
+     * @param password the management password
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the mgmt-users.properties file lives
      */

@@ -552,23 +552,21 @@ public class InstallerServiceImpl implements InstallerService {
                     storageNodeSchemaManager.drop();
                 }
 
-                try{
+                try {
                     storageNodeSchemaManager.checkCompatibility();
                 } catch (AuthenticationException e1) {
                     log("Install RHQ schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install();
                     storageNodeSchemaManager.updateTopology();
-                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 } catch (SchemaNotInstalledException e2) {
                     log("Install RHQ schema along with updates to storage nodes.");
                     storageNodeSchemaManager.install();
                     storageNodeSchemaManager.updateTopology();
-                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
                     storageNodeSchemaManager.install();
-                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 } finally {
+                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                     storageNodeSchemaManager.shutdown();
                 }
             } else {

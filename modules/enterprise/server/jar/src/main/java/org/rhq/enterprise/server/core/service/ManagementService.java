@@ -55,7 +55,7 @@ public class ManagementService implements ServiceActivator {
      * 
      * @return the ModelControllerClient
      */
-    public static ModelControllerClient getClient() {
+    public static ModelControllerClient createClient() {
         return controller.createClient(executor);
     }
 

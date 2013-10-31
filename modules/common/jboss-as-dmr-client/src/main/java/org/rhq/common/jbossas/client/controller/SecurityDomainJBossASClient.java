@@ -270,6 +270,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * @throws Exception if failed to create security domain
      */
     public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
+        //do not close the controller client here, we're using our own..
         CoreJBossASClient coreClient = new CoreJBossASClient(getModelControllerClient());
         String serverVersion = coreClient.getAppServerVersion();
         if (serverVersion.startsWith("7.2")) {

@@ -209,7 +209,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             String host = (String) props.get("jboss.bind.address.management");
             int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
-            mcc = MCCHelper.getModelControllerClient(host, port);
+            mcc = MCCHelper.createModelControllerClient(host, port);
             DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
             boolean isDeployed = client.isDeployment("rhq.ear");
             return isDeployed;
@@ -230,13 +230,7 @@ public abstract class AbstractInstall extends ControlCommand {
             return false;
 
         } finally {
-            if (null != mcc) {
-                try {
-                    mcc.close();
-                } catch (Exception e) {
-                    // best effort
-                }
-            }
+            MCCHelper.safeClose(mcc);
             if (null != reader) {
                 try {
                     reader.close();

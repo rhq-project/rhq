@@ -32,11 +32,11 @@ public class MCCHelper {
     private static final int RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY_DEFAULT_VALUE = 6999;
 
 
-    public static ModelControllerClient getModelControllerClient() {
-        return getModelControllerClient("localhost", getPort());
+    public static ModelControllerClient createModelControllerClient() {
+        return createModelControllerClient("localhost", getPort());
     }
 
-    public static ModelControllerClient getModelControllerClient(String host, int port) {
+    public static ModelControllerClient createModelControllerClient(String host, int port) {
         ModelControllerClient client;
         try {
             if (host==null || host.isEmpty())
@@ -50,6 +50,16 @@ public class MCCHelper {
             throw new RuntimeException("Cannot obtain client connection to the app server", e);
         }
         return client;
+    }
+
+    public static void safeClose(ModelControllerClient mcc) {
+        if (mcc != null) {
+            try {
+                mcc.close();
+            } catch (Exception e) {
+                //ignore
+            }
+        }
     }
 
     private static int getPort() {

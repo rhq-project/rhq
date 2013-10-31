@@ -49,6 +49,7 @@ import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -316,7 +317,7 @@ public class InstallerServiceImpl implements InstallerService {
         // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
 
             // ensure the server info is up to date and stored in the DB
             ServerInstallUtil.setSocketBindings(mcc, serverProperties);
@@ -340,7 +341,7 @@ public class InstallerServiceImpl implements InstallerService {
             // make sure all necessary web connectors are configured
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
 
         // now create our deployment services
@@ -723,12 +724,12 @@ public class InstallerServiceImpl implements InstallerService {
     public String getAppServerVersion() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String version = client.getAppServerVersion();
             return version;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
@@ -736,72 +737,72 @@ public class InstallerServiceImpl implements InstallerService {
     public String getOperatingSystem() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String osName = client.getOperatingSystem();
             return osName;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private String getAppServerHomeDir() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String dir = client.getAppServerHomeDir();
             return dir;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private String getAppServerDataDir() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String dir = client.getAppServerDataDir();
             return dir;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private String getAppServerConfigDir() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String dir = client.getAppServerConfigDir();
             return dir;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private boolean isEarDeployed() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
             boolean isDeployed = client.isDeployment(EAR_NAME);
             return isDeployed;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private boolean isExtensionDeployed() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             boolean isDeployed = client.isExtension(RHQ_EXTENSION_NAME);
             return isDeployed;
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
@@ -983,12 +984,18 @@ public class InstallerServiceImpl implements InstallerService {
 
                 // Not only do we want to make sure we can connect, but we also want to wait for the subsystems to initialize.
                 // Let's wait for one of the subsystems to exist; once we know this is up, the rest are probably ready too.
-                if (!(new WebJBossASClient(getModelControllerClient()).isWebSubsystem())) {
-                    throw new IllegalStateException(
-                        "The server does not appear to be fully started yet (the web subsystem did not start)");
-                }
+                ModelControllerClient mcc = null;
+                try {
+                    mcc = createModelControllerClient();
+                    if (!(new WebJBossASClient(mcc).isWebSubsystem())) {
+                        throw new IllegalStateException(
+                            "The server does not appear to be fully started yet (the web subsystem did not start)");
+                    }
 
-                return retVal;
+                    return retVal;
+                } finally {
+                    MCCHelper.safeClose(mcc);
+                }
             } catch (Exception e) {
                 error = e;
                 try {
@@ -1089,14 +1096,15 @@ public class InstallerServiceImpl implements InstallerService {
                 // make the cause the very first exception in case it was something other than bad host/port as the problem
                 throw new Exception("Cannot obtain client connection to the RHQ app server!!", e);
             } finally {
-                safeClose(mcc);
+                MCCHelper.safeClose(mcc);
+                mcc = null;
             }
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
-    private ModelControllerClient getModelControllerClient() {
+    private ModelControllerClient createModelControllerClient() {
         ModelControllerClient client;
         try {
             String host = this.installerConfiguration.getManagementHost();
@@ -1112,7 +1120,7 @@ public class InstallerServiceImpl implements InstallerService {
 
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
 
             // create the security domain needed by the datasources
             ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
@@ -1145,14 +1153,14 @@ public class InstallerServiceImpl implements InstallerService {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private void deployAppExtension() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             CoreJBossASClient client = new CoreJBossASClient(mcc);
             boolean isDeployed = client.isExtension(RHQ_EXTENSION_NAME);
             if (!isDeployed) {
@@ -1162,14 +1170,14 @@ public class InstallerServiceImpl implements InstallerService {
                 log("RHQ EAR startup subsystem extension is already deployed");
             }
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 
     private void deployAppSubsystem() throws Exception {
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             CoreJBossASClient client = new CoreJBossASClient(mcc);
             boolean isDeployed = client.isSubsystem(RHQ_SUBSYSTEM_NAME);
             if (!isDeployed) {
@@ -1179,16 +1187,7 @@ public class InstallerServiceImpl implements InstallerService {
                 log("RHQ EAR subsystem is already deployed");
             }
         } finally {
-            safeClose(mcc);
-        }
-    }
-
-    private static void safeClose(final ModelControllerClient mcc) {
-        if (null != mcc) {
-            try {
-                mcc.close();
-            } catch (Exception e) {
-            }
+            MCCHelper.safeClose(mcc);
         }
     }
 
@@ -1196,14 +1195,14 @@ public class InstallerServiceImpl implements InstallerService {
         log("Will now ask the app server to reload its configuration");
         ModelControllerClient mcc = null;
         try {
-            mcc = getModelControllerClient();
+            mcc = createModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             client.reload();
             log("App server has been successfully asked to reload its configuration");
         } catch (Exception e) {
             log("reloadConfiguration failed - restart the server to complete the installation", e);
         } finally {
-            safeClose(mcc);
+            MCCHelper.safeClose(mcc);
         }
     }
 

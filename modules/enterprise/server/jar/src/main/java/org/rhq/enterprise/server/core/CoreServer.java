@@ -44,6 +44,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.RHQConstants;
@@ -89,14 +90,14 @@ public class CoreServer implements CoreServerMBean {
 
         }
 
-        private static ModelControllerClient getModelControllerClient() {
+        private static ModelControllerClient createModelControllerClient() {
             if (System.getSecurityManager() == null) {
-                return ManagementService.getClient();
+                return ManagementService.createClient();
             } else {
                 return AccessController.doPrivileged(new PrivilegedAction<ModelControllerClient>() {
                     @Override
                     public ModelControllerClient run() {
-                        return ManagementService.getClient();
+                        return ManagementService.createClient();
                     }
                 });
             }
@@ -179,7 +180,7 @@ public class CoreServer implements CoreServerMBean {
     public File getEarDeploymentDir() {
         //Getting model controller client requires privs our callers might not have, but we want to provide this
         //function even to them.
-        ModelControllerClient mcc = SecurityActions.getModelControllerClient();
+        ModelControllerClient mcc = SecurityActions.createModelControllerClient();
 
         try {
             DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
@@ -188,10 +189,7 @@ public class CoreServer implements CoreServerMBean {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            try {
-                mcc.close();
-            } catch (IOException ignore) {
-            }
+            MCCHelper.safeClose(mcc);
         }
     }
 

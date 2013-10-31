@@ -44,6 +44,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient.LoginModuleRequest;
 import org.rhq.core.domain.common.composite.SystemSetting;
@@ -97,16 +98,20 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             if (isLdapAuthenticationEnabled) {
 
                 ModelControllerClient mcc = null;
-                mcc = ManagementService.getClient();
-                final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+                try {
+                    mcc = ManagementService.createClient();
+                    final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
 
-                boolean ldapModulesPresent = client.securityDomainHasLoginModule(RHQ_USER_SECURITY_DOMAIN,
-                    "org.rhq.enterprise.server.core.jaas.LdapLoginModule");
+                    boolean ldapModulesPresent = client.securityDomainHasLoginModule(RHQ_USER_SECURITY_DOMAIN,
+                        "org.rhq.enterprise.server.core.jaas.LdapLoginModule");
 
 
-                if (!ldapModulesPresent) {
-                    LOG.info("Updating RHQ Server's JAAS login modules with LDAP support");
-                    updateJaasModules(systemConfig);
+                    if (!ldapModulesPresent) {
+                        LOG.info("Updating RHQ Server's JAAS login modules with LDAP support");
+                        updateJaasModules(systemConfig);
+                    }
+                } finally {
+                    MCCHelper.safeClose(mcc);
                 }
             }
         } catch (Exception e) {
@@ -137,7 +142,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
         ModelControllerClient mcc = null;
         try {
-            mcc = ManagementService.getClient();
+            mcc = ManagementService.createClient();
             final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
 
             if (client.isSecurityDomain(RHQ_USER_SECURITY_DOMAIN)) {
@@ -196,16 +201,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         } catch (Exception e) {
             throw new Exception("Error registering RHQ JAAS modules", e);
         } finally {
-            safeClose(mcc);
-        }
-    }
-
-    private static void safeClose(final ModelControllerClient mcc) {
-        if (null != mcc) {
-            try {
-                mcc.close();
-            } catch (Exception e) {
-            }
+            MCCHelper.safeClose(mcc);
         }
     }
 

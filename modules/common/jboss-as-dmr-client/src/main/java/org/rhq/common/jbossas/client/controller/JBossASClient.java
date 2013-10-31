@@ -61,6 +61,13 @@ public class JBossASClient {
 
     private ModelControllerClient client;
 
+    /**
+     * Constructs a new JBoss AS Client that talks to the model through the provided client.
+     * <p/>
+     * Note that the caller is responsible to correctly close the client instance!!!
+     *
+     * @param client the client to use
+     */
     public JBossASClient(ModelControllerClient client) {
         this.client = client;
     }

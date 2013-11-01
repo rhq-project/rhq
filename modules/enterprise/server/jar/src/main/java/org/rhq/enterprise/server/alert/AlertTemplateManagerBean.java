@@ -177,7 +177,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             + "    AND template.id NOT IN ( SELECT ad.id " //
             + "                               FROM AlertDefinition ad " //
             + "                              WHERE ad.resource.id = :resourceId " //
-            + "                                AND ad.deleted = false ) ");
+            + "                                AND ad.deleted = false ) " //
+            + " ORDER BY template.recoveryId ASC "); // process recovered defs first, so recovery defs can reference them
         query.setParameter("resourceId", resourceId);
         List<AlertDefinition> unappliedTemplates = query.getResultList();
 

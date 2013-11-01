@@ -60,16 +60,25 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
         this.isAutogroup = groupComposite.getResourceGroup().getAutoGroupParentResource() != null;
         setDataSource(new GroupMetricsTableDataSource(groupComposite, groupId));
         //disable fields used when is full screen
-        setShowFooterRefresh(true);
+        setShowFooterRefresh(false);
         setTitle(MSG.common_title_numeric_metrics());
 
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
         buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
+        startRefreshCycle();
     }
 
     @Override
     public void refreshData() {
-
+        if (isVisible() && !isRefreshing()) {
+            Date now = new Date();
+            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
+            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            Date newStartDate = new Date(now.getTime() - timeRange);
+            buttonBarDateTimeRangeEditor.showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
+            buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
+            refresh();
+        }
     }
 
     @Override
@@ -87,21 +96,6 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
     @Override
     public boolean isRefreshing() {
         return false;
-    }
-
-    //Custom refresh operation as we are not directly extending Table
-    @Override
-    public void refresh() {
-        if (isVisible() && !isRefreshing()) {
-            Date now = new Date();
-            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
-            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
-            Date newStartDate = new Date(now.getTime() - timeRange);
-            buttonBarDateTimeRangeEditor.showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
-            buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
-
-            refreshData();
-        }
     }
 
     @Override

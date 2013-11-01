@@ -95,8 +95,8 @@ public class SubTabLayout extends EnhancedVLayout {
     }
 
     /**
-     * Make subTab visible. 
-     * 
+     * Make subTab visible.
+     *
      * @param subTab not null
      */
     public void showSubTab(SubTab subTab) {
@@ -137,7 +137,7 @@ public class SubTabLayout extends EnhancedVLayout {
 
     /**
      * Make subTab not visible. Keeps any associated Canvas.
-     * 
+     *
      * @param subTab not null
      */
     public void hideSubTab(SubTab subTab) {
@@ -207,7 +207,7 @@ public class SubTabLayout extends EnhancedVLayout {
         }
     }
 
-    /** 
+    /**
      * @return true if not visible or disabled
      */
     public boolean isSubTabDisabled(SubTab subTab) {
@@ -289,7 +289,7 @@ public class SubTabLayout extends EnhancedVLayout {
     }
 
     public SubTab getDefaultSubTab() {
-        // the default subTab is the first one in the set that is visible and not disabled 
+        // the default subTab is the first one in the set that is visible and not disabled
         for (SubTab subTab : this.subTabs.values()) {
             if (!isSubTabDisabled(subTab)) {
                 return subTab;
@@ -418,6 +418,7 @@ public class SubTabLayout extends EnhancedVLayout {
         for (SubTab subTab : subTabs.values()) {
             subTab.destroyCanvas();
         }
+        this.currentlyDisplayed = null;
     }
 
     private void setCurrentlySelected(boolean showCanvas) {

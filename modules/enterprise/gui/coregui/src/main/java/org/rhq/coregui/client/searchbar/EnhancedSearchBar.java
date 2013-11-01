@@ -448,5 +448,6 @@ public class EnhancedSearchBar extends EnhancedToolStrip {
         if (null != pickListGrid) {
             pickListGrid.destroy();
         }
+        super.destroy();
     }
 }

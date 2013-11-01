@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
@@ -79,13 +80,15 @@ public class CriteriaQueryRunner<T> {
                     queryGenerator.getCountQuery(entityManager), pageControl, DATA_FETCH_SETTINGS);
             } catch (PhantomReadMaxAttemptsExceededException e) {
                 LOG.warn(
-                    "Could not get consistent results of the paged data and a total count for " +
-                        CriteriaUtil.toString(criteria) + ". After " + e.getNumberOfAttempts() + " attempts, the collection size" +
-                        " is " + e.getList().size() + ", while the count query reports " + e.getList().getTotalSize() + " for " +
-                        pageControl + ". The discrepancy has not cleared up in " + e.getMillisecondsSpentTrying() + "ms so we're giving up, " +
-                        "returning inconsistent results. Note that is most possibly NOT an error. It is likely " +
-                        "caused by concurrent database activity that changes the contents of the database that the " +
-                        "criteria query is querying.", new Exception());
+                    "Could not get consistent results of the paged data and a total count for "
+                        + CriteriaUtil.toString(criteria) + ". After " + e.getNumberOfAttempts()
+                        + " attempts, the collection size" + " is " + e.getList().size()
+                        + ", while the count query reports " + e.getList().getTotalSize() + " for " + pageControl
+                        + ". The discrepancy has not cleared up in " + e.getMillisecondsSpentTrying()
+                        + "ms so we're giving up, "
+                        + "returning inconsistent results. Note that is most possibly NOT an error. It is likely "
+                        + "caused by concurrent database activity that changes the contents of the database that the "
+                        + "criteria query is querying.", new Exception());
 
                 results = (PageList<T>) e.getList();
             }
@@ -171,7 +174,14 @@ public class CriteriaQueryRunner<T> {
         }
     }
 
-    private void initialize(Object entity, Field field) {
+    /**
+     * @param entity
+     * @param field
+     * @return true if the field was successfully initialize, false if there was any problem
+     */
+    private boolean initialize(Object entity, Field field) {
+        boolean initialized = true;
+
         try {
             field.setAccessible(true);
 
@@ -181,15 +191,38 @@ public class CriteriaQueryRunner<T> {
 
             if (instance instanceof Iterable) {
                 Iterator<?> it = ((Iterable<?>) instance).iterator();
-                while (it.hasNext()) it.next();
+                while (it.hasNext())
+                    it.next();
             }
+        } catch (EntityNotFoundException e) {
+            // TODO: See BZ 1025756, we should try and get rid of required join fields that allow 0.
+            if (LOG.isDebugEnabled()) {
+                String msg = "Could not initialize [" + field
+                    + "]. This may happen if this entity field is required, lazy-loaded/proxied, but allows ID of 0:";
+                LOG.debug(msg, e);
+            }
+            initialized = false;
+
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Could not initialize " + field + "  Following exception has caused the problem: ", e);
             } else {
                 LOG.warn("Could not initialize " + field);
             }
+            initialized = false;
         }
-    }
 
+        // instead of likely leaving an unloaded Hibernate proxy, set null
+        if (!initialized) {
+            try {
+                field.set(entity, null);
+            } catch (Throwable t) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Could not nullify non-initialized field [" + field + "].", t);
+                }
+            }
+        }
+
+        return initialized;
+    }
 }

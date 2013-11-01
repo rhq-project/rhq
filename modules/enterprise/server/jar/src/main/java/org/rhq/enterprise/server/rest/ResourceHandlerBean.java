@@ -104,7 +104,7 @@ import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.AvailabilitySummary;
-import org.rhq.enterprise.server.rest.domain.CreateCBRresourceRequest;
+import org.rhq.enterprise.server.rest.domain.CreateCBResourceRequest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
@@ -728,7 +728,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         notes= "If a handle is given, a content based resource is created; the content identified by the handle is not removed from the content store." +
             "If no handle is given, a resource is created from the data of the passed 'resource' object.")
     public Response createResource(
-        @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBRresourceRequest resource,
+        @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBResourceRequest resource,
         @ApiParam("A handle that identifies content that has been uploaded to the server before.") @QueryParam("handle") String handle,
         @Context HttpHeaders headers,
         @Context UriInfo uriInfo) throws IOException
@@ -793,7 +793,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
     }
 
-    private Response createContentBackedResource(CreateCBRresourceRequest request, String handle, HttpHeaders headers, UriInfo uriInfo) throws IOException
+    private Response createContentBackedResource(CreateCBResourceRequest request, String handle, HttpHeaders headers, UriInfo uriInfo) throws IOException
     {
         int parentId = request.getParentId();
         String typeName = request.getTypeName();
@@ -927,7 +927,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
         else {
             builder = Response.serverError();
-            builder.entity(status + ": " + history.getErrorMessage());
+            StringValue errorMessage = new StringValue(status + ": " + history.getErrorMessage());
+            builder.entity(errorMessage);
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);

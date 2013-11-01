@@ -30,7 +30,7 @@ import com.wordnik.swagger.annotations.ApiProperty;
  * @author Heiko W. Rupp
  */
 @ApiClass("A request to create a content-based resource. For this to work, it is required that the content to be deployed is already uploaded to the server.")
-public class CreateCBRresourceRequest extends ResourceWithType {
+public class CreateCBResourceRequest extends ResourceWithType {
 
     Map<String,Object> pluginConfig = new HashMap<String, Object>();
     Map<String,Object> resourceConfig = new HashMap<String, Object>();

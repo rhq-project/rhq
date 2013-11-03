@@ -79,6 +79,7 @@
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
         <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
+        <c:simple-property name="newNodeAddress" type="string" required="true"/>
         <c:list-property name="seedsList">
           <c:simple-property name="seed" type="string"/>
         </c:list-property>
@@ -99,6 +100,7 @@
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
         <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
+        <c:simple-property name="removedNodeAddress" type="string" required="true"/>
         <c:list-property name="seedsList">
           <c:simple-property name="seed" type="string"/>
         </c:list-property>

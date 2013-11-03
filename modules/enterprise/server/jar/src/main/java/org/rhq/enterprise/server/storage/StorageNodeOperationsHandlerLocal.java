@@ -55,7 +55,7 @@ public interface StorageNodeOperationsHandlerLocal {
 
     void handleRepair(ResourceOperationHistory operationHistory);
 
-    void logError(StorageNode.OperationMode newStorageNodeOperationMode, String error, Exception e);
+    void logError(String address, String error, Exception e);
 
     StorageNode setMode(StorageNode storageNode, StorageNode.OperationMode newMode);
 }

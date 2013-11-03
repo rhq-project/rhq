@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -310,11 +311,63 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private OperationResult announce(Configuration params) {
-        return updateKnownNodes(params);
+        OperationResult result = new OperationResult();
+        Set<String> addressesToAdd = null;
+        try {
+            addressesToAdd = getAddreses(params);
+            log.info("Announcing "  + addressesToAdd);
+
+            Set<String> knownAddresses = getAuthAddresses();
+            knownAddresses.addAll(addressesToAdd);
+            setAuthAddresses(knownAddresses);
+            reloadInternodeAuthConfig();
+
+            result.getComplexResults().put(new PropertySimple("details",
+                "Successfully announced " + addressesToAdd));
+        } catch (InternodeAuthConfUpdateException e) {
+            result.setErrorMessage("Failed to update authorized nodes due to the following error(s): " +
+                ThrowableUtil.getAllMessages(e));
+        }
+        return result;
     }
 
     private OperationResult unannounce(Configuration params) {
-        return updateKnownNodes(params);
+        OperationResult result = new OperationResult();
+        Set<String> addressesToRemove = null;
+        try {
+            addressesToRemove = getAddreses(params);
+            log.info("Unannouncing " + addressesToRemove);
+
+            Set<String> knownAddresses = getAuthAddresses();
+            knownAddresses.removeAll(addressesToRemove);
+            setAuthAddresses(knownAddresses);
+            reloadInternodeAuthConfig();
+
+            result.getComplexResults().put(new PropertySimple("details",
+                "Successfully unannounced " + addressesToRemove));
+        } catch (InternodeAuthConfUpdateException e) {
+            result.setErrorMessage("Failed to update authorized nodes due to the following error(s): " +
+                ThrowableUtil.getAllMessages(e));
+        }
+        return result;
+    }
+
+    private Set<String> getAddreses(Configuration params) {
+        PropertyList propertyList = params.getList("addresses");
+        Set<String> ipAddresses = new HashSet<String>();
+
+        for (Property property : propertyList.getList()) {
+            PropertySimple propertySimple = (PropertySimple) property;
+            ipAddresses.add(propertySimple.getStringValue());
+        }
+
+        return ipAddresses;
+    }
+
+    private void reloadInternodeAuthConfig() {
+        EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
+        EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
+        emsOperation.invoke();
     }
 
     @SuppressWarnings("deprecation")
@@ -456,6 +509,38 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     private void purgeDir(File dir) {
         log.info("Purging " + dir);
         FileUtil.purge(dir, true);
+    }
+
+    private Set<String> getAuthAddresses() throws InternodeAuthConfUpdateException {
+        File authFile = null;
+        try {
+            authFile = getInternodeAuthConfFile();
+            String contents = StreamUtil.slurp(new FileReader(authFile));
+            Set<String> addresses = new TreeSet<String>();
+            for (String address : contents.split("\\n")) {
+                addresses.add(address);
+            }
+            return addresses;
+        } catch (FileNotFoundException e) {
+            throw new InternodeAuthConfUpdateException("Could not load internode authentication file " + authFile, e);
+        }
+    }
+
+    private void setAuthAddresses(Set<String> addresses) throws InternodeAuthConfUpdateException {
+        File authFile = null;
+
+        log.info("Updating " + authFile);
+        if (log.isDebugEnabled()) {
+            log.debug("Updating authorized storage node addresses to " + addresses);
+        }
+
+        try {
+            authFile = getInternodeAuthConfFile();
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(addresses, "\n")),
+                new FileWriter(authFile), true);
+        } catch (Exception e) {
+            throw new InternodeAuthConfUpdateException("An error occurred while trying to update " + authFile, e);
+        }
     }
 
     private void updateInternodeAuthConfFile(Set<String> ipAddresses) throws InternodeAuthConfUpdateException {

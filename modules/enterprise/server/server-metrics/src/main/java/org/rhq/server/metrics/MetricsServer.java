@@ -430,7 +430,7 @@ public class MetricsServer {
      * one hour aggregates. The one hour aggregates are returned because they are needed
      * for subsequently computing baselines.
      */
-    public Iterable<AggregateNumericMetric> calculateAggregates() {
+    public Iterable<AggregateNumericMetric> calculateAggregates(int firstScheduleId, int lastScheduleId) {
         long start = System.currentTimeMillis();
         try {
             DateTime theHour = currentHour();
@@ -443,7 +443,7 @@ public class MetricsServer {
             if (useAsyncAggregation) {
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
                 return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                    aggregationBatchSize, writePermits, readPermits, 0, 0).run();
+                    aggregationBatchSize, writePermits, readPermits, firstScheduleId, lastScheduleId).run();
             } else {
                 return calculateAggregates(theHour.getMillis());
             }

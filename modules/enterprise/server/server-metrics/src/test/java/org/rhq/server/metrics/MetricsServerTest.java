@@ -190,7 +190,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
-        metricsServer.calculateAggregates();
+        metricsServer.calculateAggregates(100, 200);
 
         // verify that one hour metric data is updated
         List<AggregateNumericMetric> expected = asList(new AggregateNumericMetric(scheduleId,
@@ -243,7 +243,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         waitForIndexUpdates.await("Failed to update metrics index for raw data");
 
         metricsServer.setCurrentHour(hour9);
-        metricsServer.calculateAggregates();
+        metricsServer.calculateAggregates(100, 200);
 
         // verify that the 1 hour aggregates are calculated
         assert1HourDataEquals(scheduleId, asList(new AggregateNumericMetric(scheduleId, divide((1.1 + 2.2 + 3.3), 3),
@@ -305,7 +305,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // execute the system under test
         metricsServer.setCurrentHour(hour12);
-        metricsServer.calculateAggregates();
+        metricsServer.calculateAggregates(100, 200);
 
         // verify the results
         // verify that the one hour data has been aggregated
@@ -368,7 +368,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
-        metricsServer.calculateAggregates();
+        metricsServer.calculateAggregates(100, 200);
 
         // verify that we have one hour aggregates
         double hour10Avg = divide(5.0 + 10.0 + 15.0, 3);
@@ -433,7 +433,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
-        metricsServer.calculateAggregates();
+        metricsServer.calculateAggregates(100, 200);
 
         // verify that we have one hour aggregates
         double hour20YesterdayAvg = divide(7.0 + 2.5 + 4.0, 3);
@@ -497,7 +497,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // execute the system under test
         metricsServer.setCurrentHour(hour24);
-        metricsServer.calculateAggregates();
+        metricsServer.calculateAggregates(100, 200);
 
         // verify the results
         // verify that the 6 hour data is aggregated

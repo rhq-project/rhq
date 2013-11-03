@@ -33,6 +33,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
@@ -203,6 +204,8 @@ public class MeasurementSchedule implements Serializable {
         + "                           FROM RHQ_MEASUREMENT_SCHED ms " //
         + "                          WHERE ms.RESOURCE_ID = res.ID " //
         + "                            AND ms.DEFINITION = def.ID ) ";
+
+    public static final String GET_FIRST_AND_LAST_SCHEDULE_IDS = "SELECT min(id), max(id) FROM rhq_measurement_sched";
 
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
     @Id

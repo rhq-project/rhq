@@ -209,6 +209,8 @@ public interface MeasurementScheduleManagerLocal extends MeasurementScheduleMana
      */
     int getScheduledMeasurementsPerMinute();
 
+    int[] getFirstAndLastScheduleIds();
+
     /**
      * Disable the measurement schedules for the passed definitions of the rsource ot the passed auto group.
      *

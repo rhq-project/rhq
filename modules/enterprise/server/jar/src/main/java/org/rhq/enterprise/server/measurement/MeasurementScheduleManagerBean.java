@@ -1202,6 +1202,26 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return (rate == null) ? 0 : rate.intValue();
     }
 
+    @Override
+    public int[] getFirstAndLastScheduleIds() {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(MeasurementSchedule.GET_FIRST_AND_LAST_SCHEDULE_IDS);
+            resultSet = statement.executeQuery();
+            resultSet.next();
+
+            return new int[] {resultSet.getInt(1), resultSet.getInt(2)};
+        } catch (SQLException e) {
+            throw new RuntimeException("A database error occurred while trying to get the first and last schedule ids",
+                e);
+        } finally {
+            JDBCUtil.safeClose(connection, statement, resultSet);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void errorCorrectSchedules() {

@@ -44,6 +44,7 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -107,9 +108,12 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
+            MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
+            int[] firstAndLastScheduleIds = measurementScheduleManager.getFirstAndLastScheduleIds();
+
             StorageClientManagerBean storageClientManager = LookupUtil.getStorageClientManager();
             MetricsServer metricsServer = storageClientManager.getMetricsServer();
-            return metricsServer.calculateAggregates();
+            return metricsServer.calculateAggregates(firstAndLastScheduleIds[0], firstAndLastScheduleIds[1]);
         } catch (Exception e) {
             LOG.error("Failed to compress measurement data. Cause: " + e, e);
             return Collections.emptyList();

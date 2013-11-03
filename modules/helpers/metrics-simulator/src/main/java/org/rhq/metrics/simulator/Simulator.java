@@ -99,7 +99,7 @@ public class Simulator implements ShutdownManager {
         });
 
         MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics,
-            aggregationQueue);
+            aggregationQueue, plan.getNumMeasurementCollectors() * plan.getBatchSize());
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),

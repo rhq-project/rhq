@@ -49,12 +49,15 @@ public class MeasurementAggregator implements Runnable {
 
     private ShutdownManager shutdownManager;
 
+    private int numSchedules;
+
     public MeasurementAggregator(MetricsServer metricsServer, ShutdownManager shutdownManager, Metrics metrics,
-        ExecutorService aggregationQueue) {
+        ExecutorService aggregationQueue, int numSchedules) {
         this.metricsServer = metricsServer;
         this.shutdownManager = shutdownManager;
         this.metrics = metrics;
         this.aggregationQueue = aggregationQueue;
+        this.numSchedules = numSchedules;
     }
 
     public void run() {
@@ -65,7 +68,7 @@ public class MeasurementAggregator implements Runnable {
                 long start = System.currentTimeMillis();
                 try {
                     log.debug("Starting metrics aggregation");
-                    metricsServer.calculateAggregates();
+                    metricsServer.calculateAggregates(0, numSchedules);
                 } catch (Exception e) {
                     log.error("An error occurred while trying to perform aggregation", e);
                     log.error("Requesting simulation shutdown...");

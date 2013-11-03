@@ -46,7 +46,7 @@ public class Compute6HourData implements AsyncFunction<List<ResultSet>, List<Res
     @Override
     public ListenableFuture<List<ResultSet>> apply(List<ResultSet> oneHourDataResultSets) throws Exception {
         if (log.isDebugEnabled()) {
-            log.debug("Computing and storing 6 hour data for " + oneHourDataResultSets.size() + " schedules");
+            log.debug("Computing and storing 6 hour data for " + (oneHourDataResultSets.size() / 3) + " values");
         }
         long start = System.currentTimeMillis();
         try {
@@ -68,8 +68,8 @@ public class Compute6HourData implements AsyncFunction<List<ResultSet>, List<Res
             return Futures.successfulAsList(insertFutures);
         } finally {
             if (log.isDebugEnabled()) {
-                log.debug("Finished computing and storing 6 hour data for " + oneHourDataResultSets.size() +
-                    " schedules in " + (System.currentTimeMillis() - start) + " ms");
+                log.debug("Finished computing and storing 6 hour data for " + (oneHourDataResultSets.size() / 3) +
+                    " values in " + (System.currentTimeMillis() - start) + " ms");
             }
         }
     }

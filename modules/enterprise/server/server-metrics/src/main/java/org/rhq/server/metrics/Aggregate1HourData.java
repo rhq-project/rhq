@@ -52,7 +52,7 @@ public class Aggregate1HourData implements Runnable {
         Futures.addCallback(computeFutures, new FutureCallback<List<ResultSet>>() {
             @Override
             public void onSuccess(List<ResultSet> result) {
-                log.debug("Finished aggregating 1 hour data for " + result.size() + " schedules in " +
+                log.debug("Finished aggregating 1 hour data for " + scheduleIds.size() + " schedules in " +
                     (System.currentTimeMillis() - start) + " ms");
                 state.getRemaining1HourData().addAndGet(-scheduleIds.size());
                 start6HourDataAggregationIfNecessary();

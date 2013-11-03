@@ -39,7 +39,7 @@ public class Compute24HourData implements AsyncFunction<List<ResultSet>, List<Re
     @Override
     public ListenableFuture<List<ResultSet>> apply(List<ResultSet> sixHourDataResultSets) throws Exception {
         if (log.isDebugEnabled()) {
-            log.debug("Computing and storing 24 hour data for " + sixHourDataResultSets.size() + " schedules");
+            log.debug("Computing and storing 24 hour data for " + (sixHourDataResultSets.size() / 3) + " values");
         }
         long start = System.currentTimeMillis();
         try {
@@ -58,8 +58,8 @@ public class Compute24HourData implements AsyncFunction<List<ResultSet>, List<Re
             return Futures.successfulAsList(insertFutures);
         } finally {
             if (log.isDebugEnabled()) {
-                log.debug("Finished computing and storing 24 hour data for " + sixHourDataResultSets.size() +
-                    " schedules in " + (System.currentTimeMillis() - start) + " ms");
+                log.debug("Finished computing and storing 24 hour data for " + (sixHourDataResultSets.size() / 3) +
+                    " values in " + (System.currentTimeMillis() - start) + " ms");
             }
         }
     }

@@ -172,6 +172,7 @@ public class Aggregator {
             log.debug("Fetching 6 hour index entries");
             for (int scheduleId = startScheduleId; scheduleId <= endScheduleId; scheduleId += METRICS_INDEX_ROW_SIZE) {
                 String partitionKey = indexPartitionKey(MetricsTable.TWENTY_FOUR_HOUR, scheduleId);
+                readPermits.acquire();
                 StorageResultSetFuture indexFuture = dao.findMetricsIndexEntriesAsync(partitionKey,
                     state.getTwentyFourHourTimeSlice().getMillis());
                 Futures.addCallback(indexFuture, new AggregateIndexEntriesHandler(state.getSixHourIndexEntries(),

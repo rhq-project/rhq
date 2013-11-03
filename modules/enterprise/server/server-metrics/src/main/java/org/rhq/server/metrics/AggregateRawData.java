@@ -53,7 +53,7 @@ public class AggregateRawData implements Runnable {
         Futures.addCallback(insert1HourDataFutures, new FutureCallback<List<ResultSet>>() {
             @Override
             public void onSuccess(List<ResultSet> resultSets) {
-                log.debug("Finished aggregating raw data for " + resultSets.size() + " schedules in " +
+                log.debug("Finished aggregating raw data for " + scheduleIds.size() + " schedules in " +
                     (System.currentTimeMillis() - start) + " ms");
                 state.getRemainingRawData().addAndGet(-scheduleIds.size());
                 start1HourDataAggregationIfNecessary();
@@ -95,7 +95,6 @@ public class AggregateRawData implements Runnable {
                 oneHourDataQueryFutures.add(dao.findOneHourMetricsAsync(scheduleId,
                     state.getSixHourTimeSlice().getMillis(), state.getSixHourTimeSliceEnd().getMillis()));
             }
-            log.debug("Starting 1 hour aggregation for schedule ids " + scheduleIds);
             state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds, oneHourDataQueryFutures));
         }
     }

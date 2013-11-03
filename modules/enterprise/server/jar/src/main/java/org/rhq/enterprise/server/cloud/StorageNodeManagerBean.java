@@ -296,7 +296,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     private void reset() {
-        for (StorageNode storageNode : getStorageNodes()) {
+        for (StorageNode storageNode : getClusterNodes()) {
             storageNode.setErrorMessage(null);
             storageNode.setFailedOperation(null);
         }

@@ -49,6 +49,14 @@ public class ImageManager {
         return "ajax-loader.gif";
     }
 
+    public static String getStatusComplete() {
+        return "status_complete.gif";
+    }
+
+    public static String getStatusError() {
+        return "status_error.gif";
+    }
+
     /**
      * Returns a generic "upload" icon.
      */

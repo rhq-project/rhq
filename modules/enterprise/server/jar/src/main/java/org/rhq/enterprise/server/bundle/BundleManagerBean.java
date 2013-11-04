@@ -429,22 +429,33 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment liveDeployment = (liveDeployments.isEmpty()) ? null : liveDeployments.get(0);
 
         String deploymentName;
+        // always bump up the deploy number, whether its a revert or upgrade
+        int deploy;
+        boolean isInitialDeployment = (null == liveDeployment);
+        if (isInitialDeployment) {
+            deploy = 1;
+        } else {
+            try {
+                String liveName = liveDeployment.getName();
+                int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
+                deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
+            } catch (Exception e) {
+                // if any odd error happens here, don't abort since this is only needed for the human readable name
+                log.warn("Cannot determine next deployment number. Using -1. liveDeployment=" + liveDeployment);
+                deploy = -1;
+            }
+        }
 
         if (null != bundleVersion) {
-            boolean isInitialDeployment = (null == liveDeployment);
-            int deploy = 1;
             String version = bundleVersion.getVersion();
             String dest = bundleDestination.getName();
 
             if (isInitialDeployment) {
                 deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
             } else {
-                String liveName = liveDeployment.getName();
                 String liveVersion = liveDeployment.getBundleVersion().getVersion();
                 if (liveVersion.equals(version)) {
                     // redeploy
-                    int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
-                    deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
                     deploymentName = "Deployment [" + deploy + "] of Version [" + version + "] to [" + dest + "]";
                 } else {
                     // upgrade
@@ -459,9 +470,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     + bundleDestination);
             }
 
-            String liveName = liveDeployment.getName();
-            int iStart = liveName.indexOf("[") + 1, iEnd = liveName.indexOf("]");
-            int deploy = Integer.valueOf(liveName.substring(iStart, iEnd)) + 1;
             deploymentName = "Deployment [" + deploy + "] Revert To: " + prevDeployment.getName();
         }
 

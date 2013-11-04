@@ -410,7 +410,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "] or prevDeploymentId [" + prevDeploymentId + "]");
         }
 
-        checkDeployBundleAuthz(subject, bundleVersion.getBundle().getId(), bundleDestination.getGroup().getId());
+        if (bundleVersion != null) {
+            checkDeployBundleAuthz(subject, bundleVersion.getBundle().getId(), bundleDestination.getGroup().getId());
+        }
 
         return getBundleDeploymentNameImpl(subject, bundleDestination, bundleVersion, prevDeployment);
     }

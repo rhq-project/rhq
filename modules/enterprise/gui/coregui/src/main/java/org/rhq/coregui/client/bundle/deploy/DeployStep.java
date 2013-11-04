@@ -78,7 +78,7 @@ public class DeployStep extends AbstractWizardStep {
                 wizard.getNewDeploymentDescription(), wizard.getNewDeploymentConfig(), false, -1, false, //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
-                        deployingImage.setSrc("/images/status_complete.gif");
+                        deployingImage.setSrc(ImageManager.getStatusComplete());
                         deployingMessage.setText(MSG.view_bundle_deployWizard_deploymentCreated());
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_bundle_deployWizard_deploymentCreatedDetail_concise(result.getName()),
@@ -90,7 +90,7 @@ public class DeployStep extends AbstractWizardStep {
                             wizard.isCleanDeployment(), //
                             new AsyncCallback<BundleDeployment>() {
                                 public void onSuccess(BundleDeployment result) {
-                                    deployingImage.setSrc("/images/status_complete.gif");
+                                    deployingImage.setSrc(ImageManager.getStatusComplete());
                                     deployingMessage.setText(MSG.view_bundle_deployWizard_deploymentScheduled());
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_bundle_deployWizard_deploymentScheduledDetail_concise(),
@@ -102,7 +102,7 @@ public class DeployStep extends AbstractWizardStep {
                                 }
 
                                 public void onFailure(Throwable caught) {
-                                    deployingImage.setSrc("/images/status_error.gif");
+                                    deployingImage.setSrc(ImageManager.getStatusError());
                                     deployingMessage.setText(MSG.view_bundle_deployWizard_error_3());
                                     String errMsg = MSG.view_bundle_deployWizard_error_4(ErrorHandler
                                         .getAllMessages(caught));
@@ -115,7 +115,7 @@ public class DeployStep extends AbstractWizardStep {
                     }
 
                     public void onFailure(Throwable caught) {
-                        deployingImage.setSrc("/images/status_error.gif");
+                        deployingImage.setSrc(ImageManager.getStatusError());
                         deployingMessage.setText(MSG.view_bundle_deployWizard_error_5());
                         String errMsg = MSG.view_bundle_deployWizard_error_6(ErrorHandler.getAllMessages(caught));
                         wizard.getView().showMessage(errMsg);

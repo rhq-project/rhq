@@ -86,6 +86,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     height = adjustedChartHeight - margin.top - margin.bottom,
                     smallChartThresholdInPixels = 600,
                     titleHeight = 30, titleSpace = 10,
+                    tooltipTimeout = 15000,
                     barOffset = 2,
                     chartData,
                     interpolation = "basis",
@@ -358,7 +359,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                 //Show the tooltip
                 $wnd.jQuery('#metricGraphTooltip').show();
-                setTimeout(function(){$wnd.jQuery('#metricGraphTooltip').hide();},5000);
+                setTimeout(function(){$wnd.jQuery('#metricGraphTooltip').hide();},tooltipTimeout);
 
             }
             function showNoDataBarHover(d){
@@ -385,7 +386,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                 //Show the tooltip
                 $wnd.jQuery('#noDataTooltip').show();
-                setTimeout(function(){$wnd.jQuery('#noDataTooltip').hide();},5000);
+                setTimeout(function(){$wnd.jQuery('#noDataTooltip').hide();},tooltipTimeout);
 
             }
 
@@ -551,7 +552,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                     //Show the tooltip
                     $wnd.jQuery('#singleValueTooltip').show();
-                    setTimeout(function(){$wnd.jQuery('#singleValueTooltip').hide();},5000);
+                    setTimeout(function(){$wnd.jQuery('#singleValueTooltip').hide();},tooltipTimeout);
 
                 }
 

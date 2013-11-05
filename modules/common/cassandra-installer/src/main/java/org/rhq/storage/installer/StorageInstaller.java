@@ -108,6 +108,8 @@ public class StorageInstaller {
 
     private final String STORAGE_BASEDIR = "rhq-storage";
 
+    static final String STORAGE_LOG_FILE_PATH = "../../logs/rhq-storage.log";
+
     private final Log log = LogFactory.getLog(StorageInstaller.class);
 
     private Options options;
@@ -365,7 +367,7 @@ public class StorageInstaller {
             File commitLogDirFile = new File(commitlogDir);
             File dataDirFile = new File(dataDir);
             File savedCachesDirFile = new File(savedCachesDir);
-            installerInfo.logFile = new File(logDir, "rhq-storage.log");
+
 
             boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(
                 StorageProperty.VERIFY_DATA_DIRS_EMPTY.property(), "true"));
@@ -415,7 +417,7 @@ public class StorageInstaller {
             deploymentOptions.setDataDir(dataDirFile.getAbsolutePath());
             deploymentOptions.setSavedCachesDir(savedCachesDir);
 
-            deploymentOptions.setLogFileName(installerInfo.logFile.getPath());
+            deploymentOptions.setLogFileName(installerInfo.logFile);
             deploymentOptions.setLoggingLevel("INFO");
 
             deploymentOptions.setRpcPort(rpcPort);
@@ -518,7 +520,6 @@ public class StorageInstaller {
             File cassandraJvmPropsFile = new File(newConfDir, "cassandra-jvm.properties");
 
             installerInfo.basedir = storageBasedir;
-            installerInfo.logFile = new File(logDir, "rhq-storage.log");
 
             boolean isRHQ48Install;
             if (cassandraEnvFile.exists()) {
@@ -530,7 +531,7 @@ public class StorageInstaller {
             }
 
             deploymentOptions.setBasedir(storageBasedir.getAbsolutePath());
-            deploymentOptions.setLogFileName(installerInfo.logFile.getPath());
+            deploymentOptions.setLogFileName(installerInfo.logFile);
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setJmxPort(installerInfo.jmxPort);
             deploymentOptions.setHeapSize(defaultHeapSize);
@@ -965,7 +966,7 @@ public class StorageInstaller {
 
     private static class InstallerInfo {
         File basedir;
-        File logFile;
+        String logFile = STORAGE_LOG_FILE_PATH;
         int jmxPort;
         int cqlPort;
         int gossipPort;

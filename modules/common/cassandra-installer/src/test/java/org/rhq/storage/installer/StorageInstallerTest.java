@@ -123,7 +123,7 @@ public class StorageInstallerTest {
 
         Properties log4jProps = new Properties();
         log4jProps.load(new FileInputStream(log4jFile));
-        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), StorageInstaller.STORAGE_LOG_FILE_PATH,
             "The log file is wrong");
 
         File yamlFile = new File(confDir, "cassandra.yaml");
@@ -193,7 +193,7 @@ public class StorageInstallerTest {
 
         Properties log4jProps = new Properties();
         log4jProps.load(new FileInputStream(log4jFile));
-        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), StorageInstaller.STORAGE_LOG_FILE_PATH,
             "The log file is wrong");
 
         File yamlFile = new File(confDir, "cassandra.yaml");
@@ -367,7 +367,7 @@ public class StorageInstallerTest {
 
         Properties log4jProps = new Properties();
         log4jProps.load(new FileInputStream(newLog4JFile));
-        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), StorageInstaller.STORAGE_LOG_FILE_PATH,
             "The log file is wrong");
 
         assertFalse(new File(confDir, "cassandra-env.sh").exists(),

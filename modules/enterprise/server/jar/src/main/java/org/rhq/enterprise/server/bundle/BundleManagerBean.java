@@ -768,7 +768,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         } catch (PermissionException e) {
             if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
                 deleteFile = false;
-                // This application exception indicates the special token handling workflow 
+                // This application exception indicates the special token handling workflow
                 throw new BundleNotFoundException("[" + file.getName() + "]");
             } else {
                 throw e;
@@ -1338,6 +1338,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
 
+        // schedule the bundle deployment completion check. Due to timing issues, we cannot determine
+        // the overall completion status of the bundle deployment while receiving the individual resource
+        // deployment statuses. This needs to be done out of band by a quartz job.
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=1003679 for details.
+        try {
+            JobDetail jobDetail = BundleDeploymentStatusCheckJob.getJobDetail(bundleDeploymentId);
+            Trigger trigger = QuartzUtil.getRepeatingTrigger(jobDetail, 0, 10000);
+            quartzScheduler.scheduleJob(jobDetail, trigger);
+        } catch (Exception e) {
+            log.error("Failed to schedule bundle deployment status check job for deployment:" + newDeployment, e);
+        }
+
         // make sure the new deployment is set as the live deployment and properly replaces the
         // previously live deployment.
         destination = entityManager.find(BundleDestination.class, destination.getId());
@@ -1401,16 +1413,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
                 BundleScheduleResponse response = bundleAgentService.schedule(request);
 
-                if (response.isSuccess()) {
-                    // schedule the bundle deployment completion check. Due to timing issues, we cannot determine
-                    // the overall completion status of the bundle deployment while receiving the individual resource
-                    // deployment statuses. This needs to be done out of band by a quartz job.
-                    // See https://bugzilla.redhat.com/show_bug.cgi?id=1003679 for details.
-                    JobDetail jobDetail = BundleDeploymentStatusCheckJob.getJobDetail(deployment.getId());
-                    Trigger trigger = QuartzUtil.getRepeatingTrigger(jobDetail, 0, 10000);
-
-                    quartzScheduler.scheduleJob(jobDetail, trigger);
-                } else {
+                if (!response.isSuccess()) {
                     // Handle Schedule Failures. This may include deployment failures for immediate deployment request
                     bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                         BundleDeploymentStatus.FAILURE);
@@ -1513,7 +1516,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == deployment) {
             throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
         }
-        Resource resource = (Resource) entityManager.find(Resource.class, resourceId);
+        Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             throw new IllegalArgumentException("Invalid resourceId (Resource does not exist): " + resourceId);
         }
@@ -1770,7 +1773,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         PageList<BundleVersion> result = queryRunner.execute();
 
         // If asking for optional data that the subject may not be able to see then ensure that the optional
-        // data is filtered appropriately.  In this case only deployments to destinations viewable by the subject         
+        // data is filtered appropriately.  In this case only deployments to destinations viewable by the subject
         // can be returned.  The result currently holds bundle versions viewable by the caller, but the bundle version
         // may have been deployed to destinations for which the user does not have access to the destination's
         // resource group. (BZ 694741)
@@ -1793,7 +1796,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 // get the viewable destinations and use to filter the deployments
                 List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
                 List<BundleDeployment> filteredDeployments = new ArrayList<BundleDeployment>(numDeployments);
-                entityManager.detach(bundleVersion); // make sure we don't persist the filtered data 
+                entityManager.detach(bundleVersion); // make sure we don't persist the filtered data
                 for (BundleDeployment deployment : bundleVersion.getBundleDeployments()) {
                     if (containsDestination(destinations, deployment.getDestination()))
                         filteredDeployments.add(deployment);
@@ -1844,7 +1847,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         PageList<Bundle> result = queryRunner.execute();
 
         // If asking for optional data that the subject may not be able to see then ensure that the optional
-        // data is filtered appropriately.  In this case only destinations viewable by the subject can be returned.         
+        // data is filtered appropriately.  In this case only destinations viewable by the subject can be returned.
         // The result currently holds bundles viewable by the caller, but the bundle may have been deployed to
         // destinations for which the user does not have access to the destination's resource group. (BZ 694741)
         if (!result.isEmpty() && criteria.isInventoryManagerRequired()
@@ -1856,7 +1859,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     continue;
                 }
                 BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
-                destinationCriteria.clearPaging(); //disable paging as the code assumes all the results will be returned.                
+                destinationCriteria.clearPaging(); //disable paging as the code assumes all the results will be returned.
                 destinationCriteria.addFilterBundleId(bundle.getId());
                 List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
                 entityManager.detach(bundle); // make sure the narrowed set of destinations does not get persisted
@@ -1924,7 +1927,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         // remove bundle from any assigned bundle groups
-        // wrap in new HashSet to avoid ConcurrentModificationExceptions.        
+        // wrap in new HashSet to avoid ConcurrentModificationExceptions.
         Set<BundleGroup> BundleGroupsToRemove = new HashSet<BundleGroup>(bundle.getBundleGroups());
         for (BundleGroup bg : BundleGroupsToRemove) {
             bg.removeBundle(bundle);
@@ -2119,7 +2122,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
 
             // unassign any bundles assigned to the bundle group
-            // wrap in new HashSet to avoid ConcurrentModificationExceptions.        
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.
             Set<Bundle> bundlesToRemove = new HashSet<Bundle>(bundleGroup.getBundles());
             for (Bundle b : bundlesToRemove) {
                 bundleGroup.removeBundle(b);
@@ -2184,7 +2187,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     * </pre>  
+     * </pre>
      * @param subject
      * @param bundleGroupIds null or 0 length for unassigned initial bundle version creation
      * @throws PermissionException
@@ -2231,7 +2234,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * </pre> 
+     * </pre>
      * @param subject
      * @param bundleId required, bundleId of bundle in which bundle version is being created/updated
      * @throws PermissionException
@@ -2326,12 +2329,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     /**
      * <pre>
      * Requires VIEW permission for the relevant bundles and one of:
-     * - Global.MANAGE_BUNDLE_GROUPS 
+     * - Global.MANAGE_BUNDLE_GROUPS
      * - Global.DELETE_BUNDLE
      * - BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP for the relevant bundle group
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for the relevant bundle group
      * </pre>
-     * 
+     *
      * @param subject
      * @param bundleGroupId an existing bundle group
      * @param bundleIds existing bundles
@@ -2385,7 +2388,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
-     * </pre> 
+     * </pre>
      */
     private void checkDeployBundleAuthz(Subject subject, int bundleId, int resourceGroupId) throws PermissionException {
 
@@ -2424,8 +2427,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      * Required Permissions: Either:
      * - Global.DELETE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.DELETE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG    
-     * </pre> 
+     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * </pre>
      * @param subject
      * @param bundleId required, bundleId of bundle, or the bundle version, being deleted
      * @throws PermissionException
@@ -2547,7 +2550,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (isNewBundle) {
             // set whether can leave unassigned
             result.setCanBeUnassigned(hasCreateBundles && hasViewBundles);
-            // can assign to bundle groups for which he has create_bundles_in_group            
+            // can assign to bundle groups for which he has create_bundles_in_group
             permFilter.add(Permission.CREATE_BUNDLES_IN_GROUP);
 
         } else {
@@ -2557,7 +2560,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     + assigningSubject.getName() + "]");
             }
 
-            // can assign to bundle groups for which he has create_bundles_in_group or assign_bundles_to_group            
+            // can assign to bundle groups for which he has create_bundles_in_group or assign_bundles_to_group
             permFilter.add(Permission.CREATE_BUNDLES_IN_GROUP);
             permFilter.add(Permission.ASSIGN_BUNDLES_TO_GROUP);
         }
@@ -2565,7 +2568,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         List<BundleGroup> bundleGroups;
         if (hasCreateBundles) {
             // can assign to any viewable bundle group
-            // get all the viewable bundle groups for the subject, no filters                
+            // get all the viewable bundle groups for the subject, no filters
             BundleGroupCriteria criteria = new BundleGroupCriteria();
             bundleGroups = findBundleGroupsByCriteria(assigningSubject, criteria);
 

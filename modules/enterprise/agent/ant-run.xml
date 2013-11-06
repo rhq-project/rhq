@@ -223,7 +223,6 @@ Ant Script that provides ways to package the Agent.
           <exclude name="rhq-agent/lib/*.sl"/>
           <exclude name="rhq-agent/lib/*.dylib"/>
        	  <exclude name="rhq-agent/lib/augeas/**" />
-       	  <exclude name="rhq-agent/conf/agent-configuration.xml" />
        </zipfileset>
        <zipfileset dir="${basedir}/target" filemode="755" dirmode="755">
           <include name="rhq-agent/bin/*.sh"/>
@@ -235,10 +234,6 @@ Ant Script that provides ways to package the Agent.
           <include name="rhq-agent/lib/augeas/lib/${so.exts}"/>
           <include name="rhq-agent/lib/augeas/lib64/*.so"/>
           <include name="rhq-agent/lib/augeas/lib64/${so.exts}"/>
-       </zipfileset>
-       <!-- Modifying the configuration permissions during assembly -->
-       <zipfileset dir="${basedir}/target" filemode="640" dirmode="755">
-       	  <include name="rhq-agent/conf/agent-configuration.xml" />
        </zipfileset>
     </zip>
 

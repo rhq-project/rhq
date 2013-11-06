@@ -136,7 +136,7 @@ public class Upgrade extends AbstractInstall {
             boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
             if (hasFromAgentOption) {
                 File agentBasedir = getFromAgentDir(commandLine);
-                putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getPath());
+                setAgentBasedir(agentBasedir);
             }
 
             // If storage or server appear to be installed already then don't perform an upgrade.  It's OK

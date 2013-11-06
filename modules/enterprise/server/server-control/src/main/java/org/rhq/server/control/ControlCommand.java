@@ -60,7 +60,6 @@ public abstract class ControlCommand {
     public static final String SERVER_OPTION = "server";
     public static final String STORAGE_OPTION = "storage";
     public static final String AGENT_OPTION = "agent";
-    public static final String RHQ_STORAGE_BASEDIR_PROP = "rhq.storage.basedir";
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
@@ -74,7 +73,7 @@ public abstract class ControlCommand {
     private File basedir;
     private File binDir; // where the internal startup scripts are
 
-    private PropertiesConfiguration rhqctlConfig;
+    private PropertiesConfiguration rhqctlConfig = null; // the (optional) settings found in rhqctl.properties
 
     private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
 
@@ -127,12 +126,13 @@ public abstract class ControlCommand {
         binDir = new File(basedir, "bin/internal");
 
         File rhqctlPropertiesFile = getRhqCtlProperties();
-        try {
-            rhqctlConfig = new PropertiesConfiguration(rhqctlPropertiesFile);
-        } catch (ConfigurationException e) {
-            throw new RHQControlException("Failed to load configuration", e);
+        if (rhqctlPropertiesFile != null) {
+            try {
+                rhqctlConfig = new PropertiesConfiguration(rhqctlPropertiesFile);
+            } catch (ConfigurationException e) {
+                throw new RHQControlException("Failed to load configuration", e);
+            }
         }
-
         defaultStorageBasedir = new File(getBaseDir(), STORAGE_BASEDIR_NAME);
         defaultAgentBasedir = new File(getBaseDir().getParent(), AGENT_BASEDIR_NAME);
     }
@@ -151,7 +151,10 @@ public abstract class ControlCommand {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(options, args);
             exec(cmdLine);
-            rhqctlConfig.save();
+
+            if (rhqctlConfig != null) {
+                rhqctlConfig.save();
+            }
         } catch (ParseException e) {
             printUsage();
         } catch (ConfigurationException e) {
@@ -198,11 +201,27 @@ public abstract class ControlCommand {
     }
 
     protected File getStorageBasedir() {
-        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP, defaultStorageBasedir.getAbsolutePath()));
+        return defaultStorageBasedir; // the storage location is always in our expected default location, not configurable
     }
 
     protected File getAgentBasedir() {
-        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP, defaultAgentBasedir.getAbsolutePath()));
+        File retval;
+        String agentBasedirProperty = getProperty(RHQ_AGENT_BASEDIR_PROP, null);
+        if (agentBasedirProperty == null) {
+            retval = defaultAgentBasedir; // we want to return the exact defaultAgentBasedir object here to ensure equals() works later
+        } else {
+            retval = new File(agentBasedirProperty);
+        }
+        return retval;
+    }
+
+    protected void setAgentBasedir(File agentBasedir) {
+        // We only want to create this in rhqctl.properties if it is different than the default location.
+        // This allows us to avoid creating an empty/unused rhqctl.properties - we only want that file
+        // if we actually need it to override our defaults.
+        if (agentBasedir != null && !agentBasedir.equals(defaultAgentBasedir)) {
+            putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+        }
     }
 
     protected boolean isServerInstalled() {
@@ -264,34 +283,59 @@ public abstract class ControlCommand {
         return null;
     }
 
-    protected boolean hasProperty(String key) {
-        return rhqctlConfig.containsKey(key);
-    }
-
-    protected String getProperty(String key) {
-        return rhqctlConfig.getString(key);
-    }
-
+    /**
+     * Returns a property from the rhqctl.properties file. If that optional file doesn't
+     * exist, the default value is returned. If the file exists but the key isn't found
+     * in there, the default value is returned.
+     * @param key the property name to find in rhqctl.properties
+     * @param defaultValue the value to return if the property doesn't exist
+     * @return the value of the property or its default value if property does not exist
+     */
     private String getProperty(String key, String defaultValue) {
-        return rhqctlConfig.getString(key, defaultValue);
+        return (rhqctlConfig != null) ? rhqctlConfig.getString(key, defaultValue) : defaultValue;
     }
 
-    protected void putProperty(String key, String value) {
+    /**
+     * Sets a property to rhqctl.properties. Note that calling this will eventually cause
+     * rhqctl.properties file to be created later.
+     * @param key
+     * @param value
+     */
+    private void putProperty(String key, String value) {
+        if (rhqctlConfig == null) {
+            rhqctlConfig = new PropertiesConfiguration();
+            rhqctlConfig.setPath(getRhqCtlPropertiesPath());
+        }
+
         rhqctlConfig.setProperty(key, value);
     }
 
+    /**
+     * Returns the file of the rhqctl.properties file if it exists. Since this is
+     * an optional file, this can return null to indicate it doesn't yet exist.
+     *
+     * @return rhqctl.properties file if it exists; null if it doesn't exist
+     */
     protected File getRhqCtlProperties() {
+        String filename = getRhqCtlPropertiesPath();
+        File file = new File(filename);
+        if (!file.isFile()) {
+            file = null;
+        }
+        return file;
+    }
+
+    /**
+     * Returns the path to the optional rhqctl.properties file. This will always return non-null,
+     * even if the file actually doesn't exist yet.
+     * @return the path to where the rhqctl.properties file is or could be if one existed.
+     */
+    protected String getRhqCtlPropertiesPath() {
         String sysprop = System.getProperty("rhqctl.properties-file");
         if (sysprop == null) {
             throw new RuntimeException("The required system property [rhqctl.properties-file] is not defined.");
         }
-
-        File file = new File(sysprop);
-        if (!file.isFile()) {
-            throw new RHQControlException("rhqctl.properties-file has as its values [" + file + "] which is not "
-                + "a file.");
-        }
-        return file;
+        return sysprop;
     }
 
     protected org.apache.commons.exec.CommandLine getCommandLine(String scriptName, String... args) {

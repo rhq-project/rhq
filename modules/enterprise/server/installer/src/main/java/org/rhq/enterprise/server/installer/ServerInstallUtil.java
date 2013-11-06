@@ -1444,23 +1444,17 @@ public class ServerInstallUtil {
         LOG.info("Creating https connector...");
         ConnectorConfiguration connector = buildSecureConnectorConfiguration(configDirStr, serverProperties);
 
-        // https://issues.jboss.org/browse/WFLY-1177 - we need to resolve the paths right now. the user won't be able
-        // to change these again in the future unless they go directly into standalone.xml and change it manually
+        // verify that we have a truststore file - if user is relying on our self-signed certs, we'll have to create one for them
         String truststoreFileString = connector.getSslConfiguration().getCaCertificateFile();
         truststoreFileString = resolveExpression(mcc, truststoreFileString);
-        connector.getSslConfiguration().setCaCertificateFile(truststoreFileString);
-
-        String keystoreFileString = connector.getSslConfiguration().getCertificateKeyFile();
-        keystoreFileString = resolveExpression(mcc, keystoreFileString);
-        connector.getSslConfiguration().setCertificateKeyFile(keystoreFileString);
-
-        // verify that we have a truststore file - if user is relying on our self-signed certs, we'll have to create one for them
         if (truststoreFileString == null) {
             LOG.warn("Missing a valid truststore location - you must specify a valid truststore location!");
         } else {
             File truststoreFile = new File(truststoreFileString);
             if (!truststoreFile.exists()) {
                 // user didn't provide a truststore file, copy the keystore and use it as the truststore; tell the user about this
+                String keystoreFileString = connector.getSslConfiguration().getCertificateKeyFile();
+                keystoreFileString = resolveExpression(mcc, keystoreFileString);
                 File keystoreFile = new File(keystoreFileString);
                 if (!keystoreFile.isFile()) {
                     LOG.warn("Missing both keystore [" + keystoreFile + "] and truststore [" + truststoreFile + "]");
@@ -1517,14 +1511,17 @@ public class ServerInstallUtil {
 
         SSLConfiguration ssl = new SSLConfiguration();
 
+        // Because of https://issues.jboss.org/browse/WFLY-1177 we cannot build expressions for key/truststore files.
+        // Otherwise, we end up with recursive expressions (${${x}:a}) which is what's broken. For now, just use ${x} which is allowed.
+
         // truststore
-        ssl.setCaCertificateFile(buildExpression("rhq.server.tomcat.security.truststore.file", serverProperties, true));
+        ssl.setCaCertificateFile(buildExpression("rhq.server.tomcat.security.truststore.file", serverProperties, false));
         ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
             serverProperties, true));
         ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, true));
 
         // keystore
-        ssl.setCertificateKeyFile(buildExpression("rhq.server.tomcat.security.keystore.file", serverProperties, true));
+        ssl.setCertificateKeyFile(buildExpression("rhq.server.tomcat.security.keystore.file", serverProperties, false));
         ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, true));
         ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, true));
         ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, true));

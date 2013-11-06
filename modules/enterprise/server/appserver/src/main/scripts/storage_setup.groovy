@@ -58,29 +58,6 @@ def calculateSeeds() {
   return addresses.join(',')
 }
 
-def createRhqctlPropertiesFile(basedir) {
-  def binDir = new File(basedir, "bin")
-  def propsFile = new File(binDir, "rhqctl.properties")
-
-  log.info "Creating $propsFile"
-
-  propsFile.withWriter { writer ->
-    writer.write("""# This is a configuration file for the rhqctl script.
-
-# The directory in which the RHQ storage node is installed. Defaults to:
-# <RHQ_SERVER_HOME>/rhq-storage
-# rhq.storage.basedir=
-
-# The directory in which the RHQ agent is installed. Defaults to:
-# <RHQ_SERVER_HOME>/../rhq-agent
-# rhq.agent.basedir=
-
-rhqctl.install.storage-config=bin/rhq-storage.properties
-"""
-    )
-  }
-}
-
 def createStoragePropertiesFile(basedir, nodeId) {
   def binDir = new File(basedir, "bin")
   def propsFile = new File(binDir, "rhq-storage.properties")
@@ -113,7 +90,6 @@ def prepareDefaultStorageInstallation() {
     log.info "It looks like setup for default storage has already run"
     log.info "Skipping storage setup for $defaultServerBasedir"
   } else {
-    createRhqctlPropertiesFile(defaultServerBasedir)
     createStoragePropertiesFile(defaultServerBasedir, 1)
   }
 }
@@ -138,7 +114,6 @@ def prepareAdditionalStorageInstallations() {
       log.info "Updating permissions in $basedir/bin"
       ant.chmod(dir: "$basedir/bin", perm: "ug+x", includes: "*.sh,rhqctl", verbose: true)
 
-      createRhqctlPropertiesFile(basedir)
       createStoragePropertiesFile(basedir, nodeId)
 
       log.info "Creating symlink for $basedir/jbossas"

@@ -526,8 +526,6 @@ public abstract class AbstractInstall extends ControlCommand {
         try {
             log.info("Preparing to install RHQ storage node.");
 
-            putProperty(RHQ_STORAGE_BASEDIR_PROP, storageBasedir.getAbsolutePath());
-
             final Properties storageProperties = loadStorageProperties();
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
@@ -591,7 +589,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             File agentInstallerJar = getAgentInstaller();
 
-            putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+            setAgentBasedir(agentBasedir);
 
             // if the install fails, we will completely delete any agent that might have been "half" installed
             addUndoTask(new ControlCommand.UndoTask("Removing agent install directory") {

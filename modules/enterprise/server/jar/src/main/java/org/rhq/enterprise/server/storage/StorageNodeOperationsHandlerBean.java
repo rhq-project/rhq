@@ -373,21 +373,26 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         StorageNode storageNode = findStorageNode(resourceOperationHistory.getResource());
         Configuration parameters = resourceOperationHistory.getParameters();
         PropertyList addresses = parameters.getList("addresses");
-        StorageNode newStorageNode = findStorageNodeByAddress(getAddress(addresses));
+        log.info("handle announce operation with status " + resourceOperationHistory.getStatus().getDisplayName() +
+            " and address of " + getAddress(addresses));
+        StorageNode newStorageNode;
 
         switch (resourceOperationHistory.getStatus()) {
         case INPROGRESS:
             // nothing to do here
             return;
         case CANCELED:
+            newStorageNode = findStorageNodeByAddress(getAddress(addresses));
             deploymentOperationCanceled(storageNode, resourceOperationHistory, newStorageNode);
         case FAILURE:
+            newStorageNode = findStorageNodeByAddress(getAddress(addresses));
             deploymentOperationFailed(storageNode, resourceOperationHistory, newStorageNode);
             return;
         default:  // SUCCESS
             storageNode.setMaintenancePending(false);
             StorageNode nextNode = takeFromMaintenanceQueue();
             Subject subject = getSubject(resourceOperationHistory);
+            newStorageNode = findStorageNodeByAddress(getAddress(addresses));
 
             if (nextNode == null) {
                 log.info("Successfully announced new storage node to storage cluster");
@@ -406,23 +411,25 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         StorageNode storageNode = findStorageNode(operationHistory.getResource());
         Configuration params = operationHistory.getParameters();
         PropertyList addresses = params.getList("addresses");
-        StorageNode removedStorageNode = findStorageNodeByAddress(getAddress(addresses));
+        StorageNode removedStorageNode;
 
         switch (operationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 break;
             case CANCELED:
+                removedStorageNode = findStorageNodeByAddress(getAddress(addresses));
                 undeploymentOperationCanceled(storageNode, operationHistory, removedStorageNode);
                 break;
             case FAILURE:
+                removedStorageNode = findStorageNodeByAddress(getAddress(addresses));
                 deploymentOperationFailed(storageNode, operationHistory, removedStorageNode);
                 break;
             default:  // SUCCESS
                 storageNode.setMaintenancePending(false);
-
                 StorageNode nextNode = takeFromMaintenanceQueue();
                 Subject subject = getSubject(operationHistory);
+                removedStorageNode = findStorageNodeByAddress(getAddress(addresses));
 
                 if (nextNode == null) {
                     log.info("Successfully unannounced " + removedStorageNode + " to storage cluster");
@@ -462,24 +469,27 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void handleAddNodeMaintenance(ResourceOperationHistory resourceOperationHistory) {
         StorageNode storageNode = findStorageNode(resourceOperationHistory.getResource());
-
         Configuration parameters = resourceOperationHistory.getParameters();
         String newNodeAddress = parameters.getSimpleValue("newNodeAddress");
-        StorageNode newStorageNode = findStorageNodeByAddress(newNodeAddress);
+        StorageNode newStorageNode;
+
         switch (resourceOperationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 return;
             case CANCELED:
+                newStorageNode = findStorageNodeByAddress(newNodeAddress);
                 deploymentOperationCanceled(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             case FAILURE:
+                newStorageNode = findStorageNodeByAddress(newNodeAddress);
                 deploymentOperationFailed(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             default:  // SUCCESS
                 log.info("Finished running add node maintenance for " + storageNode);
                 storageNode.setMaintenancePending(false);
                 StorageNode nextNode = takeFromMaintenanceQueue();
+                newStorageNode = findStorageNodeByAddress(newNodeAddress);
 
                 if (nextNode == null) {
                     log.info("Finished running add node maintenance on all cluster nodes");
@@ -522,21 +532,25 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         StorageNode storageNode = findStorageNode(operationHistory.getResource());
         Configuration parameters = operationHistory.getParameters();
         String removedNodeAddress = parameters.getSimpleValue("removedNodeAddress");
-        StorageNode removedStorageNode = findStorageNodeByAddress(removedNodeAddress);
+        StorageNode removedStorageNode;
+
         switch (operationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 break;
             case CANCELED:
+                removedStorageNode = findStorageNodeByAddress(removedNodeAddress);
                 undeploymentOperationCanceled(storageNode, operationHistory, removedStorageNode);
                 break;
             case FAILURE:
+                removedStorageNode = findStorageNodeByAddress(removedNodeAddress);
                 undeploymentOperationFailed(storageNode, operationHistory, removedStorageNode);
                 break;
             default:  // SUCCESS
                 log.info("Finished remove node maintenance for " + storageNode);
                 storageNode.setMaintenancePending(false);
                 StorageNode nextNode = takeFromMaintenanceQueue();
+                removedStorageNode = findStorageNodeByAddress(removedNodeAddress);
 
                 if (nextNode == null) {
                     log.info("Finished running remove node maintenance on all cluster nodes");

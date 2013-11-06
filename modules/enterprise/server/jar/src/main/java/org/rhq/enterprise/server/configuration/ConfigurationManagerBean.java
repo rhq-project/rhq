@@ -137,7 +137,7 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  */
 @Stateless
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
-    private final Log log = LogFactory.getLog(ConfigurationManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(ConfigurationManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -162,8 +162,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @Override
     @Nullable
     public Configuration getPluginConfiguration(Subject subject, int resourceId) {
-        log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
-
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Getting current plugin configuration for resource [" + resourceId + "]");
+        }
+        
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new IllegalStateException("Cannot retrieve plugin config for unknown resource [" + resourceId + "]");
@@ -260,8 +262,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             try {
                 agentClient.getDiscoveryAgentService().executeServiceScanDeferred();
             } catch (Exception e) {
-                log.warn("Failed to execute service scan - cannot detect children of the newly connected resource ["
-                    + resource + "]", e);
+                LOG.warn("Failed to execute service scan - cannot detect children of the newly connected resource ["
+                        + resource + "]", e);
             }
 
             response = new ConfigurationUpdateResponse(update.getId(), null, ConfigurationUpdateStatus.SUCCESS, null);
@@ -392,7 +394,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @Override
     public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
         boolean fromStructured) {
-        log.debug("Getting current Resource configuration for Resource [" + resourceId + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Getting current Resource configuration for Resource [" + resourceId + "]...");
+        }
 
         Resource resource = entityManager.getReference(Resource.class, resourceId);
         if (resource == null) {
@@ -465,13 +469,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     // Note that even though this application exception specifies "rollback=true", it will
                     // not effect our current transaction since the persist call was made with REQUIRES_NEW
                     // and thus only that new tx was rolled back
-                    log.debug("Resource is currently in progress of changing its resource configuration - "
-                        + "since it hasn't finished yet, will use the last successful resource configuration: " + e);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Resource is currently in progress of changing its resource configuration - "
+                            + "since it hasn't finished yet, will use the last successful resource configuration: " + e);
+                    }
                 }
             }
         } else {
-            log.warn("Could not get live resource configuration for resource [" + resource
-                + "]; will assume latest resource configuration update is the current resource configuration.");
+            LOG.warn("Could not get live resource configuration for resource [" + resource
+                    + "]; will assume latest resource configuration update is the current resource configuration.");
         }
 
         if (current != null) {
@@ -531,7 +537,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Override
     public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId) {
-        log.debug("Getting current plugin configuration for resource [" + resourceId + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Getting current plugin configuration for resource [" + resourceId + "]...");
+        }
 
         Resource resource = entityManager.getReference(Resource.class, resourceId);
         if (resource == null) {
@@ -705,8 +713,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     liveConfig);
                 if (update != null) {
                     currentPersistedConfigs.put(memberResource.getId(), update.getConfiguration());
-                    log.info("Live configuration for [" + memberResource
-                        + "] did not match latest associated ResourceConfigurationUpdate with SUCCESS status.");
+                    LOG.info("Live configuration for [" + memberResource
+                            + "] did not match latest associated ResourceConfigurationUpdate with SUCCESS status.");
                 } else {
                     // this means the live config is identical to the persisted config
                     currentPersistedConfigs.put(memberResource.getId(), liveConfig);
@@ -933,10 +941,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Override
     public void checkForTimedOutConfigurationUpdateRequests() {
-        log.debug("Begin scanning for timed out configuration update requests");
+        LOG.debug("Begin scanning for timed out configuration update requests");
         checkForTimedOutResourceConfigurationUpdateRequests();
         checkForTimedOutGroupResourceConfigurationUpdateRequests();
-        log.debug("Finished scanning for timed out configuration update requests");
+        LOG.debug("Finished scanning for timed out configuration update requests");
     }
 
     @SuppressWarnings("unchecked")
@@ -953,8 +961,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
-                    log.info("Resource configuration update request seems to have been orphaned - timing it out: "
-                        + request);
+                    LOG.info("Resource configuration update request seems to have been orphaned - timing it out: "
+                            + request);
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
                     request.setStatus(ConfigurationUpdateStatus.FAILURE);
@@ -964,7 +972,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 }
             }
         } catch (Throwable t) {
-            log.error("Failed to check for timed out Resource configuration update requests. Cause: " + t);
+            LOG.error("Failed to check for timed out Resource configuration update requests. Cause: " + t);
         }
     }
 
@@ -985,7 +993,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 long duration = request.getDuration();
                 if (duration > timeout) {
 
-                    log.info("Group Resource config update request seems to be orphaned - timing it out: " + request);
+                    LOG.info("Group Resource config update request seems to be orphaned - timing it out: " + request);
 
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
@@ -993,7 +1001,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 }
             }
         } catch (Throwable t) {
-            log.error("Failed to check for timed out group Resource configuration update requests. Cause: " + t);
+            LOG.error("Failed to check for timed out group Resource configuration update requests. Cause: " + t);
         }
     }
 
@@ -1161,7 +1169,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             configurationUpdateId);
 
         if (doomedRequest == null) {
-            log.debug("Asked to purge a non-existing config update request [" + configurationUpdateId + "]");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Asked to purge a non-existing config update request [" + configurationUpdateId + "]");
+            }
             return;
         }
 
@@ -1206,7 +1216,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             configurationUpdateId);
 
         if (doomedRequest == null) {
-            log.debug("Asked to purge a non-existing config update request [" + configurationUpdateId + "]");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Asked to purge a non-existing config update request [" + configurationUpdateId + "]");
+            }
             return;
         }
 
@@ -1501,12 +1513,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void notifyAlertConditionCacheManager(String callingMethod, ResourceConfigurationUpdate update) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(update);
 
-        log.debug(callingMethod + ": " + stats);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(callingMethod + ": " + stats);
+        }
     }
 
     @Override
     public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
-        log.debug("Received a configuration-update-completed message: " + response);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Received a configuration-update-completed message: " + response);
+        }
 
         // find the current update request that is persisted - this is the one that is being reported as being complete
         ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
@@ -1578,14 +1594,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     + failedResources);
             }
             groupConfigUpdate.setStatus(groupStatus);
-            log.info("Group Resource configuration update [" + groupConfigUpdate.getId() + "] for "
-                + groupConfigUpdate.getGroup() + " has completed with status [" + groupStatus + "].");
+            LOG.info("Group Resource configuration update [" + groupConfigUpdate.getId() + "] for "
+                    + groupConfigUpdate.getGroup() + " has completed with status [" + groupStatus + "].");
             // TODO: Add support for alerting on completion of group resource config updates.
             //notifyAlertConditionCacheManager("checkForCompletedGroupResourceConfigurationUpdate", groupUpdate);
         } else {
-            log.debug("Group Resource configuration update [" + groupConfigUpdate.getId() + "] for "
-                + groupConfigUpdate.getGroup() + " has " + inProgressResourcesCount
-                + " member updates still in progress.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Group Resource configuration update [" + groupConfigUpdate.getId() + "] for "
+                    + groupConfigUpdate.getGroup() + " has " + inProgressResourcesCount
+                    + " member updates still in progress.");
+            }
         }
         return;
     }
@@ -1702,16 +1720,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId());
                 if (liveConfig == null) {
                     // This should really never occur - the PC should never return a null, always at least an empty config.
-                    log.debug("ConfigurationAgentService.loadResourceConfiguration() returned a null Configuration.");
+                    LOG.debug("ConfigurationAgentService.loadResourceConfiguration() returned a null Configuration.");
                     liveConfig = new Configuration();
                 }
             } else {
-                log.warn("Agent is unreachable [" + agent + "] - cannot get live configuration for resource ["
-                    + resource + "]");
+                LOG.warn("Agent is unreachable [" + agent + "] - cannot get live configuration for resource ["
+                        + resource + "]");
             }
         } catch (Exception e) {
-            log.warn("Could not get live configuration for resource [" + resource + "]"
-                + ThrowableUtil.getAllMessages(e, true));
+            LOG.warn("Could not get live configuration for resource [" + resource + "]"
+                    + ThrowableUtil.getAllMessages(e, true));
         }
 
         return liveConfig;
@@ -1811,7 +1829,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
         scheduler.scheduleJob(jobDetail, trigger);
 
-        log.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
+        }
 
         return updateId;
     }
@@ -1846,7 +1866,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
         } catch (SchedulerException sche) {
             String message = "Error scheduling resource configuration update for group[id=" + group.getId() + "]";
-            log.error(message, sche);
+            LOG.error(message, sche);
             throw new ResourceGroupUpdateException(message + ": " + sche);
         }
 
@@ -1878,12 +1898,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             scheduler.scheduleJob(jobDetail, trigger);
         } catch (SchedulerException e) {
             String message = "Error scheduling job named '" + jobDetail.getName() + "':";
-            log.error(message, e);
+            LOG.error(message, e);
             throw new ResourceGroupUpdateException(message + e.getMessage());
         }
 
-        log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId
-            + "].");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Scheduled Resource configuration update against compatible ResourceGroup[id="
+                + compatibleGroupId + "].");
+        }
 
         return updateId;
     }
@@ -2102,8 +2124,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         long count = (Long) countQuery.getSingleResult();
         int resultsSize;
         if (count > maxSize) {
-            log.error("Configuration set contains more than " + maxSize + " members - " + "returning only " + maxSize
-                + " Configurations (the maximum allowed).");
+            LOG.error("Configuration set contains more than " + maxSize + " members - " + "returning only " + maxSize
+                    + " Configurations (the maximum allowed).");
             resultsSize = maxSize;
         } else {
             resultsSize = (int) count;
@@ -2223,9 +2245,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // TODO: use subject and resourceGroupId to perform security check
 
         if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId) == false) {
-            log.error(subject + " attempted to delete " + groupPluginConfigurationUpdateIds.length
-                + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
-                + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
+            LOG.error(subject + " attempted to delete " + groupPluginConfigurationUpdateIds.length
+                    + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
+                    + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
             return 0;
         }
 
@@ -2245,7 +2267,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 entityManager.remove(update);
                 removed++;
             } catch (Exception e) {
-                log.error("Problem removing group plugin configuration update", e);
+                LOG.error("Problem removing group plugin configuration update", e);
             }
         }
 
@@ -2257,9 +2279,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Integer[] groupResourceConfigurationUpdateIds) {
 
         if (authorizationManager.hasGroupPermission(subject, Permission.MODIFY_RESOURCE, resourceGroupId) == false) {
-            log.error(subject + " attempted to delete " + groupResourceConfigurationUpdateIds.length
-                + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
-                + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
+            LOG.error(subject + " attempted to delete " + groupResourceConfigurationUpdateIds.length
+                    + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
+                    + "], but did not have the " + Permission.MODIFY_RESOURCE.name() + " permission for this group");
             return 0;
         }
 
@@ -2279,7 +2301,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 entityManager.remove(update);
                 removed++;
             } catch (Exception e) {
-                log.error("Problem removing group resource configuration update", e);
+                LOG.error("Problem removing group resource configuration update", e);
             }
         }
 
@@ -2385,7 +2407,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             return configService.merge(configuration, resourceId, fromStructured);
         } catch (PluginContainerException e) {
-            log.error("An error occurred while trying to translate the configuration.", e);
+            LOG.error("An error occurred while trying to translate the configuration.", e);
             return null;
         }
     }
@@ -2564,10 +2586,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         if (inner instanceof PropertyDefinitionSimple) {
                             handlePDS(subject, resource, baseResource, (PropertyDefinitionSimple) inner);
                         }
-                        log.debug("3 ____[ " + inner.toString() + " in " + pdl.toString() + " ]____ not yet supported");
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("3 ____[ " + inner.toString() + " in " + pdl.toString()
+                                + " ]____ not yet supported");
+                        }
                     }
                 } else {
-                    log.debug("2 ____[ " + memberDef.toString() + " in " + pdl.toString() + " ]____ not yet supported");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("2 ____[ " + memberDef.toString() + " in " + pdl.toString()
+                            + " ]____ not yet supported");
+                    }
                 }
 
             } else if (pd instanceof PropertyDefinitionMap) {
@@ -2576,11 +2604,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     if (inner instanceof PropertyDefinitionSimple) {
                         handlePDS(subject, resource, baseResource, (PropertyDefinitionSimple) inner);
                     } else {
-                        log.debug("4 ____[ " + inner.toString() + " in " + pdm.toString() + " ]____ not yet supported");
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("4 ____[ " + inner.toString() + " in " + pdm.toString()
+                                + " ]____ not yet supported");
+                        }
                     }
                 }
             } else {
-                log.debug("1 ____[ " + pd.toString() + " ]____ not yet supported");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("1 ____[ " + pd.toString() + " ]____ not yet supported");
+                }
             }
         }
 
@@ -2636,13 +2669,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                             resourceList.add(resource);
                             foundResources = resourceList;
                         } else {
-                            log.warn("Self reference requested but resource id is not valid."
-                                + "Option source expression:" + expression);
+                            LOG.warn("Self reference requested but resource id is not valid."
+                                    + "Option source expression:" + expression);
                             return;
                         }
                     } else {
-                        log.warn("Option source expression for property " + pds.getName()
-                            + " and target configuration contains no ':'");
+                        LOG.warn("Option source expression for property " + pds.getName()
+                                + " and target configuration contains no ':'");
                         return;
                     }
                 } else {
@@ -2655,7 +2688,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 }
                 
                 for (Resource foundResource : foundResources) {
-                    processPropertyOptionsSource(pds, tt, expression, filterPattern, foundResource);
+                    processPropertyOptionsSource(resource, baseResource, pds, tt, expression, filterPattern, foundResource);
                 }
             } else if (tt == PropertyOptionsSource.TargetType.GROUP) {
                 // spinder 2-15-13: commenting out this code below as we don't appear to be using any of it. Half done.                
@@ -2670,10 +2703,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     }
 
-    private void processPropertyOptionsSource(PropertyDefinitionSimple pds, PropertyOptionsSource.TargetType tt,
-        String expression, Pattern filterPattern, Resource resource) {
+    private void processPropertyOptionsSource(Resource resource, Resource baseResource, PropertyDefinitionSimple pds,
+        PropertyOptionsSource.TargetType tt, String expression, Pattern filterPattern, Resource foundResource) {
         if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
-            String name = resource.getName();
+            String name = foundResource.getName();
 
             // filter if the user provided a filter
             if (filterPattern != null) {
@@ -2688,7 +2721,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             }
         } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
             //  for configuration we need to drill down into the resource configuration
-            if (!handleConfigurationTarget(pds, expression, resource))
+            if (!handleConfigurationTarget(resource, baseResource, pds, expression, foundResource))
                 return;
 
         }
@@ -2697,15 +2730,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * Drill down in the case the user set up a target of "configuration". We need to check
      * that the target property actually exists and that it has a format we understand
+     *
+     * @param resource the resource we are looking options for
+     * @param baseResource the base resource of <code>resource</code>
      * @param pds Property definition to examine
      * @param expression The whole expression starting with identifier: for the configuration
      * identifier. This looks like <i>listname</i> for list of
      * property simple or <i>mapname=mapkey</i> for a map with simple properties
-     * @param resource the resource to look at
+     * @param foundResource the resource to look at
      * @return false if the property can not be resolved, true otherwise
      */
-    private boolean handleConfigurationTarget(PropertyDefinitionSimple pds, String expression, Resource resource) {
-        Configuration configuration = resource.getResourceConfiguration();
+    private boolean handleConfigurationTarget(Resource resource, Resource baseResource, PropertyDefinitionSimple pds,
+        String expression, Resource foundResource) {
+        Configuration configuration = foundResource.getResourceConfiguration();
 
         if (expression.indexOf(":") != -1) {
             expression = expression.substring(0, expression.indexOf(":"));
@@ -2724,11 +2761,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         if (p == null) {
-            log.warn("Option source expression for property " + pds.getName() + " and target configuration not found");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(resource + " in " + baseResource + ": option source expression for property " + pds.getName()
+                    + " and target configuration of " + foundResource + " not found");
+            }
             return false;
         }
         if (!(p instanceof PropertyList)) {
-            log.warn("Option source expression for property " + pds.getName()
+            LOG.warn(resource + " in " + baseResource + ": option source expression for property " + pds.getName()
                 + " and target configuration does not point to a list");
             return false;
         }
@@ -2741,7 +2781,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         if (propertyList.get(0) instanceof PropertySimple) {
             if (isMapOrList) {
-                log.warn(" expected a List of Maps, but got a list of simple");
+                LOG.warn(resource + " in " + baseResource + ": expected a List of Maps, but got a list of simple");
                 return false;
             }
 
@@ -2755,7 +2795,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             }
         } else if (propertyList.get(0) instanceof PropertyMap) {
             if (!isMapOrList) {
-                log.warn(" expected a List of simple, but got a list of Maps");
+                LOG.warn(resource + " in " + baseResource + ": expected a List of simple, but got a list of Maps");
                 return false;
             }
             String subPropName;
@@ -2765,12 +2805,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 PropertyMap pm = (PropertyMap) tmp;
                 Property ps = pm.get(subPropName);
                 if (ps == null) {
-                    log.warn("Option source expression for property " + pds.getName()
-                        + " and target configuration does not have a map element " + subPropName);
+                    LOG.warn(resource + " in " + baseResource + ": option source expression for property "
+                        + pds.getName() + " and target configuration does not have a map element " + subPropName);
                     return false;
                 }
                 if (!(ps instanceof PropertySimple)) {
-                    log.warn("ListOfMapOf!Simple are not supported");
+                    LOG.warn(resource + " in " + baseResource + ": ListOfMapOf!Simple are not supported");
                     return false;
                 }
                 PropertySimple propertySimple = (PropertySimple) ps;

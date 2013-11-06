@@ -2320,9 +2320,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to SMTP server">
-              <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to SMTP server"/>
             <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
             <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
             <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
@@ -2339,9 +2337,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to IMAP server">
-              <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to IMAP server"/>
             <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
             <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
             <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
@@ -2358,9 +2354,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server">
-              <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="true" description="Outbound Socket binding to POP3 server"/>
             <c:simple-property name="password" required="false" type="string" readOnly="true" description="Password to authenticate on server"/>
             <c:simple-property name="ssl" required="false" type="boolean" readOnly="true" defaultValue="false" description="Does server requires SSL?. The default value is false."/>
             <c:simple-property name="username" required="false" type="string" readOnly="true" description="Username to authenticate on server"/>
@@ -2456,9 +2450,7 @@
               <c:option value="ajp"/>
             </c:property-options>
           </c:simple-property>
-          <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The web connector socket-binding reference, this connector should be bound to.">
-            <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-          </c:simple-property>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The web connector socket-binding reference, this connector should be bound to."/>
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
@@ -4413,9 +4405,7 @@
 
           <resource-configuration>
             <c:simple-property name="factory-class" required="true" type="string" readOnly="true" description="The factory class."/>
-            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference."/>
           </resource-configuration>
         </service>
 
@@ -4430,9 +4420,7 @@
 
           <resource-configuration>
             <c:simple-property name="factory-class" required="true" type="string" readOnly="true" description="The factory class."/>
-            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference."/>
           </resource-configuration>
         </service>
 
@@ -4502,9 +4490,7 @@
           <metric property="started" dataType="trait" description="Whether this acceptor is started."/>
 
           <resource-configuration>
-            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference."/>
           </resource-configuration>
         </service>
 
@@ -4518,9 +4504,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The socket binding reference."/>
           </resource-configuration>
         </service>
 
@@ -4968,9 +4952,7 @@
           <resource-configuration>
             <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="true" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
             <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="true" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
-            <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The discovery group socket binding.">
-              <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
-            </c:simple-property>
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The discovery group socket binding."/>
           </resource-configuration>
         </service>
 

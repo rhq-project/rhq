@@ -20,12 +20,9 @@ package org.rhq.coregui.client.inventory.resource.discovery;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -37,10 +34,13 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
@@ -64,6 +64,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     private static final String NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noperm();
     private static final String EMPTY_MESSAGE = MSG.common_msg_noItemsToShow();
 
+    private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;
+
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
 
@@ -73,7 +75,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
     private PermissionsLoader permissionsLoader = new PermissionsLoader();
     private TreeGrid dataContainerReference = null;
-    private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;
+
+    private List<AsyncCallback> failedFetchListeners = new ArrayList<AsyncCallback>();
 
     public AutodiscoveryQueueDataSource() {
         setClientOnly(false);
@@ -83,8 +86,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
         DataSourceTextField idField = new DataSourceTextField("id", MSG.common_title_id());
         idField.setPrimaryKey(true);
 
-        DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG
-            .view_autoDiscoveryQ_field_parentId());
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId",
+            MSG.view_autoDiscoveryQ_field_parentId());
         parentIdField.setForeignKey("id");
 
         DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.common_title_resource_name());
@@ -95,11 +98,11 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
 
-        DataSourceTextField timestampField = new DataSourceTextField("ctime", MSG
-            .view_autoDiscoveryQ_field_discoveryTime());
+        DataSourceTextField timestampField = new DataSourceTextField("ctime",
+            MSG.view_autoDiscoveryQ_field_discoveryTime());
 
-        DataSourceTextField statusField = new DataSourceTextField("statusLabel", MSG
-            .view_autoDiscoveryQ_field_inventoryStatus());
+        DataSourceTextField statusField = new DataSourceTextField("statusLabel",
+            MSG.view_autoDiscoveryQ_field_inventoryStatus());
 
         setFields(idField, parentIdField, resourceNameField, resourceKeyField, resourceTypeField, descriptionField,
             statusField, timestampField);
@@ -113,7 +116,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     protected Object transformRequest(DSRequest request) {
         DSResponse response = new DSResponse();
         response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Asume success
+        // assume success
         response.setStatus(0);
         switch (request.getOperationType()) {
         case FETCH:
@@ -127,9 +130,8 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     }
 
     protected void executeFetch(final DSRequest request, final DSResponse response) {
-        final PageControl pc = getPageControl(request);
-
-        final HashSet<InventoryStatus> statuses = new HashSet<InventoryStatus>();
+        final String platformId = request.getCriteria().getAttribute("parentId");
+        final ArrayList<InventoryStatus> statuses = new ArrayList<InventoryStatus>();
 
         String statusesString = request.getCriteria().getAttributeAsString("status");
         if (statusesString != null) {
@@ -145,29 +147,12 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             statuses.add(InventoryStatus.NEW);
         }
 
-        //determine if has manage inventory perms, if so then chain and proceed with getting discovered resources
+        //determine if has manage inventory perms, if so then chain and proceed with getting Q resources
         permissionsLoader.loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null) {
-                    Boolean accessGranted = permissions.contains(MANAGE_INVENTORY);
-                    if (accessGranted) {
-                        if (dataContainerReference != null) {
-                            dataContainerReference.setEmptyMessage(EMPTY_MESSAGE);
-                        }
-                        resourceService.getQueuedPlatformsAndServers(statuses, pc,
-                            new AsyncCallback<Map<Resource, List<Resource>>>() {
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler()
-                                        .handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
-                                }
-
-                                public void onSuccess(Map<Resource, List<Resource>> result) {
-                                    response.setData(buildNodes(result));
-                                    processResponse(request.getRequestId(), response);
-                                }
-                            });
-                    } else {
+                    if (!permissions.contains(MANAGE_INVENTORY)) {
                         Log.debug("(User does not have required managed inventory permissions. " + EMPTY_MESSAGE);
                         response.setTotalRows(0);
                         if (dataContainerReference != null) {
@@ -176,31 +161,88 @@ public class AutodiscoveryQueueDataSource extends DataSource {
                             dataContainerReference.setEmptyMessage(NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE);
                         }
                         processResponse(request.getRequestId(), response);
+                        return;
+                    }
+
+                    if (dataContainerReference != null) {
+                        dataContainerReference.setEmptyMessage(EMPTY_MESSAGE);
+                    }
+
+                    if (null == platformId) {
+                        // query for platforms
+                        final PageControl pc = getPageControl(request);
+                        resourceService.getQueuedPlatforms(statuses, pc, new AsyncCallback<PageList<Resource>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
+                                for (AsyncCallback failedFetchListener : failedFetchListeners) {
+                                    failedFetchListener.onFailure(caught);
+                                }
+                            }
+
+                            public void onSuccess(PageList<Resource> result) {
+                                response.setData(buildPlatformNodes(result));
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
+                    } else {
+                        final int platformResourceId = Integer.valueOf(platformId);
+                        final Resource parentResourceStub = new Resource(platformResourceId);
+
+                        ResourceCriteria fetchCriteria = new ResourceCriteria();
+                        fetchCriteria.addFilterParentResourceId(platformResourceId);
+                        fetchCriteria.addFilterResourceCategories(ResourceCategory.SERVER);
+                        fetchCriteria.addFilterInventoryStatuses(statuses);
+                        fetchCriteria.clearPaging();
+                        fetchCriteria.addSortName(PageOrdering.ASC);
+                        resourceService.findResourcesByCriteria(fetchCriteria, new AsyncCallback<PageList<Resource>>() {
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_loadFailure(), caught);
+                                for (AsyncCallback failedFetchListener : failedFetchListeners) {
+                                    failedFetchListener.onFailure(caught);
+                                }
+                            }
+
+                            public void onSuccess(PageList<Resource> result) {
+                                response.setData(buildServerNodes(parentResourceStub, result));
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
                     }
                 }
             }
         });
     }
 
-    private TreeNode[] buildNodes(Map<Resource, List<Resource>> result) {
+    /**
+     * @param callback The onFailure() method will be invoked if the DS fails a fetch operation.
+     */
+    public void addFailedFetchListener(AsyncCallback callback) {
+        failedFetchListeners.add(callback);
+    }
+
+    private TreeNode[] buildPlatformNodes(PageList<Resource> platforms) {
 
         ArrayList<ResourceTreeNode> nodes = new ArrayList<ResourceTreeNode>();
-        for (Resource platform : result.keySet()) {
+        for (Resource platform : platforms) {
             nodes.add(new ResourceTreeNode(platform));
-
-            for (Resource child : result.get(platform)) {
-                ResourceTreeNode childNode = new ResourceTreeNode(child);
-                childNode.setIsFolder(false);
-                nodes.add(childNode);
-            }
         }
+        TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
+        return treeNodes;
+    }
 
+    private TreeNode[] buildServerNodes(Resource parentResource, PageList<Resource> servers) {
+
+        ArrayList<ResourceTreeNode> nodes = new ArrayList<ResourceTreeNode>();
+        for (Resource server : servers) {
+            server.setParentResource(parentResource); // set the parent so the tree relationship gets set
+            nodes.add(new ResourceTreeNode(server));
+        }
         TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
         return treeNodes;
     }
 
     /**
-     * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
+     * Returns a pre-populated PageControl based on the provided DSRequest. This will set sort fields,
      * pagination, but *not* filter fields.
      *
      * @param request the request to turn into a page control
@@ -209,7 +251,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
     protected PageControl getPageControl(DSRequest request) {
         // Initialize paging.
         PageControl pageControl;
-        if (getMaximumPlatformsToDisplay() > -1) {//using default            
+        if (getMaximumPlatformsToDisplay() > -1) {
             pageControl = new PageControl(0, getMaximumPlatformsToDisplay());
         } else {
             pageControl = new PageControl(0, unlimited);
@@ -242,6 +284,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
             setID(id);
             setParentID(parentId);
+            setIsFolder(null == parentId);
 
             setAttribute("id", id);
             setAttribute("parentId", parentId);

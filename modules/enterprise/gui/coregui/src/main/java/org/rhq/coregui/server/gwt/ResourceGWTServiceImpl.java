@@ -137,7 +137,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     @Override
     public ResourceAvailability getLiveResourceAvailability(int resourceId) throws RuntimeException {
         try {
-            return SerialUtility.prepare(resourceManager.getLiveResourceAvailability(getSessionSubject(), resourceId), "ResourceService.getLiveResourceAvailability");
+            return SerialUtility.prepare(resourceManager.getLiveResourceAvailability(getSessionSubject(), resourceId),
+                "ResourceService.getLiveResourceAvailability");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -396,12 +397,12 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
+    public PageList<Resource> getQueuedPlatforms(ArrayList<InventoryStatus> statuses, PageControl pc)
         throws RuntimeException {
         try {
             return SerialUtility.prepare(
-                discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet.copyOf(statuses), pc),
-                "ResourceService.getQueuedPlatformsAndServers");
+                discoveryBoss.getQueuedPlatforms(getSessionSubject(), EnumSet.copyOf(statuses), pc),
+                "ResourceService.getQueuedPlatforms");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

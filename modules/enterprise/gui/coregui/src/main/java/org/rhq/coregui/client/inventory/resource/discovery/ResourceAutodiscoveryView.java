@@ -37,8 +37,6 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
-import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
@@ -46,6 +44,8 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
+import com.smartgwt.client.widgets.tree.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.tree.events.DataArrivedHandler;
 
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -74,9 +74,10 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
     private boolean simple;
     private TreeGrid treeGrid;
     private ToolStrip footer;
-    private DataSource dataSource;
+    private AutodiscoveryQueueDataSource dataSource;
     // This allows the selection handler to ignore selection changes initiated by us, as opposed to by the user.
     private boolean selectionChangedHandlerDisabled;
+    private boolean loadAllPlatforms;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -205,27 +206,26 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                     if (isCheckboxMarked) {
                         SC.ask(MSG.view_autoDiscoveryQ_confirmSelect(), new BooleanCallback() {
                             public void execute(Boolean confirmed) {
-                                if (confirmed) {
-                                    for (ListGridRecord child : treeGrid.getTree().getChildren(selectedNode)) {
-                                        if (!treeGrid.isSelected(child)) {
-                                            treeGrid.selectRecord(child);
-                                        }
+                                if (confirmed && !treeGrid.getTree().hasChildren(selectedNode)) {
+                                    selectedNode.setAttribute("selectChildOnArrival", "true");
+                                    treeGrid.getTree().loadChildren(selectedNode);
+                                } else {
+                                    if (confirmed) {
+                                        selectAllPlatformChildren(selectedNode);
                                     }
+                                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton,
+                                        ignoreButton, unignoreButton);
+                                    selectionChangedHandlerDisabled = false;
                                 }
-                                updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                                    unignoreButton);
-                                selectionChangedHandlerDisabled = false;
                             }
                         });
                     } else {
-                        for (ListGridRecord child : treeGrid.getTree().getChildren(selectedNode)) {
-                            if (treeGrid.isSelected(child)) {
-                                treeGrid.deselectRecord(child);
-                            }
-                        }
+                        selectedNode.setAttribute("autoSelectChildren", "false");
+                        treeGrid.deselectRecords(treeGrid.getTree().getChildren(selectedNode));
+
                         // the immediate redraw below should not be necessary, but without it the deselected
                         // platform checkbox remained checked.
-                        treeGrid.redraw();
+                        // treeGrid.redraw();
                         updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
                             unignoreButton);
                         selectionChangedHandlerDisabled = false;
@@ -247,8 +247,36 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (treeGrid != null) {
-                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                        unignoreButton);
+                    TreeNode parent = dataArrivedEvent.getParentNode();
+                    if (!treeGrid.getTree().isRoot(parent)) {
+                        // This flag can be set when we select a platform or as part of selectAll button handling. It
+                        // means that we want to immediately select the child server nodes.
+                        boolean selectChildOnArrival = Boolean.valueOf(parent.getAttribute("selectChildOnArrival"));
+                        if (selectChildOnArrival) {
+                            // data includes the platform, just get the descendant servers
+                            treeGrid.selectRecords(treeGrid.getData().getDescendantLeaves());
+                        }
+                    }
+
+                    // This logic is relevant to what we do in the selectAll button
+                    boolean endDisable = true;
+                    if (loadAllPlatforms) {
+                        TreeNode rootNode = treeGrid.getTree().getRoot();
+                        TreeNode[] platformNodes = treeGrid.getTree().getChildren(rootNode);
+
+                        for (TreeNode platformNode : platformNodes) {
+                            if (!treeGrid.getTree().isLoaded(platformNode)) {
+                                endDisable = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (endDisable) {
+                        updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                            unignoreButton);
+                        selectionChangedHandlerDisabled = false;
+                    }
+
                     // NOTE: Due to a SmartGWT bug, the TreeGrid is not automatically redrawn upon data arrival, and
                     //       calling treeGrid.markForRedraw() doesn't redraw it either. The user can mouse over the grid
                     //       to cause it to redraw, but it is obviously not reasonable to expect that. So we must
@@ -258,29 +286,78 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
             }
         });
 
+        dataSource.addFailedFetchListener(new AsyncCallback() {
+
+            // just in case we have a failure while fetching, try to make sure we don't lock up the view.
+            public void onFailure(Throwable caught) {
+                loadAllPlatforms = false;
+                updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
+                selectionChangedHandlerDisabled = false;
+            }
+
+            public void onSuccess(Object result) {
+                // never called
+            }
+        });
+
         selectAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_autoDiscoveryQ_confirmSelectAll(), new BooleanCallback() {
                     public void execute(Boolean selectChildServers) {
+
                         selectionChangedHandlerDisabled = true;
-                        TreeNode[] nodesToSelect;
+                        TreeNode rootNode = treeGrid.getTree().getRoot();
+                        TreeNode[] platformNodes = treeGrid.getTree().getChildren(rootNode);
+
                         if (selectChildServers) {
-                            // NOTE: We do not use treeGrid.selectAllRecords() here, because it only selects nodes that
-                            //       are currently visible, and we want to select all nodes, including server nodes
-                            //       under a collapsed platform node.
-                            nodesToSelect = treeGrid.getTree().getAllNodes();
+                            disableButtons(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                                unignoreButton);
+
+                            // we may need to fetch the child servers in order to select them.
+                            ArrayList<TreeNode> platformsToLoad = new ArrayList<TreeNode>();
+
+                            for (TreeNode platformNode : platformNodes) {
+                                if (treeGrid.getTree().isLoaded(platformNode)) {
+                                    // if loaded then just select the nodes
+                                    if (!treeGrid.isSelected(platformNode)) {
+                                        treeGrid.selectRecord(platformNode);
+                                    }
+                                    treeGrid.selectRecords(treeGrid.getTree().getChildren(platformNode));
+
+                                } else {
+                                    platformsToLoad.add(platformNode);
+                                }
+                            }
+
+                            if (platformsToLoad.isEmpty()) {
+                                // we're done, everything is already loaded
+                                treeGrid.markForRedraw();
+                                updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                                    unignoreButton);
+                                selectionChangedHandlerDisabled = false;
+
+                            } else {
+                                // this plays with the dataArrivedHandler which is responsible for
+                                // doing the child selection and checking to see if all platforms have been loaded
+                                // as the child data comes in.
+                                loadAllPlatforms = true;
+                                for (TreeNode platformToLoad : platformsToLoad) {
+                                    // load and select
+                                    if (!treeGrid.isSelected(platformToLoad)) {
+                                        treeGrid.selectRecord(platformToLoad);
+                                    }
+                                    platformToLoad.setAttribute("selectChildOnArrival", "true");
+                                    treeGrid.getTree().loadChildren(platformToLoad);
+                                }
+                            }
+
                         } else {
-                            TreeNode rootNode = treeGrid.getTree().getRoot();
-                            // The children of the root node are the platform nodes.
-                            nodesToSelect = treeGrid.getTree().getChildren(rootNode);
+                            treeGrid.selectRecords(platformNodes);
+                            treeGrid.markForRedraw();
+                            updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                                unignoreButton);
+                            selectionChangedHandlerDisabled = false;
                         }
-                        for (TreeNode nodeToSelect : nodesToSelect) {
-                            treeGrid.selectRecord(nodeToSelect);
-                        }
-                        treeGrid.markForRedraw();
-                        updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                            unignoreButton);
-                        selectionChangedHandlerDisabled = false;
                     }
                 });
             }
@@ -362,6 +439,14 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
             }
         });
 
+    }
+
+    private void selectAllPlatformChildren(TreeNode platformNode) {
+        for (ListGridRecord child : treeGrid.getTree().getChildren(platformNode)) {
+            if (!treeGrid.isSelected(child)) {
+                treeGrid.selectRecord(child);
+            }
+        }
     }
 
     private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton, IButton importButton,

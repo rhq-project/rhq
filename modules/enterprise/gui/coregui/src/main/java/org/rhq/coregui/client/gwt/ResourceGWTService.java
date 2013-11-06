@@ -18,7 +18,7 @@
  */
 package org.rhq.coregui.client.gwt;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -91,7 +91,7 @@ public interface ResourceGWTService extends RemoteService {
 
     Resource getPlatformForResource(int resourceId) throws RuntimeException;
 
-    Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
+    PageList<Resource> getQueuedPlatforms(ArrayList<InventoryStatus> statuses, PageControl pc)
         throws RuntimeException;
 
     Map<Integer, String> getResourcesAncestry(Integer[] resourceIds, ResourceAncestryFormat format)

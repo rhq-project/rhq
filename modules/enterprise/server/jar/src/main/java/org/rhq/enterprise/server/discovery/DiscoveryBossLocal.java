@@ -68,7 +68,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * <p>Exists for transactional boundary reasons only.</p>
      *
      * Merge In the provided batch of resources.  The list of resources must provide a parent before its child.
-     * 
+     *
      * @param resourceBatch
      * @param agent
      * @throws InvalidInventoryReportException
@@ -92,16 +92,20 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * @param  pc   used to define the size of the returned map - will determine how many platforms are returned
      *
      * @return the platforms and servers that need to be imported or ignored
+     * @deprecated used only by portal war, should be removed when possible.
      */
+    @Deprecated
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, PageControl pc);
 
     /**
-     * Like the above method, but can find ignored, commited or both
+     * Like the above method, but can find ignored, committed or both
      * @param user the subject
      * @param statuses the inventory status'
      * @param pc page control
      * @return the queued platforms and servers
+     * @deprecated unused, remove when doing a deprecation cleanup
      */
+    @Deprecated
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses,
         PageControl pc);
 
@@ -193,10 +197,10 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * Updates the version of the specified Resource in inventory, if it is indeed in inventory.
      * If the resource is already in inventory and its version is already <code>version</code>, then
      * this method does nothing and returns <code>true</code>.
-     * 
+     *
      * @param resourceId the id of the Resource to be updated
      * @param version the new version
-     * 
+     *
      * @return <code>true</code> if the Resource was in inventory and its version is now that of <code>version</code>.
      *         <code>false</code> if the Resource was not in inventory
      */
@@ -206,7 +210,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * Upgrades the data of the resources according to the provided reports.
      * The server is free to ignore or modify the requests and will provide the
      * true changes made to the resources on the server-side in the result of this method.
-     * 
+     *
      * @param upgradeRequests contains the information about the upgrade of individual resources.
      * @return details on what resources have been upgraded with what data.
      */

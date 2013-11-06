@@ -50,7 +50,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.components.table.Table;
-import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.coregui.client.inventory.common.graph.MetricGraphData;
@@ -139,6 +138,11 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             }
         }.schedule(150);
 
+    }
+
+    @Override
+    public void refresh(){
+        super.refresh();
     }
 
     public class MetricsTableListGrid extends ListGrid {

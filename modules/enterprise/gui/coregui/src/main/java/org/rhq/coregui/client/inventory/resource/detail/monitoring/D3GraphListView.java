@@ -233,9 +233,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                         new Timer() {
                             @Override
                             public void run() {
-                                if(!buttonBarDateTimeRangeEditor.isCustomTimeRangeActive()){
-                                    buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
-                                }
+                                buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                                 availabilityGraph.drawJsniChart();
                             }
                         }.schedule(150);

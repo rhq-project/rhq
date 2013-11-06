@@ -253,7 +253,7 @@ public class StorageInstaller {
 
         serverPropertiesUpdater.update(properties);
 
-        // start node (and install windows service) if necessary 
+        // start node (and install windows service) if necessary
         File binDir = null;
         if (isWindows()) {
             File basedir = new File(System.getProperty("rhq.server.basedir"));
@@ -614,19 +614,32 @@ public class StorageInstaller {
     }
 
     private void checkPerms(Option option, String path, List<String> errors) {
-        File dir = new File(path);
+        try {
+            File dir = new File(path);
+            if (!dir.isAbsolute()) {
+                dir = new File(new File(storageBasedir, "bin"), path);
+            }
+            dir = dir.getCanonicalFile();
 
-        if (dir.exists()) {
-            if (dir.isFile()) {
-                errors.add(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+            if (dir.exists()) {
+                if (dir.isFile()) {
+                    errors.add(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+                }
+            } else {
+                File parentDir = dir.getParentFile();
+                while (!parentDir.exists()) {
+                    parentDir = parentDir.getParentFile();
+                }
+
+                if (!parentDir.canWrite()) {
+                    errors.add("The user running this installer does not appear to have write permissions to "
+                        + parentDir + ". Either make sure that the user running the storage node has write permissions or use the --"
+                        + option.getLongOpt() + " to change this value.");
+                }
             }
-        } else {
-            File parent = findParentDir(new File(path));
-            if (!parent.canWrite()) {
-                errors.add("The user running this installer does not appear to have write permissions to " + parent
-                    + ". Either make sure that the user running the storage node has write permissions or use the --"
-                    + option.getLongOpt() + " to change this value.");
-            }
+        } catch (Exception e) {
+            errors.add("The request path cannot be constructed (path: " + path + "). "
+                + "Please use a valid and also make sure the user running the storage node has write permissions for the path.");
         }
     }
 
@@ -652,14 +665,6 @@ public class StorageInstaller {
                 }
             }
         }
-    }
-
-    private File findParentDir(File path) {
-        File dir = path;
-        while (!dir.exists()) {
-            dir = dir.getParentFile();
-        }
-        return dir;
     }
 
     private PropertiesFileUpdate getServerProperties() {

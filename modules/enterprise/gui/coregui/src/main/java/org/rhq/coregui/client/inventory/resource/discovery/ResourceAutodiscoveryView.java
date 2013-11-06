@@ -20,6 +20,7 @@ package org.rhq.coregui.client.inventory.resource.discovery;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -71,6 +72,13 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
     public static final ViewName VIEW_ID = new ViewName("AutodiscoveryQueue", MSG.view_inventory_adq(),
         IconEnum.DISCOVERY_QUEUE);
 
+    // Specify 3m timeout to compensate for import taking a long time for a large number of Resources.
+    // TODO (ips, 08/31/11): Remove this once import has been refactored to be partially asynchronous, i.e. where the
+    //                       call to importResources() flips all the Resources to a new COMMITTING inventory status
+    //                       and then kicks off a background job to do the actual work of committing (syncing to
+    //                       Agents, etc.).
+    ResourceGWTServiceAsync importResourceService = GWTServiceLookup.getResourceService(3 * 60 * 1000);
+
     private boolean simple;
     private TreeGrid treeGrid;
     private ToolStrip footer;
@@ -80,13 +88,6 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
     private boolean loadAllPlatforms;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
-    // Specify 3m timeout to compensate for import taking a long time for a large number of Resources.
-    // TODO (ips, 08/31/11): Remove this once import has been refactored to be partially asynchronous, i.e. where the
-    //                       call to importResources() flips all the Resources to a new COMMITTING inventory status
-    //                       and then kicks off a background job to do the actual work of committing (syncing to
-    //                       Agents, etc.).
-    private ResourceGWTServiceAsync importResourceService = GWTServiceLookup.getResourceService(3 * 60 * 1000);
 
     public ResourceAutodiscoveryView() {
         this(false);
@@ -376,6 +377,7 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
         importButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 disableButtons(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
+
                 // TODO (ips): Make the below message sticky, but add a new ClearSticky Message option that the
                 //             below callback methods can use to clear it once the importResources() call has
                 //             completed.
@@ -383,17 +385,8 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                     new Message(MSG.view_autoDiscoveryQ_importInProgress(), Message.Severity.Info, EnumSet
                         .of(Message.Option.Transient)));
 
-                importResourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_importFailure(), caught);
-                    }
+                importResources(getSelectedPlatforms());
 
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
-                        refresh();
-                    }
-                });
             }
         });
 
@@ -404,7 +397,9 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                     new Message(MSG.view_autoDiscoveryQ_ignoreInProgress(), Message.Severity.Info, EnumSet
                         .of(Message.Option.Transient)));
 
-                resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
+                // assuming here that the ignore list will not be massive and that we can do it all in one go,
+                // otherwise re-impl this like import.
+                resourceService.ignoreResources(getAllSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_ignoreFailure(), caught);
                     }
@@ -425,7 +420,9 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                     new Message(MSG.view_autoDiscoveryQ_unignoreInProgress(), Message.Severity.Info, EnumSet
                         .of(Message.Option.Transient)));
 
-                resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
+                // assuming here that the unignore list will not be massive and that we can do it all in one go,
+                // otherwise re-impl this like import.
+                resourceService.unignoreResources(getAllSelectedIds(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_unignoreFailure(), caught);
                     }
@@ -436,6 +433,43 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
                         refresh();
                     }
                 });
+            }
+        });
+
+    }
+
+    // run through the platforms, committing ids for for 1 platform on each pass.  doing it in chunks prevents
+    // a timeout for a large import request.
+    private void importResources(final List<TreeNode> platforms) {
+
+        int[] idsToImport = null;
+        for (Iterator<TreeNode> i = platforms.iterator(); i.hasNext();) {
+            TreeNode platformNode = i.next();
+            int[] uncommittedIdsForPlatform = getPlatformSelectedIds(platformNode);
+            // remove this platform, it either has nothing to import, or its resources will be imported
+            i.remove();
+            if (uncommittedIdsForPlatform.length > 0) {
+                idsToImport = uncommittedIdsForPlatform;
+                break;
+            }
+        }
+
+        if (null == idsToImport) {
+            CoreGUI.getMessageCenter().notify(
+                new Message(MSG.view_autoDiscoveryQ_importSuccessful(), Message.Severity.Info));
+            refresh();
+            return;
+        }
+
+        importResourceService.importResources(idsToImport, new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_autoDiscoveryQ_importFailure(), caught);
+                refresh();
+            }
+
+            public void onSuccess(Void result) {
+                // recurse on the smaller platform list...
+                importResources(platforms);
             }
         });
 
@@ -498,14 +532,44 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
         }
     }
 
-    private int[] getSelectedIds() {
+    private List<TreeNode> getSelectedPlatforms() {
+        TreeNode rootNode = treeGrid.getTree().getRoot();
+        TreeNode[] platformNodes = treeGrid.getTree().getChildren(rootNode);
+        List<TreeNode> result = new ArrayList<TreeNode>(platformNodes.length);
+
+        for (TreeNode platformNode : platformNodes) {
+            if (treeGrid.isSelected(platformNode)) {
+                result.add(platformNode);
+            }
+        }
+
+        return result;
+    }
+
+    private int[] getPlatformSelectedIds(TreeNode platformNode) {
+        List<Integer> result = new ArrayList<Integer>();
+
+        if (!InventoryStatus.COMMITTED.name().equals(platformNode.getAttributeAsString("status"))) {
+            result.add(Integer.parseInt(platformNode.getAttributeAsString("id")));
+        }
+
+        for (ListGridRecord childNode : treeGrid.getTree().getChildren(platformNode)) {
+            if (treeGrid.isSelected(childNode)
+                && !InventoryStatus.COMMITTED.name().equals(childNode.getAttributeAsString("status"))) {
+                result.add(Integer.parseInt(childNode.getAttributeAsString("id")));
+            }
+        }
+
+        return TableUtility.getIds(result);
+    }
+
+    private int[] getAllSelectedIds() {
         List<Integer> selected = new ArrayList<Integer>();
         for (ListGridRecord node : treeGrid.getSelectedRecords()) {
             if (!InventoryStatus.COMMITTED.name().equals(node.getAttributeAsString("status"))) {
                 selected.add(Integer.parseInt(node.getAttributeAsString("id")));
             }
         }
-
         return TableUtility.getIds(selected);
     }
 

@@ -169,3 +169,14 @@
 #                                printing a message to the console.
 #
 #RHQ_AGENT_PASSWORD_PROMPT=true
+
+#    RHQ_AGENT_UMASK           - this indicates how the file permissions
+#                                for generated files, Ex. ~/.java/.userPrefs/rhq-agent/default/prefs.xml
+#                                should be masked to prevent security concerns 
+#                                like world readable configuration files.
+#                                To see how this is used, see the 'umask $RHQ_AGENT_UMASK'
+#                                call in rhq-agent.sh script.  See umask man pages for
+#                                more information on valid permission strings. Ex. 007 masks
+#                                all other/world permissions. 
+#
+RHQ_AGENT_UMASK=007

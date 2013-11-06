@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.9.0.JON320-SNAPSHOT</version>
+  <version>4.9.0.JON320ER5</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -77,19 +77,19 @@
          inside the zip is not the same as the name of the zip
          e.g. jboss-as-dist-7.2.0.Alpha1-redhat-4.zip unzips to jboss-eap-6.1
     -->
-    <jboss.version>7.2.0.Alpha1-redhat-4</jboss.version>
+    <jboss.version>7.2.1.Final-redhat-10</jboss.version>
     <jboss.eap.version>jboss-eap-6.1</jboss.eap.version>
     <jboss.javaee6.spec.version>3.0.2.Final</jboss.javaee6.spec.version>
-    <jboss.ejb.client.version>1.0.23.Final</jboss.ejb.client.version>
+    <jboss.ejb.client.version>1.0.23.Final-redhat-1</jboss.ejb.client.version>
 
     <!-- Provided -->
     <antlr.version>2.7.7</antlr.version>
-    <hibernate.version>4.2.0.CR1</hibernate.version>
-    <hibernate-annotations.version>4.0.1.Final</hibernate-annotations.version>
-    <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version>
+    <hibernate.version>4.2.0.SP1-redhat-1</hibernate.version>
+    <hibernate-annotations.version>4.0.1.Final-redhat-2</hibernate-annotations.version>
+    <hibernate-jpa-2.0-api.version>1.0.1.Final-redhat-2</hibernate-jpa-2.0-api.version>
     <infinispan.version>5.1.2.FINAL</infinispan.version>
-    <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version>
-    <javax.ejb.api.version>1.0.2.Final</javax.ejb.api.version>
+    <javax.annotation.api.version>1.0.1.Final-redhat-2</javax.annotation.api.version>
+    <javax.ejb.api.version>1.0.2.Final-redhat-2</javax.ejb.api.version>
     <javax.jms.api.version>1.0.0.Final</javax.jms.api.version>
     <javax.servlet.api.version>1.0.2.Final</javax.servlet.api.version>
     <javax.mail.api.version>1.4.4</javax.mail.api.version>
@@ -97,19 +97,19 @@
     <jaxb-api.version>1.0.4.Final</jaxb-api.version>
     <jaxb-impl.version>2.2.4</jaxb-impl.version>
     <jboss-common-core.version>2.2.17.GA</jboss-common-core.version>
-    <jboss-ejb3-ext-api.version>2.0.0</jboss-ejb3-ext-api.version>
+    <jboss-ejb3-ext-api.version>2.0.0-redhat-1</jboss-ejb3-ext-api.version>
     <jboss-interceptors-api.version>1.0.0.Final</jboss-interceptors-api.version>
-    <jboss-jts.version>4.16.4.Final</jboss-jts.version>
-    <jboss-logging.version>3.1.2.GA</jboss-logging.version>
+    <jboss-jts.version>4.16.4.Final-redhat-1</jboss-jts.version>
+    <jboss-logging.version>3.1.2.GA-redhat-1</jboss-logging.version>
     <jboss-remotingjmx.version>1.0.2.Final</jboss-remotingjmx.version>
     <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
     <picketbox.version>4.0.7.Final</picketbox.version>
     <resteasy.version>2.3.5.Final</resteasy.version>
     <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version>
     <jboss-modules.version>1.1.1.GA</jboss-modules.version>
-    <jboss-dmr.version>1.1.1.Final</jboss-dmr.version>
-    <jboss-msc.version>1.0.2.GA</jboss-msc.version>
-    <jboss-vfs.version>3.1.0.Final</jboss-vfs.version>
+    <jboss-dmr.version>1.1.1.Final-redhat-1</jboss-dmr.version>
+    <jboss-msc.version>1.0.2.GA-redhat-1</jboss-msc.version>
+    <jboss-vfs.version>3.1.0.Final-redhat-2</jboss-vfs.version>
 
 
     <!-- Not Provided - some of these are needed by the agent -->
@@ -117,7 +117,7 @@
     <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
     <jboss-jmx.version>4.2.3.GA</jboss-jmx.version>
     <jboss-common.version>1.2.1.GA</jboss-common.version> <!-- note this is the old commons we used, not the newer commons-core -->
-    <jboss-remoting.version>2.5.4.SP4</jboss-remoting.version>
+    <jboss-remoting.version>2.5.4.SP5</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-system.version>4.2.3.GA</jboss-system.version>
     <jbosssx.version>4.2.3.GA</jbosssx.version>

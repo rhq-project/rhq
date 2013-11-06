@@ -288,9 +288,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
                 @Override
                 public void run() {
-                    if(!buttonBarDateTimeRangeEditor.isCustomTimeRangeActive()){
-                        buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
-                    }
+                    buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
                     drawJsniChart();
                 }
             }.schedule(200);

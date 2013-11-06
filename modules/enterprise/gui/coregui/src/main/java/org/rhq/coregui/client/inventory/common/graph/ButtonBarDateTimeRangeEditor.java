@@ -187,13 +187,15 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }-*/;
 
     public void updateTimeRangeToNow() {
-        Log.debug("Updating timerange to now");
-        Date now = new Date();
-        AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPreferences.getMetricRangePreferences();
-        long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
-        Date newStartDate = new Date(now.getTime() - timeRange);
-        showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
-        saveDateRange(newStartDate.getTime(), now.getTime());
+        if(!isCustomTimeRangeActive()){
+            Log.debug("Updating timerange to now");
+            Date now = new Date();
+            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPreferences.getMetricRangePreferences();
+            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            Date newStartDate = new Date(now.getTime() - timeRange);
+            showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
+            saveDateRange(newStartDate.getTime(), now.getTime());
+        }
     }
 
     /**
@@ -312,8 +314,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                         .getMonth(), endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate
                         .getMinutes());
                     buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
-                    redrawGraphs();
                     showUserFriendlyTimeRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate().getTime());
+                    redrawGraphs();
                     CustomDateRangeWindow.this.destroy();
                 }
             });

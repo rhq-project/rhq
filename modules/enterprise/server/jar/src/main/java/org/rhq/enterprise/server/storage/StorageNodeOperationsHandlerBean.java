@@ -373,8 +373,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         StorageNode storageNode = findStorageNode(resourceOperationHistory.getResource());
         Configuration parameters = resourceOperationHistory.getParameters();
         PropertyList addresses = parameters.getList("addresses");
-        log.info("handle announce operation with status " + resourceOperationHistory.getStatus().getDisplayName() +
-            " and address of " + getAddress(addresses));
         StorageNode newStorageNode;
 
         switch (resourceOperationHistory.getStatus()) {

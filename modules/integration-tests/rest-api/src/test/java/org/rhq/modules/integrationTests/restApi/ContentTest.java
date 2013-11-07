@@ -174,7 +174,7 @@ public class ContentTest extends AbstractBase {
         List<Map<String,Object>> resources =
         given()
             .header(acceptJson)
-            .queryParam("q","EAP (127.0.0.1:6990)")  // TODO Can we identify the RHQ server itself better?
+            .queryParam("q","EAP (")
             .queryParam("category","SERVER")
         .expect()
             .statusCode(200)
@@ -186,6 +186,15 @@ public class ContentTest extends AbstractBase {
         assert resources.size()>0;
 
         int as7Id = (Integer)resources.get(0).get("resourceId");
+        // try to find stock EAP6 
+        if (resources.size() > 1) {
+          for (Map<String,Object> res : resources) {
+            if (!res.get("resourceName").toString().contains("RHQ Server")) {
+              as7Id = (Integer)res.get("resourceId");
+              break;
+            }
+          }
+        }
         int createdResourceId=-1;
 
         // create child of eap6 as deployment

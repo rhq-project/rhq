@@ -110,6 +110,12 @@ public class StorageInstaller {
 
     static final String STORAGE_LOG_FILE_PATH = "../../logs/rhq-storage.log";
 
+    static final String DEFAULT_COMMIT_LOG_DIR = "../../../rhq-data/commit_log";
+
+    static final String DEFAULT_DATA_DIR = "../../../rhq-data/data";
+
+    static final String DEFAULT_SAVED_CACHES_DIR = "../../../rhq-data/saved_caches";
+
     private final Log log = LogFactory.getLog(StorageInstaller.class);
 
     private Options options;
@@ -126,8 +132,6 @@ public class StorageInstaller {
 
     private int defaultGossipPort = 7100;
 
-    private File logDir;
-
     private String defaultHeapSize = "512M";
 
     private String defaultHeapNewSize = "128M";
@@ -136,7 +140,6 @@ public class StorageInstaller {
         String basedir = System.getProperty("rhq.server.basedir");
         serverBasedir = new File(basedir);
         storageBasedir = new File(basedir, STORAGE_BASEDIR);
-        logDir = new File(serverBasedir, "logs");
 
         Option hostname = new Option("n", StorageProperty.HOSTNAME.property(), true,
             "The hostname or IP address on which the node will listen for "
@@ -357,12 +360,10 @@ public class StorageInstaller {
             String seeds = cmdLine.getOptionValue(StorageProperty.SEEDS.property(), installerInfo.hostname);
             deploymentOptions.setSeeds(seeds);
 
-            String commitlogDir = cmdLine.getOptionValue(StorageProperty.COMMITLOG.property(), getDefaultCommitLogDir()
-                .getAbsolutePath());
-            String dataDir = cmdLine.getOptionValue(StorageProperty.DATA.property(), getDefaultDataDir()
-                .getAbsolutePath());
+            String commitlogDir = cmdLine.getOptionValue(StorageProperty.COMMITLOG.property(), getDefaultCommitLogDir());
+            String dataDir = cmdLine.getOptionValue(StorageProperty.DATA.property(), getDefaultDataDir());
             String savedCachesDir = cmdLine.getOptionValue(StorageProperty.SAVED_CACHES.property(),
-                getDefaultSavedCachesDir().getAbsolutePath());
+                getDefaultSavedCachesDir());
 
             File commitLogDirFile = new File(commitlogDir);
             File dataDirFile = new File(dataDir);
@@ -414,7 +415,7 @@ public class StorageInstaller {
 
             deploymentOptions.setCommitLogDir(commitlogDir);
             // TODO add support for specifying multiple dirs
-            deploymentOptions.setDataDir(dataDirFile.getAbsolutePath());
+            deploymentOptions.setDataDir(dataDirFile.getPath());
             deploymentOptions.setSavedCachesDir(savedCachesDir);
 
             deploymentOptions.setLogFileName(installerInfo.logFile);
@@ -929,16 +930,16 @@ public class StorageInstaller {
         return new File(getInstallationDir(), "rhq-data");
     }
 
-    private File getDefaultCommitLogDir() {
-        return new File(getDefaultBaseDataDir(), "commit_log");
+    private String getDefaultCommitLogDir() {
+        return DEFAULT_COMMIT_LOG_DIR;
     }
 
-    private File getDefaultDataDir() {
-        return new File(getDefaultBaseDataDir(), "data");
+    private String getDefaultDataDir() {
+        return DEFAULT_DATA_DIR;
     }
 
-    private File getDefaultSavedCachesDir() {
-        return new File(getDefaultBaseDataDir(), "saved_caches");
+    private String getDefaultSavedCachesDir() {
+        return DEFAULT_SAVED_CACHES_DIR;
     }
 
     public void printUsage() {

@@ -51,7 +51,6 @@ public class StorageInstallerTest {
 
     @BeforeMethod
     public void initDirs(Method test) throws Exception {
-        System.out.println("BEGIN " + test);
         digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
         File dir = new File(getClass().getResource(".").toURI());
@@ -74,7 +73,6 @@ public class StorageInstallerTest {
 
     @AfterMethod(alwaysRun = true)
     public void shutdownStorageNode() throws Exception {
-        System.out.println("END");
         if (FileUtils.getFile(storageDir, "bin", "cassandra.pid").exists()) {
             CassandraClusterManager ccm = new CassandraClusterManager();
             ccm.killNode(storageDir);

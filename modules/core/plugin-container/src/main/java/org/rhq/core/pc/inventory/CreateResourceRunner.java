@@ -42,7 +42,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author Jason Dobies
  */
 public class CreateResourceRunner implements Callable, Runnable {
-
      private static final Log LOG = LogFactory.getLog(CreateResourceRunner.class);
 
      private static final int SERVICE_SCAN_MAX_RETRY = 10;
@@ -150,11 +149,13 @@ public class CreateResourceRunner implements Callable, Runnable {
 
             Throwable throwable = report.getException();
             if (throwable != null) {
-                if (LOG.isDebugEnabled())
+                if (LOG.isDebugEnabled()) {
                     LOG.debug("Throwable was found in creation report for request [" + requestId + "].", throwable);
-                else
+                }
+                else {
                     LOG.warn("Throwable was found in creation report for request [" + requestId + "]: " + throwable
                            + " - Enable DEBUG logging to see the stack trace.");
+                }
                 status = CreateResourceStatus.FAILURE;
                 String messages = ThrowableUtil.getAllMessages(throwable);
                 // If we still don't have an error message, populate it from the exception
@@ -205,7 +206,7 @@ public class CreateResourceRunner implements Callable, Runnable {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Service scan retry [" + retry + "] for parentResourceId [" + parentResourceId + "]");
                 }
-                if (retry > 1 && retry < SERVICE_SCAN_MAX_RETRY) {
+                if (retry > 1) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Pausing for [" + SERVICE_SCAN_RETRY_PAUSE
                             + "] ms before retrying service scan for parentResourceId [" + parentResourceId + "]");

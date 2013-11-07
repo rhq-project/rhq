@@ -469,54 +469,24 @@ public class AgentMain {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         if (!tmpDir.exists()) {
             LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] does not exist.");
-            useLocalTmpDir();
-            return;
+            try {
+                LOG.info("Creating java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "]");
+                tmpDir.mkdir();
+            } catch (Throwable t) {
+                throw new RuntimeException("Startup failed: Could not create missing java.io.tmpdir ["
+                    + tmpDir.getAbsolutePath() + "]", t);
+            }
         }
         if (!tmpDir.isDirectory()) {
-            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not a directory");
-            useLocalTmpDir();
-            return;
-        }
-        if (!tmpDir.canRead() || !tmpDir.canExecute()) {
-            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not readable");
-            useLocalTmpDir();
-            return;
-        }
-        if (!tmpDir.canWrite()) {
-            LOG.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not writable");
-            useLocalTmpDir();
-            return;
-        }
-    }
-
-    private void useLocalTmpDir() {
-        File localTmpDir = null;
-        try {
-            localTmpDir = new File(new File(getAgentHomeDirectory()), "temp");
-            LOG.info("Using alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
-            if (!localTmpDir.exists()) {
-                LOG.info("Creating alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
-                localTmpDir.mkdir();
-            }
-            System.setProperty("java.io.tmpdir", localTmpDir.getAbsolutePath());
-        } catch (Throwable t) {
-            throw new RuntimeException("Startup failed: Could not create or set local java.io.tmpdir ["
-                + localTmpDir.getAbsolutePath() + "]", t);
-        }
-        if (!localTmpDir.exists()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
-                + "] does not exist");
-        }
-        if (!localTmpDir.isDirectory()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not a directory");
         }
-        if (!localTmpDir.canRead() || !localTmpDir.canExecute()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+        if (!tmpDir.canRead() || !tmpDir.canExecute()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not readable");
         }
-        if (!localTmpDir.canWrite()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+        if (!tmpDir.canWrite()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not writable");
         }
     }

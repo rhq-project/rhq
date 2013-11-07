@@ -8,12 +8,12 @@
 # a strict number ordering (that continues from rhq-agent-wrapper.conf)
 # and currently must start with:
 #
-# wrapper.java.additional.9=
+# wrapper.java.additional.8=
 #
 # For example, to set a non-default temp directory for Java:
 #   Note: use forward slashes for directories:
 #
-# wrapper.java.additional.9="-Djava.io.tmpdir=c:/temp"
+# wrapper.java.additional.8="-Djava.io.tmpdir=c:/temp"
 #
 #*****************************************************************************
 

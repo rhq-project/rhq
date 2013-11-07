@@ -145,8 +145,7 @@ public class StorageNodeComponentITest {
         deployer.unzipDistro();
         deployer.applyConfigChanges();
         deployer.updateFilePerms();
-        deployer.updateStorageAuthConf(Sets.newHashSet(InetAddress.getByName("127.0.0.1"),
-            InetAddress.getByName("127.0.0.2")));
+        deployer.updateStorageAuthConf(Sets.newHashSet("127.0.0.1", "127.0.0.2"));
 
         File confDir = new File(deploymentOptions.getBasedir(), "conf");
         File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");

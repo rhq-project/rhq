@@ -38,12 +38,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -343,7 +343,9 @@ public class StorageInstaller {
 
         try {
             if (cmdLine.hasOption("n")) {
-                installerInfo.hostname = InetAddress.getByName(cmdLine.getOptionValue("n")).getHostName();
+                installerInfo.hostname = cmdLine.getOptionValue("n");
+                // Make sure it is a reachable address
+                InetAddress.getByName(installerInfo.hostname);
             } else {
                 installerInfo.hostname = InetAddress.getLocalHost().getHostName();
             }
@@ -463,9 +465,7 @@ public class StorageInstaller {
             deployer.applyConfigChanges();
             deployer.updateFilePerms();
 
-            Set<InetAddress> addresses = new HashSet<InetAddress>();
-            addresses.add(InetAddress.getByName(installerInfo.hostname));
-            deployer.updateStorageAuthConf(addresses);
+            deployer.updateStorageAuthConf(asSet(installerInfo.hostname));
 
             return installerInfo;
         } catch (UnknownHostException unknownHostException) {
@@ -579,9 +579,7 @@ public class StorageInstaller {
 
             newYamlEditor.save();
 
-            Set<InetAddress> addresses = new HashSet<InetAddress>();
-            addresses.add(InetAddress.getByName(installerInfo.hostname));
-            deployer.updateStorageAuthConf(addresses);
+            deployer.updateStorageAuthConf(asSet(installerInfo.hostname));
 
             return installerInfo;
 
@@ -607,6 +605,12 @@ public class StorageInstaller {
         } else {
             return true;
         }
+    }
+
+    private Set<String> asSet(String string) {
+        TreeSet<String> set = new TreeSet<String>();
+        set.add(string);
+        return set;
     }
 
     private int getPort(CommandLine cmdLine, String option, int defaultValue) {

@@ -343,9 +343,9 @@ public class StorageInstaller {
 
         try {
             if (cmdLine.hasOption("n")) {
-                installerInfo.hostname = InetAddress.getByName(cmdLine.getOptionValue("n")).getHostAddress();
+                installerInfo.hostname = InetAddress.getByName(cmdLine.getOptionValue("n")).getHostName();
             } else {
-                installerInfo.hostname = InetAddress.getLocalHost().getHostAddress();
+                installerInfo.hostname = InetAddress.getLocalHost().getHostName();
             }
 
             if (InetAddress.getByName(installerInfo.hostname).isLoopbackAddress()) {
@@ -615,6 +615,7 @@ public class StorageInstaller {
 
     private void checkPerms(Option option, String path, List<String> errors) {
         try {
+            log.info("Checking perms for " + path);
             File dir = new File(path);
             if (!dir.isAbsolute()) {
                 dir = new File(new File(storageBasedir, "bin"), path);

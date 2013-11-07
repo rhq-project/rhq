@@ -30,7 +30,6 @@ import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentException;
 import org.rhq.cassandra.util.ConfigEditor;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
@@ -38,8 +37,6 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author John Sanda
  */
 public class StorageInstallerTest {
-
-    private MessageDigestGenerator digestGenerator;
 
     private File basedir;
 
@@ -51,8 +48,6 @@ public class StorageInstallerTest {
 
     @BeforeMethod
     public void initDirs(Method test) throws Exception {
-        digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
-
         File dir = new File(getClass().getResource(".").toURI());
         basedir = new File(dir, getClass().getSimpleName() + "/" + test.getName());
         FileUtil.purge(basedir, true);
@@ -87,7 +82,7 @@ public class StorageInstallerTest {
 
         int status = installer.run(cmdLine);
 
-        String address = InetAddress.getLocalHost().getHostAddress();
+        String address = InetAddress.getLocalHost().getHostName();
 
         assertEquals(status, 0, "Expected to get back a status code of 0 for a successful default install");
         assertNodeIsRunning();
@@ -115,9 +110,6 @@ public class StorageInstallerTest {
 
         File log4jFile = new File(confDir, "log4j-server.properties");
         assertTrue(log4jFile.exists(), log4jFile + " does not exist");
-
-        File logsDir = new File(serverDir, "logs");
-        File logFile = new File(logsDir, "rhq-storage.log");
 
         Properties log4jProps = new Properties();
         log4jProps.load(new FileInputStream(log4jFile));
@@ -161,7 +153,7 @@ public class StorageInstallerTest {
 
         String address = InetAddress.getLocalHost().getHostAddress();
         assertNodeIsRunning();
-        assertRhqServerPropsUpdated(address);
+        assertRhqServerPropsUpdated();
 
         File binDir = new File(storageDir, "bin");
         assertTrue(binDir.exists(), "Expected to find bin directory at " + binDir);
@@ -415,7 +407,7 @@ public class StorageInstallerTest {
     }
 
     private void assertRhqServerPropsUpdated() {
-        assertRhqServerPropsUpdated("127.0.0.1");
+        assertRhqServerPropsUpdated("localhost");
     }
 
     private void assertRhqServerPropsUpdated(String address) {

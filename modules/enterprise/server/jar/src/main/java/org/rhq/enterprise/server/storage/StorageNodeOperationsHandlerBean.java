@@ -2,7 +2,6 @@ package org.rhq.enterprise.server.storage;
 
 import static java.util.Arrays.asList;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,8 +12,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-
-import com.datastax.driver.core.Host;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -910,16 +907,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             list.add(new PropertySimple("address", storageNode.getAddress()));
         }
         return list;
-    }
-
-    private boolean isPartOfCluster(InetAddress address)  {
-        StorageSession session = storageClientManager.getSession();
-        for (Host host : session.getCluster().getMetadata().getAllHosts()) {
-            if (host.getAddress().equals(address)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

@@ -52,7 +52,7 @@ public class SessionManager {
     public Set<String> getNodeAdresses() {
         Set<String> nodes = new TreeSet<String>();
         for (Host host : cluster.getMetadata().getAllHosts()) {
-            nodes.add(host.getAddress().getHostAddress());
+            nodes.add(host.getAddress().getHostName());
         }
         return nodes;
     }

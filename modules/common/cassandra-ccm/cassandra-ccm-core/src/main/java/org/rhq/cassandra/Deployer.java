@@ -212,7 +212,7 @@ public class Deployer {
 
         Set<String> addresses = new HashSet<String>(ipAddresses.size());
         for (InetAddress ipAddress : ipAddresses) {
-            addresses.add(ipAddress.getHostAddress());
+            addresses.add(ipAddress.getHostName());
         }
 
         try {

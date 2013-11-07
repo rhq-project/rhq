@@ -313,10 +313,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         return result;
     }
 
-//    protected OperationResult drain() {
-//
-//    }
-
     protected OperationResult updateSeedsList(Configuration params) {
         PropertyList list = params.getList("seedsList");
         List<String> addresses = getAddresses(list);
@@ -430,7 +426,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         List<String> ipAddresses = new ArrayList<String>(seeds.size());
         for (String seed : seeds) {
             InetAddress address = InetAddress.getByName(seed);
-            ipAddresses.add(address.getHostAddress());
+            ipAddresses.add(address.getHostName());
         }
         return ipAddresses;
     }

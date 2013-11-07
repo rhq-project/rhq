@@ -28,8 +28,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -339,15 +337,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     protected void updateSeedsList(List<String> seeds) throws IOException {
-        List<String> addresses = null;
-        try {
-            addresses = convertToIPAddresses(seeds);
-        } catch (UnknownHostException e) {
-            log.error("Failed to update seeds list", e);
-            throw new IOException("Failed to update seeds list. Make sure that " + seeds + " is a list of valid " +
-                "hostnames or IP addresses that can be resolved.", e);
-        }
-
         ResourceContext<?> context = getResourceContext();
         Configuration pluginConfig = context.getPluginConfiguration();
 
@@ -386,7 +375,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         Map seedProvider = (Map) seedProviderList.get(0);
         List paramsList = (List) seedProvider.get("parameters");
         Map params = (Map) paramsList.get(0);
-        params.put("seeds", StringUtil.listToString(addresses));
+        params.put("seeds", StringUtil.listToString(seeds));
 
         // create a backup of the configuration file in preparation of writing out the changes
         File yamlFileBackup = new File(yamlProp + ".bak" + new Date().getTime());
@@ -420,15 +409,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         } finally {
             writer.close();
         }
-    }
-
-    private List<String> convertToIPAddresses(List<String> seeds) throws UnknownHostException {
-        List<String> ipAddresses = new ArrayList<String>(seeds.size());
-        for (String seed : seeds) {
-            InetAddress address = InetAddress.getByName(seed);
-            ipAddresses.add(address.getHostName());
-        }
-        return ipAddresses;
     }
 
     private void deleteYamlBackupFile(File yamlBackup) {

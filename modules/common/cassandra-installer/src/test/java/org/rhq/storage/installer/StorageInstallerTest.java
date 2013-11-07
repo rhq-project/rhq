@@ -151,9 +151,9 @@ public class StorageInstallerTest {
         int status = installer.run(cmdLine);
         assertEquals(status, 0, "Expected to get back a status code of 0 for a successful default upgrade");
 
-        String address = InetAddress.getLocalHost().getHostAddress();
+        String address = InetAddress.getLocalHost().getHostName();
         assertNodeIsRunning();
-        assertRhqServerPropsUpdated();
+        assertRhqServerPropsUpdated(address);
 
         File binDir = new File(storageDir, "bin");
         assertTrue(binDir.exists(), "Expected to find bin directory at " + binDir);
@@ -288,7 +288,7 @@ public class StorageInstallerTest {
 
         assertEquals(status, 0, "Expected to get back a status code of 0 for a successful install");
         assertNodeIsRunning();
-        assertRhqServerPropsUpdated();
+        assertRhqServerPropsUpdated("127.0.0.1");
 
         File binDir = new File(storageDir, "bin");
         assertTrue(binDir.exists(), "Expected to find bin directory at " + binDir);

@@ -34,7 +34,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -134,13 +133,6 @@ public class CassandraClusterManager {
         FileUtil.purge(clusterDir, false);
 
         String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
-        Set<InetAddress> ipAddresses = null;
-
-        try {
-            ipAddresses = getClusterIPAddresses();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to get cluster IP addresses", e);
-        }
 
         this.nodes = new String[deploymentOptions.getNumNodes()];
         this.jmxPorts = new int[deploymentOptions.getNumNodes()];
@@ -170,7 +162,7 @@ public class CassandraClusterManager {
                 deployer.unzipDistro();
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
-                deployer.updateStorageAuthConf(ipAddresses);
+                deployer.updateStorageAuthConf(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
 
                 this.nodes[i] = address;
                 this.jmxPorts[i] = deploymentOptions.getJmxPort() + i;
@@ -222,15 +214,6 @@ public class CassandraClusterManager {
 
         String[] seedsArray = seeds.split(",");
         return i <= seedsArray.length ? seedsArray[i - 1] : ("127.0.0." + i);
-    }
-
-    private Set<InetAddress> getClusterIPAddresses() throws IOException {
-        Set<InetAddress> ipAddresses = new HashSet<InetAddress>();
-        for (String address : calculateLocalIPAddresses(deploymentOptions.getNumNodes())) {
-            ipAddresses.add(InetAddress.getByName(address));
-        }
-
-        return ipAddresses;
     }
 
     private void getStorageClusterConfiguration() {

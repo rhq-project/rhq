@@ -31,8 +31,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.InetAddress;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -206,14 +204,9 @@ public class Deployer {
         }
     }
 
-    public void updateStorageAuthConf(Set<InetAddress> ipAddresses) {
+    public void updateStorageAuthConf(Set<String> addresses) {
         File confDir = new File(deploymentOptions.getBasedir(), "conf");
         File authFile = new File(confDir, "rhq-storage-auth.conf");
-
-        Set<String> addresses = new HashSet<String>(ipAddresses.size());
-        for (InetAddress ipAddress : ipAddresses) {
-            addresses.add(ipAddress.getHostName());
-        }
 
         try {
             authFile.delete();

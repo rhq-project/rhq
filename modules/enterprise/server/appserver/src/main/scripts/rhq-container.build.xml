@@ -886,6 +886,10 @@ rhq.storage.gossip-port=${rhq.storage.gossip-port}
 #            saved-caches directories, each directory should be unique,
 #            typically under a common parent.
 #
+# IMPORTANT: If relative paths are used, they are relative to the bin folder
+#            of the storage node installation. The paths are NOT relative to
+#            bin folder of the installer.
+#
 # rhq.storage.commitlog
 #                The directory where the storage node keeps commit log files.
 #                  Defaults to: RHQ_HOME/rhq-data/storage/commitlog

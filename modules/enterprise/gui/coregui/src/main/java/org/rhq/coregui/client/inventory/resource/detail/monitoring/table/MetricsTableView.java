@@ -72,7 +72,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     private final AbstractD3GraphListView abstractD3GraphListView;
     private final MeasurementUserPreferences measurementUserPrefs;
     private final AddToDashboardComponent addToDashboardComponent;
-    Set<Integer> expandedRows;
+    private Set<Integer> expandedRows;
     private boolean rendered = false;
     private MetricsTableListGrid metricsTableListGrid;
 
@@ -98,6 +98,11 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     @Override
     protected ListGrid createListGrid() {
+        Log.debug("CreateListGrid.expandedRows: "+expandedRows.size());
+        if(null != metricsTableListGrid){
+            removeMember(metricsTableListGrid);
+            metricsTableListGrid.destroy();
+        }
         metricsTableListGrid = new MetricsTableListGrid(this, resource);
         addToDashboardComponent.setMetricsListGrid(metricsTableListGrid);
         return metricsTableListGrid;
@@ -134,15 +139,21 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
             @Override
             public void run() {
+                createListGrid();
+                metricsTableListGrid.expandOpenedRows();
                 BrowserUtility.graphSparkLines();
             }
         }.schedule(150);
 
     }
 
+
     @Override
-    public void refresh(){
-        super.refresh();
+    public void refresh() {
+        Log.debug("metricsTableView.refresh");
+        super.refresh(false);
+        createListGrid();
+        metricsTableListGrid.expandOpenedRows();
     }
 
     public class MetricsTableListGrid extends ListGrid {
@@ -194,24 +205,31 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             addDataArrivedHandler(new DataArrivedHandler() {
                 @Override
                 public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                    expandOpenedRows(dataArrivedEvent.getStartRow(), dataArrivedEvent.getEndRow(), metricsTableView);
+                    expandOpenedRows();
                 }
             });
 
         }
 
-        private void expandOpenedRows(int startRow, int endRow, MetricsTableView metricsTableView) {
+        public void expandOpenedRows() {
 
+            int startRow = 0;
+            int endRow = this.getRecords().length;
             for (int i = startRow; i < endRow; i++) {
                 ListGridRecord listGridRecord = getRecord(i);
                 if (null != listGridRecord) {
                     int metricDefinitionId = listGridRecord
                         .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
-                    if (null != metricsTableView && null != metricsTableView.expandedRows && metricsTableView.expandedRows.contains(metricDefinitionId)) {
+                    if (null != metricsTableView && null != expandedRows && metricsTableView.expandedRows.contains(metricDefinitionId)) {
                         expandRecord(listGridRecord);
                     }
                 }
             }
+        }
+
+        public void expandOpenedRows(Set<Integer> selectedRows) {
+            expandedRows = selectedRows;
+            expandOpenedRows();
         }
 
         @Override

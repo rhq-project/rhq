@@ -58,30 +58,44 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     private final Resource resource;
     private EnhancedHLayout expandCollapseHLayout;
     private MetricsTableView metricsTableView;
-    private Set<Integer> expandedRows;
+    private static MetricsResourceView INSTANCE = null;
+    private static Integer lastResourceId = 0;
 
-    public MetricsResourceView(Resource resource, Set<Integer> expandedRows) {
+    /**
+     * Encapsulate the creation logic and not let it leak out into other objects.
+     * @param resource
+     * @param expandedRows
+     * @return MetricsResourceView
+     */
+    public static MetricsResourceView create(Resource resource, Set<Integer> expandedRows){
+
+        boolean isDifferentResource = (resource.getId() != lastResourceId);
+
+        if(INSTANCE == null ||  isDifferentResource ){
+            if(null != expandedRows){
+                expandedRows.clear();
+            }
+            INSTANCE =  new MetricsResourceView(resource,  expandedRows);
+        }
+
+        return INSTANCE;
+    }
+
+    private MetricsResourceView(Resource resource, Set<Integer> expandedRows) {
         super();
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
         this.resource = resource;
-        this.expandedRows = expandedRows;
-    }
-
-    @Override
-    public void onInit() {
-        super.onInit();
-
+        metricsTableView = new MetricsTableView(resource, this, expandedRows);
 
         final ResourceMetricAvailabilityView availabilityDetails = new ResourceMetricAvailabilityView(resource);
         availabilityDetails.hide();
 
-        metricsTableView = new MetricsTableView(resource, this, expandedRows);
         metricsTableView.setHeight100();
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
-            new AvailabilityOverUnderGraphType(resource.getId()));
+                new AvailabilityOverUnderGraphType(resource.getId()));
 
         expandCollapseHLayout = new EnhancedHLayout();
         //add expand/collapse icon
@@ -104,26 +118,19 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
                     availabilityDetails.show();
 
                 }
-                drawGraphs();
+                drawAvailabilityGraphAndSparklines();
             }
         });
         expandCollapseHLayout.addMember(expandCollapseArrow);
-        expandCollapseHLayout.addMember(availabilityGraph);
+        addAvailabilityGraph();
 
         addMember(buttonBarDateTimeRangeEditor);
         addMember(expandCollapseHLayout);
         addMember(availabilityDetails);
         addMember(metricsTableView);
-
-        queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-            buttonBarDateTimeRangeEditor.getEndTime(), null);
     }
 
-    public void refreshData() {
-        Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
-        addAvailabilityGraph();
-        metricsTableView.refresh();
-    }
+
 
     private void addAvailabilityGraph() {
         expandCollapseHLayout.removeMember(availabilityGraph);
@@ -169,14 +176,22 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         });
     }
 
-    private void drawGraphs() {
+    private void drawAvailabilityGraphAndSparklines() {
         new Timer() {
             @Override
             public void run() {
+                Log.debug("MetricResourceView.drawAvailabilityGraphAndSparkLines() for: " + resource.getName() + " id: " + resource.getId());
                 availabilityGraph.drawJsniChart();
                 BrowserUtility.graphSparkLines();
             }
         }.schedule(150);
+    }
+
+    @Override
+    public void refreshData() {
+        Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
+        addAvailabilityGraph();
+        metricsTableView.refresh();
     }
 
     @Override

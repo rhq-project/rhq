@@ -306,7 +306,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         } else {
             news.getConfiguration().put(
                 new PropertySimple("address",
-                    "https://access.redhat.com/ext/software/JBoss_Operations_Network/portlet?jonVersion=3.0"));
+                    "https://access.redhat.com/ext/software/JBoss_Operations_Network/portlet/"));
         }
         dashboard.addPortlet(news, columnIndex, rowIndex++);
 

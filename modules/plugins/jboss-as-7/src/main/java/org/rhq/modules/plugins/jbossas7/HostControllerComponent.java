@@ -195,7 +195,12 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         }
         Result res = getASConnection().execute(op);
         if (res.isSuccess()) {
-            report.setResourceKey(targetAddress.getPath());
+            if (targetTypeName.equals(BaseComponent.MANAGED_SERVER)) {
+                report.setResourceKey(ManagedASDiscovery.createResourceKey(rc.getSimpleValue("hostname"),
+                    report.getUserSpecifiedResourceName()));
+            } else {
+                report.setResourceKey(targetAddress.getPath());
+            }
             report.setResourceName(resourceName);
             report.setStatus(CreateResourceStatus.SUCCESS);
         } else {

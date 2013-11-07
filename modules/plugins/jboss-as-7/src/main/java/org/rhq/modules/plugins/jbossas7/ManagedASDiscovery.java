@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
 
@@ -52,8 +52,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostControllerComponent<?>> {
-
-    private final Log log = LogFactory.getLog(ManagedASDiscovery.class);
+    private static final Log LOG = LogFactory.getLog(ManagedASDiscovery.class);
 
     private HostControllerComponent parentComponent;
 
@@ -115,7 +114,7 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
                 String resourceName = productType.SHORT_NAME + " " + serverInfo.name;
                 String resourceDescription = "Managed " + productType.FULL_NAME + " server";
 
-                String resourceKey = hostName + "/" + serverInfo.name;
+                String resourceKey = createResourceKey(hostName, serverInfo.name);
                 // TODO: Try to find the process corresponding to the managed server, so we can include the ProcessInfo
                 //       in the details.
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
@@ -124,14 +123,20 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
                 // Add to return values
                 discoveredResources.add(detail);
 
-                log.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource with key ["
                         + detail.getResourceKey() + "].");
+                }
             }
         } catch (Exception e) {
-            log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + " :"
-                + e.getMessage());
+            LOG.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + " :"
+                    + e.getMessage());
         }
         return discoveredResources;
+    }
+
+    public static String createResourceKey(String hostControllerName, String managedServerName) {
+        return hostControllerName + "/" + managedServerName;
     }
 
     /**

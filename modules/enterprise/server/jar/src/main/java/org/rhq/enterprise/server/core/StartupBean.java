@@ -238,54 +238,24 @@ public class StartupBean implements StartupLocal {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         if (!tmpDir.exists()) {
             log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] does not exist.");
-            useLocalTmpDir();
-            return;
+            try {
+                log.info("Creating java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "]");
+                tmpDir.mkdir();
+            } catch (Throwable t) {
+                throw new RuntimeException("Startup failed: Could not create missing java.io.tmpdir ["
+                    + tmpDir.getAbsolutePath() + "]", t);
+            }
         }
         if (!tmpDir.isDirectory()) {
-            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not a directory");
-            useLocalTmpDir();
-            return;
-        }
-        if (!tmpDir.canRead() || !tmpDir.canExecute()) {
-            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not readable");
-            useLocalTmpDir();
-            return;
-        }
-        if (!tmpDir.canWrite()) {
-            log.warn("Invalid java.io.tmpdir: [" + tmpDir.getAbsolutePath() + "] is not writable");
-            useLocalTmpDir();
-            return;
-        }
-    }
-
-    private void useLocalTmpDir() {
-        File localTmpDir = null;
-        try {
-            localTmpDir = new File(LookupUtil.getCoreServer().getInstallDir(), "temp");
-            log.info("Using alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
-            if (!localTmpDir.exists()) {
-                log.info("Creating alternate java.io.tmpdir: [" + localTmpDir.getAbsolutePath() + "]");
-                localTmpDir.mkdir();
-            }
-            System.setProperty("java.io.tmpdir", localTmpDir.getAbsolutePath());
-        } catch (Throwable t) {
-            throw new RuntimeException("Startup failed: Could not create or set local java.io.tmpdir ["
-                + localTmpDir.getAbsolutePath() + "]", t);
-        }
-        if (!localTmpDir.exists()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
-                + "] does not exist");
-        }
-        if (!localTmpDir.isDirectory()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not a directory");
         }
-        if (!localTmpDir.canRead() || !localTmpDir.canExecute()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+        if (!tmpDir.canRead() || !tmpDir.canExecute()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not readable");
         }
-        if (!localTmpDir.canWrite()) {
-            throw new RuntimeException("Startup failed: local java.io.tmpdir [" + localTmpDir.getAbsolutePath()
+        if (!tmpDir.canWrite()) {
+            throw new RuntimeException("Startup failed: java.io.tmpdir [" + tmpDir.getAbsolutePath()
                 + "] is not writable");
         }
     }
@@ -775,7 +745,7 @@ public class StartupBean implements StartupLocal {
                 log.error("Cannot create storage cluster init job", e);
             }
         }
-        
+
         try {
             // Storage cluster credentials refresh job
             final long initialDelay = 1000L * 60 * 5;

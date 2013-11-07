@@ -358,12 +358,14 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private String produceInnerValuesArray(List<MeasurementDataNumericHighLowComposite> measurementList) {
         StringBuilder sb = new StringBuilder("[");
         for (MeasurementDataNumericHighLowComposite measurement : measurementList) {
+            sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
             if (!Double.isNaN(measurement.getValue())) {
-                sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
                 MeasurementNumericValueAndUnits dataValue = normalizeUnitsAndValues(measurement.getValue(),
                         definition.getUnits());
                 sb.append(" \"y\":" + dataValue.getValue() + "},");
                 adjustedMeasurementUnits = dataValue.getUnits().toString();
+            }else {
+                sb.append(" \"y\": 0},");
             }
         }
         sb.setLength(sb.length() - 1); // delete the last ','
@@ -375,13 +377,16 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder();
         if (null != measurementForEachResource && !measurementForEachResource.isEmpty()) {
+
             sb = new StringBuilder("[");
             for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
-                sb.append("{ \"key\": \"");
-                sb.append(multiLineGraphData.getResourceName());
-                sb.append("\",\"value\" : ");
-                sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
-                sb.append("},");
+                if(null != multiLineGraphData.getMeasurementData() && multiLineGraphData.getMeasurementData().size() > 0){
+                    sb.append("{ \"key\": \"");
+                    sb.append(multiLineGraphData.getResourceName());
+                    sb.append("\",\"value\" : ");
+                    sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
+                    sb.append("},");
+                }
             }
             sb.setLength(sb.length() - 1); // delete the last ','
             sb.append("]");

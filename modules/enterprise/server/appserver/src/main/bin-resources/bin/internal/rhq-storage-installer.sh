@@ -171,7 +171,18 @@ fi
 
 # ----------------------------------------------------------------------
 # Find the Java executable and verify we have a VM available
+# Note that RHQ_SERVER_JAVA_* props are still handled for back compat
 # ----------------------------------------------------------------------
+if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
+   if [ ! -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
+      RHQ_JAVA_EXE_FILE_PATH="$RHQ_SERVER_JAVA_EXE_FILE_PATH"
+   fi
+fi
+if [ -z "$RHQ_JAVA_HOME" ]; then
+   if [ ! -z "$RHQ_SERVER_JAVA_HOME" ]; then
+      RHQ_JAVA_HOME="$RHQ_SERVER_JAVA_HOME"
+   fi
+fi
 
 if [ -z "$RHQ_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_JAVA_HOME" ]; then

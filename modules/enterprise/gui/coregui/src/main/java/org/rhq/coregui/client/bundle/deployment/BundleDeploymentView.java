@@ -333,7 +333,6 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         return tagEditor;
     }
 
-    @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
         Table table = new Table(MSG.view_bundle_deploy_deploymentPlatforms());
         table.setShowFooterRefresh(false);
@@ -342,7 +341,11 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         table.setTitleBar(titleBar);
 
         // resource icon field
-        ResourceCategory resourceCategory = deployment.getDestination().getGroup().getResourceType().getCategory();
+        ResourceCategory resourceCategory = ResourceCategory.PLATFORM;
+        try {
+            resourceCategory = deployment.getDestination().getGroup().getResourceType().getCategory();
+        } catch (Exception skip) { // BZ 1027732 in case a group somehow got empty or switched to a mixed group, avoid NPE
+        }
         ListGridField resourceIcon = new ListGridField("resourceAvailability");
         HashMap<String, String> icons = new HashMap<String, String>();
         icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(resourceCategory, AvailabilityType.UP));

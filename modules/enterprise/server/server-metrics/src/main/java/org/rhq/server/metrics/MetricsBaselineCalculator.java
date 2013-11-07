@@ -99,6 +99,15 @@ public class MetricsBaselineCalculator {
                 }
             }
 
+            if (Double.isNaN(max) || Double.isNaN(min) || Double.isNaN(mean.getArithmeticMean())) {
+                //There is not enough data retrieved from the storage cluster to complete the
+                //baseline calculation for this schedule.
+                //
+                //It is expected that at least one min, one max, and one average
+                //are available and also these are valid numbers.
+                return null;
+            }
+
             MeasurementBaseline baseline = new MeasurementBaseline();
             baseline.setMax(max);
             baseline.setMin(min);

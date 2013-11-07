@@ -90,7 +90,6 @@ public class ResourceDetailView extends
 
     private static final String BASE_VIEW_PATH = "Resource";
     private Integer resourceId;
-    private Integer lastSelectedResourceId = 0;
     private ResourceComposite resourceComposite;
     private MetricsResourceView metricsResourceView;
     private Set<Integer> metricsExpandedRowsMomento;
@@ -435,15 +434,7 @@ public class ResourceDetailView extends
             @Override
             public Canvas createView() {
                 // metricsResourceView contains state of opened graphs (unlike other stateless views)
-                //so we don't need to preserve that state here
-                boolean isNewView = null == metricsResourceView;
-                boolean hasResourceChanged = resourceComposite.getResource().getId() != lastSelectedResourceId;
-                if (isNewView || hasResourceChanged) {
-                    if(null != metricsExpandedRowsMomento){
-                        metricsExpandedRowsMomento.clear();
-                    }
-                }
-                metricsResourceView = new MetricsResourceView(resourceComposite.getResource(), metricsExpandedRowsMomento);
+                metricsResourceView = MetricsResourceView.create(resourceComposite.getResource(), metricsExpandedRowsMomento);
 
                 // this listener handles the subtab navigation
                 addViewRenderedListener(metricsResourceView);
@@ -653,7 +644,6 @@ public class ResourceDetailView extends
                         resourceComposite.getResource().setResourceType(type);
                         updateTabContent(resourceComposite, viewPath.isRefresh());
                         selectTab(getTabName(), getSubTabName(), viewPath);
-                        lastSelectedResourceId = resourceComposite.getResource().getId();
                     } finally {
                         notifyViewRenderedListeners();
                     }

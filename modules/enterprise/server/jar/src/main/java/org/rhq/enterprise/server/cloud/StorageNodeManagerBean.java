@@ -26,8 +26,6 @@ package org.rhq.enterprise.server.cloud;
 
 import static java.util.Arrays.asList;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -180,34 +178,29 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (log.isInfoEnabled()) {
             log.info("Linking " + resource + " to storage node at " + address);
         }
-        try {
-            StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(address));
+        StorageNode storageNode = findStorageNodeByAddress(address);
 
-            if (storageNode != null) {
-                if (log.isInfoEnabled()) {
-                    log.info(storageNode + " is an existing storage node. No cluster maintenance is necessary.");
-                }
-                storageNode.setResource(resource);
-                storageNode.setOperationMode(OperationMode.NORMAL);
-            } else {
-                StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
-                    subjectManager.getOverlord());
-                storageNode = createStorageNode(resource, clusterSettings);
-
-                if (log.isInfoEnabled()) {
-                    log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
-                }
-                if (clusterSettings.getAutomaticDeployment()) {
-                    log.info("Deploying " + storageNode);
-                    deployStorageNode(subjectManager.getOverlord(), storageNode);
-                } else {
-                    log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the " +
-                        "cluster until it is deployed.");
-                }
+        if (storageNode != null) {
+            if (log.isInfoEnabled()) {
+                log.info(storageNode + " is an existing storage node. No cluster maintenance is necessary.");
             }
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
-                " cannot be linked to a storage node", e);
+            storageNode.setResource(resource);
+            storageNode.setOperationMode(OperationMode.NORMAL);
+        } else {
+            StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
+                subjectManager.getOverlord());
+            storageNode = createStorageNode(resource, clusterSettings);
+
+            if (log.isInfoEnabled()) {
+                log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
+            }
+            if (clusterSettings.getAutomaticDeployment()) {
+                log.info("Deploying " + storageNode);
+                deployStorageNode(subjectManager.getOverlord(), storageNode);
+            } else {
+                log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the " +
+                    "cluster until it is deployed.");
+            }
         }
     }
 
@@ -512,10 +505,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return runner.execute();
     }
 
-    public StorageNode findStorageNodeByAddress(InetAddress address) {
+    public StorageNode findStorageNodeByAddress(String address) {
         TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
             StorageNode.class);
-        query.setParameter("address", address.getHostAddress());
+        query.setParameter("address", address);
         List<StorageNode> result = query.getResultList();
 
         if (result != null && result.size() > 0) {
@@ -752,84 +745,80 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
-        try {
-            StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(storageNodeConfiguration
-                .getStorageNode().getAddress()));
-            if (storageNode == null || storageNode.getResource() == null || !storageNodeConfiguration.validate())
+        StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration
+            .getStorageNode().getAddress());
+        if (storageNode == null || storageNode.getResource() == null || !storageNodeConfiguration.validate())
+            return false;
+
+        // 1. upgrade the resource configuration if there was a change
+        Resource storageNodeResource = storageNode.getResource();
+        Configuration storageNodeResourceConfig = configurationManager.getResourceConfiguration(subject,
+            storageNodeResource.getId());
+        String existingHeapSize = storageNodeResourceConfig.getSimpleValue("maxHeapSize");
+        String newHeapSize = storageNodeConfiguration.getHeapSize();
+        String existingHeapNewSize = storageNodeResourceConfig.getSimpleValue("heapNewSize");
+        String newHeapNewSize = storageNodeConfiguration.getHeapNewSize();
+        String existingThreadStackSize = storageNodeResourceConfig.getSimpleValue("threadStackSize");
+        String newThreadStackSize = storageNodeConfiguration.getThreadStackSize();
+
+        Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
+            storageNodeResource.getId());
+        String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
+        String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
+
+        boolean resourceConfigNeedsUpdate = !existingHeapSize.equals(newHeapSize)
+            || !existingHeapNewSize.equals(newHeapNewSize) || !existingThreadStackSize.equals(newThreadStackSize)
+            || !existingJMXPort.equals(newJMXPort);
+
+        ResourceConfigurationUpdate resourceUpdate = null;
+        if (resourceConfigNeedsUpdate) {
+            storageNodeResourceConfig.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
+            if (storageNodeConfiguration.getHeapSize() != null) {
+                storageNodeResourceConfig.setSimpleValue("maxHeapSize", newHeapSize + "");
+                storageNodeResourceConfig.setSimpleValue("minHeapSize", newHeapSize + "");
+            }
+            if (storageNodeConfiguration.getHeapNewSize() != null) {
+                storageNodeResourceConfig.setSimpleValue("heapNewSize", newHeapNewSize + "");
+            }
+            if (storageNodeConfiguration.getThreadStackSize() != null) {
+                storageNodeResourceConfig.setSimpleValue("threadStackSize", newThreadStackSize + "");
+            }
+
+            resourceUpdate = configurationManager.updateResourceConfiguration(subject, storageNodeResource.getId(),
+                storageNodeResourceConfig);
+
+            // initial waiting before the first check
+            try {
+                Thread.sleep(2000L);
+            } catch (InterruptedException e) {
+                // nothing
+            }
+            // wait for the resource config update
+            ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+            criteria.addFilterId(resourceUpdate.getId());
+            criteria.addFilterStartTime(System.currentTimeMillis() - (5 * 60 * 1000));
+            boolean updateSuccess = waitForConfigurationUpdateToFinish(subject, criteria, 10);
+            // restart the storage node and wait for it
+            boolean restartSuccess = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION, null,
+                5000, 15);
+            if (!updateSuccess || !restartSuccess)
                 return false;
-
-            // 1. upgrade the resource configuration if there was a change
-            Resource storageNodeResource = storageNode.getResource();
-            Configuration storageNodeResourceConfig = configurationManager.getResourceConfiguration(subject,
-                storageNodeResource.getId());
-            String existingHeapSize = storageNodeResourceConfig.getSimpleValue("maxHeapSize");
-            String newHeapSize = storageNodeConfiguration.getHeapSize();
-            String existingHeapNewSize = storageNodeResourceConfig.getSimpleValue("heapNewSize");
-            String newHeapNewSize = storageNodeConfiguration.getHeapNewSize();
-            String existingThreadStackSize = storageNodeResourceConfig.getSimpleValue("threadStackSize");
-            String newThreadStackSize = storageNodeConfiguration.getThreadStackSize();
-            
-            Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
-                storageNodeResource.getId());
-            String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
-            String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
-            
-            boolean resourceConfigNeedsUpdate = !existingHeapSize.equals(newHeapSize)
-                || !existingHeapNewSize.equals(newHeapNewSize) || !existingThreadStackSize.equals(newThreadStackSize)
-                || !existingJMXPort.equals(newJMXPort);
-
-            ResourceConfigurationUpdate resourceUpdate = null;
-            if (resourceConfigNeedsUpdate) {
-                storageNodeResourceConfig.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
-                if (storageNodeConfiguration.getHeapSize() != null) {
-                    storageNodeResourceConfig.setSimpleValue("maxHeapSize", newHeapSize + "");
-                    storageNodeResourceConfig.setSimpleValue("minHeapSize", newHeapSize + "");
-                }
-                if (storageNodeConfiguration.getHeapNewSize() != null) {
-                    storageNodeResourceConfig.setSimpleValue("heapNewSize", newHeapNewSize + "");
-                }
-                if (storageNodeConfiguration.getThreadStackSize() != null) {
-                    storageNodeResourceConfig.setSimpleValue("threadStackSize", newThreadStackSize + "");
-                }
-
-                resourceUpdate = configurationManager.updateResourceConfiguration(subject, storageNodeResource.getId(),
-                    storageNodeResourceConfig);
-                
-                // initial waiting before the first check
-                try {
-                    Thread.sleep(2000L);
-                } catch (InterruptedException e) {
-                    // nothing
-                }
-                // wait for the resource config update
-                ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-                criteria.addFilterId(resourceUpdate.getId());
-                criteria.addFilterStartTime(System.currentTimeMillis() - (5 * 60 * 1000));
-                boolean updateSuccess = waitForConfigurationUpdateToFinish(subject, criteria, 10);
-                // restart the storage node and wait for it
-                boolean restartSuccess = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION, null,
-                    5000, 15);
-                if (!updateSuccess || !restartSuccess)
-                    return false;
-            }
-
-            if (existingJMXPort.equals(newJMXPort)) {
-                // no need for plugin config update, we are done
-                return true;
-            }
-            // 2. upgrade the plugin configuration if there was a change
-            storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
-            String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
-            String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
-                + storageNodeConfiguration.getJmxPort() + "/");
-            storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
-
-            configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
-                storageNodePluginConfig);
-            return true;
-        } catch (UnknownHostException e) {
-            throw new RuntimeException("Failed to resolve address for " + storageNodeConfiguration, e);
         }
+
+        if (existingJMXPort.equals(newJMXPort)) {
+            // no need for plugin config update, we are done
+            return true;
+        }
+        // 2. upgrade the plugin configuration if there was a change
+        storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
+        String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
+        String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
+            + storageNodeConfiguration.getJmxPort() + "/");
+        storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
+
+        configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
+            storageNodePluginConfig);
+        return true;
     }
     
     private boolean waitForConfigurationUpdateToFinish(Subject subject, ResourceConfigurationUpdateCriteria criteria,

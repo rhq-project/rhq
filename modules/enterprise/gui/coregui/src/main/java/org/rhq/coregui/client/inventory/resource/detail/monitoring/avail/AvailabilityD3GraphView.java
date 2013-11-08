@@ -35,15 +35,26 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Mike Thompson
  */
-public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends EnhancedVLayout implements GraphMarker {
+public class AvailabilityD3GraphView extends EnhancedVLayout implements GraphMarker {
 
-    protected T availabilityGraphType;
+    protected AvailabilityGraphType availabilityGraphType;
+    private static AvailabilityD3GraphView INSTANCE = null;
 
-    public AvailabilityD3GraphView(T availabilityGraphType) {
+    private AvailabilityD3GraphView(AvailabilityGraphType availabilityGraphType) {
         super();
         this.availabilityGraphType = availabilityGraphType;
         setHeight(65);
         setWidth100();
+    }
+
+    public static AvailabilityD3GraphView create(AvailabilityGraphType availabilityGraphType){
+        if(null == INSTANCE){
+
+            // not thread safe but the browser is single threaded
+            INSTANCE = new AvailabilityD3GraphView(availabilityGraphType);
+        }
+        return INSTANCE;
+
     }
 
     @Override

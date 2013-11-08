@@ -120,7 +120,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         addMember(buttonBarDateTimeRangeEditor);
 
         if (showAvailabilityGraph) {
-            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
+            availabilityGraph = AvailabilityD3GraphView.create(
                 new AvailabilityOverUnderGraphType(resource.getId()));
             addMember(availabilityGraph);
         }

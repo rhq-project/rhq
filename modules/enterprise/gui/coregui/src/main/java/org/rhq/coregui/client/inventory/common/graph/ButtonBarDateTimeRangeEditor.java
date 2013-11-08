@@ -188,7 +188,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     public void updateTimeRangeToNow() {
         if(!isCustomTimeRangeActive()){
-            Log.debug("Updating timerange to now");
             Date now = new Date();
             AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPreferences.getMetricRangePreferences();
             long timeRange = metricRangePreferences.end - metricRangePreferences.begin;

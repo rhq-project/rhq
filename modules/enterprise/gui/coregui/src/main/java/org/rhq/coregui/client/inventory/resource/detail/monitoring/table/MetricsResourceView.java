@@ -72,9 +72,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         boolean isDifferentResource = (resource.getId() != lastResourceId);
 
         if(INSTANCE == null ||  isDifferentResource ){
-            if(null != expandedRows){
-                expandedRows.clear();
-            }
             INSTANCE =  new MetricsResourceView(resource,  expandedRows);
         }
 
@@ -94,8 +91,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
         metricsTableView.setHeight100();
 
-        availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
-                new AvailabilityOverUnderGraphType(resource.getId()));
+        availabilityGraph = AvailabilityD3GraphView.create( new AvailabilityOverUnderGraphType(resource.getId()));
 
         expandCollapseHLayout = new EnhancedHLayout();
         //add expand/collapse icon
@@ -128,21 +124,23 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         addMember(expandCollapseHLayout);
         addMember(availabilityDetails);
         addMember(metricsTableView);
+        lastResourceId = resource.getId();
     }
 
 
 
     private void addAvailabilityGraph() {
-        expandCollapseHLayout.removeMember(availabilityGraph);
-        availabilityGraph.destroy();
+        if(lastResourceId.equals(resource.getId())) {
+            expandCollapseHLayout.removeMember(availabilityGraph);
+            availabilityGraph.destroy();
 
-        availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
-            new AvailabilityOverUnderGraphType(resource.getId()));
+            availabilityGraph = AvailabilityD3GraphView.create(new AvailabilityOverUnderGraphType(resource.getId()));
 
-        expandCollapseHLayout.addMember(availabilityGraph);
+            expandCollapseHLayout.addMember(availabilityGraph);
 
-        queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-            buttonBarDateTimeRangeEditor.getEndTime(), null);
+            queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
+                buttonBarDateTimeRangeEditor.getEndTime(), null);
+        }
     }
 
 
@@ -161,8 +159,8 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
             @Override
             public void onSuccess(List<Availability> availList) {
-                Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
-                        + " ms.");
+                Log.debug("Successfully queried availability in: " + (System.currentTimeMillis() - timerStart)
+                        + " ms. for: "+resource.getName());
                 availabilityGraph.setAvailabilityList(availList);
                 new Timer() {
                     @Override
@@ -180,7 +178,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         new Timer() {
             @Override
             public void run() {
-                Log.debug("MetricResourceView.drawAvailabilityGraphAndSparkLines() for: " + resource.getName() + " id: " + resource.getId());
+                //Log.debug("MetricResourceView.drawAvailabilityGraphAndSparkLines() for: " + resource.getName() + " id: " + resource.getId());
                 availabilityGraph.drawJsniChart();
                 BrowserUtility.graphSparkLines();
             }
@@ -189,7 +187,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
     @Override
     public void refreshData() {
-        Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
+        //Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
         addAvailabilityGraph();
         metricsTableView.refresh();
     }

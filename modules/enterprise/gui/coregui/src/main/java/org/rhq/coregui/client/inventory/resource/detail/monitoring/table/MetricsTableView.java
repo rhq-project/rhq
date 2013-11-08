@@ -98,7 +98,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     @Override
     protected ListGrid createListGrid() {
-        Log.debug("CreateListGrid.expandedRows: "+expandedRows.size());
         if(null != metricsTableListGrid){
             removeMember(metricsTableListGrid);
             metricsTableListGrid.destroy();
@@ -134,7 +133,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      * Redraw Graphs in this context means to refresh the table and redraw open graphs.
      */
     public void refreshData() {
-        Log.debug("MetricsView.refreshData()");
         new Timer() {
 
             @Override
@@ -150,7 +148,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
     @Override
     public void refresh() {
-        Log.debug("metricsTableView.refresh");
         super.refresh(false);
         createListGrid();
         metricsTableListGrid.expandOpenedRows();

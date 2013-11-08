@@ -56,8 +56,8 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
     /**
      * Here we check to see if an availability change for a resource should initiate an avail duration check. For
      * each relevant avail duration condition for the resource schedule a job to check the avail state after the
-     * condition's duration.   
-     * 
+     * condition's duration.
+     *
      * @param cacheElements
      * @param resource
      * @param providedValue
@@ -93,7 +93,7 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
     /**
      * Each avail duration check is performed by triggering an execution of {@link AlertAvailabilityDurationJob}.
      * Note that each of the scheduled jobs is relevant to only 1 condition evaluation.
-     *   
+     *
      * @param cacheElement
      * @param resource
      */
@@ -104,7 +104,10 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
         String jobName = AlertAvailabilityDurationJob.class.getName();
         String jobGroupName = AlertAvailabilityDurationJob.class.getName();
         String operator = cacheElement.getAlertConditionOperator().name();
-        String triggerName = operator + "-" + resource.getId();
+        // must be unique amongst all possible firings, add a timestamp because the exact same condition may
+        // get hit again while a timer is already in progress.
+        String triggerName = operator + "-" + resource.getId() + "-"
+            + System.currentTimeMillis();
         String duration = (String) cacheElement.getAlertConditionOperatorOption();
         // convert from seconds to milliseconds
         Date jobTime = new Date(System.currentTimeMillis() + (Long.valueOf(duration).longValue() * 1000));

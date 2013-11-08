@@ -26,6 +26,8 @@ package org.rhq.enterprise.server.cloud;
 
 import static java.util.Arrays.asList;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +50,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.google.common.net.InetAddresses;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -178,29 +181,48 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (log.isInfoEnabled()) {
             log.info("Linking " + resource + " to storage node at " + address);
         }
-        StorageNode storageNode = findStorageNodeByAddress(address);
-
-        if (storageNode != null) {
-            if (log.isInfoEnabled()) {
-                log.info(storageNode + " is an existing storage node. No cluster maintenance is necessary.");
+        try {
+            StorageNode storageNode = findStorageNodeByAddress(address);
+            if (storageNode == null) {
+                if (InetAddresses.isInetAddress(address)) {
+                    String hostName = InetAddresses.forString(address).getHostName();
+                    log.info("Did not find storage node with address [" + address + "]. Searching by hostname [" +
+                        hostName + "]");
+                    storageNode = findStorageNodeByAddress(hostName);
+                } else {
+                    String ipAddress = InetAddress.getByName(address).getHostAddress();
+                    log.info("Did not find storage node with address [" + address + "] Searching by IP address [" +
+                        ipAddress + "]");
+                    storageNode = findStorageNodeByAddress(ipAddress);
+                }
             }
-            storageNode.setResource(resource);
-            storageNode.setOperationMode(OperationMode.NORMAL);
-        } else {
-            StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
-                subjectManager.getOverlord());
-            storageNode = createStorageNode(resource, clusterSettings);
 
-            if (log.isInfoEnabled()) {
-                log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
-            }
-            if (clusterSettings.getAutomaticDeployment()) {
-                log.info("Deploying " + storageNode);
-                deployStorageNode(subjectManager.getOverlord(), storageNode);
+            if (storageNode != null) {
+                if (log.isInfoEnabled()) {
+                    log.info(storageNode + " is an existing storage node. No cluster maintenance is necessary.");
+                }
+                storageNode.setAddress(address);
+                storageNode.setResource(resource);
+                storageNode.setOperationMode(OperationMode.NORMAL);
             } else {
-                log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the " +
-                    "cluster until it is deployed.");
+                StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
+                    subjectManager.getOverlord());
+                storageNode = createStorageNode(resource, clusterSettings);
+
+                if (log.isInfoEnabled()) {
+                    log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
+                }
+                if (clusterSettings.getAutomaticDeployment()) {
+                    log.info("Deploying " + storageNode);
+                    deployStorageNode(subjectManager.getOverlord(), storageNode);
+                } else {
+                    log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the " +
+                        "cluster until it is deployed.");
+                }
             }
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
+                " cannot be linked to a storage node", e);
         }
     }
 

@@ -110,13 +110,16 @@ public class StorageClientManagerBean {
             wrappedSession = createSession();
         } catch (NoHostAvailableException e) {
             initialized = false;
+            if (cluster != null) {
+                cluster.shutdown();
+            }
+
             log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                 + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                 + " as soon as possible.");
             return initialized;
         }
 
-        wrappedSession = createSession();
         session = new StorageSession(wrappedSession);
 
         storageClusterMonitor = new StorageClusterMonitor();
@@ -152,6 +155,10 @@ public class StorageClientManagerBean {
                 wrappedSession = createSession();
             } catch (NoHostAvailableException e) {
                 initialized = false;
+                if (cluster != null) {
+                    cluster.shutdown();
+                }
+
                 log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                     + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                     + " as soon as possible.");

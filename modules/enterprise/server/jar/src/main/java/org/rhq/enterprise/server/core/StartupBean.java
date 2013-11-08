@@ -87,8 +87,6 @@ import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
-import org.rhq.enterprise.server.scheduler.jobs.StorageClusterCredentialsJob;
-import org.rhq.enterprise.server.scheduler.jobs.StorageClusterInitJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -599,6 +597,7 @@ public class StartupBean implements StartupLocal {
         cacheConsistencyManager.scheduleServerCacheReloader();
         systemManager.scheduleConfigCacheReloader();
         subjectManager.scheduleSessionPurgeJob();
+        storageClientManager.scheduleStorageSessionMaintenance();
 
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.
@@ -732,28 +731,6 @@ public class StartupBean implements StartupLocal {
             schedulerBean.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
         } catch (Exception e) {
             log.error("Cannot create alert availability duration job.", e);
-        }
-
-        if (!isStorageRunning) {
-            // Wait long enough to allow the Server instance jobs to start executing first.
-            final long initialDelay = 1000L * 60 * 2; // 2 mins
-            final long interval = 1000L * 60; // 30 secs
-            try {
-                schedulerBean.scheduleSimpleRepeatingJob(StorageClusterInitJob.class, true, false, initialDelay,
-                    interval);
-            } catch (Exception e) {
-                log.error("Cannot create storage cluster init job", e);
-            }
-        }
-
-        try {
-            // Storage cluster credentials refresh job
-            final long initialDelay = 1000L * 60 * 5;
-            final long interval = 1000L * 60 * 2;
-            schedulerBean.scheduleSimpleRepeatingJob(StorageClusterCredentialsJob.class, true, false, initialDelay,
-                interval);
-        } catch (Exception e) {
-            log.error("Cannot schedule storage cluster credentials refresh job.", e);
         }
 
         try {

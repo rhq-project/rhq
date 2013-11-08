@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.cloud;
 
-import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 
@@ -121,8 +120,7 @@ public interface StorageNodeManagerLocal {
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
 
-    StorageNode findStorageNodeByAddress(InetAddress address);
-
+    StorageNode findStorageNodeByAddress(String address);
 
     /**
      * Find ids for all resources and sub-resources of Storage Nodes that

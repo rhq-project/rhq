@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.alert.test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -390,6 +391,82 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return;
     }
 
+    public void testDampeningWorksAcrossConditionCacheReloads() throws Exception {
+        MeasurementDefinition measDef = createResourceWithMetricSchedule();
+
+        AlertDefinition alertDef = createAlertDefinitionWithDampening(measDef, resource.getId());
+
+        Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
+        MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
+
+        //the dampening is set for 3 consecutive matches.
+        //we want to test that the agent cache reload doesn't confuse the counting
+
+        //first, send 2 matches
+        MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(25), request, 0d));
+        measurementDataManager.mergeMeasurementReport(report);
+
+        Thread.sleep(3000);
+
+        request = new MeasurementScheduleRequest(schedule);
+        report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(20), request, 0d));
+        measurementDataManager.mergeMeasurementReport(report);
+
+        Thread.sleep(3000);
+
+        //now reload the caches
+        reloadAllAlertConditionCaches();
+
+        //ok, so before BZ 1025491, after the cache reload, a non-match wouldn't cancel the counting.
+        //so we need to test that if we send a non-match followed by a match we DON'T get an alert.
+
+        //send a non-match, followed by a match
+        request = new MeasurementScheduleRequest(schedule);
+        report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(15), request, 1d));
+        measurementDataManager.mergeMeasurementReport(report);
+
+        Thread.sleep(3000);
+
+        request = new MeasurementScheduleRequest(schedule);
+        report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(10), request, 0d));
+        measurementDataManager.mergeMeasurementReport(report);
+
+        Thread.sleep(3000);
+
+        //now, we should get NO alert
+        List<Alert> alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 0 : "No alert should have fired: " + alerts;
+
+        //let's send in 2 more matches - we should be getting an alert
+        request = new MeasurementScheduleRequest(schedule);
+        report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(5), request, 0d));
+        measurementDataManager.mergeMeasurementReport(report);
+
+        Thread.sleep(3000);
+
+        //throw in a cache reload to check that it doesn't mess up the counting of the positives in sequence
+        reloadAllAlertConditionCaches();
+
+        request = new MeasurementScheduleRequest(schedule);
+        report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(0), request, 0d));
+        measurementDataManager.mergeMeasurementReport(report);
+
+        //wait
+        Thread.sleep(5000);
+
+        //and check that this time, we GOT an alert
+        alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
+    }
+
     private PageList<Alert> getAlerts(int resourceId) {
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         AlertCriteria alertCriteria = new AlertCriteria();
@@ -449,6 +526,39 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setRecoveryId(Integer.valueOf(0));
         alertDefinition.setConditionExpression(BooleanExpression.ALL);
         alertDefinition.setConditions(conditions);
+
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        alertDefinition = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition,
+            resourceId, true);
+        assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
+            + alertDefinition;
+
+        // now that we created an alert def, we have to reload the alert condition cache
+        reloadAllAlertConditionCaches();
+
+        return alertDefinition;
+    }
+
+    private AlertDefinition createAlertDefinitionWithDampening(MeasurementDefinition metricDef, int resourceId) {
+        AlertCondition cond = new AlertCondition();
+        cond.setCategory(AlertConditionCategory.THRESHOLD);
+        cond.setName(metricDef.getDisplayName());
+        cond.setComparator("=");
+        cond.setThreshold(0d); // value = 0 threshold
+        cond.setOption(null);
+        cond.setMeasurementDefinition(metricDef);
+
+        AlertDampening dampening = new AlertDampening(Category.CONSECUTIVE_COUNT);
+        dampening.setValue(3);
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("alert with consecutive count = 3 dampening");
+        alertDefinition.setEnabled(true);
+        alertDefinition.setPriority(AlertPriority.HIGH);
+        alertDefinition.setAlertDampening(dampening);
+        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setConditionExpression(BooleanExpression.ALL);
+        alertDefinition.setConditions(Collections.singleton(cond));
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
         alertDefinition = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition,

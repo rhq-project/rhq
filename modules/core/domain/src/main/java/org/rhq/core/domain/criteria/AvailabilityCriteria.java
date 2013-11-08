@@ -33,7 +33,7 @@ import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * Criteria for fetching Availability records, typically constrained to a Resource.
- * 
+ *
  * @author Jay Shaughnessy
  */
 @XmlRootElement
@@ -64,9 +64,9 @@ public class AvailabilityCriteria extends Criteria {
     /**
      * Return Availability where any portion of the Availability period falls into the specified interval. This
      * filter is mutually exclusive with filterInitialAvailability.
-     *  
-     * @param intervalStartTime NOT NULL, in *SECONDS* (not ms)
-     * @param intervalEndTime   NOT NULL,  >= filterStartTime, in *SECONDS* (not ms)
+     *
+     * @param intervalStartTime NOT NULL, in ms
+     * @param intervalEndTime   NOT NULL, >= filterStartTime, in ms
      */
     public void addFilterInterval(Long intervalStartTime, Long intervalEndTime) {
         if (null != filterStartTime) {
@@ -79,11 +79,10 @@ public class AvailabilityCriteria extends Criteria {
         // specified interval.  Things to note about the fragment below:
         // - "startTime >= 0" is done on purpose, the fragment must start with "startTime" due to the generator
         // - we do not use BETWEEN on purpose, it caused a problem with param assignment in hibernate. so, we use the expanded form
-        // - startTime and endTime are persisted in seconds,  so the parameters should be in seconds
         String filterFragment = "" //
-            + "startTime >= 0" // innocuous tautology just needed to get generated syntax correct 
+            + "startTime >= 0" // innocuous tautology just needed to get generated syntax correct
             + " AND (  ( availability.startTime >= ? AND availability.startTime <= " + intervalEndTime + " )" // interval straddles :start
-            + " OR ( availability.startTime <= ? AND ( availability.endTime >= ? OR availability.endTime IS NULL ) ) )"; // availability straddles :start 
+            + " OR ( availability.startTime <= ? AND ( availability.endTime >= ? OR availability.endTime IS NULL ) ) )"; // availability straddles :start
 
         filterOverrides.put("startTime", filterFragment);
         this.filterStartTime = intervalStartTime;

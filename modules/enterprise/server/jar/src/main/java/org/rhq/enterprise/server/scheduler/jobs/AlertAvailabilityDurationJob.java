@@ -20,6 +20,8 @@
 
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
@@ -27,8 +29,10 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationComposite;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -52,15 +56,44 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
         long duration = Long.valueOf(jobDataMap.getString(DATAMAP_DURATION));
         AlertConditionOperator operator = AlertConditionOperator.valueOf(jobDataMap.getString(DATAMAP_OPERATOR));
 
-        // get the current resource availability
-        ResourceAvailability resourceAvail = LookupUtil.getResourceAvailabilityManager().getLatestAvailability(
-            resourceId);
-        AvailabilityType availType = resourceAvail.getAvailabilityType();
+        // get the availabilities for the duration period
+        AvailabilityCriteria criteria = new AvailabilityCriteria();
+        criteria.addFilterResourceId(resourceId);
+        long durationEnd = System.currentTimeMillis();
+        Long durationStart = durationEnd - (duration * 1000);
+        criteria.addFilterInterval(durationStart, durationEnd);
+        criteria.addSortStartTime(PageOrdering.ASC);
+        List<Availability> avails = LookupUtil.getAvailabilityManager().findAvailabilityByCriteria(
+            LookupUtil.getSubjectManager().getOverlord(), criteria);
 
-        // Question? Do we care whether the avail type has been the same for the entire duration (meaning we would need
-        // to go and find the most recent Availability record)?  Or do we only care if it is currently at the avail
-        // type that matters? For now we'll go with the latter approach and ignore whether the avail actually
-        // changed during the specified duration.
+        // Although unlikely, it's possible the resource has actually gone away while we waited out the duration period.
+        // If we can't find any resource avail assume the resource is gone and just end the job.
+        if (avails.isEmpty()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("AlertAvailabilityDurationJob: No alert. Assuming resource has been uninventoried ["
+                    + resourceId + "]");
+            }
+
+            return;
+        }
+
+        // If there are multiple duration records for the duration period then the avail did not stay constant.
+        // Therefore, the alert should not fire as the semantics are "goes down and stays down".
+        if (avails.size() > 1) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("AlertAvailabilityDurationJob: No alert. Resource avail for [" + resourceId
+                    + "] has fluctuated. " + avails);
+            }
+
+            return;
+        }
+
+        // At this point we should be able to just checkConditions because if there is only one avail record for the
+        // duration period it mans nothing has changed.  But, we'll perform a sanity check just to ensure the avail
+        // type is what we think it should be...
+
+        Availability avail = avails.get(0);
+        AvailabilityType availType = avail.getAvailabilityType();
 
         boolean checkConditions = false;
         switch (operator) {
@@ -70,6 +103,8 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
         case AVAIL_DURATION_NOT_UP:
             checkConditions = (AvailabilityType.UP != availType);
             break;
+        default:
+            LOG.error("AlertAvailabilityDurationJob: unexpected operator [" + operator.name() + "]");
         }
 
         // the call to checkConditions will probably result in an alert, as the actual condition satisfaction was
@@ -83,6 +118,9 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("AlertAvailabilityDurationJob: " + stats.toString());
             }
+        } else {
+            LOG.warn("AlertAvailabilityDurationJob: unexpected availability for resource [" + resourceId + "]. "
+                + avail);
         }
     }
 }

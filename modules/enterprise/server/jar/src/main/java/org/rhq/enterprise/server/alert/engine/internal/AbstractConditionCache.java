@@ -29,6 +29,7 @@ import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.CacheElementActivity;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -64,7 +65,7 @@ abstract class AbstractConditionCache {
                      * Thus, even if the element is already active, we're going to send another message with the new
                      * value
                      */
-                    cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
+                    cacheElement.setActivity(CacheElementActivity.ACTIVE); // no harm to always set active (though, technically, STATELESS operators don't need it)
                     cachedConditionProducer.sendActivateAlertConditionMessage(
                         cacheElement.getAlertConditionTriggerId(), timestamp,
                         cacheElement.convertValueToString(providedValue), extraParams);
@@ -80,8 +81,8 @@ abstract class AbstractConditionCache {
                  * but only send negative events if we're, 1) a type of operator that supports STATEFUL events, and
                  * 2) currently active
                  */
-                if (cacheElement.isType(AlertConditionOperator.Type.STATEFUL) && cacheElement.isActive()) {
-                    cacheElement.setActive(false);
+                if (cacheElement.isType(AlertConditionOperator.Type.STATEFUL) && cacheElement.getActivity().maybeActive()) {
+                    cacheElement.setActivity(CacheElementActivity.INACTIVE);
 
                     try {
                         // send negative message

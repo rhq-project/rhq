@@ -34,7 +34,7 @@ public abstract class AbstractCacheElement<T> {
     protected Object alertConditionOperatorOption;
     protected T alertConditionValue;
     protected int alertConditionTriggerId;
-    protected boolean active;
+    protected CacheElementActivity activity = CacheElementActivity.UNKNOWN;
     protected AbstractCacheElement<?> nextCacheElement;
 
     public AbstractCacheElement(AlertConditionOperator operator, T value, int conditionTriggerId) {
@@ -116,12 +116,12 @@ public abstract class AbstractCacheElement<T> {
         return alertConditionTriggerId;
     }
 
-    public boolean isActive() {
-        return active;
+    public CacheElementActivity getActivity() {
+        return activity;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setActivity(CacheElementActivity activity) {
+        this.activity = activity;
     }
 
     public final boolean process(T providedValue, Object... extraParams) {

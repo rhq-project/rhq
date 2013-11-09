@@ -438,10 +438,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
             List<String> addresses = getAddresses(params.getList("addresses"));
 
+            log.info("Storage node addresses = " + addresses);
+
             // Make sure this node's address is not in the list; otherwise, it
             // won't bootstrap properly.
             List<String> seeds = new ArrayList<String>(addresses);
             seeds.remove(address);
+
+            log.info("Updating seeds property to " + seeds);
 
             configEditor.setSeeds(seeds.toArray(new String[seeds.size()]));
             configEditor.setNativeTransportPort(cqlPort);
@@ -500,15 +504,22 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private void purgeDataDirs(ConfigEditor configEditor) {
         purgeDir(new File(configEditor.getCommitLogDirectory()));
-        for (String dir : configEditor.getDataFileDirectories()) {
-            purgeDir(new File(dir));
+        purgeDir(new File(configEditor.getCommitLogDirectory()));
+        for (String path : configEditor.getDataFileDirectories()) {
+            purgeDir(new File(path));
         }
         purgeDir(new File(configEditor.getSavedCachesDirectory()));
     }
 
     private void purgeDir(File dir) {
-        log.info("Purging " + dir);
-        FileUtil.purge(dir, true);
+        if (dir.isAbsolute()) {
+            log.info("Purging " + dir);
+            FileUtil.purge(dir, true);
+        } else {
+            File relativeDir = new File(getBinDir(), dir.getPath());
+            log.info("Purging " + relativeDir);
+            FileUtil.purge(relativeDir, true);
+        }
     }
 
     private Set<String> getAuthAddresses() throws InternodeAuthConfUpdateException {

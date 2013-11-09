@@ -26,13 +26,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -92,11 +93,11 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.MetricsServer;
@@ -237,7 +238,12 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
             private ReentrantLock lock = new ReentrantLock();
 
-            private List<MeasurementData> insertedData = new ArrayList<MeasurementData>(data.size());
+            private Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
+                @Override
+                public int compare(MeasurementData d1, MeasurementData d2) {
+                    return (d1.getTimestamp() < d2.getTimestamp()) ? -1 : ((d1.getTimestamp() == d2.getTimestamp()) ? 0 : 1);
+                }
+            });
 
             @Override
             public void onFinish() {

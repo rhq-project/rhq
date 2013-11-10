@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -50,6 +51,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.google.common.base.Stopwatch;
 import com.google.common.net.InetAddresses;
 
 import org.apache.commons.logging.Log;
@@ -500,22 +502,28 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public PageList<StorageNodeLoadComposite> getStorageNodeComposites() {
-        List<StorageNode> nodes = getStorageNodes();
-        PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
-        long endTime = System.currentTimeMillis();
-        long beginTime = endTime - (8 * 60 * 60 * 1000);
-        for (StorageNode node : nodes) {
-            if (node.getOperationMode() != OperationMode.INSTALLED) {
-                StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
-                int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
-                composite.setUnackAlerts(unackAlerts);
-                result.add(composite);
-            } else { // newly installed node
-                result.add(new StorageNodeLoadComposite(node, beginTime, endTime));
-            }
+        Stopwatch stopwatch = new Stopwatch().start();
+        try {
+            List<StorageNode> nodes = getStorageNodes();
+            PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
+            long endTime = System.currentTimeMillis();
+            long beginTime = endTime - (8 * 60 * 60 * 1000);
+            for (StorageNode node : nodes) {
+                if (node.getOperationMode() != OperationMode.INSTALLED) {
+                    StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
+                    int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
+                    composite.setUnackAlerts(unackAlerts);
+                    result.add(composite);
+                } else { // newly installed node
+                    result.add(new StorageNodeLoadComposite(node, beginTime, endTime));
+                }
 
+            }
+            return result;
+        } finally {
+            stopwatch.stop();
+            log.debug("Retrieved storage node composites in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
-        return result;
     }
 
     @Override

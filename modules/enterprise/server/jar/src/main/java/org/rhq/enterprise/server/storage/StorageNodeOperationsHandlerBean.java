@@ -810,7 +810,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (newClusterSize == 1) {
             isRepairNeeded = false;
             replicationFactor = 1;
-        } else if (previousClusterSize > 4 && newClusterSize == 4) {
+        } else if (newClusterSize >= 5) {
             isRepairNeeded = false;
         } else if (previousClusterSize == 4 && newClusterSize == 3) {
             isRepairNeeded = true;
@@ -825,9 +825,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         } else if (previousClusterSize == 3 && newClusterSize == 4) {
             isRepairNeeded = true;
             replicationFactor = 3;
-        } else if (previousClusterSize == 4 && newClusterSize > 4) {
-            isRepairNeeded = false;
-        } else {
+        }  else {
             throw new IllegalStateException("previousClusterSize[" + previousClusterSize + "] and newClusterSize[" +
                 newClusterSize + "] is not supported");
         }

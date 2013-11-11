@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.ejb.Asynchronous;
@@ -517,13 +518,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             for (StorageNode node : nodes) {
                 if (node.getOperationMode() != OperationMode.INSTALLED) {
                     StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
-                    int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
-                    composite.setUnackAlerts(unackAlerts);
                     result.add(composite);
                 } else { // newly installed node
                     result.add(new StorageNodeLoadComposite(node, beginTime, endTime));
                 }
 
+            }
+            Map<Integer, List<Alert>> storageNodeAlerts = findAllUnackedStorageNodeAlerts(subjectManager.getOverlord(),
+                false);
+            for (StorageNodeLoadComposite composite : result) {
+                List<Alert> alerts = storageNodeAlerts.get(composite.getStorageNode().getId());
+                if (alerts != null) {
+                    composite.setUnackAlerts(alerts.size());
+                }
             }
             return result;
         } finally {
@@ -703,6 +710,47 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return alerts;
     }
 
+    private Map<Integer, List<Alert>> findAllUnackedStorageNodeAlerts(Subject subject, boolean allAlerts) {
+        Stopwatch stopwatch = new Stopwatch().start();
+        try {
+            Map<Integer, List<Alert>> alertsMap = new TreeMap<Integer, List<Alert>>();
+            Map<Integer, Integer> resourcesWithAlertDefs = findResourcesWithAlertsToStorageNodeMap(null);
+
+            AlertCriteria criteria = new AlertCriteria();
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            criteria.addFilterResourceIds(resourcesWithAlertDefs.keySet().toArray(
+                new Integer[resourcesWithAlertDefs.size()]));
+            criteria.addSortCtime(PageOrdering.DESC);
+
+            PageList<Alert> alerts = alertManager.findAlertsByCriteria(subject, criteria);
+            if (!allAlerts) {
+                PageList<Alert> trimmedAlerts = new PageList<Alert>();
+                for (Alert alert : alerts) {
+                    if (alert.getAcknowledgeTime() == null || alert.getAcknowledgeTime() <= 0) {
+                        trimmedAlerts.add(alert);
+                    }
+                }
+                alerts = trimmedAlerts;
+            }
+
+            for (Alert alert : alerts) {
+                Integer resourceId = alert.getAlertDefinition().getResource().getId();
+                Integer storageNodeId = resourcesWithAlertDefs.get(resourceId);
+                List<Alert> storageNodeAlerts = alertsMap.get(storageNodeId);
+                if (storageNodeAlerts == null) {
+                    storageNodeAlerts = new ArrayList<Alert>();
+                }
+                storageNodeAlerts.add(alert);
+                alertsMap.put(storageNodeId, storageNodeAlerts);
+            }
+
+            return alertsMap;
+        } finally {
+            stopwatch.stop();
+            log.debug("Retrieved storage node alerts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
+    }
+
     @Override
     public Map<Integer, Integer> findResourcesWithAlertDefinitions() {
         return this.findResourcesWithAlertsToStorageNodeMap(null);
@@ -736,7 +784,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 unvisitedResources.add(initialStorageNode.getResource());
                 while (!unvisitedResources.isEmpty()) {
                     Resource resource = unvisitedResources.poll();
-                    if (resource.getAlertDefinitions() != null) {
+                    if (!resource.getAlertDefinitions().isEmpty()) {
                         resourceIdsToStorageNodeMap.put(resource.getId(), initialStorageNode.getId());
                     }
 

@@ -112,8 +112,8 @@ public class StorageClientManagerBean {
             }
         }
 
-        // timer that will trigger every 30 seconds
-        timerService.createIntervalTimer(30000L, 30000L, new TimerConfig(null, false));
+        // timer that will trigger every 90 seconds after an initial wait of 30 seconds
+        timerService.createIntervalTimer(30000L, 90000L, new TimerConfig(null, false));
     }
 
     /**

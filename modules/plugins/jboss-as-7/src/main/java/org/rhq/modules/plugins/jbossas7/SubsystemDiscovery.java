@@ -213,7 +213,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             return false;
 
         ResourceType ourType = context.getResourceType();
-        boolean ourPluginTypeIsJdg = ourType.getPlugin().equals("JDG");
+        boolean ourPluginTypeIsJdg = ourType.getPlugin().equals("JDG")
+            || (ourType.getPlugin().equals("InfinispanServer"));
 
         String productType = context.getParentResourceComponent().pluginConfiguration.getSimpleValue("productType",
             "AS7");

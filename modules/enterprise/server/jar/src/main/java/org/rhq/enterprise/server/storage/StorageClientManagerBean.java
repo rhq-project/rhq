@@ -26,12 +26,17 @@
 package org.rhq.enterprise.server.storage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
@@ -80,6 +85,9 @@ public class StorageClientManagerBean {
     @EJB
     private SystemManagerLocal systemManager;
 
+    @javax.annotation.Resource
+    private TimerService timerService;
+
     private Cluster cluster;
     private StorageSession session;
     private MetricsConfiguration metricsConfiguration;
@@ -92,8 +100,45 @@ public class StorageClientManagerBean {
     private String cachedStoragePassword;
 
 
+    public void scheduleStorageSessionMaintenance() {
+        // each time the webapp is reloaded, we don't want to create duplicate jobs
+        Collection<Timer> timers = timerService.getTimers();
+        for (Timer existingTimer : timers) {
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
+        }
+
+        // timer that will trigger every 30 seconds
+        timerService.createIntervalTimer(30000L, 30000L, new TimerConfig(null, false));
+    }
+
     /**
-     * @return true if the storage subsystem is running
+     * If the session is not initialized then attempt to initialize it.
+     * If the session is initialized then verify to ensure that the
+     * session uses the latest set of credentials.
+     *
+     * @param timer
+     */
+    @Timeout
+    public void storageSessionMaintenance(Timer timer) {
+        if (!initialized) {
+            this.init();
+        } else {
+            boolean refreshResult = this.refreshCredentialsAndSession();
+            if (!refreshResult) {
+                log.error("Storage session credentials not succesfully refreshed!");
+            } else {
+                log.debug("Storage session credentials refreshed.");
+            }
+        }
+    }
+
+    /**
+     * @return <true> if the storage subsystem is running or if a session was initialized, <false> otherwise
      */
     public synchronized boolean init() {
         if (initialized) {
@@ -135,6 +180,17 @@ public class StorageClientManagerBean {
         return initialized;
     }
 
+    /**
+     * Checks the system configuration to see if the storage credentials
+     * changed from when the current session got initialized.
+     *
+     * 1) If the credentials are identical then no changes are required and
+     *    the current session is good.
+     * 2) If the credentials are different then create a new session with the
+     *    new credentials and register it with the session manager.
+     *
+     * @return <true> if a new session was sucessfully created or no new session is required; <false> otherwise
+     */
     public synchronized boolean refreshCredentialsAndSession() {
         if (!initialized) {
             if (log.isDebugEnabled()) {

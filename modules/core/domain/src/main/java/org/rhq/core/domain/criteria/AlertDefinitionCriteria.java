@@ -34,6 +34,11 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
+ * <strong>Important Note when calling as a non-inventory manager</strong>.  When searching for group level alert definitions you must
+ * filter with {@link #addFilterResourceGroupIds(Integer...) even if further filtering with
+ * {@link #addFilterId(Integer)} or {@link #addFilterIds(Integer...)}.   Otherwise proper authorization
+ * can not be performed and no results will be returned.
+ *
  * @author Joseph Marques
  */
 @XmlRootElement
@@ -49,7 +54,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private String filterDescription;
     private AlertPriority filterPriority;
     private Integer filterAlertId; // requires overrides
-    private NonBindingOverrideFilter filterAlertTemplateOnly; // requires overrides - finds only alert templates    
+    private NonBindingOverrideFilter filterAlertTemplateOnly; // requires overrides - finds only alert templates
     private Integer filterAlertTemplateParentId; // requires overrides
     private Integer filterAlertTemplateResourceTypeId; // requires overrides
     private String filterAlertTemplateResourceTypeName; // requires overrides
@@ -73,11 +78,10 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortName;
     private PageOrdering sortPriority;
     private PageOrdering sortResourceId; // requires sort override
-    private PageOrdering sortResourceName; // requires sort override    
+    private PageOrdering sortResourceName; // requires sort override
 
     public AlertDefinitionCriteria() {
-        filterOverrides.put("alertId", "" 
-            + "id IN ( SELECT alert.alertDefinition.id " //
+        filterOverrides.put("alertId", "" + "id IN ( SELECT alert.alertDefinition.id " //
             + "          FROM Alert alert " //
             + "         WHERE alert.id = ? )");
         filterOverrides.put("alertTemplateOnly", "resourceType IS NOT NULL");
@@ -118,7 +122,7 @@ public class AlertDefinitionCriteria extends Criteria {
     public void addFilterAlertTemplateParentId(Integer filterAlertTemplateParentId) {
         this.filterAlertTemplateParentId = filterAlertTemplateParentId;
     }
-    
+
     public void addFilterAlertId(Integer filterAlertId) {
         this.filterAlertId = filterAlertId;
     }
@@ -135,6 +139,11 @@ public class AlertDefinitionCriteria extends Criteria {
         this.filterResourceIds = Arrays.asList(filterResourceIds);
     }
 
+    /**
+     * This must be supplied when searching for group-level definitions, even if further filtered by a specific ID.
+     *
+     * @param filterResourceGroupIds
+     */
     public void addFilterResourceGroupIds(Integer... filterResourceGroupIds) {
         this.filterResourceGroupIds = Arrays.asList(filterResourceGroupIds);
     }

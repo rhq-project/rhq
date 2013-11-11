@@ -7,8 +7,10 @@
 
 <%@page import="org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil"%>
 <%@page import="org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean"%>
+<%@page import="org.rhq.enterprise.communications.command.Command"%>
 <%@page import="org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration"%>
 <%@page import="org.rhq.enterprise.communications.command.client.ClientCommandSender"%>
+<%@page import="org.rhq.enterprise.communications.command.client.CommandPreprocessor"%>
 <%@page import="org.rhq.enterprise.server.util.LookupUtil"%>
 <%@page import="org.rhq.core.domain.resource.Agent"%>
 <%@page import="org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory"%>
@@ -103,6 +105,14 @@ The sendThrottled field determines if you want to throttle the messages that are
       
       try
       {
+         final String token = agent.getAgentToken();
+         CommandPreprocessor preproc = new CommandPreprocessor() {
+             public void preprocess(Command command, ClientCommandSender sender) {
+                 command.getConfiguration().setProperty("rhq.security-token", token);
+             }
+         };
+         sender.setCommandPreprocessors(new CommandPreprocessor[] {preproc});
+
          ClientRemotePojoFactory pojoFactory = sender.getClientRemotePojoFactory();
          pojoFactory.setTimeout( timeout );
          pojoFactory.setAsynch( async, null );

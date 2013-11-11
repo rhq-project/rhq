@@ -39,7 +39,7 @@
 %>
 
 
-<form action="/admin/test/hibernate.jsp" method="post">
+<form action="/portal/admin/test/hibernate.jsp" method="post">
 
 
 <%

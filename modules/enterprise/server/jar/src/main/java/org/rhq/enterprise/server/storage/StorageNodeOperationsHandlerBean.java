@@ -34,7 +34,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.auth.SessionManager;
+import org.rhq.enterprise.server.auth.SubjectException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -661,8 +661,12 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     }
 
     private Subject getSubject(ResourceOperationHistory resourceOperationHistory) {
-        Subject subject = subjectManager.getSubjectByName(resourceOperationHistory.getSubjectName());
-        return SessionManager.getInstance().put(subject);
+        try {
+            return subjectManager.loginUnauthenticated(resourceOperationHistory.getSubjectName());
+        } catch (Exception e) {
+            throw new SubjectException("Not able to authenticate subject " + resourceOperationHistory.getSubjectName(),
+                e);
+        }
     }
 
     private void deploymentOperationCanceled(StorageNode storageNode, ResourceOperationHistory operationHistory,

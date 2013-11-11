@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -48,6 +49,8 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+
+import com.google.common.base.Stopwatch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -646,34 +649,40 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     }
 
     public MeasurementAggregate getMeasurementAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
-        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-        criteria.addFilterId(scheduleId);
-        criteria.fetchResource(true);
+        Stopwatch stopwatch = new Stopwatch().start();
+        try {
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterId(scheduleId);
+            criteria.fetchResource(true);
 
-        PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(
-            subjectManager.getOverlord(), criteria);
-        if (schedules.isEmpty()) {
-            throw new MeasurementException("Could not fine MeasurementSchedule with the id[" + scheduleId + "]");
+            PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(
+                subjectManager.getOverlord(), criteria);
+            if (schedules.isEmpty()) {
+                throw new MeasurementException("Could not fine MeasurementSchedule with the id[" + scheduleId + "]");
+            }
+            MeasurementSchedule schedule = schedules.get(0);
+
+            if (authorizationManager.canViewResource(subject, schedule.getResource().getId()) == false) {
+                throw new PermissionException("User[" + subject.getName()
+                    + "] does not have permission to view schedule[id=" + scheduleId + "]");
+            }
+
+            if (schedule.getDefinition().getDataType() != DataType.MEASUREMENT) {
+                throw new IllegalArgumentException(schedule + " is not about numerical values. Can't compute aggregates");
+            }
+
+            if (startTime > endTime) {
+                throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
+            }
+
+            MetricsServer metricsServer = storageClientManager.getMetricsServer();
+            AggregateNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, startTime, endTime);
+
+            return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
+        } finally {
+            stopwatch.stop();
+            log.debug("Finished loading measurement aggregate in " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
-        MeasurementSchedule schedule = schedules.get(0);
-
-        if (authorizationManager.canViewResource(subject, schedule.getResource().getId()) == false) {
-            throw new PermissionException("User[" + subject.getName()
-                + "] does not have permission to view schedule[id=" + scheduleId + "]");
-        }
-
-        if (schedule.getDefinition().getDataType() != DataType.MEASUREMENT) {
-            throw new IllegalArgumentException(schedule + " is not about numerical values. Can't compute aggregates");
-        }
-
-        if (startTime > endTime) {
-            throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
-        }
-
-        MetricsServer metricsServer = storageClientManager.getMetricsServer();
-        AggregateNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, startTime, endTime);
-
-        return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

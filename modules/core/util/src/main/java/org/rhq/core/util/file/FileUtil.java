@@ -176,7 +176,7 @@ public class FileUtil {
      * the names in the list are relative to the given directory.
      * @param directory the directory whose files are to be returned
      * @return list of files in the directory, not sorted in any particular order
-     * @throws IOException if directory does not exist or is not a directory 
+     * @throws IOException if directory does not exist or is not a directory
      */
     public static List<File> getDirectoryFiles(File directory) throws IOException {
         ArrayList<File> files = new ArrayList<File>();
@@ -208,6 +208,7 @@ public class FileUtil {
      * Copy a stream, using a buffer.
      * @deprecated use {@link StreamUtil} for more methods like this - those are unit tested and used more
      */
+    @Deprecated
     public static void copyStream(InputStream is, OutputStream os) throws IOException {
         StreamUtil.copy(is, os, false);
     }
@@ -216,6 +217,7 @@ public class FileUtil {
      * Copy a stream, using a buffer.
      * @deprecated use {@link StreamUtil} for more methods like this - those are unit tested and used more
      */
+    @Deprecated
     public static void copyStream(InputStream is, OutputStream os, byte[] buf) throws IOException {
         int bytesRead = 0;
         while (true) {
@@ -767,5 +769,42 @@ public class FileUtil {
         public abstract int getPathRootLength(String path);
 
         public abstract String getSeparatorChars();
+    }
+
+    /**
+     * Under certain conditions, it might be desired to consider a path that is technically a Windows relative path
+     * to be absolute. For example, a relative path declared as "\opt" could be considered absolute if
+     * the current working directory at runtime is C:\working\dir\here and that \opt directory is located on
+     * the same drive (i.e. C:\opt).
+     *
+     * It is preferable that you do use real absolute paths including drive letter, but this method helps
+     * work around some circumstances where that isn't possible, but yet by just implying a drive letter, you
+     * do have an absolute path.
+     *
+     * Note that if the VM is not running on a Windows machine, this method is the same as File.isAbsolute().
+     *
+     * @param path the path to see if it really can be considered absolute
+     *
+     * @return true if the path can be considered absolute if the current working directory drive letter is implied.
+     */
+    public static boolean isAbsolutePath(String path) {
+        File filepath = new File(path);
+
+        if (File.separatorChar == '/') {
+            return filepath.isAbsolute();
+        }
+
+        if (filepath.isAbsolute()) {
+            return true; // nothing else to check, it already is technically an absolute path
+        }
+
+        String driveLetter = stripDriveLetter(new StringBuilder(path));
+        if (driveLetter != null) {
+            return false; // the path already had a drive letter in it, it really is a relative path that we can't consider absolute
+        }
+
+        char cwdDriveLetter = new File("\\").getAbsolutePath().charAt(0); // gets the current working directory's drive letter
+
+        return new File(cwdDriveLetter + ":" + path).isAbsolute();
     }
 }

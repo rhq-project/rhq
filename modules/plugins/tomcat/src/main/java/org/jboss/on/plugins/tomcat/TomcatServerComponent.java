@@ -48,6 +48,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
@@ -189,7 +190,7 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 // configure to use the local jars. But, to be safe, if for some overlooked or future reason we require
                 // the jars then use them if they are available. Note, for a remote TC Server that would mean you'd have
                 // to have a version compatible local install and set the install path to the local path, even though
-                // the server url was remote. 
+                // the server url was remote.
                 String catalinaHome = pluginConfig.getSimpleValue(PLUGIN_CONFIG_CATALINA_HOME_PATH, null);
                 File libDir = getLibDir(catalinaHome);
                 if (libDir != null) {
@@ -340,14 +341,14 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
     }
 
     public void stop() {
-        // TODO: If we add event checking by default        
+        // TODO: If we add event checking by default
         // stopLogFileEventPollers();
         closeConnection();
     }
 
     /**
      * If necessary attempt to close the EMS connection, then set this.connection null.  Synchronized ensure we play well
-     * with loadConnection.  
+     * with loadConnection.
      */
     private synchronized void closeConnection() {
         if (this.connection != null) {
@@ -420,13 +421,15 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
 
     static File resolvePathRelativeToHomeDir(Configuration pluginConfig, String path) {
         File configDir = new File(path);
-        if (!configDir.isAbsolute()) {
+        if (!FileUtil.isAbsolutePath(path)) {
             String jbossHomeDir = getRequiredPropertyValue(pluginConfig,
                 TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH);
             configDir = new File(jbossHomeDir, path);
         }
 
-        return configDir;
+        // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
+        //             the drive letter might not have been specified - this makes sure the drive letter is specified.
+        return configDir.getAbsoluteFile();
     }
 
     private static String getRequiredPropertyValue(Configuration config, String propName) {

@@ -100,6 +100,7 @@ import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
 import org.rhq.plugins.jbossas.util.ConnectionFactoryConfigurationEditor;
@@ -764,12 +765,14 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
     @NotNull
     static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
-        if (!configDir.isAbsolute()) {
+        if (!FileUtil.isAbsolutePath(path)) {
             String jbossHomeDir = getRequiredPropertyValue(pluginConfig, JBOSS_HOME_DIR_CONFIG_PROP);
             configDir = new File(jbossHomeDir, path);
         }
 
-        return configDir;
+        // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
+        //             the drive letter might not have been specified - this makes sure the drive letter is specified.
+        return configDir.getAbsoluteFile();
     }
 
     @NotNull

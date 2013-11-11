@@ -31,6 +31,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -84,6 +85,12 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private static Criteria getCriteria(ResourceGroupComposite composite) {
         Criteria criteria = new Criteria();
         criteria.addCriteria(CRITERIA_GROUP_ID, composite.getResourceGroup().getId());
+        return criteria;
+    }
+
+    protected AlertDefinitionCriteria getDetailCriteria() {
+        AlertDefinitionCriteria criteria = super.getDetailCriteria();
+        criteria.addFilterResourceGroupIds(group.getId());
         return criteria;
     }
 

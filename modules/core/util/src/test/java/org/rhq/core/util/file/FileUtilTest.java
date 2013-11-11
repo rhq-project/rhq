@@ -32,7 +32,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -43,6 +42,18 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class FileUtilTest {
+    public void testIsAbsolutePath() {
+        assert true == FileUtil.isAbsolutePath("/unix/abs/path");
+        assert false == FileUtil.isAbsolutePath("unix/rel/path");
+        if (File.separatorChar == '\\') {
+            // windows only tests
+            assert true == FileUtil.isAbsolutePath("C:\\win\\abs\\path");
+            assert false == FileUtil.isAbsolutePath("C:win\\rel\\path");
+            assert false == FileUtil.isAbsolutePath("win\\rel\\path");
+            assert true == FileUtil.isAbsolutePath("\\win\\faux\\abs\\path"); // this is the one we really wanted to test
+        }
+    }
+
     public void testIsNewer() throws Exception {
         // make sure isNewer doesn't check for null or non-existent Files
         File fileDoesNotExist = new File("blah/blah/blah.txt");

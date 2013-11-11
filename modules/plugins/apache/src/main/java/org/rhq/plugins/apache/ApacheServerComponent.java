@@ -80,6 +80,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
@@ -835,9 +836,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     /**
      * This method is supposed to be called from {@link #updateResourceConfiguration(ConfigurationUpdateReport)}
      * of this resource and any child resources.
-     * 
+     *
      * Based on the plugin configuration of this resource, the Apache instance is either restarted or left as is.
-     * 
+     *
      * @param report the report is updated with the error message and status is set to failure if the restart fails.
      */
     public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
@@ -852,7 +853,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     /**
      * This method is akin to {@link #finishConfigurationUpdate(ConfigurationUpdateReport)} but should
      * be used in the {@link #createResource(CreateResourceReport)} method.
-     * 
+     *
      * @param report the report is updated with the error message and status is set to failure if the restart fails.
      */
     public void finishChildResourceCreate(CreateResourceReport report) {
@@ -866,7 +867,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     /**
      * Conditionally restarts the server based on the settings in the plugin configuration of the server.
-     * 
+     *
      * @throws Exception if the restart fails.
      */
     public void conditionalRestart() throws Exception {
@@ -947,12 +948,14 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     @NotNull
     static File resolvePathRelativeToServerRoot(Configuration pluginConfig, @NotNull String path) {
         File file = new File(path);
-        if (!file.isAbsolute()) {
+        if (!FileUtil.isAbsolutePath(path)) {
             String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
             file = new File(serverRoot, path);
         }
 
-        return file;
+        // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
+        //             the drive letter might not have been specified - this makes sure the drive letter is specified.
+        return file.getAbsoluteFile();
     }
 
     @NotNull
@@ -1090,7 +1093,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private String getVersion() {
         String ret = resourceContext.getVersion();
         if (ret == null) {
-            //strange, but this happens sometimes when 
+            //strange, but this happens sometimes when
             //the resource is synced with the server for the first
             //time after data purge on the agent side
 

@@ -68,6 +68,7 @@ import org.rhq.core.pluginapi.util.JavaCommandLine;
 import org.rhq.core.pluginapi.util.ServerStartScriptDiscoveryUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
 import org.rhq.plugins.jbossas5.helper.JBossProductType;
@@ -124,7 +125,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     };
 
     // The set of env vars that are actually relevant to AS5.  Include only these to reduce the amount
-    // of noise in the property value and to potentially avoid stale values. 
+    // of noise in the property value and to potentially avoid stale values.
     private static final Set<String> START_SCRIPT_ENV_VAR_NAMES = new LinkedHashSet<String>();
 
     // Script options that are set by the script itself and that we don't want. Currently none.
@@ -135,7 +136,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // which is set in run.conf or possibly in a custom script.  We opt to let run.conf provide the setting
         // as that is quite likely what users will expect.  JAVA_OPTS can be added manually to the
         // startScriptEnv settings at which time it would provide an override. Not discovering JAVA_OPTS also
-        // avoids issues with duplicate settings, due to manipulations made to it by run.conf. 
+        // avoids issues with duplicate settings, due to manipulations made to it by run.conf.
         START_SCRIPT_ENV_VAR_NAMES.addAll(Arrays.asList( //
             "JAVA_HOME", //
             "JAVA", //
@@ -603,11 +604,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     @NotNull
     private static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
-        if (!configDir.isAbsolute()) {
+        if (!FileUtil.isAbsolutePath(path)) {
             String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
                 .getStringValue();
             configDir = new File(homeDir, path);
         }
-        return configDir;
+
+        // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
+        //             the drive letter might not have been specified - this makes sure the drive letter is specified.
+        return configDir.getAbsoluteFile();
     }
 }

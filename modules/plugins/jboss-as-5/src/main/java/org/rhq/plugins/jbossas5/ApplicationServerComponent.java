@@ -88,6 +88,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
@@ -477,13 +478,16 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
     @NotNull
     private File resolvePathRelativeToHomeDir(@NotNull String path) {
         File configDir = new File(path);
-        if (!configDir.isAbsolute()) {
+        if (!FileUtil.isAbsolutePath(path)) {
             Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
             String homeDir = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.HOME_DIR)
                 .getStringValue();
             configDir = new File(homeDir, path);
         }
-        return configDir;
+
+        // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
+        //             the drive letter might not have been specified - this makes sure the drive letter is specified.
+        return configDir.getAbsoluteFile();
     }
 
     private static void validateNamingURL(String namingURL) {

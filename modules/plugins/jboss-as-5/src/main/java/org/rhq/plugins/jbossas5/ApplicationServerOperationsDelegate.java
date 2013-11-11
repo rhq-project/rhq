@@ -46,10 +46,11 @@ import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * Handles performing operations (Start, Shut Down, and Restart) on a JBoss AS 5.x instance.
- * 
+ *
  * @author Ian Springer
  * @author Jason Dobies
  * @author Jay Shaughnessy
@@ -75,7 +76,7 @@ public class ApplicationServerOperationsDelegate {
         @SuppressWarnings("unused")
         public ExecutionFailedException(Throwable cause) {
             super(cause);
-        }       
+        }
     }
 
     /**
@@ -207,7 +208,7 @@ public class ApplicationServerOperationsDelegate {
         if (!startScriptEnv.isEmpty()) {
             for (String envVarName : startScriptEnv.keySet()) {
                 String envVarValue = startScriptEnv.get(envVarName);
-                // TODO: If we migrate the AS7 util to a general util then hook it up            
+                // TODO: If we migrate the AS7 util to a general util then hook it up
                 // envVarValue = replacePropertyPatterns(envVarValue);
                 startScriptEnv.put(envVarName, envVarValue);
             }
@@ -278,7 +279,7 @@ public class ApplicationServerOperationsDelegate {
 
         } else {
             for (String startScriptArg : startScriptArgs) {
-                // TODO: If we migrate the AS7 util to a general util then hook it up                
+                // TODO: If we migrate the AS7 util to a general util then hook it up
                 //startScriptArg = replacePropertyPatterns(startScriptArg);
                 processExecution.getArguments().add(startScriptArg);
             }
@@ -338,7 +339,7 @@ public class ApplicationServerOperationsDelegate {
         } catch (ExecutionFailedException e) {
             errorMessage = e.getMessage();
         }
-        
+
         AvailabilityType avail = waitForServerToShutdown();
         OperationResult result;
         if (avail == AvailabilityType.UP) {
@@ -349,7 +350,7 @@ public class ApplicationServerOperationsDelegate {
             result.setSimpleResult(resultMessage);
             result.setErrorMessage(errorMessage);
         }
-        
+
         return result;
     }
 
@@ -460,7 +461,7 @@ public class ApplicationServerOperationsDelegate {
         } catch (RuntimeException e) {
             throw new ExecutionFailedException("Shutting down the server using JMX failed: " + e.getMessage(), e);
         }
-        
+
         return "The server has been shut down.";
     }
 
@@ -581,13 +582,15 @@ public class ApplicationServerOperationsDelegate {
     @NotNull
     private File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
         File configDir = new File(path);
-        if (!configDir.isAbsolute()) {
+        if (!FileUtil.isAbsolutePath(path)) {
             String jbossHomeDir = getRequiredPropertyValue(pluginConfig,
                 ApplicationServerPluginConfigurationProperties.HOME_DIR);
             configDir = new File(jbossHomeDir, path);
         }
 
-        return configDir;
+        // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
+        //             the drive letter might not have been specified - this makes sure the drive letter is specified.
+        return configDir.getAbsoluteFile();
     }
 
     @NotNull

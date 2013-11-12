@@ -199,16 +199,34 @@ public class MetricsDAO {
             storageSession);
     }
 
+    public StorageResultSetFuture findOneHourMetricsAsync(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        return storageSession.executeAsync(statement);
+    }
+
     public Iterable<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime) {
         BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
         return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
             storageSession);
     }
 
+    public StorageResultSetFuture findSixHourMetricsAsync(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        return storageSession.executeAsync(statement);
+    }
+
     public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime) {
         BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
         return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
             storageSession);
+    }
+
+    public StorageResultSetFuture findTwentyFourHourMetricsAsync(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        return storageSession.executeAsync(statement);
     }
 
     public Iterable<AggregateSimpleNumericMetric> findAggregatedSimpleOneHourMetric(int scheduleId, long startTime,

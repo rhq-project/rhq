@@ -23,6 +23,8 @@ import java.util.Map;
 
 import javax.ejb.Local;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
@@ -69,6 +71,9 @@ public interface StorageNodeManagerLocal {
      * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
      */
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
+
+    ListenableFuture<List<StorageNodeLoadComposite>> getLoadAsync(Subject subject, StorageNode node, long beginTime,
+        long endTime);
 
     StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
 

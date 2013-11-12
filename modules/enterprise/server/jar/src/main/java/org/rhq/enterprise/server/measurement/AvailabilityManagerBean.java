@@ -18,14 +18,20 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
@@ -61,6 +67,7 @@ import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationCacheElement;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -68,6 +75,7 @@ import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -111,6 +119,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
+
+    // For Avail Duration Alert Condition Checks
+    @javax.annotation.Resource
+    private TimerService timerService;
 
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -315,7 +327,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         for (Availability av : allAvailabilities) {
             // if the Avail straddles startTime (startTime inclusive, endTime exclusive) then it is relevant.
             // EndTime is exclusive because Avail(N).endTime=Avail(N+1).startTime and we don't want to consider
-            // two records. The relevant availType is the one starting, not ending at atTime. 
+            // two records. The relevant availType is the one starting, not ending at atTime.
             Long startTime = av.getStartTime();
             Long endTime = av.getEndTime();
             if (startTime <= atTime && (null == endTime || endTime > atTime)) {
@@ -500,13 +512,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             Availability currentAvailability = availabilities.get(currentAvailabilityIndex);
             long availabilityStartBarrier = currentAvailability.getStartTime();
 
-            // the start of the data point comes first or at same time as availability record (remember, we are going 
+            // the start of the data point comes first or at same time as availability record (remember, we are going
             // backwards in time)
             if (dataPointStartBarrier >= availabilityStartBarrier) {
 
                 // end the data point
                 if (currentAvailability instanceof SurrogateAvailability) {
-                    // we are on the edge of the range with a surrogate for this data point.  Be pessimistic, 
+                    // we are on the edge of the range with a surrogate for this data point.  Be pessimistic,
                     // if we have had any down time, set to down, then disabled, then up, and finally unknown.
                     if (hasDownPeriods) {
                         availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
@@ -699,7 +711,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
 
-        // if this report is from an agent update the lastAvailReport time        
+        // if this report is from an agent update the lastAvailReport time
         if (!report.isServerSideReport() && agentToUpdate != null) {
             availabilityManager.updateLastAvailabilityReportInNewTransaction(agentToUpdate.intValue());
         }
@@ -797,7 +809,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void mergeAvailabilitiesInNewTransaction(List<Availability> availabilities, MergeInfo mergeInfo) {
 
-        // We will alert only on the avails for enabled resources. Keep track of any that are disabled. 
+        // We will alert only on the avails for enabled resources. Keep track of any that are disabled.
         List<Availability> disabledAvailabilities = new ArrayList<Availability>();
         Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
         int count = 0;
@@ -819,8 +831,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // sync scenarios. A Resource is given its initial Availability/ResourceAvailability when it is
                 // persisted so it is guaranteed to have Availability, so, the Resource must not exist. At least
                 // it must not exist in my utopian view of the world. Let's just make sure...
-                Resource attachedResource = (Resource) entityManager.find(Resource.class, reported.getResource()
-                    .getId());
+                Resource attachedResource = entityManager.find(Resource.class, reported.getResource().getId());
 
                 if ((null == attachedResource) || (InventoryStatus.COMMITTED != attachedResource.getInventoryStatus())) {
                     // expected case
@@ -913,7 +924,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 //log.info( "new avail (latest/reported)-->" + latest + "/" + reported );
 
                 // the new availability data is for a time after our last known state change
-                // we are run-length encoded, so only persist data if the availability changed                        
+                // we are run-length encoded, so only persist data if the availability changed
                 if (latest.getAvailabilityType() != reported.getAvailabilityType()) {
                     entityManager.persist(reported);
                     mergeInfo.incrementNumInserted();
@@ -996,7 +1007,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         platformAvailType = (null == platformAvailType) ? AvailabilityType.DOWN : platformAvailType;
         childAvailType = (null == childAvailType) ? AvailabilityType.UNKNOWN : childAvailType;
 
-        // get the platform resource if not already at platformAvailType (since this is the one 
+        // get the platform resource if not already at platformAvailType (since this is the one
         // we need to change)
         Query query = entityManager
             .createNamedQuery(Availability.FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
@@ -1014,7 +1025,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         List<ResourceIdWithAvailabilityComposite> resourcesWithStatus = query.getResultList();
 
         // The above queries only return resources if they have at least one row in Availability. This should
-        // not be a problem since a new Resource gets an initial UNKNOWN Availability record at persist-time. 
+        // not be a problem since a new Resource gets an initial UNKNOWN Availability record at persist-time.
 
         if (log.isDebugEnabled()) {
             log.debug("Agent #[" + agentId + "] is going to have [" + resourcesWithStatus.size()
@@ -1037,7 +1048,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             resourceAvailabilityManager.updateAgentResourcesLatestAvailability(agentId, platformAvailType, true);
         }
 
-        // for those resources that have a current availability status that is different, change them       
+        // for those resources that have a current availability status that is different, change them
         for (ResourceIdWithAvailabilityComposite record : resourcesWithStatus) {
             Availability newAvailabilityInterval = getNewInterval(record, now, childAvailType);
             if (newAvailabilityInterval != null) {
@@ -1140,7 +1151,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             return;
 
         } catch (NonUniqueResultException nure) {
-            // This should not happen but can happen if the startTime exactly matches an existing start time. In 
+            // This should not happen but can happen if the startTime exactly matches an existing start time. In
             // this case assume we have somehow been passed a duplicate report, and ignore the entry.
             log.warn("Resource [" + toInsert.getResource()
                 + "] received a duplicate Availability. It is being ignored: " + toInsert);
@@ -1180,11 +1191,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
                 if (existing.getStartTime() == toInsert.getStartTime()) {
                     // Edge Case: If the insertTo start time equals the existing end time
-                    // just update the existing avail type to be the new avail type and keep the same boundary.                    
+                    // just update the existing avail type to be the new avail type and keep the same boundary.
                     existing.setAvailabilityType(toInsert.getAvailabilityType());
 
                 } else {
-                    // insert the new avail type interval, witch is different than existing and afterExisting. 
+                    // insert the new avail type interval, witch is different than existing and afterExisting.
                     existing.setEndTime(toInsert.getStartTime());
                     toInsert.setEndTime(afterExisting.getStartTime());
                     entityManager.persist(toInsert);
@@ -1232,7 +1243,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     }
 
     /**
-     * @return all avails for all member resources for the specified interval, ordered by asc startTime 
+     * @return all avails for all member resources for the specified interval, ordered by asc startTime
      */
     @SuppressWarnings("unchecked")
     private List<Availability> findResourceGroupAvailabilityWithinInterval(int groupId, Date startDate, Date endDate) {
@@ -1261,7 +1272,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     /**
      * @Deprecated used in portal war ListAvailabilityHistoryUIBEan.  Use {@link #findAvailabilityByCriteria(Subject, AvailabilityCriteria)}
-     * Note that this methods uses startTime DESC sorting, which must be explicitly set in AvailabilityCriteria. 
+     * Note that this methods uses startTime DESC sorting, which must be explicitly set in AvailabilityCriteria.
      */
     @Deprecated
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pageControl) {
@@ -1293,4 +1304,37 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
     }
 
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource) {
+
+        String operator = cacheElement.getAlertConditionOperator().name();
+        String durationString = (String) cacheElement.getAlertConditionOperatorOption();
+        long duration = Long.valueOf(durationString).longValue() * 1000;
+
+        if (log.isDebugEnabled()) {
+            Date jobTime = new Date(System.currentTimeMillis() + duration);
+            log.debug("Scheduling availability duration job for [" + DateFormat.getDateTimeInstance().format(jobTime)
+                + "]");
+        }
+
+        HashMap<String, String> infoMap = new HashMap<String, String>();
+        // the condition id is needed to ensure we limit the future avail checking to the one relevant alert condition
+        infoMap.put(AlertAvailabilityDurationJob.DATAMAP_CONDITION_ID,
+            String.valueOf(cacheElement.getAlertConditionTriggerId()));
+        infoMap.put(AlertAvailabilityDurationJob.DATAMAP_RESOURCE_ID, String.valueOf(resource.getId()));
+        infoMap.put(AlertAvailabilityDurationJob.DATAMAP_OPERATOR, operator);
+        infoMap.put(AlertAvailabilityDurationJob.DATAMAP_DURATION, durationString); // in seconds
+
+        timerService.createSingleActionTimer(duration, new TimerConfig(infoMap, false));
+    }
+
+    @Timeout
+    public void handleAvailabilityDurationCheck(Timer timer) {
+        try {
+            AlertAvailabilityDurationJob.execute((HashMap<String, String>) timer.getInfo());
+        } catch (Throwable t) {
+            log.error("Failed to handle availability duration timer - will try again later. Cause: " + t);
+        }
+    }
 }

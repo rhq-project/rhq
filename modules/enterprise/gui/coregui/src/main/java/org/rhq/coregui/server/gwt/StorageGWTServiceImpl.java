@@ -103,7 +103,7 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     @Override
     public PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException {
         try {
-            return SerialUtility.prepare(storageNodeManager.getStorageNodeComposites(),
+            return SerialUtility.prepare(storageNodeManager.getStorageNodeComposites(getSessionSubject()),
                 "StorageGWTServiceImpl.getStorageNodeComposites");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

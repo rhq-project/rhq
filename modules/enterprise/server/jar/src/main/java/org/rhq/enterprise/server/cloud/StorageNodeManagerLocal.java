@@ -53,7 +53,7 @@ public interface StorageNodeManagerLocal {
      */
     List<StorageNode> getClusterNodes();
     
-    PageList<StorageNodeLoadComposite> getStorageNodeComposites();
+    PageList<StorageNodeLoadComposite> getStorageNodeComposites(Subject subject);
 
     void linkResource(Resource resource);
 

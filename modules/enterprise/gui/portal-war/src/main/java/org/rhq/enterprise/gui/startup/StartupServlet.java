@@ -67,7 +67,6 @@ import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
@@ -528,13 +527,6 @@ public class StartupServlet extends HttpServlet {
             masterPC.scheduleAllPluginJobs();
         } catch (Exception e) {
             log.error("Cannot schedule server plugin jobs.", e);
-        }
-
-        // Alerting Availability Duration Job (create only, nothing actually scheduled here) 
-        try {
-            scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
-        } catch (Exception e) {
-            log.error("Cannot create alert availability duration job.", e);
         }
 
         return;

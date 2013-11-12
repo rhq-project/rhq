@@ -362,16 +362,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
             Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
-        for (Object[] tupple : getChildrenScheduleIds(storageNodeResourceId)) {
-            String definitionName = (String) tupple[0];
-            Integer scheduleId = (Integer) tupple[2];
-            scheduleIdsMap.put(definitionName, scheduleId);
-        }
-        for (Object[] tupple : getGrandchildrenScheduleIds(storageNodeResourceId)) {
-            String definitionName = (String) tupple[0];
-            Integer scheduleId = (Integer) tupple[2];
-            scheduleIdsMap.put(definitionName, scheduleId);
-        }
+            for (Object[] tupple : getChildrenScheduleIds(storageNodeResourceId, false)) {
+                String definitionName = (String) tupple[0];
+                Integer scheduleId = (Integer) tupple[2];
+                scheduleIdsMap.put(definitionName, scheduleId);
+            }
+            for (Object[] tupple : getGrandchildrenScheduleIds(storageNodeResourceId, false)) {
+                String definitionName = (String) tupple[0];
+                Integer scheduleId = (Integer) tupple[2];
+                scheduleIdsMap.put(definitionName, scheduleId);
+            }
 
         StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
         MeasurementAggregate totalDiskUsedAggregate = new MeasurementAggregate(0d, 0d, 0d);
@@ -458,130 +458,136 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
 
-        return result;
+            return result;
+        } finally {
+            stopwatch.stop();
+            log.info("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
     }
+    
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ListenableFuture<List<StorageNodeLoadComposite>> getLoadAsync(Subject subject, StorageNode node,
         long beginTime, long endTime) {
         Stopwatch stopwatch = new Stopwatch().start();
+        final StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
         try {
             if (!storageClientManager.isClusterAvailable()) {
-                return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(
-                    new StorageNodeLoadComposite(node, beginTime, endTime))));
+                return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(result)));
             }
             int storageNodeResourceId;
             try {
                 storageNodeResourceId = getResourceIdFromStorageNode(node);
             } catch (ResourceNotFoundException e) {
                 log.warn(e.getMessage());
-                return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(
-                    new StorageNodeLoadComposite(node, beginTime, endTime))));
+                return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(result)));
             }
             MetricsServer metricsServer = storageClientManager.getMetricsServer();
             Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
-            for (Object[] tupple : getChildrenScheduleIds(storageNodeResourceId)) {
+            for (Object[] tupple : getChildrenScheduleIds(storageNodeResourceId, true)) {
                 String definitionName = (String) tupple[0];
                 Integer scheduleId = (Integer) tupple[2];
                 scheduleIdsMap.put(definitionName, scheduleId);
             }
-            for (Object[] tupple : getGrandchildrenScheduleIds(storageNodeResourceId)) {
+            for (Object[] tupple : getGrandchildrenScheduleIds(storageNodeResourceId, true)) {
                 String definitionName = (String) tupple[0];
                 Integer scheduleId = (Integer) tupple[2];
                 scheduleIdsMap.put(definitionName, scheduleId);
             }
 
-            final StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
-            List<ListenableFuture<StorageNodeLoadComposite>> compositeFutures =
-                new ArrayList<ListenableFuture<StorageNodeLoadComposite>>();
+            List<ListenableFuture<StorageNodeLoadComposite>> compositeFutures = new ArrayList<ListenableFuture<StorageNodeLoadComposite>>();
             final MeasurementAggregate totalDiskUsedAggregate = new MeasurementAggregate(0d, 0d, 0d);
             Integer scheduleId = null;
 
             // find the aggregates and enrich the result instance
-            if (!scheduleIdsMap.isEmpty()) {
-                try {
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_TOKENS)) != null) {
-                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
-                            scheduleId, beginTime, endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
-                                    result.setTokens(new MeasurementAggregate(metric.getMin(), metric.getAvg(),
-                                        metric.getMax()));
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_OWNERSHIP)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
-                                    result.setActuallyOwns(metric);
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
+            if (scheduleIdsMap.isEmpty()) {
+                // no sheduled metrics yet
+                return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(result)));
+            }
+            try {
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_TOKENS)) != null) {
+                //                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
+                //                            scheduleId, beginTime, endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
+                //                                    result.setTokens(new MeasurementAggregate(metric.getMin(), metric.getAvg(),
+                //                                        metric.getMax()));
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_OWNERSHIP)) != null) {
+                //                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
+                //                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
+                //                                endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
+                //                                    result.setActuallyOwns(metric);
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
 
-                    //calculated disk space related metrics
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_DATA_DISK_USED_PERCENTAGE)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(
-                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
-                                    result.setDataDiskUsedPercentage(metric);
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_DISK_USED_PERCENTAGE)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(
-                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
-                                    result.setTotalDiskUsedPercentage(metric);
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_FREE_DISK_TO_DATA_RATIO)) != null) {
-                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
-                            scheduleId, beginTime, endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
-                                    result.setFreeDiskToDataSizeRatio(new MeasurementAggregate(metric.getMin(),
-                                        metric.getAvg(), metric.getMax()));
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
+                //calculated disk space related metrics
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_DATA_DISK_USED_PERCENTAGE)) != null) {
+                //                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
+                //                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
+                //                                endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(
+                //                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
+                //                                    result.setDataDiskUsedPercentage(metric);
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_DISK_USED_PERCENTAGE)) != null) {
+                //                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
+                //                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
+                //                                endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(
+                //                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
+                //                                    result.setTotalDiskUsedPercentage(metric);
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_FREE_DISK_TO_DATA_RATIO)) != null) {
+                //                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
+                //                            scheduleId, beginTime, endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
+                //                                    result.setFreeDiskToDataSizeRatio(new MeasurementAggregate(metric.getMin(),
+                //                                        metric.getAvg(), metric.getMax()));
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
 
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_LOAD)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.BYTES, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                if ((scheduleId = scheduleIdsMap.get(METRIC_LOAD)) != null) {
+                    ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture = getMeasurementAggregateWithUnitsAsync(
+                        scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
+                    ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures
+                        .transform(
+                            dataFuture,
                             new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
                                 @Override
                                 public StorageNodeLoadComposite apply(
@@ -591,104 +597,106 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                                     return result;
                                 }
                             });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
-                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
-                            scheduleId, beginTime, endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
-                                    updateAggregateTotal(totalDiskUsedAggregate, new MeasurementAggregate(
-                                        metric.getMin(), metric.getAvg(), metric.getMax()));
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
-                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
-                            scheduleId, beginTime, endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
-                                    updateAggregateTotal(totalDiskUsedAggregate, new MeasurementAggregate(
-                                        metric.getMin(), metric.getAvg(), metric.getMax()));
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
+                    compositeFutures.add(compositeFuture);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
+                    ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
+                        scheduleId, beginTime, endTime);
+                    ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                        new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
+                            @Override
+                            public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
+                                updateAggregateTotal(totalDiskUsedAggregate, new MeasurementAggregate(metric.getMin(),
+                                    metric.getAvg(), metric.getMax()));
+                                return result;
+                            }
+                        });
+                    compositeFutures.add(compositeFuture);
+                }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
+                    ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
+                        scheduleId, beginTime, endTime);
+                    ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                        new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
+                            @Override
+                            public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
+                                updateAggregateTotal(totalDiskUsedAggregate, new MeasurementAggregate(metric.getMin(),
+                                    metric.getAvg(), metric.getMax()));
+                                return result;
+                            }
+                        });
+                    compositeFutures.add(compositeFuture);
+                }
 
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
-                        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
-                            scheduleId, beginTime, endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
-                                    updateAggregateTotal(totalDiskUsedAggregate, new MeasurementAggregate(
-                                        metric.getMin(), metric.getAvg(), metric.getMax()));
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if (totalDiskUsedAggregate.getMax() > 0) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.BYTES, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
+                    ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(
+                        scheduleId, beginTime, endTime);
+                    ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                        new Function<AggregateNumericMetric, StorageNodeLoadComposite>() {
+                            @Override
+                            public StorageNodeLoadComposite apply(AggregateNumericMetric metric) {
+                                updateAggregateTotal(totalDiskUsedAggregate, new MeasurementAggregate(metric.getMin(),
+                                    metric.getAvg(), metric.getMax()));
+                                return result;
+                            }
+                        });
+                    compositeFutures.add(compositeFuture);
+                }
+                if (totalDiskUsedAggregate.getMax() > 0) {
+                    ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture = getMeasurementAggregateWithUnitsAsync(
+                        scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
+                    ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures
+                        .transform(
+                            dataFuture,
                             new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
                                 @Override
                                 public StorageNodeLoadComposite apply(
                                     StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
-                                    metric.setFormattedValue(getSummaryString(metric.getAggregate(),
-                                        MeasurementUnits.BYTES));
+//                                    metric.setFormattedValue(getSummaryString(metric.getAggregate(),
+//                                        MeasurementUnits.BYTES));
                                     result.setDataDiskUsed(metric);
                                     return result;
                                 }
                             });
-                        compositeFutures.add(compositeFuture);
-                    }
+                    compositeFutures.add(compositeFuture);
+                }
 
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_COMMITED)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.BYTES, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(
-                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
-                                    result.setHeapCommitted(metric);
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.BYTES, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
-                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
-                                @Override
-                                public StorageNodeLoadComposite apply(
-                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
-                                    result.setHeapUsed(metric);
-                                    return result;
-                                }
-                            });
-                        compositeFutures.add(compositeFuture);
-                    }
-                    if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED_PERCENTAGE)) != null) {
-                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
-                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
-                                endTime);
-                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_COMMITED)) != null) {
+                //                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
+                //                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.BYTES, beginTime,
+                //                                endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(
+                //                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
+                //                                    result.setHeapCommitted(metric);
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
+                //                    if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED)) != null) {
+                //                        ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture =
+                //                            getMeasurementAggregateWithUnitsAsync(scheduleId, MeasurementUnits.BYTES, beginTime,
+                //                                endTime);
+                //                        ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures.transform(dataFuture,
+                //                            new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
+                //                                @Override
+                //                                public StorageNodeLoadComposite apply(
+                //                                    StorageNodeLoadComposite.MeasurementAggregateWithUnits metric) {
+                //                                    result.setHeapUsed(metric);
+                //                                    return result;
+                //                                }
+                //                            });
+                //                        compositeFutures.add(compositeFuture);
+                //                    }
+                if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED_PERCENTAGE)) != null) {
+                    ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> dataFuture = getMeasurementAggregateWithUnitsAsync(
+                        scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                    ListenableFuture<StorageNodeLoadComposite> compositeFuture = Futures
+                        .transform(
+                            dataFuture,
                             new Function<StorageNodeLoadComposite.MeasurementAggregateWithUnits, StorageNodeLoadComposite>() {
                                 @Override
                                 public StorageNodeLoadComposite apply(
@@ -697,41 +705,43 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                                     return result;
                                 }
                             });
-                        compositeFutures.add(compositeFuture);
-                    }
-                } catch (NoHostAvailableException nhae) {
-                    // storage cluster went down while performing this method
-                    return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(
-                        new StorageNodeLoadComposite(node, beginTime, endTime))));
+                    compositeFutures.add(compositeFuture);
                 }
+            } catch (NoHostAvailableException nhae) {
+                // storage cluster went down while performing this method
+                return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(result)));
             }
 
             return Futures.successfulAsList(compositeFutures);
         } finally {
             stopwatch.stop();
-            log.debug("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.info("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
-    private List<Object[]> getChildrenScheduleIds(int storageNodeResourceId) {
+    private List<Object[]> getChildrenScheduleIds(int storageNodeResourceId, boolean lightWeight) {
         // get the schedule ids for Storage Service resource
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
         query.setParameter("parrentId", storageNodeResourceId).setParameter(
             "metricNames",
-            Arrays.asList(METRIC_TOKENS, METRIC_OWNERSHIP, METRIC_LOAD, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE,
+            lightWeight ? Arrays.asList(METRIC_LOAD, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE,
+                METRIC_TOTAL_COMMIT_LOG_SIZE) : Arrays.asList(METRIC_TOKENS,
+                METRIC_OWNERSHIP, METRIC_LOAD, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE,
                 METRIC_TOTAL_COMMIT_LOG_SIZE, METRIC_DATA_DISK_USED_PERCENTAGE, METRIC_TOTAL_DISK_USED_PERCENTAGE,
                 METRIC_FREE_DISK_TO_DATA_RATIO));
         return query.getResultList();
     }
 
-    private List<Object[]> getGrandchildrenScheduleIds(int storageNodeResourceId) {
+    private List<Object[]> getGrandchildrenScheduleIds(int storageNodeResourceId, boolean lightWeight) {
         // get the schedule ids for Memory Subsystem resource
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
             Object[].class);
-        query.setParameter("grandparrentId", storageNodeResourceId).setParameter("metricNames",
-            Arrays.asList(METRIC_HEAP_COMMITED, METRIC_HEAP_USED, METRIC_HEAP_USED_PERCENTAGE));
+        query.setParameter("grandparrentId", storageNodeResourceId).setParameter(
+            "metricNames",
+            lightWeight ? METRIC_HEAP_USED_PERCENTAGE : Arrays.asList(METRIC_HEAP_COMMITED, METRIC_HEAP_USED,
+                METRIC_HEAP_USED_PERCENTAGE));
         return query.getResultList();
     }
 
@@ -817,7 +827,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return result;
         } finally {
             stopwatch.stop();
-            log.debug("Retrieved storage node composites in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.info("Retrieved storage node composites in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
@@ -887,7 +897,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     metric.getMax());
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new
                     StorageNodeLoadComposite.MeasurementAggregateWithUnits(measurementAggregate, units);
-                measurementAggregateWithUnits.setFormattedValue(getSummaryString(measurementAggregate, units));
+                //measurementAggregateWithUnits.setFormattedValue(getSummaryString(measurementAggregate, units));
                 return measurementAggregateWithUnits;
             }
         });
@@ -955,7 +965,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode) {
-        return findStorageNodeAlerts(subject, false, storageNode);
+        Stopwatch stopwatch = new Stopwatch().start();
+        try {
+            return findStorageNodeAlerts(subject, false, storageNode);
+        } finally {
+            stopwatch.stop();
+            log.info("Retrieved unacked alerts for " + storageNode + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        }
     }
 
     @Override
@@ -1042,7 +1058,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return alertsMap;
         } finally {
             stopwatch.stop();
-            log.debug("Retrieved storage node alerts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.info("Retrieved storage node alerts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
@@ -1255,7 +1271,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
 
-        List<Object[]> tupples = getChildrenScheduleIds(storageNodeResourceId);
+        List<Object[]> tupples = getChildrenScheduleIds(storageNodeResourceId, false);
         List<String> defNames = new ArrayList<String>();
         Map<Integer, List<Integer>> resourceWithDefinitionIds = new HashMap<Integer, List<Integer>>();
         for (Object[] tupple : tupples) {
@@ -1279,7 +1295,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
         
-        tupples = getGrandchildrenScheduleIds(storageNodeResourceId);
+        tupples = getGrandchildrenScheduleIds(storageNodeResourceId, false);
         defNames = new ArrayList<String>();
         int[] definitionIds = new int[tupples.size()];
         definitionIds = new int[tupples.size()];

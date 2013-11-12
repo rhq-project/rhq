@@ -42,6 +42,7 @@ import com.datastax.driver.core.Row;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -242,6 +243,41 @@ public class MetricsServer {
             long end = System.currentTimeMillis();
             if (log.isDebugEnabled()) {
                 log.debug("Finished calculating resource summary aggregate in " + (end - start) + " ms");
+            }
+        }
+    }
+
+    public ListenableFuture<AggregateNumericMetric> getSummaryAggregateAsync(int scheduleId, long beginTime,
+        long endTime) {
+        long start = System.currentTimeMillis();
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Calculating resource summary aggregate (async) for [scheduleId: " + scheduleId +
+                    ", beginTime: " + beginTime + ", endTime: " + endTime + "]");
+            }
+            DateTime begin = new DateTime(beginTime);
+            StorageResultSetFuture queryFuture;
+
+            if (dateTimeService.isInRawDataRange(begin)) {
+                queryFuture = dao.findRawMetricsAsync(scheduleId, beginTime, endTime);
+                return Futures.transform(queryFuture, new ComputeRawAggregate(beginTime));
+            }
+
+            if (dateTimeService.isIn1HourDataRange(begin)) {
+                queryFuture = dao.findOneHourMetricsAsync(scheduleId, beginTime, endTime);
+            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+                queryFuture = dao.findSixHourMetricsAsync(scheduleId, beginTime, endTime);
+            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+                queryFuture = dao.findTwentyFourHourMetricsAsync(scheduleId, beginTime, endTime);
+            } else {
+                throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
+            }
+
+            return Futures.transform(queryFuture, new ComputeAggregate(beginTime));
+        } finally {
+            long end = System.currentTimeMillis();
+            if (log.isDebugEnabled()) {
+                log.debug("Finished calculating resource summary aggregate (async) in " + (end - start) + " ms");
             }
         }
     }

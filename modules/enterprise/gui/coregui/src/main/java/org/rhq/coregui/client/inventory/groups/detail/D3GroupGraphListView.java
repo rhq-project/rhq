@@ -41,6 +41,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
@@ -94,8 +95,8 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
      */
     private void buildGraphs() {
 
-        queryAvailability(EntityContext.forGroup(resourceGroup), buttonBarDateTimeRangeEditor.getStartTime(),
-            buttonBarDateTimeRangeEditor.getEndTime(), null);
+        queryAvailability(EntityContext.forGroup(resourceGroup), CustomDateRangeState.getInstance().getStartTime(),
+            CustomDateRangeState.getInstance().getEndTime(), null);
 
         final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
 
@@ -117,7 +118,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         }
 
         GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(), measDefIdArray,
-            buttonBarDateTimeRangeEditor.getStartTime(), buttonBarDateTimeRangeEditor.getEndTime(), 60,
+            CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance().getEndTime(), 60,
             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {

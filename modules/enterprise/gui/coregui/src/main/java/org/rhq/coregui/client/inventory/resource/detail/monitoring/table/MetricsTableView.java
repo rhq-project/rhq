@@ -20,7 +20,6 @@
 package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -83,11 +82,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
         setDataSource(new MetricsViewDataSource(resource));
         addToDashboardComponent = new AddToDashboardComponent(resource);
-        if(null == expandedRows){
-           this.expandedRows = new HashSet<Integer>();
-        }else {
-            this.expandedRows = expandedRows;
-        }
+        this.expandedRows = expandedRows;
     }
 
     /**
@@ -247,51 +242,52 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             int[] definitionArrayIds = new int[1];
             definitionArrayIds[0] = definitionId;
             GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitionArrayIds,
-                measurementUserPrefs.getMetricRangePreferences().begin,
-                measurementUserPrefs.getMetricRangePreferences().end, NUM_METRIC_POINTS,
-                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Log.warn("Error retrieving recent metrics charting data for resource [" + resourceId + "]:"
-                            + caught.getMessage());
-                    }
-
-                    @Override
-                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
-                        if (!results.isEmpty()) {
-
-                            //load the data results for the given metric definition
-                            List<MeasurementDataNumericHighLowComposite> measurementList = results.get(0);
-
-                            MeasurementDefinition measurementDefinition = null;
-                            for (MeasurementDefinition definition : resource.getResourceType().getMetricDefinitions()) {
-                                if (definition.getId() == definitionId) {
-                                    measurementDefinition = definition;
-                                    break;
-                                }
-                            }
-
-                            MetricGraphData metricGraphData = MetricGraphData.createForResource(resourceId,
-                                resource.getName(), measurementDefinition, measurementList, null);
-                            metricGraphData.setHideLegend(true);
-
-                            StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
-                            graph.setMetricGraphData(metricGraphData);
-                            final MetricD3Graph graphView = new MetricD3Graph(graph, abstractD3GraphListView);
-                            new Timer() {
-                                @Override
-                                public void run() {
-                                    graphView.drawJsniChart();
-                                    BrowserUtility.graphSparkLines();
-                                }
-                            }.schedule(150);
-
-                        } else {
-                            Log.warn("No chart data retrieving for resource [" + resourceId + "-" + definitionId + "]");
-
+                    measurementUserPrefs.getMetricRangePreferences().begin,
+                    measurementUserPrefs.getMetricRangePreferences().end, NUM_METRIC_POINTS,
+                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            Log.warn("Error retrieving recent metrics charting data for resource [" + resourceId + "]:"
+                                    + caught.getMessage());
                         }
-                    }
-                });
+
+                        @Override
+                        public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
+                            if (!results.isEmpty()) {
+
+                                //load the data results for the given metric definition
+                                List<MeasurementDataNumericHighLowComposite> measurementList = results.get(0);
+
+                                MeasurementDefinition measurementDefinition = null;
+                                for (MeasurementDefinition definition : resource.getResourceType().getMetricDefinitions()) {
+                                    if (definition.getId() == definitionId) {
+                                        measurementDefinition = definition;
+                                        break;
+                                    }
+                                }
+
+                                MetricGraphData metricGraphData = MetricGraphData.createForResource(resourceId,
+                                        resource.getName(), measurementDefinition, measurementList, null);
+                                metricGraphData.setHideLegend(true);
+
+                                StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
+                                graph.setMetricGraphData(metricGraphData);
+                                final MetricD3Graph graphView = new MetricD3Graph(graph, abstractD3GraphListView);
+                                new Timer() {
+                                    @Override
+                                    public void run() {
+                                        graphView.drawJsniChart();
+                                        BrowserUtility.graphSparkLines();
+                                    }
+                                }.schedule(150);
+
+                            }
+                            else {
+                                Log.warn("No chart data retrieving for resource [" + resourceId + "-" + definitionId + "]");
+
+                            }
+                        }
+                    });
 
             return vLayout;
         }

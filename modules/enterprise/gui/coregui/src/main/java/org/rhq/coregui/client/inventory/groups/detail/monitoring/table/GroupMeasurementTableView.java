@@ -29,15 +29,13 @@ import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.coregui.client.UserSessionManager;
-import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.common.graph.Refreshable;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -50,7 +48,6 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
 
     private final int groupId;
     private final boolean isAutogroup;
-    protected final MeasurementUserPreferences measurementUserPrefs;
     protected final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     protected Timer refreshTimer;
 
@@ -62,9 +59,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
         //disable fields used when is full screen
         setShowFooterRefresh(false);
         setTitle(MSG.common_title_numeric_metrics());
-
-        measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(this);
         startRefreshCycle();
     }
 
@@ -72,8 +67,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
     public void refreshData() {
         if (isVisible() && !isRefreshing()) {
             Date now = new Date();
-            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
-            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            long timeRange = CustomDateRangeState.getInstance().getTimeRange();
             Date newStartDate = new Date(now.getTime() - timeRange);
             buttonBarDateTimeRangeEditor.showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
             buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());

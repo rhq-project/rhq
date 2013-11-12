@@ -21,7 +21,6 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -37,7 +36,6 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
-import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -187,12 +185,14 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
 
             StatsRecord previousStatsRecord = previousStats.data.get(methodName);
 
-            long invocations = thisStatsRecord.invocations - previousStatsRecord.invocations;
+            long oldInvocations = previousStatsRecord != null ? previousStatsRecord.invocations : 0;
+            long invocations = thisStatsRecord.invocations - oldInvocations;
             if (invocations == 0) {
                 continue;
             }
 
-            long total = thisStatsRecord.total - previousStatsRecord.total;
+            long oldTotal = previousStatsRecord != null ? previousStatsRecord.total : 0;
+            long total = thisStatsRecord.total - oldTotal;
 
             //AS doesn't really give us this info...
             double min = (double) total / invocations;

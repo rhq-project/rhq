@@ -62,8 +62,6 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
-import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.JPAUtils;
 import org.rhq.test.TransactionCallbackWithContext;
@@ -288,8 +286,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     public void testAvailDurationAlert() throws Exception {
         try {
             prepareScheduler();
-            SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-            scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
 
             // create our resource with alert definition
             MeasurementDefinition metricDef = createResourceWithMetricSchedule();

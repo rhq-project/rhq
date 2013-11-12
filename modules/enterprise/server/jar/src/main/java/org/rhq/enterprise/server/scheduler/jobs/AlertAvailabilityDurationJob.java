@@ -21,12 +21,10 @@
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.JobDataMap;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
@@ -38,9 +36,12 @@ import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationComposit
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * This was once a quartz job but now supports an EJB Timer.  It could have been merged into the EJB class with the
+ * Timer code but I left it here since it calls out the fact that it is still a scheduled job.
+ *
  * @author Jay Shaughnessy
  */
-public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
+public class AlertAvailabilityDurationJob {
     private static final Log LOG = LogFactory.getLog(AlertAvailabilityDurationJob.class);
 
     public static final String DATAMAP_CONDITION_ID = "alertConditionId";
@@ -48,15 +49,13 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
     public static final String DATAMAP_OPERATOR = "alertConditionOperator";
     public static final String DATAMAP_RESOURCE_ID = "resourceId";
 
-    @Override
-    public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
-        JobDataMap jobDataMap = context.getTrigger().getJobDataMap();
-        int conditionId = Integer.valueOf(jobDataMap.getString(DATAMAP_CONDITION_ID));
-        int resourceId = Integer.valueOf(jobDataMap.getString(DATAMAP_RESOURCE_ID));
-        long duration = Long.valueOf(jobDataMap.getString(DATAMAP_DURATION));
-        AlertConditionOperator operator = AlertConditionOperator.valueOf(jobDataMap.getString(DATAMAP_OPERATOR));
+    static public void execute(Map<String, String> infoMap) throws Exception {
+        int conditionId = Integer.valueOf(infoMap.get(DATAMAP_CONDITION_ID));
+        int resourceId = Integer.valueOf(infoMap.get(DATAMAP_RESOURCE_ID));
+        long duration = Long.valueOf(infoMap.get(DATAMAP_DURATION)); // in seconds
+        AlertConditionOperator operator = AlertConditionOperator.valueOf(infoMap.get(DATAMAP_OPERATOR));
 
-        // get the availabilities for the duration period
+        // get the availabilities for the duration period, one consistent duration will indicate a duration condition
         AvailabilityCriteria criteria = new AvailabilityCriteria();
         criteria.addFilterResourceId(resourceId);
         long durationEnd = System.currentTimeMillis();
@@ -89,7 +88,7 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
         }
 
         // At this point we should be able to just checkConditions because if there is only one avail record for the
-        // duration period it mans nothing has changed.  But, we'll perform a sanity check just to ensure the avail
+        // duration period it means nothing has changed.  But, we'll perform a sanity check just to ensure the avail
         // type is what we think it should be...
 
         Availability avail = avails.get(0);
@@ -123,4 +122,5 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
                 + avail);
         }
     }
+
 }

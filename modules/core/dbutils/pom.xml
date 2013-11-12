@@ -475,6 +475,42 @@
                                     <goal>run</goal>
                                 </goals>
                             </execution>
+                            <execution>
+                                <id>add-test-users</id>
+                                <phase>install</phase>
+                                <configuration>
+                                    <target>
+                                        <echo>*** Adding Test Users To DB</echo>
+                                        <sql driver="${rhq.ds.driver-class}"
+                                             url="${rhq.ds.connection-url}"
+                                             userid="${rhq.ds.user-name}"
+                                             password="${rhq.ds.password}"
+                                             onerror="continue"
+                                             output="${basedir}/target/rhq-add-test-users.out"
+                                             print="true"
+                                             showheaders="false">
+                                            <classpath>
+                                                <pathelement location="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"/>
+                                                <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
+                                                <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>
+                                                <pathelement location="${settings.localRepository}/net/sourceforge/jtds/jtds/${jtds.version}/jtds-${jtds.version}.jar"/>
+                                            </classpath>
+                                            <transaction>
+                                                insert into RHQ_SUBJECT (ID, NAME, FIRST_NAME, LAST_NAME, EMAIL_ADDRESS) values (10, 'anon', 'Anonymous', 'User', 'anon@localhost');
+                                                insert into RHQ_PRINCIPAL (ID, PRINCIPAL, PASSWORD) values (10, 'anon', 'KuZvkLd4iriVDo+BuCnJRw==');
+                                            </transaction>
+                                            <transaction>
+                                                insert into RHQ_SUBJECT (ID, NAME, FIRST_NAME, LAST_NAME, EMAIL_ADDRESS) values (11, 'dev', 'Developer', 'Manager', 'dev@localhost');
+                                                insert into RHQ_PRINCIPAL (ID, PRINCIPAL, PASSWORD) values (11, 'dev', '53mJ7SF1jngzGyDkd/xVgg==');
+                                                insert into RHQ_SUBJECT_ROLE_MAP (SUBJECT_ID, ROLE_ID) values (11, 2);
+                                            </transaction>
+                                        </sql>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>

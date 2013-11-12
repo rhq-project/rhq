@@ -253,8 +253,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                 String value = LinkManager.getSubsystemResourceOperationHistoryLink(operationHistory.getResource().getId(), operationHistory.getId());
                 record.setAttribute(FIELD_FAILED_OPERATION.propertyName(), value);
             }
-            record.setAttribute(FIELD_CTIME.propertyName(), node.getCtime());
-            record.setAttribute(FIELD_MTIME.propertyName(), node.getMtime());
             if (node.getResource() != null) {
                 record.setAttribute(FIELD_RESOURCE_ID.propertyName(), node.getResource().getId());
                 record.setAttribute(FIELD_AVAILABILITY.propertyName(), node.getResource().getCurrentAvailability()

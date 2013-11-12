@@ -56,6 +56,7 @@ import org.rhq.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceTimelinePortlet;
 import org.rhq.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.coregui.client.dashboard.portlets.summary.TagCloudPortlet;
 import org.rhq.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -71,10 +72,10 @@ public class PortletFactory {
 
     private static final HashMap<String, PortletViewFactory> globalPortletFactoryMap;
     // although portlet names are I18N, they are assumed to be unique. This  maps portlet names to portlet keys,
-    // and the keyset is sorted for convenient display.  
+    // and the keyset is sorted for convenient display.
     private static final TreeMap<String, String> globalPortletNameMap;
     // although portlet names are I18N, they are assumed to be unique. This maps portlet keys to portlet names,
-    // and is suitable for a sorted Menu value map.  
+    // and is suitable for a sorted Menu value map.
     private static final LinkedHashMap<String, String> globalPortletMenuMap;
 
     //Group portlet registrations, diff from default portlets as only applicable for specific group
@@ -111,6 +112,7 @@ public class PortletFactory {
         globalPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceTimelinePortlet.KEY, ResourceTimelinePortlet.Factory.INSTANCE);
 
         // sorted map of portlet names to portlet keys
         globalPortletNameMap = new TreeMap<String, String>();
@@ -132,6 +134,7 @@ public class PortletFactory {
         globalPortletNameMap.put(ProblemResourcesPortlet.NAME, ProblemResourcesPortlet.KEY);
         globalPortletNameMap.put(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY);
         globalPortletNameMap.put(OperationSchedulePortlet.NAME, OperationSchedulePortlet.KEY);
+        globalPortletNameMap.put(ResourceTimelinePortlet.NAME, ResourceTimelinePortlet.KEY);
 
         globalPortletMenuMap = new LinkedHashMap<String, String>(globalPortletNameMap.size());
         for (String portletName : globalPortletNameMap.keySet()) {
@@ -140,7 +143,7 @@ public class PortletFactory {
 
         // GROUP Portlets
 
-        // Map portlet keys to portlet factories        
+        // Map portlet keys to portlet factories
         groupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
         groupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
         groupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
@@ -170,7 +173,7 @@ public class PortletFactory {
 
         // Resource Portlets
 
-        // Map portlet keys to portlet factories        
+        // Map portlet keys to portlet factories
         resourcePortletFactoryMap = new HashMap<String, PortletViewFactory>();
         resourcePortletFactoryMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.Factory.INSTANCE);
         resourcePortletFactoryMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.Factory.INSTANCE);

@@ -31,21 +31,40 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 public class TimelineView extends EnhancedVLayout {
     public static final ViewName VIEW_ID = new ViewName("ResourceTimeline", MSG.view_tabs_common_timeline());
 
-    private final ResourceComposite resourceComposite;
+    private int resourceId;
+    private FullHTMLPane timelinePane;
 
     public TimelineView(ResourceComposite resourceComposite) {
+        this(resourceComposite.getResource().getId());
+    }
+
+    public TimelineView(int resourceId) {
         super();
-        this.resourceComposite = resourceComposite;
+        this.resourceId = resourceId;
 
         setMargin(10);
         setMembersMargin(1);
     }
 
+    public int getResourceId() {
+        return resourceId;
+    }
+
     @Override
     protected void onDraw() {
+        renderIFrame(resourceId);
+    }
+
+    protected void renderIFrame(int resourceId) {
+        if ((null != timelinePane) && (this.resourceId == resourceId)) {
+            return;
+        }
+
+        this.resourceId = resourceId;
+        destroyMembers();
+
         //TODO: replace with GWT version
-        final FullHTMLPane timelinePane = new FullHTMLPane("/portal/resource/common/monitor/events/EventsView.jsp?id="
-            + resourceComposite.getResource().getId());
+        timelinePane = new FullHTMLPane("/portal/resource/common/monitor/events/EventsView.jsp?id=" + resourceId);
 
         // we create a simple subclass because we need to know when a new range has been set in order to refresh the timeline
         class RangeEditor extends UserPreferencesMeasurementRangeEditor {
@@ -61,7 +80,8 @@ public class TimelineView extends EnhancedVLayout {
         }
 
         RangeEditor range = new RangeEditor();
-        addMember(range); // put it at the top above the timeline's filters 
+        addMember(range); // put it at the top above the timeline's filters
         addMember(timelinePane);
     }
+
 }

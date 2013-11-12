@@ -21,6 +21,7 @@ package org.rhq.coregui.client.inventory.common.graph;
 
 import java.util.Date;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -217,7 +218,7 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
      * @param startTime double because JSNI doesn't support long
      * @param endTime   double because JSNI doesn't support long
      */
-    public void saveDateRange(double startTime, double endTime) {
+    private void saveDateRange(double startTime, double endTime, boolean refresh) {
         MeasurementUserPreferences measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
 
         Log.debug("Saving Date range: "+new Date((long)startTime) +  " - "+ new Date((long)endTime));
@@ -229,9 +230,46 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
             CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
         } else {
-            measurementUserPrefs.setMetricRangePreferences(prefs);
+            if(refresh){
+                measurementUserPrefs.setMetricRangePreferences(prefs);
+            }else {
+                measurementUserPrefs.setMetricRangePreferencesNoRefresh(prefs);
+            }
         }
 
+    }
+
+    public void dragSelectionRefresh(double startTime, double endTime){
+        Log.debug("DragSelectionRefresh");
+        // Single graph views each have their own buttonBarDateTimeRangeEditor
+        CustomDateRangeState.getInstance().setCustomDateRangeActive(true);
+        if(null != graphListView) {
+            graphListView.getButtonBarDateTimeRangeEditor().saveDateRange(startTime, endTime);
+            graphListView.getButtonBarDateTimeRangeEditor().redrawGraphs();
+        }else{
+            //we are in a multi-graph view (e.g., the MetricResourceView)
+            // In MetricResouceView there are multiple graph views sharing a common
+            // buttonBarDateTimeRangeEditor at the top
+            saveDateRangeNoRefresh(startTime, endTime);
+            new Timer() {
+                @Override
+                public void run() {
+                    // give refresh enough time otherwise we get NPE
+                    CoreGUI.refresh();
+                }
+            }.schedule(200);
+        }
+
+    }
+
+
+    public void saveDateRangeAndRefresh(double startTime, double endTime) {
+        // there is an implicit refresh in this save
+        saveDateRange(startTime, endTime, true);
+    }
+
+    public void saveDateRangeNoRefresh(double startTime, double endTime) {
+        saveDateRange(startTime, endTime, false);
     }
 
     public void redrawGraphs(){

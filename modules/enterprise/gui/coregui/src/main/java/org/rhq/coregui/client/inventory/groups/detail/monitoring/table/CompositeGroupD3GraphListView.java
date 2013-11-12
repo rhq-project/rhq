@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.JsonMetricProducer;
 import org.rhq.coregui.client.Messages;
-import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -55,7 +54,6 @@ import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * This composite graph view has different graph types and data structures for
@@ -79,7 +77,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private int definitionId;
     private boolean isAutoGroup;
     private MeasurementDefinition definition;
-    private MeasurementUserPreferences measurementUserPreferences;
     private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     private String adjustedMeasurementUnits;
     /**
@@ -100,8 +97,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         this.isAutoGroup = isAutoGroup;
         setDefinitionId(defId);
         measurementForEachResource = new ArrayList<MultiLineGraphData>();
-        measurementUserPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPreferences, this);
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(this);
         setHeight100();
         setWidth100();
         setPadding(10);

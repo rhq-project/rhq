@@ -92,7 +92,6 @@ public class ResourceDetailView extends
     private Integer resourceId;
     private ResourceComposite resourceComposite;
     private MetricsResourceView metricsResourceView;
-    private Set<Integer> metricsExpandedRowsMomento;
     private TwoLevelTab summaryTab;
 
     private TwoLevelTab monitoringTab;
@@ -434,7 +433,7 @@ public class ResourceDetailView extends
             @Override
             public Canvas createView() {
                 // metricsResourceView contains state of opened graphs (unlike other stateless views)
-                metricsResourceView = MetricsResourceView.create(resourceComposite.getResource(), metricsExpandedRowsMomento);
+                metricsResourceView = MetricsResourceView.create(resourceComposite.getResource() );
 
                 // this listener handles the subtab navigation
                 addViewRenderedListener(metricsResourceView);

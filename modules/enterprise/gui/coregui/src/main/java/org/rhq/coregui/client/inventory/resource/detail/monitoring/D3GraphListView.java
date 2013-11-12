@@ -43,6 +43,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
@@ -121,7 +122,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
         if (showAvailabilityGraph) {
             availabilityGraph = AvailabilityD3GraphView.create(
-                new AvailabilityOverUnderGraphType(resource.getId()));
+                    new AvailabilityOverUnderGraphType(resource.getId()));
             addMember(availabilityGraph);
         }
 
@@ -175,8 +176,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
         final long startTimer = System.currentTimeMillis();
 
         if (showAvailabilityGraph) {
-            queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-                buttonBarDateTimeRangeEditor.getEndTime(), null);
+            queryAvailability(EntityContext.forResource(resource.getId()), CustomDateRangeState.getInstance().getStartTime(),
+                CustomDateRangeState.getInstance().getEndTime(), null);
         }
 
         final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
@@ -250,7 +251,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
         GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-            buttonBarDateTimeRangeEditor.getStartTime(), buttonBarDateTimeRangeEditor.getEndTime(), 60,
+            CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance().getEndTime(), 60,
             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {
@@ -279,7 +280,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
             public void onSuccess(PageList<MeasurementOOBComposite> measurementOOBComposites) {
 
                 measurementOOBCompositeList = measurementOOBComposites;
-                Log.debug("\nSuccessfully queried " + measurementOOBCompositeList.size() + " OOB records in: "
+                Log.debug("Successfully queried " + measurementOOBCompositeList.size() + " OOB records in: "
                     + (System.currentTimeMillis() - startTime) + " ms.");
                 countDownLatch.countDown();
             }

@@ -96,8 +96,20 @@ public class MeasurementUserPreferences {
         return prefs;
     }
 
+    /**
+     * set the Metric Range preferences and do an implicit CoreGui.refresh() afterward.
+     * @param prefs
+     */
     public void setMetricRangePreferences(MetricRangePreferences prefs) {
         setMetricRangePreferences(prefs, true);
+    }
+
+    /**
+     * set the Metric Range preferences but do not do a CoreGui.refresh() afterward.
+     * @param prefs
+     */
+    public void setMetricRangePreferencesNoRefresh(MetricRangePreferences prefs) {
+        setMetricRangePreferences(prefs, false);
     }
 
     /**

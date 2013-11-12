@@ -38,6 +38,7 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.ExpandedRowsMomento;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
@@ -46,7 +47,6 @@ import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * The consolidated metrics view showing metric graphs and availability data both in graphical and tabular form.
- *
  * @author Mike Thompson
  */
 public class MetricsResourceView extends AbstractD3GraphListView implements
@@ -58,24 +58,25 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     private final Resource resource;
     private EnhancedHLayout expandCollapseHLayout;
     private MetricsTableView metricsTableView;
-    private static MetricsResourceView INSTANCE = null;
     private static Integer lastResourceId = 0;
 
     /**
      * Encapsulate the creation logic and not let it leak out into other objects.
+     * Clear the expanded rows set when changing resources as well.
+     * @see ExpandedRowsMomento
      * @param resource
-     * @param expandedRows
      * @return MetricsResourceView
      */
-    public static MetricsResourceView create(Resource resource, Set<Integer> expandedRows){
+    public static MetricsResourceView create(Resource resource ){
 
         boolean isDifferentResource = (resource.getId() != lastResourceId);
 
-        if(INSTANCE == null ||  isDifferentResource ){
-            INSTANCE =  new MetricsResourceView(resource,  expandedRows);
+        if(isDifferentResource){
+            ExpandedRowsMomento.getInstance().clear();
         }
 
-        return INSTANCE;
+        return  new MetricsResourceView(resource,  ExpandedRowsMomento.getInstance().getExpandedRows());
+
     }
 
     private MetricsResourceView(Resource resource, Set<Integer> expandedRows) {
@@ -128,7 +129,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     }
 
 
-
     private void addAvailabilityGraph() {
         if(lastResourceId.equals(resource.getId())) {
             expandCollapseHLayout.removeMember(availabilityGraph);
@@ -147,8 +147,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     @Override
     protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
 
-        final long timerStart = System.currentTimeMillis();
-
         // now return the availability
         GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
                 endTime, new AsyncCallback<List<Availability>>() {
@@ -159,8 +157,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
             @Override
             public void onSuccess(List<Availability> availList) {
-                Log.debug("Successfully queried availability in: " + (System.currentTimeMillis() - timerStart)
-                        + " ms. for: "+resource.getName());
                 availabilityGraph.setAvailabilityList(availList);
                 new Timer() {
                     @Override
@@ -178,7 +174,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         new Timer() {
             @Override
             public void run() {
-                //Log.debug("MetricResourceView.drawAvailabilityGraphAndSparkLines() for: " + resource.getName() + " id: " + resource.getId());
                 availabilityGraph.drawJsniChart();
                 BrowserUtility.graphSparkLines();
             }
@@ -187,7 +182,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
     @Override
     public void refreshData() {
-        //Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
         addAvailabilityGraph();
         metricsTableView.refresh();
     }

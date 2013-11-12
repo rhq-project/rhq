@@ -741,8 +741,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     svg.classed("selecting", !$wnd.d3.event.target.empty());
                     // ignore selections less than 1 minute
                     if(endTime - startTime >= 60000){
-                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)(startTime, endTime);
-                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::dragSelectionRefresh(DD)(startTime, endTime);
                     }
                 }
 

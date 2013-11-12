@@ -37,14 +37,10 @@ import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Component to allow selection of Date/Time range for graphs using a radio button group.
@@ -59,21 +55,17 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private static final int BUTTON_WIDTH = 28;
     public final String DATE_TIME_FORMAT = MSG.common_buttonbar_datetime_format_moment_js();
 
-    private MeasurementUserPreferences measurementUserPreferences;
     private Refreshable d3GraphListView;
     private Label dateRangeLabel;
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
-    private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
     // just a reference to pass to CustomDateRangeWindow as it must be final
     // so 'this' won't work
     final private ButtonBarDateTimeRangeEditor self;
     private RefreshIntervalMenu refreshIntervalMenu;
     private boolean allowPreferenceUpdateRefresh;
-    private boolean isCustomDateRangeActive;
 
-    public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs, Refreshable d3GraphListView) {
+    public ButtonBarDateTimeRangeEditor(Refreshable d3GraphListView) {
         this.self = this;
-        this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
         // if the encompassing view already handles its own refresh (e.g. AbstractD3GrpahListView) then don't
         // let a preference update cause a whole gui refresh (which it does by default to apply the new preference).
@@ -81,7 +73,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         this.allowPreferenceUpdateRefresh = !(this.d3GraphListView instanceof AutoRefresh);
 
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
-        prefs = measurementUserPreferences.getMetricRangePreferences();
 
     }
 
@@ -112,8 +103,9 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             public void onClick(ClickEvent clickEvent) {
                 CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow(MSG
                     .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(), self,
-                    new Date(prefs.begin), new Date(prefs.end));
-                isCustomDateRangeActive = true;
+                    new Date(CustomDateRangeState.getInstance().getStartTime()), new Date(CustomDateRangeState
+                        .getInstance().getEndTime()));
+                CustomDateRangeState.getInstance().setCustomDateRangeActive(true);
                 customDateRangeWindow.show();
             }
         });
@@ -124,7 +116,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(400);
         dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
-        showUserFriendlyTimeRange(new Date(prefs.begin).getTime(), new Date(prefs.end).getTime());
+        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime(),
+                CustomDateRangeState.getInstance().getEndTime());
         toolStrip.addMember(dateRangeLabel);
 
         toolStrip.addSpacer(20);
@@ -134,8 +127,12 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         addMember(toolStrip);
     }
 
-    public boolean isCustomTimeRangeActive(){
-        return isCustomDateRangeActive;
+    public boolean isCustomTimeRangeActive() {
+        return CustomDateRangeState.getInstance().isCustomDateRangeActive();
+    }
+
+    public void setCustomDateRangeActive(boolean customDateRangeActive) {
+        CustomDateRangeState.getInstance().setCustomDateRangeActive(customDateRangeActive);
     }
 
     public void redrawGraphs() {
@@ -157,11 +154,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }
 
     public Long getStartTime() {
-        return measurementUserPreferences.getMetricRangePreferences().begin;
+        return CustomDateRangeState.getInstance().getStartTime();
     }
 
     public Long getEndTime() {
-        return measurementUserPreferences.getMetricRangePreferences().end;
+        return CustomDateRangeState.getInstance().getEndTime();
     }
 
     public Date calculateStartDate(Date endDate, String dateTimeSelection) {
@@ -187,10 +184,9 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }-*/;
 
     public void updateTimeRangeToNow() {
-        if(!isCustomTimeRangeActive()){
+        if (!isCustomTimeRangeActive()) {
             Date now = new Date();
-            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPreferences.getMetricRangePreferences();
-            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            long timeRange = CustomDateRangeState.getInstance().getTimeRange();
             Date newStartDate = new Date(now.getTime() - timeRange);
             showUserFriendlyTimeRange(newStartDate.getTime(), now.getTime());
             saveDateRange(newStartDate.getTime(), now.getTime());
@@ -205,15 +201,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      * @param endTime   double because JSNI doesn't support long
      */
     public void saveDateRange(double startTime, double endTime) {
-        prefs.explicitBeginEnd = true; // default to advanced
-        prefs.begin = (long) startTime;
-        prefs.end = (long) endTime;
-        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
-            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
-        } else {
-            measurementUserPreferences.setMetricRangePreferences(prefs, allowPreferenceUpdateRefresh);
-        }
-
+        CustomDateRangeState.getInstance().saveDateRange(startTime, endTime, allowPreferenceUpdateRefresh);
     }
 
     private class DateTimeButtonBarClickHandler implements ClickHandler {
@@ -222,7 +210,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         public void onClick(ClickEvent clickEvent) {
             IButton button = (IButton) clickEvent.getSource();
             String selectedDateTimeRange = button.getTitle();
-            isCustomDateRangeActive = false;
+            CustomDateRangeState.getInstance().setCustomDateRangeActive(false);
             Date now = new Date();
             Date calculatedStartDateTime = calculateStartDate(now, selectedDateTimeRange);
             saveDateRange(calculatedStartDateTime.getTime(), now.getTime());
@@ -313,7 +301,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                         .getMonth(), endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate
                         .getMinutes());
                     buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
-                    showUserFriendlyTimeRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate().getTime());
+                    showUserFriendlyTimeRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate()
+                        .getTime());
                     redrawGraphs();
                     CustomDateRangeWindow.this.destroy();
                 }

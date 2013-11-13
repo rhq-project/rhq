@@ -620,7 +620,7 @@ public class Upgrade extends AbstractInstall {
                         + " option specified and no agent found in the default location ["
                         + oldAgentDir.getAbsolutePath()
                         + "]. Installing agent in the default location as part of the upgrade.");
-                    installAgent(oldAgentDir, rhqctlCommandLine);
+                    installAgent(getAgentBasedir(), rhqctlCommandLine);
                     return;
                 }
             }

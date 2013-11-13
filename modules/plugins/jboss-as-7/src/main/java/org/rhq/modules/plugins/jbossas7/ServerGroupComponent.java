@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
+
+import static org.rhq.modules.plugins.jbossas7.json.Result.SUCCESS;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -59,22 +61,15 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
     OperationFacet {
 
     private static final String OUTCOME = "outcome";
-    private static final String RESTART_SERVERS = "restart-servers";
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         Operation op = new Operation(name, getAddress());
-        Result res = null;
-        if (RESTART_SERVERS.equals(name)) {
-            // This operation as a timeout parameter as it can run for quite a long time
-            res = getASConnection().execute(op, parameters.getSimple("responseTimeout").getIntegerValue());
-        } else {
-            res = getASConnection().execute(op);
-        }
+        Result res = getASConnection().execute(op, parameters.getSimple("responseTimeout").getIntegerValue());
         OperationResult result = new OperationResult();
         if (res.isSuccess()) {
-            result.setSimpleResult(Result.SUCCESS);
+            result.setSimpleResult(SUCCESS);
         } else {
             result.setErrorMessage(res.getFailureDescription());
         }
@@ -120,7 +115,7 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
             if (uploadResult.has(OUTCOME)) {
                 String outcome = uploadResult.get(OUTCOME).getTextValue();
-                if (outcome.equals(Result.SUCCESS)) { // Upload was successful, so now add the file to the server group
+                if (outcome.equals(SUCCESS)) { // Upload was successful, so now add the file to the server group
                     JsonNode resultNode = uploadResult.get("result");
                     String hash = resultNode.get("BYTES_VALUE").getTextValue();
                     ASConnection connection = getASConnection();

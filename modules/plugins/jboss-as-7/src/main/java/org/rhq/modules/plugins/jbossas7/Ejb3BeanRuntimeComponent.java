@@ -38,6 +38,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
@@ -52,6 +53,8 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
 
     private static final String METHODS_ATTRIBUTE = "methods";
     private static final int CALLTIME_METRIC_NAME_PREFIX_LENGTH = "__calltime:".length();
+    private static final Address RUNTIME_MBEAN_ADDRESS = new Address("core-service=platform-mbean,type=runtime");
+    private static final String START_TIME_ATTRIBUTE = "start-time";
 
     private static class StatsRecord implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -63,11 +66,18 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
     private static class Stats implements Serializable {
         private static final long serialVersionUID = 1L;
 
+        //we kept the serialVersionUID=1 even though this field was added. This means that the collection will work
+        //even with the persisted data coming from the previous version of the plugin.
+        //We need to have special handling in the code that works around the collectionStartTime having 0 value.
+        long serverStartTime;
         long collectionTime;
         Map<String, StatsRecord> data;
 
-        static Stats fromMap(Map<String, Map<String, Number>> map, String collectedMetric, long collectionTime) {
+        static Stats fromMap(Map<String, Map<String, Number>> map, String collectedMetric, long collectionTime,
+            long serverStartTime) {
+
             Stats ret = new Stats();
+            ret.serverStartTime = serverStartTime;
             ret.collectionTime = collectionTime;
             ret.data = new HashMap<String, StatsRecord>(map.size());
 
@@ -108,17 +118,24 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
                 Result result = getASConnection().execute(new ReadAttribute(address, METHODS_ATTRIBUTE));
                 Object value = result.getResult();
                 if (value instanceof Map) {
+
+                    //first we need to know since when the values were collected
+                    result = getASConnection().execute(new ReadAttribute(RUNTIME_MBEAN_ADDRESS, START_TIME_ATTRIBUTE));
+                    long serverStartTime = (Long) result.getResult();
+
+                    //now process the calltime value
                     String requestedMetric = request.getName().substring(CALLTIME_METRIC_NAME_PREFIX_LENGTH);
 
                     @SuppressWarnings("unchecked")
                     Map<String, Map<String, Number>> allMethodStats = (Map<String, Map<String, Number>>) value;
 
-                    Stats lastCollection = getLastCallTimeCollection(requestedMetric, allMethodStats);
-                    Stats thisCollection = Stats.fromMap(allMethodStats, requestedMetric, System.currentTimeMillis());
+                    Stats lastCollection = getLastCallTimeCollection(requestedMetric, allMethodStats, serverStartTime);
+                    Stats thisCollection = Stats.fromMap(allMethodStats, requestedMetric, System.currentTimeMillis(),
+                        serverStartTime);
 
                     CallTimeData callTime = new CallTimeData(request);
 
-                    fillCallTimeData(callTime, requestedMetric, thisCollection, lastCollection);
+                    fillCallTimeData(callTime, thisCollection, lastCollection);
 
                     saveCallTimeCollection(requestedMetric, thisCollection);
 
@@ -132,16 +149,27 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
         super.getValues(report, metricsToPassDown);
     }
 
-    private Stats getLastCallTimeCollection(String requestName, Map<String, Map<String, Number>> fallbackValues) throws IOException {
+    private Stats getLastCallTimeCollection(String requestName, Map<String, Map<String, Number>> fallbackValues,
+        long fallbackStartTime) throws IOException {
+
         File dataFile = new File(context.getResourceDataDirectory(), requestName);
         if (!dataFile.exists()) {
-            return Stats.fromMap(fallbackValues, requestName, System.currentTimeMillis());
+            return Stats.fromMap(fallbackValues, requestName, System.currentTimeMillis(), fallbackStartTime);
         } else {
             ObjectInputStream in = null;
             try {
                 in = new ObjectInputStream(new FileInputStream(dataFile));
 
-                return (Stats) in.readObject();
+                Stats stats = (Stats) in.readObject();
+                if (stats.serverStartTime == 0) {
+                    //we might get serverStartTime == 0 if the datafile comes from the old version of the plugin
+                    //in that case just fallback to the old behavior that assumed no server restarts.
+                    //After that we save the new version of the stats with the start time remembered and we will
+                    //switch to the new correct behavior from the next collection.
+                    stats.serverStartTime = fallbackStartTime;
+                }
+
+                return stats;
             } catch (IOException e) {
                 throw new IOException("Couldn't read the stored calltime data from file " + dataFile + ".", e);
             } catch (ClassNotFoundException e) {
@@ -171,28 +199,42 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
      * the differential values from the last time to this time.
      *
      * @param callTimeData the calltime record to fill in
-     * @param requestName the name of the metric being collected
      * @param stats the current stats collected from the AS
      * @param previousStats the previously collected stats
      */
-    private void fillCallTimeData(CallTimeData callTimeData, String requestName, Stats stats, Stats previousStats) {
+    private void fillCallTimeData(CallTimeData callTimeData, Stats stats, Stats previousStats) {
         Date startDate = new Date(previousStats.collectionTime);
         Date endDate = new Date(stats.collectionTime);
+
+        boolean serverRestarted = stats.serverStartTime != previousStats.serverStartTime;
 
         for(Map.Entry<String, StatsRecord> entry : stats.data.entrySet()) {
             String methodName = entry.getKey();
             StatsRecord thisStatsRecord = entry.getValue();
 
-            StatsRecord previousStatsRecord = previousStats.data.get(methodName);
+            long invocations;
+            long total;
 
-            long oldInvocations = previousStatsRecord != null ? previousStatsRecord.invocations : 0;
-            long invocations = thisStatsRecord.invocations - oldInvocations;
+            if (serverRestarted) {
+                // If server restarted, we know the counter goes from 0. Note that in that case we still might have
+                // missed some invocations - the ones that happened between the last collection and the server restart.
+                // That cannot be avoided though unless the server itself pushes the data to us instead of us pulling
+                // the data on a schedule.
+                invocations = thisStatsRecord.invocations;
+                total = thisStatsRecord.total;
+            } else {
+                StatsRecord previousStatsRecord = previousStats.data.get(methodName);
+
+                long oldInvocations = previousStatsRecord != null ? previousStatsRecord.invocations : 0;
+                invocations = thisStatsRecord.invocations - oldInvocations;
+
+                long oldTotal = previousStatsRecord != null ? previousStatsRecord.total : 0;
+                total = thisStatsRecord.total - oldTotal;
+            }
+
             if (invocations == 0) {
                 continue;
             }
-
-            long oldTotal = previousStatsRecord != null ? previousStatsRecord.total : 0;
-            long total = thisStatsRecord.total - oldTotal;
 
             //AS doesn't really give us this info...
             double min = (double) total / invocations;

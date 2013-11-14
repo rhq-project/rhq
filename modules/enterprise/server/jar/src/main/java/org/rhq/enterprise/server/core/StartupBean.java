@@ -197,7 +197,7 @@ public class StartupBean implements StartupLocal {
 
         //Server depends on the storage cluster availability. Since the storage client init just
         //establishes connectivity with the storage cluster, then run it before the server init.
-        boolean isStorageRunning = initStorageClient();
+        initStorageClient();
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners
@@ -219,7 +219,7 @@ public class StartupBean implements StartupLocal {
         upgradeRhqUserSecurityDomainIfNeeded();
         startServerCommunicationServices();
         startScheduler();
-        scheduleJobs(isStorageRunning);
+        scheduleJobs();
         //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
         //startEmbeddedAgent(); // this is obsolete - we no longer have an embedded agent
         registerShutdownListener();
@@ -582,7 +582,7 @@ public class StartupBean implements StartupLocal {
      *
      * @throws RuntimeException if unable to schedule a job
      */
-    private void scheduleJobs(boolean isStorageRunning) throws RuntimeException {
+    private void scheduleJobs() throws RuntimeException {
         log.info("Scheduling asynchronous jobs...");
 
         /*

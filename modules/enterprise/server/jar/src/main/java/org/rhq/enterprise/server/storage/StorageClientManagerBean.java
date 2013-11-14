@@ -150,9 +150,20 @@ public class StorageClientManagerBean {
 
         log.info("Initializing storage client subsystem");
 
-        Session wrappedSession;
         try {
-            wrappedSession = createSession();
+            Session wrappedSession = createSession();
+            session = new StorageSession(wrappedSession);
+
+            storageClusterMonitor = new StorageClusterMonitor();
+            session.addStorageStateListener(storageClusterMonitor);
+
+            metricsConfiguration = new MetricsConfiguration();
+            metricsDAO = new MetricsDAO(session, metricsConfiguration);
+
+            initMetricsServer();
+
+            initialized = true;
+            log.info("Storage client subsystem is now initialized");
         } catch (NoHostAvailableException e) {
             initialized = false;
             if (cluster != null) {
@@ -161,22 +172,17 @@ public class StorageClientManagerBean {
 
             log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                 + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
-                + " as soon as possible.");
-            return initialized;
+                + " as soon as possible.", e);
+        } catch (Throwable t) {
+            initialized = false;
+            if (cluster != null) {
+                cluster.shutdown();
+            }
+
+            log.warn("Storage client subsystem wasn't initialized. The RHQ server will be set to MAINTENANCE mode. Please verify "
+                    + " that the storage cluster is operational.", t);
         }
 
-        session = new StorageSession(wrappedSession);
-
-        storageClusterMonitor = new StorageClusterMonitor();
-        session.addStorageStateListener(storageClusterMonitor);
-
-        metricsConfiguration = new MetricsConfiguration();
-        metricsDAO = new MetricsDAO(session, metricsConfiguration);
-
-        initMetricsServer();
-
-        initialized = true;
-        log.info("Storage client subsystem is now initialized");
         return initialized;
     }
 
@@ -210,20 +216,18 @@ public class StorageClientManagerBean {
             try {
                 wrappedSession = createSession();
             } catch (NoHostAvailableException e) {
-                initialized = false;
                 if (cluster != null) {
                     cluster.shutdown();
                 }
 
                 log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                     + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
-                    + " as soon as possible.");
-                return initialized;
+                    + " as soon as possible.", e);
+                return false;
             }
 
             session.registerNewSession(wrappedSession);
             metricsDAO.initPreparedStatements();
-            initialized = true;
             return true;
         }
 

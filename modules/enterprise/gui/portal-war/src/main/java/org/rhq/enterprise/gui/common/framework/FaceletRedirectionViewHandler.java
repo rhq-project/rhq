@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.common.framework;
 
@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
  */
 public class FaceletRedirectionViewHandler extends FaceletViewHandler {
 
-    private static Log log = LogFactory.getLog(FaceletRedirectionViewHandler.class);
+    private static final Log LOG = LogFactory.getLog(FaceletRedirectionViewHandler.class);
 
     public FaceletRedirectionViewHandler(ViewHandler handler) {
         super(handler);
@@ -92,10 +92,13 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
                  * has an error; in this case, revert to the default error handling, 
                  * which should provide extra context information to debug the issue
                  */
-                log.error("Redirected back to ourselves, there must be a problem with the error.xhtml page", ex);
+                LOG.error("Redirected back to ourselves, there must be a problem with the error.xhtml page", ex);
                 super.handleRenderException(context, ex); // normal, ugly error page used to diagnose the issue
                 return; // return early, to prevent infinite redirects back to ourselves
             }
+
+            // let's put this in the server log along with showing the user
+            LOG.error("Error processing user request", ex);
 
             // squirrel the exception away in the session so it's maintained across the redirect boundary
             FacesContext facesContext = FacesContext.getCurrentInstance();
@@ -105,7 +108,7 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
 
             FacesContextUtility.getResponse().sendRedirect("/portal/rhq/common/error.xhtml");
         } catch (IOException ioe) {
-            log.fatal("Could not process redirect to handle application error", ioe);
+            LOG.fatal("Could not process redirect to handle application error", ioe);
         }
     }
 

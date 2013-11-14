@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.common.error;
 
@@ -36,8 +36,6 @@ import org.rhq.enterprise.server.alert.engine.internal.Tuple;
  */
 public class GenericErrorUIBean {
 
-    private final Log log = LogFactory.getLog(GenericErrorUIBean.class);
-
     String summary;
     String details;
     List<Tuple<String, String>> trace;
@@ -49,9 +47,6 @@ public class GenericErrorUIBean {
 
         trace = new ArrayList<Tuple<String, String>>();
         Throwable ex = (Exception) sessionMap.remove("GLOBAL_RENDER_ERROR");
-
-        // let's put this in the server log along with showing the user
-        log.error("Error processing user request", ex);
 
         String message = ex.getLocalizedMessage();
         String stack = StringUtil.getFirstStackTrace(ex);

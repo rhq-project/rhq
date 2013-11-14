@@ -222,6 +222,7 @@ public class StorageClientManagerBean {
             }
 
             session.registerNewSession(wrappedSession);
+            metricsDAO.initPreparedStatements();
             initialized = true;
             return true;
         }

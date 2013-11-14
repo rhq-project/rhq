@@ -355,7 +355,26 @@ public interface BundleManagerRemote {
      * @throws Exception
      */
     BundleVersion createInitialBundleVersionViaFile(Subject subject, int[] bundleGroupIds, File distributionFile)
-        throws Exception;
+            throws Exception;
+
+    /**
+     * Like {@link #createInitialBundleVersionViaFile(org.rhq.core.domain.auth.Subject, int[], java.io.File)}, except
+     * that this method takes a <code>temporaryContentHandle</code> as parameter instead of a file.
+     *
+     * @param subject user that must have proper permissions
+     * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
+     * length to leave unassigned.
+     * @param temporaryContentHandle
+     * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
+     * @throws Exception
+     *
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
+     * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
+     * @see #createInitialBundleVersionViaFile(org.rhq.core.domain.auth.Subject, int[], java.io.File)
+     */
+    BundleVersion createInitialBundleVersionViaContentHandle(Subject subject, int[] bundleGroupIds,
+        String temporaryContentHandle) throws Exception;
 
     /**
      * Creates a bundle version based on the actual bytes of a Bundle Distribution file. This is essentially

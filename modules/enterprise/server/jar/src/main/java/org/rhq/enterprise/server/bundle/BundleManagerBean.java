@@ -652,6 +652,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return createBundleVersionViaFileImpl(subject, distributionFile, true, bundleGroupIds);
     }
 
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaContentHandle(Subject subject, int[] bundleGroupIds,
+        String temporaryContentHandle) throws Exception {
+        return createBundleVersionViaFileImpl(subject, contentManager.getTemporaryContentFile(temporaryContentHandle),
+            true, bundleGroupIds);
+    }
+
     private BundleVersion createBundleVersionViaFileImpl(Subject subject, File distributionFile,
         boolean mustBeInitialVersion, int[] initialBundleGroupIds) throws Exception {
 

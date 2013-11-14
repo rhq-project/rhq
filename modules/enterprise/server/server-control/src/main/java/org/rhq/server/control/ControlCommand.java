@@ -181,7 +181,7 @@ public abstract class ControlCommand {
         // because it throws an exception if the string is too long.
         String readmeContent = getReadmeContent();
         if (readmeContent != null) {
-            System.out.println(getReadmeContent());
+            System.out.println(readmeContent);
         }
     }
 

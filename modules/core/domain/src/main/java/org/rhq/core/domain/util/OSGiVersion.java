@@ -26,7 +26,7 @@ package org.rhq.core.domain.util;
  *
  * @author Lukas Krejci
  */
-public class OSGiVersion {
+public class OSGiVersion implements Comparable<OSGiVersion> {
     private int major;
     private Integer minor;
     private Integer micro;
@@ -146,7 +146,35 @@ public class OSGiVersion {
     public void setQualifier(String qualifier) {
         this.qualifier = qualifier;
     }
-    
+
+    @Override
+    public int compareTo(OSGiVersion o) {
+        int result = this.getMajor() - o.getMajor();
+        if (result == 0) {
+            result = this.getMinor() - o.getMinor();
+            if (result == 0) {
+                result = this.getMicro() - o.getMicro();
+                if (result == 0) {
+                    if (this.getQualifier() != null) {
+                        if (o.getQualifier() == null) {
+                            result = 1;
+                        } else {
+                            result = this.getQualifier().compareTo(o.getQualifier());
+                        }
+                    } else {
+                        if (o.getQualifier() == null) {
+                            result = 0;
+                        } else {
+                            result = -1;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
     @Override
     public String toString() {
         StringBuilder bld = new StringBuilder();

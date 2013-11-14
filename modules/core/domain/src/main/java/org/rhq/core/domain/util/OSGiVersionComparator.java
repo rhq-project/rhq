@@ -40,29 +40,6 @@ public class OSGiVersionComparator implements Comparator<String> {
         OSGiVersion ver1 = new OSGiVersion(string1);
         OSGiVersion ver2 = new OSGiVersion(string2);
 
-        int result = ver1.getMajor() - ver2.getMajor();
-        if (result == 0) {
-            result = ver1.getMinor() - ver2.getMinor();
-            if (result == 0) {
-                result = ver1.getMicro() - ver2.getMicro();
-                if (result == 0) {
-                    if (ver1.getQualifier() != null) {
-                        if (ver2.getQualifier() == null) {
-                            result = 1;
-                        } else {
-                            result = ver1.getQualifier().compareTo(ver2.getQualifier());
-                        }
-                    } else {
-                        if (ver2.getQualifier() == null) {
-                            result = 0;
-                        } else {
-                            result = -1;
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
+        return ver1.compareTo(ver2);
     }
 }

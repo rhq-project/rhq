@@ -32,10 +32,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.util.OSGiVersion;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -47,14 +49,18 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * statistics which is what this class handles.
  *
  * @author Lukas Krejci
- * @since 4.9
+ * @since 4.10.0
  */
-public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>> {
+public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
 
     private static final String METHODS_ATTRIBUTE = "methods";
     private static final int CALLTIME_METRIC_NAME_PREFIX_LENGTH = "__calltime:".length();
     private static final Address RUNTIME_MBEAN_ADDRESS = new Address("core-service=platform-mbean,type=runtime");
     private static final String START_TIME_ATTRIBUTE = "start-time";
+
+    private static final OSGiVersion FIRST_VERSION_SUPPORTING_METHOD_STATS = new OSGiVersion("7.2.1");
+
+    private OSGiVersion asVersion = null;
 
     private static class StatsRecord implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -96,6 +102,17 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
     }
 
     @Override
+    public AvailabilityType getAvailability() {
+        AvailabilityType avail = super.getAvailability();
+
+        if (avail == AvailabilityType.DOWN) {
+            asVersion = null;
+        }
+
+        return avail;
+    }
+
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         //we'll handling the rest of the metrics using the super method, but we may leave out some of the requests
         //if we handle them here. Right now, just use the obtained set. We only create a copy of the (unmodifiable) set
@@ -118,6 +135,12 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
                 Result result = getASConnection().execute(new ReadAttribute(address, METHODS_ATTRIBUTE));
                 Object value = result.getResult();
                 if (value instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Map<String, Number>> allMethodStats = (Map<String, Map<String, Number>>) value;
+
+                    if (allMethodStats.isEmpty()) {
+                        continue;
+                    }
 
                     //first we need to know since when the values were collected
                     result = getASConnection().execute(new ReadAttribute(RUNTIME_MBEAN_ADDRESS, START_TIME_ATTRIBUTE));
@@ -125,9 +148,6 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
 
                     //now process the calltime value
                     String requestedMetric = request.getName().substring(CALLTIME_METRIC_NAME_PREFIX_LENGTH);
-
-                    @SuppressWarnings("unchecked")
-                    Map<String, Map<String, Number>> allMethodStats = (Map<String, Map<String, Number>>) value;
 
                     Stats lastCollection = getLastCallTimeCollection(requestedMetric, allMethodStats, serverStartTime);
                     Stats thisCollection = Stats.fromMap(allMethodStats, requestedMetric, System.currentTimeMillis(),
@@ -141,7 +161,15 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
 
                     report.addData(callTime);
                 } else {
-                    log.error("Unexpected type of results when querying method stats");
+                    OSGiVersion currentAsVersion = getASVersion();
+                    if (currentAsVersion == null) {
+                        log.warn("Could not determine the AS version while reporting unexpected result of method" +
+                            " stats. Request: " + request);
+                    } else if (FIRST_VERSION_SUPPORTING_METHOD_STATS.compareTo(currentAsVersion) <= 0) {
+                        log.error("Unexpected type of results when querying method stats for measurement request " +
+                            request + ". Expected map but got " + (value == null ? "null" :
+                            value.getClass().getName()));
+                    }
                 }
             }
         }
@@ -243,6 +271,22 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<ResourceComponent<?>
             callTimeData.addAggregatedCallData(methodName, startDate, endDate, min, max, total,
                 invocations);
         }
+    }
 
+    private OSGiVersion getASVersion() {
+        if (asVersion == null)  {
+            ResourceComponent<?> base = context.getParentResourceComponent();
+
+            while (base != null && base instanceof BaseComponent && !(base instanceof BaseServerComponent)) {
+                base = ((BaseComponent<?>)base).context.getParentResourceComponent();
+            }
+
+            if (base != null && base instanceof BaseServerComponent) {
+                String version = ((BaseServerComponent<?>)base).getReleaseVersion();
+                asVersion = new OSGiVersion(version);
+            }
+        }
+
+        return asVersion;
     }
 }

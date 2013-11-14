@@ -88,6 +88,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private ServerPluginConfiguration serverPluginConfig;
     private AvailabilityType previousAvailabilityType;
     private AvailabilityCollectorRunnable availabilityCollector;
+    private String releaseVersion;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -132,11 +133,18 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @Override
     public AvailabilityType getAvailability() {
+        AvailabilityType ret;
         if (this.availabilityCollector != null) {
-            return this.availabilityCollector.getLastKnownAvailability();
+            ret = this.availabilityCollector.getLastKnownAvailability();
         } else {
-            return getAvailabilityNow();
+            ret = getAvailabilityNow();
         }
+
+        if (ret == AvailabilityType.DOWN) {
+            releaseVersion = null;
+        }
+
+        return ret;
     }
 
     private AvailabilityType getAvailabilityNow() {
@@ -642,6 +650,18 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         // Finally let our superclass handle the leftovers.
         super.getValues(report, leftovers);
+    }
+
+    /**
+     * The release version as returned by the "release-version" attribute of the root node in the management model.
+     */
+    public String getReleaseVersion() {
+        if (releaseVersion == null) {
+            releaseVersion = (String) getASConnection().execute(new ReadAttribute(new Address(), "release-version"))
+                .getResult();
+        }
+
+        return releaseVersion;
     }
 
     private void collectStartTimeTrait(MeasurementReport report, MeasurementScheduleRequest request) {

@@ -154,9 +154,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private SchedulerLocal quartzScheduler;
 
     @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
-
-    @EJB
     private SubjectManagerLocal subjectManager;
 
     @EJB
@@ -176,6 +173,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private StorageClusterSettingsManagerLocal storageClusterSettingsManager;
@@ -684,7 +684,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                                 if (composites.isEmpty()) {
                                     log.warn("The results from getLoadAsync() should not be empty. This is likely a bug.");
                                 } else {
-                                    result.add(composites.get(0));
+                                    result.add(composite);
+                                    break;
                                 }
                             }
                             latch.countDown();
@@ -702,14 +703,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 }
 
             }
-            Map<Integer, List<Alert>> storageNodeAlerts = findAllUnackedStorageNodeAlerts(subject, false);
+            Map<Integer, Integer> alertCounts = findUnackedAlertCounts(nodes);
             for (StorageNodeLoadComposite composite : result) {
-                List<Alert> alerts = storageNodeAlerts.get(composite.getStorageNode().getId());
-                if (alerts != null) {
-                    composite.setUnackAlerts(alerts.size());
+                Integer count = alertCounts.get(composite.getStorageNode().getId());
+                if (count != null) {
+                    composite.setUnackAlerts(count);
                 }
             }
-
             latch.await();
             return result;
         } catch (InterruptedException e) {
@@ -910,45 +910,57 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return alerts;
     }
 
-    private Map<Integer, List<Alert>> findAllUnackedStorageNodeAlerts(Subject subject, boolean allAlerts) {
+    private Map<Integer, Integer> findUnackedAlertCounts(List<StorageNode> storageNodes) {
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            Map<Integer, List<Alert>> alertsMap = new TreeMap<Integer, List<Alert>>();
-            Map<Integer, Integer> resourcesWithAlertDefs = findResourcesWithAlertsToStorageNodeMap(null);
-
-            AlertCriteria criteria = new AlertCriteria();
-            criteria.setPageControl(PageControl.getUnlimitedInstance());
-            criteria.addFilterResourceIds(resourcesWithAlertDefs.keySet().toArray(
-                new Integer[resourcesWithAlertDefs.size()]));
-            criteria.addSortCtime(PageOrdering.DESC);
-
-            PageList<Alert> alerts = alertManager.findAlertsByCriteria(subject, criteria);
-            if (!allAlerts) {
-                PageList<Alert> trimmedAlerts = new PageList<Alert>();
-                for (Alert alert : alerts) {
-                    if (alert.getAcknowledgeTime() == null || alert.getAcknowledgeTime() <= 0) {
-                        trimmedAlerts.add(alert);
-                    }
-                }
-                alerts = trimmedAlerts;
+            Map<Integer, StorageNode> resourceIdToStorageNodeMap = new TreeMap<Integer, StorageNode>();
+            for (StorageNode storageNode : storageNodes) {
+                resourceIdToStorageNodeMap.put(storageNode.getResource().getId(), storageNode);
             }
 
-            for (Alert alert : alerts) {
-                Integer resourceId = alert.getAlertDefinition().getResource().getId();
-                Integer storageNodeId = resourcesWithAlertDefs.get(resourceId);
-                List<Alert> storageNodeAlerts = alertsMap.get(storageNodeId);
-                if (storageNodeAlerts == null) {
-                    storageNodeAlerts = new ArrayList<Alert>();
+            Map<Integer, Integer> storageNodeAlertCounts = new TreeMap<Integer, Integer>();
+            Map<Integer, Integer> alertCountsByResource = findStorageNodeAlertCountsByResource();
+
+            Integer currentResourceId;
+            for (Integer resourceId : alertCountsByResource.keySet()) {
+                currentResourceId = resourceId;
+                while (!resourceIdToStorageNodeMap.containsKey(currentResourceId)) {
+                    currentResourceId = entityManager.find(Resource.class, currentResourceId).getId();
                 }
-                storageNodeAlerts.add(alert);
-                alertsMap.put(storageNodeId, storageNodeAlerts);
+                Integer alertsForResource = alertCountsByResource.get(resourceId);
+                StorageNode storageNode = resourceIdToStorageNodeMap.get(currentResourceId);
+                Integer count = storageNodeAlertCounts.get(storageNode.getId());
+                if (count == null) {
+                    storageNodeAlertCounts.put(storageNode.getId(), alertsForResource);
+                } else {
+                    storageNodeAlertCounts.put(storageNode.getId(), count + alertsForResource);
+                }
             }
 
-            return alertsMap;
+            return storageNodeAlertCounts;
         } finally {
             stopwatch.stop();
-            log.debug("Retrieved storage node alerts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.debug("Finished calculating storage node alert counts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) +
+                " ms");
         }
+    }
+
+    /**
+     * @return A mapping of resource ids to the count of unacknowledged alerts. Each id belongs to a descendant of or
+     * is a storage node resource itself.
+     */
+    private Map<Integer, Integer> findStorageNodeAlertCountsByResource() {
+        List<Integer[]> counts = entityManager.createNamedQuery(StorageNode.QUERY_FIND_UNACKEDA_ALERTS_COUNTS)
+            .getResultList();
+        Map<Integer, Integer> alertCounts = new TreeMap<Integer, Integer>();
+
+        for (Integer[] row : counts) {
+            Integer resourceId = row[0];
+            Integer count = row[1];
+            alertCounts.put(resourceId, count);
+        }
+
+        return alertCounts;
     }
 
     @Override
@@ -967,38 +979,45 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
     
     private Map<Integer, Integer> findResourcesWithAlertsToStorageNodeMap(StorageNode storageNode) {
+        Stopwatch stopwatch = new Stopwatch().start();
         List<StorageNode> initialStorageNodes = getStorageNodes();
-        if (storageNode == null) {
-            initialStorageNodes = getStorageNodes();
-        } else {
-            initialStorageNodes = Arrays.asList(storageNode.getResource() == null ? entityManager.find(
-                StorageNode.class, storageNode.getId()) : storageNode);
-        }
+        try {
+            if (storageNode == null) {
+                initialStorageNodes = getStorageNodes();
+            } else {
+                initialStorageNodes = Arrays.asList(storageNode.getResource() == null ? entityManager.find(
+                    StorageNode.class, storageNode.getId()) : storageNode);
+            }
 
-        Map<Integer, Integer> resourceIdsToStorageNodeMap = new HashMap<Integer, Integer>();
-        Queue<Resource> unvisitedResources = new LinkedList<Resource>();
-        
-        // we are assuming here that the set of resources is disjunktive across different storage nodes 
-        for (StorageNode initialStorageNode : initialStorageNodes) {
-            if (initialStorageNode.getResource() != null) {
-                unvisitedResources.add(initialStorageNode.getResource());
-                while (!unvisitedResources.isEmpty()) {
-                    Resource resource = unvisitedResources.poll();
-                    if (!resource.getAlertDefinitions().isEmpty()) {
-                        resourceIdsToStorageNodeMap.put(resource.getId(), initialStorageNode.getId());
-                    }
+            Map<Integer, Integer> resourceIdsToStorageNodeMap = new HashMap<Integer, Integer>();
+            Queue<Resource> unvisitedResources = new LinkedList<Resource>();
 
-                    Set<Resource> childResources = resource.getChildResources();
-                    if (childResources != null) {
-                        for (Resource child : childResources) {
-                            unvisitedResources.add(child);
+            // we are assuming here that the set of resources is disjunktive across different storage nodes
+            for (StorageNode initialStorageNode : initialStorageNodes) {
+                if (initialStorageNode.getResource() != null) {
+                    unvisitedResources.add(initialStorageNode.getResource());
+                    while (!unvisitedResources.isEmpty()) {
+                        Resource resource = unvisitedResources.poll();
+                        if (!resource.getAlertDefinitions().isEmpty()) {
+                            resourceIdsToStorageNodeMap.put(resource.getId(), initialStorageNode.getId());
+                        }
+
+                        Set<Resource> childResources = resource.getChildResources();
+                        if (childResources != null) {
+                            for (Resource child : childResources) {
+                                unvisitedResources.add(child);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        return resourceIdsToStorageNodeMap;
+            return resourceIdsToStorageNodeMap;
+        } finally {
+            stopwatch.stop();
+            log.debug("Found storage node resources with alert defs in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) +
+                " ms");
+        }
     }
 
     @Override

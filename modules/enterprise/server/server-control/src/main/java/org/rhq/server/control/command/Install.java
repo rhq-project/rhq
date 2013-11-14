@@ -90,6 +90,11 @@ public class Install extends AbstractInstall {
     }
 
     @Override
+    protected String getReadmeFilename() {
+        return "INSTALL_README.txt";
+    }
+
+    @Override
     protected void exec(CommandLine commandLine) {
         boolean start = commandLine.hasOption(START_OPTION);
         boolean startedStorage = false;

@@ -119,6 +119,11 @@ public class Upgrade extends AbstractInstall {
     }
 
     @Override
+    protected String getReadmeFilename() {
+        return "UPGRADE_README.txt";
+    }
+
+    @Override
     protected void exec(CommandLine commandLine) {
         boolean start = commandLine.hasOption(START_OPTION);
 

@@ -63,6 +63,11 @@ public class Stop extends AbstractInstall {
     }
 
     @Override
+    protected String getReadmeFilename() {
+        return "STOP_README.txt";
+    }
+
+    @Override
     protected void exec(CommandLine commandLine) {
         try {
             // if no options specified, then stop whatever is installed
@@ -92,7 +97,7 @@ public class Stop extends AbstractInstall {
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     // the server service may be installed even if the full server install fails. The files to execute
                     // the remove are there after the initial unzip, so just go ahead and try to stop the service. This
-                    // may help clean up a failed install.                    
+                    // may help clean up a failed install.
                     stopRHQServer();
                 }
 

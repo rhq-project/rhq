@@ -92,4 +92,11 @@
     <justification>Adding a method to a remote API interface is safe.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.bundle.BundleVersion createInitialBundleVersionViaContentHandle(org.rhq.core.domain.auth.Subject, int[], java.lang.String)</method>
+    <justification>Adding a method to a remote API interface is safe.</justification>
+  </difference>
+
 </differences>

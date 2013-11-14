@@ -59,6 +59,11 @@ public class Restart extends ControlCommand {
     }
 
     @Override
+    protected String getReadmeFilename() {
+        return "RESTART_README.txt";
+    }
+
+    @Override
     protected void exec(CommandLine commandLine) {
         Stop stop = new Stop();
         stop.exec(commandLine);

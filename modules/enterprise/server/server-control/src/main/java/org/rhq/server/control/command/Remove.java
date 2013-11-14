@@ -39,8 +39,8 @@ import org.rhq.server.control.RHQControlException;
 /**
  * This command is registered on Windows only.  It performs Windows service removal.
  * <p/>
- * If we decide to enable this for Linux it is coded to by a synonym for stop. 
- * 
+ * If we decide to enable this for Linux it is coded to by a synonym for stop.
+ *
  * @author Jay Shaughnessy
  */
 public class Remove extends ControlCommand {
@@ -66,6 +66,11 @@ public class Remove extends ControlCommand {
     @Override
     public Options getOptions() {
         return options;
+    }
+
+    @Override
+    protected String getReadmeFilename() {
+        return "REMOVE_README.txt";
     }
 
     @Override

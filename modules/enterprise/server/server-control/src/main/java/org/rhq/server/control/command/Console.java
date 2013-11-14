@@ -65,6 +65,11 @@ public class Console extends ControlCommand {
     }
 
     @Override
+    protected String getReadmeFilename() {
+        return "CONSOLE_README.txt";
+    }
+
+    @Override
     protected void exec(CommandLine commandLine) {
         if (commandLine.getOptions().length != 1) {
             printUsage();

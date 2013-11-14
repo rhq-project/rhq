@@ -67,6 +67,11 @@ public class Start extends ControlCommand {
     }
 
     @Override
+    protected String getReadmeFilename() {
+        return "START_README.txt";
+    }
+
+    @Override
     protected void exec(CommandLine commandLine) {
         try {
             // if no options specified, then start whatever is installed
@@ -134,7 +139,7 @@ public class Start extends ControlCommand {
 
         Map<String, String> env = new HashMap<String, String>(System.getenv());
         env.put("JAVA_HOME", javaHome);
-        
+
         if (isWindows()) {
             executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "start");

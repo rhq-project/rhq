@@ -176,6 +176,43 @@ public abstract class ControlCommand {
 
         helpFormatter.setNewLine("\n");
         helpFormatter.printHelp(syntax, header, options, null);
+
+        // we can't pass this as the last argument to printHelp above
+        // because it throws an exception if the string is too long.
+        String readmeContent = getReadmeContent();
+        if (readmeContent != null) {
+            System.out.println(getReadmeContent());
+        }
+    }
+
+    /**
+     * Subclasses can override this and return a non-null name of its readme file.
+     * If non-null is returned, the content of that file will be dumped at the bottom of the
+     * --help output.
+     * @return readme help file name, or null if the command doesn't have one
+     */
+    abstract protected String getReadmeFilename();
+
+    protected String getReadmeContent() {
+        // see if the command has a readme file whose content we will print; if not, just abort
+        String readmeFilename = getReadmeFilename();
+        if (readmeFilename == null) {
+            return null;
+        }
+        File readmeFile = new File(getBaseDir(), readmeFilename);
+        if (!readmeFile.canRead()) {
+            return null;
+        }
+
+        // dump the readme
+        try {
+            FileReader fileReader = new FileReader(readmeFile);
+            String readmeContent = StreamUtil.slurp(fileReader);
+            return readmeContent;
+        } catch (Exception e) {
+            // just quietly abort, don't be noisy about this, though this should never happen
+            return null;
+        }
     }
 
     protected List<Integer> toIntList(String s) {

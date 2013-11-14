@@ -33,6 +33,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
+
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -62,6 +63,11 @@ public class Status extends ControlCommand {
     @Override
     public Options getOptions() {
         return options;
+    }
+
+    @Override
+    protected String getReadmeFilename() {
+        return "STATUS_README.txt";
     }
 
     @Override
@@ -156,7 +162,7 @@ public class Status extends ControlCommand {
             executor.execute(commandLine);
         } catch (ExecuteException e) {
             // For windows the JSW exit code for a status check is expected to be a mask value and the agent wrapper
-            // .bat will return it explicitly.  We can ignore it and assume that the logged output is sufficient. 
+            // .bat will return it explicitly.  We can ignore it and assume that the logged output is sufficient.
             // See http://wrapper.tanukisoftware.com/doc/english/launch-win.html#standalone-status
             if (!isWindows()) {
                 throw e;

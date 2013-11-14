@@ -79,6 +79,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private static final String RHQ_KEYSPACE = "rhq";
 
+    private static final String SYSTEM_KEYSPACE = "system";
+
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
         return new StorageNodeConfigDelegate(getBasedir(), this).loadResourceConfiguration();
@@ -195,7 +197,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private long readPidFile(File pidFile) throws FileNotFoundException {
-       return Long.parseLong(StreamUtil.slurp(new FileReader(pidFile)));
+        return Long.parseLong(StreamUtil.slurp(new FileReader(pidFile)));
     }
 
     @SuppressWarnings("unchecked")
@@ -224,19 +226,19 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         //update storage node jvm settings only
         Configuration config = new Configuration();
         Configuration.builder().addSimple("jmxPort", params.getSimpleValue("jmxPort"))
-        .addSimple("jmxPort", params.getSimpleValue("jmxPort"))
-        .addSimple("minHeapSize", params.getSimpleValue("heapSize"))
-        .addSimple("maxHeapSize", params.getSimpleValue("heapSize"))
-        .addSimple("heapNewSize", params.getSimpleValue("heapNewSize"))
-        .addSimple("threadStackSize", params.getSimpleValue("threadStackSize"))
-        .addSimple("maxHeapSize", params.getSimpleValue("heapSize")).build();
-        
+            .addSimple("jmxPort", params.getSimpleValue("jmxPort"))
+            .addSimple("minHeapSize", params.getSimpleValue("heapSize"))
+            .addSimple("maxHeapSize", params.getSimpleValue("heapSize"))
+            .addSimple("heapNewSize", params.getSimpleValue("heapNewSize"))
+            .addSimple("threadStackSize", params.getSimpleValue("threadStackSize"))
+            .addSimple("maxHeapSize", params.getSimpleValue("heapSize")).build();
+
         config.put(new PropertySimple("jmxPort", params.getSimpleValue("jmxPort")));
         config.put(new PropertySimple("minHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("maxHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("heapNewSize", params.getSimpleValue("heapNewSize")));
         config.put(new PropertySimple("threadStackSize", params.getSimpleValue("threadStackSize")));
-        
+
         String restartIfRequiredString = params.getSimpleValue("restartIfRequired");
         boolean restartIfRequired = restartIfRequiredString != null && Boolean.parseBoolean(restartIfRequiredString);
 
@@ -317,6 +319,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             addressesToAdd = getAddreses(params);
             log.info("Announcing "  + addressesToAdd);
 
+            createSnapshots(addressesToAdd, "pre_" + StringUtil.collectionToString(addressesToAdd) + "_bootstrap_");
+
             Set<String> knownAddresses = getAuthAddresses();
             knownAddresses.addAll(addressesToAdd);
             setAuthAddresses(knownAddresses);
@@ -337,6 +341,9 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         try {
             addressesToRemove = getAddreses(params);
             log.info("Unannouncing " + addressesToRemove);
+
+            createSnapshots(addressesToRemove, "pre_" + StringUtil.collectionToString(addressesToRemove) +
+                "_decommission_");
 
             Set<String> knownAddresses = getAuthAddresses();
             knownAddresses.removeAll(addressesToRemove);
@@ -362,6 +369,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
 
         return ipAddresses;
+    }
+
+    private void createSnapshots(Set<String> addressesToAdd, String snapshotPrefix) {
+        EmsConnection emsConnection = getEmsConnection();
+        KeyspaceService keyspaceService = new KeyspaceService(emsConnection);
+        keyspaceService.takeSnapshot(SYSTEM_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
+        keyspaceService.takeSnapshot(SYSTEM_AUTH_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
+        keyspaceService.takeSnapshot(RHQ_KEYSPACE, snapshotPrefix + System.currentTimeMillis());
     }
 
     private void reloadInternodeAuthConfig() {
@@ -437,8 +452,6 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             int cqlPort = Integer.parseInt(params.getSimpleValue("cqlPort"));
             int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
             List<String> addresses = getAddresses(params.getList("addresses"));
-
-            log.info("Storage node addresses = " + addresses);
 
             // Make sure this node's address is not in the list; otherwise, it
             // won't bootstrap properly.

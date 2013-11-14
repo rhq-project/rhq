@@ -55,8 +55,6 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
-import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -263,8 +261,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
     @Test(enabled = ENABLED)
     public void testAvailDurationAlert() throws Exception {
-        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
 
         // create our resource with two alert definitions (we use 2 to test BZ888927)
         @SuppressWarnings("unused")

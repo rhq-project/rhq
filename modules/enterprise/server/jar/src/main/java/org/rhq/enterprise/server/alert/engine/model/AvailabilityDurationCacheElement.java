@@ -19,20 +19,11 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.quartz.JobDataMap;
-import org.quartz.SimpleTrigger;
-import org.quartz.Trigger;
 
 import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -79,14 +70,14 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
                 if (AvailabilityType.DOWN == providedValue
                     && AvailabilityType.DOWN != cacheElement.getAlertConditionValue()) {
 
-                    scheduleAvailabilityDurationCheck(cacheElement, resource);
+                    LookupUtil.getAvailabilityManager().scheduleAvailabilityDurationCheck(cacheElement, resource);
                 }
                 break;
             case AVAIL_DURATION_NOT_UP:
                 if (AvailabilityType.UP != providedValue
                     && AvailabilityType.UP == cacheElement.getAlertConditionValue()) {
 
-                    scheduleAvailabilityDurationCheck(cacheElement, resource);
+                    LookupUtil.getAvailabilityManager().scheduleAvailabilityDurationCheck(cacheElement, resource);
                 }
                 break;
             }
@@ -97,54 +88,6 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
 
     public int getAlertDefinitionId() {
         return alertDefinitionId;
-    }
-
-    /**
-     * Each avail duration check is performed by triggering an execution of {@link AlertAvailabilityDurationJob}.
-     * Note that each of the scheduled jobs is relevant to only 1 condition evaluation.
-     *
-     * @param cacheElement
-     * @param resource
-     */
-    private static void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement,
-        Resource resource) {
-
-        Log log = LogFactory.getLog(AvailabilityDurationCacheElement.class.getName());
-        String jobName = AlertAvailabilityDurationJob.class.getName();
-        String jobGroupName = AlertAvailabilityDurationJob.class.getName();
-        String operator = cacheElement.getAlertConditionOperator().name();
-        // must be unique amongst all possible firings, add a timestamp because the exact same condition may
-        // get hit again while a timer is already in progress.
-        String triggerName = operator + "-" + resource.getId() + "-" + cacheElement.getAlertDefinitionId() + "-"
-            + System.currentTimeMillis();
-        String duration = (String) cacheElement.getAlertConditionOperatorOption();
-        // convert from seconds to milliseconds
-        Date jobTime = new Date(System.currentTimeMillis() + (Long.valueOf(duration).longValue() * 1000));
-
-        if (log.isDebugEnabled()) {
-            log.debug("Scheduling availability duration job for [" + DateFormat.getDateTimeInstance().format(jobTime)
-                + "]");
-        }
-
-        JobDataMap jobDataMap = new JobDataMap();
-        // the condition id is needed to ensure we limit the future avail checking to the one relevant alert condition
-        jobDataMap.put(AlertAvailabilityDurationJob.DATAMAP_CONDITION_ID,
-            String.valueOf(cacheElement.getAlertConditionTriggerId()));
-        jobDataMap.put(AlertAvailabilityDurationJob.DATAMAP_RESOURCE_ID, String.valueOf(resource.getId()));
-        jobDataMap.put(AlertAvailabilityDurationJob.DATAMAP_OPERATOR, operator);
-        jobDataMap.put(AlertAvailabilityDurationJob.DATAMAP_DURATION, duration);
-
-        Trigger trigger = new SimpleTrigger(triggerName, jobGroupName, jobTime);
-        trigger.setJobName(jobName);
-        trigger.setJobGroup(jobGroupName);
-        trigger.setJobDataMap(jobDataMap);
-        try {
-            LookupUtil.getSchedulerBean().scheduleJob(trigger);
-        } catch (Throwable t) {
-            log.warn(
-                "Unable to schedule availability duration job for [" + resource + "] with JobData ["
-                    + jobDataMap.values() + "]", t);
-        }
     }
 
     @Override
@@ -161,6 +104,8 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
             break;
         case AVAIL_DURATION_NOT_UP:
             result = (AvailabilityType.UP != providedValue);
+            break;
+        default:
             break;
         }
 

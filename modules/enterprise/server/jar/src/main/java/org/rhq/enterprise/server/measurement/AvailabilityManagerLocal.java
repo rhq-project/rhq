@@ -27,7 +27,9 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationCacheElement;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean.MergeInfo;
 
 /**
@@ -64,9 +66,9 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      *
      * @param  subject
      * @param  resourceId The relevant resource
-     * @param  startTime  If start time precedes recorded availability UNKNOWN will be used to fill the gap 
-     * @param  endTime    If end time is in the future the current Availability will be extended to fill the gap            
-     *     
+     * @param  startTime  If start time precedes recorded availability UNKNOWN will be used to fill the gap
+     * @param  endTime    If end time is in the future the current Availability will be extended to fill the gap
+     *
      * @return the availabilities over the given time span, in increasing time order
      */
     List<Availability> getAvailabilitiesForResource(Subject subject, int resourceId, long startTime, long endTime);
@@ -77,9 +79,9 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      *
      * @param  subject
      * @param  resourceGroupId The relevant resource group
-     * @param  startTime  If start time precedes recorded availability UNKNOWN will be used to fill the gap 
-     * @param  endTime    If end time is in the future the current Availability will be extended to fill the gap            
-     *     
+     * @param  startTime  If start time precedes recorded availability UNKNOWN will be used to fill the gap
+     * @param  endTime    If end time is in the future the current Availability will be extended to fill the gap
+     *
      * @return the resource group availabilities over the given time span, in increasing time order
      */
     List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(Subject subject, int resourceGroupId,
@@ -99,6 +101,7 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      * @return the availabilities over the given time span in a list
      * @deprecated going away with portal war removal
      */
+    @Deprecated
     List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId, long begin, long end,
         int points, boolean withCurrentAvailability);
 
@@ -114,8 +117,9 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
-     * @deprecated going away with portal war removal 
+     * @deprecated going away with portal war removal
      */
+    @Deprecated
     List<AvailabilityPoint> findAvailabilitiesForResourceGroup(Subject subject, int groupId, long begin, long end,
         int points, boolean withCurrentAvailability);
 
@@ -128,12 +132,13 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      * @param  begin                   start time for data we are interested in
      * @param  end                     end time for data we are interested in
      * @param  points                  number of data points to return
-     * @param  withCurrentAvailability if true, the last data point in the range will match the autogroup's current 
+     * @param  withCurrentAvailability if true, the last data point in the range will match the autogroup's current
      *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
-     * @deprecated going away with portal war removal 
+     * @deprecated going away with portal war removal
      */
+    @Deprecated
     List<AvailabilityPoint> findAvailabilitiesForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, int points, boolean withCurrentAvailability);
 
@@ -174,7 +179,7 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
     /**
      * Executing this method will update the given agent's lastAvailabilityReport time
      * in a new transaction
-     *  
+     *
      * @param agentId the id of the agent
      */
     void updateLastAvailabilityReportInNewTransaction(int agentId);
@@ -185,7 +190,7 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      * the agent. To update a single resource avail see {@link #updateResourceAvailability(Subject, Availability)}.
      *
      * @param agentId all resources managed by this agent will have their availabilities changed
-     * @param platformAvailabilityType the type that the agent's top level platform resource will have 
+     * @param platformAvailabilityType the type that the agent's top level platform resource will have
      * @param childAvailabilityType the type that the agent's child resources will have
      */
     void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailabilityType,
@@ -196,4 +201,11 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      */
     @Deprecated
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
+
+    /**
+     * Create the EJB Timer to schedule a check for a single availability duration condition match.
+     * @param cacheElement
+     * @param resource
+     */
+    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource);
 }

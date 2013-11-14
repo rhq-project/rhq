@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.BooleanExpression;
 
@@ -41,13 +42,13 @@ public interface AlertConditionLogManagerLocal {
 
     /**
      * @param alertConditionId
-     * @return true if an alert was fired, false otherwise
+     * @return The newly fired alert for a completed condition set, or null if no alert was fired
      */
-    boolean checkForCompletedAlertConditionSet(int alertConditionId);
+    Alert checkForCompletedAlertConditionSet(int alertConditionId);
 
     /**
      * Used for internal processing, exposed here so the tiniest amount of data can be gotten in a new transaction
-     * 
+     *
      * @param alertDefinitionId the definition whose conditionExpression will be looked up
      * @return the BooleanException for the AlertDefinition represented by the id argument
      */
@@ -55,7 +56,7 @@ public interface AlertConditionLogManagerLocal {
 
     /**
      * Used for internal processing, exposed here so the tiniest amount of data can be gotten in a new transaction
-     * 
+     *
      * @param alertDefinitionId the definition whose conditionExpression will be looked up
      * @return the count of AlertConditions for the AlertDefinition represented by the id argument
      */

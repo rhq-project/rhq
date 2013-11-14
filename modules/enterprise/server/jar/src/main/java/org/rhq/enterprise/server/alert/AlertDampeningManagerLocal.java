@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 
 /**
@@ -37,10 +38,10 @@ public interface AlertDampeningManagerLocal {
      * However, in at least one instance, this can not be known immediately. Thus, in this case, the method will start a
      * timer to keep track of when it should fire an alert in the future. Subsequent calls to this method will either
      * update or delete the timer as appropriate to satisfy the business semantics of the supported dampening rules.
-     * 
+     *
      * @param alertDefinitionId
      * @param eventType
-     * @return true if dampening rules were satisfied and an alert was fired, false otherwise. 
+     * @return the Alert fired as a result of the event satisfying the dampening rules for the alert definition, or null if no alert was fired.
      */
-    public boolean processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType);
+    public Alert processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType);
 }

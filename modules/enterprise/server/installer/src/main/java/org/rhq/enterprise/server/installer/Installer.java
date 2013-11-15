@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.server.installer;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-
 import java.io.Console;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +28,9 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.installer.InstallerService.AlreadyInstalledException;
 import org.rhq.enterprise.server.installer.InstallerService.AutoInstallDisabledException;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 /**
  * The entry point to the RHQ Installer.
@@ -56,7 +56,7 @@ public class Installer {
             final Installer installer = new Installer();
             installer.doInstall(args);
         } catch (Exception e) {
-            LOG.error("An error occurred", e);
+            LOG.error("The installer will now exit due to previous errors", e);
             System.exit(EXIT_CODE_INSTALLATION_ERROR);
         }
 

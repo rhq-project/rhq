@@ -34,6 +34,8 @@
     <property name="default.rhq.storage.jmx-port"                  value=""/>
     <property name="default.rhq.storage.seeds"                     value=""/>
     <property name="default.rhq.storage.verify-data-dirs-empty"    value=""/>
+    <property name="default.rhq.storage.cql-port"                  value="9142"/>
+    <property name="default.rhq.storage.gossip-port"               value="7100"/>
 
 	<target name="set-predeploy-prop">
         <condition property="predeploy" value="true">
@@ -837,21 +839,8 @@ rhq.storage.nodes=
 # and used by the RHQ server(s) to communicate with the cluster.
 # Both properties are required.
 #
-rhq.storage.cql-port=${rhq.storage.cql-port}
-rhq.storage.gossip-port=${rhq.storage.gossip-port}
-
-# If enabled data sent to and from storage nodes will be compressed using
-# snappy (https://code.google.com/p/snappy) compression. Note that this is an
-# advanced configuration option. If you turn on client compression and your
-# storage nodes do not support compression, then the RHQ server will not be
-# able to connect to the storage cluster. The storage node will log the
-# following at start up if it does not support compression,
-#
-# Cannot initialize native Snappy library. Compression on new tables will be disabled.
-#
-# Please make sure you do not find the above log statement in your storage logs
-# before you enable client compression.
-# rhq.storage.client.compression-enabled=false
+rhq.storage.cql-port=${default.rhq.storage.cql-port}
+rhq.storage.gossip-port=${default.rhq.storage.gossip-port}
 </echo>
 
         <echo file="${rhq.bin.dir}/rhq-storage.properties">#################### RHQ Storage Configuration Properties ####################

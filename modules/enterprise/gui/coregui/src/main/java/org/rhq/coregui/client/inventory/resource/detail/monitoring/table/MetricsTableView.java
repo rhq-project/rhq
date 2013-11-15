@@ -118,10 +118,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     @Override
     protected ListGrid createListGrid() {
-        if (null != metricsTableListGrid) {
-            removeMember(metricsTableListGrid);
-            metricsTableListGrid.destroy();
-        }
         metricsTableListGrid = new MetricsTableListGrid(this, resource);
         metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             @Override
@@ -176,7 +172,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         addToDashboardButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             @Override
             public void onClick(ClickEvent clickEvent) {
-                Log.debug("\n*** Clicked Add records: " + metricsTableListGrid.getSelectedRecords().length);
                 for (MeasurementDefinition measurementDefinition : resource.getResourceType().getMetricDefinitions()) {
                     if (measurementDefinition.getId() == selectedMetricDefinitionId) {
                         Log.debug("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
@@ -198,7 +193,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         new Timer() {
             @Override
             public void run() {
-                metricsTableListGrid = (MetricsTableListGrid) createListGrid();
                 metricsTableListGrid.expandOpenedRows();
                 BrowserUtility.graphSparkLines();
             }
@@ -209,7 +203,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     @Override
     public void refresh() {
         super.refresh(false);
-        metricsTableListGrid = (MetricsTableListGrid) createListGrid();
         metricsTableListGrid.expandOpenedRows();
     }
 

@@ -434,7 +434,7 @@
         </c:simple-property>
 
         <c:simple-property name="allow-multiple-users" type="boolean" required="false" readOnly="false" description="Specifies if multiple users will access the datasource through the getConnection(user, password) method and hence if the internal pool type should account for that"/>
-        <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="false" required="false" description="The number of prepared statements per connection in an LRU cache"/>
+        <c:simple-property name="prepared-statements-cache-size" type="long" readOnly="false" required="false" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="share-prepared-statements" type="boolean" readOnly="false" required="false" default="false" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
         <c:simple-property name="track-statements" type="string" readOnly="false" required="false" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed">
           <c:property-options>
@@ -516,7 +516,7 @@
           </c:property-options>
         </c:simple-property>
 
-        <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false" description="The number of prepared statements per connection in an LRU cache"/>
+        <c:simple-property name="prepared-statements-cache-size" type="long" readOnly="true" required="false" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true" required="false" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
         <c:simple-property name="track-statements" type="string" readOnly="true" required="false" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
         <c:simple-property name="allocation-retry" type="integer" readOnly="true" required="false" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
@@ -597,7 +597,7 @@
             <c:option value="EntirePool"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="prepared-statements-cacheSize" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
+        <c:simple-property name="prepared-statements-cache-size" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="share-prepared-statements" required="false" type="boolean" readOnly="true" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
@@ -707,7 +707,7 @@
             <c:option value="EntirePool"/>
           </c:property-options>
         </c:simple-property>
-        <c:simple-property name="prepared-statements-cacheSize" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
+        <c:simple-property name="prepared-statements-cache-size" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
         <c:simple-property name="share-prepared-statements" required="false" type="boolean" readOnly="true" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
         <c:simple-property name="track-statements" required="false" type="string" readOnly="true" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>

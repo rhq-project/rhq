@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.logging.Log;
@@ -564,13 +565,18 @@ public class InstallerServiceImpl implements InstallerService {
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
                     storageNodeSchemaManager.install();
-                } finally {
-                    storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
-                    storageNodeSchemaManager.shutdown();
                 }
+                storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
+                storageNodeSchemaManager.shutdown();
             } else {
                 log("Ignoring storage cluster schema - installer will assume it exists and is already up-to-date.");
             }
+        } catch (NoHostAvailableException e) {
+            log.error("Failed to connect to the storage cluster. Please check the following:\n" +
+                "\t1) At least one storage node is running\n" +
+                "\t2) The rhq.storage.nodes property specifies the correct hostname/address of at least one storage node\n" +
+                "\t3) The rhq.storage.cql-port property has the correct value\n");
+            throw new Exception("Could not connect to the storage cluster: " + ThrowableUtil.getRootMessage(e));
         } catch (Exception e) {
             String msg = "Could not complete storage cluster schema installation: " + ThrowableUtil.getRootMessage(e);
             log.error(msg, e);

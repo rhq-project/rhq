@@ -25,6 +25,7 @@ import java.util.EnumSet;
  * @author Heiko W. Rupp
  */
 public enum Command {
+    ADD("add","plugin type [pluginConfig]",2,"Manually import a resource of given plugin and type. Optionally properties are separated by ||."),//
     ASCAN("as", "", 0, "Triggers an availability scan"), //
     AVAIL("a", " ( id )", 0,
         "Shows an availability report. If id is given, only shows availability for resource with id id. To name the current id, you can use a single dot"), //
@@ -33,8 +34,9 @@ public enum Command {
     DISCOVER("disc", " s | i | all", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
     //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
     FIND("find", "r | t  | rt <name>", 2,
-        "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
+        "Searches a (r)esource, resource (t)ype or resources of (rt)ype in inventory. Use * as wildcard.\n"
             + " Will set $r for the last resource shown."),//
+    GC("gc","",0,"Trigger a garbage collection"),//
     HELP("h", "", 0, "Shows this help"), //
     INVOKE(
         "i",
@@ -50,7 +52,7 @@ public enum Command {
     PRINT("p", "[id]", 0,
         "Prints information about the resource with id 'id'. If no id is given, the current resource is printed."), //
     QUIT("quit", "", 0, "Terminates the application"), //
-    RESOURCES("res", "", 0, "Shows the discovered resources"), //
+    RESOURCES("res", "[count]", 0, "Shows the discovered resources. With argument count only shows the resource count"), //
     SET(
         "set",
         "'resource' N",

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,27 +24,41 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
+import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
+import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
+import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -82,6 +96,8 @@ public class StandaloneContainer {
     int dollarR = 0;
     /** Do we read from stdin ? */
     static boolean isStdin;
+    /** Starting resource id for manual add */
+    private int manualAddResourceCounter=42;
 
     public static void main(String[] argv) {
         StandaloneContainer sc = new StandaloneContainer();
@@ -134,7 +150,9 @@ public class StandaloneContainer {
         pcConfig.setInsideAgent(false);
         pcConfig.setRootPluginClassLoaderRegex(PluginContainerConfiguration.getDefaultClassLoaderFilter());
         pcConfig.setCreateResourceClassloaders(true); // we need to create these because even though we aren't in the agent, we aren't embedded in a managed resource either
-        pcConfig.setServerServices(new ServerServices());
+        ServerServices serverServices = new ServerServices();
+        serverServices.setDiscoveryServerService(new FakeDiscoveryServerService());
+        pcConfig.setServerServices(serverServices);
         pc.setConfiguration(pcConfig);
 
         System.out.println("Loading plugins");
@@ -172,7 +190,7 @@ public class StandaloneContainer {
 
                 // If we have a 'real' command, dispatch it
                 if (!answer.startsWith("!")) {
-                    String[] tokens = answer.split(" ");
+                    String[] tokens = tokenize(answer);
                     if (tokens.length > 0) {
                         shouldQuit = dispatchCommand(tokens);
                     }
@@ -217,6 +235,9 @@ public class StandaloneContainer {
         }
 
         switch (com) {
+        case ADD:
+            manualAdd(tokens);
+            break;
         case ASCAN:
             AvailabilityReport aReport = pc.getDiscoveryAgentService().executeAvailabilityScanImmediately(false);
 
@@ -236,6 +257,14 @@ public class StandaloneContainer {
         //                break;
         case FIND:
             find(tokens);
+            break;
+        case GC:
+            Runtime r = Runtime.getRuntime();
+            long memBefore = r.freeMemory();
+            System.gc();
+            long memNow = r.freeMemory();
+            long freedKb = (memNow - memBefore) / 1024;
+            System.out.println(freedKb + " kB freed");
             break;
         case HELP:
             for (Command comm : EnumSet.allOf(Command.class)) {
@@ -259,7 +288,7 @@ public class StandaloneContainer {
             System.out.println("Terminating ..");
             return true;
         case RESOURCES:
-            resources();
+            resources(tokens);
             break;
         case SET:
             set(tokens);
@@ -285,6 +314,48 @@ public class StandaloneContainer {
         }
 
         return false;
+    }
+
+    /**
+     * Manually add a resource
+     * @param tokens plugin type [properties]
+     */
+    private void manualAdd(String[] tokens) {
+
+        String plugin = tokens[1];
+        String typeName = tokens[2];
+        Set<ResourceType> types = pc.getPluginManager().getMetadataManager().getAllTypes();
+        ResourceType resourceType = null;
+        for (ResourceType type : types) {
+            if (type.getPlugin().equals(plugin) && type.getName().equals(typeName)) {
+                resourceType = type;
+                break;
+            }
+        }
+        if (resourceType==null) {
+            System.err.println("Type {" + plugin + "}" + typeName + " not found");
+            return;
+        }
+
+        Configuration templateConfig = resourceType.getPluginConfigurationDefinition().getDefaultTemplate().getConfiguration();
+        Configuration newConfig = null;
+        if (tokens.length>3) {
+            // Create the config from input
+            newConfig = createConfigurationFromString(tokens[3]);
+            // And merge it into the template
+            for (Property property : newConfig.getProperties()) {
+                templateConfig.put(property);
+            }
+        }
+        newConfig = templateConfig;
+
+        try {
+            inventoryManager.manuallyAddResource(resourceType,-2,newConfig,0);
+        } catch (InvalidPluginConfigurationClientException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        } catch (PluginContainerException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        }
     }
 
     /**
@@ -457,9 +528,16 @@ public class StandaloneContainer {
     }
 
     /**
-     * Shows the list of resources known so far
+     * Shows the list or number of resources known so far.
+     * If tokens[1] is "count" the count is returned otherwise the resources
+     * @param tokens tokenized command line tokens[0] is the command itself
      */
-    private void resources() {
+    private void resources(String[] tokens) {
+        if (tokens.length>1 && tokens[1].equals("count")) {
+            System.out.println(getResources().size());
+            return;
+        }
+
         Set<Resource> resources = getResources();
         for (Resource res : resources)
             System.out.println(res);
@@ -799,4 +877,76 @@ public class StandaloneContainer {
         }
     }
 
+    private String[] tokenize(String input) {
+        List<String> list = new ArrayList<String>();
+        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(input);
+        while (m.find()) {
+            list.add(m.group(1).replace("\"", ""));
+        }
+        return list.toArray(new String[list.size()]);
+
+    }
+
+
+    private class FakeDiscoveryServerService implements DiscoveryServerService {
+
+        @Override
+        public MergeInventoryReportResults mergeInventoryReport(
+            InventoryReport inventoryReport) throws InvalidInventoryReportException {
+            return null;
+        }
+
+        @Override
+        public boolean mergeAvailabilityReport(AvailabilityReport availabilityReport) {
+            return false;
+        }
+
+        @Override
+        public Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {
+            return null;
+        }
+
+        @Override
+        public List<Resource> getResourcesAsList(Integer... resourceIds) {
+            return null;
+        }
+
+        @Override
+        public void setResourceEnablement(int resourceId, boolean setEnabled) {
+        }
+
+        @Override
+        public void setResourceError(ResourceError resourceError) {
+
+        }
+
+        @Override
+        public void clearResourceConfigError(int resourceId) {
+        }
+
+        @Override
+        public Map<Integer, InventoryStatus> getInventoryStatus(int rootResourceId, boolean descendants) {
+            return null;
+        }
+
+        @Override
+        public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {
+            return new MergeResourceResponse(manualAddResourceCounter++,false);
+        }
+
+        @Override
+        public boolean updateResourceVersion(int resourceId, String version) {
+            return false;
+        }
+
+        @Override
+        public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
+            return null;
+        }
+
+        @Override
+        public Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
+            return null;
+        }
+    }
 }

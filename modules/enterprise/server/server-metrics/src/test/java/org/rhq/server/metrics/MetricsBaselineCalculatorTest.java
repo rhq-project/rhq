@@ -210,13 +210,7 @@ public class MetricsBaselineCalculatorTest {
             expectedStartTime, expectedEndTime);
 
         //verify the results (Assert and mock verification)
-        Assert.assertEquals(result.size(), 1);
-
-        MeasurementBaseline baselineResult = result.get(0);
-        Assert.assertEquals(baselineResult.getMean(), average, TEST_PRECISION);
-        Assert.assertEquals(baselineResult.getMax(), expectedMinMax);
-        Assert.assertEquals(baselineResult.getMin(), expectedMinMax);
-        Assert.assertEquals(baselineResult.getScheduleId(), expectedScheduleId);
+        Assert.assertEquals(result.size(), 0);
 
         verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(eq(expectedScheduleId),
             eq(expectedStartTime), eq(expectedEndTime));

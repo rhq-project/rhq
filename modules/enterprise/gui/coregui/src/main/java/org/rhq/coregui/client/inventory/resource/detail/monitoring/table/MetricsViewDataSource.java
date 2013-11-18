@@ -1,4 +1,25 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
+
+import static org.rhq.core.domain.measurement.DataType.AVAILABILITY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +73,7 @@ import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
     private static final int NUMBER_OF_METRIC_POINTS = 60;
+
     public static final String FIELD_SPARKLINE = "sparkline";
     public static final String FIELD_METRIC_LABEL = "label";
     public static final String FIELD_ALERT_COUNT = "alertCount";
@@ -64,6 +86,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     public static final String FIELD_METRIC_UNITS = "units";
     public static final String FIELD_METRIC_NAME = "name";
     public static final String FIELD_RESOURCE_ID = "resourceId";
+
     private final Resource resource;
     private List<MetricDisplaySummary> metricDisplaySummaries;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
@@ -95,8 +118,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                     return "";
                 }
                 String contents = "<span id='sparkline_" + resource.getId() + "-"
-                    + record.getAttributeAsInt(FIELD_METRIC_DEF_ID) + "' class='dynamicsparkline' width='70' "
-                    + "values='" + record.getAttribute(FIELD_SPARKLINE) + "'></span>";
+                        + record.getAttributeAsInt(FIELD_METRIC_DEF_ID) + "' class='dynamicsparkline' width='70' "
+                        + "values='" + record.getAttribute(FIELD_SPARKLINE) + "'></span>";
                 return contents;
 
             }
@@ -237,40 +260,40 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resource.getId(),
-            DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
-                @Override
-                public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
-                    scheduleIds = new int[measurementSchedules.size()];
-                    int i = 0;
-                    for (MeasurementSchedule measurementSchedule : measurementSchedules) {
-                        scheduleIds[i++] = measurementSchedule.getId();
+                DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
+            @Override
+            public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
+                scheduleIds = new int[measurementSchedules.size()];
+                int i = 0;
+                for (MeasurementSchedule measurementSchedule : measurementSchedules) {
+                    scheduleIds[i++] = measurementSchedule.getId();
+                }
+
+                // This latch is the last thing that gets executed after we have executed the
+                // 2 queries in Parallel
+                final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
+
+                    @Override
+                    public void execute() {
+                        // we needed the ResourceMetrics query and Metric Display Summary
+                        // to finish before we can query the live metrics and populate the
+                        // result response
+                        queryLiveMetrics(request, response);
+
                     }
+                });
 
-                    // This latch is the last thing that gets executed after we have executed the
-                    // 2 queries in Parallel
-                    final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
-
-                        @Override
-                        public void execute() {
-                            // we needed the ResourceMetrics query and Metric Display Summary
-                            // to finish before we can query the live metrics and populate the
-                            // result response
-                            queryLiveMetrics(request, response);
-
-                        }
-                    });
-
-                    queryResourceMetrics(resource, measurementUserPrefs.getMetricRangePreferences().begin,
+                queryResourceMetrics(resource, measurementUserPrefs.getMetricRangePreferences().begin,
                         measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-                    queryMetricDisplaySummaries(scheduleIds, measurementUserPrefs.getMetricRangePreferences().begin,
+                queryMetricDisplaySummaries(scheduleIds, measurementUserPrefs.getMetricRangePreferences().begin,
                         measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-                }
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
-                }
-            });
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
+            }
+        });
     }
 
     private void queryLiveMetrics(final DSRequest request, final DSResponse response) {
@@ -339,7 +362,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
     public void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
         final CountDownLatch countDownLatch) {
-        Set<MeasurementDefinition> definitions = resource.getResourceType().getMetricDefinitions();
+        Set<MeasurementDefinition> definitions = getNonAvailMeasurementDefinitions(resource);
 
         // create a mapping of schedules ids to MeasurementUnits
         for (MeasurementDefinition definition : definitions) {
@@ -389,5 +412,13 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
     }
 
+    private Set<MeasurementDefinition> getNonAvailMeasurementDefinitions(Resource resource) {
+        Set<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
+        for (MeasurementDefinition measurementDefinition : resource.getResourceType().getMetricDefinitions()) {
+            if (measurementDefinition.getDataType() != AVAILABILITY) {
+                definitions.add(measurementDefinition);
+            }
+        }
+        return definitions;
+    }
 }
-

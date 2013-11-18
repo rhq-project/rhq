@@ -22,7 +22,6 @@ import java.util.Map;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
@@ -55,15 +54,17 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
-        
+
     private final NamedTabSet tabset;
-    private TabInfo tableTabInfo = new TabInfo(0, new ViewName("Nodes"));
-    private TabInfo settingsTabInfo = new TabInfo(1, new ViewName("Settings", "Cluster Settings"));
-    private TabInfo alertsTabInfo = new TabInfo(2, new ViewName("Alerts", "Cluster Alerts"));
-    private TabInfo backupTabInfo = new TabInfo(3, new ViewName("Backup"));
+    private TabInfo tableTabInfo = new TabInfo(0, new ViewName("Nodes",
+        MSG.view_adminTopology_storageNodes_tabs_nodes()));
+    private TabInfo settingsTabInfo = new TabInfo(1, new ViewName("Settings",
+        MSG.view_adminTopology_storageNodes_tabs_settings()));
+    private TabInfo alertsTabInfo = new TabInfo(2, new ViewName("Alerts",
+        MSG.view_adminTopology_storageNodes_tabs_alerts()));
     private StorageNodeTableView table;
     private final NamedTab alerts;
-    
+
     private Timer refresher;
     private volatile boolean isRefreshing;
 
@@ -95,15 +96,8 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 CoreGUI.goToView(VIEW_PATH + "/" + alertsTabInfo.name);
             }
         });
-        
-        final NamedTab backup = new NamedTab(backupTabInfo.name);
-        backup.addTabSelectedHandler(new TabSelectedHandler() {
-            public void onTabSelected(TabSelectedEvent event) {
-                CoreGUI.goToView(VIEW_PATH + "/" + backupTabInfo.name);
-            }
-        });
 
-        tabset.setTabs(table, settings, alerts/*, backup*/);
+        tabset.setTabs(table, settings, alerts);
         addMember(tabset);
     }
 
@@ -112,8 +106,6 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
             table = new StorageNodeTableView();
             tabset.getTabByName(tabInfo.name.getName()).setPane(table);
             tabset.selectTab(tabInfo.index);
-        } else if (tabInfo.equals(backupTabInfo)) {
-            tabset.getTabByName(tabInfo.name.getName()).setPane(new Label("in progress.."));
         } else if (tabInfo.equals(alertsTabInfo)) {
             if (resIdsToStorageNodeIdsMap != null) {
                 tabset.getTabByName(tabInfo.name.getName()).setPane(
@@ -125,16 +117,15 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                         public void onFailure(Throwable caught) {
                             if (!UserSessionManager.isLoggedOut()) {
                                 CoreGUI.getErrorHandler().handleError(
-                                    "Unable to render storage node alert view: " + caught.getMessage(), caught);
+                                    MSG.view_adminTopology_storageNodes_fetchFail2() + ": " + caught.getMessage(),
+                                    caught);
                             }
                         }
 
                         @Override
                         public void onSuccess(Map<Integer, Integer> result) {
                             if (result == null || result.size() == 0) {
-                                onFailure(new Exception(
-                                    "Unfortunately, there are no associated resources for the available storage nodes. "
-                                        + "Check if the agents are running on the machines where the storage nodes are deployed."));
+                                onFailure(new Exception(MSG.view_adminTopology_storageNodes_fetchFail3()));
                             } else {
                                 resIdsToStorageNodeIdsMap = result;
                                 tabset.getTabByName(tabInfo.name.getName()).setPane(
@@ -150,7 +141,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
             tabset.selectTab(tabInfo.index);
         }
     }
-    
+
     public static String getAlertsString(String prefix, int numOfUnackAlerts) {
         return getAlertsString(prefix, -1, numOfUnackAlerts);
     }
@@ -163,7 +154,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 + numOfUnackAlerts + ")");
         return storageNodeId == -1 ? value : LinkManager.getHref(detailsUrl, value);
     }
-    
+
     private static final class TabInfo {
         private int index;
         private ViewName name;
@@ -206,15 +197,13 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 showTab(settingsTabInfo);
             } else if (alertsTabInfo.name.getName().equals(viewId)) {
                 showTab(alertsTabInfo);
-            } else if (backupTabInfo.name.getName().equals(viewId)) {
-                showTab(backupTabInfo);
             } else { //default
                 showTab(tableTabInfo);
                 table.renderView(viewPath);
             }
         }
     }
-    
+
     private void refreshNotAcknowledgedStorageNodeAlertsCount() {
         isRefreshing = true;
         GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
@@ -249,19 +238,19 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
     public void refresh() {
         refreshNotAcknowledgedStorageNodeAlertsCount();
     }
-    
+
     @Override
     protected void onDraw() {
         super.onDraw();
         startRefreshCycle();
     }
-    
+
     @Override
     protected void onDestroy() {
         stopRefreshing();
         super.onDestroy();
     }
-    
+
     private void stopRefreshing() {
         Log.info("Unscheduling the repetitive task for fetching the number of ALL unack alerts...");
         AutoRefreshUtil.onDestroy(refresher);

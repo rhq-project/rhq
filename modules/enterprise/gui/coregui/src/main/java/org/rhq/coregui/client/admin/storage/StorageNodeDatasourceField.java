@@ -31,31 +31,32 @@ import org.rhq.coregui.client.CoreGUI;
 public enum StorageNodeDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
-    
-    FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_server_endpointAddress()),
-    
-    FIELD_ALERTS("alerts", "Alerts"),
-    
-    FIELD_CQL_PORT("cqlPort", "CQL Port"),
 
-    FIELD_OPERATION_MODE("operationMode", "Operation Mode"),
-    
-    FIELD_STATUS("status", "Cluster Status"),
-    
+    FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_server_endpointAddress()),
+
+    FIELD_ALERTS("alerts", CoreGUI.getMessages().view_adminTopology_storageNodes_field_alerts()),
+
+    FIELD_CQL_PORT("cqlPort", CoreGUI.getMessages().view_adminTopology_storageNodes_field_cqlPort()),
+
+    FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_storageNodes_field_operationMode()),
+
+    FIELD_STATUS("status", CoreGUI.getMessages().view_adminTopology_storageNodes_field_clusterStatus()),
+
     FIELD_AVAILABILITY("availability", CoreGUI.getMessages().common_title_availability()),
-    
-    FIELD_MEMORY("memory", "Memory"),
-    
-    FIELD_DISK("disk", "Disk"),
-    
-    FIELD_ERROR_MESSAGE("errorMessage", "Error"),
-    
-    FIELD_FAILED_OPERATION("failedOperation", "Failed Operation"),
+
+    FIELD_MEMORY("memory", CoreGUI.getMessages().view_adminTopology_storageNodes_field_memory()),
+
+    FIELD_DISK("disk", CoreGUI.getMessages().view_adminTopology_storageNodes_field_disk()),
+
+    FIELD_ERROR_MESSAGE("errorMessage", CoreGUI.getMessages().view_adminTopology_storageNodes_field_error()),
+
+    FIELD_FAILED_OPERATION("failedOperation", CoreGUI.getMessages()
+        .view_adminTopology_storageNodes_field_failedOperation()),
 
     FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_serverDetail_installationDate()),
 
     FIELD_MTIME("mtime", CoreGUI.getMessages().view_adminTopology_server_lastUpdateTime()),
-    
+
     FIELD_RESOURCE_ID("resourceId", CoreGUI.getMessages().common_title_resource());
 
     /**
@@ -90,13 +91,12 @@ public enum StorageNodeDatasourceField {
         field.setWidth(width);
         return field;
     }
-    
-    public enum StorageNodeLoadCompositeDatasourceField { 
-        FIELD_PARENT_ID("parentId", "parentId"),
-        FIELD_NAME("name", CoreGUI.getMessages().common_title_metric()),
-        FIELD_MIN("min", CoreGUI.getMessages().view_resource_monitor_table_min()),
-        FIELD_AVG("avg", CoreGUI.getMessages().view_resource_monitor_table_avg()),
-        FIELD_MAX("max", CoreGUI.getMessages().view_resource_monitor_table_max());
+
+    public enum StorageNodeLoadCompositeDatasourceField {
+        FIELD_PARENT_ID("parentId", "parentId"), FIELD_NAME("name", CoreGUI.getMessages().common_title_metric()), FIELD_MIN(
+            "min", CoreGUI.getMessages().view_resource_monitor_table_min()), FIELD_AVG("avg", CoreGUI.getMessages()
+            .view_resource_monitor_table_avg()), FIELD_MAX("max", CoreGUI.getMessages()
+            .view_resource_monitor_table_max());
 
         /**
          * Corresponds to a property name of StorageNodeLoadComposite (e.g. min).

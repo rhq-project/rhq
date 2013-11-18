@@ -95,14 +95,14 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         StorageNodeLoadCompositeDatasource datasource = StorageNodeLoadCompositeDatasource.getInstance(storageNodeId);
         List<ListGridField> fields = datasource.getListGridFields();
         if (showSparkLine) {
-            fields.add(0, new ListGridField("sparkline", "Chart", 75));
+            fields.add(0, new ListGridField("sparkline", MSG.view_adminTopology_storageNodes_detail_chart(), 75));
         }
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         loadGrid.setAutoFetchData(true);
         loadGrid.setHoverWidth(300);
 
         ToolStrip toolStrip = new ToolStrip();
-        IButton settingsButton = new IButton("Settings");
+        IButton settingsButton = new IButton(MSG.common_title_settings());
         settingsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 CoreGUI.goToView(StorageNodeAdminView.VIEW_PATH + "/" + storageNodeId + "/Config");
@@ -169,7 +169,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
              // prepend another value just so we have 2 values and it will graph
                 commaDelimitedList.insert(0, "0,");
             }
-            
+
             if (someChartedData) {
                 String contents = "<span id='sparkline_" + metricName + "' class='dynamicsparkline' width='70' "
                     + "values='" + commaDelimitedList.toString() + "'>...</span>";

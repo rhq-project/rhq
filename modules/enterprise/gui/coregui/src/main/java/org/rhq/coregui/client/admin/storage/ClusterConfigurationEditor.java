@@ -18,6 +18,8 @@
  */
 package org.rhq.coregui.client.admin.storage;
 
+import static org.rhq.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,7 +68,6 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private StorageClusterSettings settings;
     private final boolean readOnly;
 
-    private static String FIELD_CQL_PORT = "cql_port";
     private static String FIELD_GOSSIP_PORT = "gossip_port";
     private static String FIELD_AUTOMATIC_DEPLOYMENT = "automatic_deployment";
     private static String FIELD_USERNAME = "username";
@@ -159,7 +160,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
         // cql port field
         FormItemBuilder builder = new FormItemBuilder();
-        List<FormItem> cqlPortItems = builder.withName(FIELD_CQL_PORT).withTitle("CQL Port")
+        List<FormItem> cqlPortItems = builder.withName(FIELD_CQL_PORT.propertyName()).withTitle(FIELD_CQL_PORT.title())
             .withValue(String.valueOf(settings.getCqlPort()))
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_cqlPort())
             .withValidators(validator).build();
@@ -167,7 +168,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
         // gossip port field
         builder = new FormItemBuilder();
-        List<FormItem> gossipPortItems = builder.withName(FIELD_GOSSIP_PORT).withTitle("Gossip Port")
+        List<FormItem> gossipPortItems = builder.withName(FIELD_GOSSIP_PORT)
+            .withTitle(MSG.view_adminTopology_storageNodes_field_gossipPort())
             .withValue(String.valueOf(settings.getGossipPort()))
             .withDescription(MSG.view_adminTopology_storageNodes_clusterSettings_clusterSettings_gossipPort())
             .withValidators(validator).build();
@@ -293,7 +295,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     }
 
     private StorageClusterSettings updateSettings() {
-        settings.setCqlPort(Integer.parseInt(clusterForm.getValueAsString(FIELD_CQL_PORT)));
+        settings.setCqlPort(Integer.parseInt(clusterForm.getValueAsString(FIELD_CQL_PORT.propertyName())));
         settings.setGossipPort(Integer.parseInt(clusterForm.getValueAsString(FIELD_GOSSIP_PORT)));
 
         settings.setAutomaticDeployment(Boolean.parseBoolean(deploymentForm

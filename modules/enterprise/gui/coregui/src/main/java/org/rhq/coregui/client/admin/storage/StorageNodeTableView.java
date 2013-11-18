@@ -149,7 +149,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                         }
 
                         String formattedValue = StringUtility.escapeHtml(rawUrl);
-                        String label = StringUtility.escapeHtml("Link to Resource");
+                        String label = StringUtility.escapeHtml(MSG.view_adminTopology_storageNodes_link());
                         return LinkManager.getHref(formattedValue, label);
                     }
                 });
@@ -173,8 +173,10 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                             for (int i = 0; i < records.length; i++) {
                                 int value = result.get(i);
                                 int storageNodeId = records[i].getAttributeAsInt("id");
-                                records[i].setAttribute(FIELD_ALERTS.propertyName(),
-                                    StorageNodeAdminView.getAlertsString("Unacknowledged Alerts", storageNodeId, value));
+                                records[i].setAttribute(
+                                    FIELD_ALERTS.propertyName(),
+                                    StorageNodeAdminView.getAlertsString(
+                                        MSG.view_adminTopology_storageNodes_unackAlerts(), storageNodeId, value));
                                 listGrid.setData(records);
                             }
                             schedule(15 * 1000);
@@ -197,8 +199,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             protected Canvas getExpansionComponent(final ListGridRecord record) {
                 if (record.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
                     // no resource set
-                    return new HTMLFlow("There is no load data available for this node. Is the agent running on the " +
-                        "platform?");
+                    return new HTMLFlow(MSG.view_adminTopology_storageNodes_noLoad());
                 }
                 int id = record.getAttributeAsInt(FIELD_ID);
                 return new StorageNodeLoadComponent(id, null);
@@ -225,25 +226,24 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         final ParametrizedMessage question = new ParametrizedMessage() {
             @Override
             public String getMessage(String... param) {
-                return "Are you sure, you want to run the undeploy operation on selected nodes: " + param[0]
-                    + " ? It may take a while to complete.";
+                return MSG.view_adminTopology_storageNodes_msg_undeployConfirm(param[0]);
             }
         };
         final ParametrizedMessage success = new ParametrizedMessage() {
             @Override
             public String getMessage(String... param) {
-                return "Starting the undeploy operation on storage nodes " + param[0];
+                return MSG.view_adminTopology_storageNodes_msg_deployStart(param[0]);
             }
         };
         final ParametrizedMessage failure = new ParametrizedMessage() {
             @Override
             public String getMessage(String... param) {
-                return "Invoking the undeploy operation failed for storage nodes " + param[0] + " ids: " + param[1];
+                return MSG.view_adminTopology_storageNodes_msg_undeployFailed(param[0], param[1]);
             }
         };
 
-        addTableAction("Undeploy Selected", null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
-            Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_run_undeploySelected(), null, new AuthorizedTableAction(
+            this, TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -261,25 +261,24 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         final ParametrizedMessage question = new ParametrizedMessage() {
             @Override
             public String getMessage(String... param) {
-                return "Are you sure, you want to run the deploy operation on selected nodes: " + param[0]
-                    + " ? It may take a while to complete.";
+                return MSG.view_adminTopology_storageNodes_msg_deployConfirm(param[0]);
             }
         };
         final ParametrizedMessage success = new ParametrizedMessage() {
             @Override
             public String getMessage(String... param) {
-                return "Starting the deploy operation on storage nodes " + param[0];
+                return MSG.view_adminTopology_storageNodes_msg_undeployStart(param[0]);
             }
         };
         final ParametrizedMessage failure = new ParametrizedMessage() {
             @Override
             public String getMessage(String... param) {
-                return "Invoking the deploy operation failed for storage nodes " + param[0] + " ids: " + param[1];
+                return MSG.view_adminTopology_storageNodes_msg_deployFailed(param[0], param[1]);
             }
         };
 
-        addTableAction("Deploy Selected", null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
-            Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_run_deploySelected(), null, new AuthorizedTableAction(this,
+            TableActionEnablement.SINGLE, Permission.MANAGE_SETTINGS) {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -295,11 +294,11 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
     private void addInvokeOperationsAction() {
         Map<String, Object> operationsMap = new LinkedHashMap<String, Object>();
-        operationsMap.put("Start", "start");
-        operationsMap.put("Shutdown", "shutdown");
-        operationsMap.put("Restart", "restart");
-        operationsMap.put("Disable Debug Mode", "stopRPCServer");
-        operationsMap.put("Enable Debug Mode", "startRPCServer");
+        operationsMap.put(MSG.common_title_start(), "start");
+        operationsMap.put(MSG.view_adminTopology_storageNodes_run_shutdown(), "shutdown");
+        operationsMap.put(MSG.view_adminTopology_storageNodes_run_restart(), "restart");
+        operationsMap.put(MSG.view_adminTopology_storageNodes_run_disableDebug(), "stopRPCServer");
+        operationsMap.put(MSG.view_adminTopology_storageNodes_run_enableDebug(), "startRPCServer");
 
         addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
@@ -314,19 +313,19 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 ParametrizedMessage question = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Are you sure, you want to run operation " + param[0] + "? On the selected nodes: " + param[1];
+                        return MSG.view_adminTopology_storageNodes_msg_commonOpConfirm(param[0], param[1]);
                     }
                 };
                 ParametrizedMessage success = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Operation " + param[0] + " was successfully scheduled for storage nodes " + param[1];
+                        return MSG.view_adminTopology_storageNodes_msg_commonOpFailed(param[0], param[1]);
                     }
                 };
                 ParametrizedMessage failure = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Scheduling operation " + param[0] + " failed for storage nodes " + param[1];
+                        return MSG.view_adminTopology_storageNodes_msg_commonOpStart(param[0], param[1]);
                     }
                 };
                 executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.OTHER);
@@ -478,8 +477,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         for (ListGridRecord storageNodeRecord : selection) {
             if ("NORMAL".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
                 || "JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                ) {
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                 return false;
             }
         }
@@ -487,8 +485,10 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         ListGridRecord[] allRecords = getListGrid().getRecords();
         for (ListGridRecord storageNodeRecord : allRecords) {
             if (!selectionList.contains(storageNodeRecord)) {
-                if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                if (StorageNode.Status.JOINING.toString().equals(
+                    storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.LEAVING.toString().equals(
+                        storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                     return false;
                 }
             }
@@ -502,8 +502,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         }
         for (ListGridRecord storageNodeRecord : selection) {
             if ("JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                ) {
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                 return false;
             }
         }
@@ -512,14 +511,17 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         int nodesInNormalCouner = 0;
         for (ListGridRecord storageNodeRecord : allRecords) {
             if (!selectionList.contains(storageNodeRecord)) {
-                if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                if (StorageNode.Status.JOINING.toString().equals(
+                    storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.LEAVING.toString().equals(
+                        storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                     return false;
                 }
             }
             if (StorageNode.Status.NORMAL.toString().equals(
                 storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                && AvailabilityType.UP.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
+                && AvailabilityType.UP
+                    .equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
                 nodesInNormalCouner++;
             }
         }

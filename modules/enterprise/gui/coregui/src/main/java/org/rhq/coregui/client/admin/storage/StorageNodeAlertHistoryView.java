@@ -66,12 +66,13 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     private final boolean allStorageNodes;
     private Map<Integer, Integer> resourceIdToStorageNodeIdMap;
     private Map<Integer, String> storageNodeIdToAddressMap;
-    
+
     public StorageNodeAlertHistoryView(String tableTitle, Map<Integer, Integer> resourceIdToStorageNodeIdMap) {
-        this(tableTitle, ArrayUtils.unwrapArray(resourceIdToStorageNodeIdMap.keySet().toArray(new Integer[]{})), null, -1);
+        this(tableTitle, ArrayUtils.unwrapArray(resourceIdToStorageNodeIdMap.keySet().toArray(new Integer[] {})), null,
+            -1);
         this.resourceIdToStorageNodeIdMap = resourceIdToStorageNodeIdMap;
     }
-    
+
     public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds, HTMLFlow header, int storageNodeId) {
         super(tableTitle, resourceIds);
         this.header = header;
@@ -79,13 +80,13 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         this.allStorageNodes = storageNodeId == -1;
         storageNodeIdToAddressMap = new HashMap<Integer, String>();
     }
-    
+
     @Override
     protected void onInit() {
         super.onInit();
         fetchAddresses();
     }
-    
+
     @Override
     protected void configureTableFilters() {
         startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
@@ -98,7 +99,7 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
             setFilterFormItems(startDateFilter, spacerItem, endDateFilter);
         }
     }
-        
+
     @Override
     public AlertDataSource getDataSource() {
         return new AlertDataSource() {
@@ -107,25 +108,11 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 ArrayList<ListGridField> fields = super.getListGridFields();
                 ArrayList<ListGridField> newFields = new ArrayList<ListGridField>(fields.size());
                 for (ListGridField field : fields) {
-                    if ("priority".equals(field.getName())
-                        || AncestryUtil.RESOURCE_NAME.equals(field.getName())
+                    if ("priority".equals(field.getName()) || AncestryUtil.RESOURCE_NAME.equals(field.getName())
                         || AncestryUtil.RESOURCE_ANCESTRY.equals(field.getName())) {
                         continue;
-                    } if (AlertCriteria.SORT_FIELD_CTIME.equals(field.getName())) {
-//                        field.setShowGridSummary(true);
-//                        field.setShowGroupSummary(true);
-//                        field.setSummaryFunction(new SummaryFunction() {
-//                            public Object getSummaryValue(Record[] records, ListGridField field) {
-//                                if (records != null && records.length > 0 && records[0] != null) {
-//                                    http://localhost:7080/coregui/#Administration/Configuration/AlertDefTemplates/10190/10002
-//                                        
-//                                    Integer resourceId = records[0].getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-//                                    Integer defId = records[0].getAttributeAsInt("definitionId");
-//                                    String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
-//                                    return LinkManager.getHref(url, "Link to Definition");
-//                                } else return "";
-//                            }  
-//                        });
+                    }
+                    if (AlertCriteria.SORT_FIELD_CTIME.equals(field.getName())) {
                         field.setCellFormatter(new CellFormatter() {
                             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                                 if (listGridRecord.getAttribute("groupValue") != null) {
@@ -141,16 +128,16 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                     } else if ("conditionValue".equals(field.getName())) {
                         field.setWidth(140);
                     } else if ("acknowledgingSubject".equals(field.getName())) {
-                        field.setSummaryFunction(new SummaryFunction() {  
+                        field.setSummaryFunction(new SummaryFunction() {
                             public Object getSummaryValue(Record[] records, ListGridField field) {
                                 int count = 0;
-                                for (Record record : records) {    
+                                for (Record record : records) {
                                     if (record.getAttribute("acknowledgingSubject") != null) {
                                         count++;
                                     }
                                 }
                                 return "(" + count + " / " + records.length + ")";
-                            }  
+                            }
                         });
                         field.setCellFormatter(new CellFormatter() {
                             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -167,8 +154,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                                 }
                             }
                         });
-                        
-                        field.setShowGridSummary(false);  
+
+                        field.setShowGridSummary(false);
                         field.setShowGroupSummary(true);
                         field.setWidth(90);
                         newFields.add(1, field);
@@ -186,9 +173,10 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
                 descriptionField.setCanSortClientOnly(true);
                 newFields.add(descriptionField);
-                
+
                 if (allStorageNodes) { // all storage nodes
-                    ListGridField storageNodeLinkField = new ListGridField("storageNodeLink", "Storage Node");
+                    ListGridField storageNodeLinkField = new ListGridField("storageNodeLink",
+                        MSG.view_adminTopology_storageNodes_node());
                     storageNodeLinkField.setCellFormatter(new CellFormatter() {
                         public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                             if (listGridRecord.getAttribute("groupValue") != null) {
@@ -208,17 +196,17 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
             }
         };
     }
-    
+
     @Override
     protected void configureListGrid(ListGrid grid) {
         ListGrid listGrid = super.getListGrid();
         listGrid.setGroupStartOpen(GroupStartOpen.ALL);
-        listGrid.setShowGroupSummary(true);  
+        listGrid.setShowGroupSummary(true);
         listGrid.setShowGroupSummaryInHeader(true);
-        
+
         listGrid.setGroupByField("name");
     }
-    
+
     @Override
     protected CellFormatter getDetailsLinkColumnCellFormatter() {
         return new CellFormatter() {
@@ -235,12 +223,12 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
             }
         };
     }
-    
+
     @Override
     public void showDetails(ListGridRecord record) {
         CoreGUI.goToView(getDetailUrlFromRecord(record));
     }
-    
+
     private void fetchAddresses() {
         if (header != null && !allStorageNodes) {
             StorageNodeCriteria criteria = new StorageNodeCriteria();
@@ -256,7 +244,7 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                         }
                         final StorageNode node = storageNodes.get(0);
                         header
-                            .setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
+                            .setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'>" + MSG.view_adminTopology_storageNodes_node() + " ("
                                 + node.getAddress() + ")</div>");
                     }
 
@@ -282,10 +270,10 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                             + caught.getMessage(), caught);
                 }
             });
-            
+
         }
     }
-    
+
     private String getDetailUrlFromRecord(ListGridRecord record) {
         if (record == null) {
             throw new IllegalArgumentException("'record' parameter is null.");
@@ -301,11 +289,12 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
             throw new IllegalArgumentException(msg);
         }
     }
-    
+
     @Override
     protected void configureTable() {
         super.configureTable();
-        addTableAction("(Un)Group Alerts", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+        addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 if (isGouped) {
                     getListGrid().ungroup();

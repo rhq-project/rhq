@@ -77,12 +77,13 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
     private void save(final StorageNodeConfigurationComposite configuration) {
         GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
+                Message msg = new Message(MSG.view_adminTopology_storageNodes_settings_message_updateSuccess(),
+                    Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(msg);
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Unable to update the storage node settings.", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_storageNodes_clusterSettings_message_updateFail(), caught);
             }
         });
     }
@@ -185,7 +186,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         form.setCellPadding(5);
         form.setColWidths(190, 220, "*");
         form.setIsGroup(true);
-        form.setGroupTitle("Storage Node Specific Settings");
+        form.setGroupTitle(MSG.view_adminTopology_storageNodes_settings_specific());
         form.setBorder("1px solid #AAA");
         oddRow = true;
 
@@ -193,22 +194,24 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         items
             .addAll(buildOneFormRowWithCombobox(
                 FIELD_HEAP_MAX,
-                "Heap Size",
+                MSG.view_adminTopology_storageNodes_settings_heapSizeName(),
                 configuration.getHeapSize(),
-                "The maximum (and at the same time starting) heap size. This value will be used with the -Xmx and -Xms JVM options. If you are going to increase/decrease this value, then you should also increase/decrease the new generation proportionally. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
+                MSG.view_adminTopology_storageNodes_settings_heapSizeDescription()));
         items
             .addAll(buildOneFormRowWithCombobox(
                 FIELD_HEAP_NEW,
-                "Heap New Size",
+                MSG.view_adminTopology_storageNodes_settings_heapNewSizeName(),
                 configuration.getHeapNewSize(),
-                "The size of the new generation portion of the heap. This value will be used with the -Xmn JVM option. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
+                MSG.view_adminTopology_storageNodes_settings_heapNewSizeDescription()));
         
         IsIntegerValidator validator = new IsIntegerValidator();
-        items.addAll(buildOneFormRowWithValidator(FIELD_THREAD_STACK_SIZE, "Thread Stack Size", configuration.getThreadStackSize(),
-            "The thread stack size. This memory is allocated to each thread off heap. The value should be an integer that will be interpreted in kilobytes.", validator));
+        items.addAll(buildOneFormRowWithValidator(FIELD_THREAD_STACK_SIZE,
+            MSG.view_adminTopology_storageNodes_settings_threadStackSizeName(), configuration.getThreadStackSize(),
+            MSG.view_adminTopology_storageNodes_settings_threadStackSizeDescription(), validator));
         validator = new IsIntegerValidator();
-        items.addAll(buildOneFormRowWithValidator(FIELD_JMX_PORT, "JMX Port", String.valueOf(configuration.getJmxPort()),
-            "The JMX port for the RHQ Storage Node", validator));
+        items.addAll(buildOneFormRowWithValidator(FIELD_JMX_PORT,
+            MSG.view_adminTopology_storageNodes_settings_jmxPortName(), String.valueOf(configuration.getJmxPort()),
+            MSG.view_adminTopology_storageNodes_settings_jmxPortDescription(), validator));
         form.setFields(items.toArray(new FormItem[items.size()]));
         form.setWidth100();
         form.setOverflow(Overflow.VISIBLE);
@@ -230,17 +233,17 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 if (form.validate()) {
                     if (!checkNewHeapLowerThanMaxHeap()) {
                         Map<String, String> errors = new HashMap<String, String>(2);
-                        errors.put(FIELD_HEAP_MAX, "Should be lower than Heap New Size.");
-                        errors.put(FIELD_HEAP_NEW, "Should be higher than Max Heap Size.");
+                        errors.put(FIELD_HEAP_MAX, MSG.view_adminTopology_storageNodes_settings_validator1());
+                        errors.put(FIELD_HEAP_NEW, MSG.view_adminTopology_storageNodes_settings_validator2());
                         form.setErrors(errors, true);
                         return;
                     }
                     final StorageNodeConfigurationComposite configuration = getConfiguration();
                     if (StorageNodeConfigurationEditor.this.configuration.equals(configuration)) {
-                        SC.say("Info", "There were no changes done.");
+                        SC.say("Info", MSG.view_adminTopology_storageNodes_settings_noChanges());
                     } else {
                         SC.ask(
-                            "Changing the storage node configuration requires restart of storage node. Do you want to continue?",
+                            MSG.view_adminTopology_storageNodes_settings_confirmation(),
                             new BooleanCallback() {
                                 @Override
                                 public void execute(Boolean value) {

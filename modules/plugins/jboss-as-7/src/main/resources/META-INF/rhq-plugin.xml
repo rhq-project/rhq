@@ -919,10 +919,6 @@
             description="The execution times of individual methods on a bean. Note that you need to enable statistics at server level in the ejb3 subsystem" displayName="Method Execution Time"
             units="milliseconds" destinationType="Method Name"/>
 '>
-
-    <!ENTITY serverGroupOperationParams '
-    <c:simple-property name="responseTimeout" default="120" type="long" description="Amount of time the agent will be waiting for domain host response. Defaults to 120 seconds." />
-'>
     ]>
 <plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
@@ -1110,7 +1106,7 @@
 
       <operation name="start-servers" description="Starts all configured servers belonging to the server group in the domain that are not currently running." timeout="180">
         <parameters>
-          &serverGroupOperationParams;
+          <c:simple-property name="responseTimeout" default="120" type="long" description="Amount of time the agent will be waiting for domain host response. Defaults to 120 seconds." />
         </parameters>
         <results>
           <c:simple-property name="operationResult"/>
@@ -1118,7 +1114,7 @@
       </operation>
       <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain." timeout="180">
         <parameters>
-            &serverGroupOperationParams;
+          <c:simple-property name="responseTimeout" default="120" type="long" description="Amount of time the agent will be waiting for domain host response. Defaults to 120 seconds." />
         </parameters>
         <results>
           <c:simple-property name="operationResult"/>
@@ -1126,7 +1122,7 @@
       </operation>
       <operation name="stop-servers" description="Stops all servers belonging to the server group currently running in the domain." timeout="180">
         <parameters>
-          &serverGroupOperationParams;
+          <c:simple-property name="responseTimeout" default="120" type="long" description="Amount of time the agent will be waiting for domain host response. Defaults to 120 seconds." />
         </parameters>
         <results>
           <c:simple-property name="operationResult"/>

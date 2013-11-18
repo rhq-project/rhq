@@ -1734,7 +1734,8 @@
 
     <operation name="start" description="Start this server instance." displayName="Start">
       <parameters>
-        <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is started." default="false" type="boolean"/>
+        <c:simple-property name="blocking" default="false" type="boolean" description="Whether the operation should block and wait until the server is started. Defaults to false."/>
+        <c:simple-property name="operationTimeout" default="120" type="integer" description="Amount of time the agent will be waiting for the response. Defaults to 120 seconds." />
       </parameters>
       <results>
         <c:simple-property name="operationResult"/>
@@ -1742,7 +1743,8 @@
     </operation>
     <operation name="stop" description="Stop this server instance." displayName="Stop">
       <parameters>
-        <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is stopped." default="false" type="boolean"/>
+        <c:simple-property name="blocking" default="false" type="boolean" description="Whether the operation should block and wait until the server is started. Defaults to false."/>
+        <c:simple-property name="operationTimeout" default="120" type="integer" description="Amount of time the agent will be waiting for the response. Defaults to 120 seconds." />
       </parameters>
       <results>
         <c:simple-property name="operationResult"/>
@@ -1750,7 +1752,8 @@
     </operation>
     <operation name="restart" description="Restart this server instance." displayName="Restart">
       <parameters>
-        <c:simple-property name="blocking" description="Whether the operation should block and wait until the server is restarted." default="false" type="boolean"/>
+        <c:simple-property name="blocking" default="false" type="boolean" description="Whether the operation should block and wait until the server is started. Defaults to false."/>
+        <c:simple-property name="operationTimeout" default="120" type="integer" description="Amount of time the agent will be waiting for the response. Defaults to 120 seconds." />
       </parameters>
       <results>
         <c:simple-property name="operationResult"/>

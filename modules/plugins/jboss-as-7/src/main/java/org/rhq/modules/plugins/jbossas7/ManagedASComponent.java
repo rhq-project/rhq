@@ -53,14 +53,14 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 @SuppressWarnings("unused")
 public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>> {
-
     private static final String MANAGED_SERVER_TYPE_NAME = "Managed Server";
+
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private AvailabilityCollectorRunnable availabilityCollector;
 
     @Override
     public void start(ResourceContext<HostControllerComponent<?>> hostControllerComponentResourceContext)
-            throws InvalidPluginConfigurationException, Exception {
+        throws InvalidPluginConfigurationException, Exception {
         super.start(hostControllerComponentResourceContext);
 
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
@@ -75,11 +75,11 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         if (availabilityCheckPeriod != null) {
             long availCheckMillis = availabilityCheckPeriod * 1000L;
             this.availabilityCollector = hostControllerComponentResourceContext.getAvailabilityContext()
-                    .createAvailabilityCollectorRunnable(new AvailabilityFacet() {
-                        public AvailabilityType getAvailability() {
-                            return getAvailabilityNow();
-                        }
-                    }, availCheckMillis);
+                .createAvailabilityCollectorRunnable(new AvailabilityFacet() {
+                    public AvailabilityType getAvailability() {
+                        return getAvailabilityNow();
+                    }
+                }, availCheckMillis);
             this.availabilityCollector.start();
         }
 
@@ -245,8 +245,8 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         // We need to deduct the domain host from the path, as it is not encoded in the resource itself.
         String serverPath = path;
         try {
-            serverPath = serverPath.substring(0,serverPath.indexOf(","));
-            serverPath = serverPath.substring(serverPath.indexOf("=")+1);
+            serverPath = serverPath.substring(0, serverPath.indexOf(","));
+            serverPath = serverPath.substring(serverPath.indexOf("=") + 1);
         } catch (RuntimeException e) {
             throw new Exception("Failed to extract hostname from server path [" + serverPath + "].", e);
         }
@@ -255,21 +255,21 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         Operation op = new ReadResource(getAddress());
         ComplexResult res = getASConnection().executeComplex(op);
         if (res.isSuccess()) {
-            Map<String,Object> map = res.getResult();
+            Map<String, Object> map = res.getResult();
             String group = (String) map.get("group");
-            configuration.put(new PropertySimple("group",group));
+            configuration.put(new PropertySimple("group", group));
 
-            Map<String,Object> sgMap = getServerGroupMap(group);
+            Map<String, Object> sgMap = getServerGroupMap(group);
 
             String sbGroup = (String) map.get("socket-binding-group");
-            if (sbGroup==null)
+            if (sbGroup == null)
                 sbGroup = (String) sgMap.get("socket-binding-group");
 
-            configuration.put(new PropertySimple("socket-binding-group",sbGroup));
+            configuration.put(new PropertySimple("socket-binding-group", sbGroup));
             Integer offSet = (Integer) map.get("socket-binding-port-offset");
-            if (offSet==null)
+            if (offSet == null)
                 offSet = 0;
-            configuration.put(new PropertySimple("socket-binding-port-offset",offSet));
+            configuration.put(new PropertySimple("socket-binding-port-offset", offSet));
         } else {
             throw new RuntimeException("Could not load configuration from remote server");
         }
@@ -283,7 +283,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
      * @return Map with the properties of the group. Or an empty map if the group does not exist.
      */
     private Map<String, Object> getServerGroupMap(String group) {
-        Operation op = new ReadResource("server-group",group);
+        Operation op = new ReadResource("server-group", group);
         ComplexResult cr = getASConnection().executeComplex(op);
         if (cr.isSuccess()) {
             return cr.getResult();
@@ -293,32 +293,20 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
     }
 
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws InterruptedException, Exception {
-
-        Operation op = new Operation(name,getAddress());
-
-        if (parameters!= null) {
-           String tmp  = parameters.getSimpleValue("blocking",null);
-           if (tmp!=null) {
-              Boolean blocking = Boolean.valueOf(tmp);
-              op.addAdditionalProperty("blocking",blocking);
-           }
-        }
-
-        Result res = getASConnection().execute(op, 30);
-
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
+        Operation op = new Operation(name, getAddress());
+        op.addAdditionalProperty("blocking", Boolean.valueOf(parameters.getSimpleValue("blocking", "false")));
+        Result res = getASConnection().execute(op,
+            Integer.parseInt(parameters.getSimpleValue("operationTimeout", "120")));
         OperationResult opRes;
         if (res.isSuccess()) {
             opRes = new OperationResult("successfully invoked [" + name + "]");
-        }
-        else {
+        } else {
             opRes = new OperationResult("Operation [" + name + "] failed");
             opRes.setErrorMessage(res.getFailureDescription());
         }
-
         return opRes;
-
     }
 
 }

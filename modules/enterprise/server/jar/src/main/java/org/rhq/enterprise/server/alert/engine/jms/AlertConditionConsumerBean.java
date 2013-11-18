@@ -28,8 +28,10 @@ import javax.jms.ObjectMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.CachedConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
@@ -49,6 +51,8 @@ public class AlertConditionConsumerBean implements MessageListener {
 
     private final Log log = LogFactory.getLog(AlertConditionConsumerBean.class);
 
+    @EJB
+    private AlertManagerLocal alertManager;
     @EJB
     private AlertConditionManagerLocal alertConditionManager;
     @EJB
@@ -94,10 +98,10 @@ public class AlertConditionConsumerBean implements MessageListener {
             AlertSerializer.getSingleton().lock(definitionId);
 
             /*
-             * must be executed in a new, nested transaction so that by it
-             * completes and unlocks, the next thread will see all of its results
+             * must be executed in a new, nested transaction so that by it completes and unlocks, the next thread
+             * will see all of its results.
              */
-            boolean firedAlert = cachedConditionManager.processCachedConditionMessage(conditionMessage, definitionId);
+            Alert newAlert = cachedConditionManager.processCachedConditionMessage(conditionMessage, definitionId);
 
             /*
              * In general it's not required to reload the caches directly. Changes made via the AlertDefinitionManager
@@ -108,12 +112,20 @@ public class AlertConditionConsumerBean implements MessageListener {
              * in question, perform an immediate cache reload check. This ensures the recovery semantics are quickly
              * put in place, minimizing the window of vulnerability.  Note that other HA nodes will be updated via the
              * scheduled check, which should be fine, as that is mainly to handle an agent failover use case.
-             * 
+             *
              * Note that we must do this *after* the alert firing transaction completes.
+             *
+             * As of 4.10 we've moved the alert notification handling out of the alert firing transaction and
+             * after the cache reload.  This ensures that the cache, and in particular, recovery alert defs are
+             * updated before executing notifications that could initiate recovery processing (like an automated
+             * restart of a down resource).  It also makes the alert firing transaction more lean.
              */
-            if (firedAlert) {
+            if (null != newAlert) {
                 log.debug("Checking for cache reload due to alert firing");
                 cacheConsistencyManager.reloadServerCacheIfNeeded();
+
+                //  the alert is already persisted, now process notifications
+                alertManager.sendAlertNotifications(newAlert);
             }
 
         } catch (Throwable t) {

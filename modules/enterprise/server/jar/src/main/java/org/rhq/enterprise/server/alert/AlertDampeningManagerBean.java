@@ -31,6 +31,7 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDampeningEvent.Type;
@@ -101,15 +102,17 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
     }
 
     @Override
-    public boolean processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType) {
+    public Alert processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType) {
         /*
          * some dampening event occurred, handle it accordingly.  if it was positive, check whether this
          * AlertDefinition can fire an alert according to its dampening category rules.  currently, these is no
          * supported dampening event that can fire as the result of a partial condition set match.
          */
-        boolean fire = false;
+        Alert firedAlert = null;
 
         try {
+            boolean fire = false;
+
             // get the alert definition in preparation for lots of processing on it
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
 
@@ -173,17 +176,17 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
              */
             if (fire) {
                 log.debug("Dampening rules were satisfied");
-                alertManager.fireAlert(alertDefinitionId);
+                firedAlert = alertManager.fireAlert(alertDefinitionId);
             } else {
                 log.debug("Dampening rules were not satisfied");
             }
         } catch (Exception e) {
-            fire = false;
+            firedAlert = null;
             log.error("Error operating on the passed dampening eventType of " + eventType + " "
                 + "for the alert definition with id of " + alertDefinitionId, e);
         }
 
-        return fire;
+        return firedAlert;
     }
 
     private boolean shouldFireConsecutiveCountAlert(int alertDefinitionId, long count) {

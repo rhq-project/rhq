@@ -129,16 +129,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
 
-    /**
-     * Persist a detached alert.
-     *
-     * @return an alert
-     */
-    @Override
-    public Alert createAlert(Alert alert) {
-        entityManager.persist(alert);
-        return alert;
-    }
 
     // TODO: iterate in batches of 1000 elements at a time
     @Override
@@ -382,7 +372,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
         for (List<Integer> nextBatch : batchIter) {
             authzQuery.setParameter("alertIds", nextBatch);
-            existingAlertIds.addAll((List<Integer>) authzQuery.getResultList());
+            existingAlertIds.addAll(authzQuery.getResultList());
         }
         return existingAlertIds;
     }
@@ -615,7 +605,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     @Override
-    public void fireAlert(int alertDefinitionId) {
+    public Alert fireAlert(int alertDefinitionId) {
         if (log.isDebugEnabled()) {
             log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");
         }
@@ -636,7 +626,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          * "TransientObjectException: object references an unsaved transient instance - save the transient instance before
          * flushing org.jboss.on.domain.event.alert.AlertConditionLog.alert -> org.jboss.on.domain.event.alert.Alert"
          */
-        this.createAlert(newAlert);
+        entityManager.persist(newAlert);
         if (log.isDebugEnabled()) {
             log.debug("New alert identifier=" + newAlert.getId());
         }
@@ -656,7 +646,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         // process recovery actions
         processRecovery(alertDefinition);
 
-        sendAlertNotifications(newAlert); // this really needs to be done async,
+        return newAlert;
     }
 
     /**

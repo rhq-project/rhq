@@ -40,6 +40,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -61,16 +62,14 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     // just a reference to pass to CustomDateRangeWindow as it must be final
     // so 'this' won't work
     final private ButtonBarDateTimeRangeEditor self;
+    private boolean isAutoRefresh;
     private RefreshIntervalMenu refreshIntervalMenu;
-    private boolean allowPreferenceUpdateRefresh;
+    private EnhancedIButton refreshButton;
 
     public ButtonBarDateTimeRangeEditor(Refreshable d3GraphListView) {
         this.self = this;
         this.d3GraphListView = d3GraphListView;
-        // if the encompassing view already handles its own refresh (e.g. AbstractD3GrpahListView) then don't
-        // let a preference update cause a whole gui refresh (which it does by default to apply the new preference).
-        // the two refreshes are redundant at best, step on each other at worst..
-        this.allowPreferenceUpdateRefresh = !(this.d3GraphListView instanceof AutoRefresh);
+        this.isAutoRefresh = this.d3GraphListView instanceof AutoRefresh;
 
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
 
@@ -116,13 +115,24 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(400);
         dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
-        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime(),
-                CustomDateRangeState.getInstance().getEndTime());
+        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance()
+            .getEndTime());
         toolStrip.addMember(dateRangeLabel);
 
+        // Only allow auto refresh rate change in views actually performing auto refresh, otherwise offer only refresh
         toolStrip.addSpacer(20);
-        refreshIntervalMenu = new RefreshIntervalMenu();
-        toolStrip.addMember(refreshIntervalMenu);
+        if (isAutoRefresh) {
+            refreshIntervalMenu = new RefreshIntervalMenu();
+            toolStrip.addMember(refreshIntervalMenu);
+        } else {
+            this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
+            refreshButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    redrawGraphs();
+                }
+            });
+            toolStrip.addMember(refreshButton);
+        }
 
         addMember(toolStrip);
     }
@@ -201,6 +211,10 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      * @param endTime   double because JSNI doesn't support long
      */
     public void saveDateRange(double startTime, double endTime) {
+        // if the encompassing view already handles its own refresh (e.g. AbstractD3GrpahListView) then don't
+        // let a preference update cause a whole gui refresh (which it does by default to apply the new preference).
+        // the two refreshes are redundant at best, step on each other at worst..
+        boolean allowPreferenceUpdateRefresh = !isAutoRefresh;
         CustomDateRangeState.getInstance().saveDateRange(startTime, endTime, allowPreferenceUpdateRefresh);
     }
 

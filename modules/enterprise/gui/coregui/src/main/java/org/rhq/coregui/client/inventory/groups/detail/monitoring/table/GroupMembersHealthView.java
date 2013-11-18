@@ -24,6 +24,7 @@ import java.util.List;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.coregui.client.components.FullHTMLPane;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
@@ -37,16 +38,16 @@ import org.rhq.coregui.client.inventory.groups.detail.inventory.MembersView;
  */
 public class GroupMembersHealthView extends MembersView {
 
-    private int groupId;
+    private ResourceGroupComposite groupComposite;
     private boolean canModifyMembers;
 
-    public GroupMembersHealthView(int groupId, boolean canModifyMembers) {
-        super(groupId, false);
+    public GroupMembersHealthView(ResourceGroupComposite groupComposite, boolean canModifyMembers) {
+        super(groupComposite.getResourceGroup().getId(), false);
         this.canModifyMembers = canModifyMembers;
-        this.groupId = groupId;
+        this.groupComposite = groupComposite;
         setShowFilterForm(false);
         setShowFooterRefresh(true);
-        //diable search view
+        //disable search view
         setHideSearchBar(true);
         setTitle(MSG.common_title_group_member_health());
     }
@@ -59,6 +60,43 @@ public class GroupMembersHealthView extends MembersView {
 
         //add chart selected metric action
         addTableAction(MSG.common_title_compare_metrics(), new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return selection != null && selection.length > 1;
+            }
+
+            // TODO: REMOVE THIS OLD BUTTON ONCE THE NEW ONE IS VALIDATED !!!
+            //       - FIX BUTTON NAME BELOW WHEN REMOVING !!!
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (selection == null || selection.length == 0) {
+                    return;
+                }
+                // keyed on metric name - string[0] is the metric label, [1] is the units
+                int[] resourceIds = new int[selection.length];
+                int i = 0;
+                for (ListGridRecord record : selection) {
+                    Integer defId = record.getAttributeAsInt(FIELD_ID);
+                    resourceIds[i++] = defId.intValue();
+                }
+
+                //build portal.war chart page to iFrame
+                String destination = "/portal/resource/common/monitor/Visibility.do?mode=compareMetrics&&groupId="
+                    + groupComposite.getResourceGroup().getId();
+                for (int rId : resourceIds) {
+                    destination += "&r=" + rId;
+                }
+                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compare_metrics());
+                //generate and include iframed content
+                FullHTMLPane iframe = new FullHTMLPane(destination);
+                window.addItem(iframe);
+                window.show();
+                GroupMembersHealthView.this.refreshTableInfo();
+            }
+        });
+
+        // TODO, fix button name!
+        addTableAction(MSG.common_title_compare_metrics() + "- New!", new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;
@@ -77,19 +115,14 @@ public class GroupMembersHealthView extends MembersView {
                     resourceIds[i++] = defId.intValue();
                 }
 
-                //build portal.war chart page to iFrame
-                String destination = "/portal/resource/common/monitor/Visibility.do?mode=compareMetrics&&groupId=" + groupId;
-                for (int rId : resourceIds) {
-                    destination += "&r=" + rId;
-                }
                 ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compare_metrics());
-                //generate and include iframed content
-                FullHTMLPane iframe = new FullHTMLPane(destination);
-                window.addItem(iframe);
+                GroupMembersComparisonView view = new GroupMembersComparisonView(groupComposite, resourceIds);
+                window.addItem(view);
                 window.show();
                 GroupMembersHealthView.this.refreshTableInfo();
             }
         });
+
     }
 
     public boolean isCanModifyMembers() {

@@ -19,10 +19,13 @@
 package org.rhq.coregui.client.gwt;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 @RemoteServiceRelativePath("MeasurementChartsGWTService")
@@ -34,17 +37,13 @@ public interface MeasurementChartsGWTService extends RemoteService {
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws RuntimeException;
 
-    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int autoGroupParentResourceId,
-        int autoGroupChildResourceTypeId, String viewName) throws RuntimeException;
-
-    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int autoGroupParentResourceId,
-        int autoGroupChildResourceTypeId, int[] measurementScheduleIds, long begin, long end, boolean enabledOnly)
-        throws RuntimeException;
-
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, String viewName)
         throws RuntimeException;
 
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] measurementScheduleIds,
         long begin, long end) throws RuntimeException;
+
+    Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
+        int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws RuntimeException;
 
 }

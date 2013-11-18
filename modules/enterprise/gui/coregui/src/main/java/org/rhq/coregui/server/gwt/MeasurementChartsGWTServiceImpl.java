@@ -19,7 +19,10 @@
 package org.rhq.coregui.server.gwt;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.coregui.client.gwt.MeasurementChartsGWTService;
 import org.rhq.coregui.server.util.SerialUtility;
@@ -34,47 +37,14 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
 
     @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, String viewName)
-        throws RuntimeException {
-        try {
-            if (viewName == null) {
-                viewName = DEFAULT_VIEW_NAME;
-            }
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
-                .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, viewName));
-            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForAutoGroup1");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, int[] schedIds,
-        long begin, long end, boolean enabledOnly) throws RuntimeException {
-        Long now = System.currentTimeMillis();
-        if (now < end) {
-            // we can't foretell the future (this may be caused by different timezone on client's)
-            end = now;
-        }
-        try {
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
-                .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, schedIds, begin, end,
-                    enabledOnly));
-            return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForAutoGroup2");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
         throws RuntimeException {
         try {
             if (viewName == null) {
                 viewName = DEFAULT_VIEW_NAME;
             }
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
-                .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, viewName));
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
+                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, viewName));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup1");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -90,9 +60,9 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             end = now;
         }
         try {
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
-                .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, defIds, begin, end,
-                    enabledOnly));
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
+                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, defIds, begin,
+                    end, enabledOnly));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup2");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -106,8 +76,8 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             if (viewName == null) {
                 viewName = DEFAULT_VIEW_NAME;
             }
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
-                .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, viewName));
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
+                chartsManager.getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, viewName));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource1");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -123,11 +93,31 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
             end = now;
         }
         try {
-            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
-                .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin, end));
+            ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
+                chartsManager.getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin,
+                    end));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForResource2");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
+        int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws RuntimeException {
+        Long now = System.currentTimeMillis();
+        if (now < end) {
+            // we can't foretell the future (this may be caused by different timezone on client's)
+            end = now;
+        }
+        try {
+            Map<MeasurementDefinition, List<MetricDisplaySummary>> map = chartsManager
+                .getMetricDisplaySummariesForMetricsCompare(getSessionSubject(), resourceIds, measurementDefinitionIds,
+                    begin, end);
+            return SerialUtility.prepare(map, "MeasurementCharts.getMetricDisplaySummariesForMetricsCompare");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

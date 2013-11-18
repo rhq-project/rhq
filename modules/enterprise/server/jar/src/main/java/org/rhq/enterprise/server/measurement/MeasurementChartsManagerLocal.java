@@ -37,6 +37,7 @@ public interface MeasurementChartsManagerLocal {
     /**
      * @deprecated portal-war
      */
+    @Deprecated
     // TODO: jmarques - this will go away once ListChildrenAction is moved to JSF
     List<MetricDisplaySummary> getMetricDisplaySummariesForMetrics(Subject subject, int resourceId, DataType dataType,
         long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException;
@@ -58,7 +59,6 @@ public interface MeasurementChartsManagerLocal {
     List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException;
 
-    
     List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId, String viewName);
 
     /**
@@ -75,18 +75,22 @@ public interface MeasurementChartsManagerLocal {
      * @return
      *
      * @throws MeasurementException
+     * @deprecated portal-war only
      */
+    @Deprecated
     List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly)
         throws MeasurementException;
 
-
+    /**
+     * @deprecated portal-war only
+     */
+    @Deprecated
     List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int parent, int type,
         String viewName);
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
         int[] measurementScheduleIds, long begin, long end) throws MeasurementException;
-
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId, String viewName)
         throws MeasurementException;
@@ -96,7 +100,7 @@ public interface MeasurementChartsManagerLocal {
      *
      * @param  subject                  subject of the caller
      * @param  resourceIds              Array of resource Ids that were selected to compare
-     * @param  measurementDefinitionIds Array of measurment Ids
+     * @param  measurementDefinitionIds Array of measurement Ids
      * @param  begin                    begin time for the display time range
      * @param  end                      end time for the displays time range
      *
@@ -104,8 +108,7 @@ public interface MeasurementChartsManagerLocal {
      *         resources values in a List for the value.
      *
      * @throws MeasurementException throws Measurement exception
-     * 
-     * @deprecated portal-war
+     *
      */
     Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(Subject subject,
         int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;

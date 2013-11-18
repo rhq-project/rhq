@@ -24,7 +24,7 @@ import org.rhq.coregui.client.RefreshableView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -37,7 +37,7 @@ public class GroupMonitoringTablesView extends EnhancedVLayout implements Refres
         super();
 
         metrics = new GroupMeasurementTableView(groupComposite, groupComposite.getResourceGroup().getId());
-        memberHealth = new GroupMembersHealthView(groupComposite.getResourceGroup().getId(), false);
+        memberHealth = new GroupMembersHealthView(groupComposite, false);
         addMember(metrics);
         addMember(memberHealth);
     }

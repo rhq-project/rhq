@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.exception.ConstraintViolationException;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
@@ -172,7 +173,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     }
 
     @Override
-    public boolean checkForCompletedAlertConditionSet(int alertConditionId) {
+    public Alert checkForCompletedAlertConditionSet(int alertConditionId) {
         Integer alertDefinitionId = alertConditionManager
             .getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
 
@@ -213,7 +214,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
             return alertDampeningManager.processEventType(alertDefinitionId, type);
         }
 
-        return false;
+        return null;
     }
 
     private AlertDampeningEvent.Type getNextEventType(AlertDampeningEvent lastEvent, boolean conditionSetResult) {

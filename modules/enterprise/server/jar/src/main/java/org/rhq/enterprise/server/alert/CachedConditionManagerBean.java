@@ -28,6 +28,7 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.server.RHQConstants;
@@ -39,7 +40,7 @@ import org.rhq.enterprise.server.alert.engine.jms.model.InactiveAlertConditionMe
  * see {@link CachedConditionManagerLocal#processCachedConditionMessage(
  * org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage, Integer)}
  * for more information.
- * 
+ *
  * @author Joseph Marques
  */
 @Stateless
@@ -58,8 +59,8 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public boolean processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
-        boolean result = false;
+    public Alert processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
+        Alert result = null;
 
         /*
          * note that ctime is the time when the condition was known to be true, not the time we're persisting the
@@ -87,7 +88,7 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
                 .getAlertConditionId());
 
         } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
-            // first do some bookkeeping by removing partially matched condition logs 
+            // first do some bookkeeping by removing partially matched condition logs
             alertConditionLogManager.removeUnmatchedLogByAlertConditionId(conditionMessage.getAlertConditionId());
 
             // then create a NEGATIVE dampening event, to breakup any contiguous POSITIVE events for correct processing

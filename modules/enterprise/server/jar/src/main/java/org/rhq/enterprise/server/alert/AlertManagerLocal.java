@@ -36,8 +36,6 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
  */
 @Local
 public interface AlertManagerLocal {
-    Alert createAlert(Alert alert);
-
     int deleteAlerts(long beginTime, long endTime);
 
     int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end);
@@ -51,7 +49,7 @@ public interface AlertManagerLocal {
     int getAlertCountByMeasurementDefinitionAndResource(int measurementDefinitionId, int resourceId, long beginDate,
         long endDate);
 
-    void fireAlert(int alertDefinitionId);
+    Alert fireAlert(int alertDefinitionId);
 
     void sendAlertNotifications(Alert alert);
 

@@ -56,7 +56,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private static final int BUTTON_WIDTH = 28;
     public final String DATE_TIME_FORMAT = MSG.common_buttonbar_datetime_format_moment_js();
 
-    private Refreshable d3GraphListView;
+    private Refreshable refreshable;
     private Label dateRangeLabel;
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     // just a reference to pass to CustomDateRangeWindow as it must be final
@@ -66,10 +66,10 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private RefreshIntervalMenu refreshIntervalMenu;
     private EnhancedIButton refreshButton;
 
-    public ButtonBarDateTimeRangeEditor(Refreshable d3GraphListView) {
+    public ButtonBarDateTimeRangeEditor(Refreshable refreshable) {
         this.self = this;
-        this.d3GraphListView = d3GraphListView;
-        this.isAutoRefresh = this.d3GraphListView instanceof AutoRefresh;
+        this.refreshable = refreshable;
+        this.isAutoRefresh = this.refreshable instanceof AutoRefresh;
 
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
 
@@ -122,7 +122,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         // Only allow auto refresh rate change in views actually performing auto refresh, otherwise offer only refresh
         toolStrip.addSpacer(20);
         if (isAutoRefresh) {
-            refreshIntervalMenu = new RefreshIntervalMenu();
+            refreshIntervalMenu = new RefreshIntervalMenu((AutoRefresh)refreshable);
             toolStrip.addMember(refreshIntervalMenu);
         } else {
             this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
@@ -146,7 +146,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }
 
     public void redrawGraphs() {
-        d3GraphListView.refreshData();
+        refreshable.refreshData();
     }
 
     @Override

@@ -19,7 +19,8 @@
 
 package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
-import static org.rhq.core.domain.measurement.DataType.AVAILABILITY;
+import static org.rhq.core.domain.measurement.DataType.COMPLEX;
+import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -356,13 +357,17 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         );
     }
 
-    void setMetricDisplaySummaries(List<MetricDisplaySummary> metricDisplaySummaries) {
+    private void setMetricDisplaySummaries(List<MetricDisplaySummary> metricDisplaySummaries) {
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    public void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
+    private void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
         final CountDownLatch countDownLatch) {
-        Set<MeasurementDefinition> definitions = getNonAvailMeasurementDefinitions(resource);
+        HashSet<MeasurementDefinition> definitions = getMetricDefinitions(resource);
+        if (definitions.size() == 0) {
+            countDownLatch.countDown();
+            return;
+        }
 
         // create a mapping of schedules ids to MeasurementUnits
         for (MeasurementDefinition definition : definitions) {
@@ -397,25 +402,25 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.warn("Error retrieving recent metrics charting data for resource [" + resource.getId() + "]:"
-                        + caught.getMessage());
+                            + caught.getMessage());
+                    countDownLatch.countDown();
                 }
 
                 @Override
                 public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> measurementDataList) {
-
                     if (null != measurementDataList && !measurementDataList.isEmpty()) {
                         metricsDataList = measurementDataList;
-                        countDownLatch.countDown();
                     }
+                    countDownLatch.countDown();
                 }
             });
 
     }
 
-    private Set<MeasurementDefinition> getNonAvailMeasurementDefinitions(Resource resource) {
-        Set<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
+    private HashSet<MeasurementDefinition> getMetricDefinitions(Resource resource) {
+        HashSet<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
         for (MeasurementDefinition measurementDefinition : resource.getResourceType().getMetricDefinitions()) {
-            if (measurementDefinition.getDataType() != AVAILABILITY) {
+            if (measurementDefinition.getDataType() == MEASUREMENT || measurementDefinition.getDataType() == COMPLEX) {
                 definitions.add(measurementDefinition);
             }
         }

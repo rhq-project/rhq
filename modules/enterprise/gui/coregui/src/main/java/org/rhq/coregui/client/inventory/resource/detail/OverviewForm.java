@@ -202,7 +202,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         // Description
         final FormItem descriptionItem = (modifiable) ? new EditableFormItem() : new StaticTextItem();
         descriptionItem.setName("description");
-        descriptionItem.setTitle(MSG.view_summaryOverviewForm_field_description());
+        descriptionItem.setTitle(MSG.common_title_description());
         descriptionItem.setValue(resource.getDescription());
         descriptionItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         if (descriptionItem instanceof EditableFormItem) {

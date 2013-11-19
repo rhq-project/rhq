@@ -57,7 +57,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private final String chartNoDataLabel = MSG.chart_no_data_label();
     private final String chartSingleValueLabel = MSG.chart_single_value_label();
     private final String chartHoverStartLabel = MSG.chart_hover_start_label();
-    private final String chartHoverEndLabel = MSG.chart_hover_end_label();
+    private final String chartHoverEndLabel = MSG.common_title_end();
     private final String chartHoverPeriodLabel = MSG.chart_hover_period_label();
     private final String chartHoverBarLabel = MSG.chart_hover_bar_label();
     private final String chartHoverTimeFormat = MSG.chart_hover_time_format();

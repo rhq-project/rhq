@@ -148,7 +148,7 @@ public class DashboardLinkUtility {
                             //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
                             String currentViewPath = History.getToken();
                             if (currentViewPath.contains("Monitoring/Metrics")) {
-                                MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+                                MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graphToView());
                                 defSubItem.addItem(addGraphItem);
 
                                 addGraphItem.addClickHandler(new ClickHandler() {

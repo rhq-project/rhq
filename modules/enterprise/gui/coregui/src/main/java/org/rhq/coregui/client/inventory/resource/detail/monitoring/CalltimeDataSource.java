@@ -25,7 +25,7 @@ import org.rhq.coregui.client.util.preferences.UserPreferences;
 
 /**
  * A data source to read in calltime (aka response time) metric data.
- * 
+ *
  * @author John Mazzitelli
  */
 public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, CallTimeDataCriteria> {
@@ -61,7 +61,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         alertsField.setWidth("10%");
         fields.add(alertsField);
 
-        ListGridField minField = new ListGridField(FIELD_MIN, MSG.view_resource_monitor_calltime_minimum());
+        ListGridField minField = new ListGridField(FIELD_MIN, MSG.common_title_monitor_minimum());
         minField.setWidth("10%");
         minField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -70,7 +70,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         });
         fields.add(minField);
 
-        ListGridField maxField = new ListGridField(FIELD_MAX, MSG.view_resource_monitor_calltime_maximum());
+        ListGridField maxField = new ListGridField(FIELD_MAX, MSG.common_title_monitor_maximum());
         maxField.setWidth("10%");
         maxField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -79,7 +79,7 @@ public class CalltimeDataSource extends RPCDataSource<CallTimeDataComposite, Cal
         });
         fields.add(maxField);
 
-        ListGridField avgField = new ListGridField(FIELD_AVG, MSG.view_resource_monitor_calltime_average());
+        ListGridField avgField = new ListGridField(FIELD_AVG, MSG.common_title_monitor_average());
         avgField.setWidth("10%");
         avgField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {

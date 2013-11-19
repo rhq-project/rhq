@@ -120,7 +120,7 @@ public class InventorySummaryPortlet extends EnhancedVLayout implements AutoRefr
                 formItems.add(groupDefinitionTotal);
 
                 StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
-                    MSG.common_title_average_metrics(), summary.getScheduledMeasurementsPerMinute(), null);
+                    MSG.common_title_monitor_averagePerMinute(), summary.getScheduledMeasurementsPerMinute(), null);
                 formItems.add(avergeMetricsTotal);
 
                 form.setItems(formItems.toArray(new FormItem[formItems.size()]));

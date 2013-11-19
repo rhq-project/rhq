@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -141,15 +142,15 @@ public class GroupMembersComparisonMetricView extends Table<GroupMembersComparis
             ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
-            ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.view_resource_monitor_table_min());
+            ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.common_title_monitor_minimum());
             minField.setWidth("15%");
             fields.add(minField);
 
-            ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.view_resource_monitor_table_max());
+            ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.common_title_monitor_maximum());
             maxField.setWidth("15%");
             fields.add(maxField);
 
-            ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.view_resource_monitor_table_avg());
+            ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.common_title_monitor_average());
             avgField.setWidth("15%");
             fields.add(avgField);
 
@@ -229,12 +230,16 @@ public class GroupMembersComparisonMetricView extends Table<GroupMembersComparis
 
             MeasurementUtility.formatSimpleMetrics(from);
 
-            record.setAttribute(FIELD_MIN_VALUE, from.getMinMetric());
-            record.setAttribute(FIELD_MAX_VALUE, from.getMaxMetric());
-            record.setAttribute(FIELD_AVG_VALUE, from.getAvgMetric());
-            record.setAttribute(FIELD_LAST_VALUE, from.getLastMetric());
+            record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
+            record.setAttribute(FIELD_MAX_VALUE, getMetricStringValue(from.getMaxMetric()));
+            record.setAttribute(FIELD_AVG_VALUE, getMetricStringValue(from.getAvgMetric()));
+            record.setAttribute(FIELD_LAST_VALUE, getMetricStringValue(from.getLastMetric()));
 
             return record;
+        }
+
+        protected String getMetricStringValue(MetricDisplayValue value) {
+            return (value != null) ? value.toString() : "";
         }
 
         @Override

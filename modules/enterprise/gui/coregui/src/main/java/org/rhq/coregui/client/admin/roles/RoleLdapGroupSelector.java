@@ -163,7 +163,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         //Customize Search component
         {
             searchTextItem.setName(MSG.common_title_search());
-            searchTextItem.setTitle(MSG.common_title_filterResultsBelow());
+            searchTextItem.setTitle(MSG.view_admin_roles_filterResultsBelow());
             searchTextItem.setWidth("100%");
             searchTextItem.setTooltip(MSG.common_msg_typeToFilterResults());
         }
@@ -404,8 +404,8 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                                 noProgressAttempts = 0;
                                 //now cancel the timer
                                 cancel();
-                            } else if (noProgressAttempts >= 10) {//availGroups query stuck on server side  
-                                //cancel the timer. 
+                            } else if (noProgressAttempts >= 10) {//availGroups query stuck on server side
+                                //cancel the timer.
                                 cancel();
                                 String clientSideQuitting = MSG.view_adminRoles_failLdapCancelling();//catch all
                                 adviceItem.setDisabled(false);

@@ -188,7 +188,7 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
             fields.add(senderField);
 
             DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION,
-                MSG.view_alert_definition_notification_editor_field_configuration());
+                MSG.common_title_configuration());
             fields.add(configField);
 
             return fields;
@@ -205,8 +205,7 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
             record.setAttribute(FIELD_OBJECT, from);
             record.setAttribute(FIELD_SENDER, from.getSenderName());
             // our executeFetch will fill in the real value for FIELD_CONFIGURATION
-            record.setAttribute(FIELD_CONFIGURATION,
-                "(" + MSG.view_alert_definition_notification_editor_field_configuration_not_loaded() + ")");
+            record.setAttribute(FIELD_CONFIGURATION, "(" + MSG.common_status_unknown() + ")");
             return record;
         }
 
@@ -236,7 +235,7 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_alert_definition_notification_editor_field_configuration_loadFailed(), caught);
+                            MSG.view_alert_definition_notification_editor_loadFailed_configPreview(), caught);
                         response.setData(records);
                         processResponse(request.getRequestId(), response);
                     }
@@ -258,8 +257,7 @@ public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements
             ListGridField senderField = new ListGridField(FIELD_SENDER,
                 MSG.view_alert_definition_notification_editor_field_sender());
             senderField.setWidth("25%");
-            ListGridField configField = new ListGridField(FIELD_CONFIGURATION,
-                MSG.view_alert_definition_notification_editor_field_configuration());
+            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, MSG.common_title_configuration());
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
 

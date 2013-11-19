@@ -91,12 +91,13 @@ public enum StorageNodeDatasourceField {
         field.setWidth(width);
         return field;
     }
-
-    public enum StorageNodeLoadCompositeDatasourceField {
-        FIELD_PARENT_ID("parentId", "parentId"), FIELD_NAME("name", CoreGUI.getMessages().common_title_metric()), FIELD_MIN(
-            "min", CoreGUI.getMessages().view_resource_monitor_table_min()), FIELD_AVG("avg", CoreGUI.getMessages()
-            .view_resource_monitor_table_avg()), FIELD_MAX("max", CoreGUI.getMessages()
-            .view_resource_monitor_table_max());
+    
+    public enum StorageNodeLoadCompositeDatasourceField { 
+        FIELD_PARENT_ID("parentId", "parentId"),
+        FIELD_NAME("name", CoreGUI.getMessages().common_title_metric()),
+        FIELD_MIN("min", CoreGUI.getMessages().common_title_monitor_minimum()),
+        FIELD_AVG("avg", CoreGUI.getMessages().common_title_monitor_average()),
+        FIELD_MAX("max", CoreGUI.getMessages().common_title_monitor_maximum());
 
         /**
          * Corresponds to a property name of StorageNodeLoadComposite (e.g. min).

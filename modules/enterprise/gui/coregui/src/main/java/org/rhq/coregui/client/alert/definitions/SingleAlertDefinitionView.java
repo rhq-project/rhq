@@ -71,7 +71,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
     public SingleAlertDefinitionView(AbstractAlertDefinitionsView alertDefView) {
         this(alertDefView, null);
     }
-    
+
     @Override
     public void destroy() {
         if (handlerRegistration == null) { // the leaving dialog has been answered
@@ -92,7 +92,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         tabSet = new TabSet();
         tabSet.setHeight100();
 
-        generalPropertiesTab = new Tab(MSG.view_alert_common_tab_general());
+        generalPropertiesTab = new Tab(MSG.common_title_generalProp());
         generalProperties = new GeneralPropertiesAlertDefinitionForm(alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
         generalPropertiesTab.addTabDeselectedHandler(new TabDeselectedHandler() {
@@ -167,7 +167,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         addMember(tabSet);
         addMember(buttons);
     }
-    
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -280,7 +280,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
             tabSet.selectTab(generalPropertiesTab);
         }
     }
-    
+
     private void setBackButtonDisabled(boolean enabled) {
         Canvas layoutCandidate = getParentElement();
         if (layoutCandidate instanceof EnhancedVLayout) {
@@ -291,7 +291,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
             }
         }
     }
-    
+
     private void unregisterHandler() {
         if (handlerRegistration != null) {
             handlerRegistration.removeHandler();

@@ -59,7 +59,7 @@ public class GroupMembersHealthView extends MembersView {
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         //add chart selected metric action
-        addTableAction(MSG.common_title_compare_metrics(), new TableAction() {
+        addTableAction(MSG.common_title_compareMetrics(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;
@@ -86,7 +86,7 @@ public class GroupMembersHealthView extends MembersView {
                 for (int rId : resourceIds) {
                     destination += "&r=" + rId;
                 }
-                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compare_metrics());
+                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compareMetrics());
                 //generate and include iframed content
                 FullHTMLPane iframe = new FullHTMLPane(destination);
                 window.addItem(iframe);
@@ -96,7 +96,7 @@ public class GroupMembersHealthView extends MembersView {
         });
 
         // TODO, fix button name!
-        addTableAction(MSG.common_title_compare_metrics() + "- New!", new TableAction() {
+        addTableAction(MSG.common_title_compareMetrics() + "- New!", new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;
@@ -115,7 +115,7 @@ public class GroupMembersHealthView extends MembersView {
                     resourceIds[i++] = defId.intValue();
                 }
 
-                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compare_metrics());
+                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compareMetrics());
                 GroupMembersComparisonView view = new GroupMembersComparisonView(groupComposite, resourceIds);
                 window.addItem(view);
                 window.show();

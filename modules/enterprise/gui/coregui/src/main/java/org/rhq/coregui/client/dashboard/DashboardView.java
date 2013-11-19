@@ -122,7 +122,7 @@ public class DashboardView extends EnhancedVLayout {
 
     /**
      * Convenience constructor for subsystem context.
-     * 
+     *
      * @param dashboardContainer
      * @param storedDashboard
      */
@@ -412,7 +412,7 @@ public class DashboardView extends EnhancedVLayout {
         }
 
         refreshMenu.setItems(refreshMenuItems);
-        refreshMenuButton = new IMenuButton(MSG.common_title_change_refresh_time(), refreshMenu);
+        refreshMenuButton = new IMenuButton(MSG.common_title_refreshInterval(), refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.getMenu().setItems(refreshMenuItems);
         refreshMenuButton.setWidth(140);
@@ -626,7 +626,7 @@ public class DashboardView extends EnhancedVLayout {
         String[] columnWidths = new String[numColumns];
         columnWidths[numColumns - 1] = "*";
         for (int i = 0; i < numColumns - 1; ++i) {
-            columnWidths[i] = String.valueOf(((int) columnPixelWidths[i] * 100 / totalPixelWidth)) + "%";
+            columnWidths[i] = String.valueOf((columnPixelWidths[i] * 100 / totalPixelWidth)) + "%";
         }
 
         storedDashboard.setColumnWidths(columnWidths);
@@ -695,13 +695,13 @@ public class DashboardView extends EnhancedVLayout {
      * a portlet may have been associated with its window prior to being persisted. In this case we can consider
      * it equal if it is associated with the same dashboard(1) and has the same positioning. Note that key-name pairing
      * can not be used for equality as a dashboard is allowed to have the same portlet multiple times, with a default
-     * name.  But they can not hold the same position. 
+     * name.  But they can not hold the same position.
      * <pre>
      *   (1) Even the dashboard comparison has been made flexible. To allow for lazy persist of the dashboard (to
      *       allow for the default group or resource dashboard to not be persisted) we allow the dash comparison
      *       to be done by name if an entity id is 0.  This should be safe as dashboard names are set prior to
-     *       persist, and should be unique for the session user. 
-     * 
+     *       persist, and should be unique for the session user.
+     *
      * @param storedPortlet
      * @param updatedPortlet
      * @return

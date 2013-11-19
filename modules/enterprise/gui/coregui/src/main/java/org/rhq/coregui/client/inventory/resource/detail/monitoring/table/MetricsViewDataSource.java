@@ -67,7 +67,7 @@ import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
  * This doesn't support paging - everything is returned in one query. Since
  * the number of metrics per resource is relatively small (never more than tens of them),
  * we just load them all in at once.
- * 
+ *
  * @author John Mazzitelli
  * @author Mike Thompson
  */
@@ -105,7 +105,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
-     * 
+     *
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
@@ -133,21 +133,21 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         nameField.setWidth("30%");
         fields.add(nameField);
 
-        ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.view_resource_monitor_table_min());
+        ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.common_title_monitor_minimum());
         minField.setWidth("15%");
         fields.add(minField);
 
-        ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.view_resource_monitor_table_max());
+        ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.common_title_monitor_maximum());
         maxField.setWidth("15%");
         fields.add(maxField);
 
-        ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.view_resource_monitor_table_avg());
+        ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.common_title_monitor_average());
         avgField.setWidth("15%");
         fields.add(avgField);
 
-        ListGridField lastField = new ListGridField(FIELD_LIVE_VALUE, MSG.view_resource_monitor_table_last());
-        lastField.setWidth("15%");
-        fields.add(lastField);
+        ListGridField liveField = new ListGridField(FIELD_LIVE_VALUE, MSG.view_resource_monitor_table_live());
+        liveField.setWidth("15%");
+        fields.add(liveField);
 
         ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
         alertsField.setWidth("10%");

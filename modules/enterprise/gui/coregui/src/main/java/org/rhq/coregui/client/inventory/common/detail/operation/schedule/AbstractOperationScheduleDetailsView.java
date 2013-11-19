@@ -101,8 +101,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private ViewPath viewPath;
     private boolean isImmediateExecution;
 
-    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDataSource<? extends OperationSchedule> dataSource,
-        ResourceType resourceType, int scheduleId) {
+    public AbstractOperationScheduleDetailsView(
+        AbstractOperationScheduleDataSource<? extends OperationSchedule> dataSource, ResourceType resourceType,
+        int scheduleId) {
         super(dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
         this.setMembersMargin(5);
@@ -205,8 +206,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
             }
         });
 
-        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION,
-            MSG.view_operationScheduleDetails_field_description());
+        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION, MSG.common_title_description());
         this.operationDescriptionItem.setShowTitle(false);
         items.add(this.operationDescriptionItem);
 

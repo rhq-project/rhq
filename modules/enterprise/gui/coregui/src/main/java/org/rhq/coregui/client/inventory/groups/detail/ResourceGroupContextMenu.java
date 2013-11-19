@@ -334,7 +334,7 @@ public class ResourceGroupContextMenu extends Menu {
                                         //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
                                         String currentViewPath = History.getToken();
                                         if (currentViewPath.contains("Monitoring/NewGraphs")) {
-                                            MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+                                            MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graphToView());
                                             defSubItem.addItem(addGraphItem);
 
                                             addGraphItem.addClickHandler(new ClickHandler() {

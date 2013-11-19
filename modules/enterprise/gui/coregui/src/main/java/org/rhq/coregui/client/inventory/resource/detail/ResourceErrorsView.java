@@ -59,7 +59,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
     private ResourceTitleBar titleBar;
 
     public ResourceErrorsView(Criteria criteria, ResourceTitleBar titleBar) {
-        super(MSG.common_title_component_errors(), criteria);
+        super(MSG.common_title_componentErrors(), criteria);
 
         this.titleBar = titleBar;
 
@@ -174,7 +174,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
 
     private void popupDetails(String details) {
         final Window winModal = new Window();
-        winModal.setTitle(MSG.common_title_component_errors());
+        winModal.setTitle(MSG.common_title_componentErrors());
         winModal.setOverflow(Overflow.VISIBLE);
         winModal.setShowMinimizeButton(false);
         winModal.setShowMaximizeButton(true);

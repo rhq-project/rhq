@@ -74,15 +74,15 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
         alertsField.setWidth("10%");
         fields.add(alertsField);
 
-        ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.view_resource_monitor_table_min());
+        ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.common_title_monitor_minimum());
         minField.setWidth("15%");
         fields.add(minField);
 
-        ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.view_resource_monitor_table_max());
+        ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.common_title_monitor_maximum());
         maxField.setWidth("15%");
         fields.add(maxField);
 
-        ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.view_resource_monitor_table_avg());
+        ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.common_title_monitor_average());
         avgField.setWidth("15%");
         fields.add(avgField);
 

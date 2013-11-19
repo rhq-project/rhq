@@ -293,8 +293,7 @@ public class PortletConfigurationEditorComponent {
     }
 
     public static SelectItem getConfigurationUpdateStatusEditor(Configuration portletConfig) {
-        SelectItem priorityFilter = new SelectItem(Constant.CONFIG_UPDATE_STATUS,
-            MSG.common_title_config_update_status());
+        SelectItem priorityFilter = new SelectItem(Constant.CONFIG_UPDATE_STATUS, MSG.common_title_updateStatus());
         priorityFilter.setWrapTitle(false);
         priorityFilter.setWidth(335);
         priorityFilter.setMultiple(true);

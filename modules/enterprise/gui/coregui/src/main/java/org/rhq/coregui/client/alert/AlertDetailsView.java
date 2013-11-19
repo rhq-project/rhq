@@ -44,8 +44,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
 import org.rhq.coregui.client.CoreGUI;
@@ -94,7 +92,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
                 } else {
                     show(alert);
                 }
-                
+
             }
 
             @Override
@@ -103,7 +101,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
             }
         });
     }
-    
+
     private void fetchDefinitionWithGroupAndTemplate(final Alert alert) {
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.addFilterAlertId(alert.getId());
@@ -115,7 +113,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
                 alert.getAlertDefinition().setResourceType(result.get(0).getResourceType());
                 show(alert);
             }
-            
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alert_details_loadFailed(), caught);
             }
@@ -134,7 +132,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
     private TabSet getDetailsTabSet(ListGridRecord record) {
         TabSet tabset = new NamedTabSet();
 
-        Tab generalTab = new NamedTab(new ViewName("general", MSG.view_alert_common_tab_general()));
+        Tab generalTab = new NamedTab(new ViewName("general", MSG.common_title_generalProp()));
         generalTab.setPane(getDetailsTableForAlert(record));
 
         Tab conditionsTab = new NamedTab(new ViewName("conditions", MSG.view_alert_common_tab_conditions()));
@@ -218,7 +216,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
             MSG.view_alert_details_field_resource_ancestry());
         resourceAncestryItem.setValue(record.getAttribute("resourceAncestry"));
         items.add(resourceAncestryItem);
-        
+
         String parentUrl = record.getAttribute("parent");
         if (parentUrl != null) {
             StaticTextItem parentItem = new StaticTextItem("parent", "Parent Definition");

@@ -354,7 +354,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
                 winModal.setShowResizer(true);
                 winModal.setCanDragResize(true);
                 winModal.centerInPage();
-                winModal.setTitle(MSG.common_title_component_errors());
+                winModal.setTitle(MSG.common_title_componentErrors());
 
                 Label disposalReminder = new Label();
                 disposalReminder.setHeight(12);

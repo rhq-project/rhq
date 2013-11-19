@@ -137,7 +137,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private boolean supportsEvents = false;
     private boolean supportsResourceConfig = false;
     private boolean supportsDrift = false;
-    private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
+    private Runnable closeFunction; // this is called after a button is pressed and the editor should close
     private ResourceType resourceType;
     private boolean editMode = false;
     private AlertCondition existingCondition;
@@ -709,9 +709,9 @@ public class ConditionEditor extends EnhancedVLayout {
             SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME,
                 MSG.view_alert_definition_condition_editor_metric_baseline_value());
             LinkedHashMap<String, String> baselines = new LinkedHashMap<String, String>(3);
-            baselines.put("min", MSG.view_alert_definition_condition_editor_common_min()); // TODO can we have the current value of the min baseline
-            baselines.put("mean", MSG.view_alert_definition_condition_editor_common_avg()); // TODO can we have the current value of the avg baseline
-            baselines.put("max", MSG.view_alert_definition_condition_editor_common_max()); // TODO can we have the current value of the max baseline
+            baselines.put("min", MSG.common_title_monitor_minimum()); // TODO can we have the current value of the min baseline
+            baselines.put("mean", MSG.common_title_monitor_average()); // TODO can we have the current value of the avg baseline
+            baselines.put("max", MSG.common_title_monitor_maximum()); // TODO can we have the current value of the max baseline
             baselineSelection.setValueMap(baselines);
             baselineSelection.setDefaultValue(editMode ? existingCondition.getOption() : "mean");
             baselineSelection.setWrapTitle(false);
@@ -765,9 +765,9 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_limit());
         LinkedHashMap<String, String> limits = new LinkedHashMap<String, String>(3);
-        limits.put("MIN", MSG.view_alert_definition_condition_editor_common_min());
-        limits.put("AVG", MSG.view_alert_definition_condition_editor_common_avg());
-        limits.put("MAX", MSG.view_alert_definition_condition_editor_common_max());
+        limits.put("MIN", MSG.common_title_monitor_minimum());
+        limits.put("AVG", MSG.common_title_monitor_average());
+        limits.put("MAX", MSG.common_title_monitor_maximum());
         minMaxAvgSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
         minMaxAvgSelection.setHoverWidth(200);
@@ -822,9 +822,9 @@ public class ConditionEditor extends EnhancedVLayout {
         SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_limit());
         LinkedHashMap<String, String> limits = new LinkedHashMap<String, String>(3);
-        limits.put("MIN", MSG.view_alert_definition_condition_editor_common_min());
-        limits.put("AVG", MSG.view_alert_definition_condition_editor_common_avg());
-        limits.put("MAX", MSG.view_alert_definition_condition_editor_common_max());
+        limits.put("MIN", MSG.common_title_monitor_minimum());
+        limits.put("AVG", MSG.common_title_monitor_average());
+        limits.put("MAX", MSG.common_title_monitor_maximum());
         minMaxAvgSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
         minMaxAvgSelection.setHoverWidth(200);

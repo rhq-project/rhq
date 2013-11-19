@@ -103,7 +103,7 @@ public class RefreshIntervalMenu extends IMenuButton {
         refreshMenu.setItems(refreshMenuItems);
         setMenu(refreshMenu);
         refreshMenu.setAutoHeight();
-        setTitle(MSG.common_title_change_refresh_time());
+        setTitle(MSG.common_title_refreshInterval());
         setWidth(140);
         setShowTitle(true);
         setTop(0);

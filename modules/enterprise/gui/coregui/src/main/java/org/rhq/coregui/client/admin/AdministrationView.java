@@ -64,7 +64,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_SECURITY_VIEW_ID = new ViewName("Security", MSG.view_admin_security());
     public static final ViewName SECTION_TOPOLOGY_VIEW_ID = new ViewName("Topology", MSG.view_admin_topology());
     public static final ViewName SECTION_CONFIGURATION_VIEW_ID = new ViewName("Configuration",
-        MSG.view_admin_configuration());
+        MSG.common_title_configuration());
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
@@ -202,14 +202,14 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new DriftDefinitionTemplateTypeView();
                 }
             });
-        driftTemplatesItem.setRefreshRequired(true); // we always need a new page        
+        driftTemplatesItem.setRefreshRequired(true); // we always need a new page
 
         NavigationItem metricTemplatesItem = new NavigationItem(MetricTemplateTypeView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new MetricTemplateTypeView();
             }
         });
-        metricTemplatesItem.setRefreshRequired(true); // we always need a new page        
+        metricTemplatesItem.setRefreshRequired(true); // we always need a new page
 
         NavigationItem ignoreResourceTypesItem = new NavigationItem(IgnoreResourceTypesView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {

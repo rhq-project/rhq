@@ -40,6 +40,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -55,22 +56,20 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private static final int BUTTON_WIDTH = 28;
     public final String DATE_TIME_FORMAT = MSG.common_buttonbar_datetime_format_moment_js();
 
-    private Refreshable d3GraphListView;
+    private Refreshable refreshable;
     private Label dateRangeLabel;
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     // just a reference to pass to CustomDateRangeWindow as it must be final
     // so 'this' won't work
     final private ButtonBarDateTimeRangeEditor self;
+    private boolean isAutoRefresh;
     private RefreshIntervalMenu refreshIntervalMenu;
-    private boolean allowPreferenceUpdateRefresh;
+    private EnhancedIButton refreshButton;
 
-    public ButtonBarDateTimeRangeEditor(Refreshable d3GraphListView) {
+    public ButtonBarDateTimeRangeEditor(Refreshable refreshable) {
         this.self = this;
-        this.d3GraphListView = d3GraphListView;
-        // if the encompassing view already handles its own refresh (e.g. AbstractD3GrpahListView) then don't
-        // let a preference update cause a whole gui refresh (which it does by default to apply the new preference).
-        // the two refreshes are redundant at best, step on each other at worst..
-        this.allowPreferenceUpdateRefresh = !(this.d3GraphListView instanceof AutoRefresh);
+        this.refreshable = refreshable;
+        this.isAutoRefresh = this.refreshable instanceof AutoRefresh;
 
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
 
@@ -102,8 +101,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             @Override
             public void onClick(ClickEvent clickEvent) {
                 CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow(MSG
-                    .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(), self,
-                    new Date(CustomDateRangeState.getInstance().getStartTime()), new Date(CustomDateRangeState
+                        .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(), self,
+                        new Date(CustomDateRangeState.getInstance().getStartTime()), new Date(CustomDateRangeState
                         .getInstance().getEndTime()));
                 CustomDateRangeState.getInstance().setCustomDateRangeActive(true);
                 customDateRangeWindow.show();
@@ -116,13 +115,24 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(400);
         dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
-        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime(),
-                CustomDateRangeState.getInstance().getEndTime());
+        showUserFriendlyTimeRange(CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance()
+                .getEndTime());
         toolStrip.addMember(dateRangeLabel);
 
+        // Only allow auto refresh rate change in views actually performing auto refresh, otherwise offer only refresh
         toolStrip.addSpacer(20);
-        refreshIntervalMenu = new RefreshIntervalMenu();
-        toolStrip.addMember(refreshIntervalMenu);
+        if (isAutoRefresh) {
+            refreshIntervalMenu = new RefreshIntervalMenu((AutoRefresh)refreshable);
+            toolStrip.addMember(refreshIntervalMenu);
+        } else {
+            this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
+            refreshButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    redrawGraphs();
+                }
+            });
+            toolStrip.addMember(refreshButton);
+        }
 
         addMember(toolStrip);
     }
@@ -136,7 +146,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }
 
     public void redrawGraphs() {
-        d3GraphListView.refreshData();
+        refreshable.refreshData();
     }
 
     @Override
@@ -179,7 +189,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             endDateMoment = $wnd.moment(endTime),
             dateTimeFormat = this.@org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor::DATE_TIME_FORMAT,
             formattedDateRange = startDateMoment.format(dateTimeFormat) + '  -  ' + endDateMoment.format(dateTimeFormat),
-        timeRange = endDateMoment.from(startDateMoment,true);
+            timeRange = endDateMoment.from(startDateMoment,true);
         $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+' ('+timeRange+')');
     }-*/;
 
@@ -201,6 +211,10 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      * @param endTime   double because JSNI doesn't support long
      */
     public void saveDateRange(double startTime, double endTime) {
+        // if the encompassing view already handles its own refresh (e.g. AbstractD3GrpahListView) then don't
+        // let a preference update cause a whole gui refresh (which it does by default to apply the new preference).
+        // the two refreshes are redundant at best, step on each other at worst..
+        boolean allowPreferenceUpdateRefresh = !isAutoRefresh;
         CustomDateRangeState.getInstance().saveDateRange(startTime, endTime, allowPreferenceUpdateRefresh);
     }
 
@@ -225,8 +239,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      */
     private enum DateTimeButton {
         oneHour("1h", 60 * 60), fourHour("4h", 4 * 60 * 60), eightHour("8h", 8 * 60 * 60), twelveHour("12h",
-            12 * 60 * 60), oneDay("1d", 24 * 60 * 60), fiveDay("5d", 5 * 24 * 60 * 60), oneMonth("1m",
-            30 * 24 * 60 * 60), threeMonth("3m", 3 * 30 * 24 * 60 * 60), sixMonth("6m", 6 * 30 * 24 * 60 * 60);
+                12 * 60 * 60), oneDay("1d", 24 * 60 * 60), fiveDay("5d", 5 * 24 * 60 * 60), oneMonth("1m",
+                30 * 24 * 60 * 60), threeMonth("3m", 3 * 30 * 24 * 60 * 60), sixMonth("6m", 6 * 30 * 24 * 60 * 60);
 
         private final String label;
         private final long timeSpanInSeconds;
@@ -241,7 +255,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     public class CustomDateRangeWindow extends Window {
 
         public CustomDateRangeWindow(String title, String windowTitle,
-            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {
+                                     final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor,
+                                     Date startTime, Date endTime) {
             super();
             setTitle(windowTitle + ": " + title);
             setShowMinimizeButton(false);
@@ -272,7 +287,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             final TimeItem endTimeItem = new TimeItem("endTime", MSG.common_buttonbar_end_time());
             endTimeItem.setValue(endTime);
             form.setFields(startDateItem, startTimeItem, new RowSpacerItem(), endDateItem, endTimeItem,
-                new RowSpacerItem());
+                    new RowSpacerItem());
             this.addItem(form);
 
             HLayout buttonHLayout = new HLayout();
@@ -295,14 +310,14 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                     Date endTimeDate = (Date) endTimeItem.getValue();
 
                     Date newStartDate = new Date(startDateItem.getValueAsDate().getYear(), startDateItem
-                        .getValueAsDate().getMonth(), startDateItem.getValueAsDate().getDate(), startTimeDate
-                        .getHours(), startTimeDate.getMinutes());
+                            .getValueAsDate().getMonth(), startDateItem.getValueAsDate().getDate(), startTimeDate
+                            .getHours(), startTimeDate.getMinutes());
                     Date newEndDate = new Date(endDateItem.getValueAsDate().getYear(), endDateItem.getValueAsDate()
-                        .getMonth(), endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate
-                        .getMinutes());
+                            .getMonth(), endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate
+                            .getMinutes());
                     buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
                     showUserFriendlyTimeRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate()
-                        .getTime());
+                            .getTime());
                     redrawGraphs();
                     CustomDateRangeWindow.this.destroy();
                 }
@@ -325,4 +340,4 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         }
     }
 
-}
+} 

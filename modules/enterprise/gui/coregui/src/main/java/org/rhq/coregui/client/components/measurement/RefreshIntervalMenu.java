@@ -33,6 +33,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.inventory.AutoRefresh;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
@@ -45,9 +46,20 @@ public class RefreshIntervalMenu extends IMenuButton {
     private HashMap<Integer, String> refreshMenuMappings;
     private MenuItem[] refreshMenuItems;
     private int refreshInterval = 0;
+    private AutoRefresh autoRefresh;
 
-    public RefreshIntervalMenu() {
+
+    /**
+     * Constructor for creating an AutoRefresh'able view.
+     * @param autoRefresh object capable of autoRefreshing.
+     */
+    public RefreshIntervalMenu(AutoRefresh autoRefresh) {
         super();
+        this.autoRefresh = autoRefresh;
+        setup();
+    }
+
+    private void setup(){
         Menu refreshMenu = new Menu();
         refreshMenu.setShowShadow(true);
         refreshMenu.setShadowDepth(10);
@@ -65,7 +77,7 @@ public class RefreshIntervalMenu extends IMenuButton {
                         }
                     }
                     UserSessionManager.getUserPreferences().setPageRefreshInterval(refreshInterval,
-                        new RefreshCallback());
+                            new RefreshCallback());
                 }
             }
         };
@@ -144,6 +156,9 @@ public class RefreshIntervalMenu extends IMenuButton {
                 //update the menu
                 getMenu().setItems(refreshMenuItems);
             }
+        }
+        if(null != autoRefresh){
+            autoRefresh.startRefreshCycle();
         }
         markForRedraw();
     }

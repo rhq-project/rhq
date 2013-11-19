@@ -120,8 +120,36 @@
 
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
+                <dependencies>
+                    <!-- depend on the CLI so that we can extract files out of its distribution -->
+                    <dependency>
+                        <groupId>org.rhq</groupId>
+                        <artifactId>rhq-remoting-cli</artifactId>
+                        <version>${project.version}</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
                 <executions>
+                    <execution>
+                        <id>copy-script-modules-from-cli</id>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <echo>Copying sample modules from the CLI distribution</echo>
+                                <unzip src="${settings.localRepository}/org/rhq/rhq-remoting-cli/${project.version}/rhq-remoting-cli-${project.version}.zip"
+                                       dest="${basedir}/target/downloadable-resources/script-modules">
 
+                                    <patternset>
+                                        <include name="**/samples/modules/**.js"/>
+                                    </patternset>
+                                    <globmapper from="rhq-remoting-cli-${project.version}/samples/modules/*" to="*"/>
+                                </unzip>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
                     <execution>
                         <id>prepare-container</id>
                         <phase>generate-resources</phase>

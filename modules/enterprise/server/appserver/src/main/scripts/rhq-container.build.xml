@@ -408,6 +408,13 @@
             <fileset dir="${basedir}/src/main/downloadable-resources" />
         </copy>
 
+        <echo>Deploying static downloadable content pulled from other modules</echo>
+        <copy todir="${rhq.ear.dir}/rhq-downloads"
+              verbose="true"
+              failonerror="false">
+            <fileset dir="${basedir}/target/downloadable-resources" />
+        </copy>
+
         <echo>Make sure our downloads directories exist</echo>
         <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-agent" />
         <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-client" />

@@ -91,7 +91,7 @@ import org.rhq.core.domain.resource.Resource;
         + "    WHERE s.resource.id in (:resourceIds)"),
     @NamedQuery(name = StorageNode.QUERY_UPDATE_OPERATION_MODE, query =
         "UPDATE StorageNode s SET s.operationMode = :newOperationMode WHERE s.operationMode = :oldOperationMode"),
-    @NamedQuery(name = StorageNode.QUERY_FIND_UNACKEDA_ALERTS_COUNTS, query =
+    @NamedQuery(name = StorageNode.QUERY_FIND_UNACKED_ALERTS_COUNTS, query =
           " SELECT resource.id, COUNT(alert.id)"
         + " FROM Alert alert JOIN alert.alertDefinition alertDef JOIN alertDef.resource resource"
         + " WHERE alert.acknowledgeTime = -1 AND resource.resourceType.plugin = 'RHQStorage'"
@@ -115,7 +115,7 @@ public class StorageNode implements Serializable {
     public static final String QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES = "StorageNode.findScheduleIdsByGrandparentResourceIdAndMeasurementDefinitionNames";
     public static final String QUERY_UPDATE_REMOVE_LINKED_RESOURCES = "StorageNode.updateRemoveLinkedResources";
     public static final String QUERY_UPDATE_OPERATION_MODE = "StorageNode.updateOperationMode";
-    public static final String QUERY_FIND_UNACKEDA_ALERTS_COUNTS = "StorageNode.findUnackedAlertsCounts";
+    public static final String QUERY_FIND_UNACKED_ALERTS_COUNTS = "StorageNode.findUnackedAlertsCounts";
 
     private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
 

@@ -477,11 +477,7 @@ public class MetricsServer {
             dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, lastHour.getMillis());
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
         }
-        stopwatch.stop();
-        totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset();
 
-        stopwatch.start();
         updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, sixHourTimeSlice,
             configuration.getOneHourTimeSliceDuration());
         if (!updatedSchedules.isEmpty()) {
@@ -489,11 +485,7 @@ public class MetricsServer {
             updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules,
                 configuration.getSixHourTimeSliceDuration());
         }
-        stopwatch.stop();
-        totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset();
 
-        stopwatch.start();
         updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
             twentyFourHourTimeSlice, configuration.getSixHourTimeSliceDuration());
         if (!updatedSchedules.isEmpty()) {

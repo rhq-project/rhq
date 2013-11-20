@@ -123,6 +123,34 @@ public class GroupMembersHealthView extends MembersView {
             }
         });
 
+        // TODO, fix button name!
+        addTableAction(MSG.common_title_compareMetrics() + "- Newest!", new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return selection != null && selection.length > 1;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (selection == null || selection.length == 0) {
+                    return;
+                }
+                // keyed on metric name - string[0] is the metric label, [1] is the units
+                int[] resourceIds = new int[selection.length];
+                int i = 0;
+                for (ListGridRecord record : selection) {
+                    Integer defId = record.getAttributeAsInt(FIELD_ID);
+                    resourceIds[i++] = defId.intValue();
+                }
+
+                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compareMetrics());
+                GroupMembersComparisonView2 view = new GroupMembersComparisonView2(groupComposite, resourceIds);
+                window.addItem(view);
+                window.show();
+                GroupMembersHealthView.this.refreshTableInfo();
+            }
+        });
+
     }
 
     public boolean isCanModifyMembers() {

@@ -167,10 +167,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         long start = System.currentTimeMillis();
         Scan scan = new Scan(start, !changesOnly);
 
-        // TODO back to debug
-        LOG.info("Scan Starting: " + new Date(start));
         if (LOG.isDebugEnabled()) {
-            //log.debug("Scan Starting: " + new Date(start));
+            LOG.debug("Scan Starting: " + new Date(start));
         }
 
         AvailabilityType parentAvailabilityType = null;
@@ -207,11 +205,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         scan.setEndTime(System.currentTimeMillis());
 
-        // TODO back to debug
-        LOG.info("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
-        // Is this too much logging?
         if (LOG.isDebugEnabled()) {
-            //log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
+            LOG.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
         }
 
         addScanHistory(scan);

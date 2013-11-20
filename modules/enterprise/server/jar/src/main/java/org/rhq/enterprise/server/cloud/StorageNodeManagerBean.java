@@ -858,7 +858,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             for (Integer resourceId : alertCountsByResource.keySet()) {
                 currentResourceId = resourceId;
                 while (!resourceIdToStorageNodeMap.containsKey(currentResourceId)) {
-                    currentResourceId = entityManager.find(Resource.class, currentResourceId).getId();
+                    currentResourceId = entityManager.find(Resource.class, currentResourceId).getParentResource().getId();
                 }
                 Integer alertsForResource = alertCountsByResource.get(resourceId);
                 StorageNode storageNode = resourceIdToStorageNodeMap.get(currentResourceId);
@@ -883,13 +883,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
      * is a storage node resource itself.
      */
     private Map<Integer, Integer> findStorageNodeAlertCountsByResource() {
-        List<Integer[]> counts = entityManager.createNamedQuery(StorageNode.QUERY_FIND_UNACKEDA_ALERTS_COUNTS)
+        List<Object[]> counts = entityManager.createNamedQuery(StorageNode.QUERY_FIND_UNACKED_ALERTS_COUNTS)
             .getResultList();
         Map<Integer, Integer> alertCounts = new TreeMap<Integer, Integer>();
 
-        for (Integer[] row : counts) {
-            Integer resourceId = row[0];
-            Integer count = row[1];
+        for (Object[] row : counts) {
+            Integer resourceId = (Integer) row[0];
+            Integer count = ((Long) row[1]).intValue();
             alertCounts.put(resourceId, count);
         }
 

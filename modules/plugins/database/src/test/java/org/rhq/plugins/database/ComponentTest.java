@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -136,9 +136,9 @@ public abstract class ComponentTest {
      */
     private EventManager eventManager;
 
-    private PluginContainer pluginContainer = PluginContainer.getInstance();
+    private final PluginContainer pluginContainer = PluginContainer.getInstance();
 
-    private SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+    private final SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
     /**
      * Scan all processes before starting; false will disable this feature.
@@ -152,8 +152,8 @@ public abstract class ComponentTest {
     private final File temporaryDirectory = temp;
     private final File dataDirectory = temp;
     private final String pluginContainerName = "rhq";
-    private final OperationContext operationContext = new OperationContextImpl(0);
-    private final ContentContext contentContext = new ContentContextImpl(0);
+    private final OperationContext operationContext = new OperationContextImpl(0, null);
+    private final ContentContext contentContext = new ContentContextImpl(0, null);
     private PluginContainerDeployment pluginContainerDeployment = null;
     private Resource platform;
     private ResourceContainer platformContainer;
@@ -296,10 +296,10 @@ public abstract class ComponentTest {
         String rclassname = pmm.getComponentClass(type);
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
-        availabilityContext = new AvailabilityContextImpl(cresource);
+        availabilityContext = new AvailabilityContextImpl(cresource, pluginContainer.getInventoryManager());
         inventoryContext = new InventoryContextImpl(cresource);
 
-        EventContext eventContext = new EventContextImpl(resource);
+        EventContext eventContext = new EventContextImpl(resource, eventManager);
         ResourceContext context = new ResourceContext(cresource, parentComponent,
                 null, rdc, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,

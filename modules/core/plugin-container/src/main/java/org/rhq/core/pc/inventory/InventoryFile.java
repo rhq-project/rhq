@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
@@ -48,11 +45,23 @@ import org.rhq.core.pc.PluginContainer;
  * @author John Mazzitelli
  */
 public class InventoryFile {
-    private Log log = LogFactory.getLog(InventoryFile.class);
+    private static final Log log = LogFactory.getLog(InventoryFile.class);
 
     private final File inventoryFile;
     private Resource platform;
     private Map<String, ResourceContainer> resourceContainers; // keyed on UUID
+
+    private final InventoryManager inventoryManager;
+
+    /**
+     * Constructor for {@link InventoryFile} that will read and write inventory data to the given file.
+     *
+     * @param inventoryFile the path to the inventory.dat file
+     */
+    public InventoryFile(File inventoryFile, InventoryManager inventoryManager) {
+        this.inventoryFile = inventoryFile;
+        this.inventoryManager = inventoryManager;
+    }
 
     /**
      * Constructor for {@link InventoryFile} that will read and write inventory data to the given file.
@@ -60,7 +69,7 @@ public class InventoryFile {
      * @param inventoryFile the path to the inventory.dat file
      */
     public InventoryFile(File inventoryFile) {
-        this.inventoryFile = inventoryFile;
+        this(inventoryFile, PluginContainer.getInstance().getInventoryManager());
     }
 
     public File getInventoryFile() {
@@ -138,7 +147,6 @@ public class InventoryFile {
     }
 
     private void removeIgnoredResourcesFromChildren(Resource resource, Set<String> uuidsToIgnore) {
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         Set<Resource> children = inventoryManager.getContainerChildren(resource);
         if (!children.isEmpty() && !uuidsToIgnore.isEmpty()) {
             Iterator<Resource> iterator = children.iterator();
@@ -164,7 +172,6 @@ public class InventoryFile {
                 resource.setResourceType(fullResourceType);
 
                 // now reconnect all its children's types
-                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
                 Set<Resource> children = inventoryManager.getContainerChildren(resource);
                 for (Resource child : children) {
                     connectTypes(child, uuidsToIgnore);
@@ -184,7 +191,6 @@ public class InventoryFile {
 
     private void addAllUUIDsToList(Resource resource, Set<String> list) {
         list.add(resource.getUuid());
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         Set<Resource> children = inventoryManager.getContainerChildren(resource);
         for (Resource child : children) {
             addAllUUIDsToList(child, list);

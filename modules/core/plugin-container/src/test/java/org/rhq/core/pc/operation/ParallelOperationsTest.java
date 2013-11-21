@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.operation;
 
 import java.text.SimpleDateFormat;
@@ -71,9 +68,7 @@ public class ParallelOperationsTest {
         pcConfig.setOperationInvocationTimeout(OPERATION_TIMEOUT_MILLIS / 1000L);
         pcConfig.setServerServices(serverServices);
 
-        manager = new MockOperationManager();
-        manager.setConfiguration(pcConfig);
-        manager.initialize();
+        manager = new MockOperationManager(pcConfig);
         println("Starting new test method...");
     }
 
@@ -158,6 +153,10 @@ public class ParallelOperationsTest {
     }
 
     private class MockOperationManager extends OperationManager {
+
+        public MockOperationManager(PluginContainerConfiguration configuration) {
+            super(configuration, null);
+        }
 
         @Override
         protected OperationFacet getOperationFacet(int resourceId, long facetMethodTimeout)

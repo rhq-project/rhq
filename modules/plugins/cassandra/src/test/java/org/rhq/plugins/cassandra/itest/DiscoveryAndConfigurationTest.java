@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.plugins.cassandra.itest;
@@ -60,13 +59,13 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  */
 @Test(groups = { "integration" }, singleThreaded = true, enabled = DiscoveryAndConfigurationTest.ENABLED)
 public class DiscoveryAndConfigurationTest {
+    private static final Log log = LogFactory.getLog(DiscoveryAndConfigurationTest.class);
 
     public static final boolean ENABLED = false;
 
     private static final int TYPE_HIERARCHY_DEPTH = 6;
     protected static final String PLUGIN_NAME = "Cassandra";
 
-    private Log log = LogFactory.getLog(this.getClass());
     private ConfigurationManager configManager;
 
 
@@ -95,7 +94,6 @@ public class DiscoveryAndConfigurationTest {
             }
 
             configManager = PluginContainer.getInstance().getConfigurationManager();
-            configManager.initialize();
             Thread.sleep(10 * 1000L);
 
         } catch (Exception e) {

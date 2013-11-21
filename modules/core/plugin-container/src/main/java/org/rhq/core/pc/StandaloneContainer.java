@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc;
 
 import java.io.BufferedReader;
@@ -67,6 +68,7 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
+import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.standaloneContainer.Command;
 import org.rhq.core.pc.standaloneContainer.History;
@@ -407,7 +409,8 @@ public class StandaloneContainer {
             return;
         }
 
-        OperationContext operationContext = new OperationContextImpl(resourceId);
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationContext operationContext = new OperationContextImpl(resourceId, operationManager);
         OperationServices operationServices = operationContext.getOperationServices();
         opId++;
 

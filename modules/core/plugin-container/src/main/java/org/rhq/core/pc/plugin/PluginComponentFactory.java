@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.plugin;
 
 import java.net.URL;
@@ -36,8 +33,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
@@ -56,9 +51,16 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 public class PluginComponentFactory implements ContainerService {
     private static final Log log = LogFactory.getLog(PluginComponentFactory.class);
 
-    private PluginContainerConfiguration configuration;
-    private InventoryManager inventoryManager;
-    private PluginManager pluginManager;
+    private final InventoryManager inventoryManager;
+    private final PluginManager pluginManager;
+
+    /**
+     * Constructs a new instance.
+     */
+    public PluginComponentFactory(InventoryManager inventoryManager, PluginManager pluginManager) {
+        this.inventoryManager = inventoryManager;
+        this.pluginManager = pluginManager;
+    }
 
     /**
      * This will create a new {@link ResourceDiscoveryComponent} instance that can be used to discover and create
@@ -83,8 +85,7 @@ public class PluginComponentFactory implements ContainerService {
             return null;
         }
 
-        PluginManager pluginMgr = getPluginManager();
-        PluginMetadataManager metadataManager = pluginMgr.getMetadataManager();
+        PluginMetadataManager metadataManager = pluginManager.getMetadataManager();
         String className = metadataManager.getDiscoveryClass(resourceType);
         String typeName = resourceType.getName();
         String pluginName = resourceType.getPlugin();
@@ -116,7 +117,7 @@ public class PluginComponentFactory implements ContainerService {
         ClassLoaderManager classLoaderMgr = pluginManager.getClassLoaderManager();
         ClassLoader classLoader;
         if (parentResourceContainer == null
-            || getInventoryManager().getPlatform().equals(parentResourceContainer.getResource())) {
+            || inventoryManager.getPlatform().equals(parentResourceContainer.getResource())) {
             classLoader = classLoaderMgr.obtainPluginClassLoader(pluginName);
         } else {
             ClassLoader parentClassLoader = parentResourceContainer.getResourceClassLoader();
@@ -156,10 +157,10 @@ public class PluginComponentFactory implements ContainerService {
 
                 public void stop() {
                 }
-            };            
+            };
         }
-        String className = getPluginManager().getMetadataManager().getComponentClass(resourceType);
-        ResourceContainer resourceContainer = getInventoryManager().getResourceContainer(resource);
+        String className = pluginManager.getMetadataManager().getComponentClass(resourceType);
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resource);
         if (resourceContainer == null) {
             throw new PluginContainerException("Resource container not found for " + resource + " - cannot create ResourceComponent.");
         }
@@ -178,7 +179,7 @@ public class PluginComponentFactory implements ContainerService {
     /**
      * Given a resource, this will return the appropriate classloader for that resource.
      * If no classloader has been created for it yet, one will be created by this method.
-     * 
+     *
      * @param resource the resource whose classloader is to be returned (and possibly created if needed)
      *
      * @return the resource's classloader
@@ -187,9 +188,7 @@ public class PluginComponentFactory implements ContainerService {
      */
     public ClassLoader getResourceClassloader(Resource resource) throws PluginContainerException {
         try {
-            InventoryManager inventoryMgr = getInventoryManager();
-            PluginManager pluginMgr = getPluginManager();
-            ClassLoaderManager classLoaderMgr = pluginMgr.getClassLoaderManager();
+            ClassLoaderManager classLoaderMgr = pluginManager.getClassLoaderManager();
 
             ResourceType resourceType = resource.getResourceType();
 
@@ -203,12 +202,12 @@ public class PluginComponentFactory implements ContainerService {
             ResourceContainer parentContainer;
 
             if (parentResource != null) {
-                parentContainer = inventoryMgr.getResourceContainer(parentResource);
+                parentContainer = inventoryManager.getResourceContainer(parentResource);
                 if (parentContainer == null) {
                     throw new PluginContainerException("Missing container for parent " + parentResource + " of "
                             + resource + ".");
                 }
-            } else if (resource.equals(inventoryMgr.getPlatform())) {
+            } else if (resource.equals(inventoryManager.getPlatform())) {
                 // the given resource is our top platform resource - just use its plugin classloader
                 return classLoaderMgr.obtainPluginClassLoader(resourceType.getPlugin());
             } else {
@@ -256,8 +255,7 @@ public class PluginComponentFactory implements ContainerService {
         ResourceDiscoveryComponent discoveryComponent = getDiscoveryComponent(resource.getResourceType(),
             parentContainer);
         if (discoveryComponent != null && discoveryComponent instanceof ClassLoaderFacet) {
-            InventoryManager inventoryMgr = getInventoryManager();
-            additionalJars = inventoryMgr.invokeDiscoveryComponentClassLoaderFacet(resource, discoveryComponent,
+            additionalJars = inventoryManager.invokeDiscoveryComponentClassLoaderFacet(resource, discoveryComponent,
                 parentContainer);
         }
 
@@ -304,40 +302,11 @@ public class PluginComponentFactory implements ContainerService {
         }
     }
 
-    private InventoryManager getInventoryManager() {
-        if (this.inventoryManager == null) {
-            this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        }
-        return this.inventoryManager;
-    }
-
-    private PluginManager getPluginManager() {
-        if (this.pluginManager == null) {
-            this.pluginManager = PluginContainer.getInstance().getPluginManager();
-        }
-        return this.pluginManager;
-    }
-
-    /**
-     * Creates our (initially empty) cache of discovery components.
-     *
-     * @see ContainerService#initialize()
-     */
-    public void initialize() {
-        return;
-    }
-
     /**
      * Clears our cache of discovery components.
      *
      * @see ContainerService#shutdown()
      */
     public void shutdown() {
-        this.inventoryManager = null;
-        this.pluginManager = null;
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
     }
 }

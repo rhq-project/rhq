@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.operation;
 
 import java.util.EnumSet;
@@ -44,6 +45,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.operation.OperationInvocation.Status;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
@@ -62,17 +64,15 @@ import org.rhq.core.util.exception.WrappedRemotingException;
 public class OperationManager extends AgentService implements OperationAgentService, ContainerService {
     private static final String SENDER_THREAD_POOL_NAME = "OperationManager.invoker";
 
-    private final Log log = LogFactory.getLog(OperationManager.class);
+    private static final Log log = LogFactory.getLog(OperationManager.class);
 
-    private PluginContainerConfiguration configuration;
-    private Timer timer;
-    private OperationThreadPoolGateway operationGateway;
+    private final PluginContainerConfiguration configuration;
+    private final Timer timer;
+    private final OperationThreadPoolGateway operationGateway;
 
-    public OperationManager() {
-        super(OperationAgentService.class);
-    }
-
-    public void initialize() {
+    public OperationManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter) {
+        super(OperationAgentService.class, streamRemoter);
+        this.configuration = configuration;
         timer = new Timer(SENDER_THREAD_POOL_NAME + ".timeout-timer");
 
         // read the javadoc on ThreadPoolExecutor and how max pool size is affected when using LinkedBlockingQueue
@@ -95,10 +95,6 @@ public class OperationManager extends AgentService implements OperationAgentServ
     public void shutdown() {
         timer.cancel();
         operationGateway.shutdown();
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
     }
 
     public void invokeOperation(@NotNull final String jobId, final int resourceId, @NotNull final String operationName,

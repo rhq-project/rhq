@@ -1,31 +1,26 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.core.pc.agent;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 
 /**
  * Those plugin container managers that need to expose their interfaces remotely (to the JON Server for example) need to
@@ -34,9 +29,8 @@ import java.util.LinkedHashSet;
  * and "unremote" its client interface).
  */
 public abstract class AgentService {
-    private Class clientInterface;
-    private Collection<AgentServiceLifecycleListener> listeners;
-    private AgentServiceStreamRemoter streamRemoter;
+    private final Class clientInterface;
+    private final AgentServiceStreamRemoter streamRemoter;
 
     /**
      * Creates a new {@link AgentService} object.
@@ -44,38 +38,15 @@ public abstract class AgentService {
      * @param clientInterface the client interface that this agent service wants to make remotely accessible to external
      *                        clients
      */
-    protected AgentService(Class clientInterface) {
+    protected AgentService(Class clientInterface, AgentServiceStreamRemoter streamRemoter) {
         this.clientInterface = clientInterface;
-        this.listeners = new LinkedHashSet<AgentServiceLifecycleListener>();
+        this.streamRemoter = streamRemoter;
     }
 
     /**
-     * This is called when the agent service changes its {@link LifecycleState state} - it will notify all listeners of
-     * the changed state.
-     *
-     * @param newState
-     */
-    public void notifyLifecycleListenersOfNewState(LifecycleState newState) {
-        for (AgentServiceLifecycleListener agentServiceLifecycleListener : listeners) {
-            switch (newState) {
-            case STARTED: {
-                agentServiceLifecycleListener.started(this);
-                break;
-            }
-
-            case STOPPED: {
-                agentServiceLifecycleListener.stopped(this);
-                break;
-            }
-            }
-        }
-    }
-
-    /**
-     * Given any input stream, this will attempt to remote it using the
-     * {@link #setAgentServiceStreamRemoter(AgentServiceStreamRemoter) stream remoter}, thus providing access to
-     * external clients. If there is no remoter available, the same input stream instance passed into this method is
-     * returned as-is.
+     * Given any inputstream, this will attempt to remote it using the {@link AgentServiceStreamRemoter stream remoter},
+     * , thus providing access to external clients. If there is no remoter available, the same input stream instance
+     * passed into this method is returned as-is.
      *
      * <p>If <code>inputStream</code> is <code>null</code>, <code>null</code> is returned.</p>
      *
@@ -87,15 +58,13 @@ public abstract class AgentService {
         if ((inputStream == null) || (streamRemoter == null)) {
             return inputStream;
         }
-
         return streamRemoter.prepareInputStream(inputStream);
     }
 
     /**
-     * Given any output stream, this will attempt to remote it using the
-     * {@link #setAgentServiceStreamRemoter(AgentServiceStreamRemoter) stream remoter}, thus providing access to
-     * external clients. If there is no remoter available, the same output stream instance passed into this method is
-     * returned as-is.
+     * Given any outputstream, this will attempt to remote it using the {@link AgentServiceStreamRemoter stream remoter},
+     * thus providing access to external clients. If there is no remoter available, the same output stream instance
+     * passed into this method is returned as-is.
      *
      * <p>If <code>outputStream</code> is <code>null</code>, <code>null</code> is returned.</p>
      *
@@ -107,38 +76,7 @@ public abstract class AgentService {
         if ((outputStream == null) || (streamRemoter == null)) {
             return outputStream;
         }
-
         return streamRemoter.prepareOutputStream(outputStream);
-    }
-
-    /**
-     * Adds the given listener to the list of listeners that will be notified when this agent service changes its state
-     * (i.e. is started or stopped).
-     *
-     * @param listener
-     */
-    public void addLifecycleListener(AgentServiceLifecycleListener listener) {
-        listeners.add(listener);
-    }
-
-    /**
-     * Removes the given listener so it is no longer notified of changed states.
-     *
-     * @param listener
-     */
-    public void removeLifecycleListener(AgentServiceLifecycleListener listener) {
-        listeners.remove(listener);
-    }
-
-    /**
-     * Sets the remoter object that is responsible for remoting streams. If <code>null</code>, the agent service will
-     * not be able to remote streams to external clients, as in the case when the plugin container is not running inside
-     * an agent (i.e. embedded mode).
-     *
-     * @param remoter
-     */
-    public void setAgentServiceStreamRemoter(AgentServiceStreamRemoter remoter) {
-        streamRemoter = remoter;
     }
 
     /**
@@ -152,10 +90,9 @@ public abstract class AgentService {
     }
 
     /**
-     * The different states agent services can be in. Listeners will be notified when agent services enter one of these
-     * states.
+     * Returns the stream remoter.
      */
-    public enum LifecycleState {
-        STARTED, STOPPED
+    protected AgentServiceStreamRemoter getStreamRemoter() {
+        return streamRemoter;
     }
 }

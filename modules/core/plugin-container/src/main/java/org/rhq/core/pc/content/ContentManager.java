@@ -62,6 +62,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.inventory.InventoryEventListener;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
@@ -80,22 +81,22 @@ public class ContentManager extends AgentService implements ContainerService, Co
     /**
      * Configuration elements for the running of this manager.
      */
-    private PluginContainerConfiguration configuration;
+    private final PluginContainerConfiguration configuration;
 
     /**
      * Flag indicating whether or not this instance of the manager should run automatic, scheduled discoveries.
      */
-    private boolean scheduledDiscoveriesEnabled;
+    private final boolean scheduledDiscoveriesEnabled;
 
     /**
      * Executor used in running discoveries.
      */
-    private ScheduledThreadPoolExecutor discoveryThreadPoolExecutor;
+    private final ScheduledThreadPoolExecutor discoveryThreadPoolExecutor;
 
     /**
      * Executor used for CRUD operations on content.
      */
-    private ExecutorService crudExecutor;
+    private final ExecutorService crudExecutor;
 
     /**
      * Manages the scheduled discoveries, keeping them ordered on next execution time.
@@ -105,15 +106,16 @@ public class ContentManager extends AgentService implements ContainerService, Co
     /**
      * Event listener to receive notifications of changes to the inventory.
      */
-    private ContentInventoryEventListener inventoryEventListener;
+    private final ContentInventoryEventListener inventoryEventListener;
+    private final InventoryManager inventoryManager;
 
-    public ContentManager() {
-        super(ContentAgentService.class);
-    }
+    public ContentManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager im) {
+        super(ContentAgentService.class, streamRemoter);
 
-    public void initialize() {
         LOG.info("Initializing Content Manager...");
 
+        this.configuration = configuration;
+        this.inventoryManager = im;
         // Determine discovery mode - we only enable discovery if we are inside the agent and the period is positive non-zero
         this.scheduledDiscoveriesEnabled = (configuration.getContentDiscoveryPeriod() > 0);
 
@@ -147,31 +149,26 @@ public class ContentManager extends AgentService implements ContainerService, Co
             inventoryEventListener = new ContentInventoryEventListener();
 
             // the inventory manager has probably already activated some resources, so let's prepopulate our schedules
-            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
             im.notifyForAllActivatedResources(inventoryEventListener);
 
             // now ask that the inventory manager tell us about resources that will be activated in the future
             im.addInventoryEventListener(inventoryEventListener);
+        } else {
+            inventoryEventListener = null;
         }
         LOG.info("Content Manager initialized...");
     }
 
     public void shutdown() {
         LOG.info("Shutting down Content Manager...");
-        PluginContainer pluginContainer = PluginContainer.getInstance();
-        pluginContainer.shutdownExecutorService(discoveryThreadPoolExecutor, true);
+        PluginContainer.shutdownExecutorService(discoveryThreadPoolExecutor, true);
         // pass false, so we don't interrupt a plugin in the middle of a content update
-        pluginContainer.shutdownExecutorService(crudExecutor, false);
-        pluginContainer.getInventoryManager().removeInventoryEventListener(inventoryEventListener);
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
+        PluginContainer.shutdownExecutorService(crudExecutor, false);
+        inventoryManager.removeInventoryEventListener(inventoryEventListener);
     }
 
     public Set<ResourcePackageDetails> getLastDiscoveredResourcePackages(int resourceId) {
         // Get the resource component
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
 
         // Nothing to do if the container doesn't exist or isn't running, so punch out
@@ -356,7 +353,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
          */
 
         // Make sure the resource still exists, otherwise don't bother rescheduling
-        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager().getResourceContainer(
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(
             discoveryInfo.getResourceId());
 
         if (resourceContainer != null) {
@@ -502,7 +499,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
      * Schedules any necessary discoveries for the specified resource.
      * This is called when a resource is newly activated - as when a plugin configuration change is made.
      * If a schedule is already in place, it will remain.
-     * 
+     *
      * @param resource resource for which discoveries are being scheduled
      */
     private synchronized void scheduleDiscoveries(Resource resource) {
@@ -585,7 +582,6 @@ public class ContentManager extends AgentService implements ContainerService, Co
             return null;
         }
 
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
 
         Set<ResourcePackageDetails> updatedPackageSet = new HashSet<ResourcePackageDetails>(details);
@@ -674,6 +670,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
 
         return null;
+    }
+
+    public InventoryManager getInventoryManager() {
+        return inventoryManager;
     }
 
     // Inner Classes  --------------------------------------------

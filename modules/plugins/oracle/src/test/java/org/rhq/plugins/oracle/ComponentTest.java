@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -151,8 +151,8 @@ public abstract class ComponentTest {
             resource.setParentResource(pluginContainer.getInventoryManager().getPlatform());
 
             ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
-            EventContext eventContext = new EventContextImpl(resource);
-            AvailabilityContext availContext = new AvailabilityContextImpl(resource);
+            EventContext eventContext = new EventContextImpl(resource, eventManager);
+            AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
             InventoryContext inventoryContext = new InventoryContextImpl(resource);
             ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
@@ -189,8 +189,8 @@ public abstract class ComponentTest {
         ResourceDiscoveryComponent rdc = (ResourceDiscoveryComponent) Class.forName(s).newInstance();
         log.debug("rdc=" + rdc);
 
-        EventContext eventContext = new EventContextImpl(resource);
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource);
+        EventContext eventContext = new EventContextImpl(resource, eventManager);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
             systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
@@ -221,8 +221,8 @@ public abstract class ComponentTest {
         String rclassname = pmm.getComponentClass(type);
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
-        EventContext eventContext = new EventContextImpl(resource);
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource);
+        EventContext eventContext = new EventContextImpl(resource, eventManager);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
@@ -234,7 +234,7 @@ public abstract class ComponentTest {
 
     /**
      * Called before the configuration is processed; override to set specific plugin parameters.
-     * @see #configuration
+     * @see Configuration
      */
     protected void setConfiguration(Configuration configuration, ResourceType resourceType) {
     }

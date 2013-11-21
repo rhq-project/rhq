@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.core.pc.upgrade;
@@ -34,7 +34,6 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -61,11 +60,11 @@ public class ResourceUpgradeDelegate {
 
     private boolean enabled = true;
 
-    private Set<ResourceUpgradeRequest> requests = new HashSet<ResourceUpgradeRequest>();
-    private Set<ResourceUpgradeRequest> originalResourceData = new HashSet<ResourceUpgradeRequest>();
-    private InventoryManager inventoryManager;
-    private Set<Resource> failedResources = new HashSet<Resource>();
-    private Map<Resource, Set<ResourceType>> failedResourceTypesPerParent = new HashMap<Resource, Set<ResourceType>>();
+    private final Set<ResourceUpgradeRequest> requests = new HashSet<ResourceUpgradeRequest>();
+    private final Set<ResourceUpgradeRequest> originalResourceData = new HashSet<ResourceUpgradeRequest>();
+    private final InventoryManager inventoryManager;
+    private final Set<Resource> failedResources = new HashSet<Resource>();
+    private final Map<Resource, Set<ResourceType>> failedResourceTypesPerParent = new HashMap<Resource, Set<ResourceType>>();
     private boolean mergeFailed;
 
     public ResourceUpgradeDelegate(InventoryManager inventoryManager) {
@@ -261,7 +260,7 @@ public class ResourceUpgradeDelegate {
 
         ResourceDiscoveryComponent<ResourceComponent<T>> discoveryComponent;
         try {
-            discoveryComponent = PluginContainer.getInstance().getPluginComponentFactory()
+            discoveryComponent = inventoryManager.getPluginComponentFactory()
                 .getDiscoveryComponent(resource.getResourceType(), parentResourceContainer);
         } catch (ResourceTypeNotEnabledException rtne) {
             // no point in continuing if the resource is unmanageable because its type has been disabled

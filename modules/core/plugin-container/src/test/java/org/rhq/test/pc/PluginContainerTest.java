@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.test.pc;
@@ -178,16 +178,7 @@ public class PluginContainerTest extends JMockTest {
      */
     public static void startConfiguredPluginContainer() {
         PluginContainer.getInstance().setConfiguration(getCurrentPluginContainerConfiguration());
-
         PluginContainer.getInstance().initialize();
-
-        try {
-            while (!PluginContainer.getInstance().isStarted()) {
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.", e);
-        }
 
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
         for (int i = 0; i < CURRENT_SETUP.get().numberOfInitialDiscoveries(); ++i) {
@@ -409,6 +400,8 @@ public class PluginContainerTest extends JMockTest {
         if ("classpath".equals(pluginUri.getScheme())) {
             String path = pluginUri.getPath();
             pluginUrl = testObject.getClass().getResource(path);
+            if (pluginUrl == null)
+                throw new IOException("could not find " + pluginUri);
         } else {
             pluginUrl = pluginUri.toURL();
         }

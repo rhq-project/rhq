@@ -17,19 +17,25 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.core.pc;
+package org.rhq.core.pc.bundle;
 
-/**
- * An interface that all plugin container services and managers will implement.
- * Hook so container service can stop these components.
- *
- * @author Greg Hinkle
- * @author John Mazzitelli
- */
-public interface ContainerService {
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-    /**
-     * Stops the container service which effectively releases all runtime resources such as running threads.
-     */
-    void shutdown();
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
+
+public class MockAgentServiceStreamRemoter implements AgentServiceStreamRemoter {
+
+    @Override
+    public InputStream prepareInputStream(InputStream stream) {
+        return new ByteArrayInputStream(new byte[0]);
+    }
+
+    @Override
+    public OutputStream prepareOutputStream(OutputStream stream) {
+        return new ByteArrayOutputStream();
+    }
+
 }

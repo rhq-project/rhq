@@ -267,7 +267,6 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         if (testConfigurationManager == null) {
             testConfigurationManager = this.pluginContainer.getConfigurationManager();
             testConfigurationManager = pluginContainer.getConfigurationManager();
-            testConfigurationManager.initialize();
             Thread.sleep(20 * 1000L);
         }
         //iterate through list of nodes and make sure they've all been discovered

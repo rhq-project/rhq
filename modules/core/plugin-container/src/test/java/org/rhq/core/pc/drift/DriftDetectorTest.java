@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.core.pc.drift;
@@ -73,10 +73,7 @@ public class DriftDetectorTest extends DriftTest {
 
         scheduleQueue = new ScheduleQueueImpl();
 
-        detector = new DriftDetector();
-        detector.setDriftClient(driftClient);
-        detector.setChangeSetManager(changeSetMgr);
-        detector.setScheduleQueue(scheduleQueue);
+        detector = new DriftDetector(scheduleQueue, changeSetMgr, driftClient);
     }
 
     @Test
@@ -230,7 +227,7 @@ public class DriftDetectorTest extends DriftTest {
 
     @Test
     public void skipDetectionForScheduledThatIsDisabled() throws Exception {
-        detector.setDriftClient(new DriftClientTestStub() {
+        DriftClientTestStub driftClient = new DriftClientTestStub() {
             {
                 setBaseDir(resourceDir);
             }
@@ -239,7 +236,7 @@ public class DriftDetectorTest extends DriftTest {
             public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
                 fail("Should not invoke drift client when drift definition is disabled");
             }
-        });
+        };
 
         DriftDefinition def = driftDefinition("disabled-config-test", resourceDir.getAbsolutePath());
         def.setEnabled(false);
@@ -252,6 +249,7 @@ public class DriftDetectorTest extends DriftTest {
         touch(server1Conf);
 
         scheduleQueue.addSchedule(schedule);
+        detector = new DriftDetector(scheduleQueue, changeSetMgr, driftClient);
         detector.run();
 
         // make sure that the next scan time is not updated
@@ -886,7 +884,7 @@ public class DriftDetectorTest extends DriftTest {
         // was previously detected. It should not however, produce a new current snapshot
         // since there are no changes on the file system.
         final AtomicBoolean repeatChangeSetCalled = new AtomicBoolean(false);
-        detector.setDriftClient(new DriftClientTestStub() {
+        DriftClientTestStub driftClient = new DriftClientTestStub() {
             {
                 setBaseDir(resourceDir);
             }
@@ -904,9 +902,10 @@ public class DriftDetectorTest extends DriftTest {
                     + "is wrong");
                 assertEquals(version, 1, "The snapshot version should not have changed since no new drift was detected");
             }
-        });
+        };
 
         schedule.resetSchedule();
+        detector = new DriftDetector(scheduleQueue, changeSetMgr, driftClient);
         detector.run();
 
         // verify that the current snapshot file has not changed

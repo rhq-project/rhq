@@ -1,34 +1,29 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc;
 
 import java.beans.Introspector;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -55,8 +50,9 @@ import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.agent.AgentServiceLifecycleListener;
 import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.bundle.BundleManager;
+import org.rhq.core.pc.configuration.ConfigManagementFactory;
+import org.rhq.core.pc.configuration.ConfigManagementFactoryImpl;
 import org.rhq.core.pc.configuration.ConfigurationManager;
-import org.rhq.core.pc.configuration.ConfigurationManagerInitializer;
 import org.rhq.core.pc.content.ContentManager;
 import org.rhq.core.pc.drift.DriftManager;
 import org.rhq.core.pc.event.EventManager;
@@ -66,8 +62,12 @@ import org.rhq.core.pc.inventory.ResourceFactoryManager;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
+import org.rhq.core.pc.plugin.PluginLifecycleListenerManager;
+import org.rhq.core.pc.plugin.PluginLifecycleListenerManagerImpl;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.support.SupportManager;
+import org.rhq.core.pc.util.ComponentService;
+import org.rhq.core.pc.util.ComponentServiceImpl;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.util.FileUtils;
 
@@ -87,7 +87,7 @@ public class PluginContainer {
 
     private static final PluginContainer INSTANCE = new PluginContainer();
 
-    private final Log log = LogFactory.getLog(PluginContainer.class);
+    private static final Log log = LogFactory.getLog(PluginContainer.class);
 
     private static final class NullRebootRequestListener implements RebootRequestListener {
         @Override
@@ -95,34 +95,12 @@ public class PluginContainer {
         }
     }
 
-    /**
-     * Invoked by the plugin container immediately after it is initialized
-     */
-    public static interface InitializationListener {
-        /**
-         * Notifies the listener that the plugin container has been initialized. This method executes in the same
-         * thread in which {@link PluginContainer#initialize()} is executing.
-         */
-        void initialized();
-    }
-
-    /**
-     * Invoked by the plugin container immediately after it is shutdown
-     */
-    public static interface ShutdownListener {
-        /**
-         * Notifies the listener that the plugin container has been shutdown. This method executes in the same
-         * thread in which {@link PluginContainer#shutdown()} is executing.
-         */
-        void shutdown();
-    }
-
     // our management interface
     private PluginContainerMBeanImpl mbean;
 
     private PluginContainerConfiguration configuration;
     private String version;
-    private boolean started = false;
+    private volatile boolean started = false;
 
     private PluginManager pluginManager;
     private PluginComponentFactory pluginComponentFactory;
@@ -137,22 +115,18 @@ public class PluginContainer {
     private BundleManager bundleManager;
     private DriftManager driftManager;
 
-    private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
+    private final Collection<AgentServiceLifecycleListener> agentServiceListeners = new CopyOnWriteArraySet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
     private AgentRegistrar agentRegistrar = null;
 
     private RebootRequestListener rebootListener = new NullRebootRequestListener();
 
     // this is to prevent race conditions on startup between components from all the different managers
-    private ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private List<InitializationListener> initListeners = new ArrayList<InitializationListener>();
-    private List<ShutdownListener> shutdownListeners = new ArrayList<ShutdownListener>();
-    private Object initListenersLock = new Object();
-    private Object shutdownListenersLock = new Object();
-    private boolean shuttingDown;
     private long shutdownStartTime;
     private boolean shutdownGracefully;
+    private volatile boolean shuttingDown;
 
     /**
      * Returns the singleton instance.
@@ -309,31 +283,28 @@ public class PluginContainer {
 
             ResourceContainer.initialize(configuration);
 
-            pluginManager = new PluginManager();
-            pluginComponentFactory = new PluginComponentFactory();
-            inventoryManager = new InventoryManager();
-            measurementManager = new MeasurementManager();
-            configurationManager = new ConfigurationManager();
-            operationManager = new OperationManager();
-            resourceFactoryManager = new ResourceFactoryManager();
-            contentManager = new ContentManager();
+            PluginLifecycleListenerManager pluginLifecycle = new PluginLifecycleListenerManagerImpl();
+            pluginManager = new PluginManager(configuration, pluginLifecycle);
             eventManager = new EventManager(configuration);
-            supportManager = new SupportManager();
-            bundleManager = new BundleManager();
-            driftManager = new DriftManager();
+            inventoryManager = new InventoryManager(configuration, agentServiceStreamRemoter, pluginManager, eventManager);
+            inventoryManager.initialize();
+            measurementManager = inventoryManager.getMeasurementManager();
+            pluginComponentFactory = inventoryManager.getPluginComponentFactory();
+            ComponentService componentService = new ComponentServiceImpl(pluginManager);
+            ConfigManagementFactory factory = new ConfigManagementFactoryImpl(componentService);
+            configurationManager = new ConfigurationManager(configuration, componentService, factory, agentServiceStreamRemoter, inventoryManager);
+            operationManager = new OperationManager(configuration, agentServiceStreamRemoter);
+            resourceFactoryManager = new ResourceFactoryManager(configuration, agentServiceStreamRemoter, pluginManager);
+            contentManager = new ContentManager(configuration, agentServiceStreamRemoter, inventoryManager);
+            supportManager = new SupportManager(agentServiceStreamRemoter);
+            bundleManager = new BundleManager(configuration, agentServiceStreamRemoter, inventoryManager, measurementManager);
+            driftManager = new DriftManager(configuration, agentServiceStreamRemoter, inventoryManager);
 
-            startContainerService(pluginManager);
-            startContainerService(pluginComponentFactory);
-            startContainerService(inventoryManager);
-            startContainerService(measurementManager);
-            startContainerService(configurationManager);
-            startContainerService(operationManager);
-            startContainerService(resourceFactoryManager);
-            startContainerService(contentManager);
-            startContainerService(eventManager);
-            startContainerService(supportManager);
-            startContainerService(bundleManager);
-            startContainerService(driftManager);
+            for (AgentServiceLifecycleListener ll : agentServiceListeners) {
+                for (AgentService service : services()) {
+                    ll.started(service);
+                }
+            }
 
             started = true;
 
@@ -341,16 +312,22 @@ public class PluginContainer {
         } finally {
             releaseLock(lock);
         }
+    }
 
-        synchronized (initListenersLock) {
-            if (started) {
-                for (InitializationListener listener : initListeners) {
-                    listener.initialized();
-                }
-            }
-        }
-
-        return;
+    /**
+     * Agent services, returned in alphabetical order...
+     */
+    private AgentService[] services() {
+        return new AgentService[] {
+            bundleManager,
+            configurationManager,
+            contentManager,
+            driftManager,
+            inventoryManager,
+            measurementManager,
+            operationManager,
+            resourceFactoryManager,
+            supportManager };
     }
 
     /**
@@ -383,6 +360,12 @@ public class PluginContainer {
                 mbean = null;
             }
 
+            for (AgentServiceLifecycleListener ll : agentServiceListeners) {
+                for (AgentService service : services()) {
+                    ll.stopped(service);
+                }
+            }
+
             if (configuration.isWaitForShutdownServiceTermination()) {
                 log.info("Plugin container shutdown will wait up to "
                     + configuration.getShutdownServiceTerminationTimeout()
@@ -403,7 +386,6 @@ public class PluginContainer {
             pluginManager.shutdown();
 
             agentServiceListeners.clear();
-            agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
             agentServiceStreamRemoter = null;
             agentRegistrar = null;
 
@@ -440,7 +422,6 @@ public class PluginContainer {
             configuration = null;
 
             started = false;
-            shuttingDown = false;
 
             log.info("Plugin container is now shutdown.");
 
@@ -448,16 +429,9 @@ public class PluginContainer {
             if (isInsideAgent) {
                 cleanMemory();
             }
+            shuttingDown = false;
         } finally {
             releaseLock(lock);
-        }
-
-        synchronized (shutdownListenersLock) {
-            if (!started) {
-                for (ShutdownListener listener : shutdownListeners) {
-                    listener.shutdown();
-                }
-            }
         }
 
         return shutdownGracefully;
@@ -485,35 +459,6 @@ public class PluginContainer {
             FileUtils.purge(configuration.getTemporaryDirectory(), false);
         } catch (IOException e) {
             log.warn("Failed to purge contents of temporary directory - cause: " + e);
-        }
-    }
-
-    private void startContainerService(ContainerService containerService) {
-        log.debug("Starting and configuring container service: " + containerService.getClass().getSimpleName());
-
-        containerService.setConfiguration(configuration);
-
-        AgentService agentService = null;
-
-        if (containerService instanceof AgentService) {
-            agentService = (AgentService) containerService;
-
-            agentService.setAgentServiceStreamRemoter(agentServiceStreamRemoter);
-
-            for (AgentServiceLifecycleListener agentServiceListener : agentServiceListeners) {
-                agentService.addLifecycleListener(agentServiceListener);
-            }
-
-            if (containerService instanceof ConfigurationManager) {
-                ConfigurationManagerInitializer initializer = new ConfigurationManagerInitializer();
-                initializer.initialize((ConfigurationManager) containerService);
-            }
-        }
-
-        containerService.initialize();
-
-        if (agentService != null) {
-            agentService.notifyLifecycleListenersOfNewState(AgentService.LifecycleState.STARTED);
         }
     }
 
@@ -580,6 +525,8 @@ public class PluginContainer {
     public PluginComponentFactory getPluginComponentFactory() {
         Lock lock = obtainReadLock();
         try {
+            if (pluginComponentFactory == null)
+                throw new IllegalStateException("pcf");
             return pluginComponentFactory;
         } finally {
             releaseLock(lock);
@@ -741,37 +688,6 @@ public class PluginContainer {
     }
 
     /**
-     * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
-     * the PC is already initialized, then <code>listener</code> will be invoked immediately.
-     *
-     * @param listener The callback object to notify. If a listener with the supplied name is registered, it
-     * will be replaced with the newly supplied listner.
-     */
-    public void addInitializationListener(InitializationListener listener) {
-        synchronized (initListenersLock) {
-            initListeners.add(listener);
-
-            if (started) {
-                listener.initialized();
-            }
-        }
-    }
-
-    /**
-     * Add the callback listener to notify when the plugin container is shutdown. Unlike
-     * {@link #addInitializationListener(String, InitializationListener)} the <code>listener</code> will
-     * not be invoked immediately if the PC is already shutdown.  It will only be invoked on future shutdowns.
-     *
-     * @param listener The callback object to notify. If a listener with the supplied name is registered, it
-     * will be replaced with the newly supplied listener.
-     */
-    public void addShutdownListener(String name, ShutdownListener listener) {
-        synchronized (shutdownListenersLock) {
-            shutdownListeners.add(listener);
-        }
-    }
-
-    /**
      * Initiate shutdown of the specified executor service. If the "waitForShutdownServiceTermination" plugin
      * container configuration property is "true" and the "shutdownServiceTerminationTimeout" has not already expired,
      * then wait for the service to terminate before returning. With the exception of test code, this method should only
@@ -781,7 +697,14 @@ public class PluginContainer {
      *
      * @return true if the executor service terminated, or false if it is still shutting down
      */
-    public boolean shutdownExecutorService(ExecutorService executorService, boolean now) {
+    public static boolean shutdownExecutorService(ExecutorService executorService, boolean now) {
+        if (executorService == null) {
+            throw new NullPointerException("executorService is null");
+        }
+        return getInstance().shutdownExecutorService0(executorService, now);
+    }
+
+    private boolean shutdownExecutorService0(ExecutorService executorService, boolean now) {
         if (now) {
             executorService.shutdownNow();
         } else {

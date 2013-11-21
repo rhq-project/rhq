@@ -1,6 +1,6 @@
- /*
+/*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,15 +16,17 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
 
- import java.util.concurrent.Callable;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -33,8 +35,6 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.util.exception.ThrowableUtil;
-
- import static java.util.concurrent.TimeUnit.SECONDS;
 
  /**
  * Runnable implementation to process Resource create requests.
@@ -52,27 +52,29 @@ public class CreateResourceRunner implements Callable, Runnable {
     /**
      * Handle to the manager that will do most of the logic.
      */
-    private ResourceFactoryManager resourceFactoryManager;
+    private final ResourceFactoryManager resourceFactoryManager;
 
     /**
      * Parent resource on which the child will be created.
      */
-    private int parentResourceId;
+    private final int parentResourceId;
 
     /**
      * Indicates whether or not to execute a runtime scan after the create.
      */
-    private boolean runRuntimeScan;
+    private final boolean runRuntimeScan;
 
     /**
      * ID of the request being processed. This ID will be used when the response is sent back to the caller.
      */
-    private int requestId;
+    private final int requestId;
 
     /**
      * Facet to use to make the call against the plugin.
      */
-    private CreateChildResourceFacet facet;
+    private final CreateChildResourceFacet facet;
+
+    private final InventoryManager inventoryManager;
 
     /**
      * Report to send to the facet as part of the call.
@@ -89,6 +91,7 @@ public class CreateResourceRunner implements Callable, Runnable {
         this.requestId = requestId;
         this.report = report;
         this.runRuntimeScan = runRuntimeScan;
+        this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
     }
 
     // Runnable Implementation  --------------------------------------------
@@ -200,7 +203,6 @@ public class CreateResourceRunner implements Callable, Runnable {
                 LOG.debug("Scheduling service scan to discover newly created [" + report.getResourceType()
                     + "] managed resource with key [" + report.getResourceKey() + "]...");
             }
-            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             Resource discoveredResource = null;
             for (int retry = 1; discoveredResource == null && retry <= SERVICE_SCAN_MAX_RETRY; retry++) {
                 if (LOG.isDebugEnabled()) {
@@ -241,7 +243,6 @@ public class CreateResourceRunner implements Callable, Runnable {
      }
 
      private Resource getDiscoveredResource() {
-         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
          ResourceContainer parentResourceContainer = inventoryManager.getResourceContainer(parentResourceId);
          Resource parentResource = parentResourceContainer.getResource();
          for (Resource childResource : parentResource.getChildResources()) {

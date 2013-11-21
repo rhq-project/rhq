@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.measurement;
 
 import java.util.ArrayDeque;
@@ -31,7 +32,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.ComponentUtil;
@@ -46,12 +46,12 @@ import org.rhq.core.util.exception.ThrowableUtil;
 * @author Greg Hinkle
 */
 public class MeasurementCollectorRunner implements Callable<MeasurementReport>, Runnable {
-    private Log log = LogFactory.getLog(MeasurementCollectorRunner.class);
+    private static final Log log = LogFactory.getLog(MeasurementCollectorRunner.class);
 
-    private MeasurementManager measurementManager;
+    private final MeasurementManager measurementManager;
 
-    // this is only kept when in debug mode to help figure out which metrics are slowing things down. 
-    private ScheduleHistory scheduleHistory = new ScheduleHistory();
+    // this is only kept when in debug mode to help figure out which metrics are slowing things down.
+    private final ScheduleHistory scheduleHistory = new ScheduleHistory();
 
     public MeasurementCollectorRunner(MeasurementManager measurementManager) {
         this.measurementManager = measurementManager;
@@ -65,7 +65,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
             report = this.measurementManager.getActiveReport();
             long start = System.currentTimeMillis();
 
-            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            InventoryManager im = this.measurementManager.getInventoryManager();
 
             Set<ScheduledMeasurementInfo> requests = this.measurementManager.getNextScheduledSet();
 

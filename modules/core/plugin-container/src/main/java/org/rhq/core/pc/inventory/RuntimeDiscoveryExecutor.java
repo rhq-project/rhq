@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
@@ -39,7 +40,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
@@ -58,7 +58,7 @@ import org.rhq.core.util.exception.Severity;
  * @author Ian Springer
  */
 public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
-    private Log log = LogFactory.getLog(RuntimeDiscoveryExecutor.class);
+    private static final Log log = LogFactory.getLog(RuntimeDiscoveryExecutor.class);
 
     private final InventoryManager inventoryManager;
     private final PluginContainerConfiguration pluginContainerConfiguration;
@@ -236,7 +236,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             return;
         }
 
-        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
+        PluginComponentFactory factory = inventoryManager.getPluginComponentFactory();
 
         try {
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.drift;
 
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
@@ -52,33 +53,29 @@ import org.rhq.core.util.file.FileVisitor;
 
 /**
  * Mechanism to detect and report Drift for active Drift Definitions.
- * 
+ *
  * @author John Sanda
  */
 public class DriftDetector implements Runnable {
-    private Log log = LogFactory.getLog(DriftDetector.class);
+    private static final Log log = LogFactory.getLog(DriftDetector.class);
 
     static final String FILE_CHANGESET_FULL = "changeset.txt";
     static final String FILE_CHANGESET_DELTA = "drift-changeset.txt";
     static final String FILE_SNAPSHOT_PINNED = "snapshot.pinned";
 
-    private ScheduleQueue scheduleQueue;
+    private final ScheduleQueue scheduleQueue;
 
-    private ChangeSetManager changeSetMgr;
+    private final ChangeSetManager changeSetMgr;
 
-    private MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+    private final MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
-    private DriftClient driftClient;
+    private final DriftClient driftClient;
 
-    public void setScheduleQueue(ScheduleQueue queue) {
-        scheduleQueue = queue;
-    }
-
-    public void setChangeSetManager(ChangeSetManager changeSetManager) {
-        changeSetMgr = changeSetManager;
-    }
-
-    public void setDriftClient(DriftClient driftClient) {
+    public DriftDetector(ScheduleQueue scheduleQueue,
+            ChangeSetManager changeSetMgr,
+            DriftClient driftClient) {
+        this.scheduleQueue = scheduleQueue;
+        this.changeSetMgr = changeSetMgr;
         this.driftClient = driftClient;
     }
 
@@ -202,7 +199,7 @@ public class DriftDetector implements Runnable {
 
         // get a Set of all files in the detection, consider them initially new files, and we'll knock the
         // list down as we go.  As we build up FileEntries in memory this Set will shrink.  It's marginally
-        // less memory than if we had both in memory at the same time. 
+        // less memory than if we had both in memory at the same time.
         final Set<File> newFiles = new HashSet<File>(1000);
 
         // If the basedir is still valid we need to do a directory tree scan to look for newly added files
@@ -301,12 +298,12 @@ public class DriftDetector implements Runnable {
                 }
             }
 
-            // The new snapshot contains all changed, unchanged and added files. Not removed files.  
+            // The new snapshot contains all changed, unchanged and added files. Not removed files.
             final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>(unchangedEntries);
             snapshotEntries.addAll(changedEntries);
             snapshotEntries.addAll(addedEntries);
 
-            // The snapshot delta contains all changed, added and removed files.  
+            // The snapshot delta contains all changed, added and removed files.
             final List<FileEntry> deltaEntries = new LinkedList<FileEntry>(changedEntries);
             deltaEntries.addAll(removedEntries);
             deltaEntries.addAll(addedEntries);
@@ -363,15 +360,15 @@ public class DriftDetector implements Runnable {
     /**
      * File.canRead() is basically a security check and does not guarantee that the file contents can truly be read.
      * Certain files, like socket files on linux, can not be processed and it's not known until actually trying to
-     * construct a FileInputStream, as is done when we actually try to generate the digest. These files will generate 
+     * construct a FileInputStream, as is done when we actually try to generate the digest. These files will generate
      * a FileNotFoundException. This method will catch, log and suppress that issue, and return null
      * indicating the file is not suitable for drift detection.
-     * 
+     *
      * @param basedir the drift def base directory
      * @param file the new file to add
      * @return the new FileEntry, or null if this file is not appropriate for drift detection (typically if the
      * underlying file does not support the needed File operations.
-     * @throws Will throw unexpected IOExceptions, outside of the FileNotFoundException it looks for. 
+     * @throws IOException if something unexpected occurs, outside of the FileNotFoundException it looks for.
      */
     private FileEntry getAddedFileEntry(File basedir, File file) throws IOException {
         FileEntry result = null;
@@ -426,7 +423,7 @@ public class DriftDetector implements Runnable {
 
     /**
      * Process the entries for the snapshotReader. Each entry will be placed in one of the various Lists depending
-     * on what bucket it fall into. 
+     * on what bucket it fall into.
      * @return true if unchangedEntries (meaning no drift) had timestamp/filesize info updated, in which case the
      * snapshot should be re-written to disk even if there was no drift.
      * @throws IOException

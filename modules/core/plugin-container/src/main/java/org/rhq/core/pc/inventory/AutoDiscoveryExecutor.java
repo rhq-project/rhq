@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
@@ -46,8 +43,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.state.discovery.AutoDiscoveryScanType;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
@@ -64,7 +59,7 @@ import org.rhq.core.util.exception.Severity;
  * Standard platform/server inventory detection execution. This looks for top level servers, typically doing
  * process-based discovery.  It should probably be renamed to ServerDiscoveryExecutor as "AutoDiscovery" is
  * pretty much redundant and non-descriptive. This is typically called in a non-blocking fashion, and the report
- * is returned asynchronously to the server. It is available for direct execution via a Future when running in 
+ * is returned asynchronously to the server. It is available for direct execution via a Future when running in
  * an embedded mode. This is complemented by {@link RuntimeDiscoveryExecutor} for discovering new child resources
  * in the existing inventory hierarchy.
  *
@@ -73,19 +68,15 @@ import org.rhq.core.util.exception.Severity;
  * @author Ian Springer
  */
 public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
-    private Log log = LogFactory.getLog(AutoDiscoveryExecutor.class);
+    private static final Log log = LogFactory.getLog(AutoDiscoveryExecutor.class);
 
-    private AutoDiscoveryRequest autoDiscoveryRequest;
+    private final AutoDiscoveryRequest autoDiscoveryRequest;
 
-    private InventoryManager inventoryManager;
+    private final InventoryManager inventoryManager;
 
-    private PluginContainerConfiguration configuration;
-
-    public AutoDiscoveryExecutor(AutoDiscoveryRequest autoDiscoveryRequest, InventoryManager inventoryManager,
-        PluginContainerConfiguration configuration) {
+    public AutoDiscoveryExecutor(AutoDiscoveryRequest autoDiscoveryRequest, InventoryManager inventoryManager) {
         this.autoDiscoveryRequest = autoDiscoveryRequest;
         this.inventoryManager = inventoryManager;
-        this.configuration = configuration;
     }
 
     public void run() {
@@ -113,7 +104,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             } else {
                 log.info("Discovered " + report.getAddedRoots().size() + " new server(s).");
             }
-            
+
             if (log.isDebugEnabled()) {
                 log.debug("Server discovery scan took [" + (report.getEndTime() - report.getStartTime()) + "] ms.");
             }
@@ -163,8 +154,8 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
     private void pluginDiscovery(InventoryReport report, List<ProcessInfo> processInfos) {
         inventoryManager.executePlatformScan();
 
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
+        PluginManager pluginManager = inventoryManager.getPluginManager();
+        PluginComponentFactory factory = inventoryManager.getPluginComponentFactory();
 
         Set<ResourceType> serverTypes = pluginManager.getMetadataManager().getTypesForCategory(ResourceCategory.SERVER);
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());

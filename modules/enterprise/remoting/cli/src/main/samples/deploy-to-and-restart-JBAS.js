@@ -105,6 +105,7 @@ function updateAppAndRestartJBAS(bundleZipFile, jbasDestination, deploymentConfi
 
     var destCrit = new BundleDestinationCriteria
     destCrit.fetchGroup(true)
+    destCrit.addFilterId(destinationId)
 
     var destinations = BundleManager.findBundleDestinationsByCriteria(destCrit);
 

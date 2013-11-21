@@ -97,6 +97,7 @@ exports.updateAppAndRestart = function(bundleZipFile, jbasDestination, deploymen
 
     var destCrit = new BundleDestinationCriteria
     destCrit.fetchGroup(true)
+    destCrit.addFilterId(destinationId)
 
     var destinations = BundleManager.findBundleDestinationsByCriteria(destCrit);
 

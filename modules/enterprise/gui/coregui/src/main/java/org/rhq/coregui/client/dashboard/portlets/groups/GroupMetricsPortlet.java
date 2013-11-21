@@ -20,9 +20,9 @@ package org.rhq.coregui.client.dashboard.portlets.groups;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
@@ -49,14 +49,15 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
@@ -73,9 +74,10 @@ import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityVi
 import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph;
-import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
+import org.rhq.coregui.client.util.async.Command;
+import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -101,6 +103,9 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     //instance ui widgets
 
     protected Timer refreshTimer;
+    
+    private volatile List<MeasurementSchedule> enabledSchedules = null;
+    private volatile boolean renderChart = false;
 
     // final version needed to pass to anon classes
     // so we can call refresh in anon callback handler
@@ -221,10 +226,80 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
      */
     protected void getRecentMetrics() {
 
+        renderChart = true;
+        
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack
 
+        final CountDownLatch latch = CountDownLatch.create(2, new Command() {
+            @Override
+            public void execute() {
+                if (enabledSchedules.isEmpty() || !renderChart) {
+                    DynamicForm row = getEmptyDataForm();
+                    column.addMember(row);
+                    return;
+                }
+                //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+                final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
+                for (MeasurementSchedule schedule : enabledSchedules) {
+                    measurementDefMap.put(schedule.getDefinition().getDisplayName(), schedule.getDefinition());
+                }
+                Set<String> displayNamesSet = measurementDefMap.keySet();
+                //bundle definition ids for async call.
+                int[] definitionArrayIds = new int[displayNamesSet.size()];
+                final String[] displayOrder = new String[displayNamesSet.size()];
+                displayNamesSet.toArray(displayOrder);
+                //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+                Arrays.sort(displayOrder);
+
+                //organize definitionArrayIds for ordered request on server.
+                int index = 0;
+                for (String definitionToDisplay : displayOrder) {
+                    definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
+                        .getId();
+                }
+                
+                fetchEnabledMetrics(enabledSchedules, definitionArrayIds, displayOrder, measurementDefMap, column);
+            }
+        });
+
+        //fetch only enabled schedules
+        fetchEnabledSchedules(latch);
+
+        //fetch the resource type
+        fetchResourceType(latch, column);
+
+        //cleanup
+        for (Canvas child : recentMeasurementsContent.getChildren()) {
+            child.destroy();
+        }
+        recentMeasurementsContent.addChild(column);
+        recentMeasurementsContent.markForRedraw();
+    }
+    
+    private void fetchEnabledSchedules(final CountDownLatch latch) {
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterEnabled(true);
+        criteria.fetchDefinition(true);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        addFilterKey(criteria);
+        GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria, new AsyncCallback<PageList<MeasurementSchedule>>() {
+
+            @Override
+            public void onSuccess(PageList<MeasurementSchedule> result) {
+                enabledSchedules = result;
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                latch.countDown();
+            }
+        });
+    }
+    
+    protected void fetchResourceType(final CountDownLatch latch, final VLayout layout) {
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(this.groupId);
@@ -251,211 +326,18 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                     Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
                         + caught.getMessage());
                     setRefreshing(false);
+                    latch.countDown();
                 }
 
                 @Override
                 public void onSuccess(PageList<ResourceGroupComposite> results) {
-                    if (!results.isEmpty()) {
-                        final ResourceGroupComposite groupComposite = results.get(0);
-                        final ResourceGroup group = groupComposite.getResourceGroup();
-                        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-                            // Load the fully fetched ResourceType.
-                            ResourceType groupType = group.getResourceType();
-                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                                groupType.getId(),
-                                EnumSet.of(ResourceTypeRepository.MetadataType.content,
-                                    ResourceTypeRepository.MetadataType.operations,
-                                    ResourceTypeRepository.MetadataType.measurements,
-                                    ResourceTypeRepository.MetadataType.events,
-                                    ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-                                new ResourceTypeRepository.TypeLoadedCallback() {
-                                    public void onTypesLoaded(ResourceType type) {
-                                        group.setResourceType(type);
-                                        //metric definitions
-                                        Set<MeasurementDefinition> definitions = type.getMetricDefinitions();
-
-                                        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-                                        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-                                        for (MeasurementDefinition definition : definitions) {
-                                            measurementDefMap.put(definition.getDisplayName(), definition);
-                                        }
-                                        //bundle definition ids for asynch call.
-                                        int[] definitionArrayIds = new int[definitions.size()];
-                                        final String[] displayOrder = new String[definitions.size()];
-                                        measurementDefMap.keySet().toArray(displayOrder);
-                                        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
-                                        Arrays.sort(displayOrder);
-
-                                        //organize definitionArrayIds for ordered request on server.
-                                        int index = 0;
-                                        for (String definitionToDisplay : displayOrder) {
-                                            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
-                                                .getId();
-                                        }
-
-                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(
-                                            groupId, definitionArrayIds,
-                                            CustomDateRangeState.getInstance().getStartTime(),
-                                            CustomDateRangeState.getInstance().getEndTime(), 60,
-                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                @Override
-                                                public void onFailure(Throwable caught) {
-                                                    Log.debug("Error retrieving recent metrics charting data for group ["
-                                                        + groupId + "]:" + caught.getMessage());
-                                                    setRefreshing(false);
-                                                }
-
-                                                @Override
-                                                public void onSuccess(
-                                                    List<List<MeasurementDataNumericHighLowComposite>> results) {
-                                                    if (!results.isEmpty()) {
-                                                        boolean someChartedData = false;
-                                                        //iterate over the retrieved charting data
-                                                        for (int index = 0; index < displayOrder.length; index++) {
-                                                            //retrieve the correct measurement definition
-                                                            final MeasurementDefinition md = measurementDefMap
-                                                                .get(displayOrder[index]);
-
-                                                            //load the data results for the given metric definition
-                                                            List<MeasurementDataNumericHighLowComposite> data = results
-                                                                .get(index);
-
-                                                            //locate last and minimum values.
-                                                            double lastValue = -1;
-                                                            double minValue = Double.MAX_VALUE;//
-                                                            for (MeasurementDataNumericHighLowComposite d : data) {
-                                                                if ((!Double.isNaN(d.getValue()))
-                                                                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
-                                                                    if (d.getValue() < minValue) {
-                                                                        minValue = d.getValue();
-                                                                    }
-                                                                    lastValue = d.getValue();
-                                                                }
-                                                            }
-
-                                                            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
-                                                            String commaDelimitedList = "";
-
-                                                            for (MeasurementDataNumericHighLowComposite d : data) {
-                                                                if ((!Double.isNaN(d.getValue()))
-                                                                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
-                                                                    commaDelimitedList += d.getValue() + ",";
-                                                                }
-                                                            }
-                                                            DynamicForm row = new DynamicForm();
-                                                            row.setNumCols(3);
-                                                            row.setColWidths(65, "*", 100);
-                                                            row.setWidth100();
-                                                            row.setAutoHeight();
-                                                            row.setOverflow(Overflow.VISIBLE);
-                                                            HTMLFlow graph = new HTMLFlow();
-                                                            //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
-                                                            //                            + commaDelimitedList + "</span>";
-                                                            String contents = "<span id='sparkline_" + index
-                                                                + "' class='dynamicsparkline' width='0' " + "values='"
-                                                                + commaDelimitedList + "'>...</span>";
-                                                            graph.setContents(contents);
-                                                            graph.setContentsType(ContentsType.PAGE);
-                                                            //disable scrollbars on span
-                                                            graph.setScrollbarSize(0);
-
-                                                            CanvasItem graphContainer = new CanvasItem();
-                                                            graphContainer.setShowTitle(false);
-                                                            graphContainer.setHeight(16);
-                                                            graphContainer.setWidth(60);
-                                                            graphContainer.setCanvas(graph);
-
-                                                            final String title = md.getDisplayName();
-                                                            LinkItem link = AbstractActivityView.newLinkItem(title,
-                                                                null);
-                                                            link.setTooltip(title);
-                                                            link.setTitleVAlign(VerticalAlignment.TOP);
-                                                            link.setAlign(Alignment.LEFT);
-                                                            link.setClipValue(true);
-                                                            link.setWrap(true);
-                                                            link.setHeight(26);
-                                                            if (!BrowserUtility.isBrowserPreIE9()) {
-
-                                                                link.addClickHandler(new ClickHandler() {
-                                                                    @Override
-                                                                    public void onClick(ClickEvent event) {
-                                                                        ChartViewWindow window = new ChartViewWindow(
-                                                                            title, "", refreshablePortlet);
-                                                                        CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(
-                                                                            groupId, md.getId(), isAutoGroup);
-                                                                        window.addItem(graph);
-                                                                        graph.populateData();
-                                                                        window.show();
-                                                                    }
-                                                                });
-                                                            } else {
-                                                                link.disable();
-                                                            }
-
-                                                            //Value
-                                                            String convertedValue = AbstractActivityView
-                                                                .convertLastValueForDisplay(lastValue, md);
-                                                            StaticTextItem value = AbstractActivityView
-                                                                .newTextItem(convertedValue);
-                                                            value.setVAlign(VerticalAlignment.TOP);
-                                                            value.setAlign(Alignment.RIGHT);
-                                                            value.setWidth("100%");
-
-                                                            row.setItems(graphContainer, link, value);
-                                                            row.setWidth100();
-                                                            //if graph content returned
-                                                            if ((!md.getName().trim().contains("Trait."))
-                                                                && (lastValue != -1)) {
-                                                                column.addMember(row);
-                                                                someChartedData = true;
-                                                            }
-                                                        }
-                                                        if (!someChartedData) {// when there are results but no chartable entries.
-                                                            DynamicForm row = AbstractActivityView
-                                                                .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
-                                                            column.addMember(row);
-                                                        } else {
-                                                            //insert see more link
-                                                            DynamicForm row = new DynamicForm();
-                                                            String link = LinkManager
-                                                                .getGroupMonitoringGraphsLink(context);
-                                                            AbstractActivityView.addSeeMoreLink(row, link, column);
-                                                        }
-                                                        //call out to 3rd party javascript lib
-                                                        new Timer() {
-                                                            @Override
-                                                            public void run() {
-                                                                BrowserUtility.graphSparkLines();
-                                                            }
-                                                        }.schedule(200);
-
-                                                    } else {
-                                                        DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
-                                                        column.addMember(row);
-                                                    }
-                                                    setRefreshing(false);
-                                                }
-                                            }
-                                        );
-                                    }
-                                });
-                        }
-                    } else {
-                        DynamicForm row = AbstractActivityView
-                            .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
-                        column.addMember(row);
-                        setRefreshing(false);
+                    if (results.isEmpty()
+                        || results.get(0).getResourceGroup().getGroupCategory() != GroupCategory.COMPATIBLE) {
+                        renderChart = false;
                     }
+                    latch.countDown();
                 }
             });
-
-        //cleanup
-        for (Canvas child : recentMeasurementsContent.getChildren()) {
-            child.destroy();
-        }
-        recentMeasurementsContent.addChild(column);
-        recentMeasurementsContent.markForRedraw();
     }
 
     @Override
@@ -497,10 +379,10 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     protected void setRefreshing(boolean currentlyRefreshing) {
         this.currentlyLoading = currentlyRefreshing;
     }
+
     public static class ChartViewWindow extends Window {
 
-
-        public ChartViewWindow(String title, String windowTitle,final GroupMetricsPortlet portlet) {
+        public ChartViewWindow(String title, String windowTitle, final GroupMetricsPortlet portlet) {
             super();
             if ((windowTitle != null) && (!windowTitle.trim().isEmpty())) {
                 setTitle(windowTitle + ": " + title);
@@ -532,5 +414,157 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
             });
 
         }
+    }
+
+    protected void fetchEnabledMetrics(List<MeasurementSchedule> schedules, int[] definitionArrayIds,
+        final String[] displayOrder, final Map<String, MeasurementDefinition> measurementDefMap, final VLayout layout) {
+        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(groupId, definitionArrayIds,
+            CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance().getEndTime(), 60,
+            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving recent metrics charting data for group [" + groupId + "]:"
+                        + caught.getMessage());
+                    setRefreshing(false);
+                }
+
+                @Override
+                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
+                    renderData(results, displayOrder, measurementDefMap, layout);
+                }
+            });
+    }
+    
+    
+    protected void renderData(List<List<MeasurementDataNumericHighLowComposite>> results, String[] displayOrder, Map<String, MeasurementDefinition> measurementDefMap, VLayout layout) {
+        if (!results.isEmpty() && !measurementDefMap.isEmpty()) {
+            boolean someChartedData = false;
+            //iterate over the retrieved charting data
+            for (int index = 0; index < displayOrder.length; index++) {
+                //retrieve the correct measurement definition
+                final MeasurementDefinition md = measurementDefMap
+                    .get(displayOrder[index]);
+
+                //load the data results for the given metric definition
+                List<MeasurementDataNumericHighLowComposite> data = results
+                    .get(index);
+
+                //locate last and minimum values.
+                double lastValue = -1;
+                double minValue = Double.MAX_VALUE;
+                //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
+                String commaDelimitedList = "";
+                for (MeasurementDataNumericHighLowComposite d : data) {
+                    if ((!Double.isNaN(d.getValue()))
+                        && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                        commaDelimitedList += d.getValue() + ",";
+                        if (d.getValue() < minValue) {
+                            minValue = d.getValue();
+                        }
+                        lastValue = d.getValue();
+                    }
+                }
+                DynamicForm row = new DynamicForm();
+                row.setNumCols(3);
+                row.setColWidths(65, "*", 100);
+                row.setWidth100();
+                row.setAutoHeight();
+                row.setOverflow(Overflow.VISIBLE);
+                HTMLFlow graph = new HTMLFlow();
+                String contents = "<span id='sparkline_" + index
+                    + "' class='dynamicsparkline' width='0' " + "values='"
+                    + commaDelimitedList + "'>...</span>";
+                graph.setContents(contents);
+                graph.setContentsType(ContentsType.PAGE);
+                //disable scrollbars on span
+                graph.setScrollbarSize(0);
+
+                CanvasItem graphContainer = new CanvasItem();
+                graphContainer.setShowTitle(false);
+                graphContainer.setHeight(16);
+                graphContainer.setWidth(60);
+                graphContainer.setCanvas(graph);
+
+                final String title = md.getDisplayName();
+                LinkItem link = AbstractActivityView.newLinkItem(title,
+                    null);
+                link.setTooltip(title);
+                link.setTitleVAlign(VerticalAlignment.TOP);
+                link.setAlign(Alignment.LEFT);
+                link.setClipValue(true);
+                link.setWrap(true);
+                link.setHeight(26);
+                if (!BrowserUtility.isBrowserPreIE9()) {
+
+                    link.addClickHandler(new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            showPopupWithChart(title, md);
+                        }
+                    });
+                } else {
+                    link.disable();
+                }
+
+                //Value
+                String convertedValue = AbstractActivityView
+                    .convertLastValueForDisplay(lastValue, md);
+                StaticTextItem value = AbstractActivityView
+                    .newTextItem(convertedValue);
+                value.setVAlign(VerticalAlignment.TOP);
+                value.setWidth("100%");
+
+                row.setItems(graphContainer, link, value);
+                row.setWidth100();
+                //if graph content returned
+                if ((!md.getName().trim().contains("Trait."))
+                    && (lastValue != -1)) {
+                    layout.addMember(row);
+                    someChartedData = true;
+                }
+            }
+            if (!someChartedData) {// when there are results but no chartable entries.
+                DynamicForm row = getEmptyDataForm();
+                layout.addMember(row);
+            } else {
+                //insert see more link
+                DynamicForm row = new DynamicForm();
+                String link = getSeeMoreLink();
+                AbstractActivityView.addSeeMoreLink(row, link, layout);
+            }
+            //call out to 3rd party javascript lib
+            new Timer() {
+                @Override
+                public void run() {
+                    BrowserUtility.graphSparkLines();
+                }
+            }.schedule(200);
+
+        } else {
+            DynamicForm row = getEmptyDataForm();
+            layout.addMember(row);
+        }
+        setRefreshing(false);
+    }
+
+    protected void showPopupWithChart(final String title, final MeasurementDefinition md) {
+        ChartViewWindow window = new ChartViewWindow(title, "", refreshablePortlet);
+        CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(groupId, md.getId(), isAutoGroup());
+        window.addItem(graph);
+        graph.populateData();
+        window.show();
+    }
+
+    protected DynamicForm getEmptyDataForm() {
+        return AbstractActivityView.createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+    }
+
+    protected String getSeeMoreLink() {
+        return LinkManager.getGroupMonitoringGraphsLink(context);
+    }
+    
+    protected MeasurementScheduleCriteria addFilterKey(MeasurementScheduleCriteria criteria) {
+        criteria.addFilterResourceGroupId(groupId);
+        return criteria;
     }
 }

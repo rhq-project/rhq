@@ -275,7 +275,9 @@ public class Upgrade extends AbstractInstall {
                 // We need to be sure the storage is really stopped (long enough) to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
-                // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again later
+                addUndoTaskToStopComponent("--storage");
+                // if the upgrade fails, we need to purge the new storage node basedir to allow for user to try again
+                // later
                 addUndoTask(new ControlCommand.UndoTask("Removing new storage node install directory") {
                     public void performUndoWork() {
                         FileUtil.purge(getStorageBasedir(), true);

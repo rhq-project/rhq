@@ -739,7 +739,7 @@ function _allResourceIds(group) {
     var list = [];
 
     if (group.explicitResources != null) {
-        foreach(group.explicitResources, function(resource) {
+        util.foreach(group.explicitResources, function(resource) {
             list.push(resource.id);
         });
     }

@@ -109,7 +109,7 @@ public class TemplatedComponent extends BaseComponent<ResourceComponent<?>> {
             additionalProperties.put("attributes-only", "true");
             currentAttributesOp.setAdditionalProperties(additionalProperties);
             Result currentAttributes = getASConnection().execute(currentAttributesOp);
-            if (currentAttributes.isSuccess()) {
+            if ((currentAttributes!=null)&&(currentAttributes.isSuccess())) {
                 currentAttributeList = (Map<String, Object>) currentAttributes.getResult();
             }
 

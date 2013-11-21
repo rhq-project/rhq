@@ -14,7 +14,7 @@ fi
 
 echo "Will trigger job '$JOB' for branch '$BRANCH'"
 
-URL="https://jenkins.mw.lab.eng.bos.redhat.com/hudson/view/RHQ/view/RHQ%20On%20Demand/job/$JOB/buildWithParameters?THIS_VERSION_BRANCH=origin/$BRANCH"
+URL="https://jenkins.mw.lab.eng.bos.redhat.com/hudson/view/RHQ/view/RHQ%20On%20Demand/job/$JOB/buildWithParameters?git_build_branch_or_commit=origin/$BRANCH"
 
 case "`uname`" in
   CYGWIN*)

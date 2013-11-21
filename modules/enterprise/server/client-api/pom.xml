@@ -60,7 +60,14 @@
          <artifactId>powermock-api-mockito</artifactId>
          <scope>test</scope>
       </dependency>
-               
+
+      <!-- adding a runtime dep on cassandra - this is so that we can instantiate the local beans in the tests -->
+      <dependency>
+          <groupId>com.datastax.cassandra</groupId>
+          <artifactId>cassandra-driver-core</artifactId>
+          <version>${cassandra.driver.version}</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 
     <profiles>

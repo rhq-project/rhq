@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
@@ -87,13 +86,12 @@ public class ComplexConfigurationResourceComponent extends MBeanResourceComponen
 
                             propertyList.add(propertyMap);
                         }
-                    } else if (result instanceof Set) {
+                    } else if (result instanceof Iterable<?>) {
                         String entryName = ((PropertyDefinitionSimple) ((PropertyDefinitionList) propertyDefinition)
                             .getMemberDefinition()).getName();
 
-                        Set<Object> setValue = (Set<Object>) result;
-
-                        for (Object entry : setValue) {
+                        Iterable<?> iterable = (Iterable<?>) result;
+                        for (Object entry : iterable) {
                             propertyList.add(new PropertySimple(entryName, entry.toString()));
                         }
                     } else if (result instanceof Object[]) {

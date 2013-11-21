@@ -7,7 +7,7 @@
   <parent>
     <artifactId>rhq-modules-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.9.0.JON320-SNAPSHOT</version>
+    <version>4.9.0.JON320ER7</version>
   </parent>
 
   <artifactId>test-utils</artifactId>

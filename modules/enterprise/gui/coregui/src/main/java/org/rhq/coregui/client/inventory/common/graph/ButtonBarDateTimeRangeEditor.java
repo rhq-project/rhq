@@ -315,9 +315,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                         .getMonth(), endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate
                         .getMinutes());
                     buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
-                    showUserFriendlyTimeRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate()
-                        .getTime());
                     redrawGraphs();
+                    showUserFriendlyTimeRange(newStartDate.getTime(), newEndDate.getTime());
                     CustomDateRangeWindow.this.destroy();
                 }
             });

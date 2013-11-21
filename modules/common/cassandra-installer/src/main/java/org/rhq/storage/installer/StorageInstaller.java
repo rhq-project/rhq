@@ -28,6 +28,7 @@ package org.rhq.storage.installer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.BindException;
@@ -74,6 +75,7 @@ import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -547,16 +549,6 @@ public class StorageInstaller {
             deployer.applyConfigChanges();
             deployer.updateFilePerms();
 
-            if (isRHQ48Install) {
-                Properties jvmProps = new Properties();
-                jvmProps.load(new FileInputStream(cassandraJvmPropsFile));
-                PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
-                    cassandraJvmPropsFile.getAbsolutePath());
-                jvmProps.setProperty("jmx_port", Integer.toString(installerInfo.jmxPort));
-
-                propertiesUpdater.update(jvmProps);
-            }
-
             ConfigEditor oldYamlEditor = new ConfigEditor(oldYamlFile);
             oldYamlEditor.load();
             ConfigEditor newYamlEditor = new ConfigEditor(newYamlFile);
@@ -579,7 +571,22 @@ public class StorageInstaller {
 
             newYamlEditor.save();
 
-            deployer.updateStorageAuthConf(asSet(installerInfo.hostname));
+            if (isRHQ48Install) {
+                Properties jvmProps = new Properties();
+                jvmProps.load(new FileInputStream(cassandraJvmPropsFile));
+                PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
+                    cassandraJvmPropsFile.getAbsolutePath());
+                jvmProps.setProperty("jmx_port", Integer.toString(installerInfo.jmxPort));
+
+                propertiesUpdater.update(jvmProps);
+
+                deployer.updateStorageAuthConf(asSet(installerInfo.hostname));
+            } else {
+                File oldStorageAuthConfFile = new File(oldConfDir, "rhq-storage-auth.conf");
+                File newStorageAuthConfFile = new File(newConfDir, "rhq-storage-auth.conf");
+                StreamUtil.copy(new FileInputStream(oldStorageAuthConfFile), new FileOutputStream(
+                    newStorageAuthConfFile));
+            }
 
             return installerInfo;
 

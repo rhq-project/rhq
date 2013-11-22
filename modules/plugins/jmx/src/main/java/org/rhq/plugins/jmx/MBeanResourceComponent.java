@@ -95,11 +95,13 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
     /**
      * @deprecated do not use this - use {@link #getEmsBean()} instead
      */
+    @Deprecated
     protected EmsBean bean;
 
     /**
      * @deprecated do not use this - use {@link #getResourceContext()} instead
      */
+    @Deprecated
     protected ResourceContext<T> resourceContext;
 
     /**
@@ -124,10 +126,10 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
      * Gets the loaded MBean. This will attempt to {@link #loadBean() load} the bean if it
      * is not yet loaded. This might still return <code>null</code> if the MBean could
      * not be loaded.
-     * 
+     *
      * @return the loaded MBean
      * @throws IllegalStateException if it could not be loaded
-     * 
+     *
      * @see #loadBean()
      */
     public EmsBean getEmsBean() {
@@ -148,7 +150,7 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
 
     /**
      * Sets the MBean that this component considers loaded.
-     * 
+     *
      * @param bean the new MBean representing the component resource
      */
     protected void setEmsBean(EmsBean bean) {
@@ -167,10 +169,10 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
      * Loads the MBean in a default way. This default mechanism is to look in the
      * plugin configuration for a key of {@link #OBJECT_NAME_PROP} and uses that
      * as the object name to load via {@link #loadBean(String)}.
-     * 
+     *
      * Subclasses are free to override this method in order to provide its own
      * default loading mechanism.
-     * 
+     *
      * @return the bean that is loaded
      */
     protected EmsBean loadBean() {
@@ -184,7 +186,7 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
      * Loads the bean with the given object name.
      *
      * Subclasses are free to override this method in order to load the bean.
-     * 
+     *
      * @param objectName the name of the bean to load
      * @return the bean that is loaded
      */
@@ -216,23 +218,27 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
      */
     public AvailabilityType getAvailability() {
         try {
-            if (isMBeanAvailable()) {
-                return AvailabilityType.UP;
-            } else {
-                return AvailabilityType.DOWN;
-            }
+            return isMBeanAvailable() ? AvailabilityType.UP : AvailabilityType.DOWN;
+
         } catch (RuntimeException e) {
             if (this.bean != null) {
                 // Retry by connecting to a new parent connection (this bean might have been connected to by an old
                 // provider that's since been recreated).
                 this.bean = null;
-                if (isMBeanAvailable()) {
-                    return AvailabilityType.UP;
-                } else {
+                try {
+                    return isMBeanAvailable() ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+                } catch (RuntimeException e2) {
+                    if (log.isDebugEnabled() ) {
+                        log.debug("Avail check retry failed, MBean not available", e2);
+                    }
                     return AvailabilityType.DOWN;
                 }
             } else {
-                throw e;
+                if (log.isDebugEnabled() ) {
+                    log.debug("Avail check failed, MBean not available", e);
+                }
+                return AvailabilityType.DOWN;
             }
         }
     }

@@ -256,7 +256,7 @@ public final class SessionManager {
         return session.getLastAccess();
     }
 
-    public Subject getOverlord() {
+    public synchronized Subject getOverlord() {
         checkPermission();
         if (overlordSubject == null) {
             overlordSubject = LookupUtil.getSubjectManager().getSubjectById(OVERLORD_SUBJECT_ID);

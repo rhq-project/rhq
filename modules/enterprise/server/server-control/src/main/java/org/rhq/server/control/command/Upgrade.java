@@ -45,6 +45,7 @@ import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -659,6 +660,23 @@ public class Upgrade extends AbstractInstall {
                 FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
                 if (!oldAgentDir.renameTo(agentBasedir)) {
                     FileUtil.copyDirectory(oldAgentDir, agentBasedir);
+
+                    // we need to retain the execute bits for the executable scripts and libraries
+                    FileVisitor visitor = new FileVisitor() {
+                        @Override
+                        public void visit(File file) {
+                            String filename = file.getName();
+                            if (filename.contains(".so") || filename.contains(".sl")
+                                || filename.contains(".dylib")) {
+                                file.setExecutable(true);
+                            } else if (filename.endsWith(".sh")) {
+                                file.setExecutable(true);
+                            }
+                        }
+                    };
+
+                    FileUtil.forEachFile(new File(agentBasedir, "bin"), visitor);
+                    FileUtil.forEachFile(new File(agentBasedir, "lib"), visitor);
                 }
             }
 

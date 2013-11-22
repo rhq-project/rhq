@@ -131,6 +131,13 @@ public class FileUtil {
         BufferedInputStream is = new BufferedInputStream(new FileInputStream(inFile));
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(outFile));
         StreamUtil.copy(is, os);
+
+        // TODO do we care to restore execute bit? For coping large number of files via copyDirectory, will this make things slow?
+        // if (inFile.canExecute()) {
+        //    outFile.setExecutable(true);
+        // }
+        // TODO do we care to restore the last mod time on the destination file?
+        //outFile.setLastModified(inFile.lastModified());
     }
 
     public static void copyDirectory(File inDir, File outDir) throws IOException {

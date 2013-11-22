@@ -19,9 +19,16 @@
  */
 package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
 
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,26 +38,33 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.EmbeddedPosition;
-import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.SortDirection;
-import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.GroupValueFunction;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.UserSessionManager;
+import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
@@ -58,8 +72,12 @@ import org.rhq.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEdito
 import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.GroupMembersComparisonView.GroupMembersComparisonDataSource;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
@@ -67,20 +85,19 @@ import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
  */
 public class GroupMembersComparisonView extends Table<GroupMembersComparisonDataSource> implements Refreshable { //, AutoRefresh {
 
-    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
-        GroupMembersComparisonDataSource.FIELD_NAME, SortDirection.ASCENDING);
+    private static SortSpecifier DEFAULT_SORT_SPECIFIER_1 = new SortSpecifier(
+        GroupMembersComparisonDataSource.FIELD_METRIC_NAME, SortDirection.ASCENDING);
+    private static SortSpecifier DEFAULT_SORT_SPECIFIER_2 = new SortSpecifier(NAME.propertyName(),
+        SortDirection.ASCENDING);
 
     protected ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
-    //protected Timer refreshTimer;
 
     private final ResourceGroupComposite groupComposite;
     private final int[] resourceIds;
     private final GroupMembersComparisonDataSource dataSource;
 
-    private Map<MeasurementDefinition, List<MetricDisplaySummary>> comparisonData;
-
     public GroupMembersComparisonView(ResourceGroupComposite groupComposite, int[] resourceIds) {
-        super(null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER_1, DEFAULT_SORT_SPECIFIER_2 });
 
         this.groupComposite = groupComposite;
         this.resourceIds = resourceIds;
@@ -94,7 +111,7 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
 
     @Override
     public void refreshData() {
-        if (isVisible()) { // && !isRefreshing()) {
+        if (isVisible()) {
             refreshDateTimeRangeEditor();
             refresh();
         }
@@ -124,33 +141,10 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
 
     @Override
     protected void configureTable() {
-        addTopWidget(buttonBarDateTimeRangeEditor);
-        refreshDateTimeRangeEditor();
-
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
-
-        //add cell click handler to execute on Table data entries.
-        getListGrid().addCellClickHandler(new CellClickHandler() {
-            @Override
-            public void onCellClick(CellClickEvent event) {
-                Record record = event.getRecord();
-                Object source = event.getSource();
-
-                String title = record.getAttribute(GroupMembersComparisonDataSource.FIELD_NAME);
-                ChartViewWindow window = new ChartViewWindow("", title);
-                int defId = record.getAttributeAsInt(FIELD_ID);
-
-                ResourceGroup group = groupComposite.getResourceGroup();
-                boolean isAutogroup = group.getAutoGroupParentResource() != null;
-                CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(group.getId(), defId,
-                    isAutogroup);
-                window.addItem(graph);
-                graph.populateData();
-                window.show();
-            }
-        });
-
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
+
+        addTopWidget(buttonBarDateTimeRangeEditor);
     }
 
     /**
@@ -161,45 +155,114 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
         public GroupMembersComparisonListGrid() {
             super();
 
-            setShowRecordComponents(true);
-            setShowRecordComponentsByCell(false);
-            setRecordComponentPosition(EmbeddedPosition.EXPAND);
             setShowAllRecords(true);
-        }
+            setGroupByField(GroupMembersComparisonDataSource.FIELD_METRIC_NAME);
+            setGroupStartOpen(GroupStartOpen.ALL);
+            setCanCollapseGroup(false);
 
-        @Override
-        protected Canvas createRecordComponent(ListGridRecord record, Integer colNum) {
-            MeasurementDefinition measurementDefinition = (MeasurementDefinition) record
-                .getAttributeAsObject(GroupMembersComparisonDataSource.FIELD_OBJECT);
-
-            return new GroupMembersComparisonMetricView(comparisonData.get(measurementDefinition));
+            // this grouped view can't display a useful total rows value, so show nothing
+            setShowFooter(false);
         }
     }
 
-    public class GroupMembersComparisonDataSource extends RPCDataSource<MeasurementDefinition, Criteria> {
+    public class GroupMembersComparisonDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
+        public static final String FIELD_MIN_VALUE = "min";
+        public static final String FIELD_MAX_VALUE = "max";
+        public static final String FIELD_AVG_VALUE = "avg";
+        public static final String FIELD_LAST_VALUE = "last";
 
-        public static final String FIELD_OBJECT = "object";
-        public static final String FIELD_NAME = "name";
+        public static final String FIELD_METRIC_NAME = "metricName";
+        public static final String FIELD_ICON = "icon";
+
+        public static final String ATTR_RESOURCE_ID = "resourceId";
+        public static final String ATTR_DEFINITION_ID = "definitionId";
+
         private final MeasurementUserPreferences measurementUserPrefs;
 
         public GroupMembersComparisonDataSource() {
             measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
         }
 
-        /**
-         * The view that contains the list grid which will display this datasource's data will call this
-         * method to get the field information which is used to control the display of the data.
-         *
-         * @return list grid fields used to display the datasource data
-         */
         public ArrayList<ListGridField> getListGridFields() {
-            ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+            ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
 
-            ListGridField nameField = new ListGridField(FIELD_NAME, MSG.common_title_name());
-            nameField.setType(ListGridFieldType.LINK);
-            nameField.setTarget("javascript");
-            nameField.setWidth("*");
+            ListGridField metricNameField = new ListGridField(FIELD_METRIC_NAME, MSG.common_title_name());
+            metricNameField.setHidden(true);
+
+            metricNameField.setGroupValueFunction(new GroupValueFunction() {
+                public Object getGroupValue(Object value, ListGridRecord record, ListGridField field, String fieldName,
+                    ListGrid grid) {
+                    // just create a group for each metric display name
+                    return value;
+                }
+            });
+
+            fields.add(metricNameField);
+
+            IconField iconField = new IconField(FIELD_ICON);
+            iconField.setWidth(25);
+
+            // click an icon, win a chart
+            iconField.addRecordClickHandler(new RecordClickHandler() {
+                @Override
+                public void onRecordClick(RecordClickEvent event) {
+                    Record record = event.getRecord();
+
+                    String title = record.getAttribute(NAME.propertyName());
+                    ChartViewWindow window = new ChartViewWindow("", title);
+                    int defId = record.getAttributeAsInt(GroupMembersComparisonDataSource.ATTR_DEFINITION_ID);
+
+                    ResourceGroup group = groupComposite.getResourceGroup();
+                    boolean isAutogroup = group.getAutoGroupParentResource() != null;
+                    CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(group.getId(), defId,
+                        isAutogroup);
+                    window.addItem(graph);
+                    graph.populateData();
+                    window.show();
+                }
+            });
+
+            fields.add(iconField);
+
+            ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
+            nameField.setCellFormatter(new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String invStatus = record.getAttribute(INVENTORY_STATUS.propertyName());
+                    if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
+                        String url = LinkManager.getResourceLink(record.getAttributeAsInt(ATTR_RESOURCE_ID));
+                        String name = StringUtility.escapeHtml(value.toString());
+                        return LinkManager.getHref(url, name);
+                    } else {
+                        return value.toString();
+                    }
+                }
+            });
+            nameField.setShowHover(true);
+            nameField.setHoverCustomizer(new HoverCustomizer() {
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                }
+            });
             fields.add(nameField);
+
+            ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+            fields.add(ancestryField);
+
+            ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.common_title_monitor_minimum());
+            minField.setWidth("15%");
+            fields.add(minField);
+
+            ListGridField maxField = new ListGridField(FIELD_MAX_VALUE, MSG.common_title_monitor_maximum());
+            maxField.setWidth("15%");
+            fields.add(maxField);
+
+            ListGridField avgField = new ListGridField(FIELD_AVG_VALUE, MSG.common_title_monitor_average());
+            avgField.setWidth("15%");
+            fields.add(avgField);
+
+            ListGridField lastField = new ListGridField(FIELD_LAST_VALUE, MSG.view_resource_monitor_table_last());
+            lastField.setWidth("15%");
+            fields.add(lastField);
 
             return fields;
         }
@@ -236,10 +299,6 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
 
                         long begin = measurementUserPrefs.getMetricRangePreferences().begin;
                         long end = measurementUserPrefs.getMetricRangePreferences().end;
-                        if (null != comparisonData) {
-                            comparisonData.clear();
-                            comparisonData = null;
-                        }
                         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForMetricsCompare(
                             resourceIds, definitionIds, begin, end,
                             new AsyncCallback<Map<MeasurementDefinition, List<MetricDisplaySummary>>>() {
@@ -249,13 +308,62 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
                                 }
 
                                 public void onSuccess(Map<MeasurementDefinition, List<MetricDisplaySummary>> result) {
-                                    comparisonData = result;
-                                    response.setData(buildRecords(result.keySet()));
-                                    processResponse(request.getRequestId(), response);
+                                    List<MetricDisplaySummary> all = new ArrayList<MetricDisplaySummary>();
+                                    for (MeasurementDefinition key : result.keySet()) {
+                                        all.addAll(result.get(key));
+                                    }
+                                    dataRetrieved(all, response, request);
                                 }
                             });
                     }
                 });
+        }
+
+        protected void dataRetrieved(final List<MetricDisplaySummary> result, final DSResponse response,
+            final DSRequest request) {
+
+            HashSet<Integer> typesSet = new HashSet<Integer>();
+            HashSet<String> ancestries = new HashSet<String>();
+            for (MetricDisplaySummary mds : result) {
+                Resource resource = mds.getResource();
+                ResourceType type = resource.getResourceType();
+                if (type != null) {
+                    typesSet.add(type.getId());
+                }
+                ancestries.add(resource.getAncestry());
+            }
+
+            // In addition to the types of the result resources, get the types of their ancestry
+            typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+            ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+            typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+                @Override
+                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                    // SmartGWT has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
+                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                    Record[] records = buildRecords(result);
+                    for (Record record : records) {
+                        // replace type id with type name
+                        Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
+                        ResourceType type = types.get(typeId);
+                        if (type != null) {
+                            record.setAttribute(TYPE.propertyName(), type.getName());
+                            record.setAttribute(TYPE_ID.propertyName(), type.getId());
+                        }
+
+                        // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                        // Store the types map off the records so we can build a detailed hover string as needed.
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                        // Build the decoded ancestry Strings now for display
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                    }
+                    response.setData(records);
+                    processResponse(request.getRequestId(), response);
+                }
+            });
         }
 
         @Override
@@ -264,18 +372,41 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
         }
 
         @Override
-        public ListGridRecord copyValues(MeasurementDefinition from) {
+        public ListGridRecord copyValues(MetricDisplaySummary from) {
 
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute("object", from);
-            record.setAttribute(FIELD_ID, from.getId());
-            record.setAttribute(FIELD_NAME, from.getDisplayName());
+            record.setAttribute(FIELD_ID, from.getMetricName() + "_" + from.getResourceId());
+            record.setAttribute(FIELD_METRIC_NAME, from.getLabel());
+
+            Resource resource = from.getResource();
+
+            record.setAttribute(NAME.propertyName(), resource.getName());
+            record.setAttribute(INVENTORY_STATUS.propertyName(), resource.getInventoryStatus());
+            record.setAttribute(CATEGORY.propertyName(), resource.getResourceType().getCategory().name());
+            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+
+            MeasurementUtility.formatSimpleMetrics(from);
+
+            record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
+            record.setAttribute(FIELD_MAX_VALUE, getMetricStringValue(from.getMaxMetric()));
+            record.setAttribute(FIELD_AVG_VALUE, getMetricStringValue(from.getAvgMetric()));
+            record.setAttribute(FIELD_LAST_VALUE, getMetricStringValue(from.getLastMetric()));
+
+            record.setAttribute(FIELD_ICON, ImageManager.getMonitorIcon());
+
+            record.setAttribute(ATTR_RESOURCE_ID, from.getResourceId());
+            record.setAttribute(ATTR_DEFINITION_ID, from.getDefinitionId());
 
             return record;
         }
 
+        protected String getMetricStringValue(MetricDisplayValue value) {
+            return (value != null) ? value.toString() : "";
+        }
+
         @Override
-        public MeasurementDefinition copyValues(Record from) {
+        public MetricDisplaySummary copyValues(Record from) {
             return null;
         }
     }

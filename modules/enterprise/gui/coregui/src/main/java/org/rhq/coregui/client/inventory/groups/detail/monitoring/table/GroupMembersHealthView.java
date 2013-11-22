@@ -25,7 +25,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.coregui.client.components.FullHTMLPane;
 import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.coregui.client.inventory.groups.detail.inventory.MembersView;
@@ -58,45 +57,7 @@ public class GroupMembersHealthView extends MembersView {
         //add extra list grid field for alerts
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        //add chart selected metric action
         addTableAction(MSG.common_title_compareMetrics(), new TableAction() {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return selection != null && selection.length > 1;
-            }
-
-            // TODO: REMOVE THIS OLD BUTTON ONCE THE NEW ONE IS VALIDATED !!!
-            //       - FIX BUTTON NAME BELOW WHEN REMOVING !!!
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                if (selection == null || selection.length == 0) {
-                    return;
-                }
-                // keyed on metric name - string[0] is the metric label, [1] is the units
-                int[] resourceIds = new int[selection.length];
-                int i = 0;
-                for (ListGridRecord record : selection) {
-                    Integer defId = record.getAttributeAsInt(FIELD_ID);
-                    resourceIds[i++] = defId.intValue();
-                }
-
-                //build portal.war chart page to iFrame
-                String destination = "/portal/resource/common/monitor/Visibility.do?mode=compareMetrics&&groupId="
-                    + groupComposite.getResourceGroup().getId();
-                for (int rId : resourceIds) {
-                    destination += "&r=" + rId;
-                }
-                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compareMetrics());
-                //generate and include iframed content
-                FullHTMLPane iframe = new FullHTMLPane(destination);
-                window.addItem(iframe);
-                window.show();
-                GroupMembersHealthView.this.refreshTableInfo();
-            }
-        });
-
-        // TODO, fix button name!
-        addTableAction(MSG.common_title_compareMetrics() + "- New!", new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;
@@ -117,34 +78,6 @@ public class GroupMembersHealthView extends MembersView {
 
                 ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compareMetrics());
                 GroupMembersComparisonView view = new GroupMembersComparisonView(groupComposite, resourceIds);
-                window.addItem(view);
-                window.show();
-                GroupMembersHealthView.this.refreshTableInfo();
-            }
-        });
-
-        // TODO, fix button name!
-        addTableAction(MSG.common_title_compareMetrics() + "- Newest!", new TableAction() {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return selection != null && selection.length > 1;
-            }
-
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                if (selection == null || selection.length == 0) {
-                    return;
-                }
-                // keyed on metric name - string[0] is the metric label, [1] is the units
-                int[] resourceIds = new int[selection.length];
-                int i = 0;
-                for (ListGridRecord record : selection) {
-                    Integer defId = record.getAttributeAsInt(FIELD_ID);
-                    resourceIds[i++] = defId.intValue();
-                }
-
-                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compareMetrics());
-                GroupMembersComparisonView2 view = new GroupMembersComparisonView2(groupComposite, resourceIds);
                 window.addItem(view);
                 window.show();
                 GroupMembersHealthView.this.refreshTableInfo();

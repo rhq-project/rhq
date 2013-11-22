@@ -188,7 +188,20 @@ public final class SessionManager {
      */
     public synchronized void invalidate(int sessionId) {
         checkPermission();
-        _cache.remove(new Integer(sessionId));
+
+        Integer sessionIdObj = new Integer(sessionId);
+
+        // we currently use a shared session for overlord.  don't log it out as it could affect another caller's use
+        // of the overlord user.  The session will expire if unused by any caller for the overlord timeout period.
+        AuthSession session = _cache.get(sessionIdObj);
+        if (session != null) {
+            Subject doomedSubject = session.getSubject(false);
+            if (doomedSubject.getId() == OVERLORD_SUBJECT_ID) {
+                return;
+            }
+        }
+
+        _cache.remove(sessionIdObj);
 
         // while we are here, let's go through the entire session cache and remove expired sessions
         purgeTimedOutSessions();

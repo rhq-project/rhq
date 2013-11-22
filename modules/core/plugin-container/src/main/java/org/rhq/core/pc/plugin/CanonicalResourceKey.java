@@ -33,7 +33,7 @@ import org.rhq.core.domain.resource.ResourceType;
 /**
  * This object represents a canonical ID that can uniquely identify a resource
  * within a resource hierarchy.
- * 
+ *
  * @author John Mazzitelli
  */
 public class CanonicalResourceKey implements Serializable {
@@ -118,7 +118,7 @@ public class CanonicalResourceKey implements Serializable {
         return true;
     }
 
-    private class KeyTypePlugin {
+    private static class KeyTypePlugin {
         public final String key;
         public final String type;
         public final String plugin;

@@ -1,0 +1,21 @@
+<updatePlan>
+  <step>
+    ALTER TABLE rhq.raw_metrics WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
+
+  <step>
+    ALTER TABLE rhq.one_hour_metrics WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
+
+  <step>
+    ALTER TABLE rhq.six_hour_metrics WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
+
+  <step>
+    ALTER TABLE rhq.twenty_four_hour_metrics WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
+
+  <step>
+    ALTER TABLE rhq.metrics_index WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
+</updatePlan>

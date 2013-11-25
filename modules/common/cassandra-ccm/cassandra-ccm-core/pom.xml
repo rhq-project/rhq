@@ -162,7 +162,17 @@
                 <delete file="${cassandra.dir}/lib/netty-3.5.9.Final.jar"/>
                 <copy file="${settings.localRepository}/io/netty/netty/3.6.6.Final/netty-3.6.6.Final.jar"
                       todir="${cassandra.dir}/lib"/>
+
+                <property name="lz4.dir" value="${project.build.outputDirectory}/lz4"/>
+                <mkdir dir="${lz4.dir}"/>
+                <unzip src="${cassandra.dir}/lib/lz4-1.1.0.jar" dest="${lz4.dir}"/>
                 <delete file="${cassandra.dir}/lib/lz4-1.1.0.jar"/>
+                <delete dir="${lz4.dir}/darwin" failonerror="true"/>
+                <delete dir="${lz4.dir}/linux" failonerror="true"/>
+                <delete dir="${lz4.dir}/win32" failonerror="true"/>
+                <jar destfile="${cassandra.dir}/lib/lz4-1.1.0.jar" basedir="${lz4.dir}" />
+                <delete dir="${lz4.dir}"/>
+
                 <delete file="${cassandra.dir}/lib/snappy-java-1.0.5.jar"/>
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       todir="${cassandra.dir}/lib"/>

@@ -247,7 +247,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         }
     }
 
-    void delete(ListGridRecord[] records) {
+    protected void delete(ListGridRecord[] records) {
         final int[] alertIds = new int[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
@@ -270,7 +270,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         });
     }
 
-    void deleteAll() {
+    protected void deleteAll() {
         int rpcTimeout = 10000 + getListGrid().getTotalRows();
         GWTServiceLookup.getAlertService(rpcTimeout).deleteAlertsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
@@ -308,7 +308,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         });
     }
 
-    void acknowledgeAll() {
+    protected void acknowledgeAll() {
         int rpcTimeout = 10000 + getListGrid().getTotalRows();
         GWTServiceLookup.getAlertService(rpcTimeout).acknowledgeAlertsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {

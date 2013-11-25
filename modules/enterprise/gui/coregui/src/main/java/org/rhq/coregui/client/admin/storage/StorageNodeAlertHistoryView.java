@@ -19,7 +19,9 @@
 package org.rhq.coregui.client.admin.storage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
@@ -48,6 +51,9 @@ import org.rhq.coregui.client.alert.AlertDataSource;
 import org.rhq.coregui.client.alert.AlertHistoryView;
 import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
+import org.rhq.coregui.client.components.table.RecordExtractor;
+import org.rhq.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.coregui.client.components.table.TableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
@@ -55,12 +61,11 @@ import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
- * The view for accessing alerts on storage node resource and its children.
+ * The view for presenting alerts on storage node resource and its children.
  * 
  * @author Jirka Kremser
  */
 public class StorageNodeAlertHistoryView extends AlertHistoryView {
-    private boolean isGouped = true;
     private final HTMLFlow header;
     private final int storageNodeId;
     private final boolean allStorageNodes;
@@ -98,6 +103,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         if (isShowFilterForm()) {
             setFilterFormItems(startDateFilter, spacerItem, endDateFilter);
         }
+        startDateFilter.setVisible(false);
+        endDateFilter.setVisible(false);
     }
 
     @Override
@@ -243,9 +250,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                             return;
                         }
                         final StorageNode node = storageNodes.get(0);
-                        header
-                            .setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'>" + MSG.view_adminTopology_storageNodes_node() + " ("
-                                + node.getAddress() + ")</div>");
+                        header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'>"
+                            + MSG.view_adminTopology_storageNodes_node() + " (" + node.getAddress() + ")</div>");
                     }
 
                     public void onFailure(Throwable caught) {
@@ -291,17 +297,82 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     }
 
     @Override
-    protected void configureTable() {
-        super.configureTable();
-        addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), new AbstractTableAction(
+    protected void setupTableInteractions(final boolean hasWriteAccess) {
+        // We override this method, because button enablement implementation from super class for "Delete All"
+        // and "Acknowledge All" doesn't work correctly for table with using grouping. Also adding additional
+        // button for enabling / disabling the alerts grouping. 
+
+        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new ResourceAuthorizedTableAction(
+            StorageNodeAlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
+                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("resourceId"));
+                    }
+                    return result;
+                }
+            }) {
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
+        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new ResourceAuthorizedTableAction(
+            StorageNodeAlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null
+                : Permission.MANAGE_ALERTS), new RecordExtractor<Integer>() {
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("resourceId"));
+                    }
+                    return result;
+                }
+            }) {
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                acknowledge(selection);
+            }
+        });
+        addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                ListGrid grid = getListGrid();
+                ListGridRecord[] records = (null != grid) ? grid.getRecords() : null;
+                return (hasWriteAccess && grid != null && records != null && records.length > 0);
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteAll();
+            }
+        });
+        addTableAction(MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                ListGrid grid = getListGrid();
+                ListGridRecord[] records = (null != grid) ? grid.getRecords() : null;
+                return (hasWriteAccess && grid != null && records != null && records.length > 0);
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                acknowledgeAll();
+            }
+        });
+
+        // alerts grouping
+        Map<String, Object> items = new LinkedHashMap<String, Object>(2);
+        items.put("On", true);
+        items.put("Off", false);
+        addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), null, items, new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                if (isGouped) {
+                if (!(Boolean) actionValue) {
                     getListGrid().ungroup();
+                    startDateFilter.show();
+                    endDateFilter.show();
                 } else {
                     getListGrid().groupBy("name");
+                    startDateFilter.hide();
+                    endDateFilter.hide();
                 }
-                isGouped = !isGouped;
                 refreshTableInfo();
             }
         });

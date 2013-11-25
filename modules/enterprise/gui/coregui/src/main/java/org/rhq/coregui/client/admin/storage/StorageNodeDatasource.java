@@ -119,7 +119,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         fields.add(idField);
 
         fields.add(FIELD_ADDRESS.getListGridField("*"));
-        fields.add(FIELD_ALERTS.getListGridField("165"));
+        fields.add(FIELD_ALERTS.getListGridField("170"));
 
         ListGridField field = FIELD_MEMORY.getListGridField("120");
         field.setShowHover(true);

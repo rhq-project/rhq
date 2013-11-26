@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.configuration;
 
 import java.util.List;
@@ -334,9 +335,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
 
     int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update) throws SchedulerException;
-
-    int scheduleGroupPluginConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> pluginConfigurationUpdate) throws SchedulerException;
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc);
 

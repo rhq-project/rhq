@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
@@ -1782,7 +1783,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Override
     public int scheduleGroupPluginConfigurationUpdate(Subject subject, int compatibleGroupId,
-        Map<Integer, Configuration> memberPluginConfigurations) throws SchedulerException {
+        Map<Integer, Configuration> memberPluginConfigurations) {
 
         if (memberPluginConfigurations == null) {
             throw new IllegalArgumentException(
@@ -1801,7 +1802,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          * actually exists)
          */
         GroupPluginConfigurationUpdate groupUpdate = new GroupPluginConfigurationUpdate(group, subject.getName());
-        int updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
+        int updateId = -1;
+        try {
+            updateId = configurationManager.createGroupConfigurationUpdate(groupUpdate);
+        } catch (SchedulerException sche) {
+            String message = "Error scheduling plugin configuration update for group[id=" + group.getId() + "]";
+            LOG.error(message, sche);
+            throw new ResourceGroupUpdateException(message + ": " + sche);
+        }
 
         // Create and persist updates for each of the members.
         for (Integer resourceId : memberPluginConfigurations.keySet()) {
@@ -1827,7 +1835,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          */
         JobDetail jobDetail = GroupPluginConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap);
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
-        scheduler.scheduleJob(jobDetail, trigger);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+        } catch (SchedulerException e) {
+            String message = "Error scheduling job named '" + jobDetail.getName() + "':";
+            LOG.error(message, e);
+            throw new ResourceGroupUpdateException(message + e.getMessage());
+        }
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");

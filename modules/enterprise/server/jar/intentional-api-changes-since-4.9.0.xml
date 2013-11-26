@@ -99,4 +99,11 @@
     <justification>Adding a method to a remote API interface is safe.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>int scheduleGroupPluginConfigurationUpdate(org.rhq.core.domain.auth.Subject, int, java.util.Map)</method>
+    <justification>Adding a method to a remote API interface is safe.</justification>
+  </difference>
+
 </differences>

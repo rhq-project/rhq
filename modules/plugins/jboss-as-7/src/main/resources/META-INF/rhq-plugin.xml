@@ -8870,10 +8870,10 @@
           <c:simple-property name="archive" type="boolean" readOnly="true" required="false" description="Flag indicating whether unmanaged content is a zip archive (true) or exploded (false)."/>
         </c:map-property>
       </c:list-property>
-      <c:simple-property name="enabled" required="true" type="boolean" readOnly="true" description="Boolean indicating whether the deployment content is currently deployed in the runtime (or should be deployed in the runtime the next time the server starts.)"/>
-      <c:simple-property name="name" required="true" type="string" readOnly="true" description="Unique identifier of the deployment. Must be unique across all deployments."/>
-      <c:simple-property name="persistent" required="true" type="boolean" readOnly="true" description="Boolean indicating whether the existence of the deployment should be recorded in the persistent server configuration. Only relevant to a standalone mode server. Default is &apos;true&apos;. A deployment managed by a deployment scanner would have this set to &apos;false&apos; to ensure the deployment is only deployed at server start if the scanner again detects the deployment."/>
-      <c:simple-property name="runtime-name" required="true" type="string" readOnly="true" description="Name by which the deployment should be known within a server runtime. This would be equivalent to the file name of a deployment file, and would form the basis for such things as default Java Enterprise Edition application and module names. This would typically be the same as 'name', but in some cases users may wish to have two deployments with the same runtime-name (e.g. two versions of foo.war) both available in the deployment content repository, in which case the deployments would need to have distinct name; values but would have the same runtime-name."/>
+      <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Boolean indicating whether the deployment content is currently deployed in the runtime (or should be deployed in the runtime the next time the server starts.)"/>
+      <c:simple-property name="name" required="false" type="string" readOnly="true" description="Unique identifier of the deployment. Must be unique across all deployments."/>
+      <c:simple-property name="persistent" required="false" type="boolean" readOnly="true" description="Boolean indicating whether the existence of the deployment should be recorded in the persistent server configuration. Only relevant to a standalone mode server. Default is &apos;true&apos;. A deployment managed by a deployment scanner would have this set to &apos;false&apos; to ensure the deployment is only deployed at server start if the scanner again detects the deployment."/>
+      <c:simple-property name="runtime-name" required="false" type="string" readOnly="true" description="Name by which the deployment should be known within a server runtime. This would be equivalent to the file name of a deployment file, and would form the basis for such things as default Java Enterprise Edition application and module names. This would typically be the same as 'name', but in some cases users may wish to have two deployments with the same runtime-name (e.g. two versions of foo.war) both available in the deployment content repository, in which case the deployments would need to have distinct name; values but would have the same runtime-name."/>
     </resource-configuration>
 
   </service>
@@ -8953,6 +8953,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -8993,7 +8994,7 @@
         <c:simple-property name="background-validation-millis" required="false" type="long" readOnly="true" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value can be done only on disabled datasource,  requires a server restart otherwise"/>
         <c:simple-property name="blocking-timeout-wait-millis" required="false" type="long" readOnly="true" description="The blocking-timeout-millis element specifies the maximum time, in milliseconds, to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for locking a connection, and will never throw an exception if creating a new connection takes an inordinately long time"/>
         <c:simple-property name="check-valid-connection-sql" required="false" type="string" readOnly="true" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is obtained from the pool"/>
-        <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
+        <c:simple-property name="driver-name" required="false" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides an isExceptionFatal(SQLException) method to validate if an exception should broadcast an error"/>
         <c:map-property name="exception-sorter-properties" description="The exception sorter properties">
@@ -9008,7 +9009,7 @@
         </c:simple-property>
         <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="true" description="The idle-timeout-minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle-timeout-minutes value of any pool. Changing this value can be done only on disabled datasource, requires a server restart otherwise."/>
         <c:simple-property name="interleaving" required="false" type="boolean" readOnly="true" defaultValue="false" description="An element to enable interleaving for XA connections. The default value is false."/>
-        <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
+        <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="jta" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable JTA integration. The default value is true."/>
         <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="true" defaultValue="20" description="The max-pool-size element specifies the maximum number of connections for a pool. No more connections will be created in each sub-pool. The default value is 20."/>
         <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="true" defaultValue="0" description="The min-pool-size element specifies the minimum number of connections for a pool. The default value is 0."/>
@@ -9116,10 +9117,10 @@
         <c:simple-property name="background-validation-millis" required="false" type="long" readOnly="true" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value can be done only on disabled datasource,  requires a server restart otherwise"/>
         <c:simple-property name="blocking-timeout-wait-millis" required="false" type="long" readOnly="true" description="The blocking-timeout-millis element specifies the maximum time, in milliseconds, to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for locking a connection, and will never throw an exception if creating a new connection takes an inordinately long time"/>
         <c:simple-property name="check-valid-connection-sql" required="false" type="string" readOnly="true" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is obtained from the pool"/>
-        <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
+        <c:simple-property name="connection-url" required="false" type="string" readOnly="true" description="The JDBC driver connection URL"/>
         <c:simple-property name="datasource-class" required="false" type="string" readOnly="true" description="The fully qualifed name of the JDBC datasource class"/>
         <c:simple-property name="driver-class" required="false" type="string" readOnly="true" description="The fully qualifed name of the JDBC driver class"/>
-        <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
+        <c:simple-property name="driver-name" required="false" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides an isExceptionFatal(SQLException) method to validate if an exception should broadcast an error"/>
         <c:map-property name="exception-sorter-properties" description="The exception sorter properties">
@@ -9133,7 +9134,7 @@
           </c:property-options>
         </c:simple-property>
         <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="true" description="The idle-timeout-minutes elements specifies the maximum time, in minutes, a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is half of the smallest idle-timeout-minutes value of any pool. Changing this value can be done only on disabled datasource, requires a server restart otherwise."/>
-        <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
+        <c:simple-property name="jndi-name" required="false" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
         <c:simple-property name="jta" required="false" type="boolean" readOnly="true" defaultValue="true" description="Enable JTA integration. The default value is true."/>
         <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="true" defaultValue="20" description="The max-pool-size element specifies the maximum number of connections for a pool. No more connections will be created in each sub-pool. The default value is 20."/>
         <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="true" defaultValue="0" description="The min-pool-size element specifies the minimum number of connections for a pool. The default value is 0."/>
@@ -9200,6 +9201,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -9663,7 +9665,7 @@
         <metric property="temporary" dataType="trait" description="Whether the queue is temporary."/>
 
         <resource-configuration>
-          <c:list-property name="entries" required="true" readOnly="true" description="The jndi names the queue will be bound to.">
+          <c:list-property name="entries" required="false" readOnly="true" description="The jndi names the queue will be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
         </resource-configuration>
@@ -9780,7 +9782,7 @@
         <metric property="topic-address" dataType="trait" description="The address the topic points to."/>
 
         <resource-configuration>
-          <c:list-property name="entries" required="true" readOnly="true" displayName="JNDI Names" description="The jndi names the queue will be bound to.">
+          <c:list-property name="entries" required="false" readOnly="true" displayName="JNDI Names" description="The jndi names the queue will be bound to.">
             <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
           </c:list-property>
         </resource-configuration>
@@ -9799,6 +9801,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -9997,6 +10000,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -10021,11 +10025,11 @@
       <metric property="total-processing-time" description="Total endpoint processing time."/>
 
       <resource-configuration>
-        <c:simple-property name="class" required="true" type="string" readOnly="true" description="Webservice endpoint class."/>
-        <c:simple-property name="context" required="true" type="string" readOnly="true" description="Webservice endpoint context."/>
-        <c:simple-property name="name" required="true" type="string" readOnly="true" description="Webservice endpoint name."/>
-        <c:simple-property name="type" required="true" type="string" readOnly="true" description="Webservice endpoint type."/>
-        <c:simple-property name="wsdl-url" required="true" type="string" readOnly="true" description="Webservice endpoint WSDL URL."/>
+        <c:simple-property name="class" required="false" type="string" readOnly="true" description="Webservice endpoint class."/>
+        <c:simple-property name="context" required="false" type="string" readOnly="true" description="Webservice endpoint context."/>
+        <c:simple-property name="name" required="false" type="string" readOnly="true" description="Webservice endpoint name."/>
+        <c:simple-property name="type" required="false" type="string" readOnly="true" description="Webservice endpoint type."/>
+        <c:simple-property name="wsdl-url" required="false" type="string" readOnly="true" description="Webservice endpoint WSDL URL."/>
       </resource-configuration>
     </service>
 
@@ -10041,6 +10045,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>

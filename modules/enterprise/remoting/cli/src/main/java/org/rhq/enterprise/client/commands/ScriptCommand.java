@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.client.commands;
 
 import java.io.File;
@@ -97,9 +98,13 @@ public class ScriptCommand implements ClientCommand {
                     }
                 }
             } catch (FileNotFoundException e) {
-                client.getPrintWriter().println(e.getMessage());
-                if (log.isDebugEnabled()) {
-                    log.debug("Unable to locate script file: " + e.getMessage());
+                if (client.isInteractiveMode()) {
+                    client.getPrintWriter().println(e.getMessage());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Unable to locate script file: " + e.getMessage());
+                    }
+                } else {
+                    throw new CLIScriptException(e);
                 }
             } catch (CommandLineParseException e) {
                 if (client.isInteractiveMode()) {
@@ -151,16 +156,20 @@ public class ScriptCommand implements ClientCommand {
             }
         } catch (ScriptException e) {
 
+            if (client.isInteractiveMode()) {
             String message = client.getUsefulErrorMessage(e);
 
-            client.getPrintWriter().println(message);
-            client.getPrintWriter().println(script);
-            for (int i = 0; i < e.getColumnNumber(); i++) {
-                client.getPrintWriter().print(" ");
+                client.getPrintWriter().println(message);
+                client.getPrintWriter().println(script);
+                for (int i = 0; i < e.getColumnNumber(); i++) {
+                    client.getPrintWriter().print(" ");
+                }
+                client.getPrintWriter().println("^");
+                script = new StringBuilder();
+                inMultilineScript = false;
+            } else {
+                throw new CLIScriptException(e);
             }
-            client.getPrintWriter().println("^");
-            script = new StringBuilder();
-            inMultilineScript = false;
         }
         client.getPrintWriter().println();
         return true;

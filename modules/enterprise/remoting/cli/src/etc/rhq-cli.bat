@@ -160,6 +160,7 @@ if defined RHQ_CLI_DEBUG (
    echo %CMD%
 )
 cmd.exe /S /C "%CMD%"
+if ERRORLEVEL 1 goto :error
 
 goto :done
 
@@ -186,3 +187,13 @@ if defined RHQ_CLI_DEBUG echo %0 done.
 endlocal
 
 exit /B 0
+
+rem ----------------------------------------------------------------------
+rem CALL subroutine that exits this script with error
+rem ----------------------------------------------------------------------
+
+:error
+if defined RHQ_CLI_DEBUG echo %0 done.
+endlocal
+
+if ERRORLEVEL 1 exit /B 1

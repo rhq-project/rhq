@@ -1,29 +1,23 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.client;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
+package org.rhq.enterprise.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -46,6 +40,8 @@ import jline.ConsoleReader;
 import jline.MultiCompletor;
 import jline.SimpleCompletor;
 import mazz.i18n.Msg;
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.util.PackageFinder;
@@ -149,7 +145,11 @@ public class ClientMain {
                     loginCmd.execute(ClientMain.this, new String[] { "login", getUser(), getPass() });
                 }
                 if (!loggedIn()) {
-                    return;
+                    if (isInteractiveMode()) {
+                        return;
+                    } else {
+                        System.exit(1);
+                    }
                 }
             }
             
@@ -158,27 +158,31 @@ public class ClientMain {
             }            
         }
     }
-    
-    // Entrance to main.
-    public static void main(String[] args) throws Exception {
+
+    public static void main(String[] args) {
         initCommands();
+        try {
+            new ClientMain().run(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 
-        // instantiate
-        ClientMain main = new ClientMain();
-
+    private void run(String[] args) throws Exception {
         // capture startup arguments and setup the properties
         //from them
-        StartupConfiguration config = main.processArguments(args);
+        StartupConfiguration config = processArguments(args);
 
         //initialize the CLI
-        main.initialize();
-        
+        initialize();
+
         //process the arguments now that we are initialized
         config.process();
-        
-        if (main.isInteractiveMode()) {
+
+        if (isInteractiveMode()) {
             // begin client access loop
-            main.inputLoop();
+            inputLoop();
         }
     }
 

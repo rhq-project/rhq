@@ -189,12 +189,17 @@ fi
 # would be already expanded and we'd therefore loose the ability to pass in
 # quoted args.
 debug_msg "Executing the CLI with this command line:"
+exit_code=0
 if [ -z "$RHQ_CLI_CMDLINE_OPTS" ]; then
     debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain $@"
     "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain "$@"
+    exit_code=$?
+
 else
     debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
     "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}
+    exit_code=$?
 fi
 
 debug_msg "$0 done."
+exit ${exit_code}

@@ -282,8 +282,14 @@ class VersionManager extends AbstractManager {
             throw e1;
         } catch (AuthenticationException e2) {
             throw e2;
-        } catch (Exception e3) {
-            throw new RuntimeException(e3);
+        } catch (SchemaNotInstalledException e3) {
+            throw e3;
+        } catch (InstalledSchemaTooOldException e4) {
+            throw e4;
+        } catch (InstalledSchemaTooAdvancedException e5) {
+            throw e5;
+        } catch (Exception e6) {
+            throw new RuntimeException(e6);
         } finally {
             log.info("Completed storage schema compatibility check.");
         }

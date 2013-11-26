@@ -68,15 +68,16 @@ import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorCompo
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
-/**This portlet allows the end user to customize the metric display
+/**
+ * This portlet allows the end user to customize the metric display
  *
  * @author Simeon Pinder
  */
@@ -86,11 +87,6 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     private EntityContext context;
     protected Canvas recentMeasurementsContent = new Canvas();
     protected boolean currentlyLoading = false;
-    protected long start = -1;
-    protected long end = -1;
-    protected int lastN = -1;
-    protected int units = -1;
-
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupMetrics";
     // A default displayed, persisted name for the portlet
@@ -216,45 +212,10 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
      * digits.
      */
     protected void getRecentMetrics() {
-        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
-        final Configuration portletConfig = storedPortlet.getConfiguration();
 
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack
-
-        //initialize to defaults
-        end = -1;
-        start = -1;
-        lastN = -1;
-        units = -1;
-
-        //result timeframe if enabled
-        PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-        if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-
-            boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
-                Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
-            if (isAdvanced) {
-                //Advanced time settings
-                String currentSetting = portletConfig.getSimpleValue(Constant.METRIC_RANGE,
-                    Constant.METRIC_RANGE_DEFAULT);
-                String[] range = currentSetting.split(",");
-                if (range.length == 2) {
-                    start = Long.valueOf(range[0]);
-                    end = Long.valueOf(range[1]);
-                }
-            } else {
-                //Simple time settings
-                property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
-                if (property != null) {
-                    lastN = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_LASTN,
-                        Constant.METRIC_RANGE_LASTN_DEFAULT));
-                    units = Integer.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_UNIT,
-                        Constant.METRIC_RANGE_UNIT_DEFAULT));
-                }
-            }
-        }
 
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -324,158 +285,151 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                 .getId();
                                         }
 
-                                        AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>> callback = new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                            @Override
-                                            public void onFailure(Throwable caught) {
-                                                Log.debug("Error retrieving recent metrics charting data for group ["
-                                                    + groupId + "]:" + caught.getMessage());
-                                                setRefreshing(false);
-                                            }
-
-                                            @Override
-                                            public void onSuccess(
-                                                List<List<MeasurementDataNumericHighLowComposite>> results) {
-                                                if (!results.isEmpty()) {
-                                                    boolean someChartedData = false;
-                                                    //iterate over the retrieved charting data
-                                                    for (int index = 0; index < displayOrder.length; index++) {
-                                                        //retrieve the correct measurement definition
-                                                        final MeasurementDefinition md = measurementDefMap
-                                                            .get(displayOrder[index]);
-
-                                                        //load the data results for the given metric definition
-                                                        List<MeasurementDataNumericHighLowComposite> data = results
-                                                            .get(index);
-
-                                                        //locate last and minimum values.
-                                                        double lastValue = -1;
-                                                        double minValue = Double.MAX_VALUE;//
-                                                        for (MeasurementDataNumericHighLowComposite d : data) {
-                                                            if ((!Double.isNaN(d.getValue()))
-                                                                && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
-                                                                if (d.getValue() < minValue) {
-                                                                    minValue = d.getValue();
-                                                                }
-                                                                lastValue = d.getValue();
-                                                            }
-                                                        }
-
-                                                        //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
-                                                        String commaDelimitedList = "";
-
-                                                        for (MeasurementDataNumericHighLowComposite d : data) {
-                                                            if ((!Double.isNaN(d.getValue()))
-                                                                && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
-                                                                commaDelimitedList += d.getValue() + ",";
-                                                            }
-                                                        }
-                                                        DynamicForm row = new DynamicForm();
-                                                        row.setNumCols(3);
-                                                        row.setColWidths(65, "*", 100);
-                                                        row.setWidth100();
-                                                        row.setAutoHeight();
-                                                        row.setOverflow(Overflow.VISIBLE);
-                                                        HTMLFlow graph = new HTMLFlow();
-                                                        //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
-                                                        //                            + commaDelimitedList + "</span>";
-                                                        String contents = "<span id='sparkline_" + index
-                                                            + "' class='dynamicsparkline' width='0' " + "values='"
-                                                            + commaDelimitedList + "'>...</span>";
-                                                        graph.setContents(contents);
-                                                        graph.setContentsType(ContentsType.PAGE);
-                                                        //disable scrollbars on span
-                                                        graph.setScrollbarSize(0);
-
-                                                        CanvasItem graphContainer = new CanvasItem();
-                                                        graphContainer.setShowTitle(false);
-                                                        graphContainer.setHeight(16);
-                                                        graphContainer.setWidth(60);
-                                                        graphContainer.setCanvas(graph);
-
-                                                        final String title = md.getDisplayName();
-                                                        LinkItem link = AbstractActivityView.newLinkItem(title, null);
-                                                        link.setTooltip(title);
-                                                        link.setTitleVAlign(VerticalAlignment.TOP);
-                                                        link.setAlign(Alignment.LEFT);
-                                                        link.setClipValue(true);
-                                                        link.setWrap(true);
-                                                        link.setHeight(26);
-                                                        if(!BrowserUtility.isBrowserPreIE9()){
-
-                                                        link.addClickHandler(new ClickHandler() {
-                                                            @Override
-                                                            public void onClick(ClickEvent event) {
-                                                                ChartViewWindow window = new ChartViewWindow(title);
-                                                                CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(
-                                                                    groupId, md.getId(), isAutoGroup);
-                                                                window.addItem(graph);
-                                                                graph.populateData();
-                                                                window.show();
-                                                            }
-                                                        });
-                                                        }else {
-                                                            link.disable();
-                                                        }
-
-
-                                                        //Value
-                                                        String convertedValue = AbstractActivityView
-                                                            .convertLastValueForDisplay(lastValue, md);
-                                                        StaticTextItem value = AbstractActivityView
-                                                            .newTextItem(convertedValue);
-                                                        value.setVAlign(VerticalAlignment.TOP);
-                                                        value.setAlign(Alignment.RIGHT);
-                                                        value.setWidth("100%");
-
-                                                        row.setItems(graphContainer, link, value);
-                                                        row.setWidth100();
-                                                        //if graph content returned
-                                                        if ((!md.getName().trim().contains("Trait."))
-                                                            && (lastValue != -1)) {
-                                                            column.addMember(row);
-                                                            someChartedData = true;
-                                                        }
-                                                    }
-                                                    if (!someChartedData) {// when there are results but no chartable entries.
-                                                        DynamicForm row = AbstractActivityView
-                                                            .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
-                                                        column.addMember(row);
-                                                    } else {
-                                                        //insert see more link
-                                                        DynamicForm row = new DynamicForm();
-                                                        String link = LinkManager.getGroupMonitoringGraphsLink(context);
-                                                        AbstractActivityView.addSeeMoreLink(row, link, column);
-                                                    }
-                                                    //call out to 3rd party javascript lib
-                                                    new Timer(){
-                                                        @Override
-                                                        public void run() {
-                                                            BrowserUtility.graphSparkLines();
-                                                        }
-                                                    }.schedule(200);
-                                                } else {
-                                                    DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-
-                                                    AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
-                                                    column.addMember(row);
+                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(
+                                            groupId, definitionArrayIds,
+                                            CustomDateRangeState.getInstance().getStartTime(),
+                                            CustomDateRangeState.getInstance().getEndTime(), 60,
+                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                @Override
+                                                public void onFailure(Throwable caught) {
+                                                    Log.debug("Error retrieving recent metrics charting data for group ["
+                                                        + groupId + "]:" + caught.getMessage());
+                                                    setRefreshing(false);
                                                 }
-                                                setRefreshing(false);
-                                            }
-                                        };
 
-                                        //make the asynchronous call for all the measurement data
-                                        if (end != -1 && start != -1) {
-                                            GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(
-                                                groupId, definitionArrayIds, start, end, 60, callback);
-                                        } else if (lastN != -1 && units != -1) {
-                                            GWTServiceLookup.getMeasurementDataService()
-                                                .findDataForCompatibleGroupForLast(groupId, definitionArrayIds, lastN,
-                                                    units, 60, callback);
-                                        } else {
-                                            GWTServiceLookup.getMeasurementDataService()
-                                                .findDataForCompatibleGroupForLast(groupId, definitionArrayIds, 8,
-                                                    MeasurementUtility.UNIT_HOURS, 60, callback);
-                                        }
+                                                @Override
+                                                public void onSuccess(
+                                                    List<List<MeasurementDataNumericHighLowComposite>> results) {
+                                                    if (!results.isEmpty()) {
+                                                        boolean someChartedData = false;
+                                                        //iterate over the retrieved charting data
+                                                        for (int index = 0; index < displayOrder.length; index++) {
+                                                            //retrieve the correct measurement definition
+                                                            final MeasurementDefinition md = measurementDefMap
+                                                                .get(displayOrder[index]);
+
+                                                            //load the data results for the given metric definition
+                                                            List<MeasurementDataNumericHighLowComposite> data = results
+                                                                .get(index);
+
+                                                            //locate last and minimum values.
+                                                            double lastValue = -1;
+                                                            double minValue = Double.MAX_VALUE;//
+                                                            for (MeasurementDataNumericHighLowComposite d : data) {
+                                                                if ((!Double.isNaN(d.getValue()))
+                                                                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                                                                    if (d.getValue() < minValue) {
+                                                                        minValue = d.getValue();
+                                                                    }
+                                                                    lastValue = d.getValue();
+                                                                }
+                                                            }
+
+                                                            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
+                                                            String commaDelimitedList = "";
+
+                                                            for (MeasurementDataNumericHighLowComposite d : data) {
+                                                                if ((!Double.isNaN(d.getValue()))
+                                                                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                                                                    commaDelimitedList += d.getValue() + ",";
+                                                                }
+                                                            }
+                                                            DynamicForm row = new DynamicForm();
+                                                            row.setNumCols(3);
+                                                            row.setColWidths(65, "*", 100);
+                                                            row.setWidth100();
+                                                            row.setAutoHeight();
+                                                            row.setOverflow(Overflow.VISIBLE);
+                                                            HTMLFlow graph = new HTMLFlow();
+                                                            //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
+                                                            //                            + commaDelimitedList + "</span>";
+                                                            String contents = "<span id='sparkline_" + index
+                                                                + "' class='dynamicsparkline' width='0' " + "values='"
+                                                                + commaDelimitedList + "'>...</span>";
+                                                            graph.setContents(contents);
+                                                            graph.setContentsType(ContentsType.PAGE);
+                                                            //disable scrollbars on span
+                                                            graph.setScrollbarSize(0);
+
+                                                            CanvasItem graphContainer = new CanvasItem();
+                                                            graphContainer.setShowTitle(false);
+                                                            graphContainer.setHeight(16);
+                                                            graphContainer.setWidth(60);
+                                                            graphContainer.setCanvas(graph);
+
+                                                            final String title = md.getDisplayName();
+                                                            LinkItem link = AbstractActivityView.newLinkItem(title,
+                                                                null);
+                                                            link.setTooltip(title);
+                                                            link.setTitleVAlign(VerticalAlignment.TOP);
+                                                            link.setAlign(Alignment.LEFT);
+                                                            link.setClipValue(true);
+                                                            link.setWrap(true);
+                                                            link.setHeight(26);
+                                                            if (!BrowserUtility.isBrowserPreIE9()) {
+
+                                                                link.addClickHandler(new ClickHandler() {
+                                                                    @Override
+                                                                    public void onClick(ClickEvent event) {
+                                                                        ChartViewWindow window = new ChartViewWindow(
+                                                                            title);
+                                                                        CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(
+                                                                            groupId, md.getId(), isAutoGroup);
+                                                                        window.addItem(graph);
+                                                                        graph.populateData();
+                                                                        window.show();
+                                                                    }
+                                                                });
+                                                            } else {
+                                                                link.disable();
+                                                            }
+
+                                                            //Value
+                                                            String convertedValue = AbstractActivityView
+                                                                .convertLastValueForDisplay(lastValue, md);
+                                                            StaticTextItem value = AbstractActivityView
+                                                                .newTextItem(convertedValue);
+                                                            value.setVAlign(VerticalAlignment.TOP);
+                                                            value.setAlign(Alignment.RIGHT);
+                                                            value.setWidth("100%");
+
+                                                            row.setItems(graphContainer, link, value);
+                                                            row.setWidth100();
+                                                            //if graph content returned
+                                                            if ((!md.getName().trim().contains("Trait."))
+                                                                && (lastValue != -1)) {
+                                                                column.addMember(row);
+                                                                someChartedData = true;
+                                                            }
+                                                        }
+                                                        if (!someChartedData) {// when there are results but no chartable entries.
+                                                            DynamicForm row = AbstractActivityView
+                                                                .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                            column.addMember(row);
+                                                        } else {
+                                                            //insert see more link
+                                                            DynamicForm row = new DynamicForm();
+                                                            String link = LinkManager
+                                                                .getGroupMonitoringGraphsLink(context);
+                                                            AbstractActivityView.addSeeMoreLink(row, link, column);
+                                                        }
+                                                        //call out to 3rd party javascript lib
+                                                        new Timer() {
+                                                            @Override
+                                                            public void run() {
+                                                                BrowserUtility.graphSparkLines();
+                                                            }
+                                                        }.schedule(200);
+
+                                                    } else {
+                                                        DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+                                                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                        column.addMember(row);
+                                                    }
+                                                    setRefreshing(false);
+                                                }
+                                            }
+                                        );
                                     }
                                 });
                         }

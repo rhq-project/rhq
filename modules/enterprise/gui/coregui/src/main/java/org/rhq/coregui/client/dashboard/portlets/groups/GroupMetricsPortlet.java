@@ -33,6 +33,9 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -67,7 +70,6 @@ import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorCompo
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph;
@@ -83,6 +85,7 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
  */
 public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
+    public static final String CHART_TITLE = MSG.common_title_metric_chart();
     private int groupId = -1;
     private EntityContext context;
     protected Canvas recentMeasurementsContent = new Canvas();
@@ -99,6 +102,10 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     protected Timer refreshTimer;
 
+    // final version needed to pass to anon classes
+    // so we can call refresh in anon callback handler
+    final protected GroupMetricsPortlet refreshablePortlet;
+
     //defines the list of configuration elements to load/persist for this portlet
     protected static List<String> CONFIG_INCLUDE = new ArrayList<String>();
     static {
@@ -113,6 +120,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
         super();
         this.groupId = context.getGroupId();
         this.context = context;
+        this.refreshablePortlet = this;
     }
 
     @Override
@@ -372,7 +380,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                                     @Override
                                                                     public void onClick(ClickEvent event) {
                                                                         ChartViewWindow window = new ChartViewWindow(
-                                                                            title);
+                                                                            title, "", refreshablePortlet);
                                                                         CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(
                                                                             groupId, md.getId(), isAutoGroup);
                                                                         window.addItem(graph);
@@ -488,5 +496,41 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     protected void setRefreshing(boolean currentlyRefreshing) {
         this.currentlyLoading = currentlyRefreshing;
+    }
+    public static class ChartViewWindow extends Window {
+
+
+        public ChartViewWindow(String title, String windowTitle,final GroupMetricsPortlet portlet) {
+            super();
+            if ((windowTitle != null) && (!windowTitle.trim().isEmpty())) {
+                setTitle(windowTitle + ": " + title);
+            } else {
+                setTitle(CHART_TITLE + ": " + title);
+            }
+            setShowMinimizeButton(false);
+            setShowMaximizeButton(false);
+            setShowCloseButton(true);
+            setIsModal(true);
+            setShowModalMask(true);
+            setWidth(950);
+            setHeight(420);
+            setShowResizer(true);
+            setCanDragResize(true);
+            centerInPage();
+
+            addCloseClickHandler(new CloseClickHandler() {
+                @Override
+                public void onCloseClick(CloseClickEvent event) {
+                    try {
+                        ChartViewWindow.this.destroy();
+                        portlet.refresh();
+
+                    } catch (Throwable e) {
+                        Log.warn("Cannot destroy chart display window.", e);
+                    }
+                }
+            });
+
+        }
     }
 }

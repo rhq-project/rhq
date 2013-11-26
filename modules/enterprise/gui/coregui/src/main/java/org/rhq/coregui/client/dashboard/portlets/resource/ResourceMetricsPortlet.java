@@ -55,7 +55,6 @@ import org.rhq.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -240,7 +239,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             link.addClickHandler(new ClickHandler() {
                                                                 @Override
                                                                 public void onClick(ClickEvent event) {
-                                                                    window = new ChartViewWindow(title);
+                                                                    window = new ChartViewWindow(title,"", refreshablePortlet);
 
                                                                     graphView = D3GraphListView.createSingleGraph(
                                                                             resourceComposite.getResource(), md.getId(),

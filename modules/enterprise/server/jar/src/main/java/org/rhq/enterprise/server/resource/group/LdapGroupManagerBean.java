@@ -683,7 +683,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
 
         // Setup SSL if requested
         String value = env.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
-        boolean ldapSsl = "ssl".equalsIgnoreCase(value);
+        boolean ldapSsl = "ssl".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
         if (ldapSsl) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {

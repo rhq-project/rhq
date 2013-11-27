@@ -41,14 +41,14 @@ rem
 rem    RHQ_SERVER_RUN_AS - if defined, then when the Windows Service is
 rem                        installed, the value is the domain\username of the
 rem                        user that the Windows Service will run as. It is
-rem                        important to also set RHQ_SERVER_PASSWORD for the
-rem                        current user account.
+rem                        required to also set RHQ_SERVER_PASSWORD for the
+rem                        specified user account.
 rem                       
 rem    RHQ_SERVER_RUN_AS_ME - if defined, then when the Windows Service is
 rem                           installed, the domain\username of the user that the Windows
 rem                           Service will run as will be the current user (.\%USERNAME%).
 rem                           This takes precedence over RHQ_SERVER_RUN_AS. It is
-rem                           important to also set RHQ_SERVER_PASSWORD for the
+rem                           required to also set RHQ_SERVER_PASSWORD for the
 rem                           current user account.
 rem                       
 rem Note that you cannot define custom Java VM parameters or command line
@@ -178,20 +178,46 @@ rem Determine if there should be debug VM options passed into it.
 rem For some reason, this can't go inside another if statement.
 if defined RHQ_SERVER_DEBUG set _DEBUG_OPTS=wrapper.debug=true
 
-rem Determine what user the Windows Service will run as.
-if defined RHQ_SERVER_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_SERVER_RUN_AS%"
-if defined RHQ_SERVER_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
-rem This service is typically installed by rhqctl, so assume we don't want to prompt 
-if not defined RHQ_SERVER_PASSWORD_PROMPT set RHQ_SERVER_PASSWORD_PROMPT=false
-
 if /i "%1"=="console" (
-   rem START SERVER
-   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   rem Determine what user the Windows Service will run as.
+   if defined RHQ_SERVER_RUN_AS (
+      if not defined RHQ_SERVER_PASSWORD (
+         echo Exiting. RHQ_SERVER_PASSWORD is not set but is required because RHQ_SERVER_RUN_AS is set: %RHQ_SERVER_RUN_AS%.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_SERVER_RUN_AS%"
+   )
+   if defined RHQ_SERVER_RUN_AS_ME (
+      if not defined RHQ_SERVER_PASSWORD (
+         echo Exiting. RHQ_SERVER_PASSWORD is not set but is required because RHQ_SERVER_RUN_AS_ME is set.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+   )
+
+   rem START SERVER as console
+   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" !_WRAPPER_NTSERVICE_ACCOUNT! %_DEBUG_OPTS%
    goto done
 )
 
 if /i "%1"=="install" (
-   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   rem Determine what user the Windows Service will run as.
+   if defined RHQ_SERVER_RUN_AS (
+      if not defined RHQ_SERVER_PASSWORD (
+         echo Exiting. RHQ_SERVER_PASSWORD is not set but is required because RHQ_SERVER_RUN_AS is set: %RHQ_SERVER_RUN_AS%.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_SERVER_RUN_AS%"
+   )
+   if defined RHQ_SERVER_RUN_AS_ME (
+      if not defined RHQ_SERVER_PASSWORD (
+         echo Exiting. RHQ_SERVER_PASSWORD is not set but is required because RHQ_SERVER_RUN_AS_ME is set.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+   )
+
+   "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" !_WRAPPER_NTSERVICE_ACCOUNT! %_DEBUG_OPTS%
    goto done
 )
 

@@ -199,6 +199,19 @@ set _JBOSS_MODULEPATH=%_RHQ_MODULES_PATH%;%_INTERNAL_MODULES_PATH%
 
 if defined RHQ_STORAGE_DEBUG echo _JBOSS_MODULEPATH: %_JBOSS_MODULEPATH%
 
+rem before running the storage installer, ensure password is set if RUN_AS is in use
+if defined RHQ_STORAGE_RUN_AS (
+   if not defined RHQ_STORAGE_PASSWORD (
+      echo Exiting. RHQ_STORAGE_PASSWORD is not set but is required because RHQ_STORAGE_RUN_AS is set: %RHQ_STORAGE_RUN_AS%.
+      exit /B 1
+   )
+)
+if defined RHQ_STORAGE_RUN_AS_ME (
+   if not defined RHQ_STORAGE_PASSWORD (
+      echo Exiting. RHQ_STORAGE_PASSWORD is not set but is required because RHQ_STORAGE_RUN_AS_ME is set.
+      exit /B 1
+   )
+)
 
 echo "Starting RHQ Storage Installer ..."
 

@@ -157,20 +157,24 @@ rem set RHQ_AGENT_RUN_AS=.\%USERNAME%
 rem    RHQ_AGENT_RUN_AS_ME - if defined, then when the Windows Service is
 rem                          installed, the domain\username of the
 rem                          user that the Windows Service will run as will
-rem                          be the current user (.\%USERNAME%).  This takes
+rem                          be the current user (.\%USERNAME%). This takes
 rem                          precedence over RHQ_AGENT_RUN_AS.
 rem
 rem set RHQ_AGENT_RUN_AS_ME=true
 
-rem    RHQ_AGENT_PASSWORD_PROMPT - if "true", the user that is to run the
-rem                                service (as defined by RHQ_AGENT_RUN_AS or
-rem                                RHQ_AGENT_RUN_AS_ME) must type the password
+rem    RHQ_AGENT_PASSWORD_PROMPT - ignored unless RHQ_AGENT_RUN_AS or
+rem                                RHQ_AGENT_RUN_AS_ME is in use.
+rem                                Ignored by 'rhqctl install', in which case
+rem                                RHQ_AGENT_PASSWORD is required.
+rem                                Used only when installing the agent as a
+rem                                service via 'rhq-agent-wrapper.bat install'.
+rem                                If "true", the user that is to
+rem                                run the service must type the password
 rem                                on the console in order to install service.
 rem                                If "false", you must provide the password
 rem                                in RHQ_AGENT_PASSWORD. Default is "true".
-rem                                This is only used when installing the
-rem                                service; it is not needed to be set when
-rem                                starting, stopping or removing the service.
+rem                                It is not needed to be set when starting,
+rem                                stopping or removing the service.
 rem
 rem set RHQ_AGENT_PASSWORD_PROMPT=true
 

@@ -43,15 +43,15 @@ rem
 rem    RHQ_STORAGE_RUN_AS - if defined, then when the Windows Service is
 rem                      installed, the value is the domain\username of the
 rem                      user that the Windows Service will run as. It is
-rem                      important to also set RHQ_STORAGE_PASSWORD for the
-rem                      current user account.
+rem                      required to also set RHQ_STORAGE_PASSWORD for the
+rem                      specified user account.
 rem                       
 rem    RHQ_STORAGE_RUN_AS_ME - if defined, then when the Windows Service is
 rem                      installed, the domain\username of the user that the Windows
 rem                      Service will run as will be the current user (.\%USERNAME%).
 rem                      This takes precedence over RHQ_STORAGE_RUN_AS. It is
-rem                      important to also set RHQ_STORAGE_PASSWORD for the
-rem                      current user account.
+rem                      required to also set RHQ_STORAGE_PASSWORD for the
+rem                      specified user account.
 rem                       
 rem Note that you cannot define custom Java VM parameters or command line
 rem arguments to pass to Cassandra.  If you wish to pass in  specific arguments,
@@ -199,20 +199,46 @@ rem Determine if there should be debug VM options passed into it.
 rem For some reason, this can't go inside another if statement.
 if defined RHQ_STORAGE_DEBUG set _DEBUG_OPTS=wrapper.debug=true
 
-rem Determine what user the Windows Service will run as.
-if defined RHQ_STORAGE_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_STORAGE_RUN_AS%"
-if defined RHQ_STORAGE_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
-rem This service is typically installed by rhqctl, so assume we don't want to prompt
-if not defined RHQ_STORAGE_PASSWORD_PROMPT set RHQ_STORAGE_PASSWORD_PROMPT=false
-
 if /i "%1"=="console" (
+   rem Determine what user the Windows Service will run as.
+   if defined RHQ_STORAGE_RUN_AS (
+      if not defined RHQ_STORAGE_PASSWORD (
+         echo Exiting. RHQ_STORAGE_PASSWORD is not set but is required because RHQ_STORAGE_RUN_AS is set: %RHQ_STORAGE_RUN_AS%.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_STORAGE_RUN_AS%"
+   )
+   if defined RHQ_STORAGE_RUN_AS_ME (
+      if not defined RHQ_STORAGE_PASSWORD (
+         echo Exiting. RHQ_STORAGE_PASSWORD is not set but is required because RHQ_STORAGE_RUN_AS_ME is set.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+   )
+
    rem START STORAGE NODE
-   start "%RHQ_STORAGE_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_STORAGE_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_STORAGE_HOME=%RHQ_STORAGE_HOME%" "set.RHQ_STORAGE_INSTANCE_NAME=%RHQ_STORAGE_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_STORAGE_OS_PLATFORM=%RHQ_STORAGE_OS_PLATFORM%" "set.RHQ_STORAGE_WRAPPER_LOG_DIR_PATH=%RHQ_STORAGE_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   start "%RHQ_STORAGE_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_STORAGE_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_STORAGE_HOME=%RHQ_STORAGE_HOME%" "set.RHQ_STORAGE_INSTANCE_NAME=%RHQ_STORAGE_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_STORAGE_OS_PLATFORM=%RHQ_STORAGE_OS_PLATFORM%" "set.RHQ_STORAGE_WRAPPER_LOG_DIR_PATH=%RHQ_STORAGE_WRAPPER_LOG_DIR_PATH%" !_WRAPPER_NTSERVICE_ACCOUNT! %_DEBUG_OPTS%
    goto done
 )
 
 if /i "%1"=="install" (
-   "%RHQ_STORAGE_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_STORAGE_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_STORAGE_HOME=%RHQ_STORAGE_HOME%" "set.RHQ_STORAGE_INSTANCE_NAME=%RHQ_STORAGE_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_STORAGE_OS_PLATFORM=%RHQ_STORAGE_OS_PLATFORM%" "set.RHQ_STORAGE_WRAPPER_LOG_DIR_PATH=%RHQ_STORAGE_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   rem Determine what user the Windows Service will run as.
+   if defined RHQ_STORAGE_RUN_AS (
+      if not defined RHQ_STORAGE_PASSWORD (
+         echo Exiting. RHQ_STORAGE_PASSWORD is not set but is required because RHQ_STORAGE_RUN_AS is set: %RHQ_STORAGE_RUN_AS%.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_STORAGE_RUN_AS%"
+   )
+   if defined RHQ_STORAGE_RUN_AS_ME (
+      if not defined RHQ_STORAGE_PASSWORD (
+         echo Exiting. RHQ_STORAGE_PASSWORD is not set but is required because RHQ_STORAGE_RUN_AS_ME is set.
+         exit /B 1
+      )
+      set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+   )
+
+   "%RHQ_STORAGE_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_STORAGE_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_STORAGE_HOME=%RHQ_STORAGE_HOME%" "set.RHQ_STORAGE_INSTANCE_NAME=%RHQ_STORAGE_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_STORAGE_OS_PLATFORM=%RHQ_STORAGE_OS_PLATFORM%" "set.RHQ_STORAGE_WRAPPER_LOG_DIR_PATH=%RHQ_STORAGE_WRAPPER_LOG_DIR_PATH%" !_WRAPPER_NTSERVICE_ACCOUNT! %_DEBUG_OPTS%
    goto done
 )
 

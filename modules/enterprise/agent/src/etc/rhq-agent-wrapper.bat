@@ -28,7 +28,7 @@ rem If the embedded JRE is to be used but is not available, the fallback
 rem JRE to be used will be determined by the JAVA_HOME environment variable.
 rem ===========================================================================
 
-setlocal
+setlocal enabledelayedexpansion
 
 rem ----------------------------------------------------------------------
 rem Let's load in the env script first. We assume our custom environment
@@ -121,13 +121,32 @@ rem Determine if there should be debug VM options passed into it
 rem For some reason, this can't go inside another if statement
 if defined RHQ_AGENT_DEBUG set _DEBUG_OPTS=wrapper.debug=true wrapper.java.additional.1=-Dlog4j.configuration=log4j-debug.xml wrapper.java.additional.4=-Di18nlog.dump-stack-traces=true wrapper.java.additional.5=-Dsigar.nativeLogging=true
 
-rem Determine what user the Windows Service will run as
-if defined RHQ_AGENT_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_AGENT_RUN_AS%"
-if defined RHQ_AGENT_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
-if not defined RHQ_AGENT_PASSWORD_PROMPT set RHQ_AGENT_PASSWORD_PROMPT=true
-
 if /i "%1"=="install" (
-   "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%" "set.RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" "set.RHQ_AGENT_INSTANCE_NAME=%RHQ_AGENT_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_AGENT_OS_PLATFORM=%RHQ_AGENT_OS_PLATFORM%" "set.RHQ_AGENT_WRAPPER_LOG_DIR_PATH=%RHQ_AGENT_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   rem Determine what user the Windows Service will run as
+   rem If this is an rhqctl install then ensure password is set as needed because we can't perform interactive prompt
+   rem Note - using the RHQ_CONTROL_JAVA_OPTS env var as a flag indicating we're being called from rhqctl
+   if defined RHQ_CONTROL_JAVA_OPTS (
+      if defined RHQ_AGENT_RUN_AS (
+         if not defined RHQ_AGENT_PASSWORD (
+            echo Exiting. RHQ_AGENT_PASSWORD is not set but is required because RHQ_AGENT_RUN_AS is set: %RHQ_AGENT_RUN_AS%.
+            exit /B 1
+         )
+         set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_AGENT_RUN_AS%"
+      )
+      if defined RHQ_AGENT_RUN_AS_ME (
+         if not defined RHQ_AGENT_PASSWORD (
+            echo Exiting. RHQ_AGENT_PASSWORD is not set but is required because RHQ_AGENT_RUN_AS_ME is set.
+            exit /B 1
+         )
+         set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+      )
+   ) else (
+      if defined RHQ_AGENT_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_AGENT_RUN_AS%"
+      if defined RHQ_AGENT_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+      if not defined RHQ_AGENT_PASSWORD_PROMPT set RHQ_AGENT_PASSWORD_PROMPT=true
+   )
+
+   "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%" "set.RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" "set.RHQ_AGENT_INSTANCE_NAME=%RHQ_AGENT_INSTANCE_NAME%" "set.RHQ_JAVA_EXE_FILE_PATH=%RHQ_JAVA_EXE_FILE_PATH%" "set.RHQ_AGENT_OS_PLATFORM=%RHQ_AGENT_OS_PLATFORM%" "set.RHQ_AGENT_WRAPPER_LOG_DIR_PATH=%RHQ_AGENT_WRAPPER_LOG_DIR_PATH%" !_WRAPPER_NTSERVICE_ACCOUNT! %_DEBUG_OPTS%
    if ERRORLEVEL 1 goto error
    goto done
 )

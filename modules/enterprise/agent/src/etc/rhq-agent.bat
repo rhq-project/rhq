@@ -114,16 +114,15 @@ set CLASSPATH=
 call :append_classpath "%RHQ_AGENT_HOME%\conf"
 for /R "%RHQ_AGENT_HOME%\lib" %%G in ("*.jar") do (
    call :append_classpath "%%G"
-   if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: %%G
 )
-for %%G in ("%RHQ_JAVA_HOME%\lib\tools.jar" "%RHQ_JAVA_HOME%\..\lib\tools.jar") do (
+for %%G in ("!RHQ_JAVA_HOME!\lib\tools.jar" "!RHQ_JAVA_HOME!\..\lib\tools.jar") do (
    if exist "%%G" (
-      call :append_classpath "%%G"
-      if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: %%G
+      call :append_classpath %%G
       goto end_classpath
    )
 )
 :end_classpath
+if defined RHQ_AGENT_DEBUG echo CLASSPATH: %CLASSPATH%
 
 rem ----------------------------------------------------------------------
 rem Prepare the VM command line options to be passed in
@@ -137,7 +136,7 @@ if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_OPTS: %RHQ_AGENT_JAVA_OPTS%
 rem ----------------------------------------------------------------------
 rem Ensure the agent uses our custom JavaPreferences implementation
 rem ----------------------------------------------------------------------
-set _JAVA_PREFERENCES_FACTORY_OPT="-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory"
+set _JAVA_PREFERENCES_FACTORY_OPT=-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory
 
 if "%RHQ_AGENT_JAVA_ENDORSED_DIRS%" == "none" (
    if defined RHQ_AGENT_DEBUG echo Not explicitly setting java.endorsed.dirs
@@ -145,7 +144,7 @@ if "%RHQ_AGENT_JAVA_ENDORSED_DIRS%" == "none" (
 )
 if not defined RHQ_AGENT_JAVA_ENDORSED_DIRS set RHQ_AGENT_JAVA_ENDORSED_DIRS=%RHQ_AGENT_HOME%\lib\endorsed
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_ENDORSED_DIRS: %RHQ_AGENT_JAVA_ENDORSED_DIRS%
-set _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=%RHQ_AGENT_JAVA_ENDORSED_DIRS%"
+set _JAVA_ENDORSED_DIRS_OPT=-Djava.endorsed.dirs="%RHQ_AGENT_JAVA_ENDORSED_DIRS%"
 :skip_java_endorsed_dirs
 
 if "%RHQ_AGENT_JAVA_LIBRARY_PATH%" == "none" (
@@ -154,7 +153,7 @@ if "%RHQ_AGENT_JAVA_LIBRARY_PATH%" == "none" (
 )
 if not defined RHQ_AGENT_JAVA_LIBRARY_PATH set RHQ_AGENT_JAVA_LIBRARY_PATH=%RHQ_AGENT_HOME%\lib
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_LIBRARY_PATH: %RHQ_AGENT_JAVA_LIBRARY_PATH%
-set _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=%RHQ_AGENT_JAVA_LIBRARY_PATH%"
+set _JAVA_LIBRARY_PATH_OPT=-Djava.library.path="%RHQ_AGENT_JAVA_LIBRARY_PATH%"
 :skip_java_library_path
 
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_ADDITIONAL_JAVA_OPTS: %RHQ_AGENT_ADDITIONAL_JAVA_OPTS%
@@ -183,18 +182,17 @@ rem if sigar debug is enabled, the log configuration is different - sigar debugg
 if defined RHQ_AGENT_SIGAR_DEBUG (
    set _LOG_CONFIG=%_LOG_CONFIG% -Dsigar.nativeLogging=true
 )
-
 rem to support other agents/plugin containers, allow the caller to override the main classname
 if not defined RHQ_AGENT_MAINCLASS (
    set RHQ_AGENT_MAINCLASS=org.rhq.enterprise.agent.AgentMain
 )
 
-rem note - currently not using custom Java Prefs as the default, use commented command line to activate. If installing
-rem note - the agent as a windows service, you must also uncomment lines in wrapper/rhq-agent-wrapper.conf.
-rem set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %_JAVA_PREFERENCES_FACTORY_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
-set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
-
 if not defined _SETENV_ONLY (
+   rem note - currently not using custom Java Prefs as the default, use commented command line to activate. If installing
+   rem note - the agent as a windows service, you must also uncomment lines in wrapper/rhq-agent-wrapper.conf.
+   rem set CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %_JAVA_PREFERENCES_FACTORY_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
+   set     CMD="%RHQ_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
+
    rem log4j 1.2.8 does not create the directory for us (later versions do)
    if not exist "%RHQ_AGENT_HOME%\logs" (
       mkdir "%RHQ_AGENT_HOME%\logs"
@@ -203,7 +201,7 @@ if not defined _SETENV_ONLY (
       echo Executing the agent with this command line:
       echo %CMD%
    )
-   cmd.exe /S /C "%CMD%"
+   cmd.exe /S /C "!CMD!"
 )
 
 goto :done
@@ -213,11 +211,12 @@ rem CALL subroutine that appends the first argument to CLASSPATH
 rem ----------------------------------------------------------------------
 
 :append_classpath
-set _entry=%1
+set "_entry=%1"
+if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: !_entry!
 if not defined CLASSPATH (
-   set CLASSPATH=%_entry:"=%
+   set CLASSPATH=!_entry:"=!
 ) else (
-   set CLASSPATH=%CLASSPATH%;%_entry:"=%
+   set CLASSPATH=!CLASSPATH!;!_entry:"=!
 )
 goto :eof
 

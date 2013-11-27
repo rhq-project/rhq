@@ -92,11 +92,12 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.rest.ResourceHandlerBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.MetricsServer;
@@ -869,6 +870,12 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
         query.setParameter("resourceId", resourceId);
         Agent agent = (Agent) query.getSingleResult();
+        
+        // return empty data if the agent is the dummy one
+        if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
+            && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
+            return Collections.<MeasurementData> emptySet();
+        }
 
         query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
         query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));

@@ -81,6 +81,7 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -2451,7 +2452,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         try {
             // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
-            AgentClient client = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+            Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
+            if (agent == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
+                }
+                new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
+            } else if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
+                && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
+                // dummy agent created from REST
+                return getResourceById(subject, resourceId).getCurrentAvailability();
+            }
+            AgentClient client = agentManager.getAgentClient(agent);
             if (client == null) {
                 throw new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             }

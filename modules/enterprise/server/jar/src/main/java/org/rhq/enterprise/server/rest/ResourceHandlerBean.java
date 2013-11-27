@@ -127,6 +127,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     // Name prefix for synthetic/dummy agents created with the rest api. See #createPlatformInternal
     public static final String DUMMY_AGENT_NAME_PREFIX = "dummy-agent:name";
+    public static final String DUMMY_AGENT_TOKEN_PREFIX = "abc-";
 
     @EJB
     AvailabilityManagerLocal availMgr;
@@ -670,7 +671,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         // Create a dummy agent per platform - otherwise we can't delete the platform later
         // See also https://docs.jboss.org/author/display/RHQ/Virtual+platforms+and+synthetic+agents
         Agent agent ;
-        agent = new Agent(DUMMY_AGENT_NAME_PREFIX +name,"-dummy-p:"+name,12345,"http://foo.com/p:name/"+name,"abc-"+name);
+        agent = new Agent(DUMMY_AGENT_NAME_PREFIX + name, "-dummy-p:" + name, 12345, "http://foo.com/p:name/" + name,
+            DUMMY_AGENT_TOKEN_PREFIX + name);
         agentMgr.createAgent(agent);
 
         Resource platform = new Resource(resourceKey,name,type);

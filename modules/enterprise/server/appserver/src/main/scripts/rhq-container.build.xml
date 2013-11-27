@@ -496,7 +496,12 @@
            }&#xA;
            checkIfRunning(16);&#xA;
           -->&#xA;
-        &lt;/script>'/>
+        &lt;/script>&#xA;&#xA;
+        &lt;noscript>&#xA;
+          &lt;h1>Your browser does not support JavaScript!&lt;/h1>&#xA;
+          &lt;h2>Please turn it on or use a different browser.&lt;/h2>&#xA;
+          &lt;h2>You will NOT be automatically redirected...&lt;/h2>&#xA;
+        &lt;/noscript>&#xA;'/>
 
       <!-- Changing the default content of the welcome page -->
       <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;div class="section">(.*?)&lt;/div>' replace='

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.agent.i18n;
 
@@ -355,12 +355,6 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Completed updating the plugins to their latest versions.")
     String UPDATING_PLUGINS_COMPLETE = "PluginUpdate.updating-complete";
-
-    @I18NMessage("Failed to create updater marker file [{0}] - will continue but agent startup may fail.  If so, restart agent. Cause. {1}")
-    String UPDATING_PLUGINS_MARKER_CREATE_FAILURE = "PluginUpdate.marker-create-failure";
-
-    @I18NMessage("Failed to delete updater marker file [{0}] - will continue but agent startup may fail.  If so, delete the file manually.")
-    String UPDATING_PLUGINS_MARKER_DELETE_FAILURE = "PluginUpdate.marker-delete-failure";
 
     @I18NMessage("The plugin [{0}] is current and does not need to be updated.")
     String PLUGIN_ALREADY_AT_LATEST = "PluginUpdate.already-at-latest";
@@ -1608,10 +1602,10 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The agent will now wait until it has registered with the server...")
     String WAITING_TO_BE_REGISTERED_BEGIN = "AgentMain.waiting-to-be-registered-begin";
 
-    @I18NMessage("The agent does not have plugins - it will now wait for them to be downloaded...")
+    @I18NMessage("The agent is waiting for plugins to be downloaded...")
     String WAITING_FOR_PLUGINS = "AgentMain.waiting-for-plugins";
 
-    @I18NMessage("The agent does not have plugins - it will now wait for them to be downloaded to [{0}]...")
+    @I18NMessage("The agent is waiting for plugins to be downloaded to [{0}]...")
     String WAITING_FOR_PLUGINS_WITH_DIR = "AgentMain.waiting-for-plugins-with-dir";
 
     @I18NMessage("[{0}] plugins downloaded.")

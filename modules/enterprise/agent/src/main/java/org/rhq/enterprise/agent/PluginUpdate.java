@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.agent;
 
@@ -26,10 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import mazz.i18n.Logger;
 
@@ -55,55 +54,13 @@ import org.rhq.enterprise.communications.command.client.RemoteIOException;
 public class PluginUpdate {
     private static final Logger LOG = AgentI18NFactory.getLogger(PluginUpdate.class);
 
-    private static final String MARKER_FILENAME = ".updatelock";
-
     /**
-     * Static lock that prohibits concurrent plugin updates.
+     * Lock that prohibits concurrent plugin updates between threads.
      */
-    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final Semaphore SEMAPHORE = new Semaphore(1);
 
     private final CoreServerService coreServerService;
     private final PluginContainerConfiguration config;
-
-    /**
-     * All {@link PluginUpdate} objects know if they are currently updating plugins given a specific <code>
-     * config</code>. Call this static method to ask if any plugin update object is currently updating plugins with the
-     * given configuration
-     *
-     * @param  config used to determine where the plugins are being updated
-     *
-     * @return <code>true</code> if a plugin updater object is currently updating plugin; <code>false</code> if all
-     *         plugins are up-to-date and nothing is being updated anymore.
-     */
-    public static boolean isCurrentlyUpdating(PluginContainerConfiguration config) {
-        File marker = new File(config.getPluginDirectory(), MARKER_FILENAME);
-        return marker.exists();
-    }
-
-    /**
-     * Blocks the calling thread for a maximum of the given amount of milliseconds timeout waiting for a plugin update
-     * to completely. This will return sooner if the update finishes early or if there is no update currently happening.
-     *
-     * @param  config  used to determine where the plugins are being updated
-     * @param  timeout max milliseconds to wait
-     *
-     * @return <code>true</code> if a plugin updater object is currently updating plugin and this method timed out;
-     *         <code>false</code> if all plugins are up-to-date and nothing is being updated anymore.
-     *
-     * @throws InterruptedException if thread was interrupted while waiting
-     */
-    public static boolean waitForUpdateToComplete(PluginContainerConfiguration config, long timeout)
-        throws InterruptedException {
-        long time_limit = System.currentTimeMillis() + timeout;
-        boolean currently_updating = true; // for us to sleep at least an initial amount before checking the first time
-
-        while (currently_updating && (time_limit > System.currentTimeMillis())) {
-            Thread.sleep(2000L);
-            currently_updating = isCurrentlyUpdating(config);
-        }
-
-        return currently_updating;
-    }
 
     /**
      * Constructor for {@link PluginUpdate}. You can pass in a <code>null</code> <code>core_server_service</code> if you
@@ -151,97 +108,101 @@ public class PluginUpdate {
         List<Plugin> updated_plugins = new ArrayList<Plugin>();
 
         // block if some other thread is updating, too - we can only ever have one thread updating plugins
-        if (!PluginUpdate.lock.writeLock().tryLock(3600, TimeUnit.SECONDS)) {
+        if (!SEMAPHORE.tryAcquire(3600, TimeUnit.SECONDS)) {
             // it should never take this long to update plugins. But if it does, just barf
             throw new TimeoutException();
         }
 
         try {
-            createMarkerFile();
+            List<String> disabled_plugin_names = this.config.getDisabledPlugins();
 
-            try {
-                List<String> disabled_plugin_names = this.config.getDisabledPlugins();
+            // find out what plugins we already have locally
+            Map<String, Plugin> current_plugins = getCurrentPlugins();
 
-                // find out what plugins we already have locally
-                Map<String, Plugin> current_plugins = getCurrentPlugins();
+            // find out what the latest plugins are available to us
+            List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
 
-                // find out what the latest plugins are available to us
-                List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
-
+            if (LOG.isDebugEnabled()) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(AgentI18NResourceKeys.LATEST_PLUGINS_COUNT, latest_plugins.size());
-                    for (Plugin latest_plugin : latest_plugins) {
+                }
+                for (Plugin latest_plugin : latest_plugins) {
+                    if (LOG.isDebugEnabled()) {
                         LOG.debug(AgentI18NResourceKeys.LATEST_PLUGIN, latest_plugin.getId(), latest_plugin.getName(),
                             latest_plugin.getDisplayName(), latest_plugin.getVersion(), latest_plugin.getPath(),
                             latest_plugin.getMd5(), latest_plugin.isEnabled(), latest_plugin.getDescription());
                     }
                 }
+            }
 
-                Map<String, Plugin> latest_plugins_map = new HashMap<String, Plugin>(latest_plugins.size());
+            Map<String, Plugin> latest_plugins_map = new HashMap<String, Plugin>(latest_plugins.size());
 
-                // determine if we need to upgrade any of our current plugins to the latest versions
-                for (Plugin latest_plugin : latest_plugins) {
-                    String plugin_filename = latest_plugin.getPath();
-                    latest_plugins_map.put(plugin_filename, latest_plugin);
-                    Plugin current_plugin = current_plugins.get(plugin_filename);
+            // determine if we need to upgrade any of our current plugins to the latest versions
+            for (Plugin latest_plugin : latest_plugins) {
+                String plugin_filename = latest_plugin.getPath();
+                latest_plugins_map.put(plugin_filename, latest_plugin);
+                Plugin current_plugin = current_plugins.get(plugin_filename);
 
-                    if (current_plugin == null) {
-                        updated_plugins.add(latest_plugin); // we don't have any version of this plugin, we'll need to get it
+                if (current_plugin == null) {
+                    updated_plugins.add(latest_plugin); // we don't have any version of this plugin, we'll need to get it
+                    if (LOG.isDebugEnabled()) {
                         LOG.debug(AgentI18NResourceKeys.NEED_MISSING_PLUGIN, plugin_filename);
-                    } else {
-                        if (latest_plugin.isEnabled() && !disabled_plugin_names.contains(latest_plugin.getName())) {
-                            String latest_md5 = latest_plugin.getMD5();
-                            String current_md5 = current_plugin.getMD5();
+                    }
+                } else {
+                    if (latest_plugin.isEnabled() && !disabled_plugin_names.contains(latest_plugin.getName())) {
+                        String latest_md5 = latest_plugin.getMD5();
+                        String current_md5 = current_plugin.getMD5();
 
-                            if (!current_md5.equals(latest_md5)) {
-                                updated_plugins.add(latest_plugin);
-                                LOG.debug(AgentI18NResourceKeys.PLUGIN_NEEDS_TO_BE_UPDATED, plugin_filename,
-                                    current_md5, latest_md5);
-                            } else {
-                                LOG.debug(AgentI18NResourceKeys.PLUGIN_ALREADY_AT_LATEST, plugin_filename);
+                        if (!current_md5.equals(latest_md5)) {
+                            updated_plugins.add(latest_plugin);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug(AgentI18NResourceKeys.PLUGIN_NEEDS_TO_BE_UPDATED, plugin_filename, current_md5,
+                                        latest_md5);
                             }
                         } else {
-                            // we have a plugin file locally, but it is to be disabled, so delete the plugin .jar
-                            File disabled_file = getPluginFile(latest_plugin);
-                            if (disabled_file.delete()) {
-                                LOG.info(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DELETED, disabled_file);
-                            } else {
-                                LOG.error(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DELETE_FAILED, disabled_file);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug(AgentI18NResourceKeys.PLUGIN_ALREADY_AT_LATEST, plugin_filename);
                             }
                         }
-                    }
-                }
-
-                deleteIllegitimatePlugins(current_plugins, latest_plugins_map);
-
-                // Let's go ahead and download all the plugins that we need.
-                // Try to update all plugins, even if one or more fails to update. At the end,
-                // if an exception was thrown, we'll rethrow it but only after all update attempts were made
-                // NOTE: we do not download any plugins that are to be disabled
-                Exception last_error = null;
-
-                for (Plugin updated_plugin : updated_plugins) {
-                    String name = updated_plugin.getName();
-                    if (updated_plugin.isEnabled() && !disabled_plugin_names.contains(name)) {
-                        try {
-                            downloadPluginWithRetries(updated_plugin); // tries our very best to get it
-                        } catch (Exception e) {
-                            last_error = e;
-                        }
                     } else {
-                        LOG.info(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DOWNLOAD_SKIPPED, name);
-                        updated_plugin.setEnabled(false);
+                        // we have a plugin file locally, but it is to be disabled, so delete the plugin .jar
+                        File disabled_file = getPluginFile(latest_plugin);
+                        if (disabled_file.delete()) {
+                            LOG.info(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DELETED, disabled_file);
+                        } else {
+                            LOG.error(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DELETE_FAILED, disabled_file);
+                        }
                     }
                 }
+            }
 
-                if (last_error != null) {
-                    throw last_error;
+            deleteIllegitimatePlugins(current_plugins, latest_plugins_map);
+
+            // Let's go ahead and download all the plugins that we need.
+            // Try to update all plugins, even if one or more fails to update. At the end,
+            // if an exception was thrown, we'll rethrow it but only after all update attempts were made
+            // NOTE: we do not download any plugins that are to be disabled
+            Exception last_error = null;
+
+            for (Plugin updated_plugin : updated_plugins) {
+                String name = updated_plugin.getName();
+                if (updated_plugin.isEnabled() && !disabled_plugin_names.contains(name)) {
+                    try {
+                        downloadPluginWithRetries(updated_plugin); // tries our very best to get it
+                    } catch (Exception e) {
+                        last_error = e;
+                    }
+                } else {
+                    LOG.info(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DOWNLOAD_SKIPPED, name);
+                    updated_plugin.setEnabled(false);
                 }
-            } finally {
-                deleteMarkerFile();
+            }
+
+            if (last_error != null) {
+                throw last_error;
             }
         } finally {
-            PluginUpdate.lock.writeLock().unlock();
+            SEMAPHORE.release();
         }
 
         LOG.info(AgentI18NResourceKeys.UPDATING_PLUGINS_COMPLETE);
@@ -406,39 +367,6 @@ public class PluginUpdate {
         }
 
         return plugins;
-    }
-
-    private void createMarkerFile() {
-        File marker = null;
-        try {
-            marker = new File(config.getPluginDirectory(), MARKER_FILENAME);
-
-            // shouldn't exist, but if it does, oh well, just reuse it
-            if (!marker.exists()) {
-                new FileOutputStream(marker).close();
-            }
-        } catch (Exception e) {
-            LOG.warn(AgentI18NResourceKeys.UPDATING_PLUGINS_MARKER_CREATE_FAILURE, marker, e);
-        }
-
-        return;
-    }
-
-    private void deleteMarkerFile() {
-        try {
-            File marker = new File(config.getPluginDirectory(), MARKER_FILENAME);
-
-            // it should exist, but if it doesn't oh well, just skip trying to delete it
-            if (marker.exists()) {
-                if (!marker.delete()) {
-                    LOG.warn(AgentI18NResourceKeys.UPDATING_PLUGINS_MARKER_DELETE_FAILURE, marker);
-                }
-            }
-        } catch (Throwable t) {
-            LOG.warn(AgentI18NResourceKeys.UPDATING_PLUGINS_MARKER_DELETE_FAILURE, MARKER_FILENAME);
-        }
-
-        return;
     }
 
     private void deleteIllegitimatePlugins(Map<String, Plugin> current_plugins, Map<String, Plugin> latest_plugins_map) {

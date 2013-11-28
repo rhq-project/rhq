@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.agent;
-
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,7 +25,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -63,6 +59,8 @@ import javax.management.ObjectName;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -168,9 +166,6 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  * @author John Mazzitelli
  */
 public class AgentMain {
-    /**
-     * The logger.
-     */
     private static final Logger LOG = AgentI18NFactory.getLogger(AgentMain.class);
 
     /**
@@ -391,6 +386,11 @@ public class AgentMain {
      * Tracks whether we already logged a warning to let the user know SIGAR support isn't available.
      */
     private boolean m_loggedNativeSystemInfoUnavailableWarning;
+
+    /**
+     * Plugin update instance, used by management.
+     */
+    private PluginUpdate m_pluginUpdate;
 
     /**
      * The main method that starts the whole thing.
@@ -1677,7 +1677,6 @@ public class AgentMain {
      * <p/>
      * <ul>
      *   <li>Registering with the server (if the agent needs to do so at startup)</li>
-     *   <li>Updating the plugins with the latest versions that are found on the server</li>
      *   <li>Setup a conditional restart of the plugin container, see {@link PluginContainerConditionalRestartListener}</li>
      * </ul>
      *
@@ -1706,11 +1705,6 @@ public class AgentMain {
             m_clientSender.addStateListener(new RegisterStateListener(), true);
         }
 
-        // now we want to prepare to update the plugins if told to do so
-        if (m_configuration.isUpdatePluginsAtStartupEnabled()) {
-            updatePlugins();
-        }
-
         //the next thing is to setup the conditional restart of the PC if it fails to merge
         //the upgrade results with the server due to some network glitch
         m_clientSender.addStateListener(new PluginContainerConditionalRestartListener(), false);
@@ -1719,12 +1713,20 @@ public class AgentMain {
     }
 
     /**
-     * This asks that the agent update its plugins. If the RHQ Server is already up and the agent has detected it, this
-     * method will immediately pull down the new/updated plugins. Otherwise, this will schedule the agent to update the
-     * plugins from the server once it comes up and the agent detects it.
+     * Management method to manually update plugins.
+     * This method will fail if the server is down.
+     * @throws IllegalStateException if the container is not initialized
+     * @throws RuntimeException for any other reason (failed to download, etc.)
      */
     public void updatePlugins() {
-        m_clientSender.addStateListener(new UpdatePluginsStateListener(), true);
+        if (m_pluginUpdate == null) {
+            throw new IllegalStateException("plugin update uninitialized");
+        }
+        try {
+            m_pluginUpdate.updatePlugins();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -1885,59 +1887,34 @@ public class AgentMain {
             return false;
         }
 
-        try {
-            File plugin_dir = pc_config.getPluginDirectory();
-            boolean keep_waiting = (plugin_dir.list().length == 0)
-                || PluginUpdate.waitForUpdateToComplete(pc_config, 1000L);
+        File plugin_dir = pc_config.getPluginDirectory();
 
-            // we block until we get our plugins - there is no sense continuing until we have plugins
-            // there may be instances, though, where we don't want to block (in unit tests for example)
-            // so allow this to be configurable via the "update plugins at startup" flag.
-            if (m_configuration.isUpdatePluginsAtStartupEnabled()) {
-                boolean notified_user = false;
-
-                while (keep_waiting) {
-                    if (!notified_user) {
-                        LOG.info(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
-                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_FOR_PLUGINS));
-                        notified_user = true;
-                    } else {
-                        // let's keep logging this at debug level so we don't look hung
-                        LOG.debug(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
-                    }
-
-                    boolean updating = PluginUpdate.waitForUpdateToComplete(pc_config, 30000L);
-                    int after = plugin_dir.list().length;
-
-                    if ((after == 0) && !updating) {
-                        // still nothing and it doesn't look like we are downloading - try to update them again right now
-                        // (doing this because I saw a case where the startup update somehow happened just prior to the
-                        // registration finishing, so the original update was rejected by the server as "unauthorized")
-                        updatePluginsNow(m_clientSender);
-                        after = plugin_dir.list().length;
-                    }
-
-                    keep_waiting = ((after == 0) || (updating));
-
-                    if (!keep_waiting) {
-                        after = plugin_dir.list(new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
-                                return name.endsWith(".jar");
-                            }
-                        }).length;
-                        LOG.info(AgentI18NResourceKeys.DONE_WAITING_FOR_PLUGINS, after);
-                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.DONE_WAITING_FOR_PLUGINS, after));
-                    }
+        // we block until we get our plugins - there is no sense continuing until we have plugins
+        // there may be instances, though, where we don't want to block (in unit tests for example)
+        // so allow this to be configurable via the "update plugins at startup" flag.
+        m_pluginUpdate = new PluginUpdate(pc_config.getServerServices().getCoreServerService(), pc_config);
+        if (m_configuration.isUpdatePluginsAtStartupEnabled()) {
+            boolean notified_user = false;
+            // this can block forever...perhaps exit after a few tries?
+            while (true) {
+                if (!notified_user) {
+                    LOG.info(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
+                    getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_FOR_PLUGINS));
+                    notified_user = true;
+                } else {
+                    // let's keep logging this at debug level so we don't look hung
+                    LOG.debug(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
                 }
-            } else if (plugin_dir.list().length == 0) {
-                LOG.warn(AgentI18NResourceKeys.NO_PLUGINS);
-                getOut().println(MSG.getMsg(AgentI18NResourceKeys.NO_PLUGINS));
-                return false;
+                try {
+                    m_pluginUpdate.updatePlugins();
+                    break;
+                } catch (Exception e) {
+                    LOG.error(e, AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE, e);
+                }
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOG.warn(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED);
-            getOut().println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED));
+        } else if (plugin_dir.list().length == 0) {
+            LOG.warn(AgentI18NResourceKeys.NO_PLUGINS);
+            getOut().println(MSG.getMsg(AgentI18NResourceKeys.NO_PLUGINS));
             return false;
         }
 
@@ -3522,29 +3499,6 @@ public class AgentMain {
         m_startTime = (started) ? System.currentTimeMillis() : 0L;
     }
 
-    /**
-     * Immediately sends a request to the server to update the plugins.
-     *
-     * @param  sender the sender used to comminucate with server
-     *
-     * @return <code>true</code> if the plugins were succesfully updated, <code>false</code> if an error occurred
-     *
-     * @see    PluginUpdate
-     */
-    private boolean updatePluginsNow(ClientCommandSender sender) {
-        try {
-            ClientRemotePojoFactory factory = sender.getClientRemotePojoFactory();
-            CoreServerService server = factory.getRemotePojo(CoreServerService.class);
-            PluginContainerConfiguration pc_config = m_configuration.getPluginContainerConfiguration();
-            PluginUpdate plugin_update = new PluginUpdate(server, pc_config);
-            plugin_update.updatePlugins();
-            return true;
-        } catch (Exception e) {
-            LOG.warn(e, AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE);
-            return false;
-        }
-    }
-
     private static void reconfigureJavaLogging() {
         try {
             LOG.debug(AgentI18NResourceKeys.RECONFIGURE_JAVA_LOGGING_START);
@@ -3573,21 +3527,6 @@ public class AgentMain {
             // or just set this config preference back to true if they want to register
             // 9/17/2008 - we now have to register every time we startup because its how we get the failover list too
             //m_configuration.getPreferences().putBoolean(AgentConfigurationConstants.REGISTER_WITH_SERVER_AT_STARTUP, false);
-            return false; // no need to keep listening
-        }
-
-        public boolean stoppedSending(ClientCommandSender sender) {
-            return true; // no-op but keep listening
-        }
-    }
-
-    /**
-     * Listener that will update the plugins once the sender is able to start sending.
-     */
-    private class UpdatePluginsStateListener implements ClientCommandSenderStateListener {
-        public boolean startedSending(ClientCommandSender sender) {
-            updatePluginsNow(sender);
-
             return false; // no need to keep listening
         }
 

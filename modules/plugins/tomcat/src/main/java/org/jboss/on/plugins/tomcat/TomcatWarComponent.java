@@ -1,24 +1,20 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.jboss.on.plugins.tomcat;
 
@@ -141,7 +137,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     public AvailabilityType getAvailability() {
         AvailabilityType availability;
 
-        if (null == this.webModuleMBean) {
+        if (null == this.webModuleMBean || isStaleWebModuleMBeanReference(this.webModuleMBean, getEmsConnection())) {
             this.webModuleMBean = getWebModuleMBean();
         }
 
@@ -177,6 +173,10 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         }
 
         return availability;
+    }
+
+    private static boolean isStaleWebModuleMBeanReference(EmsBean webModuleMBean, EmsConnection emsConnection) {
+        return !webModuleMBean.getConnectionProvider().getExistingConnection().equals(emsConnection);
     }
 
     @Override

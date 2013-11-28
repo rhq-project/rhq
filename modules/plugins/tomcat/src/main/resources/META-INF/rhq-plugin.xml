@@ -60,16 +60,20 @@
                type="string"
                required="false"
                default="SCRIPT"
-               description="The method used to execute the control operations. When set to RPM the 
-                                            system will use a System V init script via the 'service' command. The
-                                            script properties will be ignored.">
+               description="The method used to execute the control operations.
+                  When set to 'RPM System V init script' the system will use a System V init script via the 'service' command.
+                  'Windows executable' should be used when Tomcat is installed as a Windows service.
+                  For these two control methods, the script properties will be ignored.">
                <c:property-options>
+                 <c:option
+                         value="SCRIPT"
+                         name="Standard scripts" />
                   <c:option
                      value="RPM"
                      name="RPM System V init script" />
                   <c:option
-                     value="SCRIPT"
-                     name="shutdown script" />
+                     value="WINDOWS_EXE"
+                     name="Windows executable" />
                </c:property-options>
             </c:simple-property>
 

@@ -59,6 +59,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  */
 public class TomcatServerComponent<T extends ResourceComponent<?>> implements JMXComponent<T>, MeasurementFacet,
     OperationFacet {
+    private static final Log LOG = LogFactory.getLog(TomcatServerComponent.class);
 
     public enum SupportedOperations {
         /**
@@ -88,7 +89,10 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         RPM,
 
         /** Control operations should be performed via the scripts set in the plugin configuration. */
-        SCRIPT
+        SCRIPT,
+
+        /** Control operations should be performed via Tomcat EXE (Windows only). */
+        WINDOWS_EXE
     }
 
     /**
@@ -103,8 +107,6 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
     public static final String PLUGIN_CONFIG_START_SCRIPT = "startScript";
     public static final String START_WAIT_MAX_PROP = "startWaitMax";
     public static final String STOP_WAIT_MAX_PROP = "stopWaitMax";
-
-    private Log log = LogFactory.getLog(this.getClass());
 
     private EmsConnection connection;
 
@@ -130,8 +132,8 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         try {
             emsConnection = loadConnection();
         } catch (Exception e) {
-            if (log.isTraceEnabled()) {
-                log.debug("Component attempting to access a connection that could not be loaded:" + e.getMessage());
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Component attempting to access a connection that could not be loaded:" + e.getMessage());
             }
         }
 
@@ -221,14 +223,14 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                     connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
                         tempDir.getAbsolutePath());
 
-                    if (log.isDebugEnabled()) {
-                        log.debug("Loading connection [" + connectionSettings.getServerUrl() + "] with install path ["
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Loading connection [" + connectionSettings.getServerUrl() + "] with install path ["
                             + connectionSettings.getLibraryURI() + "] and temp directory [" + tempDir.getAbsolutePath()
                             + "]");
                     }
                 } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Loading connection [" + connectionSettings.getServerUrl()
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Loading connection [" + connectionSettings.getServerUrl()
                             + "] ignoring remote install path [" + catalinaHome + "]");
                     }
                 }
@@ -240,8 +242,8 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
 
                 this.consecutiveConnectionErrors = 0;
 
-                if (log.isDebugEnabled())
-                    log.debug("Successfully made connection to the Tomcat Server for resource ["
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Successfully made connection to the Tomcat Server for resource ["
                         + this.resourceContext.getResourceKey() + "]");
 
             } catch (Exception e) {
@@ -251,13 +253,13 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 // the connection is established. If we get to this point that an exception was thrown, close any
                 // connection that was made and null it out so we can try to establish it again.
                 if (this.connection != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Connection created but an exception was thrown. Closing the connection.", e);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Connection created but an exception was thrown. Closing the connection.", e);
                     }
                     try {
                         this.connection.close();
                     } catch (Exception e2) {
-                        log.error("Error closing Tomcat EMS connection: " + e2);
+                        LOG.error("Error closing Tomcat EMS connection: " + e2);
                     }
                     this.connection = null;
                 }
@@ -266,13 +268,13 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 // file spamming. Log a warning only one time outside of debug mode, and throttle even in debug
                 // mode (once for every 10 connect errors).
                 if (0 == consecutiveConnectionErrors) {
-                    log.warn("Could not connect to the Tomcat instance for resource ["
-                        + resourceContext.getResourceKey() + "] (enable debug logging for more info): "
-                        + e.getMessage());
+                    LOG.warn("Could not connect to the Tomcat instance for resource ["
+                            + resourceContext.getResourceKey() + "] (enable debug logging for more info): "
+                            + e.getMessage());
                 }
 
-                if (log.isDebugEnabled() && (consecutiveConnectionErrors % 10 == 0)) {
-                    log.debug(
+                if (LOG.isDebugEnabled() && (consecutiveConnectionErrors % 10 == 0)) {
+                    LOG.debug(
                         "Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1)
                             + "] times for resource [" + resourceContext.getResourceKey() + "]", e);
                 }
@@ -369,7 +371,7 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
             try {
                 this.connection.close();
             } catch (Exception e) {
-                log.error("Error closing Tomcat EMS connection: " + e);
+                LOG.error("Error closing Tomcat EMS connection: " + e);
             }
             this.connection = null;
         }
@@ -385,8 +387,8 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
             bean.getAttribute("serverInfo").refresh();
             avail = AvailabilityType.UP;
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("An exception occurred during availability check for Tomcat Server Resource with key ["
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("An exception occurred during availability check for Tomcat Server Resource with key ["
                     + this.getResourceContext().getResourceKey() + "] and plugin config ["
                     + this.getPluginConfiguration().getAllProperties() + "].", e);
             }
@@ -492,7 +494,7 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                     report.addData(new MeasurementDataTrait(schedule, valueObject.toString()));
                 }
             } catch (Exception e) {
-                log.error("Failed to obtain measurement [" + name + "]", e);
+                LOG.error("Failed to obtain measurement [" + name + "]", e);
             }
         }
     }

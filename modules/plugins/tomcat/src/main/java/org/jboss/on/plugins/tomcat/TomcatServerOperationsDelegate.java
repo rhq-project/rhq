@@ -1,24 +1,20 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.jboss.on.plugins.tomcat;
 
@@ -58,6 +54,7 @@ import org.rhq.core.system.SystemInfo;
  * @author Lukas Krejci
  */
 public class TomcatServerOperationsDelegate {
+    private static final Log LOG = LogFactory.getLog(TomcatServerOperationsDelegate.class);
 
     public static final String SHUTDOWN_SCRIPT_ENVIRONMENT_PROPERTY = "shutdownScriptEnvironment";
     public static final String START_SCRIPT_ENVIRONMENT_PROPERTY = "startScriptEnvironment";
@@ -79,8 +76,6 @@ public class TomcatServerOperationsDelegate {
 
     /** amount of time to wait between availability checks when performing a start - in milliseconds */
     private static final long START_WAIT_INTERVAL = 1000L * 10; // 10 seconds
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String SEPARATOR = "\n-----------------------\n";
     // Attributes  --------------------------------------------
@@ -169,8 +164,8 @@ public class TomcatServerOperationsDelegate {
         applyEnvironmentVars(environment, processExecution);
 
         long start = System.currentTimeMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("About to execute the following process: [" + processExecution + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("About to execute the following process: [" + processExecution + "]");
         }
         ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
@@ -183,9 +178,9 @@ public class TomcatServerOperationsDelegate {
             String message = "Script returned error or non-zero exit code while starting the Tomcat instance - exitCode=["
                 + ((exitCode != null) ? exitCode : "UNKNOWN") + "], output=[" + output + "].";
             if (error == null) {
-                log.error(message);
+                LOG.error(message);
             } else {
-                log.error(message, error);
+                LOG.error(message, error);
             }
             avail = this.serverComponent.getAvailability();
         } else {
@@ -299,8 +294,8 @@ public class TomcatServerOperationsDelegate {
 
         applyEnvironmentVars(environment, processExecution);
 
-        if (log.isDebugEnabled()) {
-            log.debug("About to execute the following process: [" + processExecution + "]");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("About to execute the following process: [" + processExecution + "]");
         }
         ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
@@ -346,7 +341,7 @@ public class TomcatServerOperationsDelegate {
         processExecution.getArguments().add("stop");
 
         Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
-        log.info("Operation Envs: " + envVars);
+        LOG.info("Operation Envs: " + envVars);
         processExecution.setEnvironmentVariables(envVars);
 
         initProcessExecution(processExecution);
@@ -408,14 +403,14 @@ public class TomcatServerOperationsDelegate {
     }
 
     private void logExecutionResults(ProcessExecutionResults results) {
-        if (log.isDebugEnabled()) {
-            log.debug("Exit code from process execution: " + results.getExitCode());
-            log.debug("Output from process execution: " + SEPARATOR + results.getCapturedOutput() + SEPARATOR);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Exit code from process execution: " + results.getExitCode());
+            LOG.debug("Output from process execution: " + SEPARATOR + results.getCapturedOutput() + SEPARATOR);
         }
     }
 
     private String restart(Configuration parameters) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         boolean problem = false;
 
         try {

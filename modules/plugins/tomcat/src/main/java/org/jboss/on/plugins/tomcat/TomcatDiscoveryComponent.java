@@ -59,9 +59,8 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  *
  * @author Jay Shaughnessy
  */
-@SuppressWarnings("unchecked")
 public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(TomcatDiscoveryComponent.class);
 
     /**
      * Indicates the version information could not be determined.
@@ -111,28 +110,29 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     public static final String EWS_TOMCAT_5 = "tomcat5";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.debug("Discovering Tomcat servers...");
+        LOG.debug("Discovering Tomcat servers...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
         // For each Tomcat process found in the context, create a resource details instance
+        @SuppressWarnings("unchecked")
         List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
-            if (log.isDebugEnabled()) {
-                log.debug("Discovered potential Tomcat process: " + autoDiscoveryResult);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Discovered potential Tomcat process: " + autoDiscoveryResult);
             }
 
             try {
                 DiscoveredResourceDetails resource = parseTomcatProcess(context, autoDiscoveryResult);
                 if (resource != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Verified Tomcat process: " + autoDiscoveryResult);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Verified Tomcat process: " + autoDiscoveryResult);
                     }
 
                     resources.add(resource);
                 }
             } catch (Exception e) {
-                log.error("Error creating discovered resource for process: " + autoDiscoveryResult, e);
+                LOG.error("Error creating discovered resource for process: " + autoDiscoveryResult, e);
             }
         }
 
@@ -146,7 +146,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         try {
             catalinaHome = FileUtils.getCanonicalPath(catalinaHome);
         } catch (Exception e) {
-            log.warn("Failed to canonicalize catalina.home path [" + catalinaHome + "] - cause: " + e);
+            LOG.warn("Failed to canonicalize catalina.home path [" + catalinaHome + "] - cause: " + e);
             // leave as is
         }
         File catalinaHomeDir = new File(catalinaHome);
@@ -156,7 +156,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         try {
             catalinaBase = FileUtils.getCanonicalPath(catalinaBase);
         } catch (Exception e) {
-            log.warn("Failed to canonicalize catalina.base path [" + catalinaBase + "] - cause: " + e);
+            LOG.warn("Failed to canonicalize catalina.base path [" + catalinaBase + "] - cause: " + e);
             // leave as is
         }
 
@@ -172,8 +172,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         // if the specified home dir does not exist locally assume this is a remote Tomcat server
         // We can't determine version. Try to get the hostname from the connect url
         if (!catalinaHomeDir.isDirectory()) {
-            log.info("Manually added Tomcat Server directory does not exist locally. Assuming remote Tomcat Server: "
-                + catalinaHome);
+            LOG.info("Manually added Tomcat Server directory does not exist locally. Assuming remote Tomcat Server: "
+                    + catalinaHome);
 
             Matcher matcher = TOMCAT_MANAGER_URL_PATTERN.matcher(pluginConfig.getSimpleValue(
                 JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, null));
@@ -207,7 +207,9 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
             resourceKey, resourceName, version, productDescription, pluginConfig, null);
-        log.debug("Verified manually-added Tomcat Resource with plugin config: " + pluginConfig);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Verified manually-added Tomcat Resource with plugin config: " + pluginConfig);
+        }
 
         return resource;
     }
@@ -227,22 +229,18 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
         String[] commandLine = processInfo.getCommandLine();
 
-        if (null == processInfo.getExecutable()) {
-            log.debug("Ignoring Tomcat instance (agent may not be owner) with following command line: "
-                + Arrays.toString(commandLine));
-            return null;
-        }
-
         if (!isStandalone(commandLine) && !isWindows(context)) {
-            log.debug("Ignoring embedded Tomcat instance (catalina.home not found) with following command line: "
-                + Arrays.toString(commandLine));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Ignoring embedded Tomcat instance (catalina.home not found) with following command line: "
+                    + Arrays.toString(commandLine));
+            }
             return null;
         }
 
         String catalinaHome = determineCatalinaHome(commandLine);
 
         if (catalinaHome == null && isWindows(context)) {
-            log.debug("catalina.home not found. Checking to see if this is an EWS installation.");
+            LOG.debug("catalina.home not found. Checking to see if this is an EWS installation.");
             // On Windows EWS uses the tomcat5.exe, tomcat6.exe or Tomcat7.exe executables to start tomcat. They currently do
             // not provide the command line args that we get with the normal start up scripts that are used to
             // determine catalina.home. See https://bugzilla.redhat.com/show_bug.cgi?id=580931 for more information.
@@ -252,15 +250,15 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         }
 
         if (null == catalinaHome) {
-            log.error("Ignoring Tomcat instance due to invalid setting of catalina.home in command line: "
-                + Arrays.toString(commandLine));
+            LOG.error("Ignoring Tomcat instance due to invalid setting of catalina.home in command line: "
+                    + Arrays.toString(commandLine));
             return null;
         }
 
         String catalinaBase = determineCatalinaBase(commandLine, catalinaHome);
         if (null == catalinaBase) {
-            log.error("Ignoring Tomcat instance due to invalid setting of catalina.base in command line: "
-                + Arrays.toString(commandLine));
+            LOG.error("Ignoring Tomcat instance due to invalid setting of catalina.base in command line: "
+                    + Arrays.toString(commandLine));
             return null;
         }
 
@@ -313,7 +311,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
      * Looks for tomcat home in the command line properties. Requires a full path for the catalina.home
      * property. The path may be a symbolic link.
      * 
-     * @param startup command line
+     * @param cmdLine startup command line
      *
      * @return A canonical form of the catalina home path set in the command line.  Symbolic links
      * are not resolved to ensure that we discover the same resource repeatedly for the same symlink
@@ -386,14 +384,16 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         if (tomcatInstallDirs.length == 0) {
             return null;
         } else if (tomcatInstallDirs.length > 1) {
-            log.warn("Could not unambiguously determine the tomcat installation dir for EWS executable " + exePath.getAbsolutePath() + ". The candidates are: " + Arrays.asList(tomcatInstallDirs));
+            LOG.warn("Could not unambiguously determine the tomcat installation dir for EWS executable " + exePath.getAbsolutePath() + ". The candidates are: " + Arrays.asList(tomcatInstallDirs));
             return null;
         }
         
         File tomcatDir = tomcatInstallDirs[0];
 
         if (tomcatDir.exists()) {
-            log.debug("Detected EWS installation. catalina.home found at " + tomcatDir.getAbsolutePath());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Detected EWS installation. catalina.home found at " + tomcatDir.getAbsolutePath());
+            }
             return tomcatDir.getAbsolutePath();
         }
 
@@ -404,7 +404,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
      * Looks for tomcat instance base in the command line properties. Requires a full path for the catalina.base, if
      * specified.  The path may be a symbolic link.
      * 
-     * @param startup command line
+     * @param cmdLine startup command line
      *
      * @return A canonical form of the catalina base path if set in the command line.  Symbolic links
      * are not resolved to ensure that we discover the same resource repeatedly for the same symlink
@@ -464,7 +464,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         File versionScriptFile = new File(versionScriptFileName);
 
         if (!versionScriptFile.exists()) {
-            log.warn("Version script file not found in expected location: " + versionScriptFile);
+            LOG.warn("Version script file not found in expected location: " + versionScriptFile);
             return UNKNOWN_VERSION;
         }
 
@@ -482,8 +482,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         String version = getVersionFromVersionScriptOutput(versionOutput);
 
         if (UNKNOWN_VERSION.equals(version)) {
-            log.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput
-                + "\ncatalinaHome: " + catalinaHome + "\nScript:" + versionScriptFileName + "\ntimeout=" + timeout);
+            LOG.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput
+                    + "\ncatalinaHome: " + catalinaHome + "\nScript:" + versionScriptFileName + "\ntimeout=" + timeout);
         }
 
         return version;
@@ -552,7 +552,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     /**
      * Check from the command line if this is an EWS tomcat
      *
-     * @param  commandLine
+     * @param  catalinaHome
      *
      * @return
      */

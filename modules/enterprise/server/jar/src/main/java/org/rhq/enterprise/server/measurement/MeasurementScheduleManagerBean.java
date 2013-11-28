@@ -1485,6 +1485,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             // the JPQL above, I've chosen to just make a change to the custom altered projection, using
             // the JPQL to guide me.
             generator.alterProjection(" distinct orderingField0");
+            generator.alterCountProjection(" count(distinct orderingField0)");
             CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
                 entityManager);
             definitions = queryRunner.execute();

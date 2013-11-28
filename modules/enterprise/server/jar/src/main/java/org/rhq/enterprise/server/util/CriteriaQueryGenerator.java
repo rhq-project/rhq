@@ -84,6 +84,7 @@ public final class CriteriaQueryGenerator {
     private String alias;
     private String className;
     private String projection;
+    private String countProjection;
     private String groupByClause;
     private String havingClause;
     private static String NL = System.getProperty("line.separator");
@@ -411,7 +412,10 @@ public final class CriteriaQueryGenerator {
         boolean useJoinFetch = projection == null && pc.isUnlimited() && !fetchFields.isEmpty();
 
         if (countQuery) {
-            if (groupByClause == null) { // non-grouped method
+            if (countProjection != null) {
+                //just use whatever we are told
+                results.append(countProjection).append(NL);
+            } else if (groupByClause == null) { // non-grouped method
                 // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
                 results.append("COUNT(*)").append(NL);
             } else {
@@ -838,6 +842,24 @@ public final class CriteriaQueryGenerator {
      */
     public void alterProjection(String projection) {
         this.projection = projection;
+    }
+
+    /**
+     * Sometimes the altered projection ({@link #alterProjection(String)}) might cause the result set to have different
+     * number of results than the default/unaltered projection. Leaving the count query in the default form could then
+     * generate seemingly inconsistent results, where the data query and the count query wouldn't match up.
+     * <p/>
+     * An example of a projection that might alter the number of results is the {@code " distinct ..."} projection that
+     * would only return distinct results from a dataset, while the default count query (COUNT(*)) would produce the
+     * count including duplicate results that were eliminated in the returned data.
+     * <p/>
+     * In these cases one can also alter the count query to count the results the data query will return.
+     *
+     * @param countProjection a complete JPQL fragment expressing the count expression (e.g.
+     *                        {@code COUNT(DISTINCT ...)})
+     */
+    public void alterCountProjection(String countProjection) {
+        this.countProjection = countProjection;
     }
 
     public boolean isProjectionAltered() {

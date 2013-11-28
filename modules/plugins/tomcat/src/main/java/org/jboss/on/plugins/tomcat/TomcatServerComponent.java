@@ -158,6 +158,16 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
      * @throws Exception if there are any issues at all connecting to the server
      */
     private synchronized EmsConnection loadConnection() throws Exception {
+
+        if (this.connection != null && !this.connection.getConnectionProvider().isConnected()) {
+            try {
+                this.connection.close();
+            } catch (Exception ignore) {
+            } finally {
+                this.connection = null;
+            }
+        }
+
         if (this.connection == null) {
             try {
                 Configuration pluginConfig = this.resourceContext.getPluginConfiguration();

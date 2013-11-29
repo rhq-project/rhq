@@ -402,7 +402,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     private void setDampeningFromRest(AlertDefinition alertDefinition, AlertDefinitionRest adr) {
         AlertDampening.Category dampeningCategory;
         try {
-            dampeningCategory = AlertDampening.Category.valueOf(adr.getDampeningCategory());
+            dampeningCategory = AlertDampening.Category.valueOf(adr.getDampeningCategory().toUpperCase());
         }
         catch (Exception e) {
             AlertDampening.Category[] vals = AlertDampening.Category.values();
@@ -415,6 +415,16 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             }
             throw new BadArgumentException("dampening category","Allowed values are: " + builder.toString());
         }
+        if (dampeningCategory == AlertDampening.Category.ONCE) {
+            // WillRecover = true means to disable after firing
+            // See org.rhq.enterprise.server.alert.AlertManagerBean.willDefinitionBeDisabled()
+            alertDefinition.setWillRecover(true);
+            dampeningCategory = AlertDampening.Category.NONE;
+        }
+        if (dampeningCategory == AlertDampening.Category.NO_DUPLICATES) {
+            dampeningCategory = AlertDampening.Category.NONE;
+        }
+
         AlertDampening dampening = new AlertDampening(dampeningCategory);
         if (adr.getDampeningCount()>-1) {
             dampening.setValue(adr.getDampeningCount());

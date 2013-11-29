@@ -1147,6 +1147,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
         AlertDampening dampening = def.getAlertDampening();
         adr.setDampeningCategory(dampening.getCategory().name());
+        if (dampening.getCategory()== AlertDampening.Category.NONE && def.getWillRecover()) {
+            adr.setDampeningCategory(AlertDampening.Category.ONCE.name());
+        }
+
         AlertDampening.TimeUnits units = dampening.getValueUnits();
         String s = units != null ? " " + units.name() : "";
         adr.setDampeningCount(dampening.getValue());

@@ -123,6 +123,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     @Override
     public void stop() {
+        connection.shutdown();
         logFileEventDelegate.stopLogFileEventPollers();
         previousAvailabilityType = null;
         if (this.availabilityCollector != null) {

@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static java.lang.Boolean.FALSE;
@@ -725,6 +726,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             } catch (InvalidPluginConfigurationException e) {
                 log.debug("Could not get the product info from [" + hostname + ":" + port
                     + "] - probably a connection failure");
+            } finally {
+                connection.shutdown();
             }
             return this;
         }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
 
@@ -111,103 +111,107 @@ public class Domain2Descriptor {
 
         //create connection
         ASConnection conn = new ASConnection("localhost", 9990, user, pass);
-
-        Address address = new Address(path);
-
-        //create request to get metadata type information
-        Operation op = new Operation("read-resource-description", address);
-        //recurse down the tree.
-        op.addAdditionalProperty("recursive", "true");
-
-        //additionally request operation metadata
-        if (mode == D2DMode.OPERATION) {
-            op.addAdditionalProperty("operations", true);
-        }
-        //additionally request metric metadata
-        if (mode == D2DMode.METRICS) {
-            op.addAdditionalProperty("include-runtime", true);
-        }
-        //additionally request both metric and operations metadata
-        if (mode == D2DMode.RECURSIVE) {
-            op.addAdditionalProperty("operations", true);
-            op.addAdditionalProperty("include-runtime", true);
-        }
-
-        ComplexResult res = conn.executeComplex(op);
-        if (res == null) {
-            System.err.println("Got no result");
-            return;
-        }
-        if (!res.isSuccess()) {
-            System.err.println("Failure: " + res.getFailureDescription());
-            return;
-        }
-
-        //load json object hierarchy of response
-        Map<String, Object> resMap = res.getResult();
-        String what;
-        if (mode == D2DMode.OPERATION) {
-            what = "operations";
-        } else {
-            what = "attributes";
-        }
-
-        //Determine which attributes to focus on.
-        Map<String, Object> attributesMap = null;
-
-        //when will childtype is actually passed then...
-        if (childType != null) {
-
-            Map childMap = (Map) resMap.get("children");
-            Map<String, Object> typeMap = (Map<String, Object>) childMap.get(childType);
-            if (typeMap == null) {
-                System.err.println("No child with type '" + childType + "' found");
+        try {
+    
+            Address address = new Address(path);
+    
+            //create request to get metadata type information
+            Operation op = new Operation("read-resource-description", address);
+            //recurse down the tree.
+            op.addAdditionalProperty("recursive", "true");
+    
+            //additionally request operation metadata
+            if (mode == D2DMode.OPERATION) {
+                op.addAdditionalProperty("operations", true);
+            }
+            //additionally request metric metadata
+            if (mode == D2DMode.METRICS) {
+                op.addAdditionalProperty("include-runtime", true);
+            }
+            //additionally request both metric and operations metadata
+            if (mode == D2DMode.RECURSIVE) {
+                op.addAdditionalProperty("operations", true);
+                op.addAdditionalProperty("include-runtime", true);
+            }
+    
+            ComplexResult res = conn.executeComplex(op);
+            if (res == null) {
+                System.err.println("Got no result");
                 return;
             }
-            Map descriptionMap = (Map) typeMap.get("model-description");
-            if (descriptionMap == null) {
-                System.err.println("No model description found");
+            if (!res.isSuccess()) {
+                System.err.println("Failure: " + res.getFailureDescription());
                 return;
             }
-            Map starMap = (Map) descriptionMap.get("*");
-            if (starMap != null) {
-                attributesMap = (Map<String, Object>) starMap.get(what);
-            } else {//when no *map is provided check for 'classic'
-                Map classicMap = (Map) descriptionMap.get("classic");
-                attributesMap = (Map<String, Object>) classicMap.get(what);
-            }//spinder: What about 'jsapi'? This occurs on some nodes.
-        } else {//no child type passed in just load typical map
-            attributesMap = (Map<String, Object>) resMap.get(what);
-        }
-
-        if (mode == D2DMode.OPERATION) {
-            //populate operations(each special map type) and sort them for ordered listing
-            Set<String> strings = attributesMap.keySet();
-            String[] keys = strings.toArray(new String[strings.size()]);
-            Arrays.sort(keys);
-
-            for (String key : keys) {
-                //exclude typical 'read-' and 'write-attribute' operations typical to all types.
-                if (!isExcludedOperation(key)) {
-                    //for each custom operation found, retrieve child hierarchy and pass into
-                    Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
-                    createOperation(key, value);
-                }
-            }
-        } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
-            String legend = "Key: - property, -M metric,* req'd, + operation, [] child node.";
-            StringBuilder tree = new StringBuilder(path + " ->\t" + legend + " \n");
-            if (!descriptorSegment) {
-                System.out.print(tree);
-                listPropertiesAndChildren(3, resMap);
+    
+            //load json object hierarchy of response
+            Map<String, Object> resMap = res.getResult();
+            String what;
+            if (mode == D2DMode.OPERATION) {
+                what = "operations";
             } else {
-                System.out.println(generateSegment(path, 0));
-                listPropertiesAndChildren(3, resMap);
-                System.out.println("</service>\n");
+                what = "attributes";
             }
-
-        } else {
-            createProperties(mode, attributesMap, 0, false);
+    
+            //Determine which attributes to focus on.
+            Map<String, Object> attributesMap = null;
+    
+            //when will childtype is actually passed then...
+            if (childType != null) {
+    
+                Map childMap = (Map) resMap.get("children");
+                Map<String, Object> typeMap = (Map<String, Object>) childMap.get(childType);
+                if (typeMap == null) {
+                    System.err.println("No child with type '" + childType + "' found");
+                    return;
+                }
+                Map descriptionMap = (Map) typeMap.get("model-description");
+                if (descriptionMap == null) {
+                    System.err.println("No model description found");
+                    return;
+                }
+                Map starMap = (Map) descriptionMap.get("*");
+                if (starMap != null) {
+                    attributesMap = (Map<String, Object>) starMap.get(what);
+                } else {//when no *map is provided check for 'classic'
+                    Map classicMap = (Map) descriptionMap.get("classic");
+                    attributesMap = (Map<String, Object>) classicMap.get(what);
+                }//spinder: What about 'jsapi'? This occurs on some nodes.
+            } else {//no child type passed in just load typical map
+                attributesMap = (Map<String, Object>) resMap.get(what);
+            }
+    
+            if (mode == D2DMode.OPERATION) {
+                //populate operations(each special map type) and sort them for ordered listing
+                Set<String> strings = attributesMap.keySet();
+                String[] keys = strings.toArray(new String[strings.size()]);
+                Arrays.sort(keys);
+    
+                for (String key : keys) {
+                    //exclude typical 'read-' and 'write-attribute' operations typical to all types.
+                    if (!isExcludedOperation(key)) {
+                        //for each custom operation found, retrieve child hierarchy and pass into
+                        Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
+                        createOperation(key, value);
+                    }
+                }
+            } else if (mode == D2DMode.RECURSIVE) {// list the child nodes and properties
+                String legend = "Key: - property, -M metric,* req'd, + operation, [] child node.";
+                StringBuilder tree = new StringBuilder(path + " ->\t" + legend + " \n");
+                if (!descriptorSegment) {
+                    System.out.print(tree);
+                    listPropertiesAndChildren(3, resMap);
+                } else {
+                    System.out.println(generateSegment(path, 0));
+                    listPropertiesAndChildren(3, resMap);
+                    System.out.println("</service>\n");
+                }
+    
+            } else {
+                createProperties(mode, attributesMap, 0, false);
+            }
+        } finally {
+            conn.shutdown();
         }
     }
 

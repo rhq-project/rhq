@@ -19,14 +19,16 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.rhq.modules.plugins.jbossas7.json.Result.FAILURE;
+
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.StringTokenizer;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,6 +71,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Thomas Segismont
  */
 public class ASConnection {
+    private static final Log LOG = LogFactory.getLog(ASConnection.class);
 
     public static final String HTTP_SCHEME = "http";
 
@@ -85,7 +88,7 @@ public class ASConnection {
 
     static final String FAILURE_NO_RESPONSE = "The server closed the connection before sending the response";
 
-    private static final Log LOG = LogFactory.getLog(ASConnection.class);
+    private static final String FAILURE_SHUTDOWN = "The HTTP connection has already been shutdown";
 
     private static final int MAX_POOLED_CONNECTIONS = 10;
 
@@ -97,24 +100,8 @@ public class ASConnection {
 
     // A shared scheduled executor service to free HttpClient resources
     // One thread is enough as tasks will execute quickly
-    private static final ScheduledExecutorService cleanerExecutor = Executors.newScheduledThreadPool(1,
-        new ThreadFactory() {
-
-            private ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
-
-            private AtomicInteger threadCounter = new AtomicInteger(0);
-
-            @Override
-            public Thread newThread(Runnable runnable) {
-                Thread thread = defaultThreadFactory.newThread(runnable);
-                thread.setName("ASConnection Cleaner-" + threadCounter.incrementAndGet());
-                // With daemon threads, there is no need to call #shutdown on the executor to let the JVM go down
-                thread.setDaemon(true);
-                return thread;
-            }
-        });
-
-    private String scheme = ASConnection.HTTP_SCHEME;
+    private static final ScheduledExecutorService cleanerExecutor = Executors
+        .newSingleThreadScheduledExecutor(new ThreadFactory());
 
     private String host;
 
@@ -129,6 +116,8 @@ public class ASConnection {
     private DefaultHttpClient httpClient;
 
     private ObjectMapper mapper;
+
+    private volatile boolean shutdown;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
@@ -157,7 +146,6 @@ public class ASConnection {
     public ASConnection(String host, int port, String user, String password, Long managementConnectionTimeout) {
 
         // Check and store the basic parameters
-
         if (host == null) {
             throw new IllegalArgumentException("Management host cannot be null.");
         }
@@ -169,7 +157,8 @@ public class ASConnection {
         if (user != null && password != null) {
             credentials = new UsernamePasswordCredentials(user, password);
         }
-        managementUrl = scheme + "://" + host + ":" + port + MANAGEMENT_URI;
+
+        managementUrl = HTTP_SCHEME + "://" + host + ":" + port + MANAGEMENT_URI;
 
         // Each ASConnection instance will have its own HttpClient instance
         // HttpClient will use a pooling connection manager to allow concurrent request processing
@@ -223,6 +212,8 @@ public class ASConnection {
 
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        shutdown = false;
     }
 
 
@@ -230,13 +221,12 @@ public class ASConnection {
         return new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword(), serverPluginConfig.getManagementConnectionTimeout());
     }
 
-
-    @Override
-    protected void finalize() throws Throwable {
+    public void shutdown() {
         // Defensive call to shutdown the HttpClient connection manager
         // If an ASConnection instance is no longer used, its cleaning task should already
         // have closed expired connections
         httpClient.getConnectionManager().shutdown();
+        shutdown = true;
     }
 
     /**
@@ -272,41 +262,33 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation, int timeoutSec) {
-
-        long requestStartTime = System.currentTimeMillis();
-
-        // Check for spaces in the path, which the AS7 server will reject. Log verbose error and
-        // generate failure indicator.
-        if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
-            if (containsSpaces(operation.getAddress().getPath())) {
-                Result noResult = new Result();
-                String outcome = "- Path '" + operation.getAddress().getPath() + "' is invalid as it contains spaces -";
-                if (verbose) {
-                    LOG.error(outcome);
-                }
-                noResult.setFailureDescription(outcome);
-                noResult.setOutcome("failure");
-                JsonNode invalidPathResult = mapper.valueToTree(noResult);
-                return invalidPathResult;
-            }
+        if (shutdown) {
+            return resultAsJsonNode(FAILURE, FAILURE_SHUTDOWN, null, FALSE);
         }
 
-        HttpPost httpRequest = new HttpPost(managementUrl);
-        httpRequest.addHeader(ACCEPT_HTTP_HEADER, ContentType.APPLICATION_JSON.getMimeType());
-        HttpParams httpParams = httpClient.getParams();
-        int timeoutMillis = timeoutSec * 1000;
-        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMillis);
-        HttpConnectionParams.setSoTimeout(httpParams, timeoutMillis);
+        long requestStartTime = System.nanoTime();
 
+        if (addressPathContainsSpaces(operation) == TRUE) {
+            // Check for spaces in the path, which the AS7 server will reject. Log verbose error and
+            // generate failure indicator.
+            String failureDescription = "- Path '" + operation.getAddress().getPath()
+                + "' is invalid as it contains spaces -";
+            if (verbose) {
+                LOG.error(failureDescription);
+            }
+            return resultAsJsonNode(FAILURE, failureDescription, null, FALSE);
+        }
+
+        HttpPost httpPost = null;
         try {
-
             String jsonToSend = mapper.writeValueAsString(operation);
             if (verbose) {
                 LOG.info("JSON to send: " + jsonToSend);
             }
-            httpRequest.setEntity(new StringEntity(jsonToSend, ContentType.APPLICATION_JSON));
 
-            HttpResponse httpResponse = httpClient.execute(httpRequest);
+            httpPost = initHttpPost(timeoutSec, jsonToSend);
+
+            HttpResponse httpResponse = httpClient.execute(httpPost);
             StatusLine statusLine = httpResponse.getStatusLine();
             if (isAuthorizationFailureResponse(statusLine)) {
                 handleAuthorizationFailureResponse(operation, statusLine);
@@ -315,83 +297,72 @@ public class ASConnection {
             HttpEntity httpResponseEntity = httpResponse.getEntity();
             String responseBody = httpResponseEntity == null ? StringUtil.EMPTY_STRING : EntityUtils
                 .toString(httpResponseEntity);
-            if (statusLine.getStatusCode() >= 400) {
-                if (verbose) {
-                    if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
-                        || responseBody.contains("JBAS014792") || responseBody.contains("JBAS014793")
-                        || responseBody.contains("JBAS014739")) {
-                        // management resource not found or not readable or no known child-type
-                        LOG.info("Requested management resource not found: " + operation.getAddress().getPath());
-                    } else {
-                        LOG.warn(operation + " failed with " + statusAsString(statusLine) + " - response body was ["
-                            + responseBody + "].");
-                    }
-                }
+            if (verbose && statusLine.getStatusCode() >= 400) {
+                logHttpError(operation, statusLine, responseBody);
             }
 
             JsonNode operationResult;
             if (!responseBody.isEmpty()) {
-                try {
-                    operationResult = mapper.readTree(responseBody);
-                } catch (IOException ioe) {
-                    LOG.error("Failed to deserialize response to " + operation + " to JsonNode - response status was "
-                        + statusAsString(statusLine) + ", and body was [" + responseBody + "]: " + ioe);
-                    Result result = new Result();
-                    result.setOutcome("failure");
-                    result.setFailureDescription("Failed to deserialize response to " + operation
-                        + " to JsonNode - response status was " + statusAsString(statusLine) + ", and body was ["
-                        + responseBody + "]: " + ioe);
-                    result.setRolledBack(responseBody.contains("rolled-back=true"));
-                    result.setRhqThrowable(ioe);
-                    operationResult = mapper.valueToTree(result);
-                }
-
+                operationResult = deserializeResponseBody(operation, statusLine, responseBody);
                 if (verbose) {
-                    ObjectMapper om2 = new ObjectMapper();
-                    om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
-                    try {
-                        String resultString = om2.writeValueAsString(operationResult);
-                        LOG.info(resultString);
-                    } catch (IOException ioe) {
-                        LOG.error("Failed to convert result of " + operation + " to string.", ioe);
-                    }
+                    logFormatted(operationResult);
                 }
             } else {
-                Result noResult = new Result();
-                noResult.setOutcome("failure");
-                noResult.setFailureDescription("- empty response body with HTTP status code "
-                    + statusAsString(statusLine) + " -");
-                operationResult = mapper.valueToTree(noResult);
+                operationResult = resultAsJsonNode(FAILURE, "- empty response body with HTTP status code "
+                    + statusAsString(statusLine) + " -", null, FALSE);
             }
-
             return operationResult;
-
         } catch (NoHttpResponseException e) {
             // For some operations like reload or shutdown, the server closes the connection before sending the
             // response. We use a specific description here so that callers can write code to decide what to do
             // in this situation.
-            Result failure = new Result();
-            failure.setFailureDescription(FAILURE_NO_RESPONSE);
-            failure.setOutcome("failure");
-            failure.setRhqThrowable(e);
-            JsonNode ret = mapper.valueToTree(failure);
-            return ret;
+            return resultAsJsonNode(FAILURE, FAILURE_NO_RESPONSE, e, FALSE);
         } catch (IOException e) {
-            Result failure = new Result();
-            failure.setFailureDescription(e.getMessage());
-            failure.setOutcome("failure");
-            failure.setRhqThrowable(e);
-            JsonNode ret = mapper.valueToTree(failure);
-            return ret;
+            return resultAsJsonNode(FAILURE, e.getMessage(), e, FALSE);
         } finally {
-            // Force release of httpclient resources
-            httpRequest.abort();
-            // Update statistics
-            long requestEndTime = System.currentTimeMillis();
-            PluginStats stats = PluginStats.getInstance();
-            stats.incrementRequestCount();
-            stats.addRequestTime(requestEndTime - requestStartTime);
+            if (httpPost != null) {
+                // Release of httpclient resources
+                httpPost.abort();
+            }
+            updateStatistics(requestStartTime, System.nanoTime());
         }
+    }
+
+    private JsonNode resultAsJsonNode(String outcome, String failureDescription, Throwable rhqThrowable,
+                                      Boolean rolledBack) {
+        Result result = new Result();
+        result.setOutcome(outcome);
+        if (failureDescription != null) {
+            result.setFailureDescription(failureDescription);
+        }
+        if (rhqThrowable != null) {
+            result.setRhqThrowable(rhqThrowable);
+        }
+        if (rolledBack == TRUE) {
+            result.setRolledBack(true);
+        }
+        return mapper.valueToTree(result);
+    }
+
+    private Boolean addressPathContainsSpaces(Operation operation) {
+        Boolean addressPathContainsSpaces = FALSE;
+        if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
+            if (containsSpaces(operation.getAddress().getPath())) {
+                addressPathContainsSpaces = TRUE;
+            }
+        }
+        return addressPathContainsSpaces;
+    }
+
+    private HttpPost initHttpPost(int timeoutSec, String jsonToSend) {
+        HttpPost httpPost = new HttpPost(managementUrl);
+        httpPost.addHeader(ACCEPT_HTTP_HEADER, ContentType.APPLICATION_JSON.getMimeType());
+        HttpParams httpParams = httpClient.getParams();
+        int timeoutMillis = timeoutSec * 1000;
+        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMillis);
+        HttpConnectionParams.setSoTimeout(httpParams, timeoutMillis);
+        httpPost.setEntity(new StringEntity(jsonToSend, ContentType.APPLICATION_JSON));
+        return httpPost;
     }
 
     // When no management users have been configured, a 307 (Temporary Redirect) response will be returned, and
@@ -405,7 +376,7 @@ public class ASConnection {
     private void handleAuthorizationFailureResponse(Operation operation, StatusLine statusLine) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Response to " + operation + " was " + statusAsString(statusLine)
-                + " - throwing InvalidPluginConfigurationException...");
+                    + " - throwing InvalidPluginConfigurationException...");
         }
         // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
         // warning message in the GUI.
@@ -418,18 +389,55 @@ public class ASConnection {
         throw new InvalidPluginConfigurationException(message);
     }
 
+    private void logHttpError(Operation operation, StatusLine statusLine, String responseBody) {
+        if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
+                || responseBody.contains("JBAS014792") || responseBody.contains("JBAS014793")
+                || responseBody.contains("JBAS014739")) {
+            // management resource not found or not readable or no known child-type
+            LOG.info("Requested management resource not found: " + operation.getAddress().getPath());
+        } else {
+            LOG.warn(operation + " failed with " + statusAsString(statusLine) + " - response body was ["
+                    + responseBody + "].");
+        }
+    }
+
+    private void logFormatted(JsonNode operationResult) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+        try {
+            LOG.info(objectMapper.writeValueAsString(operationResult));
+        } catch (IOException ignore) {
+        }
+    }
+
+    private JsonNode deserializeResponseBody(Operation operation, StatusLine statusLine, String responseBody) {
+        JsonNode operationResult;
+        try {
+            operationResult = mapper.readTree(responseBody);
+        } catch (IOException ioe) {
+            String failureDescription = "Failed to deserialize response to " + operation
+                + " to JsonNode - response status was " + statusAsString(statusLine) + ", and body was ["
+                + responseBody + "]: " + ioe;
+            LOG.error(failureDescription);
+            operationResult = resultAsJsonNode(FAILURE, failureDescription, ioe,
+                responseBody.contains("rolled-back=true"));
+        }
+        return operationResult;
+    }
+
+    private void updateStatistics(long requestStartTime, long requestEndTime) {
+        PluginStats stats = PluginStats.getInstance();
+        stats.incrementRequestCount();
+        stats.addRequestTime(NANOSECONDS.toMillis(requestEndTime - requestStartTime));
+    }
+
     /** Method parses Operation.getAddress().getPath() for invalid spaces in the path passed in.
      *
      * @param path Operation.getAddress().getPath() value.
      * @return boolean indicating invalid spaces found.
      */
     private boolean containsSpaces(String path) {
-        boolean includesSpaces = false;
-        StringTokenizer components = new StringTokenizer(path, " ");
-        if (components.countTokens() > 1) {
-            includesSpaces = true;
-        }
-        return includesSpaces;
+        return path.indexOf(" ") != -1;
     }
 
     /**
@@ -579,8 +587,7 @@ public class ASConnection {
         @Override
         public void run() {
             ASConnection asConnection = asConnectionWeakReference.get();
-            if (asConnection != null) {
-                // The target ASConnection instance has not been marked for collection yet
+            if (asConnection != null && !asConnection.shutdown) {
                 try {
                     asConnection.httpClient.getConnectionManager().closeExpiredConnections();
                     // Defensive call to close idle connections
@@ -595,4 +602,15 @@ public class ASConnection {
         }
     }
 
+    private static class ThreadFactory implements java.util.concurrent.ThreadFactory {
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+            thread.setName("ASConnection Cleaner");
+            // With daemon threads, there is no need to call #shutdown on the executor to let the JVM go down
+            thread.setDaemon(true);
+            return thread;
+        }
+    }
 }

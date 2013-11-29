@@ -868,7 +868,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
         // use default timeout
         return findLiveData(subject, resourceId, definitionIds, null);
@@ -885,7 +884,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
         query.setParameter("resourceId", resourceId);
         Agent agent = (Agent) query.getSingleResult();
-        
+
         // return empty data if the agent is the dummy one
         if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
             && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
@@ -947,6 +946,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             List<ResourceIdWithAgentComposite> resourceIdsWithAgents = query.getResultList();
 
             for (ResourceIdWithAgentComposite resourceIdWithAgent : resourceIdsWithAgents) {
+                // return empty data if the agent is the dummy one
+                if (resourceIdWithAgent.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
+                    && resourceIdWithAgent.getAgent().getAgentToken()
+                        .startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
+                    values.addAll(Collections.<MeasurementData> emptySet());
+                    continue;
+                }
+
                 query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
                 query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
                 query.setParameter("resourceIds", Arrays.asList(resourceIdWithAgent.getResourceId()));

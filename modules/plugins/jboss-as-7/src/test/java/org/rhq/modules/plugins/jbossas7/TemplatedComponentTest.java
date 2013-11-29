@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7;
@@ -48,6 +47,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * @author Stefan Negrea
@@ -230,6 +231,7 @@ public class TemplatedComponentTest {
             .thenReturn(mockConfigurationWriteDelegate);
 
         ASConnection mockASConnection = mock(ASConnection.class);
+        when(mockASConnection.execute(any(ReadResource.class))).thenReturn(new Result());
 
 
         //create object to test and inject required dependencies
@@ -287,6 +289,7 @@ public class TemplatedComponentTest {
             .thenReturn(mockConfigurationWriteDelegate);
 
         ASConnection mockASConnection = mock(ASConnection.class);
+        when(mockASConnection.execute(any(ReadResource.class))).thenReturn(new Result());
 
         //create object to test and inject required dependencies
         TemplatedComponent objectUnderTest = new TemplatedComponent();

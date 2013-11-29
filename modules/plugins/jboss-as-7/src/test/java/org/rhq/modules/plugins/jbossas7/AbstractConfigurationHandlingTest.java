@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
+import static org.rhq.modules.plugins.jbossas7.json.Result.FAILURE;
+
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -32,8 +34,6 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -53,15 +53,16 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public abstract class AbstractConfigurationHandlingTest {
+    private static final Log LOG = LogFactory.getLog(AbstractConfigurationHandlingTest.class);
 
     private static final String DESCRIPTOR_FILENAME = "test-plugin.xml";
-    private Log log = LogFactory.getLog(getClass());
+
     private PluginDescriptor pluginDescriptor;
 
     void loadPluginDescriptor() throws Exception {
         try {
             URL descriptorUrl = this.getClass().getClassLoader().getResource(DESCRIPTOR_FILENAME);
-            log.info("Loading plugin descriptor at: " + descriptorUrl);
+            LOG.info("Loading plugin descriptor at: " + descriptorUrl);
 
             JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
 
@@ -151,15 +152,15 @@ public abstract class AbstractConfigurationHandlingTest {
         @Override
         public Result execute(Operation op) {
             JsonNode json = executeRaw(op);
-            Result result = null;
+            Result result;
             try {
                 result = mapper.readValue(json, Result.class);
-            } catch (JsonParseException e) {
-                e.printStackTrace();
-            } catch (JsonMappingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                LOG.warn("Could not read jsonValue", e);
+                result = new Result();
+                result.setOutcome(FAILURE);
+                result.setFailureDescription(e.getMessage());
+                result.setRhqThrowable(e);
             }
             return result;
         }

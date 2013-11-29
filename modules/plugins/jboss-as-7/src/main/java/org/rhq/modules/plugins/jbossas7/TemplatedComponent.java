@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2012, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7;
@@ -109,7 +108,7 @@ public class TemplatedComponent extends BaseComponent<ResourceComponent<?>> {
             additionalProperties.put("attributes-only", "true");
             currentAttributesOp.setAdditionalProperties(additionalProperties);
             Result currentAttributes = getASConnection().execute(currentAttributesOp);
-            if ((currentAttributes!=null)&&(currentAttributes.isSuccess())) {
+            if (currentAttributes.isSuccess()) {
                 currentAttributeList = (Map<String, Object>) currentAttributes.getResult();
             }
 

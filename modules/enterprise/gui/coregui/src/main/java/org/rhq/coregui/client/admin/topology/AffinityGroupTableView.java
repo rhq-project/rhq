@@ -34,6 +34,8 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
@@ -170,6 +172,17 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         modalWindow.setAutoCenter(true);
         modalWindow.setCanDragResize(true);
         modalWindow.setCanDragReposition(true);
+        modalWindow.setShowMinimizeButton(false);
+        modalWindow.setShowMaximizeButton(true);
+        modalWindow.setIsModal(true);
+        modalWindow.setShowModalMask(true);
+        modalWindow.centerInPage();
+        modalWindow.addCloseClickHandler(new CloseClickHandler() {
+            public void onCloseClick(CloseClickEvent event) {
+                modalWindow.destroy();
+                AffinityGroupTableView.this.refreshTableInfo();
+            }
+        });
 
         VLayout layout = new VLayout();
         layout.setWidth100();
@@ -207,6 +220,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 modalWindow.destroy();
+                AffinityGroupTableView.this.refreshTableInfo();
             }
         });
         final IButton create = new EnhancedIButton(MSG.view_adminTopology_affinityGroups_createNew());
@@ -240,6 +254,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                     Map<String, String> errors = new HashMap<String, String>();
                     errors.put(FIELD_NAME, caught.getMessage());
                     form.setErrors(errors, true);
+                    AffinityGroupTableView.this.refreshTableInfo();
                 }
             });
         }

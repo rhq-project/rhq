@@ -203,7 +203,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param  subject a session id that must be valid
      * @param  scheduleId The primary key of the Schedule
      *
-     * @return a MeasurementSchedule or null, if there is 
+     * @return a MeasurementSchedule or null, if there is
      */
     public MeasurementSchedule getScheduleById(Subject subject, int scheduleId) {
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
@@ -225,8 +225,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * <p>Ensures the collection interval is valid by increasing it to the minimum if necessary.</p>
      * <p>Be careful not to call this for template enable/disable, because that uses special values for the
-     * interval.</p> 
-    
+     * interval.</p>
+
      * @param schedule
      */
     private void verifyMinimumCollectionInterval(MeasurementSchedule schedule) {
@@ -236,8 +236,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * <p>Ensures the collection interval is valid by increasing it to the minimum if necessary.</p>
      * <p>Be careful not to call this for template enable/disable, because that uses special values for the
-     * interval.</p> 
-     *  
+     * interval.</p>
+     *
      * @param collectionInterval
      * @return valid interval
      */
@@ -380,7 +380,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
      * Resources are also updated. Otherwise, the updated templates will only affect Resources that added to
      * inventory in the future.
-     * @param subject 
+     * @param subject
      *
      * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated
      * @param collectionInterval if > 0, enable the metric with this value as the the new collection
@@ -418,7 +418,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * <strong>Only the 3-param modifyDefaultCollectionIntervalForMeasurementDefinitions method should call this method,
      * since it will batch the metric defs specified by the user to ensure no more than 1000 metric defs are passed to
      * this method.</strong>
-     * @param subject 
+     * @param subject
      *
      * @param measurementDefinitionIds the IDs of the metric defs whose default schedules should be updated; the size of
      *                                 this array must be <= 1000
@@ -534,7 +534,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
 
                     // Ignore resources that are not actually associated with an agent. For example,
-                    // those with an UNINVENTORIED status. 
+                    // those with an UNINVENTORIED status.
                     if (null == agent) {
                         if (log.isDebugEnabled()) {
                             log.debug("Ignoring measurement schedule change for non-agent-related resource ["
@@ -558,8 +558,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 for (Map.Entry<Agent, Set<ResourceMeasurementScheduleRequest>> agentEntry : agentUpdates.entrySet()) {
                     boolean synced = sendUpdatedSchedulesToAgent(agentEntry.getKey(), agentEntry.getValue());
                     if (!synced) {
-                        /* 
-                         * only sync resources that are affected by this set of definitions that were updated, and only 
+                        /*
+                         * only sync resources that are affected by this set of definitions that were updated, and only
                          * for the agent that couldn't be contacted (under the assumption that 9 times out of 10 the agent
                          * will be up; so, we don't want to unnecessarily mark more resources as needing syncing that don't
                          */
@@ -920,6 +920,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * @deprecated used for portal war
      */
+    @Deprecated
     public void updateSchedulesForAutoGroup(Subject subject, int parentResourceId, int childResourceType,
         int[] measurementDefinitionIds, long collectionInterval) {
 
@@ -1018,7 +1019,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             for (int batchIndex = 0; batchIndex < resourceIds.length; batchIndex += 1000) {
                 int[] batchIds = ArrayUtils.copyOfRange(resourceIds, batchIndex, batchIndex + 1000);
 
-                /* 
+                /*
                  * need to use a native query solution for both the insertion and returning the results because if we
                  * go through Hibernate to return the results it will not see the effects of the insert statement
                  */
@@ -1040,17 +1041,17 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int insertSchedulesFor(int[] batchIds) throws Exception {
-        /* 
+        /*
          * JM: (April 15th, 2009)
-         * 
+         *
          *     the "res.id" token on the final line does not get the "res" alias from the outer query appropriately;
-         *     instead, it tries to reference the table name itself as "RHQ_RESOURCE.ID", which bombs with[2] on 
-         *     postgres; i thought of using "WHERE ms.resource.uuid = res.uuid" which would work because UUID column 
+         *     instead, it tries to reference the table name itself as "RHQ_RESOURCE.ID", which bombs with[2] on
+         *     postgres; i thought of using "WHERE ms.resource.uuid = res.uuid" which would work because UUID column
          *     name is not reused for any other entity in the model, let alone on any table used in this query; however,
          *     this felt like a hack, and I wasn't sure whether UUID would be unique across very large inventories; if
-         *     it's not, there is a slight chance that the insert query could do the wrong thing (albeit rare), so I 
-         *     erred on the side of correctness and went with native sql which allowed me to use the proper id alias in 
-         *     the correlated subquery; correctness aside, keeping the logic using resource id should allow the query 
+         *     it's not, there is a slight chance that the insert query could do the wrong thing (albeit rare), so I
+         *     erred on the side of correctness and went with native sql which allowed me to use the proper id alias in
+         *     the correlated subquery; correctness aside, keeping the logic using resource id should allow the query
          *     optimizer to use indexes instead of having to look up the rows on the resource table to get the uuid
          *
          * [1] - http://opensource.atlassian.com/projects/hibernate/browse/HHH-1397
@@ -1138,11 +1139,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             ResultSet results = resultsStatement.executeQuery();
             try {
                 while (results.next()) {
-                    Integer resourceId = (Integer) results.getInt(1);
-                    Integer scheduleId = (Integer) results.getInt(2);
-                    String definitionName = (String) results.getString(3);
-                    Long interval = (Long) results.getLong(4);
-                    Boolean enabled = (Boolean) results.getBoolean(5);
+                    Integer resourceId = results.getInt(1);
+                    Integer scheduleId = results.getInt(2);
+                    String definitionName = results.getString(3);
+                    Long interval = results.getLong(4);
+                    Boolean enabled = results.getBoolean(5);
                     DataType dataType = DataType.values()[results.getInt(6)];
                     NumericType rawNumericType = NumericType.values()[results.getInt(7)];
                     if (results.wasNull()) {
@@ -1205,8 +1206,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void errorCorrectSchedules() {
-        /* 
-         * update mtime of resources whose schedules are < 30s, this will indicate to the 
+        /*
+         * update mtime of resources whose schedules are < 30s, this will indicate to the
          * agent that it needs to sync / merge schedules for the resources updated here
          */
         try {
@@ -1215,7 +1216,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + " UPDATE Resource " //
                 + "    SET mtime = :currentTime " //
                 + "  WHERE id IN ( SELECT ms.resource.id " //
-                + "                  FROM MeasurementSchedule ms " // 
+                + "                  FROM MeasurementSchedule ms " //
                 + "                 WHERE ms.interval < 30000 ) ";
             Query updateResourcesQuery = entityManager.createQuery(updateResourcesQueryString);
             updateResourcesQuery.setParameter("currentTime", now);
@@ -1338,6 +1339,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * @deprecated
      */
+    @Deprecated
     @Override
     public void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds) {
         modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, 0, true);
@@ -1462,13 +1464,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             // Get the core definitions.
             CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-            // We previously used the following altered projection for the criteria query: 
+            // We previously used the following altered projection for the criteria query:
             //
-            //   generator.alterProjection(" distinct orderingField0");
+            //   generator.alterProjection(" distinct measurementschedule.definition");
             //
             // Hibernate4 no longer allowed for the generated criteria JPQL for this projection:
             //
-            //    SELECT distinct measurementschedule.definition 
+            //    SELECT distinct measurementschedule.definition
             //      FROM MeasurementSchedule measurementschedule
             // LEFT JOIN measurementschedule.definition orderingField0
             //     WHERE ( measurementschedule.resource.id IN ( :resourceId ) )
@@ -1476,7 +1478,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             //
             // It causes:
             //   SQLGrammarException: ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list
-            // 
+            //
             // In essence, using DISTINCT now requires that we use the LEFT JOIN alias in the select
             // list.  To support this we could probably have made some tricky coding changes to the
             // generator. But seeing that this would be to support non-default criteria queries (i.e

@@ -75,8 +75,10 @@ public class ServerInvokerServlet extends org.jboss.remoting.transport.servlet.w
 
         Set<ObjectName> mbeans = mbeanServer.queryNames(invokerObjectNameQuery, null);
         if (mbeans.isEmpty()) {
-            throw new ServletException("Could not find the remoting servlet invoker: " + invokerObjectNameQuery
-                + " - need to wait for remoting to be initialized later");
+            throw new ServletException(
+                "Could not find the remoting servlet invoker ["
+                    + invokerObjectNameQuery
+                    + "].  DURING SERVER STARTUP AND INITIALIZATION THIS IS NOT AN ERROR AND CAN BE IGNORED.  This may be a problem if occurring during normal server runtime.");
         }
         if (mbeans.size() > 1) {
             throw new ServletException("Found more than one remoting servlet invoker at [" + invokerObjectNameQuery
@@ -86,7 +88,7 @@ public class ServerInvokerServlet extends org.jboss.remoting.transport.servlet.w
         ObjectName theInvokerObjectName = mbeans.iterator().next();
         log("Found RHQ remoting servlet: " + theInvokerObjectName);
 
-        return (ServletServerInvokerMBean) MBeanServerInvocationHandler.newProxyInstance(mbeanServer,
+        return MBeanServerInvocationHandler.newProxyInstance(mbeanServer,
             theInvokerObjectName, ServletServerInvokerMBean.class, false);
     }
 }

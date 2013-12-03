@@ -1143,6 +1143,11 @@ public class AgentConfiguration {
             AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_INITIAL_DELAY,
             AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_INITIAL_DELAY);
 
+        // get the avail thread pool size
+        int avail_scan_threadpool_size = m_preferences.getInt(
+            AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_THREADPOOL_SIZE,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_THREADPOOL_SIZE);
+
         // get the initial delay before measurement collections begin
         long meas_scan_initial_delay = m_preferences.getLong(
             AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY,
@@ -1250,6 +1255,7 @@ public class AgentConfiguration {
         config.setChildResourceDiscoveryDelay(childResourceDiscoveryDelay);
         config.setAvailabilityScanInitialDelay(avail_scan_initial_delay);
         config.setAvailabilityScanPeriod(avail_scan_period);
+        config.setAvailabilityScanThreadPoolSize(avail_scan_threadpool_size);
         config.setMeasurementCollectionThreadPoolSize(meas_threadpool_size);
         config.setMeasurementCollectionInitialDelay(meas_scan_initial_delay);
         config.setDriftDetectionInitialDelay(drift_initial_delay);

@@ -42,7 +42,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
-import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -54,15 +53,15 @@ import org.rhq.core.util.exception.Severity;
  * discovering children of existing resources.  It recursively walks the hierarchy looking for new resources, which
  * are typically services (but could be non-top-level servers).  It is complemented by {@link AutoDiscoveryExecutor}
  * which looks for new top level servers.
- * 
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */
 public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
     private Log log = LogFactory.getLog(RuntimeDiscoveryExecutor.class);
 
-    private InventoryManager inventoryManager;
-    private PluginContainerConfiguration pluginContainerConfiguration;
+    private final InventoryManager inventoryManager;
+    private final PluginContainerConfiguration pluginContainerConfiguration;
 
     /**
      * Resource to scan. If null, the entire platform will be scanned.
@@ -210,8 +209,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         // to still perform the check in two cases: if the current avail is not UP or if the resource category is
         // SERVER.  This means we won't miss an opportunity to do discovery for stale DOWN resource, and we won't
         // waste time doing discovery on a stale UP SERVER, which can be time consuming.  Since most resources are
-        // SERVICEs, and also are typically UP and stay UP, perfoming checks in these two situations should
-        // not add much overhead. Finally, make sure to use facet proxy to do the avail check, this allows us to use 
+        // SERVICEs, and also are typically UP and stay UP, performing checks in these two situations should
+        // not add much overhead. Finally, make sure to use facet proxy to do the avail check, this allows us to use
         // a timeout, and therefore not hang discovery if the avail check is slow.
         Availability currentAvailability = parentContainer.getAvailability();
         AvailabilityType currentAvailabilityType = (null == currentAvailability) ? AvailabilityType.DOWN
@@ -221,20 +220,10 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         if (AvailabilityType.UP != currentAvailabilityType
             || ResourceCategory.SERVER == parentContainer.getResource().getResourceType().getCategory()) {
 
-            AvailabilityFacet parentComponent = null;
-            try {
-                parentComponent = parentContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                    FacetLockType.NONE, AvailabilityExecutor.GET_AVAILABILITY_TIMEOUT, true, false, true);
-
-            } catch (PluginContainerException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Parent component for [" + parent + "] was null; cannot perform service scan.");
-                }
-                return;
-            }
+            AvailabilityFacet parentAvailabilityProxy = parentContainer.getAvailabilityProxy();
 
             try {
-                currentAvailabilityType = parentComponent.getAvailability();
+                currentAvailabilityType = parentAvailabilityProxy.getAvailability();
             } catch (Exception e) {
                 currentAvailabilityType = AvailabilityType.DOWN;
             }
@@ -293,7 +282,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                     }
                 }
 
-                // get rid of any child resources of this type that were not yet committed and are now gone  
+                // get rid of any child resources of this type that were not yet committed and are now gone
                 removeStaleResources(parent, childResourceType, mergedResources);
 
             }

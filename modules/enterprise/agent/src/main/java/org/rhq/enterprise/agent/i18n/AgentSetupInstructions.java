@@ -709,6 +709,15 @@ public interface AgentSetupInstructions {
     @I18NMessages( { @I18NMessage("The time in seconds before the initial availability scan is performed.") })
     String SETUP_INSTRUCTION_PLUGINSAVAILSCANINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.avail-scan-initialdelay.help";
 
+    // PLUGINS AVAILABILITY SCAN THREAD POOL SIZE
+    String SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_PREF = AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_THREADPOOL_SIZE;
+    String SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_DEFAULT = Integer
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_THREADPOOL_SIZE);
+    @I18NMessages({ @I18NMessage("Availability Scan ThreadPool Size") })
+    String SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_PROMPT = "PromptCommand.setup.instruction.plugins.avail-scan-threadpoolsize.prompt";
+    @I18NMessages({ @I18NMessage("The number of threads that can concurrently scan resource availabilities.") })
+    String SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_HELP = "PromptCommand.setup.instruction.plugins.avail-scan-threadpoolsize.help";
+
     // PLUGINS MEASUREMENT COLLECTION INITIAL DELAY
     String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLINITIALDELAY_PREF = AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY;
     String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLINITIALDELAY_DEFAULT = Long

@@ -221,12 +221,16 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                     connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
                         tempDir.getAbsolutePath());
 
-                    log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path ["
-                        + connectionSettings.getLibraryURI() + "] and temp directory [" + tempDir.getAbsolutePath()
-                        + "]");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Loading connection [" + connectionSettings.getServerUrl() + "] with install path ["
+                            + connectionSettings.getLibraryURI() + "] and temp directory [" + tempDir.getAbsolutePath()
+                            + "]");
+                    }
                 } else {
-                    log.info("Loading connection [" + connectionSettings.getServerUrl()
-                        + "] ignoring remote install path [" + catalinaHome + "]");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Loading connection [" + connectionSettings.getServerUrl()
+                            + "] ignoring remote install path [" + catalinaHome + "]");
+                    }
                 }
 
                 ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
@@ -425,7 +429,8 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         return scriptFile;
     }
 
-    private File resolvePathRelativeToHomeDir(@NotNull String path) {
+    private File resolvePathRelativeToHomeDir(@NotNull
+    String path) {
         return resolvePathRelativeToHomeDir(this.resourceContext.getPluginConfiguration(), path);
     }
 

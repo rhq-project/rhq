@@ -19,8 +19,6 @@
 
 package org.rhq.core.pc.inventory;
 
-import static org.rhq.core.pc.component.ComponentInvocationContextImpl.LocalContext;
-
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -55,9 +53,12 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
+import org.rhq.core.pc.component.ComponentInvocationContextImpl.LocalContext;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -85,15 +86,26 @@ public class ResourceContainer implements Serializable {
     // thread pools used to invoke methods on container's components
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
     private static final String NON_DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.nonDaemon";
+    private static final String AVAIL_CHECK_THREAD_POOL_NAME = "ResourceContainer.invoker.availCheck.daemon";
     private static ExecutorService DAEMON_THREAD_POOL;
     private static ExecutorService NON_DAEMON_THREAD_POOL;
+
+    /**
+     * This thread pool protects us from generating a potentially huge number of threads on slow running
+     * agents where avail checks are taking longer that 1s (given a default setting).  Each avail check
+     * requests a thread on the assumption that most if not all checks will be sub-second.  But if that
+     * is not the case we could, if using an CachedThreadPool, end up with N concurrent avail check threads,
+     * where N is the number of resources managed by the agent (because that type of pool can grow unbounded).
+     * Instead, limit the max # of threads and fall back to synchronous checking when overloaded.
+     */
+    private static ExecutorService AVAIL_CHECK_THREAD_POOL;
 
     // non-transient fields
     private final Resource resource;
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
+    private final Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
     private MeasurementScheduleRequest availabilitySchedule = null;
 
     // transient fields
@@ -107,15 +119,21 @@ public class ResourceContainer implements Serializable {
     private transient Availability availability;
     // the time at which this resource is up for an avail check. null indicates unscheduled.
     private transient Long availabilityScheduleTime;
+    private transient AvailabilityProxy availabilityProxy;
 
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
+     *
+     * @param configuration the plugin container's configuration
      */
-    public static void initialize() {
+    public static void initialize(PluginContainerConfiguration pcConfig) {
         LoggingThreadFactory daemonFactory = new LoggingThreadFactory(DAEMON_THREAD_POOL_NAME, true);
         LoggingThreadFactory nonDaemonFactory = new LoggingThreadFactory(NON_DAEMON_THREAD_POOL_NAME, false);
+        LoggingThreadFactory availCheckFactory = new LoggingThreadFactory(AVAIL_CHECK_THREAD_POOL_NAME, true);
         DAEMON_THREAD_POOL = Executors.newCachedThreadPool(daemonFactory);
         NON_DAEMON_THREAD_POOL = Executors.newCachedThreadPool(nonDaemonFactory);
+        AVAIL_CHECK_THREAD_POOL = Executors.newFixedThreadPool(pcConfig.getAvailabilityScanThreadPoolSize(),
+            availCheckFactory);
     }
 
     /**
@@ -125,6 +143,7 @@ public class ResourceContainer implements Serializable {
         // TODO (ips, 04/30/12): Should we funnel these through PluginContainer.shutdownExecutorService()?
         DAEMON_THREAD_POOL.shutdown();
         NON_DAEMON_THREAD_POOL.shutdown();
+        AVAIL_CHECK_THREAD_POOL.shutdown();
     }
 
     public ResourceContainer(Resource resource, ClassLoader resourceClassLoader) {
@@ -198,6 +217,8 @@ public class ResourceContainer implements Serializable {
     public void setResourceComponent(ResourceComponent resourceComponent) {
         synchronized (this) {
             this.resourceComponent = resourceComponent;
+            this.availabilityProxy = new AvailabilityProxy(resourceComponent, AVAIL_CHECK_THREAD_POOL,
+                resourceClassLoader);
         }
     }
 
@@ -228,7 +249,10 @@ public class ResourceContainer implements Serializable {
                 for (MeasurementScheduleRequest sched : this.measurementSchedule) {
                     if (sched.getInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                         String smallStack = ThrowableUtil.getFilteredStackAsString(new Throwable());
-                        String msg = "Invalid collection interval [" + sched + "] for Resource [" + resource
+                        String msg = "Invalid collection interval ["
+                            + sched
+                            + "] for Resource ["
+                            + resource
                             + "]. Setting it to 20 minutes until the situation is corrected. Please report to Development: "
                             + smallStack;
                         LogFactory.getLog(ResourceContainer.class).error(msg);
@@ -390,8 +414,7 @@ public class ResourceContainer implements Serializable {
     public String toString() {
         AvailabilityType avail = (this.availability != null) ? this.availability.getAvailabilityType() : null;
         return this.getClass().getSimpleName() + "[resource=" + this.resource + ", syncState="
-                + this.synchronizationState + ", componentState=" + this.resourceComponentState + ", avail=" + avail
-                + "]";
+            + this.synchronizationState + ", componentState=" + this.resourceComponentState + ", avail=" + avail + "]";
     }
 
     /**
@@ -489,6 +512,15 @@ public class ResourceContainer implements Serializable {
     }
 
     /**
+     * Return a proxy for a call to check resource availability, using the daemon thread pool.
+     *
+     * @see AvailabilityProxy for details
+     */
+    public AvailabilityFacet getAvailabilityProxy() {
+        return this.availabilityProxy;
+    }
+
+    /**
      * This is a ResourceComponent proxy that invokes component methods in pooled threads. Depending on the parameters
      * passed to its constructor, it may also:
      *
@@ -574,7 +606,7 @@ public class ResourceContainer implements Serializable {
                 throw e.getCause();
             } catch (java.util.concurrent.TimeoutException e) {
                 String msg = invokedMethodString(method, args, "timed out after " + timeout
-                        + " milliseconds - invocation thread will be interrupted.");
+                    + " milliseconds - invocation thread will be interrupted.");
                 LOG.debug(msg);
                 Throwable cause = new Throwable();
                 cause.setStackTrace(componentInvocation.getStackTrace());

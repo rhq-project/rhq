@@ -91,6 +91,11 @@
    </category>
    -->
 
+   <!-- EMS connection factory can be noisy with its INFO messages - comment the below to see them. -->
+   <category name="org.mc4j.ems.connection.ConnectionFactory">
+      <priority value="WARN"/>
+   </category>
+
    <!-- EMS can be noisy with its WARN messages - uncomment the below to suppress them. -->
    <!--
    <category name="org.mc4j.ems">

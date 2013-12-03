@@ -151,12 +151,12 @@ public interface AgentConfigurationConstants {
     boolean DEFAULT_AGENT_UPDATE_ENABLED = true;
 
     /**
-     * If this preference is defined (its default is null), this will be the URL that contains the agent update version info. 
+     * If this preference is defined (its default is null), this will be the URL that contains the agent update version info.
      */
     String AGENT_UPDATE_VERSION_URL = PROPERTY_NAME_PREFIX + "agent-update.version-url";
 
     /**
-     * If this preference is defined (its default is null), this will be the URL the agent downloads the agent update from. 
+     * If this preference is defined (its default is null), this will be the URL the agent downloads the agent update from.
      */
     String AGENT_UPDATE_DOWNLOAD_URL = PROPERTY_NAME_PREFIX + "agent-update.download-url";
 
@@ -541,12 +541,12 @@ public interface AgentConfigurationConstants {
     String DEFAULT_PLUGINS_DIRECTORY = "plugins";
 
     /**
-     * The regular expression to indicate what agent/plugin container classes the plugins cannot access. 
+     * The regular expression to indicate what agent/plugin container classes the plugins cannot access.
      */
     String PLUGINS_ROOT_PLUGIN_CLASSLOADER_REGEX = PROPERTY_NAME_PREFIX + "plugins.root-plugin-classloader-regex";
 
     /**
-     * The comma separated list of names of plugins that are to be disabled at startup 
+     * The comma separated list of names of plugins that are to be disabled at startup
      */
     String PLUGINS_DISABLED = PROPERTY_NAME_PREFIX + "plugins.disabled";
 
@@ -628,6 +628,17 @@ public interface AgentConfigurationConstants {
      * The default time period between each availability scan, in seconds.
      */
     long DEFAULT_PLUGINS_AVAILABILITY_SCAN_PERIOD = PluginContainerConfiguration.AVAILABILITY_SCAN_PERIOD_DEFAULT;
+
+    /**
+     * Defines how many threads can be concurrently scanning for resource availabilities.
+     */
+    String PLUGINS_AVAILABILITY_SCAN_THREADPOOL_SIZE = PROPERTY_NAME_PREFIX
+        + "plugins.availability-scan.threadpool-size";
+
+    /**
+     * The default threadpool size for availability scanning.
+     */
+    int DEFAULT_PLUGINS_AVAILABILITY_SCAN_THREADPOOL_SIZE = PluginContainerConfiguration.AVAILABILITY_SCAN_THREADPOOL_SIZE_DEFAULT;
 
     /**
      * If defined, this is to be the size of the measurement collection thread pool. If not defined, the plugin

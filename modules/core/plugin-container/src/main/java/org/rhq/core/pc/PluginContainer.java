@@ -307,7 +307,7 @@ public class PluginContainer {
                 mbean.register();
             }
 
-            ResourceContainer.initialize();
+            ResourceContainer.initialize(configuration);
 
             pluginManager = new PluginManager();
             pluginComponentFactory = new PluginComponentFactory();

@@ -26,7 +26,7 @@ import org.rhq.core.domain.resource.Resource;
 
 /**
  * A thin subclass that ensures that the avail report generation forces avail checks for all resources.
- * 
+ *
  * @author Jay Shaughnessy
  */
 public class ForceAvailabilityExecutor extends AvailabilityExecutor {
@@ -37,7 +37,7 @@ public class ForceAvailabilityExecutor extends AvailabilityExecutor {
 
     @Override
     protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
-        AvailabilityType parentAvailType, boolean forceCheck, Scan scan) {
+        AvailabilityType parentAvailType, boolean forceCheck, Scan scan) throws InterruptedException {
 
         scan.setForced(true);
         super.checkInventory(resource, availabilityReport, parentAvailType, true, scan);

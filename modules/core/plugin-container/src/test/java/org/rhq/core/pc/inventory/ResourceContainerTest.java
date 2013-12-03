@@ -64,12 +64,10 @@ public class ResourceContainerTest {
         PluginContainer pc = PluginContainer.getInstance();
         pc.setConfiguration(config);
         pc.initialize();
-        ResourceContainer.initialize();
     }
 
     @AfterClass
     public void afterClass() {
-        ResourceContainer.shutdown();
         PluginContainer.getInstance().shutdown();
     }
 

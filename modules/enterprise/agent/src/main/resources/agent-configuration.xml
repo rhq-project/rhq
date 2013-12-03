@@ -654,6 +654,17 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.plugins.availability-scan.threadpool-size
+
+               The number of threads that can be concurrently scanning
+               resource availabilities.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.availability-scan.threadpool-size" value="100"/>
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.agent.plugins.measurement-collection.threadpool-size
 
                When measurement's are scheduled for collection, the collection

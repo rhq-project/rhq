@@ -577,6 +577,13 @@ public class SetupPromptCommand implements AgentPromptCommand {
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSAVAILSCANINITIALDELAY_HELP)));
 
         instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_DEFAULT,
+            new IntegerSetupValidityChecker(1, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSAVAILSCANTHREADPOOLSIZE_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLINITIALDELAY_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLINITIALDELAY_DEFAULT,
             new LongSetupValidityChecker(1L, null), SETUPMSG

@@ -55,7 +55,7 @@ public class PluginContainerConfiguration {
     public static final boolean WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION_DEFAULT = true;
     private static final String SHUTDOWN_SERVICE_TERMINATION_TIMEOUT = PROP_PREFIX + "shutdown-service-termination-timeout";
     public static final long SHUTDOWN_SERVICE_TERMINATION_TIMEOUT_DEFAULT = 5 * 60L; // in seconds
-    
+
     // The following configuration settings have hardcoded default values. These defaults are publicly
     // accessible so the entity that embeds the plugin container can know what its default values are.
 
@@ -85,6 +85,8 @@ public class PluginContainerConfiguration {
     private static final String AVAILABILITY_SCAN_PERIOD_PROP = PROP_PREFIX + "availability-scan-period";
     // in seconds, should be the shortest avail collection interval allowed
     public static final long AVAILABILITY_SCAN_PERIOD_DEFAULT = 30L;
+    public static final String AVAILABILITY_SCAN_THREADPOOL_SIZE_PROP = "availability-scan-threadpool-size";
+    public static final int AVAILABILITY_SCAN_THREADPOOL_SIZE_DEFAULT = 100;
 
     // Measurement ----------
 
@@ -347,10 +349,10 @@ public class PluginContainerConfiguration {
             return ((Boolean)val).booleanValue();
         }
     }
-    
+
     /**
      * Sets the flag to indicate whether to start the management bean of the plugin container or not.
-     * 
+     *
      * @see #isStartManagementBean()
      * @param value
      */
@@ -437,6 +439,25 @@ public class PluginContainerConfiguration {
      */
     public void setAvailabilityScanPeriod(long period) {
         configuration.put(AVAILABILITY_SCAN_PERIOD_PROP, Long.valueOf(period));
+    }
+
+    /**
+     * Returns the number of concurrent threads that can be scanning resource availabilities.
+     *
+     * @return threadpool size used for thread pool that scans availabilities
+     */
+    public int getAvailabilityScanThreadPoolSize() {
+        Integer size = (Integer) configuration.get(AVAILABILITY_SCAN_THREADPOOL_SIZE_PROP);
+        return (size == null) ? AVAILABILITY_SCAN_THREADPOOL_SIZE_DEFAULT : size.intValue();
+    }
+
+    /**
+     * Sets the number of concurrent threads that can be scanning resource availabilities.
+     *
+     * @param size threadpool size used for thread pool that scans availabilities
+     */
+    public void setAvailabilityScanThreadPoolSize(int size) {
+        configuration.put(AVAILABILITY_SCAN_THREADPOOL_SIZE_PROP, Integer.valueOf(size));
     }
 
     /**

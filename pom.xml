@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.9.0.JON320-SNAPSHOT</version>
+  <version>4.9.0.JON320CR1</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>

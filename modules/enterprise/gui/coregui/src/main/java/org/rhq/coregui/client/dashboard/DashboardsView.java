@@ -31,6 +31,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.TabBarControls;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
@@ -205,7 +206,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         buttons.addMember(editButton);
         buttons.addMember(newDashboardButton);
 
-        tabSet.setTabBarControls(buttons);
+        tabSet.setTabBarControls(TabBarControls.TAB_SCROLLER, TabBarControls.TAB_PICKER, buttons );
 
         tabSet.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent tabSelectedEvent) {

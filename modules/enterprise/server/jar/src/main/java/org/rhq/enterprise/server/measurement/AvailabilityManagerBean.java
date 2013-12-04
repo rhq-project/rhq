@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -93,13 +94,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     static {
 
+        // The value of 200 has been settled upon after testing several batch sizes. If changed it still must be less
+        // than 1000 for Oracle IN clause limitation reasons.
         int mergeBatchSize = 200;
         try {
             mergeBatchSize = Integer.parseInt(System.getProperty("rhq.server.availability.merge.batch.size", "200"));
         } catch (Throwable t) {
             //
         }
-        MERGE_BATCH_SIZE = mergeBatchSize;
+        MERGE_BATCH_SIZE = (mergeBatchSize > 999) ? 999 : mergeBatchSize;
     }
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -811,8 +814,28 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         // We will alert only on the avails for enabled resources. Keep track of any that are disabled.
         List<Availability> disabledAvailabilities = new ArrayList<Availability>();
-        Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
-        int count = 0;
+
+        Query q = entityManager.createNamedQuery(Availability.FIND_LATEST_BY_RESOURCE_IDS);
+        List<Integer> resourceIds = new ArrayList<Integer>(availabilities.size());
+        for (Availability reported : availabilities) {
+            resourceIds.add(reported.getResource().getId());
+        }
+        q.setParameter("resourceIds", resourceIds);
+        List<Availability> latestAvailabilitiesList = q.getResultList();
+        resourceIds.clear(); // perhaps helps GC
+
+        // populate Map of resourceIds to latestAvailability
+        // there should be a single latest avail per resource. mark any situation where we have multiple
+        Object nonUniqueMarker = new Object();
+        Map<Integer, Object> latestAvailabilities = new HashMap(availabilities.size() + 100);
+        for (Availability latestAvailability : latestAvailabilitiesList) {
+            Integer resourceId = latestAvailability.getResource().getId();
+            if (latestAvailabilities.containsKey(resourceId)) {
+                latestAvailabilities.put(resourceId, nonUniqueMarker);
+            } else {
+                latestAvailabilities.put(resourceId, latestAvailability);
+            }
+        }
 
         for (Availability reported : availabilities) {
 
@@ -820,13 +843,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             reported.setEndTime(null);
 
             // get the latest avail for the reported resource
-            q.setParameter("resourceId", reported.getResource().getId());
+            //q.setParameter("resourceId", reported.getResource().getId());
+            Integer resourceId = reported.getResource().getId();
+            Object latestObject = latestAvailabilities.get(resourceId);
             Availability latest = null;
 
-            try {
-                latest = (Availability) q.getSingleResult();
-
-            } catch (NoResultException nre) {
+            if (null == latestObject) { // this is like NoResultException
                 // This should not happen unless the Resource in the report is stale, which can happen in certain
                 // sync scenarios. A Resource is given its initial Availability/ResourceAvailability when it is
                 // persisted so it is guaranteed to have Availability, so, the Resource must not exist. At least
@@ -873,7 +895,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         continue;
                     }
                 }
-            } catch (NonUniqueResultException nure) {
+            } else if (latestObject == nonUniqueMarker) { // this is like NonUniqueResultException
                 // This condition should never happen.  In my world of la-la land, I've done everything
                 // correctly so this never happens.  But, due to the asynchronous nature of things,
                 // I have to believe that this still might happen (albeit rarely).  If it does happen,
@@ -881,10 +903,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // has 2 or more availabilities with endTime of null, we need to delete all but the
                 // latest one (the one whose start time is the latest).  This should correct the
                 // problem and allow us to continue processing availability reports for that resource
-                log.warn("Resource [" + reported.getResource() + "] has multiple availabilities without an endtime ["
-                    + nure.getMessage() + "] - will attempt to remove the extra ones\n" + mergeInfo.toString(false));
+                log.warn("Resource [" + reported.getResource()
+                    + "] has multiple availabilities without an endtime - will attempt to remove the extra ones\n"
+                    + mergeInfo.toString(false));
 
                 try {
+                    q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
+                    q.setParameter("resourceId", resourceId);
 
                     List<Availability> latestList = q.getResultList();
 
@@ -906,6 +931,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                             + "]", t);
                     continue;
                 }
+            } else {
+                latest = (Availability) latestObject;
             }
 
             AvailabilityType latestType = latest.getAvailabilityType();
@@ -952,6 +979,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 mergeInfo.setAskForFullReport(true);
             }
         }
+
+        latestAvailabilities.clear(); // perhaps helps GC
 
         // notify alert condition cache manager for all reported avails for for enabled resources
         availabilities.removeAll(disabledAvailabilities);

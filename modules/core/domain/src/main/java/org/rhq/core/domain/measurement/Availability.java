@@ -64,6 +64,11 @@ import org.rhq.core.domain.resource.Resource;
         + "   WHERE av.resource.id = :resourceId " //
         + "     AND av.endTime IS NULL " //
         + "ORDER BY av.startTime ASC "), // this order by is on purpose - for handling NonUniqueResultException problems
+    @NamedQuery(name = Availability.FIND_LATEST_BY_RESOURCE_IDS, query = "" //
+        + "  SELECT av " //
+        + "    FROM Availability av " //
+        + "   WHERE av.resource.id IN :resourceIds " //
+        + "     AND av.endTime IS NULL "), //
     @NamedQuery(name = Availability.FIND_BY_RESOURCE, query = "" //
         + "  SELECT av " //
         + "    FROM Availability av " //
@@ -88,7 +93,7 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite(av.resource.id, av) " //
         + "  FROM Availability av " //
         + " WHERE av.resource.agent.id = :agentId " //
-        + "   AND av.resource.parentResource IS NOT NULL " //        
+        + "   AND av.resource.parentResource IS NOT NULL " //
         + "   AND ((av.availabilityType <> :availabilityType AND av.availabilityType <> :disabled AND :availabilityType IS NOT NULL) " //
         + "        OR (av.availabilityType IS NOT NULL AND :availabilityType IS NULL) " //
         + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL)) " //
@@ -139,6 +144,7 @@ public class Availability implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String FIND_CURRENT_BY_RESOURCE = "Availability.findCurrentByResource";
+    public static final String FIND_LATEST_BY_RESOURCE_IDS = "Availability.findLatestByResourceIds";
     public static final String FIND_BY_RESOURCE = "Availability.findByResource";
     public static final String FIND_BY_RESOURCE_NO_SORT = "Availability.findByResourceNoSort";
     public static final String FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE = "Availability.findPlatformCompositeByAgentAndNonmatchingType";
@@ -199,7 +205,7 @@ public class Availability implements Serializable {
      *
      * @param resource
      * @param startTime if null set to current time
-     * @param type if null this will be set to UNKNOWN 
+     * @param type if null this will be set to UNKNOWN
      */
     public Availability(Resource resource, Long startTime, AvailabilityType type) {
         if (resource == null) {

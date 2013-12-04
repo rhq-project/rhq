@@ -380,6 +380,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/trove4j/trove4j/3.0.3/trove4j-3.0.3.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.4/cassandra-all-1.2.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>

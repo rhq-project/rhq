@@ -456,62 +456,68 @@
     <target name="prepare-welcome-content">
       <echo>Changing the default welcome content</echo>
       <!-- Simple redirect script written in EcmaScript checking if the server has fully started -->
-      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;body&gt;' replace='
-        &lt;body>&#xA;
-        &lt;script type="text/JavaScript">&#xA;
-          &lt;!--&#xA;
-           function httpGet() {&#xA;
-             var url = "/portal/sessionAccess";&#xA;
-             var xmlHttp = null;&#xA;
-             xmlHttp = new XMLHttpRequest();&#xA;
-             xmlHttp.open("GET", url, false);&#xA;
-             xmlHttp.send(null);&#xA;
-             return xmlHttp;&#xA;
-           }&#xA;
-           function showError(msg) {&#xA;
-             var elError = document.getElementById("error");&#xA;
-             if (elError != null) {&#xA;
-               if (msg) {&#xA;
-                 elError.innerHTML = "Following subsystems had problem to start: &lt;b>" + msg + "&lt;/b>";&#xA;
-                 if (msg.indexOf("storage") != -1) elError.innerHTML += "&lt;br />&lt;i>NOTE: Start at least one storage node as soon as possible.&lt;/i>"&#xA;
-                 elError.setAttribute("style", elError.getAttribute("style").replace(/display:.*/gi, "display: visible;"));&#xA;
-               } else elError.setAttribute("style", elError.getAttribute("style").replace(/display:.*/gi, "display: none;"));&#xA;
-             }&#xA;
-           }&#xA;
-           function checkIfRunning(attemptNum) {&#xA;
-             var response = httpGet();&#xA;
-             if (response.status === 200) {&#xA;
-               var json = JSON.parse(response.responseText);&#xA;
-               if (json.serverInitialized) {&#xA;
-                 location.href = "/coregui";&#xA;
-               } else {&#xA;
-                 showError(json.startupError);&#xA;
-               }&#xA;
-             }&#xA;
-             var elProgress = document.getElementById("progress");&#xA;
-             if (elProgress != null) {&#xA;
-               elProgress.innerHTML = elProgress.innerHTML.trim() + "." + (attemptNum % 180 == 0 ? "&lt;br />" : "") ;&#xA;
-             }&#xA;
-             setTimeout("checkIfRunning(" + (attemptNum + 1) + ");", 3000);&#xA;
-           }&#xA;
-           checkIfRunning(16);&#xA;
-          -->&#xA;
-        &lt;/script>&#xA;&#xA;
-        &lt;noscript>&#xA;
-          &lt;h1>Your browser does not support JavaScript!&lt;/h1>&#xA;
-          &lt;h2>Please turn it on or use a different browser.&lt;/h2>&#xA;
-          &lt;h2>You will NOT be automatically redirected...&lt;/h2>&#xA;
-        &lt;/noscript>&#xA;'/>
+      <echo file="${jboss.home}/welcome-content/backend-checker.js"><![CDATA[function httpGet() {
+  var url = "/portal/sessionAccess";
+  var xmlHttp = null;
+  xmlHttp = new XMLHttpRequest();
+  xmlHttp.open("GET", url, false);
+  xmlHttp.send(null);
+  return xmlHttp;
+}
 
-      <!-- Changing the default content of the welcome page -->
-      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;div class="section">(.*?)&lt;/div>' replace='
-        &lt;div class="section">&#xA;
-          &lt;h1>Server Initialization&lt;/h1>&#xA;
-          &lt;h3>Your server is starting, please wait.&lt;/h3>&#xA;
-          &lt;p class="WarnBlock" id="error" style="background-color: #DE7272; display: none;">&lt;/p>&#xA;
-          &lt;p class="WarnBlock" id="progress">Starting ..&lt;/p>&#xA;
-          &lt;sub>You will be automatically redirected once the server is up and running. If this takes more than 10 minutes, please check the server log for possible issues.&lt;/sub>&#xA;
-        &lt;/div>'/>
+function showError(msg) {
+  var elError = document.getElementById("error");
+  if (elError) {
+    if (msg) {
+      elError.innerHTML = "Following subsystems had problem to start: <b>" + msg + "</b>";
+      if (msg.indexOf("storage") != -1) {
+        elError.innerHTML += "<br /><i>NOTE: Start at least one storage node as soon as possible.</i>"
+      }
+      elError.setAttribute("style", elError.getAttribute("style").replace(/display:.*/gi, "display: visible;"));
+    } else elError.setAttribute("style", elError.getAttribute("style").replace(/display:.*/gi, "display: none;"));
+  }
+}
+
+function checkIfRunning(attemptNum) {
+  try {
+    var response = httpGet();
+  } catch (error) {
+    showError(error.message + " Is the server running?");
+  }
+  if (response && response.status === 200) {
+    var json = JSON.parse(response.responseText);
+    if (json.serverInitialized) {
+      location.href = "/coregui";
+    } else showError(json.startupError);
+  }
+  var elProgress = document.getElementById("progress");
+  if (elProgress) {
+    elProgress.innerHTML = elProgress.innerHTML.trim() + "." + (attemptNum % 180 == 0 ? "<br />" : "") ;
+  }
+  setTimeout("checkIfRunning(" + (attemptNum + 1) + ");", 3000);
+}
+
+checkIfRunning(16);]]>
+</echo>
+
+      <!-- Adding the script and noscript elements to the welcome webpage -->
+      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;body&gt;' replace='&lt;body>&#xA;
+    &lt;script src="backend-checker.js">
+    &lt;/script>&#xA;
+    &lt;noscript>&#xA;
+        &lt;h1>Your browser does not support JavaScript!&lt;/h1>&#xA;
+        &lt;h2>Please turn it on or use a different browser.&lt;/h2>&#xA;
+        &lt;h2>You will NOT be automatically redirected...&lt;/h2>&#xA;
+    &lt;/noscript>&#xA;'/>
+
+      <!-- Changing the default content of the welcome page to support our indications -->
+      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;div class="section">(.*?)&lt;/div>' replace='&lt;div class="section">&#xA;
+    &lt;h1>Server Initialization&lt;/h1>&#xA;
+    &lt;h3>Your server is starting, please wait.&lt;/h3>&#xA;
+    &lt;p class="WarnBlock" id="error" style="background-color: #DE7272; display: none;">&lt;/p>&#xA;
+    &lt;p class="WarnBlock" id="progress">Starting ..&lt;/p>&#xA;
+    &lt;sub>You will be automatically redirected once the server is up and running. If this takes more than 10 minutes, please check the server log for possible issues.&lt;/sub>&#xA;
+  &lt;/div>'/>
     </target>
 
     <target name="package-connectors">

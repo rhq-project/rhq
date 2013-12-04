@@ -848,7 +848,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         try {
             Map<Integer, StorageNode> resourceIdToStorageNodeMap = new TreeMap<Integer, StorageNode>();
             for (StorageNode storageNode : storageNodes) {
-                resourceIdToStorageNodeMap.put(storageNode.getResource().getId(), storageNode);
+                if (storageNode.getResource() != null) { // handling the case before the s.n. autoimport
+                    resourceIdToStorageNodeMap.put(storageNode.getResource().getId(), storageNode);
+                }
             }
 
             Map<Integer, Integer> storageNodeAlertCounts = new TreeMap<Integer, Integer>();

@@ -52,7 +52,6 @@ import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.util.StringUtil;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
@@ -158,68 +157,71 @@ public class MetricsServer {
 
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
         long endTime, int numberOfBuckets) {
+        Stopwatch stopwatch = new Stopwatch().start();
+        try {
+            DateTime begin = new DateTime(beginTime);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Querying for metric data using parameters [scheduleId: " + scheduleId + ", beginTime: " +
-                beginTime + ", endTime: " + endTime + ", numberOfBuckets: " + numberOfBuckets + "]");
+            if (dateTimeService.isInRawDataRange(begin)) {
+                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
+                return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
+            }
+
+            Iterable<AggregateNumericMetric> metrics = null;
+            if (dateTimeService.isIn1HourDataRange(begin)) {
+                metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
+            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+                metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
+            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+                metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
+            } else {
+                throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
+            }
+
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets);
+        } finally {
+            stopwatch.stop();
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved resource data for [scheduleId: " + scheduleId + ", beginTime: " + beginTime +
+                    ", endTime: " + endTime + "] in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            }
         }
-
-        DateTime begin = new DateTime(beginTime);
-
-        if (dateTimeService.isInRawDataRange(begin)) {
-            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
-            return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
-        }
-
-        Iterable<AggregateNumericMetric> metrics = null;
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
-        } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
-        } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-            metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
-        } else {
-            throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
-        }
-
-        return createComposites(metrics, beginTime, endTime, numberOfBuckets);
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
         long endTime, int numberOfBuckets) {
-        if (log.isDebugEnabled()) {
-            log.debug("Querying for metric data using parameters [scheduleIds: " + scheduleIds + ", beingTime: " +
-                beginTime + ", endTime: " + endTime + ", numberOfBuckets: " + numberOfBuckets + "]");
+        Stopwatch stopwatch = new Stopwatch().start();
+        try {
+            DateTime begin = new DateTime(beginTime);
+
+            if (dateTimeService.isInRawDataRange(begin)) {
+                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
+                return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
+            }
+
+            Iterable<AggregateNumericMetric> metrics = null;
+            if (dateTimeService.isIn1HourDataRange(begin)) {
+                metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
+            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+                metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
+            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+                metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
+            } else {
+                throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
+            }
+
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets);
+        } finally {
+            stopwatch.stop();
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved resource group data for [scheduleIds: " + scheduleIds + ", beginTime: " +
+                    beginTime + ", endTime: " + endTime + "] in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            }
         }
-
-        DateTime begin = new DateTime(beginTime);
-
-        if (dateTimeService.isInRawDataRange(begin)) {
-            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
-            return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
-        }
-
-        Iterable<AggregateNumericMetric> metrics = null;
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
-        } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
-        } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-            metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
-        } else {
-            throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
-        }
-
-        return createComposites(metrics, beginTime, endTime, numberOfBuckets);
     }
 
     public AggregateNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
-        long start = System.currentTimeMillis();
+        Stopwatch stopwatch = new Stopwatch().start();
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Calculating resource summary aggregate for [scheduleId: " + scheduleId + ", beginTime: " +
-                    beginTime + ", endTime: " + endTime + "]");
-            }
             DateTime begin = new DateTime(beginTime);
 
             if (dateTimeService.isInRawDataRange(begin)) {
@@ -240,9 +242,11 @@ public class MetricsServer {
 
             return calculateAggregate(metrics, beginTime);
         } finally {
-            long end = System.currentTimeMillis();
+            stopwatch.stop();
             if (log.isDebugEnabled()) {
-                log.debug("Finished calculating resource summary aggregate in " + (end - start) + " ms");
+                log.debug("Finished calculating resource summary aggregate for [scheduleId: " + scheduleId +
+                    ", beginTime: " + beginTime + ", endTime: " + endTime + "] in " +
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         }
     }
@@ -283,12 +287,8 @@ public class MetricsServer {
     }
 
     public AggregateNumericMetric getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
-        long start = System.currentTimeMillis();
+        Stopwatch stopwatch = new Stopwatch().start();
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Calculating group summary aggregate for [scheduleIds: [" + StringUtil.listToString(
-                    scheduleIds) + "], beginTime: " + beginTime + ", endTime: " + endTime + "]");
-            }
             DateTime begin = new DateTime(beginTime);
 
             if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
@@ -309,9 +309,11 @@ public class MetricsServer {
 
             return calculateAggregate(metrics, beginTime);
         } finally {
-            long end = System.currentTimeMillis();
+            stopwatch.stop();
             if (log.isDebugEnabled()) {
-                log.debug("Finished calculating group summary aggregate in " + (end - start) + " ms");
+                log.debug("Finished calculatig group summary aggregate for [scheduleIds: " + scheduleIds +
+                    ", beginTime: " + beginTime + ", endTime: " + endTime + "] in " +
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         }
     }

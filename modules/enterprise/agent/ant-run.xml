@@ -16,11 +16,12 @@ Ant Script that provides ways to package the Agent.
    <property name="augeas.classifier" value="el5"/>
    <property name="augeas.zip.location" value="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}/"/>
    <property name="augeas.zip.mask" value="*-${augeas.classifier}.zip"/>
-   <property name="augeas.zip.version" value="0.9.0-4"/> 
+   <property name="augeas.zip.version" value="0.9.0-4"/>
    <property name="getopt.version" value="1.0.13"/>
    <property name="jaxb-api.version" value="2.1"/>
    <property name="jaxb-impl.version" value="2.1"/>
    <property name="log4j.version" value="1.2.16"/>
+   <property name="trove.version" value="3.0.3"/>
    <property name="so.exts" value="*.so.*"/>
 
    <!--
@@ -63,6 +64,7 @@ Ant Script that provides ways to package the Agent.
          <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
          <include name="org/rhq/rhq-common-drift/${project.version}/rhq-common-drift-${project.version}.jar"/>
          <include name="commons-io/commons-io/1.4/commons-io-1.4.jar"/>
+         <include name="net/sf/trove4j/trove4j/${trove.version}/trove4j-${trove.version}.jar"/>
       </fileset>
 
    </path>
@@ -151,18 +153,18 @@ Ant Script that provides ways to package the Agent.
        	  <include name="${so.exts}" />
        </fileset>
      </move>
-   	
+
     <move todir="${agent.distro.dir}/lib/augeas/lib64" flatten="true" overwrite="false">
       <fileset dir="${agent.distro.dir}/lib/augeas-native-${augeas.zip.version}/lib64">
          <include name="*.so" />
          <include name="${so.exts}" />
       </fileset>
     </move>
-   	
+
     <delete failonerror="false" includeEmptyDirs="true" verbose="true">
         <fileset dir="${agent.distro.dir}/lib" includes="augeas-native-*/"/>
-    </delete>       
-    
+    </delete>
+
     <move todir="${agent.distro.dir}/lib" flatten="true" overwrite="false">
        <fileset dir="${agent.distro.dir}/lib">
           <include name="**/lib/*" />
@@ -170,14 +172,14 @@ Ant Script that provides ways to package the Agent.
        </fileset>
     </move>
     <move file="${agent.distro.dir}/lib/sigar.jar" tofile="${agent.distro.dir}/lib/sigar-${sigar.version}.jar"
-          overwrite="false"/> 
+          overwrite="false"/>
     <delete failonerror="false" includeEmptyDirs="true" verbose="true">
         <fileset dir="${agent.distro.dir}/lib" includes="hyperic-sigar-*/"/>
-    </delete>       
+    </delete>
     <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,${so.exts},*.sl,*.dylib"/>
     <chmod dir="${agent.distro.dir}/lib/augeas/lib" perm="ug+rx" includes="*.so,${so.exts}"/>
     <chmod dir="${agent.distro.dir}/lib/augeas/lib64" perm="ug+rx" includes="*.so,${so.exts}"/>
-    
+
     <copy todir="${agent.distro.dir}/bin">
        <fileset dir="${basedir}/src/etc"
                 includes="*.bat,*.sh"/>

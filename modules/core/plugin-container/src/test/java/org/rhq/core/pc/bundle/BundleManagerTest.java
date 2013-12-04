@@ -455,7 +455,7 @@ public class BundleManagerTest {
         }
 
         @Override
-        public ResourceContainer getResourceContainer(Integer resourceId) {
+        public ResourceContainer getResourceContainer(int resourceId) {
             return idResourceContainerMap.get(resourceId);
         }
 

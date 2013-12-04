@@ -393,7 +393,7 @@ public class DriftManagerTest extends DriftTest {
         private Map<Integer, ResourceContainer> resourceContainers = new HashMap<Integer, ResourceContainer>();
 
         @Override
-        public ResourceContainer getResourceContainer(Integer resourceId) {
+        public ResourceContainer getResourceContainer(int resourceId) {
             ResourceContainer container = resourceContainers.get(resourceId);
             if (container == null) {
                 Resource resource = new Resource();

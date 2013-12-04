@@ -46,6 +46,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -195,7 +198,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * UUID to ResourceContainer map
      */
-    private final Map<String, ResourceContainer> resourceContainers = new ConcurrentHashMap<String, ResourceContainer>(100);
+    private final Map<String, ResourceContainer> resourceContainersByUUID = new ConcurrentHashMap<String, ResourceContainer>(500);
+
+    /**
+     * ResourceID to ResourceContainer map
+     */
+    private final TIntObjectMap<ResourceContainer> resourceContainerByResourceId = new TIntObjectHashMap<ResourceContainer>(500);
 
     /**
      * Collection of event listeners to inform of changes to the inventory.
@@ -300,7 +308,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         this.discoveryComponentProxyFactory.shutdown();
         this.availabilityCollectors.shutdown();
         this.inventoryEventListeners.clear();
-        this.resourceContainers.clear();
+        this.resourceContainersByUUID.clear();
+        this.resourceContainerByResourceId.clear();
     }
 
     /**
@@ -545,13 +554,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Nullable
     public ResourceContainer getResourceContainer(String uuid) {
-        return this.resourceContainers.get(uuid);
+        return this.resourceContainersByUUID.get(uuid);
     }
 
     @Nullable
     public ResourceContainer getResourceContainer(CanonicalResourceKey canonicalId) {
         ResourceContainer resourceContainer = null;
-        for (Map.Entry<String, ResourceContainer> entry : resourceContainers.entrySet()) {
+        for (Map.Entry<String, ResourceContainer> entry : resourceContainersByUUID.entrySet()) {
             ResourceContainer container = entry.getValue();
             Resource resource = container.getResource();
             if (resource != null) {
@@ -577,12 +586,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         String uuid = resource.getUuid();
         if (uuid == null)
             return null;
-        return this.resourceContainers.get(uuid);
+        return this.resourceContainersByUUID.get(uuid);
     }
 
     @Nullable
-    public ResourceContainer getResourceContainer(Integer resourceId) {
-        if ((resourceId == null) || (resourceId == 0)) {
+    public ResourceContainer getResourceContainer(int resourceId) {
+        if (resourceId == 0) {
             // I've already found one place where passing in 0 was very bad - I want to be very noisy in the log
             // when this happens but not throw an exception, for fear I might break something.
             // I'll just return null instead; hopefully, callers are checking for null appropriately.
@@ -596,10 +605,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return null;
         }
 
+        ResourceContainer resourceContainer = this.resourceContainerByResourceId.get(resourceId);
+        if (resourceContainer != null) {
+            return resourceContainer;
+        }
+        // We did not find the UUID in above map.
+        // Check on the classical way if the container is present and populate the
+        // resourceId -> resourceContainer map for the next call into this method.
         ResourceContainer retContainer = null;
-        for (ResourceContainer container : resourceContainers.values()) {
-            if (resourceId.equals(container.getResource().getId())) {
+        for (ResourceContainer container : resourceContainersByUUID.values()) {
+            if (resourceId == container.getResource().getId()) {
                 retContainer = container;
+                this.resourceContainerByResourceId.put(resourceId, retContainer);
                 break;
             }
         }
@@ -1340,7 +1357,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Nullable
     public ResourceComponent<?> getResourceComponent(Resource resource) {
-        ResourceContainer resourceContainer = this.resourceContainers.get(resource.getUuid());
+        ResourceContainer resourceContainer = this.resourceContainersByUUID.get(resource.getUuid());
 
         if (resourceContainer == null) {
             return null;
@@ -1410,11 +1427,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
             PluginContainer.getInstance().getMeasurementManager()
                 .unscheduleCollection(Collections.singleton(resource.getId()));
 
-            if (this.resourceContainers.remove(resource.getUuid()) == null) {
+            if (this.resourceContainersByUUID.remove(resource.getUuid()) == null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Asked to remove an unknown Resource [" + resource + "] with UUID [" + resource.getUuid()
                         + "]");
                 }
+            }
+            else {
+                this.resourceContainerByResourceId.remove(resource.getId());
             }
 
             // Notify InventoryEventListeners a Resource has been removed.
@@ -1509,7 +1529,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @return
      */
     public Availability updateAvailability(Resource resource, AvailabilityType availabilityType) {
-        ResourceContainer resourceContainer = this.resourceContainers.get(resource.getUuid());
+        ResourceContainer resourceContainer = resourceContainersByUUID.get(resource.getUuid());
         return resourceContainer.updateAvailability(availabilityType);
     }
 
@@ -1657,7 +1677,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         List<Resource> activatedResources = new ArrayList<Resource>();
         this.inventoryLock.readLock().lock();
         try {
-            for (ResourceContainer container : this.resourceContainers.values()) {
+            for (ResourceContainer container : this.resourceContainersByUUID.values()) {
                 if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
                     activatedResources.add(container.getResource());
                 }
@@ -1687,7 +1707,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // Auto-sync if the PC is running within the embedded JBossAS console.
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
             }
-            this.resourceContainers.put(resource.getUuid(), resourceContainer);
+            this.resourceContainersByUUID.put(resource.getUuid().intern(), resourceContainer);
+            this.resourceContainerByResourceId.put(resource.getId(), resourceContainer);
         } else {
             // container already exists, but make sure the classloader exists too
             if (resourceContainer.getResourceClassLoader() == null) {
@@ -2144,18 +2165,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryFile.loadInventory();
 
                 this.platform = inventoryFile.getPlatform();
-                this.resourceContainers.clear();
+                this.resourceContainersByUUID.clear();
+                this.resourceContainerByResourceId.clear();
                 for (String uuid : inventoryFile.getResourceContainers().keySet()) {
                     ResourceContainer resourceContainer = inventoryFile.getResourceContainers().get(uuid);
-                    this.resourceContainers.put(uuid, resourceContainer);
+                    this.resourceContainersByUUID.put(uuid, resourceContainer);
+                    Resource resource = resourceContainer.getResource();
+                    this.resourceContainerByResourceId.put(resource.getId(), resourceContainer);
                 }
 
-                log.info("Inventory with size [" + this.resourceContainers.size() + "] loaded from data file in ["
+                log.info("Inventory with size [" + this.resourceContainersByUUID.size() + "] loaded from data file in ["
                     + (System.currentTimeMillis() - start) + "ms]");
             }
         } catch (Exception e) {
             this.platform = null;
-            this.resourceContainers.clear();
+            this.resourceContainersByUUID.clear();
+            this.resourceContainerByResourceId.clear();
             if (file != null) {
                 file.renameTo(new File(file.getAbsolutePath() + ".invalid")); // move it out of the way if we can, retain it for later analysis
             }
@@ -2215,7 +2240,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             File file = new File(dataDir, "inventory.dat");
             InventoryFile inventoryFile = new InventoryFile(file);
-            inventoryFile.storeInventory(this.platform, this.resourceContainers);
+            inventoryFile.storeInventory(this.platform, this.resourceContainersByUUID);
         } catch (Exception e) {
             log.error("Could not persist inventory data to disk", e);
         }
@@ -3209,9 +3234,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     + resourceFromServer + ".");
 
                 // First grab the existing Resource's container, so we can reuse it.
-                resourceContainer = this.resourceContainers.remove(existingResource.getUuid());
+                resourceContainer = this.resourceContainersByUUID.remove(existingResource.getUuid());
                 if (resourceContainer != null) {
-                    this.resourceContainers.put(resourceFromServer.getUuid(), resourceContainer);
+                    this.resourceContainerByResourceId.remove(existingResource.getId());
+                    this.resourceContainersByUUID.put(resourceFromServer.getUuid().intern(), resourceContainer);
+                    this.resourceContainerByResourceId.put(resourceFromServer.getId(), resourceContainer);
                 } else {
                     log.error("No ResourceContainer found for existing " + existingResource + ".");
                     return;
@@ -3308,7 +3335,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void purgeObsoleteResources(Set<String> allUuids) {
         // Remove previously synchronized Resources that no longer exist in the Server's inventory...
         log.debug("Purging obsolete Resources...");
-        if (this.resourceContainers == null) {
+        if (this.resourceContainersByUUID == null) {
             log.debug("No containers present, immediately returning ..");
             return;
         }
@@ -3320,10 +3347,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
              * can be called later without throwing ConcurrentModificationException
              */
             Map<String, ResourceContainer> mapForIterating = new HashMap<String, ResourceContainer>(
-                this.resourceContainers);
+                this.resourceContainersByUUID);
             for (String uuid : mapForIterating.keySet()) {
                 if (!allUuids.contains(uuid)) {
-                    ResourceContainer resourceContainer = this.resourceContainers.get(uuid);
+                    ResourceContainer resourceContainer = this.resourceContainersByUUID.get(uuid);
                     if (resourceContainer != null) {
                         Resource resource = resourceContainer.getResource();
                         // Only purge stuff that was synchronized at some point. Other stuff may just be newly discovered.

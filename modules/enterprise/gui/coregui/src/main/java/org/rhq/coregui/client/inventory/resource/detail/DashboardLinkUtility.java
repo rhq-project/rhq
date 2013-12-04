@@ -22,39 +22,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
-import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
-import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
-import org.rhq.coregui.client.util.preferences.UserPreferences;
 
 /**
  * Utility Class to build menus for linking to the Dashboard.
@@ -144,57 +131,6 @@ public class DashboardLinkUtility {
                                 });
 
                             }
-
-                            //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
-                            String currentViewPath = History.getToken();
-                            if (currentViewPath.contains("Monitoring/Metrics")) {
-                                MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graphToView());
-                                defSubItem.addItem(addGraphItem);
-
-                                addGraphItem.addClickHandler(new ClickHandler() {
-                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                        //generate javascript to call out to.
-                                        //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
-                                        if (getScheduleDefinitionId(resource, def.getName()) > -1) {
-                                            final String resourceGraphElements = resource.getId() + ","
-                                                + getScheduleDefinitionId(resource, def.getName());
-
-                                            //Once, the portal-war will be rewritten to GWT and operations performed
-                                            //within the iframe + JSF will update the user preferences, the following
-                                            //2 lines could be uncommented and the lines below them refactorized
-                                            //MeasurementUserPreferences measurementPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-                                            //String selectedView = measurementPreferences.getSelectedView(String.valueOf(resource.getId()));
-
-                                            final int sid = UserSessionManager.getSessionSubject().getId();
-                                            SubjectCriteria c = new SubjectCriteria();
-                                            c.addFilterId(sid);
-
-                                            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(c,
-                                                new AsyncCallback<PageList<Subject>>() {
-                                                    public void onSuccess(PageList<Subject> result) {
-                                                        if (result.size() > 0) {
-                                                            UserPreferences uPreferences = new UserPreferences(result
-                                                                .get(0));
-                                                            MeasurementUserPreferences mPreferences = new MeasurementUserPreferences(
-                                                                uPreferences);
-                                                            String selectedView = mPreferences.getSelectedView(String
-                                                                .valueOf(resource.getId()));
-
-                                                            addNewMetric(String.valueOf(resource.getId()),
-                                                                selectedView, resourceGraphElements);
-                                                        } else {
-                                                            Log.warn("DashboardLinkUtility: Error obtaining subject with id:" + sid);
-                                                        }
-                                                    }
-
-                                                    public void onFailure(Throwable caught) {
-                                                        Log.warn("DashboardLinkUtility: Error obtaining subject with id:" + sid, caught);
-                                                    }
-                                                });
-                                        }
-                                    }
-                                });
-                            }
                         }
                     }
 
@@ -202,57 +138,5 @@ public class DashboardLinkUtility {
             });
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
-    }
-
-    /** Locate the specific schedule definition using the definition identifier.
-     */
-    private static int getScheduleDefinitionId(Resource resource, String definitionName) {
-        int id = -1;
-        if (resource.getSchedules() != null) {
-            boolean located = false;
-            MeasurementSchedule[] schedules = new MeasurementSchedule[resource.getSchedules().size()];
-            resource.getSchedules().toArray(schedules);
-            for (int i = 0; (!located && i < resource.getSchedules().size()); i++) {
-                MeasurementSchedule schedule = schedules[i];
-                MeasurementDefinition definition = schedule.getDefinition();
-                if ((definition != null) && definition.getName().equals(definitionName)) {
-                    located = true;
-                    id = schedule.getId();
-                }
-            }
-        }
-        return id;
-    }
-
-    private static void addNewMetric(String id, String selectedView, String resourceGraphElements) {
-        //construct portal.war url to access
-        String baseUrl = "/portal/resource/common/monitor/visibility/IndicatorCharts.do";
-        baseUrl += "?id=" + id;
-        baseUrl += "&view=" + selectedView;
-        baseUrl += "&action=addChart&metric=" + resourceGraphElements;
-        final String url = baseUrl;
-        //initiate HTTP request
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
-
-        try {
-            b.setCallback(new RequestCallback() {
-                public void onResponseReceived(final Request request, final Response response) {
-                    Log.trace("Successfully submitted request to add graph to view:" + url);
-
-                    //kick off a page reload.
-                    String currentViewPath = History.getToken();
-                    CoreGUI.goToView(currentViewPath, true);
-                }
-
-                @Override
-                public void onError(Request request, Throwable t) {
-                    Log.trace("Error adding Metric:" + url, t);
-                }
-            });
-            b.send();
-        } catch (RequestException e) {
-            Log.warn("Error adding Metric:" + url, e);
-        }
-
     }
 }

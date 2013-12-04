@@ -559,10 +559,6 @@ public class ResourceTreeView extends EnhancedVLayout {
         }
         resourceContextMenu.addItem(operations);
 
-        // Metric graph addition menu
-        resourceContextMenu.addItem(DashboardLinkUtility.buildMetricsMenu(resourceType, resource,
-            MSG.view_tree_common_contextMenu_measurements()));
-
         // Create Child Menu and Manual Import Menu
         final Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
         final Set<ResourceType> importableChildTypes = getImportableChildTypes(resourceType);

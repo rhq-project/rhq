@@ -51,7 +51,7 @@
     </generate-with>
 
     <script src="/coregui/js/moment-2.0.0.min.js"/>
-    <script src="/coregui/js/rhq-4.9.0.js"/>
+    <script src="/coregui/js/rhq-4.10.0.js"/>
     <!-- External javascript libraries -->
     <!-- jquery.sparkline requires jquery.
     -->

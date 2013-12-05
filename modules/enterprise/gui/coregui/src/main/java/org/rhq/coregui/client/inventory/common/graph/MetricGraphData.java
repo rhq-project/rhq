@@ -30,6 +30,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.JsonMetricProducer;
 import org.rhq.coregui.client.Messages;
+import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
@@ -74,49 +75,70 @@ public class MetricGraphData implements JsonMetricProducer {
     private Integer chartHeight;
     private boolean isPortalGraph;
     private boolean hideLegend;
-
+    private double average = 0.0;
+    private double min = Double.MAX_VALUE;
+    private double max = Double.MIN_VALUE;
 
     private MetricGraphData(int portalId) {
         isPortalGraph = true;
         this.portalId = portalId;
     }
 
-    public static MetricGraphData createForDashboard(int portalId){
+    public static MetricGraphData createForDashboard(int portalId) {
         return new MetricGraphData(portalId);
     }
 
-
     private MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
-        List<MeasurementDataNumericHighLowComposite> metricData ) {
+        List<MeasurementDataNumericHighLowComposite> metricData) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(def.getId());
         this.definition = def;
         this.metricData = metricData;
         this.isPortalGraph = false;
+
+        calcMinMaxAvg(metricData);
     }
 
     public static MetricGraphData createForResourceGroup(int groupId, String groupName, MeasurementDefinition def,
-                                      List<MeasurementDataNumericHighLowComposite> metricData ){
-        return new MetricGraphData(groupId,groupName,def, metricData );
+        List<MeasurementDataNumericHighLowComposite> metricData) {
+        return new MetricGraphData(groupId, groupName, def, metricData);
     }
 
     private MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef,
-        List<MeasurementDataNumericHighLowComposite> metrics,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList ) {
+        List<MeasurementDataNumericHighLowComposite> metricData,
+        PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(measurementDef.getId());
         this.definition = measurementDef;
-        this.metricData = metrics;
+        this.metricData = metricData;
         this.measurementOOBCompositeList = measurementOOBCompositeList;
         this.isPortalGraph = false;
+        calcMinMaxAvg(metricData);
     }
 
-    public static MetricGraphData createForResource(int resourceId, String resourceName, MeasurementDefinition measurementDef,
-                                                    List<MeasurementDataNumericHighLowComposite> metrics,
-                                                    PageList<MeasurementOOBComposite> measurementOOBCompositeList ){
-        return new MetricGraphData(resourceId, resourceName,measurementDef, metrics, measurementOOBCompositeList);
+    public static MetricGraphData createForResource(int resourceId, String resourceName,
+        MeasurementDefinition measurementDef, List<MeasurementDataNumericHighLowComposite> metrics,
+        PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
+        return new MetricGraphData(resourceId, resourceName, measurementDef, metrics, measurementOOBCompositeList);
+    }
+
+    private void calcMinMaxAvg(List<MeasurementDataNumericHighLowComposite> metricData) {
+        int averageCount = 0;
+        for (MeasurementDataNumericHighLowComposite measurement : metricData) {
+            if (!Double.isNaN(measurement.getLowValue())) {
+                min = Math.min(min, measurement.getLowValue());
+            }
+            if (!Double.isNaN(measurement.getHighValue())) {
+                max = Math.max(max, measurement.getHighValue());
+            }
+            if (!Double.isNaN(measurement.getValue())) {
+                average = average + measurement.getValue();
+                averageCount++;
+            }
+        }
+        average = average / averageCount;
     }
 
     public int getEntityId() {
@@ -127,7 +149,6 @@ public class MetricGraphData implements JsonMetricProducer {
         this.entityId = entityId;
         //this.definition = null;
     }
-
 
     public void setEntityName(String entityName) {
         this.entityName = entityName;
@@ -152,23 +173,21 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getChartId() {
-        if(isPortalGraph){
-            if(definition != null){
+        if (isPortalGraph) {
+            if (definition != null) {
                 return entityId + "-" + definition.getId();
-            }else {
+            } else {
                 // case when portlet has not been configured yet
                 return "";
             }
-        }else {
+        } else {
             return entityId + "-" + definitionId;
         }
     }
 
-
     public void setMetricData(List<MeasurementDataNumericHighLowComposite> metricData) {
         this.metricData = metricData;
     }
-
 
     public String getChartTitleMinLabel() {
         return chartTitleMinLabel;
@@ -180,6 +199,30 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartTitlePeakLabel() {
         return chartTitlePeakLabel;
+    }
+
+    public String getChartAverage() {
+        if(average != 0.0){
+            return AbstractActivityView.convertLastValueForDisplay(average, definition);
+        }else {
+            return "";
+        }
+    }
+
+    public String getChartMax() {
+        if(max != Double.MIN_VALUE){
+            return AbstractActivityView.convertLastValueForDisplay(max, definition);
+        }else {
+            return "";
+        }
+    }
+
+    public String getChartMin() {
+        if(min != Double.MAX_VALUE){
+            return AbstractActivityView.convertLastValueForDisplay(min, definition);
+        }else {
+            return "";
+        }
     }
 
     public String getChartDateLabel() {
@@ -201,6 +244,7 @@ public class MetricGraphData implements JsonMetricProducer {
     public String getChartNoDataLabel() {
         return chartNoDataLabel;
     }
+
     public String getChartSingleValueLabel() {
         return chartSingleValueLabel;
     }
@@ -260,9 +304,10 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartTitle() {
 
-        if(definition != null){
-            return (entityName == null) ? definition.getDisplayName() : entityName + " - "+definition.getDisplayName();
-        }else {
+        if (definition != null) {
+            return (entityName == null) ? definition.getDisplayName() : entityName + " - "
+                + definition.getDisplayName();
+        } else {
             // handle case when dashboard portlet has not been configured yet.
             return "";
 
@@ -323,28 +368,29 @@ public class MetricGraphData implements JsonMetricProducer {
                     sb.append(" \"baselineMax\":" + lastOOB.getBlMax() + ", ");
                 }
 
-                    if (!Double.isNaN(measurement.getValue())) {
+                if (!Double.isNaN(measurement.getValue())) {
 
-                        MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
-                            definition.getUnits());
-                        MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
-                            definition.getUnits());
-                        MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(),
-                            definition.getUnits());
-                        if (!gotAdjustedMeasurementUnits) {
-                            adjustedMeasurementUnits = newAvg.getUnits();
-                            gotAdjustedMeasurementUnits = true;
-                        }
-                        sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
-                        sb.append(" \"high\":" + cleanseHigh(newLow.getValue(), newAvg.getValue(),newHigh.getValue()) + ",");
-                        sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
-                        sb.append(" \"y\":" + newAvg.getValue() + "},");
-                    } else {
-                        // give it some values so that we dont have NaN
-                        sb.append(" \"high\":0,");
-                        sb.append(" \"low\":0,");
-                        sb.append(" \"y\":0,");
-                        sb.append(" \"nodata\":true },");
+                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
+                        definition.getUnits());
+                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
+                        definition.getUnits());
+                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(),
+                        definition.getUnits());
+                    if (!gotAdjustedMeasurementUnits) {
+                        adjustedMeasurementUnits = newAvg.getUnits();
+                        gotAdjustedMeasurementUnits = true;
+                    }
+                    sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
+                    sb.append(" \"high\":" + cleanseHigh(newLow.getValue(), newAvg.getValue(), newHigh.getValue())
+                        + ",");
+                    sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
+                    sb.append(" \"y\":" + newAvg.getValue() + "},");
+                } else {
+                    // give it some values so that we dont have NaN
+                    sb.append(" \"high\":0,");
+                    sb.append(" \"low\":0,");
+                    sb.append(" \"y\":0,");
+                    sb.append(" \"nodata\":true },");
                 }
                 if (!sb.toString().endsWith("},")) {
                     sb.append(" },");
@@ -353,7 +399,7 @@ public class MetricGraphData implements JsonMetricProducer {
             sb.setLength(sb.length() - 1); // delete the last ','
             sb.append("]");
         }
-        Log.debug("Json data for: "+getChartTitle());
+        Log.debug("Json data for: " + getChartTitle());
         Log.debug(sb.toString());
         return sb.toString();
     }
@@ -368,12 +414,12 @@ public class MetricGraphData implements JsonMetricProducer {
      * @param high supposed high value
      * @return the real high value
      */
-    private Double cleanseHigh(Double low, Double avg, Double high){
-        double highLowMax =  Math.max(low, high);
+    private Double cleanseHigh(Double low, Double avg, Double high) {
+        double highLowMax = Math.max(low, high);
         return Math.max(highLowMax, avg);
     }
 
-    private Double cleanseLow(Double low, Double avg,  Double high){
+    private Double cleanseLow(Double low, Double avg, Double high) {
         double highLowMin = Math.min(low, high);
         return Math.min(highLowMin, avg);
     }
@@ -391,12 +437,14 @@ public class MetricGraphData implements JsonMetricProducer {
     public boolean showBarAvgTrendLine() {
         int numberOfAggBars = 0;
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            boolean noValuesInCurrentBarUndefined = (!Double.isNaN(measurement.getValue()) && !Double.isNaN(measurement.getHighValue())  && !Double.isNaN(measurement.getLowValue()));
-            boolean foundAggregateBar = (measurement.getValue() != measurement.getHighValue() || measurement.getHighValue() != measurement.getLowValue());
+            boolean noValuesInCurrentBarUndefined = (!Double.isNaN(measurement.getValue())
+                && !Double.isNaN(measurement.getHighValue()) && !Double.isNaN(measurement.getLowValue()));
+            boolean foundAggregateBar = (measurement.getValue() != measurement.getHighValue() || measurement
+                .getHighValue() != measurement.getLowValue());
             // if there exists a even one aggregate bar then I can short circuit this and exit
-            if (noValuesInCurrentBarUndefined && foundAggregateBar){
+            if (noValuesInCurrentBarUndefined && foundAggregateBar) {
                 numberOfAggBars++;
-                if(numberOfAggBars > 4){
+                if (numberOfAggBars > 4) {
                     return true;
                 }
             }
@@ -422,7 +470,6 @@ public class MetricGraphData implements JsonMetricProducer {
         }
     }
 
-
     private MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
         MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
         MeasurementNumericValueAndUnits returnValue;
@@ -436,7 +483,6 @@ public class MetricGraphData implements JsonMetricProducer {
 
         return returnValue;
     }
-
 
     @Override
     public String toString() {
@@ -463,6 +509,5 @@ public class MetricGraphData implements JsonMetricProducer {
         sb.append('}');
         return sb.toString();
     }
-
 
 }

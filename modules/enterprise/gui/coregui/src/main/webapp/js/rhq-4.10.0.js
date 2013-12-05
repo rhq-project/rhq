@@ -34,9 +34,12 @@
  * @param chartXaxisTimeFormatHours
  * @param chartXaxisTimeFormatHoursMinutes
  * @param hideLegend
+ * @param chartAverage
+ * @param chartMin
+ * @param chartMax
  * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend) {
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend, chartAverage, chartMin, chartMax) {
             "use strict";
             if (!(this instanceof ChartContext)) {
                 throw new Error("ChartContext function cannot be called as a function.");
@@ -75,6 +78,9 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
             this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
             this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
             this.hideLegend = hideLegend;
+            this.chartAverage = chartAverage;
+            this.chartMin = chartMin;
+            this.chartMax = chartMax;
 
         },
         /**

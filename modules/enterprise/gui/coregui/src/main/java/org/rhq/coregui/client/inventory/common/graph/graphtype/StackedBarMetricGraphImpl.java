@@ -72,7 +72,10 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartSingleValueLabel()(),
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHours()(),
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHoursMinutes()(),
-                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()()
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartAverage()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartMin()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartMax()()
                 );
 
 
@@ -216,21 +219,20 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-                    legendUnDefined = (typeof min === 'undefined') || (typeof avg === 'undefined') || (typeof peak === 'undefined');
-                    if (!(chartContext.hideLegend &&  !useSmallCharts())) {
-                        createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
+                    legendUnDefined = (chartContext.chartAverage === "");
+                    if ((!chartContext.hideLegend &&  !useSmallCharts() && !legendUnDefined )) {
+                        createMinAvgPeakSidePanel(chartContext.minChartTitle, chartContext.chartMin, chartContext.avgChartTitle, chartContext.chartAverage, chartContext.peakChartTitle, chartContext.chartMax, chartContext.yAxisUnits);
                     }
                 }
 
             }
 
 
-            function createMinAvgPeakSidePanel(minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
+            function createMinAvgPeakSidePanel(minLabel, minValue, avgLabel, avgValue, highLabel, highValue ) {
                 var xLabel = 772,
                         xValue = 820,
                         yBase = 100,
-                        yInc = 25,
-                        decimalPlaces = 0;
+                        yInc = 25;
 
                 // title/header
                 chart.append("g").append("rect")
@@ -256,7 +258,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("class", "highText")
                             .attr("x", xValue)
                             .attr("y", yBase)
-                            .text(highValue.toFixed(decimalPlaces) + " " + uom);
+                            .text(highValue);
                 }
 
 
@@ -272,7 +274,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("class", "avgText")
                             .attr("x", xValue)
                             .attr("y", yBase + yInc)
-                            .text(avgValue.toFixed(decimalPlaces) + " " + uom);
+                            .text(avgValue);
                 }
 
                 // min
@@ -287,7 +289,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("class", "minText")
                             .attr("x", xValue)
                             .attr("y", yBase + 2 * yInc)
-                            .text(minValue.toFixed(decimalPlaces) + " " + uom);
+                            .text(minValue);
                 }
 
             }

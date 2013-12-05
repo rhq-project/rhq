@@ -207,6 +207,18 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         return metricGraphData.isHideLegend();
     }
 
+    public String getChartAverage(){
+        return  metricGraphData.getChartAverage();
+    }
+
+    public String getChartMin(){
+        return  metricGraphData.getChartMin();
+    }
+
+    public String getChartMax(){
+        return  metricGraphData.getChartMax();
+    }
+
     public void setGraphListView(AbstractD3GraphListView graphListView) {
         this.graphListView = graphListView;
     }

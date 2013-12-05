@@ -67,7 +67,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Availability.FIND_LATEST_BY_RESOURCE_IDS, query = "" //
         + "  SELECT av " //
         + "    FROM Availability av " //
-        + "   WHERE av.resource.id IN :resourceIds " //
+        + "   WHERE av.resource.id IN ( :resourceIds ) " //
         + "     AND av.endTime IS NULL "), //
     @NamedQuery(name = Availability.FIND_BY_RESOURCE, query = "" //
         + "  SELECT av " //

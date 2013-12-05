@@ -822,7 +822,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
         q.setParameter("resourceIds", resourceIds);
         List<Availability> latestAvailabilitiesList = q.getResultList();
-        resourceIds.clear(); // perhaps helps GC
+        resourceIds.clear(); // done with this, perhaps helps GC
+        resourceIds = null;
 
         // populate Map of resourceIds to latestAvailability
         // there should be a single latest avail per resource. mark any situation where we have multiple
@@ -836,6 +837,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 latestAvailabilities.put(resourceId, latestAvailability);
             }
         }
+
+        // keep track of the changes in availability so we can update the relevant ResourceAvailabilities in a batch
+        List<Availability> changedAvailabilities = new ArrayList<Availability>(availabilities.size());
 
         for (Availability reported : availabilities) {
 
@@ -959,7 +963,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     latest.setEndTime(reported.getStartTime());
                     latest = entityManager.merge(latest);
 
-                    updateResourceAvailability(reported);
+                    changedAvailabilities.add(reported);
                 }
 
                 // our last known state was unknown, ask for a full report to ensure we are in sync with agent
@@ -980,7 +984,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             }
         }
 
-        latestAvailabilities.clear(); // perhaps helps GC
+        // update the affected ResourceAvailabilities
+        updateResourceAvailabilities(changedAvailabilities);
+
+        latestAvailabilities.clear(); // done with these, perhaps helps GC
+        latestAvailabilities = null;
+        changedAvailabilities.clear();
+        changedAvailabilities = null;
 
         // notify alert condition cache manager for all reported avails for for enabled resources
         availabilities.removeAll(disabledAvailabilities);
@@ -991,12 +1001,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     }
 
     private void updateResourceAvailability(Availability reported) {
-        // update the last known availability data for this resource
         ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
             .getResource().getId());
 
+        updateResourceAvailabilityIfNecessary(reported, currentAvailability);
+    }
+
+    // update the current availability data for this resource but only if necessary (actually changed)
+    private void updateResourceAvailabilityIfNecessary(Availability reported, ResourceAvailability currentAvailability) {
         if (currentAvailability != null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
-            // but only update the record if necessary (if the AvailabilityType changed)
             currentAvailability.setAvailabilityType(reported.getAvailabilityType());
             entityManager.merge(currentAvailability);
 
@@ -1004,9 +1017,42 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             // This should not happen unless the Resource in the report is stale, which can happen in certain
             // sync scenarios. A Resource is given its initial ResourceAvailability when it is persisted so it
             // is guaranteed to have currentAvailability, so, the Resource must not exist.
-            log.info("Skipping updateResourceAvailability() for stale resource [" + reported.getResource()
+            log.info("Skipping updateResourceAvailabilityIfNecessary() for stale resource [" + reported.getResource()
                 + "]. These messages should go away after the next agent synchronization with the server.");
         }
+    }
+
+    // pulls all the ResourceAvailabilities in one query to reduce DB round trips
+    private void updateResourceAvailabilities(List<Availability> reportedChanges) {
+        if (null == reportedChanges || reportedChanges.isEmpty()) {
+            return;
+        }
+
+        Query q = entityManager.createNamedQuery(ResourceAvailability.QUERY_FIND_BY_RESOURCE_IDS);
+        List<Integer> resourceIds = new ArrayList<Integer>(reportedChanges.size());
+        for (Availability reported : reportedChanges) {
+            resourceIds.add(reported.getResource().getId());
+        }
+        q.setParameter("resourceIds", resourceIds);
+        List<ResourceAvailability> resourceAvailabilityList = q.getResultList();
+        resourceIds.clear(); // done with this, perhaps helps GC
+        resourceIds = null;
+
+        // populate Map of resourceIds to resourceAvailability
+        Map<Integer, ResourceAvailability> resourceAvailabilities = new HashMap(reportedChanges.size());
+        for (ResourceAvailability resourceAvailability : resourceAvailabilityList) {
+            resourceAvailabilities.put(resourceAvailability.getResourceId(), resourceAvailability);
+        }
+
+        for (Availability reported : reportedChanges) {
+            ResourceAvailability currentAvailability = resourceAvailabilities.get(reported.getResource().getId());
+
+            // update the last known availability data for this resource but only if necessary (actually changed)
+            updateResourceAvailabilityIfNecessary(reported, currentAvailability);
+        }
+
+        resourceAvailabilities.clear(); // done with these, perhaps helps GC
+        resourceAvailabilities = null;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

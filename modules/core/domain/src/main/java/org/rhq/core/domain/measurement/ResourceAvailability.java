@@ -51,6 +51,8 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( //
 { @NamedQuery(name = ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID, query = "" //
     + "  SELECT ra FROM ResourceAvailability ra WHERE ra.resourceId = :resourceId "),
+    @NamedQuery(name = ResourceAvailability.QUERY_FIND_BY_RESOURCE_IDS, query = "" //
+        + "  SELECT ra FROM ResourceAvailability ra WHERE ra.resourceId IN ( :resourceIds ) "),
     @NamedQuery(name = ResourceAvailability.UPDATE_PLATFORM_BY_AGENT_ID, query = "" //
         + "  UPDATE ResourceAvailability " //
         + "     SET availabilityType = :availabilityType " //
@@ -70,11 +72,11 @@ import org.rhq.core.domain.resource.Resource;
      * Platform plugins always return up for availability.  Platforms are
      * only down if the check-suspect-agent's backfiller sets them down.
      * Thus this agent has been backfilled if it's platform is not up.
-     * 
+     *
      * Returns 0 if the agent has NOT been backfilled, non-zero if it is.
      */
     @NamedQuery(name = ResourceAvailability.QUERY_IS_AGENT_BACKFILLED, query = "" //
-        + "SELECT COUNT(avail.id) " // return count of 
+        + "SELECT COUNT(avail.id) " // return count of
         + "  FROM Resource res " //
         + "  JOIN res.currentAvailability avail " // we only want the current availability
         + " WHERE res.agent.id = :agentId " // use id not name to prevent an unnecessary join to agent table
@@ -88,6 +90,7 @@ public class ResourceAvailability implements Serializable {
     public static final String TABLE_NAME = "RHQ_RESOURCE_AVAIL";
 
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
+    public static final String QUERY_FIND_BY_RESOURCE_IDS = "ResourceAvailability.findByResourceIds";
     public static final String UPDATE_CHILD_BY_AGENT_ID = "ResourceAvailability.updateChildByAgentId";
     public static final String UPDATE_PLATFORM_BY_AGENT_ID = "ResourceAvailability.updatePlatformByAgentId";
     public static final String QUERY_IS_AGENT_BACKFILLED = "ResourceAvailability.isAgentBackfilled";
@@ -134,6 +137,13 @@ public class ResourceAvailability implements Serializable {
 
     public Resource getResource() {
         return resource;
+    }
+
+    /**
+     * Lightweight way to get only the resource ID, as getResource goes through a lazy proxy
+     */
+    public int getResourceId() {
+        return resourceId;
     }
 
     /**

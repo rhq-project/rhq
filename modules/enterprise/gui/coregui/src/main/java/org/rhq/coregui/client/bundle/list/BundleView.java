@@ -104,7 +104,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        BackButton backButton = new BackButton(MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID.getTitle());
+        BackButton backButton = new BackButton(MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID.getName());
         headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle.getName()));
         tabs = new TabSet();
         versionsTab = createVersionsTab();

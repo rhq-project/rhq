@@ -10129,25 +10129,25 @@
         <metric property="put-count" description="Number of cacheable entities/collections put in the cache."/>
       </service>
 
-      <service name="Query Cache"
-               class="BaseComponent"
-               discovery="QueryCacheDiscovery"
-               description="Statistics for individual queries.">
+      <!--<service name="Query Cache"-->
+               <!--class="BaseComponent"-->
+               <!--discovery="QueryCacheDiscovery"-->
+               <!--description="Statistics for individual queries.">-->
 
-        <plugin-configuration>
-          <c:simple-property name="path" readOnly="true"/>
-        </plugin-configuration>
+        <!--<plugin-configuration>-->
+          <!--<c:simple-property name="path" readOnly="true"/>-->
+        <!--</plugin-configuration>-->
 
-        <metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was retrieved from cache."/>
-        <metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was not found in cache."/>
-        <metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was put in cache."/>
-        <metric property="query-execution-average-time" description="Get the average time in milliseconds of the query."/>
-        <metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of times query has been executed."/>
-        <metric property="query-execution-max-time" description="Get the time in milliseconds of the query."/>
-        <metric property="query-execution-min-time" description="Get the minimum time in milliseconds of the query."/>
-        <metric property="query-execution-row-count" displayType="summary" measurementType="trendsup" description="Get number of rows returned from executions of query."/>
-        <metric property="query-name" dataType="trait" description="Query name."/>
-      </service>
+        <!--<metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was retrieved from cache."/>-->
+        <!--<metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was not found in cache."/>-->
+        <!--<metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was put in cache."/>-->
+        <!--<metric property="query-execution-average-time" description="Get the average time in milliseconds of the query."/>-->
+        <!--<metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of times query has been executed."/>-->
+        <!--<metric property="query-execution-max-time" description="Get the time in milliseconds of the query."/>-->
+        <!--<metric property="query-execution-min-time" description="Get the minimum time in milliseconds of the query."/>-->
+        <!--<metric property="query-execution-row-count" displayType="summary" measurementType="trendsup" description="Get number of rows returned from executions of query."/>-->
+        <!--<metric property="query-name" dataType="trait" description="Query name."/>-->
+      <!--</service>-->
 
       <service name="Entity"
                class="BaseComponent"

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.agent;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -69,6 +71,7 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
+import org.jboss.util.file.FilenameSuffixFilter;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -1894,23 +1897,27 @@ public class AgentMain {
         // so allow this to be configurable via the "update plugins at startup" flag.
         m_pluginUpdate = new PluginUpdate(pc_config.getServerServices().getCoreServerService(), pc_config);
         if (m_configuration.isUpdatePluginsAtStartupEnabled()) {
-            boolean notified_user = false;
-            // this can block forever...perhaps exit after a few tries?
-            while (true) {
-                if (!notified_user) {
-                    LOG.info(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
-                    getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_FOR_PLUGINS));
-                    notified_user = true;
-                } else {
-                    // let's keep logging this at debug level so we don't look hung
-                    LOG.debug(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
-                }
+            LOG.info(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
+            getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_FOR_PLUGINS));
+            for (;;) {
                 try {
                     m_pluginUpdate.updatePlugins();
-                    break;
                 } catch (Exception e) {
                     LOG.error(e, AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE, e);
                 }
+                if (pluginsDirHasJarFile(plugin_dir)) {
+                    break;
+                }
+                try {
+                    Thread.sleep(SECONDS.toMillis(30));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOG.warn(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED);
+                    getOut().println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED));
+                    return false;
+                }
+                // let's keep logging this at debug level so we don't look hung
+                LOG.debug(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
             }
         } else if (plugin_dir.list().length == 0) {
             LOG.warn(AgentI18NResourceKeys.NO_PLUGINS);
@@ -1932,6 +1939,10 @@ public class AgentMain {
         LOG.debug(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZED, pc_config);
 
         return plugin_container.isStarted();
+    }
+
+    private boolean pluginsDirHasJarFile(File plugin_dir) {
+        return plugin_dir.listFiles(new FilenameSuffixFilter(".jar")).length != 0;
     }
 
     /**

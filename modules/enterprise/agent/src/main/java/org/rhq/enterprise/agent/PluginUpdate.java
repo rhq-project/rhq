@@ -123,15 +123,11 @@ public class PluginUpdate {
             List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
 
             if (LOG.isDebugEnabled()) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(AgentI18NResourceKeys.LATEST_PLUGINS_COUNT, latest_plugins.size());
-                }
+                LOG.debug(AgentI18NResourceKeys.LATEST_PLUGINS_COUNT, latest_plugins.size());
                 for (Plugin latest_plugin : latest_plugins) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(AgentI18NResourceKeys.LATEST_PLUGIN, latest_plugin.getId(), latest_plugin.getName(),
-                            latest_plugin.getDisplayName(), latest_plugin.getVersion(), latest_plugin.getPath(),
-                            latest_plugin.getMd5(), latest_plugin.isEnabled(), latest_plugin.getDescription());
-                    }
+                    LOG.debug(AgentI18NResourceKeys.LATEST_PLUGIN, latest_plugin.getId(), latest_plugin.getName(),
+                        latest_plugin.getDisplayName(), latest_plugin.getVersion(), latest_plugin.getPath(),
+                        latest_plugin.getMd5(), latest_plugin.isEnabled(), latest_plugin.getDescription());
                 }
             }
 

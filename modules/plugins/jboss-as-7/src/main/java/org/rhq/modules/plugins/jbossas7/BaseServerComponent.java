@@ -43,8 +43,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
-import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -87,7 +85,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private StartScriptConfiguration startScriptConfig;
     private ServerPluginConfiguration serverPluginConfig;
     private AvailabilityType previousAvailabilityType;
-    private AvailabilityCollectorRunnable availabilityCollector;
     private String releaseVersion;
 
     @Override
@@ -102,23 +99,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
-
-        Integer availabilityCheckPeriod = null;
-        try {
-            availabilityCheckPeriod = serverPluginConfig.getAvailabilityCheckPeriod();
-        } catch (NumberFormatException e) {
-            log.error("Avail check period config prop was not a valid number. Cause: " + e);
-        }
-        if (availabilityCheckPeriod != null) {
-            long availCheckMillis = availabilityCheckPeriod * 1000L;
-            this.availabilityCollector = resourceContext.getAvailabilityContext().createAvailabilityCollectorRunnable(
-                    new AvailabilityFacet() {
-                        public AvailabilityType getAvailability() {
-                            return getAvailabilityNow();
-                        }
-                    }, availCheckMillis);
-            this.availabilityCollector.start();
-        }
     }
 
     @Override
@@ -126,29 +106,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         connection.shutdown();
         logFileEventDelegate.stopLogFileEventPollers();
         previousAvailabilityType = null;
-        if (this.availabilityCollector != null) {
-            this.availabilityCollector.stop();
-            this.availabilityCollector = null;
-        }
     }
 
     @Override
     public AvailabilityType getAvailability() {
-        AvailabilityType ret;
-        if (this.availabilityCollector != null) {
-            ret = this.availabilityCollector.getLastKnownAvailability();
-        } else {
-            ret = getAvailabilityNow();
-        }
-
-        if (ret == AvailabilityType.DOWN) {
-            releaseVersion = null;
-        }
-
-        return ret;
-    }
-
-    private AvailabilityType getAvailabilityNow() {
         AvailabilityType availabilityType;
         try {
             readAttribute("launch-type");
@@ -164,6 +125,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             }
         } finally {
             previousAvailabilityType = availabilityType;
+        }
+
+        if (availabilityType == AvailabilityType.DOWN) {
+            releaseVersion = null;
         }
 
         return availabilityType;

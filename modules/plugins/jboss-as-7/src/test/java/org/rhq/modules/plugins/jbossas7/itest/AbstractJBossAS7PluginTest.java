@@ -19,8 +19,6 @@
 
 package org.rhq.modules.plugins.jbossas7.itest;
 
-import static org.rhq.core.domain.measurement.AvailabilityType.UP;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import java.util.Set;
@@ -37,7 +35,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
@@ -155,21 +152,6 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
                     }
                 }));
         return serverResource;
-    }
-
-    protected void testAsynchronousAvailabilityCheck(Resource resource) throws Exception {
-        // Activate asynchronous availability checking
-        ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(resource.getPluginConfiguration());
-        int availabilityCheckPeriod = 65;
-        serverPluginConfig.setAvailabilityCheckPeriod(availabilityCheckPeriod);
-        restartResourceComponent(resource);
-
-        Thread.sleep((3 * availabilityCheckPeriod * 1000L) / 2);
-        assertEquals(getAvailability(resource), UP);
-
-        // Deactivate asynchronous availability checking as subsequent tests may rely on immediate availabilty checking
-        serverPluginConfig.setAvailabilityCheckPeriod(null);
-        restartResourceComponent(resource);
     }
 
     private void restartResourceComponent(Resource resource) throws PluginContainerException {

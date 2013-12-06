@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -98,7 +97,7 @@ public abstract class ComponentTest {
         OperationContext operationContext = new OperationContextImpl(0);
         ContentContext contentContext = new ContentContextImpl(0);
         PluginContainerDeployment pluginContainerDeployment = null;
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource);
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,

@@ -80,12 +80,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         testServerAttributeValidation();
     }
 
-    @Test(priority = 1002)
-    public void testDomainServerAsynchronousAvailabilityCheck() throws Exception {
-        testAsynchronousAvailabilityCheck(getServerResource());
-    }
-
-
     // ******************************* METRICS ******************************* //
     @Test(priority = 1003, enabled = true)
     public void testDomainReleaseVersionTrait() throws Exception {

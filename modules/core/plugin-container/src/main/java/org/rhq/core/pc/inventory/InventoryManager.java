@@ -89,7 +89,6 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
-import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
@@ -215,11 +214,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private DiscoveryComponentProxyFactory discoveryComponentProxyFactory;
 
     /**
-     * Used by resource components that want to perform asynchronous availability checking.
-     */
-    private AvailabilityCollectorThreadPool availabilityCollectors;
-
-    /**
      * Handles the resource upgrade during the initialization of the inventory manager.
      */
     private ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
@@ -241,11 +235,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.discoveryComponentProxyFactory.initialize();
 
             this.agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
-
-            //make sure the avail collectors are available before we instantiate any
-            //resource context - either from disk or from anywhere else.
-            availabilityCollectors = new AvailabilityCollectorThreadPool();
-            availabilityCollectors.initialize();
 
             if (configuration.isInsideAgent()) {
                 loadFromDisk();
@@ -306,7 +295,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.persistToDisk();
         }
         this.discoveryComponentProxyFactory.shutdown();
-        this.availabilityCollectors.shutdown();
         this.inventoryEventListeners.clear();
         this.resourceContainersByUUID.clear();
         this.resourceContainerByResourceId.clear();
@@ -1977,7 +1965,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
+            getAvailabilityContext(resource),
             getInventoryContext(resource), this.configuration.getPluginContainerDeployment(), // helps components make determinations of what to do
             new ComponentInvocationContextImpl());
     }
@@ -1997,7 +1985,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
+            getAvailabilityContext(resource), // for components that want avail manager access
             getInventoryContext(resource), this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -2815,12 +2803,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
     //        };
     //    }
 
-    private AvailabilityContext getAvailabilityContext(Resource resource, Executor availCollectionThreadPool) {
+    private AvailabilityContext getAvailabilityContext(Resource resource) {
         if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
             log.error("RESOURCE UUID IS NOT SET! Availability features may not work!");
         }
 
-        AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource, availCollectionThreadPool);
+        AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource);
         return availabilityContext;
     }
 

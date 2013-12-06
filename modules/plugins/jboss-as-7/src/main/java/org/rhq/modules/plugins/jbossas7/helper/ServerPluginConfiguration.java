@@ -22,7 +22,6 @@ package org.rhq.modules.plugins.jbossas7.helper;
 import java.io.File;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.modules.plugins.jbossas7.JBossProductType;
 
 /**
@@ -45,7 +44,6 @@ public class ServerPluginConfiguration {
         public static final String LOG_DIR = "logDir";
         public static final String PRODUCT_TYPE = "productType";
         public static final String HOST_CONFIG_FILE = "hostConfigFile";
-        public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
     }
 
     private Configuration pluginConfig;
@@ -144,16 +142,6 @@ public class ServerPluginConfiguration {
     public void setHostConfigFile(File hostConfigFile) {
         this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE, (hostConfigFile != null) ?
                 hostConfigFile.toString() : null);
-    }
-
-    public Integer getAvailabilityCheckPeriod() {
-        PropertySimple propertySimple = this.pluginConfig.getSimple(Property.AVAIL_CHECK_PERIOD_CONFIG_PROP);
-        return propertySimple == null ? null : propertySimple.getIntegerValue();
-    }
-
-    public void setAvailabilityCheckPeriod(Integer availabilityCheckPeriod) {
-        this.pluginConfig.setSimpleValue(Property.AVAIL_CHECK_PERIOD_CONFIG_PROP,
-                availabilityCheckPeriod == null ? null : availabilityCheckPeriod.toString());
     }
 
 }

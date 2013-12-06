@@ -24,6 +24,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.AvailabilityExecutor;
 import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
 import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
@@ -146,12 +147,22 @@ public class AvailTest extends Arquillian {
                 resourceComponent.start(c.getResourceContext());
             }
         }
+
+        // this is a hack to get this test to pass. If you run this test class on its own, it passes fine.
+        // but if you run it in conjunction with other tests (e.g. mvn -Dtest=AvailTest,DiscoveryCallbackAbortTest)
+        // then it fails. It appears our arquillian test infrastructure is shutting down the PC / ResourceContainer
+        // but the ResourceContainer is not getting reinitialized by the time this test class needs it. What then
+        // happens is the avail thread pool in ResourceContainer is shutdown and will not accept any more tasks, causing failures.
+        // We should try to figure out why the Arquillian infrastructure is doing this, but for now, to get tests
+        // passing again, this one-line fix needs to be here.
+        ResourceContainer.initialize(new PluginContainerConfiguration());
     }
 
     @Test(groups = "pc.itest.avail", priority = 20)
     public void testDiscovery() throws Exception {
         Assert.assertNotNull(pluginContainer);
         Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
 
         // make sure we have all the resource containers for all the resources
         Assert.assertEquals(parentContainers1.size(), 2, "missing parent1");
@@ -172,6 +183,8 @@ public class AvailTest extends Arquillian {
 
     @Test(groups = "pc.itest.avail", priority = 21)
     public void testAvailReport() throws Exception {
+        Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         dumpContainers("testAvailReport() Start");
         AvailabilityReport report = executor.call();
@@ -215,6 +228,8 @@ public class AvailTest extends Arquillian {
 
     @Test(groups = "pc.itest.avail", priority = 21)
     public void testScheduling() throws Exception {
+        Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
         Assert.assertNotNull(report);
@@ -270,6 +285,8 @@ public class AvailTest extends Arquillian {
     // If a parent changes to UP, its children must all be checked as they could legitimately be something
     // other than UP.
     public void testForceChildrenOfParentUp() throws Exception {
+        Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
         // don't use a ForceAvailabilityExecutor for this test, we want to manipulate what gets checked
         AvailabilityExecutor executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
@@ -284,7 +301,7 @@ public class AvailTest extends Arquillian {
             }
         }
         Assert.assertEquals(numUp, 1);
-        // only the platform should have been checked, all others should only have been scheduled for a check 
+        // only the platform should have been checked, all others should only have been scheduled for a check
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
         assertScan(scan, false, true, 29, 0, 1, 28, 0, 0);
 
@@ -333,6 +350,8 @@ public class AvailTest extends Arquillian {
     @Test(groups = "pc.itest.avail", priority = 21)
     // If a parent changes to DOWN, its children should all defer to being DOWN as well.
     public void testDeferToParentDown() throws Exception {
+        Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
         // don't use a ForceAvailabilityExecutor for this test, we want to manipulate what gets checked
         AvailabilityExecutor executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
@@ -347,7 +366,7 @@ public class AvailTest extends Arquillian {
             }
         }
         Assert.assertEquals(numUp, 1);
-        // only the platform should have been checked, all others should only have been scheduled for a check 
+        // only the platform should have been checked, all others should only have been scheduled for a check
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
         assertScan(scan, false, true, 29, 0, 1, 28, 0, 0);
 
@@ -403,7 +422,9 @@ public class AvailTest extends Arquillian {
 
     @Test(groups = "pc.itest.avail", priority = 21)
     public void testCheckOnlyEligible() throws Exception {
-        // Force all the avails to UP to start so we can avoid the scenario in  testForceChildrenOfParentUp() 
+        Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
+        // Force all the avails to UP to start so we can avoid the scenario in  testForceChildrenOfParentUp()
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
         Assert.assertNotNull(report);
@@ -468,6 +489,8 @@ public class AvailTest extends Arquillian {
 
     @Test(groups = "pc.itest.avail", priority = 21)
     public void testDeferToParent() throws Exception {
+        Assert.assertTrue(pluginContainer.isStarted());
+        Assert.assertTrue(pluginContainer.isRunning());
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
         Assert.assertNotNull(report);

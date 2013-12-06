@@ -102,16 +102,6 @@
     </c:group>
 '>
 
-    <!ENTITY availabilityCheckPeriod '
-        <c:simple-property name="availabilityCheckPeriod"
-                           description="The amount of time, in seconds, that must elapse between availability checks to see if the server is up. If set, the availability checks will be performed asynchronously thus allowing slow-responding servers to avoid being falsely reported as down. Minimum value is 60 seconds."
-                           units="seconds" required="false" type="integer">
-          <c:constraint>
-            <c:integer-constraint minimum="60"/>
-          </c:constraint>
-        </c:simple-property>
-'>
-
     <!ENTITY serverKindMetrics '
         <metric property="_skm:release-codename" dataType="trait"  displayName="Server Code Name"/>
         <metric property="_skm:release-version" dataType="trait"  displayName="Server Version"/>
@@ -952,9 +942,6 @@
       &startScriptPluginConfigGroup;
       &logSources;
 
-      <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-        &availabilityCheckPeriod;
-      </c:group>
     </plugin-configuration>
 
     <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
@@ -1272,9 +1259,6 @@
       &startScriptPluginConfigGroup;
       &logSources;
 
-      <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-        &availabilityCheckPeriod;
-      </c:group>
     </plugin-configuration>
 
     <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
@@ -1723,9 +1707,6 @@
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true"/>
       &logSources;
-      <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-        &availabilityCheckPeriod;
-      </c:group>
     </plugin-configuration>
 
     <operation name="start" description="Start this server instance." displayName="Start">

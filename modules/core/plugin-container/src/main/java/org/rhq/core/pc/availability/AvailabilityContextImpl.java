@@ -20,8 +20,6 @@
 
 package org.rhq.core.pc.availability;
 
-import java.util.concurrent.Executor;
-
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -36,29 +34,20 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 public class AvailabilityContextImpl implements AvailabilityContext {
 
     private final Resource resource;
-    private final Executor availCollectionThreadPool;
 
-    public AvailabilityContextImpl(Resource resource, Executor availCollectionThreadPool) {
+    public AvailabilityContextImpl(Resource resource) {
         super();
         this.resource = resource;
-        this.availCollectionThreadPool = availCollectionThreadPool;
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.availability.AvailabilityContext#createAvailabilityCollectorRunnable(org.rhq.core.pluginapi.availability.AvailabilityFacet, long)
-     */
     @Override
-    public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(AvailabilityFacet availChecker,
-        long interval) {
-
-        // notice that we assume we are called with the same context classloader that will be need by the avail checker
-        return new AvailabilityCollectorRunnable(availChecker, interval,
-            Thread.currentThread().getContextClassLoader(), this.availCollectionThreadPool);
+    @Deprecated
+    public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(AvailabilityFacet facet, long i) {
+        // even though this shouldn't be used, plugins may still be using this. Allow for these to still be
+        // created for backward compatibility, but its a dummy object nevertheless.
+        return new AvailabilityCollectorRunnable(facet, i, null, null);
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.availability.AvailabilityContext#requestAvailabilityCheck()
-     */
     @Override
     public void requestAvailabilityCheck() {
         PluginContainer.getInstance().getInventoryManager().requestAvailabilityCheck(resource);

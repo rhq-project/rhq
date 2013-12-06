@@ -156,11 +156,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     }
 
-    @Test(priority = 8)
-    public void testStandaloneServerAsynchronousAvailabilityCheck() throws Exception {
-        testAsynchronousAvailabilityCheck(getServerResource());
-    }
-
     protected String getExpectedStartScriptFileName() {
         return (File.separatorChar == '/') ? "standalone.sh" : "standalone.bat";
     }

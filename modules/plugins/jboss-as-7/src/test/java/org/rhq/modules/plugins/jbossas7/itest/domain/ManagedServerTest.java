@@ -93,11 +93,6 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
         assertEquals(avail, AvailabilityType.UP);
     }
 
-    @Test(priority = 1022)
-    public void testManagedServerAsynchronousAvailabilityCheck() throws Exception {
-        testAsynchronousAvailabilityCheck(getResource());
-    }
-
    private Resource getResource() {
 
        InventoryManager im = pluginContainer.getInventoryManager();

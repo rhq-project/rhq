@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -134,7 +133,7 @@ public abstract class ComponentTest {
 
             ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
             EventContext eventContext = new EventContextImpl(resource);
-            AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+            AvailabilityContext availContext = new AvailabilityContextImpl(resource);
             InventoryContext inventoryContext = new InventoryContextImpl(resource);
             ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
@@ -172,7 +171,7 @@ public abstract class ComponentTest {
         log.debug("rdc=" + rdc);
 
         EventContext eventContext = new EventContextImpl(resource);
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource);
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
             systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
@@ -204,7 +203,7 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         EventContext eventContext = new EventContextImpl(resource);
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource);
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,

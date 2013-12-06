@@ -136,9 +136,9 @@ public class CanonicalResourceKey implements Serializable {
             if (type.getPlugin() == null) {
                 throw new PluginContainerException("plugin must not be null");
             }
-            this.key = key;
-            this.type = type.getName();
-            this.plugin = type.getPlugin();
+            this.key = key.intern();
+            this.type = type.getName().intern();
+            this.plugin = type.getPlugin().intern();
         }
 
         @Override

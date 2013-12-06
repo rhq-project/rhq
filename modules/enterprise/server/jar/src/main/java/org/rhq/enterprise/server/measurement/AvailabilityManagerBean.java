@@ -888,6 +888,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                             latest = entityManager.merge(latest);
                         }
 
+                        // update the Map to reflect the repaired latest avail
+                        latestAvailabilities.put(resourceId, latest);
+
                         updateResourceAvailability(latest);
 
                         // ask the agent for a full report so as to ensure we are in sync with agent
@@ -926,6 +929,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     latest = latestList.get(latestCount - 1);
                     updateResourceAvailability(latest);
 
+                    // update the Map to reflect the repaired latest avail
+                    latestAvailabilities.put(resourceId, latest);
+
                     // this is an unusual report - ask the agent for a full report so as to ensure we are in sync with agent
                     mergeInfo.setAskForFullReport(true);
 
@@ -958,6 +964,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // we are run-length encoded, so only persist data if the availability changed
                 if (latest.getAvailabilityType() != reported.getAvailabilityType()) {
                     entityManager.persist(reported);
+                    // the reported avail is the new latest avail, update the Map in case we have multiple reported
+                    // changes for the same resource in this report
+                    latestAvailabilities.put(resourceId, reported);
+
                     mergeInfo.incrementNumInserted();
 
                     latest.setEndTime(reported.getStartTime());

@@ -19,7 +19,6 @@
 package org.rhq.etc.ircbot;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyManagementException;
@@ -27,7 +26,6 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.Properties;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -45,7 +43,7 @@ public class RhqIrcBot extends PircBotX {
     
     public RhqIrcBot(RhqIrcBotListener rhqBot) {
         setName("rhq-bot");
-        setVersion("1.1.1");
+        setVersion("1.1.2");
         setFinger("RHQ IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
 
         setVerbose(true);
@@ -74,24 +72,21 @@ public class RhqIrcBot extends PircBotX {
                 System.err.println("Provided property file [" + args[2] +  "] does not exist");
                 System.exit(2);
             }
-            Properties properties = new Properties();
-            FileInputStream fis = new FileInputStream(propertyFile);
-            properties.load(fis);
-            String docspaceLogin = properties.getProperty("docspace_login");
-            String docspacePassword = properties.getProperty("docspace_password");
-            if (docspaceLogin == null || docspaceLogin.isEmpty() || docspacePassword == null || docspacePassword.isEmpty()) {
-                System.err.println("The property format has bad format");
-                System.err.println("It must contain following key-value pairs\n");
-                System.err.println("docspace_login=X");
-                System.err.println("docspace_password=Y");
-                System.exit(3);
-            }
-            fis.close();
+//            Properties properties = new Properties();
+//            FileInputStream fis = new FileInputStream(propertyFile);
+//            properties.load(fis);
+//            String docspaceLogin = properties.getProperty("docspace_login");
+//            String docspacePassword = properties.getProperty("docspace_password");
+//            if (docspaceLogin == null || docspaceLogin.isEmpty() || docspacePassword == null || docspacePassword.isEmpty()) {
+//                System.err.println("The property format has bad format");
+//                System.err.println("It must contain following key-value pairs\n");
+//                System.err.println("docspace_login=X");
+//                System.err.println("docspace_password=Y");
+//                System.exit(3);
+//            }
+//            fis.close();
             
             setupTrustStore();
-            
-            rhqBotListener.setDocspaceLogin(docspaceLogin);
-            rhqBotListener.setDocspacePassword(docspacePassword);
         }
 
         PircBotX bot = new RhqIrcBot(rhqBotListener);

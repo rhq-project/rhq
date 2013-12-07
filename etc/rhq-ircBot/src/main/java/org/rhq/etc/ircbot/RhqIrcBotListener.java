@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +16,6 @@ import com.j2bugzilla.base.BugzillaConnector;
 import com.j2bugzilla.base.BugzillaException;
 import com.j2bugzilla.rpc.GetBug;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -43,7 +41,6 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     private static final Pattern BUG_PATTERN = Pattern.compile("(?i)(bz|bug)[ ]*(\\d{6,7})");
     private static final Pattern COMMIT_PATTERN = Pattern.compile("(?i)(\\!commit|cm)[ ]*([0-9a-f]{3,40})");
     private static final Pattern ECHO_PATTERN = Pattern.compile("(?i)echo[ ]+(.+)");
-    private static final String SUPPORT_LINK = "https://docspace.corp.redhat.com/docs/DOC-124477";
     private static final String COMMIT_LINK = "https://git.fedorahosted.org/cgit/rhq/rhq.git/commit/?id=%s";
     private static final String PTO_LINK = "https://mail.corp.redhat.com/home/ccrouch@redhat.com/JBoss%20ON%20OOO?fmt=rss&view=day&start=0day&end=0day";
     private static final DateFormat monthFormat = new SimpleDateFormat("MMM");
@@ -93,8 +90,6 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     private final String server;
     private final String channel;
     private final boolean isRedHatChannel;
-    private String docspaceLogin;
-    private String docspacePassword;
     private BugzillaConnector bzConnector = new BugzillaConnector();
     private final Map<Integer, Long> bugLogTimestamps = new HashMap<Integer, Long>();
     private final Map<String, String> names = new HashMap<String, String>();
@@ -119,6 +114,10 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
     @Override
     public void onMessage(MessageEvent<RhqIrcBot> event) throws Exception {
+        if (event.getUser().getNick().toLowerCase().contains("bot")) {
+            return; // never talk with artificial forms of life
+        }
+        
         PircBotX bot = event.getBot();
         if (!bot.getNick().equals(bot.getName())) {
             bot.changeNick(bot.getName());
@@ -290,7 +289,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         switch (command) {
         case SUPPORT:
             if (isRedHatChannel)
-            return whoIsOnSupport(SUPPORT_LINK);
+            return whoIsOnSupport();
         case PTO:
             if (isRedHatChannel)
             return whoIsOnPto(PTO_LINK);
@@ -301,67 +300,23 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         return null;
     }
 
-    private String whoIsOnSupport(String link) {
-        if (docspaceLogin == null || docspaceLogin.isEmpty() || docspacePassword == null || docspacePassword.isEmpty()) {
-            return "This command is not supported.";
-        }
+    private String whoIsOnSupport() {
         String month = monthFormat.format(new Date());
         String dayInMonth = dayInMonthFormat.format(new Date());
-        String cachedValue = ptoCache.get(month + "#" + dayInMonth);
+        String cachedValue = supportCache.get(month + "#" + dayInMonth);
         if (cachedValue != null) {
             return cachedValue;
         }
-        int dayInMonthInt = Integer.parseInt(dayInMonth);
-        try {
-            boolean monthFound = false;
-            String login = docspaceLogin + ":" + docspacePassword;
-            String base64login = new String(Base64.encodeBase64(login.getBytes()));
-            Document doc = Jsoup.connect(link).header("Authorization", "Basic " + base64login).get();
-            Elements cells = doc.select("tr td");
-            for (Element cell : cells) {
-                String cellText = cell.text().toLowerCase();
-                if (cellText.startsWith(month.toLowerCase())) {
-                    monthFound = true;
-                    if (cellText.substring(cellText.length() - 1, cellText.length()).equals(dayInMonth)) {
-                        String value = doNotNotify(cell.firstElementSibling().text() + " is on support this week");
-                        ptoCache.put(month + "#" + dayInMonth, value);
-                        return value;
-                    }
-                    continue;
-                }
-                if (monthFound && cellText.equals(dayInMonth)) {
-                    String value = doNotNotify(cell.firstElementSibling().text() + " is on support this week");
-                    ptoCache.put(month + "#" + dayInMonth, value);
-                    return value;
-                } else if (monthFound) {
-                    if (cell.equals(cell.firstElementSibling()) || cell.equals(cell.lastElementSibling())) {
-                        continue; //the first row with name or the last row with a comment
-                    }
-                    int day;
-                    try {
-                        day = Integer.parseInt(cellText);
-                        if (day > dayInMonthInt) {
-                            String value = doNotNotify(cell.parent().previousElementSibling().child(0).text() + " is on support this week");
-                            ptoCache.put(month + "#" + dayInMonth, value);
-                            return value;
-                        }
-                    } catch (NumberFormatException nfe) {
-                        break; // next month
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // fallback solution if SSL is not set correctly
-        String randomDevel = JON_DEVS.toArray(new String[JON_DEVS.size()])[new Random().nextInt(JON_DEVS.size())];
-        return "404 Developer Not Found, selecting randomly " + doNotNotify(randomDevel) + ". Check the " + SUPPORT_LINK;
+        String onSupport = GDocParser.onSupport1();
+        String value = doNotNotify(onSupport + " is on support this week");
+        supportCache.put(month + "#" + dayInMonth, value);
+        return value;
     }
     
     private String whoIsOnPto(String link) {
         String month = monthFormat.format(new Date());
         String dayInMonth = dayInMonthFormat.format(new Date());
-        String cachedValue = supportCache.get(month + "#" + dayInMonth);
+        String cachedValue = ptoCache.get(month + "#" + dayInMonth);
         if (cachedValue != null) {
             return cachedValue;
         }
@@ -374,7 +329,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
             }
             if (!onPto.isEmpty()) {
                 String value = doNotNotify(onPto.substring(0, onPto.length() - 2));
-                supportCache.put(month + "#" + dayInMonth, value);
+                ptoCache.put(month + "#" + dayInMonth, value);
                 return value;
             }
         } catch (IOException e) {
@@ -387,13 +342,4 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         //replace all vowels with unicode chars that look same not to spam users with notifications
         return nick.toLowerCase().replaceFirst("a", "\u0430").replaceFirst("e", "\u0435").replaceFirst("i", "\u0456").replaceFirst("o", "\u043E").replaceFirst("u", "\u222A").replaceFirst("y", "\u028F");
     }
-
-    public void setDocspaceLogin(String docspaceLogin) {
-        this.docspaceLogin = docspaceLogin;
-    }
-
-    public void setDocspacePassword(String docspacePassword) {
-        this.docspacePassword = docspacePassword;
-    }
-
 }

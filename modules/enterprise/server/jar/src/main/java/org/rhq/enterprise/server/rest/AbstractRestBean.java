@@ -315,6 +315,12 @@ public class AbstractRestBean {
         uri = uriBuilder.build(res.getId());
         link = new Link("alerts", uri.toString());
         rwt.addLink(link);
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/alert/definitions");
+        uriBuilder.queryParam("resourceId",res.getId());
+        uri = uriBuilder.build(res.getId());
+        link = new Link("alertDefinitions", uri.toString());
+        rwt.addLink(link);
         if (parent != null) {
             uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/resource/{id}/");

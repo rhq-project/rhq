@@ -155,6 +155,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             @ApiParam("Should conditions and notifications be returned too?") @QueryParam("full") @DefaultValue("false") boolean full,
             @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
             @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
+            @ApiParam(value = "Resource id") @QueryParam("resourceId") Integer resourceId,
             @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
@@ -162,6 +163,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         criteria.addSortId(PageOrdering.ASC);
         if (page!=null) {
             criteria.setPaging(page,pageSize);
+        }
+        if (resourceId!=null) {
+            criteria.addFilterResourceIds(resourceId);
         }
 
         PageList<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);

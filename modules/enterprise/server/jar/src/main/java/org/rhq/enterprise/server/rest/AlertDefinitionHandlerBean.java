@@ -155,7 +155,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             @ApiParam("Should conditions and notifications be returned too?") @QueryParam("full") @DefaultValue("false") boolean full,
             @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
             @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
-            @ApiParam(value = "Resource id") @QueryParam("resourceId") Integer resourceId,
+            @ApiParam(value = "Resource id to filter by") @QueryParam("resourceId") Integer resourceId,
             @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
@@ -123,6 +124,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     ResourceManagerLocal resMgr;
     @EJB
     ResourceGroupManagerLocal groupMgr;
+    @EJB
+    MetricHandlerBean metricHandlerBean;
 
     @EJB
     private StorageClientManagerBean sessionManager;
@@ -608,7 +611,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation(value = "Update the schedule (enabled, interval) ", responseClass = "MetricSchedule")
     @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
-    public Response updateSchedule(@ApiParam("Id of the schedule to query") @PathParam("id") int scheduleId,
+    public Response updateSchedule(@ApiParam("Id of the schedule to update") @PathParam("id") int scheduleId,
                                 @ApiParam(value = "New schedule data", required = true) MetricSchedule in,
                                 @Context HttpHeaders headers) {
 
@@ -630,6 +633,69 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         ret.setDefinitionId(def.getId());
 
         return Response.ok(ret,headers.getAcceptableMediaTypes().get(0)).build();
+    }
+
+
+    @GET
+    @Path("/definition/{id}")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation(value = "Get the definition ", responseClass = "MetricSchedule")
+    @ApiError(code = 404, reason = "No definition exists for the given id.")
+    public Response getDefinition(@ApiParam("Id of the definition to obtain") @PathParam("id") int definitionId,
+                                @Context HttpHeaders headers) {
+
+        MeasurementDefinition measurementDefinition = definitionManager.getMeasurementDefinition(caller, definitionId);
+        if (measurementDefinition==null)
+            throw new StuffNotFoundException("Definition with id " + definitionId);
+
+
+        MetricSchedule schedule = new MetricSchedule(definitionId,
+            measurementDefinition.getName(),
+            measurementDefinition.getDisplayName(),
+            measurementDefinition.isDefaultOn(),
+            measurementDefinition.getDefaultInterval(),
+            measurementDefinition.getUnits().getName(),
+            measurementDefinition.getDataType().name());
+
+        return Response.ok(schedule,headers.getAcceptableMediaTypes().get(0)).build();
+    }
+
+    @PUT
+    @Path("/definition/{id}")
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation(value = "Update the definition (default enabled, default interval)",
+        notes = "This operation may internally take a long time to complete and is thus only triggered by this call. "
+            + "A return code of 200 only indicates that the operation was successfully submitted."
+        , responseClass = "MetricSchedule")
+    @ApiError(code = 404, reason = "No definition exists for the given id.")
+    public Response updateDefinition(@ApiParam("Id of the definition to update") @PathParam("id") int definitionId,
+                                @ApiParam(value = "New definition data", required = true) MetricSchedule in,
+                                @ApiParam(value = "Update existing schedules for this definition as well?") @QueryParam("updateExisting") @DefaultValue("false") boolean updateExisting,
+                                @Context HttpHeaders headers) {
+
+        MeasurementDefinition measurementDefinition = definitionManager.getMeasurementDefinition(caller, definitionId);
+        if (measurementDefinition==null)
+            throw new StuffNotFoundException("Definition with id " + definitionId);
+
+        // Call an async method to do the work as this can take a looong time
+        metricHandlerBean.submitDefinitionChange(definitionId, in, updateExisting);
+
+        StringValue ret = new StringValue("Request submitted - this may take a while to complete.");
+
+        return Response.ok(ret,headers.getAcceptableMediaTypes().get(0)).build();
+    }
+
+    /**
+     * This method does the real updating, it is not exposed to the REST-clients, but must be public so that #updateDefinition can
+     * call it and the container does an asynchronous request.
+     * @param definitionId Id of the measeuremnt definition to update
+     * @param in The data to be put in
+     * @param updateExisting Should existing schedules of the metric als be updated?
+     */
+    @Asynchronous
+    public void submitDefinitionChange(int definitionId, MetricSchedule in, boolean updateExisting) {
+        scheduleManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(caller,new int[]{definitionId},in.getCollectionInterval(),in.getEnabled(),updateExisting);
     }
 
     @GZIP

@@ -1025,11 +1025,11 @@ JsonPath jp =
         given()
             .header(acceptJson)
             .queryParam("sid", numericScheduleId)
-            .queryParam("dataPoints",99)
+            .queryParam("dataPoints", 99)
         .expect()
             .statusCode(200)
             .log().ifError()
-            .body("[0].dataPoints",iterableWithSize(99))
+            .body("[0].dataPoints", iterableWithSize(99))
 //            .body("[0].min",closeTo(1.5,0.1))
 //            .body("[0].max",closeTo(46.0,0.1)) // We may have data already
 //            .body("[0].avg",notNullValue())
@@ -1068,7 +1068,7 @@ JsonPath jp =
         .expect()
             .statusCode(200)
             .log().ifError()
-            .body("",iterableWithSize(2))
+            .body("", iterableWithSize(2))
 //            .body("[0].min", closeTo(1.5,0.1))
 //            .body("[0].max", notNullValue()) // We may have data already
 //            .body("[0].avg", notNullValue())
@@ -1077,7 +1077,91 @@ JsonPath jp =
             .get("/metric/data");
     }
 
+    @Test
+    public void testGetUpdateDefinition() throws Exception {
 
+        Schedule schedule = new Schedule();
+        schedule.setCollectionInterval(1234567);
+        schedule.setEnabled(true);
+
+        // First read the current data
+
+        Schedule def =
+        given()
+            .header(acceptJson)
+            .pathParam("id", numericScheduleDefinitionId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/metric/definition/{id}")
+        .as(Schedule.class);
+
+        long oldInterval = def.getCollectionInterval();
+
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .pathParam("id", numericScheduleDefinitionId)
+            .body(schedule)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .put("/metric/definition/{id}");
+
+        // reset to original interval
+
+        schedule.setCollectionInterval(oldInterval);
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .pathParam("id", numericScheduleDefinitionId)
+            .body(schedule)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .put("/metric/definition/{id}");
+
+
+
+    }
+
+    @Test
+    public void testUpdateBadDefinition() throws Exception {
+
+        Schedule schedule = new Schedule();
+        schedule.setCollectionInterval(1234567);
+        schedule.setEnabled(true);
+
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .pathParam("id", 42)
+            .body(schedule)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .put("/metric/definition/{id}");
+
+    }
+
+    @Test
+    public void testGetBadDefinition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("id",42)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/metric/definition/{id}");
+
+    }
 
     private void addDataToSchedule(int howMany) {
         long now = System.currentTimeMillis();

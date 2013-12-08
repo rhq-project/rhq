@@ -22,6 +22,8 @@
  */
 package org.rhq.modules.integrationTests.restApi.d;
 
+import java.util.List;
+
 /**
  * A metric schedule for testing
  * @author Heiko W. Rupp
@@ -32,6 +34,12 @@ public class Schedule {
     private boolean enabled;
     private long collectionInterval;
     private int definitionId;
+    private String scheduleName;
+    private String displayName;
+    private String unit;
+    private String type;
+    List<Link> links;
+    private long mtime;
 
     public Schedule() {
     }
@@ -66,5 +74,53 @@ public class Schedule {
 
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
+    }
+
+    public String getScheduleName() {
+        return scheduleName;
+    }
+
+    public void setScheduleName(String scheduleName) {
+        this.scheduleName = scheduleName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public long getMtime() {
+        return mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
     }
 }

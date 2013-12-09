@@ -26,6 +26,7 @@ package org.rhq.server.control;
 
 import java.io.Console;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,6 +75,8 @@ public class RHQControl {
                 String commandName = findCommand(commands, args);
                 command = commands.get(commandName);
 
+                logWarningIfAgentRPMIsInstalled(command);
+
                 validateInstallCommand(command, args);
 
                 // in case the installer gets killed, prepare the shutdown hook to try the undo
@@ -113,6 +116,47 @@ public class RHQControl {
             } catch (Throwable t) {
                 log.warn("Failed to clean up after the failed installation attempt. "
                     + "You may have to clean up some things before attempting to install again", t);
+            }
+        }
+
+        return;
+    }
+
+    private void logWarningIfAgentRPMIsInstalled(ControlCommand command) {
+        // we only care about warning if the user is installing or upgrading; otherwise, just return silently
+        if (!"install".equalsIgnoreCase(command.getName()) && (!"upgrade".equalsIgnoreCase(command.getName()))) {
+            return;
+        }
+
+        // see if we can find an RPM installation somewhere.
+        boolean rpmInstalled;
+        File rpmParentLocation = new File("/usr/share");
+        File[] rpms = rpmParentLocation.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                if (name.startsWith("jboss-on-")) {
+                    File jonDir = new File(dir, name);
+                    // technically, we should look for the agent in new File(jonDir, "agent") because that's the rpm install dir.
+                    // but there are no other rpms other than the agent, so if we see this jboss-on-* location, we know the agent is here.
+                    log.warn("An agent RPM installation was found in ["
+                        + jonDir
+                        + "]!!! You will not be able to successfully run this older agent anymore. You should manually remove it.");
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+
+        // if there is an RPM install on this box, we need to pause for some time to give the user a chance to read the message
+        rpmInstalled = (rpms != null && rpms.length > 0);
+        if (rpmInstalled) {
+            try {
+                log.warn("Please read the above warnings about the existence of agent RPM installations. This "
+                    + command.getName() + " will resume in a few seconds.");
+                Thread.sleep(30000L);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
             }
         }
 

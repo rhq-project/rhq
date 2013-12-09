@@ -44,6 +44,8 @@ public class ServerPluginConfiguration {
         public static final String LOG_DIR = "logDir";
         public static final String PRODUCT_TYPE = "productType";
         public static final String HOST_CONFIG_FILE = "hostConfigFile";
+        @Deprecated
+        public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
     }
 
     private Configuration pluginConfig;
@@ -142,6 +144,15 @@ public class ServerPluginConfiguration {
     public void setHostConfigFile(File hostConfigFile) {
         this.pluginConfig.setSimpleValue(Property.HOST_CONFIG_FILE, (hostConfigFile != null) ?
                 hostConfigFile.toString() : null);
+    }
+
+    @Deprecated
+    public Integer getAvailabilityCheckPeriod() {
+        return 0;
+    }
+
+    @Deprecated
+    public void setAvailabilityCheckPeriod(Integer availabilityCheckPeriod) {
     }
 
 }

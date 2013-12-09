@@ -139,6 +139,8 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
     public static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMbeanOperation";
     public static final String SHUTDOWN_METHOD_CONFIG_PROP = "shutdownMethod";
     public static final String JAVA_HOME_PATH_CONFIG_PROP = "javaHomePath";
+    @Deprecated
+    public static final String AVAIL_CHECK_PERIOD_CONFIG_PROP = "availabilityCheckPeriod";
 
     public static final String BINDING_ADDRESS_CONFIG_PROP = "bindingAddress";
 

@@ -13,32 +13,104 @@
 
 
 /**
+ * <p>
  * If obj is a JS array or a java.util.Collection, each element is passed to
- * the callback function. If obj is a java.util.Map, each map entry is passed
- * to the callback function as a key/value pair. If obj is none of the
- * aforementioned types, it is treated as a generic object and each of its
- * properties is passed to the callback function as a name/value pair.
+ * the callback function.
+ * </p>
+ * <p>
+ * If obj is a java.util.Map, each map entry is passed to the callback function
+ * as a key/value pair.
+ * </p>
+ * <p>
+ * If obj is a Criteria object, then the corresponding find by criteria method
+ * will be invoked. Each entity in the result set will be passed to the callback
+ * function. This function performs paging implicitly such that the callback will
+ * be invoked for all entities in the result set, even if it requires multiple
+ * criteria query finder method invocations.
+ * </p>
+ * <p>
+ * If obj is none of the aforementioned types, it is treated as a generic object
+ * and each of its properties is passed to the callback function as a name/value pair.
+ * </p>
  */
 exports.foreach = function (obj, fn) {
+  var criteriaExecutors = {
+    Alert: function(criteria) { return AlertManager.findAlertsByCriteria(criteria); },
+    AlertDefinition: function(criteria) { return AlertDefinitionManager.findAlertDefinitionsByCriteria(criteria); },
+    Agent: function(criteria) { return AgentManager.findAgentsByCriteria(criteria); },
+    Availability: function(criteria) { return AvailabilityManager.findAvailabilityByCriteria(criteria); },
+    Bundle: function(criteria) { return BundleManager.findBundlesByCriteria(criteria); },
+    BundleDeployment: function(criteria) { return BundleManager.findBundleDeploymentsByCriteria(criteria); },
+    BundleDestination: function(criteria) { return BundleManager.findBundleDestinationsByCriteria(criteria); },
+    BundleFile: function(criteria) { return BundleManager.findBundleFilesByCriteria(criteria); },
+    BundleGroup: function(criteria) { return BundleManager.findBundleGroupsByCriteria(criteria); },
+    BundleResourceDeployment: function(criteria) { return BundleManager.findBundleResourceDeploymentsByCriteria(criteria); },
+    BundleVersion: function(criteria) { return BundleManager.findBundleVersionsByCriteria(criteria); },
+    DriftDefinition: function(criteria) { return DriftManager.findDriftDefinitionsByCriteria(criteria); },
+    DriftDefinitionTemplate: function(criteria) { return DriftDefinitionTemplateManager.findTemplatesByCriteria(criteria); },
+    Event: function(criteria) { return EventManager.findEventsByCriteria(criteria); },
+    GroupOperationHistory: function(criteria) { return OperationManager.findGroupOperationHistoriesByCriteria(criteria); },
+    GroupPluginConfigurationUpdate: function(criteria) { return ConfigurationManager.findGroupPluginConfigurationUpdatesByCriteria(criteria); },
+    GroupResourceConfigurationUpdate: function(criteria) { return ConfigurationManager.findGroupResourceConfigurationUpdatesByCriteria(criteria); },
+    InstalledPackage: function(criteria) { return ContentManager.findInstalledPackagesByCriteria(criteria); },
+    MeasurementDataTrait: function(criteria) { return MeasurementDataManager.findTraitsByCriteria(criteria); },
+    MeasurementDefinition: function(criteria) { return MeasurementDefinitionManager.findMeasurementDefinitionsByCriteria(criteria); },
+    JPADriftChangeSet: function(criteria) { return DriftManager.findDriftChangeSetsByCriteria(criteria); },
+    JPADrift: function(criteria) { return DriftManager.findDriftsByCriteria(criteria); },
+    MeasurementSchedule: function(criteria) { return MeasurementScheduleManager,findSchedulesByCriteria(criteria); },
+    OperationDefinition: function(criteria) { return OperationManager.findOperationDefinitionsByCriteria(criteria); },
+    ResourceOperationHistory: function(criteria) { return OperationManager.findResourceOperationHistoriesByCriteria(criteria); },
+    ResourceType: function(criteria) { return ResourceTypeManager.findResourceTypesByCriteria(criteria); },
+    Resource: function(criteria) { return ResourceManager.findResourcesByCriteria(criteria); },
+    Role: function(criteria) { return RoleManager.findRolesByCriteria(criteria); },
+    SavedSearch: function(criteria) { return SavedSearchManager.findSavedSearchesByCriteria(criteria); },
+    StorageNode: function(criteria) { return StorageNodeManager.findStorageNodesByCriteria(criteria); },
+    Subject: function(criteria) { return SubjectManager.findSubjectsByCriteria(criteria); },
+    Tag: function(criteria) { return TagManager.findTagsByCriteria(criteria); }
+  };
+
   if (obj instanceof Array) {
     for (i in obj) {
       fn(obj[i]);
     }
-  }
-  else if (obj instanceof java.util.Collection) {
+  } else if (obj instanceof java.util.Collection) {
     var iterator = obj.iterator();
     while (iterator.hasNext()) {
       fn(iterator.next());
     }
-  }
-  else if (obj instanceof java.util.Map) {
+  } else if (obj instanceof java.util.Map) {
     var iterator = obj.entrySet().iterator()
     while (iterator.hasNext()) {
       var entry = iterator.next();
       fn(entry.key, entry.value);
     }
-  }
-  else {   // assume we have a generic object
+  } else if (obj instanceof Criteria) {
+    var criteria = obj;
+    var executeQuery = criteriaExecutors[criteria.persistentClass];
+
+    if (executeQuery == null) {
+      throw "No criteria executor found for " + criteria.getClass().name + ". A new executor may need to be added to " +
+          "this script.";
+    }
+
+    var currentPage = executeQuery();
+
+    while (!currentPage.isEmpty()) {
+      util.foreach(currentPage, fn);
+      if (currentPage.pageControl == null && currentPage.pageControlOverrides == null) {
+        reachedEnd = true;
+      } else {
+        if (currentPage.pageControlOverrides != null) {
+          currentPage.pageControlOverrides.pageNumber = currentPage.pageControlOverrides.pageNumber + 1;
+        } else {
+          criteria.setPaging(currentPage.pageControl.pageNumber + 1, currentPage.pageControl.pageSize);
+        }
+
+        currentPage.clear();
+        currentPage = executeQuery();
+      }
+    }
+  } else {   // assume we have a generic object
     for (i in obj) {
       fn(i, obj[i]);
     }
@@ -277,4 +349,22 @@ exports.asHash = function(configuration) {
 	})(configuration);
 
 	return ret;
+}
+
+exports.walkTree = function(root, visitorFn, nodesProperty, filterFn) {
+  var nodes = root[nodesProperty];
+  var stack = [];
+  var pushChildNodesOntoStack = function(node) {
+    exports.foreach(node[nodesProperty], function(childNode) {
+      stack.push(childNode);
+    });
+  }
+
+  pushChildNodesOntoStack(root);
+
+  while (stack.length > 0) {
+    var node = stack.pop();
+    pushChildNodesOntoStack(node);
+
+  }
 }

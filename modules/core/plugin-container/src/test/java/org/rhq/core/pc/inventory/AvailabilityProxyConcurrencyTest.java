@@ -71,7 +71,7 @@ public class AvailabilityProxyConcurrencyTest implements AvailabilityFacet {
             Mockito.when(resourceContainer.getResourceComponent()).thenReturn(resourceComponent);
 
             // our one proxy we want to call concurrently
-            final AvailabilityProxy ap = new AvailabilityProxy(resourceContainer);
+            final AvailabilityProxy ap = new TestAvailabilityProxy(resourceContainer);
 
             // make sure our mock object uses our own thread pool when submitting the task
             Mockito.when(resourceContainer.submitAvailabilityCheck(ap)).thenAnswer(
@@ -147,5 +147,17 @@ public class AvailabilityProxyConcurrencyTest implements AvailabilityFacet {
             System.out.println("~~~AVAILABILITY SLEEP WAS ABORTED: " + e);
         }
         return UP;
+    }
+
+    // for our test, we want to ensure the sync avail check doesn't time out - so increase the timeout limit
+    private class TestAvailabilityProxy extends AvailabilityProxy {
+        public TestAvailabilityProxy(ResourceContainer rc) {
+            super(rc);
+        }
+
+        @Override
+        protected long getSyncTimeout() {
+            return 5000L;
+        }
     }
 }

@@ -71,6 +71,11 @@
       </dependency>
 
       <!-- Test dependencies -->
+      <dependency>
+         <groupId>org.powermock</groupId>
+         <artifactId>powermock-api-mockito</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>

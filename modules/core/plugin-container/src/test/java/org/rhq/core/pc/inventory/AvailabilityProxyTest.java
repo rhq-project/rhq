@@ -25,13 +25,20 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
  * @author Elias Ross
@@ -44,12 +51,39 @@ public class AvailabilityProxyTest implements AvailabilityFacet {
     private AvailabilityType returnedAvail = UP;
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
+    @BeforeMethod
+    @AfterMethod
+    public void clearInterrupts() {
+        // make sure we don't leave interrupt flag set, if somehow the test set it
+        Thread.interrupted();
+    }
+
     /**
      * Run a test. Note this may not be 100% reliable, as it depends on thread execution to
      * happen according to our sleep schedule...
      */
     public void test() throws InterruptedException {
-        TestAvailabilityProxy ap = new TestAvailabilityProxy(this, executor, getClass().getClassLoader());
+        // mock out the resource container
+        ResourceComponent<?> resourceComponent = Mockito.mock(ResourceComponent.class);
+        Mockito.when(resourceComponent.getAvailability()).thenAnswer(new Answer<AvailabilityType>() {
+            public AvailabilityType answer(InvocationOnMock invocation) throws Throwable {
+                return AvailabilityProxyTest.this.getAvailability();
+            }
+        });
+        ResourceContainer resourceContainer = Mockito.mock(ResourceContainer.class);
+        Mockito.when(resourceContainer.getResourceClassLoader()).thenReturn(getClass().getClassLoader());
+        Mockito.when(resourceContainer.getResourceComponent()).thenReturn(resourceComponent);
+
+        // our one proxy we want to call concurrently
+        final TestAvailabilityProxy ap = new TestAvailabilityProxy(resourceContainer);
+
+        // make sure our mock object uses our own thread pool when submitting the task
+        Mockito.when(resourceContainer.submitAvailabilityCheck(ap)).thenAnswer(new Answer<Future<AvailabilityType>>() {
+            public Future<AvailabilityType> answer(InvocationOnMock invocation) throws Throwable {
+                return executor.submit(ap);
+            }
+        });
+
         LOG.debug("proxy " + ap);
 
         assertEquals("should be up", UP, ap.getAvailability()); // waits 1ms and returns synchronously
@@ -125,9 +159,8 @@ public class AvailabilityProxyTest implements AvailabilityFacet {
         private Long asyncTimeout = null;
         private Long syncTimeout = null;
 
-        public TestAvailabilityProxy(AvailabilityFacet resourceComponent, ExecutorService executor,
-            ClassLoader classLoader) {
-            super(resourceComponent, executor, classLoader);
+        public TestAvailabilityProxy(ResourceContainer rc) {
+            super(rc);
         }
 
         @Override

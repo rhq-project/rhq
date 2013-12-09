@@ -24,13 +24,13 @@ import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 
@@ -110,17 +110,13 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
         AVAIL_ASYNC_TIMEOUT = asyncAvailTimeout;
     }
 
-    private final AvailabilityFacet resourceComponent;
-
-    private final ExecutorService executor;
-
     private Future<AvailabilityType> availabilityFuture = null;
 
     private volatile Thread current;
 
     private long lastSubmitTime = 0;
 
-    private AvailabilityType lastAvail = UNKNOWN;
+    private final ResourceContainer resourceContainer;
 
     /**
      * Number of consecutive avail sync timeouts for the resource. This value is reset if availability is
@@ -129,15 +125,11 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
      */
     private byte availSyncConsecutiveTimeouts = 0;
 
-    private final ClassLoader classLoader;
-
     /**
      * Constructs a new proxy.
      */
-    public AvailabilityProxy(AvailabilityFacet resourceComponent, ExecutorService executor, ClassLoader classLoader) {
-        this.resourceComponent = resourceComponent;
-        this.executor = executor;
-        this.classLoader = classLoader;
+    public AvailabilityProxy(ResourceContainer resourceContainer) {
+        this.resourceContainer = resourceContainer;
     }
 
     @Override
@@ -145,8 +137,8 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
         current = Thread.currentThread();
         ClassLoader originalContextClassLoader = current.getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(classLoader);
-            return resourceComponent.getAvailability();
+            Thread.currentThread().setContextClassLoader(this.resourceContainer.getResourceClassLoader());
+            return this.resourceContainer.getResourceComponent().getAvailability();
         } finally {
             current.setContextClassLoader(originalContextClassLoader);
         }
@@ -162,7 +154,6 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
      */
     @Override
     public AvailabilityType getAvailability() {
-        // TODO take out DevDebug printlns when we're confident we don't need them
         AvailabilityType avail = UNKNOWN;
 
         try {
@@ -172,7 +163,6 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
                 if (availabilityFuture.isDone()) {
                     // hold onto and report the last known value if necessary
                     avail = availabilityFuture.get();
-                    // System.out.println("DevDebug 1 [" + System.currentTimeMillis() + "] future done avail [" + avail.name() + "]");
 
                 } else {
                     // We are still waiting on the previously submitted async avail check - let's just return
@@ -181,58 +171,49 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
                     // In this case, throw a detailed exception to the avail checker.
                     long elapsedTime = System.currentTimeMillis() - lastSubmitTime;
                     if (elapsedTime > getAsyncTimeout()) {
-                        // System.out.println("DevDebug 2 [" + System.currentTimeMillis() + "] async timeout");
 
                         Throwable t = new Throwable();
                         if (current != null) {
                             t.setStackTrace(current.getStackTrace());
                         }
                         String msg = "Availability check ran too long [" + elapsedTime + "ms], canceled for ["
-                            + resourceComponent + "]; Stack trace includes the timed out thread's stack trace.";
+                            + this.resourceContainer + "]; Stack trace includes the timed out thread's stack trace.";
                         availabilityFuture.cancel(true);
 
                         // try again, maybe the situation will resolve in time for the next check
-                        availabilityFuture = executor.submit(this);
+                        availabilityFuture = this.resourceContainer.submitAvailabilityCheck(this);
                         lastSubmitTime = System.currentTimeMillis();
-                        // System.out.println("DevDebug  3 [" + System.currentTimeMillis() + "] async timeout submit");
 
                         throw new TimeoutException(msg, t);
                     } else {
-                        // System.out.println("DevDebug  4 [" + System.currentTimeMillis() + "] no async timeout, return lastAvail [" + lastAvail.name() + "]");
-                        return lastAvail;
+                        return getLastAvailabilityType();
                     }
                 }
             }
 
             // request a thread to do an avail check
-            availabilityFuture = executor.submit(this);
+            availabilityFuture = this.resourceContainer.submitAvailabilityCheck(this);
             lastSubmitTime = System.currentTimeMillis();
-            // System.out.println("DevDebug  5 [" + System.currentTimeMillis() + "] standard submit");
 
             // if we have exceeded the timeout too many times in a row assume that this is a slow
             // resource and stop performing synchronous checks, which would likely fail to return fast enough anyway.
             if (availSyncConsecutiveTimeouts < getSyncTimeoutLimit()) {
                 // attempt to get availability synchronously
                 avail = availabilityFuture.get(getSyncTimeout(), TimeUnit.MILLISECONDS);
-                // System.out.println("DevDebug  6 [" + System.currentTimeMillis() + "] sync avail [" + avail.name() + "]");
 
                 // success (failure will throw exception)
                 availSyncConsecutiveTimeouts = 0;
                 availabilityFuture = null;
 
             } else if (availSyncConsecutiveTimeouts == getSyncTimeoutLimit()) {
-                // System.out.println("DevDebug  7 [" + System.currentTimeMillis() + "] sync disabled");
-
                 // log one time that we are disabling synchronous checks for this resource
                 ++availSyncConsecutiveTimeouts;
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Disabling synchronous availability collection for [" + resourceComponent + "]; ["
+                    LOG.debug("Disabling synchronous availability collection for [" + resourceContainer + "]; ["
                         + getSyncTimeoutLimit() + "] consecutive timeouts exceeding [" + getSyncTimeout() + "ms]");
                 }
             }
         } catch (InterruptedException e) {
-            // System.out.println("DevDebug  8 [" + System.currentTimeMillis() + "] Interrupted");
-
             LOG.debug("InterruptedException; shut down is (likely) in progress.");
             availabilityFuture.cancel(true);
             availabilityFuture = null;
@@ -243,8 +224,6 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
             throw new RuntimeException("Availability check failed", e.getCause());
 
         } catch (java.util.concurrent.TimeoutException e) {
-            // System.out.println("DevDebug  9 [" + System.currentTimeMillis() + "] Sync Timeout");
-
             // failed to get avail synchronously. next call to the future will return availability (we hope)
             ++availSyncConsecutiveTimeouts;
         }
@@ -260,7 +239,7 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
             break;
         default:
             if (LOG.isDebugEnabled()) {
-                LOG.debug("ResourceComponent [" + resourceComponent + "] getAvailability() returned " + type
+                LOG.debug("ResourceComponent [" + this.resourceContainer + "] getAvailability() returned " + type
                     + ". This is invalid and is being replaced with DOWN.");
             }
             result = DOWN;
@@ -269,25 +248,31 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
         // whenever changing to UP we reset the timeout counter.  This is because DOWN resources often respond
         // slowly to getAvailability() calls (for example, waiting for a connection attempt to time out).  When a
         // resource comes up we should give it a chance to respond quickly and provide live avail.
-        if (result != lastAvail) {
+        AvailabilityType lastAvail = getLastAvailabilityType();
+        if (result != getLastAvailabilityType()) {
             if (result == UP) {
                 if (availSyncConsecutiveTimeouts >= getSyncTimeoutLimit()) {
-                    // System.out.println("DevDebug 10 [" + System.currentTimeMillis() + "] Enabling Sync");
-
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Enabling synchronous availability collection for [" + resourceComponent
+                        LOG.debug("Enabling synchronous availability collection for [" + resourceContainer
                             + "]; Availability has just changed from [" + lastAvail + "] to UP.");
                     }
                 }
                 availSyncConsecutiveTimeouts = 0;
 
             }
-            lastAvail = result;
         }
 
-        // System.out.println("DevDebug 11 [" + System.currentTimeMillis() + "] returning processAvail [" + result.getName()+ "]");
-
         return result;
+    }
+
+    private AvailabilityType getLastAvailabilityType() {
+        Availability av = this.resourceContainer.getAvailability();
+        if (av != null) {
+            AvailabilityType avt = av.getAvailabilityType();
+            return (avt != null) ? avt : AvailabilityType.UNKNOWN;
+        } else {
+            return AvailabilityType.UNKNOWN;
+        }
     }
 
     /**
@@ -323,9 +308,8 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
      */
     @Override
     public String toString() {
-        return "AvailabilityProxy [resourceComponent=" + resourceComponent + ", lastAvail=" + lastAvail
-            + ", lastSubmitTime=" + new java.util.Date(lastSubmitTime) + ", executor=" + executor
-            + ", availabilityFuture=" + availabilityFuture + ", current=" + current + ", timeouts="
-            + availSyncConsecutiveTimeouts + "]";
+        return "AvailabilityProxy [resource=" + resourceContainer + ", lastSubmitTime="
+            + new java.util.Date(lastSubmitTime) + ", availabilityFuture=" + availabilityFuture + ", current="
+            + current + ", timeouts=" + availSyncConsecutiveTimeouts + "]";
     }
 }

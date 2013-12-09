@@ -217,8 +217,7 @@ public class ResourceContainer implements Serializable {
     public void setResourceComponent(ResourceComponent resourceComponent) {
         synchronized (this) {
             this.resourceComponent = resourceComponent;
-            this.availabilityProxy = new AvailabilityProxy(resourceComponent, AVAIL_CHECK_THREAD_POOL,
-                resourceClassLoader);
+            this.availabilityProxy = new AvailabilityProxy(this); // now that we have a component, we can collect its avail via a proxy
         }
     }
 
@@ -302,6 +301,16 @@ public class ResourceContainer implements Serializable {
     // TODO: Is there a reason for this to be synchronized like the other setters? I don't see why it would need to be.
     public void setAvailabilityScheduleTime(Long availabilityScheduleTime) {
         this.availabilityScheduleTime = availabilityScheduleTime;
+    }
+
+    /**
+     * Submits a task to perform an availability check asynchonrously.
+     * NOTE: this is package scoped so the avail proxy can call it and submit itself as a task to the containers thread pool.
+     *
+     * @return the future that will provide the avail value
+     */
+    Future<AvailabilityType> submitAvailabilityCheck(Callable<AvailabilityType> callable) {
+        return AVAIL_CHECK_THREAD_POOL.submit(callable);
     }
 
     /**

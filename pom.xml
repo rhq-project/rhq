@@ -116,7 +116,7 @@
     <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
     <jboss-jmx.version>4.2.3.GA</jboss-jmx.version>
     <jboss-common.version>1.2.1.GA</jboss-common.version> <!-- note this is the old commons we used, not the newer commons-core -->
-    <jboss-remoting.version>2.5.4.SP4</jboss-remoting.version>
+    <jboss-remoting.version>2.5.4.SP5</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-system.version>4.2.3.GA</jboss-system.version>
     <jbosssx.version>4.2.3.GA</jbosssx.version>

@@ -54,6 +54,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
@@ -1073,12 +1074,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
          * since we already know we have to update the agent row with the last avail report time, might as well
          * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
          */
-        String updateStatement = "" //
-            + "UPDATE Agent " //
-            + "   SET lastAvailabilityReport = :reportTime, backFilled = FALSE " //
-            + " WHERE id = :agentId ";
-
-        Query query = entityManager.createQuery(updateStatement);
+        Query query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_REPORT);
         query.setParameter("reportTime", System.currentTimeMillis());
         query.setParameter("agentId", agentId);
 

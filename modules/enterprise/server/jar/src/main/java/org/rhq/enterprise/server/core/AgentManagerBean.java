@@ -242,8 +242,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         long maximumQuietTimeAllowed = 300000L;
         try {
-            String prop = systemManager.getUnmaskedSystemSettings(true).get(
-                SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED);
+            String prop = systemManager.getUnmaskedSystemSettings(true).get(SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED);
             if (prop != null) {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
             }
@@ -286,7 +285,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             // about a downed agent once, at the time it is first backfilled.
             if (!record.isBackFilled()) {
                 LOG.info("Have not heard from agent [" + record.getAgentName() + "] since ["
-                        + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
+                    + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
 
                 agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), record.getAgentName(),
                     record.getAgentId());
@@ -304,20 +303,27 @@ public class AgentManagerBean implements AgentManagerLocal {
         // problems
         AvailabilityReportSerializer.getSingleton().lock(agentName);
         try {
-            // This marks the Agent as backfilled=true
-            agentManager.setAgentBackfilled(agentId, true);
-
             // This marks the top-level platform DOWN since we have not heard from it and all
             // child resources UNKNOWN since they are not reporting and may very well be up
             availabilityManager.updateAgentResourceAvailabilities(agentId, AvailabilityType.DOWN,
                 AvailabilityType.UNKNOWN);
+
+            // This marks the Agent as backfilled=true. Although doing this in its own transaction means the
+            // agent will be reflected as backfilled before the resource availability changes are committed, that
+            // should not matter, as it affects only availability reporting which 1) is locked out (see a few line above)
+            // and 2) at worst would only request a full avail report anyway, when detecting a backfilled agent.
+            // What this buys is it shortens the locking on the agent table, because backfilling a large inventory
+            // can take time.  Performing this after the backfill to minimize the window between the commits as
+            // much as possible.
+            agentManager.setAgentBackfilledInNewTransaction(agentId, true);
 
         } finally {
             AvailabilityReportSerializer.getSingleton().unlock(agentName);
         }
     }
 
-    public void setAgentBackfilled(int agentId, boolean backfilled) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void setAgentBackfilledInNewTransaction(int agentId, boolean backfilled) {
         Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
         query.setParameter("agentId", agentId);
         query.setParameter("backfilled", backfilled);
@@ -662,12 +668,7 @@ public class AgentManagerBean implements AgentManagerLocal {
          * since we already know we have to update the agent row with the last avail ping time, might as well
          * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
          */
-        String updateStatement = "" //
-            + "UPDATE Agent " //
-            + "   SET lastAvailabilityPing = :now, backFilled = FALSE " //
-            + " WHERE name = :agentName ";
-
-        Query query = entityManager.createQuery(updateStatement);
+        Query query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING);
         query.setParameter("now", now);
         query.setParameter("agentName", agentName);
 

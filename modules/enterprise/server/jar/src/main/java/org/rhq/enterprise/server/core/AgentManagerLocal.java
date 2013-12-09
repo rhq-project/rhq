@@ -44,11 +44,11 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 @Local
 public interface AgentManagerLocal {
 
-    /** 
+    /**
      * Call this method to set the agent DOWN and mark it 'backfilled'. Also, sets all of its monitored resources
      * to an UNKNOWN avail state since the agent is no longer reporting availability.  Done in its own transaction to
      * avoid large transactions if many agents are simultaneously backfilled.
-     * 
+     *
      * @param subject
      * @param agentName
      * @param agentId
@@ -113,15 +113,17 @@ public interface AgentManagerLocal {
      * @return list of all known agents in inventory
      * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
+    @Deprecated
     List<Agent> getAllAgents();
 
     /**
      * Returns a collection of paged agents, filtered by Server (if non-null).
      *
-     * @param serverId the server to filter the agent list by.  pass null to view unfiltered results. 
+     * @param serverId the server to filter the agent list by.  pass null to view unfiltered results.
      * @return list of all known agents in inventory
      * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
+    @Deprecated
     PageList<Agent> getAgentsByServer(Subject subject, Integer serverId, PageControl pageControl);
 
     /**
@@ -136,7 +138,7 @@ public interface AgentManagerLocal {
      * name exists, <code>null</code> is returned.
      * This method is very efficient if you want to find a single agent by its name.
      * If you need to get more than one agent, you could use <code>findAgentsByCriteria</code>.
-     * 
+     *
      * @param  agentName
      *
      * @return the agent whose name matches the given name; <code>null</code> if there is no agent with the given name
@@ -184,7 +186,7 @@ public interface AgentManagerLocal {
 
     /**
      * Given a resource ID, this will return the agent responsible for servicing that resource.
-     * @param subject 
+     * @param subject
      *
      * @param  resourceId
      *
@@ -246,9 +248,9 @@ public interface AgentManagerLocal {
     /**
      * Determines if the given agent version is supported by this server. In other words, this will
      * return <code>true</code> if this server can talk to any agent of the given version.
-     * 
+     *
      * @param agentVersion the version of the agent to verify
-     * 
+     *
      * @return <code>true</code> if this server can support an agent with the given version; if the server
      *         knows it cannot communicate successfully with an agent of that version, <code>false</code>
      *         will be returned
@@ -259,9 +261,9 @@ public interface AgentManagerLocal {
      * Returns the path on the server's file system where the agent update version file is found.
      * The agent update version file contains information about the agent update binary, such
      * as what version it is.
-     * 
+     *
      * @return agent update version file location
-     *  
+     *
      * @throws Exception if the file could not be created or found
      */
     File getAgentUpdateVersionFile() throws Exception;
@@ -271,9 +273,9 @@ public interface AgentManagerLocal {
      * of some name/value pairs.
      * The agent update version file contains information about the agent update binary, such
      * as what version it is.
-     * 
+     *
      * @return version properties found in the agent update version file.
-     * 
+     *
      * @throws Exception if cannot read the agent update version file
      */
     Properties getAgentUpdateVersionFileContent() throws Exception;
@@ -281,9 +283,9 @@ public interface AgentManagerLocal {
     /**
      * Returns the path on the server's file system where the agent update binary is found.
      * This is the actual agent distribution that can be installed on the agent machines.
-     * 
+     *
      * @return agent update binary location
-     * 
+     *
      * @throws Exception if the binary file does not exist
      */
     File getAgentUpdateBinaryFile() throws Exception;
@@ -292,13 +294,18 @@ public interface AgentManagerLocal {
      * DO NOT USE THIS. You should be using one of the getAgentUpdateXXX methods directly rather
      * than looking in the download directory. Not all agent update files are located in this download
      * directory anymore. This API will be removed from the public API in the near future.
-     * 
+     *
      * @deprecated
      */
     @Deprecated
     File getAgentDownloadDir() throws Exception;
 
-    void setAgentBackfilled(int agentId, boolean backfilled);
+    /**
+     * Do this in its own transaction to minimize locking on the agent table.
+     * @param agentId
+     * @param backfilled
+     */
+    void setAgentBackfilledInNewTransaction(int agentId, boolean backfilled);
 
     /**
      * Returns <code>true</code> if the agent is "suspect" and has been backfilled. A "suspect agent" means one that the
@@ -313,7 +320,7 @@ public interface AgentManagerLocal {
 
     /**
      * Returns <code>true</code> indicating successful ping of agent. Exposed so server could
-     * initiate N requests so gwt clients wont face Single Origin Policy issues.  
+     * initiate N requests so gwt clients wont face Single Origin Policy issues.
      *
      * @param  agentId the id of the agent
      *
@@ -323,17 +330,17 @@ public interface AgentManagerLocal {
 
     /**
      * Process a ping request from an agent, performing any requested actions and returning any requested data.
-     *  
+     *
      * @param request
      * @return The updated request object.
      */
     public PingRequest handlePingRequest(PingRequest request);
-    
+
     /**
      * Fetches the agents based on provided criteria.
-     * 
+     *
      * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
-     * 
+     *
      * @param subject caller
      * @param criteria the criteria
      * @return list of agents

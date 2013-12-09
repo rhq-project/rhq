@@ -75,7 +75,7 @@ import org.rhq.core.domain.cloud.Server;
         + "SELECT a.id " //
         + "  FROM Agent a " //
         + " WHERE a.server.name = :serverName " //
-        + "   AND a.status <> 0 "), // 
+        + "   AND a.status <> 0 "), //
     @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS, query = "" //
         + "SELECT a.id " //
         + "  FROM Agent a " //
@@ -83,7 +83,7 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_UPDATE_CLEAR_STATUS_BY_IDS, query = "" //
         + "UPDATE Agent a " //
         + "   SET a.status = 0 " //
-        + " WHERE a.id IN ( :agentIds ) "), // 
+        + " WHERE a.id IN ( :agentIds ) "), //
     @NamedQuery(name = Agent.QUERY_FIND_BY_AFFINITY_GROUP, query = "" //
         + "SELECT a " //
         + "  FROM Agent a " //
@@ -137,7 +137,16 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_UPDATE_STATUS_FOR_ALL, query = "" //
         + " UPDATE Agent a " //
         + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
-        + "  WHERE a.status = 0 ") //
+        + "  WHERE a.status = 0 "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_REPORT, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET lastAvailabilityReport = :reportTime, backFilled = FALSE " //
+        + "  WHERE id = :agentId "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_PING, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET lastAvailabilityPing = :now, backFilled = FALSE " //
+        + "  WHERE name = :agentName ") //
+
 })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_AGENT_ID_SEQ", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
@@ -172,7 +181,10 @@ public class Agent implements Serializable {
     public static final String QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE = "Agent.updateStatusByMeasurementBasleine";
     public static final String QUERY_UPDATE_STATUS_BY_AGENT = "Agent.updateStatusByAgent";
     public static final String QUERY_UPDATE_STATUS_FOR_ALL = "Agent.updateStatusForAll";
-    
+
+    public static final String QUERY_UPDATE_LAST_AVAIL_REPORT = "Agent.updateLastAvailReport";
+    public static final String QUERY_UPDATE_LAST_AVAIL_PING = "Agent.updateLastAvailPing";
+
     // this value is set, when authorized user wants to reset the token
     public static final String SECURITY_TOKEN_RESET = "@#$reset$#@";
 
@@ -237,7 +249,8 @@ public class Agent implements Serializable {
      * @param remoteEndpoint
      * @param agentToken
      */
-    public Agent(@NotNull String name, String address, int port, String remoteEndpoint, String agentToken) {
+    public Agent(@NotNull
+    String name, String address, int port, String remoteEndpoint, String agentToken) {
         this.name = name;
         this.address = address;
         this.port = port;
@@ -269,7 +282,8 @@ public class Agent implements Serializable {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 
@@ -284,7 +298,8 @@ public class Agent implements Serializable {
         return this.address;
     }
 
-    public void setAddress(@NotNull String address) {
+    public void setAddress(@NotNull
+    String address) {
         this.address = address;
     }
 
@@ -313,7 +328,8 @@ public class Agent implements Serializable {
         return agentToken;
     }
 
-    public void setAgentToken(@NotNull String agentToken) {
+    public void setAgentToken(@NotNull
+    String agentToken) {
         this.agentToken = agentToken;
     }
 
@@ -392,7 +408,7 @@ public class Agent implements Serializable {
 
     /**
      * Returns the {@link AffinityGroup} this agent currently belongs to.
-     * 
+     *
      * @return the {@link AffinityGroup} this agent currently belongs to
      */
     public AffinityGroup getAffinityGroup() {
@@ -401,7 +417,7 @@ public class Agent implements Serializable {
 
     /**
      * Sets the {@link AffinityGroup} this agent should belong to.
-     * 
+     *
      * @param affinityGroup the {@link AffinityGroup} this agent should belong to
      */
     public void setAffinityGroup(AffinityGroup affinityGroup) {
@@ -410,7 +426,7 @@ public class Agent implements Serializable {
 
     /**
      * Returns the {@link Server} this agent is currently communicating to.
-     * 
+     *
      * @return the {@link Server} this agent is currently communicating to
      */
     public Server getServer() {
@@ -418,8 +434,8 @@ public class Agent implements Serializable {
     }
 
     /**
-     * Sets the {@link Server} this agent should communicate with. 
-     * 
+     * Sets the {@link Server} this agent should communicate with.
+     *
      * @param server the {@link Server} this agent should communicate with
      */
     public void setServer(Server server) {
@@ -429,7 +445,7 @@ public class Agent implements Serializable {
     /**
      * Returns 0 if this agent is current.  Otherwise, returns a mask of {@link Agent.Status}
      * elements corresponding to the updates that have occurred that are related to this agent.
-     * 
+     *
      * @return 0 if this agent is current.  Otherwise, returns a mask of {@link Agent.Status}
      * elements corresponding to the updates that have occurred that are related to this agent.
      */
@@ -440,8 +456,8 @@ public class Agent implements Serializable {
     /**
      * If this status was non-zero, some scheduled job would have had to come along to perform
      * some work on behalf of this agent.  After that work is complete, the status can be reset
-     * (set to 0) signifying that no further work needs to be done on this agent (as long as the 
-     * status remains 0). 
+     * (set to 0) signifying that no further work needs to be done on this agent (as long as the
+     * status remains 0).
      */
     public void clearStatus() {
         status = 0;

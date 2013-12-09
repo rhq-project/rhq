@@ -140,7 +140,8 @@ public class RHQControl {
                     // but there are no other rpms other than the agent, so if we see this jboss-on-* location, we know the agent is here.
                     log.warn("An agent RPM installation was found in ["
                         + jonDir
-                        + "]!!! You will not be able to successfully run this older agent anymore. You should manually remove it.");
+                        + "]!!! You will not be able to successfully run this older agent anymore. You should consult the "
+                        +"install documentation about manually removing and/or merging the old and new agent.");
                     return true;
                 } else {
                     return false;

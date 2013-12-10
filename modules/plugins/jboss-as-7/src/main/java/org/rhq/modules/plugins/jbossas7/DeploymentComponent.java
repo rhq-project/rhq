@@ -1,4 +1,25 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.modules.plugins.jbossas7;
+
+import static org.rhq.modules.plugins.jbossas7.ASConnection.verbose;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -29,7 +50,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.content.FileContentDelegate;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -52,8 +72,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> implements OperationFacet, ContentFacet {
 
+
     private static final String DOMAIN_DATA_CONTENT_SUBDIR = "/data/content";
-    private boolean verbose = ASConnection.verbose;
     private File deploymentFile;
 
     @Override
@@ -123,13 +143,13 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
     @Override
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
-        log.debug("Starting deployment..");
+        getLog().debug("Starting deployment..");
         DeployPackagesResponse response = new DeployPackagesResponse();
 
         if (packages.size() != 1) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage("Can only deploy one package at a time");
-            log.warn("deployPackages can only deploy one package at a time");
+            getLog().warn("deployPackages can only deploy one package at a time");
         }
 
         ResourcePackageDetails detail = packages.iterator().next();
@@ -145,7 +165,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         }
         ResourceType resourceType = context.getResourceType();
 
-        log.info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]...");
+        getLog().info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]...");
 
         try {
             contentServices.downloadPackageBits(context.getContentContext(), detail.getKey(), out, true);
@@ -158,7 +178,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         JsonNode uploadResult = uploadConnection.finishUpload();
         if (verbose) {
-            log.info(uploadResult);
+            getLog().info(uploadResult);
         }
 
         if (ASUploadConnection.isErrorReply(uploadResult)) {
@@ -183,7 +203,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
         }
 
-        log.info("Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]: "
+        getLog().info("Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]: "
             + response);
 
         return response;
@@ -288,7 +308,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
                     return deploymentFile;
                 }
             } else {
-                log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment"
+                getLog().warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment"
                     + getAddress() + ".");
                 return null;
             }
@@ -296,7 +316,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         Boolean archive = (Boolean) content.get(0).get("archive");
         if (archive != null && !archive) {
-            log.debug("Exploded deployments not supported for retrieving the content.");
+            getLog().debug("Exploded deployments not supported for retrieving the content.");
             return null;
         }
 
@@ -338,7 +358,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             }
             deploymentFile = getDeploymentFileFromHash(hash, contentPath);
         } else {
-            log.warn("Failed to determine the deployment file of " + getAddress()
+            getLog().warn("Failed to determine the deployment file of " + getAddress()
                 + " deployment. Neither path nor hash attributes were available.");
         }
 
@@ -362,7 +382,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
                 return new File(relativeTo, path);
             } else {
-                log.warn("Unsupported property used as a base for deployment path specification: " + relativeTo);
+                getLog().warn("Unsupported property used as a base for deployment path specification: " + relativeTo);
                 return null;
             }
         }
@@ -394,8 +414,8 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             FileContentDelegate fileContentDelegate = new FileContentDelegate();
             sha256 = fileContentDelegate.retrieveDeploymentSHA(file, context.getResourceDataDirectory());
         } catch (Exception iex) {
-            if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }
         }
 

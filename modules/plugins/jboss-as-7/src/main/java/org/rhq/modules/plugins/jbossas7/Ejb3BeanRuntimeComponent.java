@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2013 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7;
@@ -163,12 +163,13 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
                 } else {
                     OSGiVersion currentAsVersion = getASVersion();
                     if (currentAsVersion == null) {
-                        log.warn("Could not determine the AS version while reporting unexpected result of method" +
-                            " stats. Request: " + request);
+                        getLog().warn(
+                            "Could not determine the AS version while reporting unexpected result of method"
+                                + " stats. Request: " + request);
                     } else if (FIRST_VERSION_SUPPORTING_METHOD_STATS.compareTo(currentAsVersion) <= 0) {
-                        log.error("Unexpected type of results when querying method stats for measurement request " +
-                            request + ". Expected map but got " + (value == null ? "null" :
-                            value.getClass().getName()));
+                        getLog().error(
+                            "Unexpected type of results when querying method stats for measurement request " + request
+                                + ". Expected map but got " + (value == null ? "null" : value.getClass().getName()));
                     }
                 }
             }

@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -27,7 +46,7 @@ public class ModClusterContextComponent extends ModClusterComponent implements A
             int indexOfSeparator = this.context.getResourceKey().indexOf(":");
             context = ProxyInfo.Context.fromString(this.context.getResourceKey().substring(indexOfSeparator + 1));
         } catch (Exception e) {
-            log.warn("Invalid resourcekey is being used for modcluster component: " + e.getMessage());
+            getLog().warn("Invalid resourcekey is being used for modcluster component: " + e.getMessage());
             return AvailabilityType.DOWN;
         }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
@@ -56,12 +57,12 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
         }
 
         if (logFile != null) {
-            if (log.isDebugEnabled()) {
+            if (getLog().isDebugEnabled()) {
                 if (logFile.isFile()) {
-                    log.debug("[" + resourceContext.getResourceKey() + "] is using the response time log file ["
+                    getLog().debug("[" + resourceContext.getResourceKey() + "] is using the response time log file ["
                         + logFile + "]");
                 } else {
-                    log.debug("The response time log file [" + logFile + "] for ["
+                    getLog().debug("The response time log file [" + logFile + "] for ["
                         + resourceContext.getResourceKey() + "] does not exist yet.");
                 }
             }
@@ -70,8 +71,8 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
             this.responseTimeLogParser.setExcludes(responseTimeConfig.getExcludes());
             this.responseTimeLogParser.setTransforms(responseTimeConfig.getTransforms());
         } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Cannot monitor response time for [" + resourceContext.getResourceKey()
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Cannot monitor response time for [" + resourceContext.getResourceKey()
                     + "] - unknown log file location");
             }
         }
@@ -96,12 +97,12 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
                         this.responseTimeLogParser.parseLog(callTimeData);
                         report.addData(callTimeData);
                     } catch (Exception e) {
-                        log.error("Failed to retrieve call-time metric '" + RESPONSE_TIME_METRIC + "' for "
+                        getLog().error("Failed to retrieve call-time metric '" + RESPONSE_TIME_METRIC + "' for "
                                 + context.getResourceType() + " Resource with key [" + context.getResourceKey() + "].",
                                 e);
                     }
                 } else {
-                    log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for " + context.getResourceType()
+                    getLog().error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for " + context.getResourceType()
                             + " Resource with key [" + context.getResourceKey() + "], but no value is defined for the '"
                             + ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
                     // TODO: Communicate this error back to the server for display in the GUI.
@@ -147,13 +148,13 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
                         String logFileName = String.format("rt/%s%s_rt.log", virtualHost, contextRoot);
                         logFile = new File(logDir, logFileName);
                     } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Unknown context root for: " + getAddress());
+                        if (getLog().isDebugEnabled()) {
+                            getLog().debug("Unknown context root for: " + getAddress());
                         }
                     }
                 } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Unknown virtual host for: " + getAddress());
+                    if (getLog().isDebugEnabled()) {
+                        getLog().debug("Unknown virtual host for: " + getAddress());
                     }
                 }
             } catch (Exception e) {

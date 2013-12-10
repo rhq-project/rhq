@@ -19,6 +19,8 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static org.rhq.modules.plugins.jbossas7.ASConnection.verbose;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -112,7 +114,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             }
         }
 
-        if (Boolean.getBoolean("as7plugin.verbose")) {
+        if (verbose) {
             log.info("total path: [" + path + "]");
         }
 

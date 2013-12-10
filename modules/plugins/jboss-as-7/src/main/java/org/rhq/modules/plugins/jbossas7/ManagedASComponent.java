@@ -57,10 +57,8 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
     public void start(ResourceContext<HostControllerComponent<?>> hostControllerComponentResourceContext)
         throws InvalidPluginConfigurationException, Exception {
         super.start(hostControllerComponentResourceContext);
-
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
-
     }
 
     @Override
@@ -87,7 +85,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
             try {
                 result = getASConnection().execute(getStatus);
             } catch (Exception e) {
-                log.warn(e.getMessage());
+                getLog().warn(e.getMessage());
                 return AvailabilityType.DOWN;
             }
             if (!result.isSuccess())
@@ -149,18 +147,21 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
                     }
 
                     if ("null".equals(val)) {
-                        if (realName.equals("product-name"))
+                        if (realName.equals("product-name")) {
                             val = "JBoss AS";
-                        else if (realName.equals("product-version"))
+                        }
+                        else if (realName.equals("product-version")) {
                             val = getStringValue(props.get("release-version"));
-                        else
-                            log.debug("Value for " + realName + " was 'null' and no replacement found");
+                        }
+                        else if (getLog().isDebugEnabled()) {
+                            getLog().debug("Value for " + realName + " was 'null' and no replacement found");
+                        }
                     }
                     MeasurementDataTrait data = new MeasurementDataTrait(request, val);
                     report.addData(data);
                 }
-            } else {
-                log.debug("getSKMRequests failed: " + res.getFailureDescription());
+            } else if (getLog().isDebugEnabled()) {
+                getLog().debug("getSKMRequests failed: " + res.getFailureDescription());
             }
         }
 

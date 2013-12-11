@@ -5,6 +5,11 @@
  * installs, some input, in terms of the numbers and types of resources, will have to be provided in order to generate
  * the estimates. Right now the module has functionality for generating the sizes of the data and partition index files
  * for the metrics tables (which does not include the metrics_index table).
+ *
+ * current usage (from CLI shell):
+ *
+ * $ storage = require('modules:/rhq.storage.sizing.js');
+ * $ results = storage.sizeOfRawMetrics({30000: 5, 60000: 5});
  */
 (function() {
   var util = require('modules:/util');

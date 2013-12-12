@@ -2452,7 +2452,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         try {
             // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
-            Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
+            Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
             if (agent == null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");

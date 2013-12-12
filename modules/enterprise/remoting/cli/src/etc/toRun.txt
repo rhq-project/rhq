@@ -1,3 +1,0 @@
-java -cp getopt-1.0.13.jar:remoting.jar:jline-0.9.94.jar:i18nlog-1.0.9.jar org.rhq.enterprise.client.ClientMain
-
-java -cp getopt-1.0.13.jar;remoting.jar;jline-0.9.94.jar;i18nlog-1.0.9.jar org.rhq.enterprise.client.ClientMain

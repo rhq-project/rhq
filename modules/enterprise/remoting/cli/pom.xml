@@ -13,7 +13,11 @@
 
    <name>RHQ Enterprise Remote CLI</name>
    <description>RHQ Enterprise Remote Command Line Interface</description>
-   
+
+   <properties>
+      <rhq.cli.change-dir-on-start-default>false</rhq.cli.change-dir-on-start-default>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -78,7 +82,18 @@
    </dependencies>
 
    <build>
-      <plugins>
+       <resources>
+           <resource>
+               <directory>src/etc</directory>
+               <filtering>true</filtering>
+               <targetPath>${project.build.outputDirectory}/../etc</targetPath>
+           </resource>
+           <resource>
+               <directory>src/main/resources</directory>
+           </resource>
+       </resources>
+
+       <plugins>
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>

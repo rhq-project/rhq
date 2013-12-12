@@ -49,18 +49,49 @@ else
    debug_msg "No environment script found at: ${RHQ_CLI_BIN_DIR_PATH}/rhq-cli-env.sh"
 fi
 
-if [ -z "$RHQ_CLI_HOME" ]; then
-   cd "${RHQ_CLI_BIN_DIR_PATH}/.."
-else
-   cd "${RHQ_CLI_HOME}" || {
-      echo "Cannot go to the RHQ_CLI_HOME directory: ${RHQ_CLI_HOME}"
-      exit 1
-      }
+# this variable is set during the build and defines the desired default behavior for directory changing
+# we do want to change the dir in RHQ, but possibly don't want to do that in JBoss ON for backwards compatibility
+# reasons.
+RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT=${rhq.cli.change-dir-on-start-default}
+if [ -z "$RHQ_CLI_CHANGE_DIR_ON_START" ]; then
+    RHQ_CLI_CHANGE_DIR_ON_START="$RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT"
 fi
 
-RHQ_CLI_HOME=`pwd`
+# Only change the directory on start when told so. This is new in RHQ 4.10.0.
+# Previous versions always changed directory.
+if [ -n "$RHQ_CLI_CHANGE_DIR_ON_START" -a "$RHQ_CLI_CHANGE_DIR_ON_START" != "false" ]; then
+    if [ -z "$RHQ_CLI_HOME" ]; then
+       cd "${RHQ_CLI_BIN_DIR_PATH}/.."
+    else
+       cd "${RHQ_CLI_HOME}" || {
+          echo "Cannot go to the RHQ_CLI_HOME directory: ${RHQ_CLI_HOME}"
+          exit 1
+          }
+    fi
+    RHQ_CLI_HOME=`pwd`
+else
+    if [ -z "$RHQ_CLI_HOME" ]; then
+        RHQ_CLI_HOME="${RHQ_CLI_BIN_DIR_PATH}/.."
+    fi
+
+    #get an absolute path
+    RHQ_CLI_HOME=`readlink -f "$RHQ_CLI_HOME"`
+
+    if [ ! -d "$RHQ_CLI_HOME" ]; then
+        echo "RHQ_CLI_HOME detected or defined as [${RHQ_CLI_HOME}] doesn't seem to exist or is not a directory"
+        exit 1
+    fi
+fi
 
 debug_msg "RHQ_CLI_HOME: $RHQ_CLI_HOME"
+
+# ----------------------------------------------------------------------
+# Prepare the modules:/ script source provider to by default load our
+# sample modules.
+# ----------------------------------------------------------------------
+if [ -z "$RHQ_CLI_MODULES_DIR" ]; then
+    RHQ_CLI_MODULES_DIR="${RHQ_CLI_HOME}/samples/modules"
+fi
 
 # ----------------------------------------------------------------------
 # If we are on a Mac and JAVA_HOME is not set, then set it to /usr
@@ -113,8 +144,6 @@ for _JAR in $_JAR_FILES ; do
    fi
    debug_msg "CLASSPATH entry: $_JAR"
 done
-_JAR="${RHQ_CLI_HOME}/jbossws-native-dist/deploy/lib/jbossws-client.jar"
-CLASSPATH="${CLASSPATH}:${_JAR}"
 debug_msg "CLASSPATH entry: $_JAR"
 
 # ----------------------------------------------------------------------
@@ -122,7 +151,7 @@ debug_msg "CLASSPATH entry: $_JAR"
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_CLI_JAVA_OPTS" ]; then
-   RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
+   RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir=${RHQ_CLI_MODULES_DIR}"
 fi
 debug_msg "RHQ_CLI_JAVA_OPTS: $RHQ_CLI_JAVA_OPTS"
 

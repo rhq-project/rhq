@@ -41,7 +41,7 @@
 #                          to the CLI's defaults, then you will want to
 #                          use RHQ_CLI_ADDITIONAL_JAVA_OPTS instead.
 #
-#RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
+#RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir=${RHQ_CLI_MODULES_DIR}"
 
 #    RHQ_CLI_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 #                                   endorsed dirs for the CLI's VM. If this
@@ -78,3 +78,33 @@
 #                             be passed to the CLI.
 # 
 #RHQ_CLI_CMDLINE_OPTS=""
+
+#    RHQ_CLI_CHANGE_DIR_ON_START - By setting this variable to true (or any
+#                                  other value than "false") you can make RHQ
+#                                  change the directory to $RHQ_CLI_HOME when
+#                                  starting the CLI. When this variable is set
+#                                  to false, the current working directory is
+#                                  NOT changed when starting the CLI.
+#
+#                                  If not set, this variable is understood
+#                                  to be: ${rhq.cli.change-dir-on-start-default}
+#RHQ_CLI_CHANGE_DIR_ON_START=true
+
+#    RHQ_CLI_MODULES_DIR - The default location from which to load CommonJS
+#                          modules available through the "modules:/" scheme
+#                          is $RHQ_CLI_HOME/samples/modules.
+#                          Setting this variable to another value, causes
+#                          the modules to be loaded from another location.
+#
+#                          Notice that this can be a relative path, too.
+#                          For example, setting:
+#                          RHQ_CLI_MODULES_DIR=./modules
+#                          would cause the CLI to load modules from the
+#                          "modules" subdirectory of whichever current
+#                          working directory it is started from.
+#                          (See RHQ_CLI_JAVA_OPTS and
+#                          RHQ_CLI_CHANGE_DIR_ON_START variables above for
+#                          further details of this approach).
+#
+#RHQ_CLI_MODULE_DIR=/opt/company-wide/rhq/cli/modules
+

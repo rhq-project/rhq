@@ -20,13 +20,6 @@ if "%RHQ_CLI_DEBUG%" == "false" (
    set RHQ_CLI_DEBUG=
 )
 
-rem ----------------------------------------------------------------------
-rem Change directory so the current directory is the CLI home.
-rem Here we assume this script is a child directory of the CLI home
-rem We also assume our custom environment script is located in the same
-rem place as this script.
-rem ----------------------------------------------------------------------
-
 set RHQ_CLI_BIN_DIR_PATH=%~dp0
 
 if exist "%RHQ_CLI_BIN_DIR_PATH%\rhq-cli-env.bat" (
@@ -36,9 +29,36 @@ if exist "%RHQ_CLI_BIN_DIR_PATH%\rhq-cli-env.bat" (
    if defined RHQ_CLI_DEBUG echo No environment script found at: %RHQ_CLI_BIN_DIR_PATH%\rhq-cli-env.bat
 )
 
-rem if debug variable is set, it is assumed to be on, unless its value is false
+rem this variable is set during the build and defines the desired default behavior for directory changing
+rem we do want to change the dir in RHQ, but possibly don't want to do that in JBoss ON for backwards compatibility
+rem reasons.
+set RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT=${rhq.cli.change-dir-on-start-default}
+
+if not defined RHQ_CLI_CHANGE_DIR_ON_START (
+    set RHQ_CLI_CHANGE_DIR_ON_START=%RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT%
+)
+
+rem RHQ_CLI_CHANGE_DIR_ON_START behaves the same as RHQ_CLI_DEBUG - if set, it is assumed on, unless equal to false
+if "%RHQ_CLI_CHANGE_DIR_ON_START%" == "false" (
+   set RHQ_CLI_CHANGE_DIR_ON_START=
+)
+
+rem if debug variable is set, it is assumed to be on, unless its value is false (do this again after we've loaded
+rem the env script)
 if "%RHQ_CLI_DEBUG%" == "false" (
    set RHQ_CLI_DEBUG=
+)
+
+rem ----------------------------------------------------------------------
+rem Change directory so the current directory is the CLI home.
+rem Here we assume this script is a child directory of the CLI home
+rem We also assume our custom environment script is located in the same
+rem place as this script.
+rem ----------------------------------------------------------------------
+
+rem since RHQ 4.10.0 we don't change the directory to the RHQ_CLI_HOME by default
+if not defined RHQ_CLI_CHANGE_DIR_ON_START (
+    pushd .
 )
 
 if not defined RHQ_CLI_HOME (
@@ -52,7 +72,20 @@ if not defined RHQ_CLI_HOME (
 
 set RHQ_CLI_HOME=%CD%
 
+rem since RHQ 4.10.0 we don't change the directory to the RHQ_CLI_HOME by default
+if not defined RHQ_CLI_CHANGE_DIR_ON_START (
+    popd
+)
+
 if defined RHQ_CLI_DEBUG echo RHQ_CLI_HOME: %RHQ_CLI_HOME%
+
+rem ----------------------------------------------------------------------
+rem Prepare the modules:/ script source provider to by default load our
+rem sample modules.
+rem ----------------------------------------------------------------------
+if not defined RHQ_CLI_MODULES_DIR (
+    set RHQ_CLI_MODULES_DIR="%RHQ_CLI_HOME%\samples\modules"
+)
 
 rem ----------------------------------------------------------------------
 rem Find the Java executable and verify we have a VM available
@@ -105,7 +138,7 @@ rem Prepare the VM command line options to be passed in
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_CLI_JAVA_OPTS (
-   set RHQ_CLI_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
+   set RHQ_CLI_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir="%RHQ_CLI_MODULES_DIR%"
 )
 if defined RHQ_CLI_DEBUG echo RHQ_CLI_JAVA_OPTS: %RHQ_CLI_JAVA_OPTS%
 

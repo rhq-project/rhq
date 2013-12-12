@@ -37,7 +37,7 @@ rem                          CLI's defaults. If you only want to add options
 rem                          to the CLI's defaults, then you will want to
 rem                          use RHQ_CLI_ADDITIONAL_JAVA_OPTS instead.
 rem
-rem set RHQ_CLI_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
+rem set RHQ_CLI_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir="%RHQ_CLI_MODULES_DIR%"
 
 rem    RHQ_CLI_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 rem                                   endorsed dirs for the CLI's VM. If this
@@ -74,3 +74,33 @@ rem                             line options and the ones specified here will
 rem                             be passed to the CLI.
 rem
 rem set RHQ_CLI_CMDLINE_OPTS=
+
+rem    RHQ_CLI_CHANGE_DIR_ON_START - By setting this variable to true (or any
+rem                                  other value than "false") you can make RHQ
+rem                                  change the directory to $RHQ_CLI_HOME when 
+rem                                  starting the CLI. When this variable is set 
+rem                                  to false, the current working directory is
+rem                                  NOT changed when starting the CLI.
+rem
+rem                                  If not set, this variable is understood
+rem                                  to be: ${rhq.cli.change-dir-on-start-default}
+rem set RHQ_CLI_CHANGE_DIR_ON_START=true
+
+rem    RHQ_CLI_MODULES_DIR - The default location from which to load CommonJS 
+rem                          modules available through the "modules:/" scheme
+rem                          is $RHQ_CLI_HOME/samples/modules.
+rem                          Setting this variable to another value, causes
+rem                          the modules to be loaded from another location.
+rem                          
+rem                          Notice that this can be a relative path, too.
+rem                          For example, setting:
+rem                          RHQ_CLI_MODULES_DIR=./modules
+rem                          would cause the CLI to load modules from the
+rem                          "modules" subdirectory of whichever current 
+rem                          working directory it is started from.
+rem                          (See RHQ_CLI_JAVA_OPTS and 
+rem                          RHQ_CLI_CHANGE_DIR_ON_START variables above for 
+rem                          further details of this approach).
+rem                             
+rem set RHQ_CLI_MODULE_DIR=Z:\company-wide\rhq\cli\modules
+

@@ -23,6 +23,7 @@
 
 package org.rhq.plugins.jbosscache;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,10 +44,10 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 /**
  * Discover JBossCache instances. The only way to detect them are to
  * look for "*:cache-interceptor=CacheMgmtInterceptor,*" or "*:treecache-interceptor=CacheMgmtInterceptor,*"
- * This is done in {@link MBeanResourceDiscoveryComponent}. We postprocess the result here to 
+ * This is done in {@link MBeanResourceDiscoveryComponent}. We postprocess the result here to
  * get the base MBean name (without the property for detection) to be able to use this later and also
  * for display purposes, as this is the MBean name the user set up in his MBean.
- * 
+ *
  * @author Heiko W. Rupp
  */
 public class JBossCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
@@ -60,6 +61,11 @@ public class JBossCacheDiscoveryComponent extends MBeanResourceDiscoveryComponen
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
 
         ResourceContext parentCtx = context.getParentResourceContext();
+
+        if (!(parentCtx.getParentResourceComponent() instanceof JMXComponent)) {
+            return Collections.emptySet();
+        }
+
         JMXComponent<JBossASServerComponent<?>> gparentComponent = (JMXComponent<JBossASServerComponent<?>>) parentCtx.getParentResourceComponent();
 
         Set<DiscoveredResourceDetails> discovered = super.performDiscovery(context.getDefaultPluginConfiguration(), gparentComponent, context.getResourceType(), false);

@@ -30,13 +30,38 @@ import java.net.URI;
  */
 public class ModulesDirectoryScriptSourceProvider extends FileSystemScriptSourceProvider {
 
-    private static final File ROOT_DIR = new File(System.getProperty("rhq.scripting.modules.root-dir", "./samples/modules"));
     private static final String SCHEME = "modules";
-    
+
+    private File rootDir;
+
+    /**
+     * Creates a new instance of module script source provider that looks for the module sources in a directory
+     * specified by the "rhq.scripting.modules.root-dir" system property. If none such exists, the default value
+     * is assumed to be "./modules".
+     */
     public ModulesDirectoryScriptSourceProvider() {
-        super(SCHEME);
+        this(new File(System.getProperty("rhq.scripting.modules.root-dir", "./modules")));
     }
-    
+
+    /**
+     * Provided for testing purposes. A script source provider is only instantiated through its no-arg constructor
+     * in the scripting environment.
+     *
+     * @param rootDir the root directory under which to locate module sources
+     */
+    public ModulesDirectoryScriptSourceProvider(File rootDir) {
+        super(SCHEME);
+        this.rootDir = rootDir;
+    }
+
+    public File getRootDir() {
+        return rootDir;
+    }
+
+    public void setRootDir(File rootDir) {
+        this.rootDir = rootDir;
+    }
+
     @Override
     protected File getFile(URI location) {
         String path = location.getPath();
@@ -44,6 +69,6 @@ public class ModulesDirectoryScriptSourceProvider extends FileSystemScriptSource
         //remove the leading /
         path = path.substring(1);
         
-        return new File(ROOT_DIR, path);
+        return new File(rootDir, path);
     }
 }

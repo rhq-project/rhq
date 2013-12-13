@@ -39,6 +39,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -91,7 +92,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 if (log.isDebugEnabled()) {
                     log.error("Received invalid inventory report from agent [" + agent + "]", e);
                 } else {
-                    /* 
+                    /*
                      * this is expected when the platform is uninventoried, because the agent often has in-flight reports
                      * going to the server at the time the platform's agent is being deleted from the database
                      */
@@ -117,6 +118,26 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         } finally {
             InventoryReportSerializer.getSingleton().unlock(report.getAgent().getName());
         }
+    }
+
+    @Override
+    public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
+        long start = System.currentTimeMillis();
+        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+        ResourceSyncInfo results;
+
+        results = discoveryBoss.getResourceSyncInfo(resourceId);
+
+        long elapsed = (System.currentTimeMillis() - start);
+        if (elapsed > 30000L) {
+            log.warn("Performance: get resource sync info (" + elapsed + ")ms");
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Performance: get resource sync info (" + elapsed + ")ms");
+            }
+        }
+
+        return results;
     }
 
     @Override

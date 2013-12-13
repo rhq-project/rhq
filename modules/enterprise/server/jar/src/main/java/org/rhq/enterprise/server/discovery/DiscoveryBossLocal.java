@@ -37,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -57,9 +58,9 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @param  report the inventory report to be merged
      *
-     * @return the server's response, which will include the true IDs for new resources that were found.
-     *         This can return null in one specific case - if this is a brand new agent and it is currently initializing
-     *         for the very first time.
+     * @return the server's response, which will include the information necessary for the agent to
+     *         start synchronizing its inventory with the server's inventory. This can return null in one specific
+     *         case - if this is a brand new agent and it is currently initializing for the very first time.
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
     MergeInventoryReportResults mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
@@ -77,10 +78,18 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
         throws InvalidInventoryReportException;
 
     /**
+     * Just get the top level server info for the agent's platform.  Then, each top level server
+     * can be individually synced
      * @param knownAgent the agent for the platform we want to sync with
      * @return null if platform not found
      */
-    ResourceSyncInfo getResourceSyncInfo(Agent knownAgent);
+    PlatformSyncInfo getPlatformSyncInfo(Agent knownAgent);
+
+    /**
+     * @param resourceid the root resourceId on which we want to sync
+     * @return null if resource not found, otherwise the entire tree rooted at the specified resource
+     */
+    ResourceSyncInfo getResourceSyncInfo(int resourceId);
 
     /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not

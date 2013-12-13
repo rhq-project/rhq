@@ -34,6 +34,7 @@ import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -69,6 +70,11 @@ public interface DiscoveryServerService {
     MergeInventoryReportResults mergeInventoryReport(InventoryReport inventoryReport)
         throws InvalidInventoryReportException, StaleTypeException;
 
+    @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
+    @Timeout(0L)
+    // should be something like 1000L * 60 * 30 but until we can be assured we never take longer, disable timeout
+    ResourceSyncInfo getResourceSyncInfo(int resourceId);
+
     /**
      * Merges a new availability report from the agent into the server. This updates the availability statuses of known
      * resources.
@@ -96,7 +102,7 @@ public interface DiscoveryServerService {
     Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants);
 
     /**
-     * Returns the Resources with the given id's.  The children are not set. 
+     * Returns the Resources with the given id's.  The children are not set.
      *
      * @param resourceIds
      * @return a list of resources in the same order as the passed in ids, with the latest data
@@ -107,7 +113,7 @@ public interface DiscoveryServerService {
     /**
      * Set the specified resource enabled or disabled. The call has no effect if the resource is already
      * in the desired state.
-     * 
+     *
      * @param resourceId The resource to enable or disable.
      * @param setEnabled Enable if true, disable if false.
      */
@@ -165,7 +171,7 @@ public interface DiscoveryServerService {
      * Upgrades the data of the resources according to the provided reports.
      * The server is free to ignore or modify the requests and will provide the
      * true changes made to the resources on the server-side in the result of this method.
-     * 
+     *
      * @param upgradeRequests contains the information about the upgrade of individual resources.
      * @return details on what resources have been upgraded with what data.
      */
@@ -174,7 +180,7 @@ public interface DiscoveryServerService {
     /**
      * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources
      * that have been successfully synchronized on the agent.
-     *   
+     *
      * @param  resourceIds a collection of{@link Resource} ids that have been newly committed and successfully
      *                     synchronized on the agent
      *

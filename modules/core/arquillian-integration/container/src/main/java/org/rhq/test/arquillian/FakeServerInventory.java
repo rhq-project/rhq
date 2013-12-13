@@ -41,6 +41,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -63,7 +64,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * own. It is only meant as a helper.
  * <p>
  * This impl uses mockito for defining the answers to various calls.
- * 
+ *
  * @author Lukas Krejci
  */
 public class FakeServerInventory {
@@ -75,7 +76,7 @@ public class FakeServerInventory {
      * for the complete discovery to finish in case your
      * fake server commits some resources (which starts off
      * asynchronous discovery of children).
-     * 
+     *
      *
      * @author Lukas Krejci
      */
@@ -235,9 +236,38 @@ public class FakeServerInventory {
                                 platform = persisted;
                             }
                         }
-                        return new MergeInventoryReportResults(getSyncInfo(), null);
+
+                        return new MergeInventoryReportResults(getPlatformSyncInfo(), null);
                     } finally {
                         if (discoveryChecker != null && !inventoryReport.getAddedRoots().isEmpty()) {
+                            discoveryChecker.setDepth(getResourceTreeDepth());
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    public synchronized Answer<ResourceSyncInfo> getResourceSyncInfo() {
+        return new Answer<ResourceSyncInfo>() {
+            @Override
+            public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
+                synchronized (FakeServerInventory.this) {
+                    Integer resourceId = (Integer) invocation.getArguments()[0];
+
+                    try {
+                        throwIfFailing();
+
+                        for (Resource c : platform.getChildResources()) {
+                            if (c.getId() == resourceId) {
+                                return getResourceSyncInfo(c);
+                            }
+                        }
+                        return null;
+                    } finally {
+                        // TODO: We may need to actually do a check here to make sure we've been invoked once
+                        // for every top level server, before setting depth...
+                        if (discoveryChecker != null) {
                             discoveryChecker.setDepth(getResourceTreeDepth());
                         }
                     }
@@ -251,8 +281,20 @@ public class FakeServerInventory {
             return 0;
         }
 
+        // dumpTree(platform, "");
+
         return getTreeDepth(platform);
     }
+
+    /*
+    private static void dumpTree(Resource r, String indent) {
+        System.out.println(indent + r.getName());
+        indent += "  ";
+        for (Resource c : r.getChildResources()) {
+            dumpTree(c, indent);
+        }
+    }
+    */
 
     private static int getTreeDepth(Resource root) {
         int maxDepth = 0;
@@ -266,16 +308,16 @@ public class FakeServerInventory {
         return maxDepth + 1;
     }
 
-    public synchronized Answer<ResourceSyncInfo> clearPlatform() {
-        return new Answer<ResourceSyncInfo>() {
+    public synchronized Answer<PlatformSyncInfo> clearPlatform() {
+        return new Answer<PlatformSyncInfo>() {
             @Override
-            public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
+            public PlatformSyncInfo answer(InvocationOnMock invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     throwIfFailing();
 
                     platform = null;
 
-                    return getSyncInfo();
+                    return getPlatformSyncInfo();
                 }
             }
         };
@@ -576,53 +618,42 @@ public class FakeServerInventory {
         return persisted;
     }
 
-    private ResourceSyncInfo getSyncInfo() {
-        return platform != null ? convert(platform) : null;
+    private PlatformSyncInfo getPlatformSyncInfo() {
+        return platform == null ? null : PlatformSyncInfo.buildPlatformSyncInfo(platform);
     }
 
-    private void throwIfFailing() {
-        if (failing) {
-            throw new RuntimeException("Fake server inventory is in the failing mode.");
-        }
+    private ResourceSyncInfo getResourceSyncInfo(Resource resource) {
+        return resource == null ? null : convert(resource);
     }
 
     private static ResourceSyncInfo convert(Resource root) {
-        return convertInternal(root, new HashMap<String, ResourceSyncInfo>());
+        return convertInternal(root, true, new HashMap<String, ResourceSyncInfo>());
     }
 
-    private static ResourceSyncInfo convertInternal(Resource root, Map<String, ResourceSyncInfo> intermediateResults) {
+    private static ResourceSyncInfo convertInternal(Resource root, boolean isTopLevelServer,
+        Map<String, ResourceSyncInfo> intermediateResults) {
+
         ResourceSyncInfo ret = intermediateResults.get(root.getUuid());
 
         if (ret != null) {
             return ret;
         }
-
         try {
-            ret = new ResourceSyncInfo();
-
+            ret = ResourceSyncInfo.buildResourceSyncInfo(root);
             intermediateResults.put(root.getUuid(), ret);
 
-            Class<ResourceSyncInfo> clazz = ResourceSyncInfo.class;
-
-            getPrivateField(clazz, "id").set(ret, root.getId());
-            getPrivateField(clazz, "uuid").set(ret, root.getUuid());
-            getPrivateField(clazz, "mtime").set(ret, root.getMtime());
-            getPrivateField(clazz, "inventoryStatus").set(ret, root.getInventoryStatus());
-
-            ResourceSyncInfo parent = root.getParentResource() == null ? null : convertInternal(
-                root.getParentResource(), intermediateResults);
-
-            getPrivateField(clazz, "parent").set(ret, parent);
+            Integer parentId = root.getParentResource() == null ? null : root.getParentResource().getId();
+            getPrivateField(ResourceSyncInfo.class, "parentId").set(ret, parentId);
 
             Set<ResourceSyncInfo> children = new LinkedHashSet<ResourceSyncInfo>();
             for (Resource child : root.getChildResources()) {
-                ResourceSyncInfo syncChild = convertInternal(child, intermediateResults);
+                ResourceSyncInfo syncChild = convertInternal(child, false, intermediateResults);
 
                 children.add(syncChild);
             }
-            getPrivateField(clazz, "childSyncInfos").set(ret, children);
-
+            getPrivateField(ResourceSyncInfo.class, "childSyncInfos").set(ret, children);
             return ret;
+
         } catch (Exception e) {
             throw new IllegalStateException("Failed to convert resource " + root
                 + " to a ResourceSyncInfo. This should not happen.", e);
@@ -636,6 +667,12 @@ public class FakeServerInventory {
         }
 
         return field;
+    }
+
+    private void throwIfFailing() {
+        if (failing) {
+            throw new RuntimeException("Fake server inventory is in the failing mode.");
+        }
     }
 
     private static Resource findResource(Resource root, Resource template, Comparator<Resource> comparator) {

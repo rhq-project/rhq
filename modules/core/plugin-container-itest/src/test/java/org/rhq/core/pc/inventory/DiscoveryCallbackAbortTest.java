@@ -18,11 +18,20 @@
  */
 package org.rhq.core.pc.inventory;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -31,24 +40,13 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.discoverycallback.DiscoveryCallbackAbortCallback1;
 import org.rhq.core.pc.inventory.discoverycallback.DiscoveryCallbackAbortCallback2;
 import org.rhq.core.pc.inventory.discoverycallback.DiscoveryCallbackAbortDiscoveryComponent;
-import org.rhq.core.pc.inventory.discoverycallback.PluginOneCallback;
-import org.rhq.core.pc.inventory.discoverycallback.PluginTwoCallback1;
-import org.rhq.core.pc.inventory.discoverycallback.PluginTwoCallback2;
 import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
-import org.rhq.core.pc.inventory.testplugin.TestResourceDiscoveryComponent;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import java.util.Set;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * A unit test for testing discovery callbacks.
@@ -86,6 +84,8 @@ public class DiscoveryCallbackAbortTest extends Arquillian {
         discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(2);
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
     }
 
     @AfterDiscovery
@@ -101,7 +101,7 @@ public class DiscoveryCallbackAbortTest extends Arquillian {
         // make sure our inventory is as we expect it to be
         validatePluginContainerInventory();
     }
-    
+
     private void validatePluginContainerInventory() throws Exception {
         System.out.println("Validating PC inventory...");
 

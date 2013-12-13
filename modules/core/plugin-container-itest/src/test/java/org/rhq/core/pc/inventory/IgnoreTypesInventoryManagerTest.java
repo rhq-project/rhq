@@ -44,6 +44,7 @@ public class IgnoreTypesInventoryManagerTest extends AbstractIgnoreTypesInventor
     @RunDiscovery
     public void testIgnoreTypes() throws Exception {
         // make sure the agent inventory does not have any resources of the ignored types
+        waitForInventory(3);
         validatePartiallyIgnoredInventory();
 
         // simulate the unignoring of all types (i.e. don't ignore any types anymore)

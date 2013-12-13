@@ -75,6 +75,8 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
         // autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
 
         // set up the metric schedules using the metric metadata to determine default intervals and enablement
         when(serverServices.getDiscoveryServerService().postProcessNewlyCommittedResources(any(Set.class))).then(

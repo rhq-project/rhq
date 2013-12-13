@@ -216,7 +216,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         AvailabilityType currentAvailabilityType = (null == currentAvailability) ? AvailabilityType.DOWN
             : currentAvailability.getAvailabilityType();
 
-        // If there is no current avail, or this is a SERVER, we must perfom the live check.
+        // If there is no current avail, or this is a SERVER, we must perform the live check.
         if (AvailabilityType.UP != currentAvailabilityType
             || ResourceCategory.SERVER == parentContainer.getResource().getResourceType().getCategory()) {
 

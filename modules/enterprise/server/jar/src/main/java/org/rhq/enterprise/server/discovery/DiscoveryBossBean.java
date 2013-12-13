@@ -72,6 +72,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
@@ -208,7 +209,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Set<Resource> roots = report.getAddedRoots();
         LOG.debug(report);
 
-        final Map<String, ResourceType> allTypes = new HashMap<String, ResourceType>();
+        Map<String, ResourceType> allTypes = new HashMap<String, ResourceType>();
 
         for (Resource root : roots) {
             // Make sure all platform, server, and service types are valid. Also, make sure they're fetched - otherwise
@@ -231,7 +232,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
         }
 
-        allTypes.clear(); // help GC, we don't need this anymore
+        allTypes = null; // maybe help GC? we don't need this anymore
 
         // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
         // The platform can be null in only one scenario.. a brand new agent has connected to the server
@@ -239,7 +240,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // the current inventory on the server side. But at this point there isn't any since that very
         // agent just registered and is starting up for the very first time and therefore hasn't had
         // a chance yet to send us its full inventory report.
-        ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(knownAgent);
+        PlatformSyncInfo syncInfo = discoveryBoss.getPlatformSyncInfo(knownAgent);
 
         // we need to also tell the agent if there were any ignored types - we must provide the agent with
         // ALL types that are ignored, not just for those resources that were in the report
@@ -264,13 +265,21 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     @Override
-    public ResourceSyncInfo getResourceSyncInfo(Agent knownAgent) {
+    public PlatformSyncInfo getPlatformSyncInfo(Agent knownAgent) {
         Resource platform = resourceManager.getPlatform(knownAgent);
         if (null == platform) {
             return null;
         }
 
-        ResourceSyncInfo result = entityManager.find(ResourceSyncInfo.class, platform.getId());
+        PlatformSyncInfo result = entityManager.find(PlatformSyncInfo.class, platform.getId());
+        return result;
+    }
+
+    @Override
+    public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
+        // [PERF] this is expensive, it let's hibernate grab the whole hierarchy via eager fetch of children.
+        ResourceSyncInfo result = entityManager.find(ResourceSyncInfo.class, resourceId);
+
         return result;
     }
 
@@ -1235,7 +1244,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Add a product version entry for the new resource.
         if ((resource.getVersion() != null) && (resource.getVersion().length() > 0)) {
-            ProductVersion productVersion = productVersionManager.addProductVersion(resourceType, resource.getVersion());
+            ProductVersion productVersion = productVersionManager
+                .addProductVersion(resourceType, resource.getVersion());
             resource.setProductVersion(productVersion);
         }
 

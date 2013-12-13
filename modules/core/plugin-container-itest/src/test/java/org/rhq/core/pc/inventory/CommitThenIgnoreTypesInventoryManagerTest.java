@@ -44,6 +44,7 @@ public class CommitThenIgnoreTypesInventoryManagerTest extends AbstractIgnoreTyp
     @RunDiscovery
     public void testIgnoreTypesAfterFullCommit() throws Exception {
         // make sure the agent inventory has a full inventory
+        waitForInventory(5);
         validateFullInventory();
 
         // simulate the ignoring of types
@@ -58,8 +59,6 @@ public class CommitThenIgnoreTypesInventoryManagerTest extends AbstractIgnoreTyp
         // Now execute a full discovery again, this time, we should see the ignored resources go away
         System.out.println("Executing full discovery...");
         InventoryReport report = inventoryManager.executeServerScanImmediately();
-        inventoryManager.handleReport(report);
-        report = inventoryManager.executeServiceScanImmediately();
         inventoryManager.handleReport(report);
         waitForInventory(3);
         validatePartiallyIgnoredInventory();

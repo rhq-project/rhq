@@ -38,11 +38,11 @@ import org.rhq.core.domain.resource.ResourceType;
 public class MergeInventoryReportResults implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final ResourceSyncInfo resourceSyncInfo;
+    private final PlatformSyncInfo platformSyncInfo;
     private final Collection<ResourceTypeFlyweight> ignoredResourceTypes;
 
-    public MergeInventoryReportResults(ResourceSyncInfo rsi, Collection<ResourceType> ignoredResourceTypes) {
-        resourceSyncInfo = rsi;
+    public MergeInventoryReportResults(PlatformSyncInfo psi, Collection<ResourceType> ignoredResourceTypes) {
+        platformSyncInfo = psi;
 
         if (ignoredResourceTypes == null || ignoredResourceTypes.isEmpty()) {
             this.ignoredResourceTypes = null;
@@ -54,8 +54,8 @@ public class MergeInventoryReportResults implements Serializable {
         }
     }
 
-    public ResourceSyncInfo getResourceSyncInfo() {
-        return resourceSyncInfo;
+    public PlatformSyncInfo getPlatformSyncInfo() {
+        return platformSyncInfo;
     }
 
     public Collection<ResourceTypeFlyweight> getIgnoredResourceTypes() {

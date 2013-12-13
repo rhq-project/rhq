@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
@@ -42,9 +41,9 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
  * @author John Mazzitelli
  * @author Mike Thompson
  */
-public class ResourceMetricAvailabilityView extends EnhancedVLayout {
+public class MetricAvailabilityView extends EnhancedVLayout {
 
-    private Resource resource;
+    private int resourceId;
     private StaticTextItem currentField;
     private StaticTextItem availField;
     private StaticTextItem availTimeField;
@@ -59,10 +58,10 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
     private StaticTextItem unknownField;
     private StaticTextItem currentTimeField;
 
-    public ResourceMetricAvailabilityView(Resource resource) {
+    public MetricAvailabilityView(int resourceId) {
         super();
 
-        this.resource = resource;
+        this.resourceId = resourceId;
 
         setWidth100();
         setHeight(165);
@@ -154,7 +153,7 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
     }
 
     private void reloadSummaryData() {
-        GWTServiceLookup.getResourceService().getResourceAvailabilitySummary(resource.getId(),
+        GWTServiceLookup.getResourceService().getResourceAvailabilitySummary(resourceId,
             new AsyncCallback<ResourceAvailabilitySummary>() {
 
                 @Override

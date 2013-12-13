@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
+package org.rhq.coregui.client.inventory.groups.detail.monitoring.metric;
 
 import java.util.List;
 import java.util.Set;
@@ -31,15 +31,17 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.ExpandedRowsMomento;
 import org.rhq.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
+import org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricAvailabilityView;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
@@ -48,50 +50,50 @@ import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
  * The consolidated metrics view showing metric graphs and availability data both in graphical and tabular form.
  * @author Mike Thompson
  */
-public class MetricsResourceView extends AbstractD3GraphListView implements
+public class MetricsGroupView extends AbstractD3GraphListView implements
     AbstractTwoLevelTabSetView.ViewRenderedListener {
 
     private static final String COLLAPSED_TOOLTIP = MSG.chart_metrics_collapse_tooltip();
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
 
-    private final Resource resource;
+    private final ResourceGroup resourceGroup;
     private EnhancedHLayout expandCollapseHLayout;
-    private MetricsTableView metricsTableView;
-    private static Integer lastResourceId = 0;
+    private MetricsGroupTableView metricsTableView;
+    private static Integer lastResourceGroupId = 0;
 
     /**
      * Encapsulate the creation logic and not let it leak out into other objects.
      * Clear the expanded rows set when changing resources as well.
      * @see ExpandedRowsMomento
-     * @param resource
-     * @return MetricsResourceView
+     * @param group
+     * @return MetricsGroupView
      */
-    public static MetricsResourceView create(Resource resource ){
+    public static MetricsGroupView create(ResourceGroup group ){
 
-        boolean isDifferentResource = (resource.getId() != lastResourceId);
+        boolean isDifferentResource = (group.getId() != lastResourceGroupId);
 
         if(isDifferentResource){
             ExpandedRowsMomento.getInstance().clear();
         }
 
-        return  new MetricsResourceView(resource,  ExpandedRowsMomento.getInstance().getExpandedRows());
+        return  new MetricsGroupView(group,  ExpandedRowsMomento.getInstance().getExpandedRows());
 
     }
 
-    private MetricsResourceView(Resource resource, Set<Integer> expandedRows) {
+    private MetricsGroupView(ResourceGroup resourceGroup, Set<Integer> expandedRows) {
         super();
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
-        this.resource = resource;
-        metricsTableView = new MetricsTableView(resource, this, expandedRows);
+        this.resourceGroup = resourceGroup;
+        metricsTableView = new MetricsGroupTableView(resourceGroup, this, expandedRows);
 
-        final MetricAvailabilityView availabilityDetails = new MetricAvailabilityView(resource.getId());
+        final MetricAvailabilityView availabilityDetails = new MetricAvailabilityView(resourceGroup.getId());
         availabilityDetails.hide();
 
         metricsTableView.setHeight100();
 
-        availabilityGraph = AvailabilityD3GraphView.create( new AvailabilityOverUnderGraphType(resource.getId()));
+        availabilityGraph = AvailabilityD3GraphView.create( new AvailabilityOverUnderGraphType(resourceGroup.getId()));
 
         expandCollapseHLayout = new EnhancedHLayout();
         //add expand/collapse icon
@@ -124,22 +126,20 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         addMember(expandCollapseHLayout);
         addMember(availabilityDetails);
         addMember(metricsTableView);
-        lastResourceId = resource.getId();
+        lastResourceGroupId = resourceGroup.getId();
     }
 
 
     private void addAvailabilityGraph() {
-        if(lastResourceId.equals(resource.getId())) {
             expandCollapseHLayout.removeMember(availabilityGraph);
             availabilityGraph.destroy();
 
-            availabilityGraph = AvailabilityD3GraphView.create(new AvailabilityOverUnderGraphType(resource.getId()));
+            availabilityGraph = AvailabilityD3GraphView.create(new AvailabilityOverUnderGraphType(resourceGroup.getId()));
 
             expandCollapseHLayout.addMember(availabilityGraph);
 
-            queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-                buttonBarDateTimeRangeEditor.getEndTime(), null);
-        }
+            queryAvailability(EntityContext.forGroup(resourceGroup.getId()), CustomDateRangeState.getInstance().getStartTime(),
+                CustomDateRangeState.getInstance().getEndTime(), null);
     }
 
 
@@ -147,7 +147,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
 
         // now return the availability
-        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getGroupId(), startTime,
                 endTime, new AsyncCallback<List<Availability>>() {
             @Override
             public void onFailure(Throwable caught) {
@@ -160,8 +160,8 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
                 new Timer() {
                     @Override
                     public void run() {
-                        availabilityGraph.drawJsniChart();
                         buttonBarDateTimeRangeEditor.updateTimeRangeToNow();
+                        availabilityGraph.drawJsniChart();
 
                     }
                 }.schedule(150);

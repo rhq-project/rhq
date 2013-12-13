@@ -17,10 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
-
-import static org.rhq.core.domain.measurement.DataType.COMPLEX;
-import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
+package org.rhq.coregui.client.inventory.groups.detail.monitoring.metric;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,8 +28,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
-import com.google.gwt.user.client.rpc.InvocationException;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
@@ -41,26 +36,23 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.Criteria;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.MeasurementConverterClient;
 import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
-import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
+
+import static org.rhq.core.domain.measurement.DataType.COMPLEX;
+import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
 import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.*;
 
 /**
@@ -72,22 +64,17 @@ import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.
  * @author John Mazzitelli
  * @author Mike Thompson
  */
-public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
+public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
     private static final int NUMBER_OF_METRIC_POINTS = 60;
 
-    private final Resource resource;
+    private final ResourceGroup resourceGroup;
     private List<MetricDisplaySummary> metricDisplaySummaries;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
-    private Set<MeasurementData> liveMeasurementDataSet;
     private int[] definitionArrayIds;
-    private int[] scheduleIds;
-    private HashMap<Integer, MeasurementUnits> scheduleToMeasurementUnitMap = new HashMap<Integer, MeasurementUnits>();
-    private final MeasurementUserPreferences measurementUserPrefs;
 
-    public MetricsViewDataSource(Resource resource) {
-        this.resource = resource;
-        measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+    public MetricsGroupViewDataSource(ResourceGroup resourceGroup) {
+        this.resourceGroup = resourceGroup;
     }
 
     /**
@@ -106,9 +93,9 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                 if (value == null) {
                     return "";
                 }
-                String contents = "<span id='sparkline_" + resource.getId() + "-"
-                        + record.getAttributeAsInt(METRIC_DEF_ID.getValue()) + "' class='dynamicsparkline' width='70' "
-                        + "values='" + record.getAttribute(SPARKLINE.getValue()) + "'></span>";
+                String contents = "<span id='sparkline_" + resourceGroup.getId() + "-"
+                    + record.getAttributeAsInt(METRIC_DEF_ID.getValue()) + "' class='dynamicsparkline' width='70' "
+                    + "values='" + record.getAttribute(SPARKLINE.getValue()) + "'></span>";
                 return contents;
 
             }
@@ -132,10 +119,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         ListGridField avgField = new ListGridField(AVG_VALUE.getValue(), AVG_VALUE.getLabel());
         avgField.setWidth("15%");
         fields.add(avgField);
-
-        ListGridField liveField = new ListGridField(LIVE_VALUE.getValue(), LIVE_VALUE.getLabel());
-        liveField.setWidth("15%");
-        fields.add(liveField);
 
         ListGridField alertsField = new ListGridField(ALERT_COUNT.getValue(), ALERT_COUNT.getLabel());
         alertsField.setWidth("10%");
@@ -164,36 +147,12 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         record.setAttribute(MIN_VALUE.getValue(), getMetricStringValue(from.getMinMetric()));
         record.setAttribute(MAX_VALUE.getValue(), getMetricStringValue(from.getMaxMetric()));
         record.setAttribute(AVG_VALUE.getValue(), getMetricStringValue(from.getAvgMetric()));
-        record.setAttribute(LIVE_VALUE.getValue(), buildLiveValue(from));
         record.setAttribute(METRIC_DEF_ID.getValue(), from.getDefinitionId());
         record.setAttribute(METRIC_SCHEDULE_ID.getValue(), from.getScheduleId());
         record.setAttribute(METRIC_UNITS.getValue(), from.getUnits());
         record.setAttribute(METRIC_NAME.getValue(), from.getMetricName());
-        record.setAttribute(RESOURCE_ID.getValue(), resource.getId());
+        record.setAttribute(RESOURCE_GROUP_ID.getValue(), resourceGroup.getId());
         return record;
-    }
-
-    private String buildLiveValue(MetricDisplaySummary from) {
-        StringBuilder sb = new StringBuilder();
-        for (MeasurementData measurementData : liveMeasurementDataSet) {
-            if (from.getScheduleId() == measurementData.getScheduleId()) {
-                double doubleValue;
-                if (measurementData.getValue() instanceof Number) {
-                    doubleValue = ((Number) measurementData.getValue()).doubleValue();
-                } else {
-                    doubleValue = Double.parseDouble(measurementData.getValue().toString());
-                }
-
-                String value = MeasurementConverterClient.formatToSignificantPrecision(new double[] { doubleValue },
-                    MeasurementUnits.valueOf(from.getUnits()), true)[0];
-
-                sb.append(value);
-
-                break;
-            }
-        }
-
-        return sb.toString();
     }
 
     private String getCsvMetricsForSparkline(int definitionId) {
@@ -248,87 +207,81 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
-        GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resource.getId(),
-                DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
-            @Override
-            public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
-                scheduleIds = new int[measurementSchedules.size()];
-                int i = 0;
-                for (MeasurementSchedule measurementSchedule : measurementSchedules) {
-                    scheduleIds[i++] = measurementSchedule.getId();
-                }
-
-                // This latch is the last thing that gets executed after we have executed the
-                // 2 queries in Parallel
-                final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
-
-                    @Override
-                    public void execute() {
-                        // we needed the ResourceMetrics query and Metric Display Summary
-                        // to finish before we can query the live metrics and populate the
-                        // result response
-                        queryLiveMetrics(request, response);
-
-                    }
-                });
-
-                queryResourceMetrics(resource, measurementUserPrefs.getMetricRangePreferences().begin,
-                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-                queryMetricDisplaySummaries(scheduleIds, measurementUserPrefs.getMetricRangePreferences().begin,
-                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-            }
+        // This latch is the last thing that gets executed after we have executed the
+        // 1 query
+        final CountDownLatch countDownLatch = CountDownLatch.create(1, new Command() {
 
             @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
+            public void execute() {
+
+                // NOTE: this runs after the queryMetricDisplaySummaries is complete
+                queryGroupMetrics(resourceGroup, request, response);
             }
         });
+
+        organizeMeasurementDefinitionOrder(resourceGroup);
+        queryMetricDisplaySummaries(definitionArrayIds, CustomDateRangeState.getInstance().getStartTime(),
+            CustomDateRangeState.getInstance().getEndTime(), countDownLatch);
+
     }
 
-    private void queryLiveMetrics(final DSRequest request, final DSResponse response) {
+    private void queryGroupMetrics(final ResourceGroup resourceGroup, final DSRequest request, final DSResponse response) {
 
-        // actually go out and ask the agents for the data
-        GWTServiceLookup.getMeasurementDataService(60000).findLiveData(resource.getId(), definitionArrayIds,
-            new AsyncCallback<Set<MeasurementData>>() {
-                @Override
-                public void onSuccess(Set<MeasurementData> result) {
-                    if (result == null) {
-                        result = new HashSet<MeasurementData>(0);
-                    }
-                    liveMeasurementDataSet = result;
-                    response.setData(buildRecords(metricDisplaySummaries));
-                    processResponse(request.getRequestId(), response);
-
-                    new Timer() {
-
-                        @Override
-                        public void run() {
-                            BrowserUtility.graphSparkLines();
-                        }
-                    }.schedule(150);
-                }
-
-                /**
-                 * Called when an asynchronous call fails to complete normally. {@link IncompatibleRemoteServiceException}s, {@link
-                 * InvocationException}s, or checked exceptions thrown by the service method are examples of the type of failures that
-                 * can be passed to this method.
-                 * <p/>
-                 * <p> If <code>caught</code> is an instance of an {@link IncompatibleRemoteServiceException} the application should
-                 * try to get into a state where a browser refresh can be safely done. </p>
-                 *
-                 * @param caught failure encountered while executing a remote procedure call
-                 */
+        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(),
+            definitionArrayIds, CustomDateRangeState.getInstance().getStartTime(),
+            CustomDateRangeState.getInstance().getEndTime(), NUMBER_OF_METRIC_POINTS,
+            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
+                    Log.warn("Error retrieving recent metrics charting data for resource [" + resourceGroup.getId()
+                        + "]:" + caught.getMessage());
+                }
+
+                @Override
+                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> measurementDataList) {
+                    if (null != measurementDataList && !measurementDataList.isEmpty()) {
+                        metricsDataList = measurementDataList;
+                        response.setData(buildRecords(metricDisplaySummaries));
+                        processResponse(request.getRequestId(), response);
+                        new Timer() {
+                            @Override
+                            public void run() {
+                                BrowserUtility.graphSparkLines();
+                            }
+                        }.schedule(150);
+                    }
                 }
             });
+
     }
 
-    private void queryMetricDisplaySummaries(int[] scheduleIds, Long startTime, Long endTime,
+    private void organizeMeasurementDefinitionOrder(ResourceGroup resourceGroup) {
+        Set<MeasurementDefinition> definitions = getMetricDefinitions(resourceGroup);
+
+        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
+        for (MeasurementDefinition definition : definitions) {
+            measurementDefMap.put(definition.getDisplayName(), definition);
+        }
+        //bundle definition ids for asynch call.
+        definitionArrayIds = new int[definitions.size()];
+        final String[] displayOrder = new String[definitions.size()];
+        measurementDefMap.keySet().toArray(displayOrder);
+        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+        Arrays.sort(displayOrder);
+
+        //organize definitionArrayIds for ordered request on server.
+        int index = 0;
+        for (String definitionToDisplay : displayOrder) {
+            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
+        }
+    }
+
+    private void queryMetricDisplaySummaries(int[] measurementDefIds, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
-        GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resource.getId(),
-            scheduleIds, startTime, endTime, new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
+        GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(
+            resourceGroup.getId(), measurementDefIds, startTime, endTime, false,
+            new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                 @Override
                 public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {
                     setMetricDisplaySummaries(metricDisplaySummaries);
@@ -349,65 +302,9 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    private void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
-        final CountDownLatch countDownLatch) {
-        HashSet<MeasurementDefinition> definitions = getMetricDefinitions(resource);
-        if (definitions.size() == 0) {
-            countDownLatch.countDown();
-            return;
-        }
-
-        // create a mapping of schedules ids to MeasurementUnits
-        for (MeasurementDefinition definition : definitions) {
-            if (null != definition.getSchedules()) {
-                for (MeasurementSchedule schedule : definition.getSchedules()) {
-                    scheduleToMeasurementUnitMap.put(schedule.getId(), definition.getUnits());
-                }
-            }
-        }
-
-        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-        for (MeasurementDefinition definition : definitions) {
-            measurementDefMap.put(definition.getDisplayName(), definition);
-        }
-        //bundle definition ids for asynch call.
-        definitionArrayIds = new int[definitions.size()];
-        final String[] displayOrder = new String[definitions.size()];
-        measurementDefMap.keySet().toArray(displayOrder);
-        //sort the charting data ex. Free Memory, Free Swap Space,..System Load
-        Arrays.sort(displayOrder);
-
-        //organize definitionArrayIds for ordered request on server.
-        int index = 0;
-        for (String definitionToDisplay : displayOrder) {
-            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
-        }
-
-        GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), definitionArrayIds,
-            startTime, endTime, NUMBER_OF_METRIC_POINTS,
-            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    Log.warn("Error retrieving recent metrics charting data for resource [" + resource.getId() + "]:"
-                            + caught.getMessage());
-                    countDownLatch.countDown();
-                }
-
-                @Override
-                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> measurementDataList) {
-                    if (null != measurementDataList && !measurementDataList.isEmpty()) {
-                        metricsDataList = measurementDataList;
-                    }
-                    countDownLatch.countDown();
-                }
-            });
-
-    }
-
-    private HashSet<MeasurementDefinition> getMetricDefinitions(Resource resource) {
-        HashSet<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
-        for (MeasurementDefinition measurementDefinition : resource.getResourceType().getMetricDefinitions()) {
+    private Set<MeasurementDefinition> getMetricDefinitions(ResourceGroup resourceGroup) {
+        Set<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
+        for (MeasurementDefinition measurementDefinition : resourceGroup.getResourceType().getMetricDefinitions()) {
             if (measurementDefinition.getDataType() == MEASUREMENT || measurementDefinition.getDataType() == COMPLEX) {
                 definitions.add(measurementDefinition);
             }

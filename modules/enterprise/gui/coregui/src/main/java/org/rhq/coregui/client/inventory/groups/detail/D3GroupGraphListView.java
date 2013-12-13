@@ -189,6 +189,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition,
         List<MeasurementDataNumericHighLowComposite> data) {
+        Log.debug("\n***** D3GroupGraphListView.MD: "+measurementDefinition);
 
         MetricGraphData metricGraphData = MetricGraphData.createForResourceGroup(resourceGroup.getId(),
             resourceGroup.getName(), measurementDefinition, data);

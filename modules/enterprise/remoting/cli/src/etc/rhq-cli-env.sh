@@ -3,6 +3,14 @@
 #===========================================================================
 #
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# IMPORTANT: Avoid enclosing shell variables in braces using the ${XXX}
+# notation. This file is subject to maven resource variable expansion
+# during the build and so it can happen that the build environment
+# could corrupt this file by expanding variables that clash with
+# the names defined herein.
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 #    RHQ_CLI_DEBUG - If this is defined, the script will emit debug
 #                      messages. It will also enable debug
 #                      messages to be emitted from the cli itself.
@@ -41,7 +49,7 @@
 #                          to the CLI's defaults, then you will want to
 #                          use RHQ_CLI_ADDITIONAL_JAVA_OPTS instead.
 #
-#RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir=${RHQ_CLI_MODULES_DIR}"
+#RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir=$RHQ_CLI_MODULES_DIR"
 
 #    RHQ_CLI_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 #                                   endorsed dirs for the CLI's VM. If this

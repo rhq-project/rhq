@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +39,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -103,9 +107,9 @@ public class ResourceContainer implements Serializable {
     // non-transient fields
     private final Resource resource;
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
-    private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
-    private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private final Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
+    private Set<MeasurementScheduleRequest> measurementSchedule;
+    private Set<ResourcePackageDetails> installedPackages;
+    private Map<String, DriftDefinition> driftDefinitions;
     private MeasurementScheduleRequest availabilitySchedule = null;
 
     // transient fields
@@ -113,7 +117,7 @@ public class ResourceContainer implements Serializable {
     private transient ResourceContext resourceContext;
     private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
     private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
-    private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
+    private transient TIntObjectMap<Object> proxyCache = new TIntObjectHashMap<Object>(5);
     private transient ClassLoader resourceClassLoader;
     // the currently known availability
     private transient Availability availability;
@@ -124,7 +128,7 @@ public class ResourceContainer implements Serializable {
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
      *
-     * @param configuration the plugin container's configuration
+     * @param pcConfig the plugin container's configuration
      */
     public static void initialize(PluginContainerConfiguration pcConfig) {
         LoggingThreadFactory daemonFactory = new LoggingThreadFactory(DAEMON_THREAD_POOL_NAME, true);
@@ -198,6 +202,9 @@ public class ResourceContainer implements Serializable {
 
     public Set<ResourcePackageDetails> getInstalledPackages() {
         synchronized (this) {
+            if (this.installedPackages==null) {
+                return Collections.emptySet();
+            }
             return this.installedPackages;
         }
     }
@@ -235,8 +242,13 @@ public class ResourceContainer implements Serializable {
 
     public Set<MeasurementScheduleRequest> getMeasurementSchedule() {
         synchronized (this) {
-            return this.measurementSchedule;
-        }
+            if (this.measurementSchedule == null) {
+                return Collections.emptySet();
+            }
+            else {
+             return this.measurementSchedule;
+          }
+      }
     }
 
     public void setMeasurementSchedule(Set<MeasurementScheduleRequest> measurementSchedule) {
@@ -321,7 +333,7 @@ public class ResourceContainer implements Serializable {
     * @return true if the schedule was updated successfully, false otherwise or if measurementScheduleUpdate is null
     */
     public boolean updateMeasurementSchedule(Set<MeasurementScheduleRequest> measurementScheduleUpdate) {
-        if (null == measurementScheduleUpdate) {
+        if (null == measurementScheduleUpdate || measurementScheduleUpdate.size()==0) {
             return false;
         }
 
@@ -343,6 +355,9 @@ public class ResourceContainer implements Serializable {
         }
 
         synchronized (this) {
+            if (this.measurementSchedule==null) {
+                this.measurementSchedule = new HashSet<MeasurementScheduleRequest>(measurementScheduleUpdate.size());
+            }
             Set<MeasurementScheduleRequest> toBeRemoved = new HashSet<MeasurementScheduleRequest>();
             for (MeasurementScheduleRequest current : this.measurementSchedule) {
                 if (updateScheduleIds.contains(current.getScheduleId())) {
@@ -359,25 +374,39 @@ public class ResourceContainer implements Serializable {
 
     public Collection<DriftDefinition> getDriftDefinitions() {
         synchronized (this) {
+            if (driftDefinitions==null) {
+                return Collections.emptyList();
+            }
             return driftDefinitions.values();
         }
     }
 
     public boolean containsDriftDefinition(DriftDefinition d) {
         synchronized (this) {
+            if (driftDefinitions==null)
+                return false;
             return driftDefinitions.containsKey(d.getName());
         }
     }
 
     public void addDriftDefinition(DriftDefinition d) {
         synchronized (this) {
+            if (driftDefinitions==null) {
+                driftDefinitions = new HashMap<String, DriftDefinition>(1);
+            }
             driftDefinitions.put(d.getName(), d);
         }
     }
 
     public void removeDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            driftDefinitions.remove(d.getName());
+            if (driftDefinitions!=null) {
+                driftDefinitions.remove(d.getName());
+
+                if (driftDefinitions.isEmpty()) {
+                    driftDefinitions = null;
+                }
+            }
         }
     }
 
@@ -482,7 +511,7 @@ public class ResourceContainer implements Serializable {
 
         synchronized (this) {
             if (this.proxyCache == null) {
-                this.proxyCache = new HashMap<Integer, Object>();
+                this.proxyCache = new TIntObjectHashMap<Object>(5);
             }
 
             T proxy = (T) this.proxyCache.get(key);
@@ -512,7 +541,8 @@ public class ResourceContainer implements Serializable {
     }
 
     private String getFacetLockStatus() {
-        StringBuilder str = new StringBuilder("Facet lock status for [" + getResource());
+        StringBuilder str = new StringBuilder("Facet lock status for [" );
+        str.append(getResource());
 
         str.append("], is-write-locked=[").append(facetAccessLock.isWriteLocked());
         str.append("], is-write-locked-by-current-thread=[").append(facetAccessLock.isWriteLockedByCurrentThread());

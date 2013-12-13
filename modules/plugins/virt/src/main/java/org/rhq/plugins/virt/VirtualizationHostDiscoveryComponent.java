@@ -35,7 +35,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.virt.LibVirtConnection.HVInfo;
 
 /**
- * Discovers Host and Guest information using 
+ * Discovers Host and Guest information using
  */
 public class VirtualizationHostDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
 
@@ -68,7 +68,12 @@ public class VirtualizationHostDiscoveryComponent implements ResourceDiscoveryCo
             res.getPluginConfiguration().put(new PropertySimple("connectionURI", virt.getConnectionURI()));
             virt.close();
         } catch (Throwable t) {
-            log.warn("Can not load libvirt: " + t.getMessage(), t);
+            String message = t.getMessage();
+            if (t.getCause()!=null) {
+                message += ": " + t.getCause().getMessage();
+            }
+            log.warn("Can not load libvirt: " + message);
+
         }
 
         return res;

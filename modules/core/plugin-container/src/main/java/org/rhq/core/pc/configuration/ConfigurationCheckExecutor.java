@@ -18,6 +18,12 @@
  */
 package org.rhq.core.pc.configuration;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -25,9 +31,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -45,14 +51,12 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
 
     private final Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
 
-    private ConfigurationManager configurationManager;
     private ConfigurationServerService configurationServerService;
     private InventoryManager inventoryManager;
     private static final long CONFIGURATION_CHECK_TIMEOUT = 30000L;
 
-    public ConfigurationCheckExecutor(ConfigurationManager configurationManager,
-        ConfigurationServerService configurationServerService, InventoryManager inventoryManager) {
-        this.configurationManager = configurationManager;
+    public ConfigurationCheckExecutor(ConfigurationServerService configurationServerService,
+                                      InventoryManager inventoryManager) {
         this.configurationServerService = configurationServerService;
         this.inventoryManager = inventoryManager;
     }
@@ -65,24 +69,32 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         log.info("Starting configuration update check...");
         long start = System.currentTimeMillis();
 
-        checkConfigurations(this.inventoryManager.getPlatform(), true);
-        log.info("Configuration update check completed in " + (System.currentTimeMillis() - start) + "ms");
+        CountTime countTime;
+        countTime = checkConfigurations(this.inventoryManager.getPlatform(), true);
+        log.info("Configuration update check for [" + countTime.count + "] resources completed in " +
+            (System.currentTimeMillis() - start)/1000 + "s wall time, " + countTime.time + "ms check time");
         return null;
     }
 
-    public void checkConfigurations(Resource resource, boolean checkChildren) {
+    public CountTime checkConfigurations(Resource resource, boolean checkChildren) {
         ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
         ConfigurationFacet resourceComponent = null;
         ResourceType resourceType = resource.getResourceType();
 
+        CountTime countTime = new CountTime();
+        boolean debugEnabled = log.isDebugEnabled();
+
         if (resourceContainer != null && resourceContainer.getAvailability() != null
             && resourceContainer.getAvailability().getAvailabilityType() == AvailabilityType.UP) {
 
-            try {
-                resourceComponent = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
-                    FacetLockType.NONE, CONFIGURATION_CHECK_TIMEOUT, true, false, true);
-            } catch (PluginContainerException e) {
-                // Expecting when the resource does not support configuration management
+            if (resourceContainer.supportsFacet(ConfigurationFacet.class)) {
+                try {
+                    resourceComponent = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
+                        FacetLockType.NONE, CONFIGURATION_CHECK_TIMEOUT, true, false, true);
+                } catch (PluginContainerException e) {
+                    // Expecting when the resource does not support configuration management
+                        // Should never happen after above check
+                }
             }
 
             if (resourceComponent != null) {
@@ -90,7 +102,10 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                 if (resource.getInventoryStatus() == InventoryStatus.COMMITTED
                     && resourceType.getResourceConfigurationDefinition() != null) {
 
-                    if (log.isDebugEnabled()) {
+                    long t1 = System.currentTimeMillis();
+
+
+                    if (debugEnabled) {
                         log.debug("Checking for updated Resource configuration for " + resource + "...");
                     }
 
@@ -102,7 +117,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                                 .getResourceConfigurationDefinition();
 
                             // Normalize and validate the config.
-                            ConfigurationUtility.normalizeConfiguration(liveConfiguration, configurationDefinition);
+                            ConfigurationUtility.normalizeConfiguration(liveConfiguration, configurationDefinition,true,true);
                             List<String> errorMessages = ConfigurationUtility.validateConfiguration(liveConfiguration,
                                 configurationDefinition);
                             for (String errorMessage : errorMessages) {
@@ -112,29 +127,125 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                             }
 
                             Configuration original = resource.getResourceConfiguration();
+
+                            if (original==null) {
+                                original = loadConfigurationFromFile(resource.getId());
+                            }
+
                             if (!liveConfiguration.equals(original)) {
-                                log.info("New configuration version detected on resource: " + resource);
+                                if (debugEnabled) {
+                                    log.debug("New configuration version detected on resource: " + resource);
+                                }
                                 this.configurationServerService.persistUpdatedResourceConfiguration(resource.getId(),
                                     liveConfiguration);
-                                resource.setResourceConfiguration(liveConfiguration);
+//                                resource.setResourceConfiguration(liveConfiguration);
+                                boolean persisted = persistConfigurationToFile(resource.getId(),liveConfiguration, log);
+                                if (persisted) {
+                                    resource.setResourceConfiguration(null);
+                                }
                             }
                         }
                     } catch (Throwable t) {
                         log.warn("An error occurred while checking for an updated Resource configuration for "
                             + resource + ".", t);
                     }
+
+                    long now = System.currentTimeMillis();
+                    countTime.add(1,(now-t1));
+
+                    // Give the agent some time to breathe
+                    try {
+                        Thread.sleep(750);
+                    } catch (InterruptedException e) {
+                        ; // We don't care
                 }
+            }
             }
 
             if (checkChildren) {
                 for (Resource child : this.inventoryManager.getContainerChildren(resource, resourceContainer)) {
                     try {
-                        checkConfigurations(child, true);
+                        CountTime inner = checkConfigurations(child, true);
+                        countTime.add(inner.count,inner.time);
                     } catch (Exception e) {
                         log.error("Failed to check Resource configuration for " + child + ".", e);
                     }
                 }
             }
+        }
+        return countTime;
+    }
+
+    public static boolean persistConfigurationToFile(int resourceId, Configuration liveConfiguration, Log log) {
+
+        boolean success = true;
+        try {
+            String pathname = "data/rc/" + String.valueOf(resourceId/1000); // Don't put too many files into one data dir
+            File dataDir = new File(pathname);
+            if (!dataDir.exists()) {
+                success = dataDir.mkdirs();
+                if (!success) {
+                    log.warn("Could not create data dir " + dataDir.getAbsolutePath());
+                    return false;
+                }
+            }
+            File file = new File(dataDir, String.valueOf(resourceId));
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(liveConfiguration);
+            oos.flush();
+            oos.close();
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            log.warn("Persisting failed: " + e.getMessage());
+            success = false;
+        }
+        return success;
+
+    }
+
+    private Configuration loadConfigurationFromFile(int resourceId) {
+        String pathname = "data/rc/" + String.valueOf(resourceId/1000); // Don't put too many files into one data dir
+        File dataDir = new File(pathname);
+        File file = new File(dataDir, String.valueOf(resourceId));
+        if (!file.exists()) {
+            log.error("File " + file.getAbsolutePath() + " does not exist");
+            return new Configuration();
+        }
+
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            Configuration config = (Configuration) ois.readObject();
+            ois.close();
+            fis.close();
+            return config;
+        } catch (IOException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        }
+
+        return new Configuration();
+    }
+
+    private static class CountTime {
+        private long count=0;
+        private long time=0;
+
+        private void add(long count, long time) {
+
+            this.count  +=count;
+            this.time   +=time;
+        }
+
+        @Override
+        public String toString() {
+            return "CountTime{" +
+                "count=" + count +
+                ", time=" + time +
+                '}';
         }
     }
 

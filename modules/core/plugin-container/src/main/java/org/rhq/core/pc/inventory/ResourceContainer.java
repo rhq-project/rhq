@@ -502,6 +502,15 @@ public class ResourceContainer implements Serializable {
         }
     }
 
+    public boolean supportsFacet(Class facetInterface) {
+        ResourceComponent thisComponent = this.getResourceComponent();
+        if (thisComponent == null) {
+            return false;
+        }
+        return facetInterface.isAssignableFrom(thisComponent.getClass());
+
+    }
+
     private String getFacetLockStatus() {
         StringBuilder str = new StringBuilder("Facet lock status for [" + getResource());
 

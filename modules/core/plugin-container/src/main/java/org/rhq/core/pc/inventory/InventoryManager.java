@@ -90,6 +90,7 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
+import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -2988,6 +2989,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Configuration resourceConfiguration = resource.getResourceConfiguration();
         if (resourceConfiguration != null) {
             resourceConfiguration.cleanoutRawConfiguration();
+
+            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(resource.getId(),resourceConfiguration, log);
+            if (persisted) {
+                resource.setResourceConfiguration(null);
+            }
+
         }
 
     }

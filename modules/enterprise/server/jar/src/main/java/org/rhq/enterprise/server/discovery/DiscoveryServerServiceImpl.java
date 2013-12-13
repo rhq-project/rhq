@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +92,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 if (log.isDebugEnabled()) {
                     log.error("Received invalid inventory report from agent [" + agent + "]", e);
                 } else {
-                    /* 
+                    /*
                      * this is expected when the platform is uninventoried, because the agent often has in-flight reports
                      * going to the server at the time the platform's agent is being deleted from the database
                      */
@@ -161,6 +162,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);
             if (isVisibleInInventory(resource)) {
                 resource = convertToPojoResource(resource, includeDescendants);
+                cleanoutResource(resource);
                 resources.add(resource);
             }
         }
@@ -193,7 +195,36 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             log.debug("Performance: get ResourcesAsList [" + resourceIds + "], timing ("
                 + (System.currentTimeMillis() - start) + ")ms");
         }
+
+        // Now do some clean out of stuff the agent does not need
+        // Perhaps we should limit the query above to only return relevant stuff
+
+        for (Resource resource: result) {
+            cleanoutResource(resource);
+        }
+
         return result;
+    }
+
+    private void cleanoutResource(Resource resource) {
+        resource.setAncestry(null);
+        resource.setAlertDefinitions(Collections.EMPTY_SET);
+        resource.setLocation(null);
+        resource.setDescription(null);
+        resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
+        resource.setExplicitGroups(Collections.EMPTY_SET);
+        resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
+        resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
+        resource.setImplicitGroups(Collections.EMPTY_SET);
+        resource.setInstalledPackageHistory(Collections.EMPTY_LIST);
+        resource.setInstalledPackages(Collections.EMPTY_SET);
+        resource.setPluginConfigurationUpdates(Collections.EMPTY_LIST);
+        resource.setResourceConfigurationUpdates(Collections.EMPTY_LIST);
+        if (resource.getPluginConfiguration()!=null) {
+            resource.getPluginConfiguration().cleanoutRawConfiguration();
+        }
+
+
     }
 
     @Override

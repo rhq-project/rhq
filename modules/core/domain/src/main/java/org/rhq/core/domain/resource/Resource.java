@@ -20,6 +20,7 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -609,7 +610,7 @@ import org.rhq.core.domain.util.Summary;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5), " // we want DELETE_RESOURCES, 5
-        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 16)) " // we want MANAGE_DRIFT, 16        
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 16)) " // we want MANAGE_DRIFT, 16
         + "FROM Resource res " //
         + "     LEFT JOIN res.parentResource parent " //
         + "     LEFT JOIN res.currentAvailability a " //
@@ -992,64 +993,64 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
-    private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
+    private Set<AlertDefinition> alertDefinitions;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
     // by primary key which will also put the resource configuration updates in chronological order
-    private List<ResourceConfigurationUpdate> resourceConfigurationUpdates = new ArrayList<ResourceConfigurationUpdate>();
+    private List<ResourceConfigurationUpdate> resourceConfigurationUpdates ;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
     // by primary key which will also put the plugin configuration updates in chronological order
-    private List<PluginConfigurationUpdate> pluginConfigurationUpdates = new ArrayList<PluginConfigurationUpdate>();
+    private List<PluginConfigurationUpdate> pluginConfigurationUpdates;// = new ArrayList<PluginConfigurationUpdate>();
 
     // bulk delete
     @ManyToMany(mappedBy = "implicitResources", fetch = FetchType.LAZY)
-    private Set<ResourceGroup> implicitGroups = new HashSet<ResourceGroup>();
+    private Set<ResourceGroup> implicitGroups;// = new HashSet<ResourceGroup>();
 
     // bulk delete
     @ManyToMany(mappedBy = "explicitResources", fetch = FetchType.LAZY)
-    private Set<ResourceGroup> explicitGroups = new HashSet<ResourceGroup>();
+    private Set<ResourceGroup> explicitGroups;// = new HashSet<ResourceGroup>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
     @OrderBy
-    private List<ContentServiceRequest> contentServiceRequests = new ArrayList<ContentServiceRequest>();
+    private List<ContentServiceRequest> contentServiceRequests;//  = new ArrayList<ContentServiceRequest>();
 
     // bulk delete @OneToMany(mappedBy = "parentResource", cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "parentResource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
     @OrderBy
-    private List<CreateResourceHistory> createChildResourceRequests = new ArrayList<CreateResourceHistory>();
+    private List<CreateResourceHistory> createChildResourceRequests;//  = new ArrayList<CreateResourceHistory>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
-    private List<DeleteResourceHistory> deleteResourceRequests = new ArrayList<DeleteResourceHistory>();
+    private List<DeleteResourceHistory> deleteResourceRequests;//  = new ArrayList<DeleteResourceHistory>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
     // by primary key which will also put the operation histories in chronological order
-    private List<ResourceOperationHistory> operationHistories = new ArrayList<ResourceOperationHistory>();
+    private List<ResourceOperationHistory> operationHistories;//  = new ArrayList<ResourceOperationHistory>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
-    private Set<InstalledPackage> installedPackages = new HashSet<InstalledPackage>();
+    private Set<InstalledPackage> installedPackages;//  = new HashSet<InstalledPackage>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
-    private List<InstalledPackageHistory> installedPackageHistory = new ArrayList<InstalledPackageHistory>();
+    private List<InstalledPackageHistory> installedPackageHistory;//  = new ArrayList<InstalledPackageHistory>();
 
     // bulk delete
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
-    private Set<ResourceRepo> resourceRepos = new HashSet<ResourceRepo>();
+    private Set<ResourceRepo> resourceRepos;//  = new HashSet<ResourceRepo>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
     @OneToMany(mappedBy = "resource")
-    private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
+    private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>(5); // TODO lazy allocate?
 
     //bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.PERSIST })
@@ -1063,11 +1064,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
     @XmlTransient
-    private List<ResourceError> resourceErrors = new ArrayList<ResourceError>();
+    private List<ResourceError> resourceErrors;//  = new ArrayList<ResourceError>();
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
-    private Set<EventSource> eventSources = new HashSet<EventSource>();
+    private Set<EventSource> eventSources ; // = new HashSet<EventSource>();
 
     @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
@@ -1095,12 +1096,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     private Set<DriftDefinition> driftDefinitions = null;
 
     public Resource() {
-        this(new HashSet<Resource>());
     }
 
     /**
      * Constructor that allows the caller to choose what Set implementation is used for the <code>childResources</code> field.
-     * 
+     *
      * @param childResources the Set that will be used to hold this Resource's child Resources
      */
     public Resource(Set<Resource> childResources) {
@@ -1173,7 +1173,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     /**
      * In general this method should not be called by application code, at least not for any Resource that will be
      * persisted or merged.  The ancestry string is maintained internally (see {@link #updateAncestryForResource()}).
-     * 
+     *
      * @param ancestry
      */
     public void setAncestry(String ancestry) {
@@ -1187,14 +1187,14 @@ public class Resource implements Comparable<Resource>, Serializable {
      * not a persisted entity, or if it lacks the required information, the update will be skipped.
      * It can also be called at any time the ancestry has changed, for example, if a resource name has
      * been updated.
-     *  
+     *
      * @return the built ancestry string
      */
     public String updateAncestryForResource() {
 
         Resource parentResource = this.getParentResource();
 
-        if (parentResource == null || // 
+        if (parentResource == null || //
             parentResource.getId() <= 0 || //
             parentResource.getResourceType() == null) {
             return null;
@@ -1212,7 +1212,7 @@ public class Resource implements Comparable<Resource>, Serializable {
             ancestry.append(parentAncestry);
         }
 
-        // protect against the *very* unlikely case that this value is too big for the db 
+        // protect against the *very* unlikely case that this value is too big for the db
         if (ancestry.length() < 4000) {
             this.setAncestry(ancestry.toString());
         }
@@ -1304,7 +1304,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     /**
      * Call this directly only when needing manual manipulation of the mtime. Otherwise, you probably want to
      * call {@link #setAgentSynchronizationNeeded()}.
-     * 
+     *
      * @param mtime
      */
     public void setMtime(long mtime) {
@@ -1362,6 +1362,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<Resource> getChildResources() {
+        if (this.childResources==null) {
+            return Collections.emptySet();
+        }
         return this.childResources;
     }
 
@@ -1373,22 +1376,24 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.childResources.add(childResource);
     }
 
+    public void addChildResourceWithoutAncestry(Resource childResource) {
+        childResource.setParentResourceWithoutAncestry(this);
+        if (null == this.childResources || childResources.equals(Collections.emptySet())) {
+            this.childResources = new HashSet<Resource>(1);
+        }
+        this.childResources.add(childResource);
+    }
+
     public boolean removeChildResource(Resource childResource) {
-        return this.childResources.remove(childResource);
+        boolean removed = this.childResources.remove(childResource);
+        if (this.childResources.isEmpty()) {
+            this.childResources=null;
+        }
+        return removed;
     }
 
     public void setChildResources(Set<Resource> children) {
-        // Never allow this.childResources to become null, so we can guarantee getChildResources() will always return a
-        // non-null value.
-        if (children != null) {
-            this.childResources = children;
-        } else {
-            if (this.childResources != null) {
-                this.childResources.clear();
-            } else {
-                this.childResources = new HashSet<Resource>();
-            }
-        }
+        this.childResources = children;
     }
 
     public Resource getParentResource() {
@@ -1398,6 +1403,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     public void setParentResource(Resource parentResource) {
         this.parentResource = parentResource;
         updateAncestryForResource();
+    }
+
+    public void setParentResourceWithoutAncestry(Resource parentResource) {
+        this.parentResource = parentResource;
     }
 
     public Configuration getResourceConfiguration() {
@@ -1417,6 +1426,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public List<ResourceConfigurationUpdate> getResourceConfigurationUpdates() {
+        if (this.resourceConfigurationUpdates==null) {
+            return Collections.emptyList();
+        }
         return resourceConfigurationUpdates;
     }
 
@@ -1425,6 +1437,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addResourceConfigurationUpdates(ResourceConfigurationUpdate update) {
+        if (this.resourceConfigurationUpdates==null) {
+            this.resourceConfigurationUpdates = new ArrayList<ResourceConfigurationUpdate>(1);
+        }
         update.setResource(this);
         this.resourceConfigurationUpdates.add(update);
     }
@@ -1456,7 +1471,8 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public Set<AlertDefinition> getAlertDefinitions() {
         if (this.alertDefinitions == null) {
-            this.alertDefinitions = new LinkedHashSet<AlertDefinition>();
+            //this.alertDefinitions = new LinkedHashSet<AlertDefinition>();
+            return Collections.emptySet();
         }
 
         return alertDefinitions;
@@ -1467,11 +1483,17 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addAlertDefinition(AlertDefinition alertDefinition) {
-        getAlertDefinitions().add(alertDefinition);
+        if (this.alertDefinitions==null) {
+            this.alertDefinitions = new HashSet<AlertDefinition>(1);
+        }
+        this.alertDefinitions.add(alertDefinition);
         alertDefinition.setResource(this);
     }
 
     public List<ContentServiceRequest> getContentServiceRequests() {
+        if (contentServiceRequests==null) {
+            return Collections.emptyList();
+        }
         return contentServiceRequests;
     }
 
@@ -1480,11 +1502,17 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addContentServiceRequest(ContentServiceRequest request) {
+        if (contentServiceRequests==null) {
+            contentServiceRequests = new ArrayList<ContentServiceRequest>(1);
+        }
         request.setResource(this);
         this.contentServiceRequests.add(request);
     }
 
     public List<CreateResourceHistory> getCreateChildResourceRequests() {
+        if (createChildResourceRequests==null) {
+            return Collections.emptyList();
+        }
         return createChildResourceRequests;
     }
 
@@ -1493,11 +1521,17 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addCreateChildResourceHistory(CreateResourceHistory request) {
+        if (createChildResourceRequests==null) {
+            createChildResourceRequests = new ArrayList<CreateResourceHistory>(1);
+        }
         request.setParentResource(this);
         this.createChildResourceRequests.add(request);
     }
 
     public List<DeleteResourceHistory> getDeleteResourceRequests() {
+        if (deleteResourceRequests==null) {
+            deleteResourceRequests=new ArrayList<DeleteResourceHistory>(1);
+        }
         return deleteResourceRequests;
     }
 
@@ -1519,6 +1553,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<ResourceGroup> getImplicitGroups() {
+        if (implicitGroups==null) {
+            return Collections.emptySet();
+        }
         return implicitGroups;
     }
 
@@ -1527,14 +1564,23 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addImplicitGroup(ResourceGroup implicitGroup) {
+        if (implicitGroups==null) {
+            implicitGroups = new HashSet<ResourceGroup>(1);
+        }
         this.implicitGroups.add(implicitGroup);
     }
 
     public void removeImplicitGroup(ResourceGroup implicitGroup) {
         this.implicitGroups.remove(implicitGroup);
+        if (implicitGroups.isEmpty()) {
+            implicitGroup = null;
+        }
     }
 
     public Set<ResourceGroup> getExplicitGroups() {
+        if (explicitGroups==null) {
+            return Collections.emptySet();
+        }
         return explicitGroups;
     }
 
@@ -1543,11 +1589,17 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addExplicitGroup(ResourceGroup explicitGroup) {
+        if (explicitGroups==null) {
+            explicitGroups = new HashSet<ResourceGroup>(1);
+        }
         this.explicitGroups.add(explicitGroup);
     }
 
     public void removeExplicitGroup(ResourceGroup explicitGroup) {
         this.explicitGroups.remove(explicitGroup);
+        if (explicitGroups.isEmpty()) {
+            explicitGroups = null;
+        }
     }
 
     public List<ResourceOperationHistory> getOperationHistories() {
@@ -1581,6 +1633,9 @@ public class Resource implements Comparable<Resource>, Serializable {
      *         null</code>)
      */
     public List<ResourceError> getResourceErrors(ResourceErrorType type) {
+        if (resourceErrors==null) {
+            return Collections.emptyList();
+        }
         List<ResourceError> errors = new ArrayList<ResourceError>();
 
         for (ResourceError error : this.resourceErrors) {
@@ -1593,14 +1648,14 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void setResourceErrors(List<ResourceError> resourceErrors) {
-        if (resourceErrors == null) {
-            resourceErrors = new ArrayList<ResourceError>();
-        }
 
         this.resourceErrors = resourceErrors;
     }
 
     public void addResourceError(ResourceError resourceError) {
+        if (this.resourceErrors==null) {
+            this.resourceErrors=new ArrayList<ResourceError>(1);
+        }
         resourceError.setResource(this);
         this.resourceErrors.add(resourceError);
     }
@@ -1625,6 +1680,9 @@ public class Resource implements Comparable<Resource>, Serializable {
      * @see    #getResourceRepos()
      */
     public Set<ResourceRepo> getResourceRepos() {
+        if (resourceRepos==null) {
+            return Collections.emptySet();
+        }
         return resourceRepos;
     }
 
@@ -1635,6 +1693,10 @@ public class Resource implements Comparable<Resource>, Serializable {
      * {@link #getResourceRepos()} or {@link #addRepo(Repo)}, {@link #removeRepo(Repo)}.</p>
      */
     public Set<Repo> getRepos() {
+        if (resourceRepos==null) {
+            return Collections.emptySet();
+        }
+
         HashSet<Repo> repos = new HashSet<Repo>();
 
         if (resourceRepos != null) {
@@ -1655,7 +1717,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      */
     public ResourceRepo addRepo(Repo repo) {
         if (this.resourceRepos == null) {
-            this.resourceRepos = new HashSet<ResourceRepo>();
+            this.resourceRepos = new HashSet<ResourceRepo>(1);
         }
 
         ResourceRepo mapping = new ResourceRepo(this, repo);
@@ -1690,17 +1752,23 @@ public class Resource implements Comparable<Resource>, Serializable {
         if (doomed != null) {
             this.resourceRepos.remove(doomed);
         }
+        if (this.resourceRepos.isEmpty()) {
+            this.resourceRepos=null;
+        }
 
         return doomed;
     }
 
     public Set<InstalledPackage> getInstalledPackages() {
+        if (installedPackages==null) {
+            return Collections.emptySet();
+        }
         return installedPackages;
     }
 
     public void addInstalledPackage(InstalledPackage installedPackage) {
         if (this.installedPackages == null) {
-            this.installedPackages = new LinkedHashSet<InstalledPackage>();
+            this.installedPackages = new LinkedHashSet<InstalledPackage>(1);
         }
 
         this.installedPackages.add(installedPackage);
@@ -1712,6 +1780,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public List<InstalledPackageHistory> getInstalledPackageHistory() {
+        if (installedPackageHistory == null) {
+            return Collections.emptyList();
+        }
         return installedPackageHistory;
     }
 
@@ -1729,6 +1800,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<EventSource> getEventSources() {
+        if (eventSources==null) {
+            return Collections.emptySet();
+        }
         return eventSources;
     }
 
@@ -1876,7 +1950,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     // this should only ever be called once, during initial persistence
     public void initCurrentAvailability() {
         if (this.currentAvailability == null) {
-            // initialize avail to be one big unknown period, starting at epoch. 
+            // initialize avail to be one big unknown period, starting at epoch.
             this.currentAvailability = new ResourceAvailability(this, AvailabilityType.UNKNOWN);
             this.availability = new ArrayList<Availability>(1);
             this.availability.add(new Availability(this, 0L, AvailabilityType.UNKNOWN));

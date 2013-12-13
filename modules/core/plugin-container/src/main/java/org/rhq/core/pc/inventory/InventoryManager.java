@@ -39,7 +39,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -903,7 +902,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     log.debug("Adding manually discovered resource [" + resource + "] to inventory...");
                 }
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                parentResource.addChildResource(resource);
+                parentResource.addChildResourceWithoutAncestry(resource);
                 initResourceContainer(resource);
             }
 
@@ -981,8 +980,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     static Resource createNewResource(DiscoveredResourceDetails details) {
         // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
-        Resource resource = new Resource(childResources);
+//        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource resource = new Resource();
 
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceKey(details.getResourceKey());
@@ -1002,8 +1001,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private Resource cloneResourceWithoutChildren(Resource resourceFromServer) {
         // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
-        Resource resource = new Resource(childResources);
+//        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource resource = new Resource();
 
         resource.setId(resourceFromServer.getId());
         resource.setUuid(resourceFromServer.getUuid());
@@ -1018,6 +1017,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setDescription(resourceFromServer.getDescription());
         resource.setLocation(resourceFromServer.getLocation());
 
+        compactResource(resource);
         return resource;
     }
 
@@ -1615,7 +1615,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 throw new IllegalStateException(
                     "An attempt was made to add a platform Resource as a child of another Resource.");
             }
-            parent.addChildResource(resource);
+            parent.addChildResourceWithoutAncestry(resource);
         } else {
             if (resource.getResourceType().getCategory() != ResourceCategory.PLATFORM)
                 throw new IllegalStateException(
@@ -2160,6 +2160,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     this.resourceContainersByUUID.put(uuid, resourceContainer);
                     Resource resource = resourceContainer.getResource();
                     this.resourceContainerByResourceId.put(resource.getId(), resourceContainer);
+                    compactResource(resource);
                 }
 
                 log.info("Inventory with size [" + this.resourceContainersByUUID.size() + "] loaded from data file in ["
@@ -2895,6 +2896,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             } else {
                 Resource resource = container.getResource();
+                compactResource(resource);
                 // Ensure the Resource classloader is initialized on the Resource container.
                 initResourceContainer(resource);
 
@@ -2952,6 +2954,44 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private void compactResource(final Resource resource) {
+        resource.setAncestry(null);
+        resource.setAlertDefinitions(null);
+        resource.setLocation(null);
+        resource.setModifiedBy(null);
+        resource.setOperationHistories(Collections.EMPTY_LIST);
+        resource.setTags(Collections.EMPTY_SET);
+        resource.setInstalledPackages(Collections.EMPTY_SET);
+        resource.setInstalledPackageHistory(Collections.EMPTY_LIST);
+        resource.setDescription(null);
+        resource.setImplicitGroups(Collections.EMPTY_SET);
+        resource.setExplicitGroups(Collections.EMPTY_SET);
+        resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
+        resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
+        resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
+
+        if (resource.getVersion()!=null) {
+            resource.setVersion(resource.getVersion().intern());
+        }
+
+        if (resource.getName()!=null) {
+            resource.setName(resource.getName().intern());
+        }
+
+        if (resource.getChildResources().isEmpty()) {
+            resource.setChildResources(Collections.EMPTY_SET);
+        }
+        Configuration pluginConfiguration = resource.getPluginConfiguration();
+        if (pluginConfiguration !=null ) {
+            pluginConfiguration.cleanoutRawConfiguration();
+        }
+        Configuration resourceConfiguration = resource.getResourceConfiguration();
+        if (resourceConfiguration != null) {
+            resourceConfiguration.cleanoutRawConfiguration();
+        }
+
+    }
+
     private void mergeModifiedResources(Set<Integer> modifiedResourceIds) {
         if (modifiedResourceIds != null && !modifiedResourceIds.isEmpty()) {
             if (log.isDebugEnabled()) {
@@ -2963,6 +3003,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
             syncDriftDefinitions(modifiedResources);
             for (Resource modifiedResource : modifiedResources) {
+                compactResource(modifiedResource);
                 mergeResource(modifiedResource);
             }
         }
@@ -2984,6 +3025,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource unknownResource : unknownResources) {
                 ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
                 if (resourceType != null) {
+                    compactResource(unknownResource);
                     mergeResource(unknownResource);
                     syncSchedulesRecursively(unknownResource);
                     syncDriftDefinitionsRecursively(unknownResource);
@@ -3090,8 +3132,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource r : resourceBatch) {
                 //  protect against childResources notNull assumptions downstream
                 if (null == r.getChildResources()) {
-                    r.setChildResources(null); // this will actually initialize to an empty Set
+                    r.setChildResources(Collections.EMPTY_SET); // this will actually initialize to an empty Set
                 }
+                compactResource(r);
                 resourceMap.put(r.getId(), r);
             }
             resourceBatch.clear();
@@ -3136,7 +3179,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
             Resource childResource = syncInfoTreeToResourceTree(child, resourceMap);
             if (null != childResource) {
-                result.addChildResource(childResource);
+                result.addChildResourceWithoutAncestry(childResource);
             }
         }
 
@@ -3246,7 +3289,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             if (parentResource != null) {
-                parentResource.addChildResource(mergedResource);
+                parentResource.addChildResourceWithoutAncestry(mergedResource);
             } else {
                 this.platform = mergedResource;
             }
@@ -3298,8 +3341,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         targetResource.setPluginConfiguration(sourceResource.getPluginConfiguration());
 
         targetResource.setName(sourceResource.getName());
-        targetResource.setDescription(sourceResource.getDescription());
-        targetResource.setLocation(sourceResource.getLocation());
+        compactResource(targetResource);
 
         return pluginConfigUpdated;
     }

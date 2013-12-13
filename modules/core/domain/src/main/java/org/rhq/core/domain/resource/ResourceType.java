@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -184,7 +185,7 @@ import org.rhq.core.domain.util.Summary;
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
         + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')," //
         + "         (SELECT COUNT(driftDef) FROM rt.driftDefinitionTemplates driftDef)," // drift
-        + "         (SELECT COUNT(bundleConfig) FROM rt.bundleConfiguration bundleConfig)" // bundle        
+        + "         (SELECT COUNT(bundleConfig) FROM rt.bundleConfiguration bundleConfig)" // bundle
         + "       ) " //
         + "  FROM ResourceType rt " //
         + " WHERE rt.deleted = false AND ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
@@ -383,14 +384,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
-    private Set<OperationDefinition> operationDefinitions = new HashSet<OperationDefinition>();
+    private Set<OperationDefinition> operationDefinitions;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID")
     @OneToMany(cascade = CascadeType.ALL)
     private Set<ProcessScan> processScans;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
-    private Set<PackageType> packageTypes = new HashSet<PackageType>();
+    private Set<PackageType> packageTypes;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private List<ResourceSubCategory> subCategories;
@@ -440,16 +441,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         }
 
         // Initialize empty ordered lists...
-        this.childResourceTypes = new LinkedHashSet<ResourceType>();
-        this.parentResourceTypes = new LinkedHashSet<ResourceType>();
+        this.childResourceTypes = null;
+        this.parentResourceTypes = new HashSet<ResourceType>(1);
         this.metricDefinitions = new LinkedHashSet<MeasurementDefinition>();
-        this.eventDefinitions = new LinkedHashSet<EventDefinition>();
-        this.operationDefinitions = new LinkedHashSet<OperationDefinition>();
-        this.processScans = new HashSet<ProcessScan>();
-        this.packageTypes = new HashSet<PackageType>();
-        this.subCategories = new ArrayList<ResourceSubCategory>();
-        this.productVersions = new HashSet<ProductVersion>();
-        this.driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>();
 
         this.name = name;
         this.category = category;
@@ -633,6 +627,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
      * @param parentResourceType
      */
     public void addParentResourceType(ResourceType parentResourceType) {
+        if (parentResourceType.childResourceTypes==null || parentResourceType.childResourceTypes.equals(Collections.emptySet())) {
+            parentResourceType.childResourceTypes = new HashSet<ResourceType>(1);
+        }
         parentResourceType.childResourceTypes.add(this);
         this.parentResourceTypes.add(parentResourceType);
     }
@@ -647,6 +644,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public Set<ResourceType> getChildResourceTypes() {
+        if (this.childResourceTypes==null) {
+            return Collections.emptySet();
+        }
         return this.childResourceTypes;
     }
 
@@ -655,6 +655,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
      * @param childResourceType
      */
     public void addChildResourceType(ResourceType childResourceType) {
+        if (this.childResourceTypes==null) {
+            childResourceTypes = new LinkedHashSet<ResourceType>(1);
+        }
         childResourceType.parentResourceTypes.add(this);
         this.childResourceTypes.add(childResourceType);
     }
@@ -664,8 +667,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
      * @param oldChildResourceType
      */
     public void removeChildResourceType(ResourceType oldChildResourceType) {
+        if (this.childResourceTypes==null) {
+            return;
+        }
         oldChildResourceType.parentResourceTypes.remove(this);
         this.childResourceTypes.remove(oldChildResourceType);
+        if (this.childResourceTypes.isEmpty()) {
+            this.childResourceTypes=null;
+    }
     }
 
     public void setChildResourceTypes(Set<ResourceType> childResourceTypes) {
@@ -720,6 +729,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @XmlTransient
     public Set<EventDefinition> getEventDefinitions() {
+        if (eventDefinitions==null) {
+            return Collections.emptySet();
+        }
         return eventDefinitions;
     }
 
@@ -728,10 +740,16 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public void addEventDefinition(EventDefinition eventDefinition) {
+        if (this.eventDefinitions==null) {
+            this.eventDefinitions = new HashSet<EventDefinition>(1);
+        }
         this.eventDefinitions.add(eventDefinition);
     }
 
     public Set<OperationDefinition> getOperationDefinitions() {
+        if (operationDefinitions==null) {
+            return Collections.emptySet();
+        }
         return operationDefinitions;
     }
 
@@ -740,11 +758,17 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public boolean addOperationDefinition(OperationDefinition operationDefinition) {
+        if (operationDefinitions==null) {
+            operationDefinitions = new LinkedHashSet<OperationDefinition>(1);
+        }
         operationDefinition.setResourceType(this);
         return this.operationDefinitions.add(operationDefinition);
     }
 
     public Set<ProcessScan> getProcessScans() {
+        if (processScans==null) {
+            return Collections.emptySet();
+        }
         return this.processScans;
     }
 
@@ -756,12 +780,15 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         // this is unidirection - no need to set this resource this on process match
 
         if (this.processScans == null) {
-            this.processScans = new HashSet<ProcessScan>();
+            this.processScans = new HashSet<ProcessScan>(1);
         }
         return this.processScans.add(processMatch);
     }
 
     public Set<PackageType> getPackageTypes() {
+        if (packageTypes==null) {
+            return Collections.emptySet();
+        }
         return packageTypes;
     }
 
@@ -770,6 +797,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public void addPackageType(PackageType packageType) {
+        if (packageTypes==null) {
+            packageTypes= new HashSet<PackageType>(1);
+        }
         packageType.setResourceType(this);
         packageTypes.add(packageType);
     }
@@ -777,6 +807,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     public void removePackageType(PackageType packageType) {
         packageTypes.remove(packageType);
         packageType.setResourceType(null);
+        if (packageTypes.isEmpty()) {
+            packageTypes=null;
+    }
     }
 
     /**
@@ -788,6 +821,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
      *         on this ResourceType
      */
     public List<ResourceSubCategory> getChildSubCategories() {
+        if (subCategories==null) {
+            return Collections.emptyList();
+        }
         return this.subCategories;
     }
 
@@ -813,6 +849,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public Set<ProductVersion> getProductVersions() {
+        if (productVersions==null) {
+            return Collections.emptySet();
+        }
         return productVersions;
     }
 
@@ -853,12 +892,15 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public Set<DriftDefinitionTemplate> getDriftDefinitionTemplates() {
+        if (driftDefinitionTemplates==null) {
+            return Collections.emptySet();
+        }
         return driftDefinitionTemplates;
     }
 
     public void addDriftDefinitionTemplate(DriftDefinitionTemplate template) {
         if (driftDefinitionTemplates == null) {
-            driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>();
+            driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>(1);
         }
         template.setResourceType(this);
         driftDefinitionTemplates.add(template);

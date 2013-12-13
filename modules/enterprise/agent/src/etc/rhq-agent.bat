@@ -129,7 +129,7 @@ rem Prepare the VM command line options to be passed in
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_AGENT_JAVA_OPTS (
-   set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file="%RHQ_AGENT_HOME%\conf\agent-prefs.properties"
+   set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file="%RHQ_AGENT_HOME%\conf\agent-prefs.properties -XX:StringTableSize=1000003"
 )
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_OPTS: %RHQ_AGENT_JAVA_OPTS%
 

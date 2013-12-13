@@ -63,6 +63,7 @@ import org.rhq.coregui.client.inventory.groups.detail.configuration.HistoryGroup
 import org.rhq.coregui.client.inventory.groups.detail.inventory.GroupPluginConfigurationEditView;
 import org.rhq.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
 import org.rhq.coregui.client.inventory.groups.detail.inventory.MembersView;
+import org.rhq.coregui.client.inventory.groups.detail.monitoring.metric.MetricsGroupView;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.schedules.ResourceGroupSchedulesView;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.table.GroupMonitoringTablesView;
 import org.rhq.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
@@ -332,7 +333,7 @@ public class ResourceGroupDetailView extends
             viewFactory = (!showOnPage) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return createD3GraphListView();
+                    return MetricsGroupView.create(groupComposite.getResourceGroup());
                 }
             };
 

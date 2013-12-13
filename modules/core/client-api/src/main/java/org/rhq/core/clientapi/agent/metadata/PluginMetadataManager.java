@@ -64,7 +64,7 @@ public class PluginMetadataManager {
     static {
         TEST_PLATFORM_TYPE.setClassLoaderType(ClassLoaderType.SHARED);
     }
-    
+
     private Log log = LogFactory.getLog(PluginMetadataManager.class);
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();
@@ -295,7 +295,7 @@ public class PluginMetadataManager {
 
     /**
      * Builds the dependency graph using all known descriptors.
-     * 
+     *
      * @return dependency graph
      */
     public PluginDependencyGraph buildDependencyGraph() {
@@ -540,5 +540,12 @@ public class PluginMetadataManager {
         }
 
         return;
+    }
+
+    public void cleanupDescriptors() {
+        descriptorsByPlugin.clear();
+        for (PluginMetadataParser parser : parsersByPlugin.values()) {
+            parser.cleanDescriptor();
+        }
     }
 }

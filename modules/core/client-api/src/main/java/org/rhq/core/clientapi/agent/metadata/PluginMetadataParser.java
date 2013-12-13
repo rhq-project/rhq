@@ -924,4 +924,7 @@ public class PluginMetadataParser {
         return null;
     }
 
+    public void cleanDescriptor() {
+        pluginDescriptor=null;
+    }
 }

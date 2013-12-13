@@ -11,6 +11,14 @@
 # set via rhq-client-env.sh, which is sourced by this script.
 # =============================================================================
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# IMPORTANT: Avoid enclosing shell variables in braces using the ${XXX}
+# notation. This file is subject to maven resource variable expansion
+# during the build and so it can happen that the build environment
+# could corrupt this file by expanding variables that clash with
+# the names defined herein.
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # ----------------------------------------------------------------------
 # Subroutine that simply dumps a message iff debug mode is enabled
 # ----------------------------------------------------------------------
@@ -42,16 +50,17 @@ esac
 _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 RHQ_CLI_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
-if [ -f "${RHQ_CLI_BIN_DIR_PATH}/rhq-cli-env.sh" ]; then
-   debug_msg "Loading environment script: ${RHQ_CLI_BIN_DIR_PATH}/rhq-cli-env.sh"
-   . "${RHQ_CLI_BIN_DIR_PATH}/rhq-cli-env.sh" $*
+if [ -f "$RHQ_CLI_BIN_DIR_PATH/rhq-cli-env.sh" ]; then
+   debug_msg "Loading environment script: $RHQ_CLI_BIN_DIR_PATH/rhq-cli-env.sh"
+   . "$RHQ_CLI_BIN_DIR_PATH/rhq-cli-env.sh" $*
 else
-   debug_msg "No environment script found at: ${RHQ_CLI_BIN_DIR_PATH}/rhq-cli-env.sh"
+   debug_msg "No environment script found at: $RHQ_CLI_BIN_DIR_PATH/rhq-cli-env.sh"
 fi
 
 # this variable is set during the build and defines the desired default behavior for directory changing
 # we do want to change the dir in RHQ, but possibly don't want to do that in JBoss ON for backwards compatibility
 # reasons.
+# (yes, this USES ${} in the source (not in the distribution) because we seed the default value from the build)
 RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT=${rhq.cli.change-dir-on-start-default}
 if [ -z "$RHQ_CLI_CHANGE_DIR_ON_START" ]; then
     RHQ_CLI_CHANGE_DIR_ON_START="$RHQ_CLI_CHANGE_DIR_ON_START_DEFAULT"
@@ -61,24 +70,24 @@ fi
 # Previous versions always changed directory.
 if [ -n "$RHQ_CLI_CHANGE_DIR_ON_START" -a "$RHQ_CLI_CHANGE_DIR_ON_START" != "false" ]; then
     if [ -z "$RHQ_CLI_HOME" ]; then
-       cd "${RHQ_CLI_BIN_DIR_PATH}/.."
+       cd "$RHQ_CLI_BIN_DIR_PATH/.."
     else
-       cd "${RHQ_CLI_HOME}" || {
-          echo "Cannot go to the RHQ_CLI_HOME directory: ${RHQ_CLI_HOME}"
+       cd "$RHQ_CLI_HOME" || {
+          echo "Cannot go to the RHQ_CLI_HOME directory: $RHQ_CLI_HOME"
           exit 1
           }
     fi
     RHQ_CLI_HOME=`pwd`
 else
     if [ -z "$RHQ_CLI_HOME" ]; then
-        RHQ_CLI_HOME="${RHQ_CLI_BIN_DIR_PATH}/.."
+        RHQ_CLI_HOME="$RHQ_CLI_BIN_DIR_PATH/.."
     fi
 
     #get an absolute path
     RHQ_CLI_HOME=`readlink -f "$RHQ_CLI_HOME"`
 
     if [ ! -d "$RHQ_CLI_HOME" ]; then
-        echo "RHQ_CLI_HOME detected or defined as [${RHQ_CLI_HOME}] doesn't seem to exist or is not a directory"
+        echo "RHQ_CLI_HOME detected or defined as [$RHQ_CLI_HOME] doesn't seem to exist or is not a directory"
         exit 1
     fi
 fi
@@ -90,7 +99,7 @@ debug_msg "RHQ_CLI_HOME: $RHQ_CLI_HOME"
 # sample modules.
 # ----------------------------------------------------------------------
 if [ -z "$RHQ_CLI_MODULES_DIR" ]; then
-    RHQ_CLI_MODULES_DIR="${RHQ_CLI_HOME}/samples/modules"
+    RHQ_CLI_MODULES_DIR="$RHQ_CLI_HOME/samples/modules"
 fi
 
 # ----------------------------------------------------------------------
@@ -110,7 +119,7 @@ fi
 
 if [ -z "$RHQ_CLI_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_CLI_JAVA_HOME" ]; then
-      RHQ_CLI_JAVA_HOME="${RHQ_CLI_HOME}/jre"
+      RHQ_CLI_JAVA_HOME="$RHQ_CLI_HOME/jre"
       if [ -d "$RHQ_CLI_JAVA_HOME" ]; then
          debug_msg "Using the embedded JRE"
       else
@@ -119,7 +128,7 @@ if [ -z "$RHQ_CLI_JAVA_EXE_FILE_PATH" ]; then
       fi
    fi
    debug_msg "RHQ_CLI_JAVA_HOME: $RHQ_CLI_JAVA_HOME"
-   RHQ_CLI_JAVA_EXE_FILE_PATH=${RHQ_CLI_JAVA_HOME}/bin/java
+   RHQ_CLI_JAVA_EXE_FILE_PATH="$RHQ_CLI_JAVA_HOME/bin/java"
 fi
 debug_msg "RHQ_CLI_JAVA_EXE_FILE_PATH: $RHQ_CLI_JAVA_EXE_FILE_PATH"
 
@@ -133,14 +142,14 @@ fi
 # Prepare the classpath (take into account possible spaces in dir names)
 # ----------------------------------------------------------------------
 
-CLASSPATH="${RHQ_CLI_HOME}/conf"
-_JAR_FILES=`cd "${RHQ_CLI_HOME}/lib";ls -1 *.jar`
+CLASSPATH="$RHQ_CLI_HOME/conf"
+_JAR_FILES=`cd "$RHQ_CLI_HOME/lib";ls -1 *.jar`
 for _JAR in $_JAR_FILES ; do
-   _JAR="${RHQ_CLI_HOME}/lib/${_JAR}"
+   _JAR="$RHQ_CLI_HOME/lib/$_JAR"
    if [ -z "$CLASSPATH" ]; then
-      CLASSPATH="${_JAR}"
+      CLASSPATH="$_JAR"
    else
-      CLASSPATH="${CLASSPATH}:${_JAR}"
+      CLASSPATH="$CLASSPATH:$_JAR"
    fi
    debug_msg "CLASSPATH entry: $_JAR"
 done
@@ -151,7 +160,7 @@ debug_msg "CLASSPATH entry: $_JAR"
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_CLI_JAVA_OPTS" ]; then
-   RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir=${RHQ_CLI_MODULES_DIR}"
+   RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.scripting.modules.root-dir=$RHQ_CLI_MODULES_DIR"
 fi
 debug_msg "RHQ_CLI_JAVA_OPTS: $RHQ_CLI_JAVA_OPTS"
 
@@ -159,7 +168,7 @@ if [ "$RHQ_CLI_JAVA_ENDORSED_DIRS" = "none" ]; then
    debug_msg "Not explicitly setting java.endorsed.dirs"
 else
    if [ -z "$RHQ_CLI_JAVA_ENDORSED_DIRS" ]; then
-      RHQ_CLI_JAVA_ENDORSED_DIRS="${RHQ_CLI_HOME}/lib/endorsed"
+      RHQ_CLI_JAVA_ENDORSED_DIRS="$RHQ_CLI_HOME/lib/endorsed"
    fi
 
    # convert the path if on Windows
@@ -167,14 +176,14 @@ else
       RHQ_CLI_JAVA_ENDORSED_DIRS=`cygpath --windows --path "$RHQ_CLI_JAVA_ENDORSED_DIRS"`
    fi
    debug_msg "RHQ_CLI_JAVA_ENDORSED_DIRS: $RHQ_CLI_JAVA_ENDORSED_DIRS"
-   _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=\"${RHQ_CLI_JAVA_ENDORSED_DIRS}\""
+   _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=\"$RHQ_CLI_JAVA_ENDORSED_DIRS\""
 fi
 
 if [ "$RHQ_CLI_JAVA_LIBRARY_PATH" = "none" ]; then
    debug_msg "Not explicitly setting java.library.path"
 else
    if [ -z "$RHQ_CLI_JAVA_LIBRARY_PATH" ]; then
-      RHQ_CLI_JAVA_LIBRARY_PATH="${RHQ_CLI_HOME}/lib"
+      RHQ_CLI_JAVA_LIBRARY_PATH="$RHQ_CLI_HOME/lib"
    fi
 
    # convert the path if on Windows
@@ -182,7 +191,7 @@ else
       RHQ_CLI_JAVA_LIBRARY_PATH=`cygpath --windows --path "$RHQ_CLI_JAVA_LIBRARY_PATH"`
    fi
    debug_msg "RHQ_CLI_JAVA_LIBRARY_PATH: $RHQ_CLI_JAVA_LIBRARY_PATH"
-   _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=\"${RHQ_CLI_JAVA_LIBRARY_PATH}\""
+   _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=\"$RHQ_CLI_JAVA_LIBRARY_PATH\""
 fi
 
 debug_msg "RHQ_CLI_ADDITIONAL_JAVA_OPTS: $RHQ_CLI_ADDITIONAL_JAVA_OPTS"
@@ -201,8 +210,8 @@ if [ -n "$RHQ_CLI_DEBUG" ]; then
 fi
 
 # create the logs directory
-if [ ! -d "${RHQ_CLI_HOME}/logs" ]; then
-   mkdir "${RHQ_CLI_HOME}/logs"
+if [ ! -d "$RHQ_CLI_HOME/logs" ]; then
+   mkdir "$RHQ_CLI_HOME/logs"
 fi
 
 # convert some of the paths if we are on Windows
@@ -220,15 +229,15 @@ fi
 debug_msg "Executing the CLI with this command line:"
 exit_code=0
 if [ -z "$RHQ_CLI_CMDLINE_OPTS" ]; then
-    debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain $@"
-    "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain "$@"
+    debug_msg "$RHQ_CLI_JAVA_EXE_FILE_PATH $_JAVA_ENDORSED_DIRS_OPT $_JAVA_LIBRARY_PATH_OPT $RHQ_CLI_JAVA_OPTS $RHQ_CLI_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp $CLASSPATH org.rhq.enterprise.client.ClientMain $@"
+    "$RHQ_CLI_JAVA_EXE_FILE_PATH" $_JAVA_ENDORSED_DIRS_OPT $_JAVA_LIBRARY_PATH_OPT $RHQ_CLI_JAVA_OPTS $RHQ_CLI_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp "$CLASSPATH" org.rhq.enterprise.client.ClientMain "$@"
     exit_code=$?
 
 else
-    debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
-    "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}
+    debug_msg "$RHQ_CLI_JAVA_EXE_FILE_PATH $_JAVA_ENDORSED_DIRS_OPT $_JAVA_LIBRARY_PATH_OPT $RHQ_CLI_JAVA_OPTS $RHQ_CLI_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp $CLASSPATH org.rhq.enterprise.client.ClientMain $RHQ_CLI_CMDLINE_OPTS"
+    "$RHQ_CLI_JAVA_EXE_FILE_PATH" $_JAVA_ENDORSED_DIRS_OPT $_JAVA_LIBRARY_PATH_OPT $RHQ_CLI_JAVA_OPTS $RHQ_CLI_ADDITIONAL_JAVA_OPTS $_LOG_CONFIG -cp "$CLASSPATH" org.rhq.enterprise.client.ClientMain $RHQ_CLI_CMDLINE_OPTS
     exit_code=$?
 fi
 
 debug_msg "$0 done."
-exit ${exit_code}
+exit $exit_code

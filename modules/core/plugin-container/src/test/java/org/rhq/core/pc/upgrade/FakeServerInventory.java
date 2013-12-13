@@ -19,8 +19,6 @@
 
 package org.rhq.core.pc.upgrade;
 
-import static org.testng.Assert.fail;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +39,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -120,7 +119,26 @@ public class FakeServerInventory {
                             platform = persisted;
                         }
                     }
-                    return new MergeInventoryReportResults(getSyncInfo(), null);
+                    return new MergeInventoryReportResults(getPlatformSyncInfo(), null);
+                }
+            }
+        };
+    }
+
+    public synchronized CustomAction getResourceSyncInfo() {
+        return new CustomAction("getResourceSyncInfo") {
+            public Object invoke(Invocation invocation) throws Throwable {
+                synchronized (FakeServerInventory.this) {
+                    throwIfFailing();
+
+                    Integer resourceId = (Integer) invocation.getParameter(0);
+
+                    for (Resource c : platform.getChildResources()) {
+                        if (c.getId() == resourceId) {
+                            return getResourceSyncInfo(c);
+                        }
+                    }
+                    return null;
                 }
             }
         };
@@ -134,7 +152,7 @@ public class FakeServerInventory {
 
                     platform = null;
 
-                    return new MergeInventoryReportResults(getSyncInfo(), null);
+                    return new MergeInventoryReportResults(getPlatformSyncInfo(), null);
                 }
             }
         };
@@ -394,57 +412,51 @@ public class FakeServerInventory {
         return persisted;
     }
 
-    private ResourceSyncInfo getSyncInfo() {
-        return platform != null ? convert(platform) : null;
-    }
-
     private void throwIfFailing() {
         if (failing) {
             throw new RuntimeException("Fake server inventory is in the failing mode.");
         }
     }
 
-    private static ResourceSyncInfo convert(Resource root) {
-        return convertInternal(root, new HashMap<String, ResourceSyncInfo>());
+    private PlatformSyncInfo getPlatformSyncInfo() {
+        return platform == null ? null : PlatformSyncInfo.buildPlatformSyncInfo(platform);
     }
 
-    private static ResourceSyncInfo convertInternal(Resource root, Map<String, ResourceSyncInfo> intermediateResults) {
+    private ResourceSyncInfo getResourceSyncInfo(Resource resource) {
+        return resource == null ? null : convert(resource);
+    }
+
+    private static ResourceSyncInfo convert(Resource root) {
+        return convertInternal(root, true, new HashMap<String, ResourceSyncInfo>());
+    }
+
+    private static ResourceSyncInfo convertInternal(Resource root, boolean isTopLevelServer,
+        Map<String, ResourceSyncInfo> intermediateResults) {
+
         ResourceSyncInfo ret = intermediateResults.get(root.getUuid());
 
         if (ret != null) {
             return ret;
         }
-
         try {
-            ret = new ResourceSyncInfo();
-
+            ret = ResourceSyncInfo.buildResourceSyncInfo(root);
             intermediateResults.put(root.getUuid(), ret);
 
-            Class<ResourceSyncInfo> clazz = ResourceSyncInfo.class;
-
-            getPrivateField(clazz, "id").set(ret, root.getId());
-            getPrivateField(clazz, "uuid").set(ret, root.getUuid());
-            getPrivateField(clazz, "mtime").set(ret, root.getMtime());
-            getPrivateField(clazz, "inventoryStatus").set(ret, root.getInventoryStatus());
-
-            ResourceSyncInfo parent = root.getParentResource() == null ? null : convertInternal(
-                root.getParentResource(), intermediateResults);
-
-            getPrivateField(clazz, "parent").set(ret, parent);
+            Integer parentId = root.getParentResource() == null ? null : root.getParentResource().getId();
+            getPrivateField(ResourceSyncInfo.class, "parentId").set(ret, parentId);
 
             Set<ResourceSyncInfo> children = new LinkedHashSet<ResourceSyncInfo>();
             for (Resource child : root.getChildResources()) {
-                ResourceSyncInfo syncChild = convertInternal(child, intermediateResults);
+                ResourceSyncInfo syncChild = convertInternal(child, false, intermediateResults);
 
                 children.add(syncChild);
             }
-
-            getPrivateField(clazz, "childSyncInfos").set(ret, children);
-
+            getPrivateField(ResourceSyncInfo.class, "childSyncInfos").set(ret, children);
             return ret;
+
         } catch (Exception e) {
-            fail("Failed to convert resource " + root + " to a ResourceSyncInfo. This should not happen.", e);
-            return null;
+            throw new IllegalStateException("Failed to convert resource " + root
+                + " to a ResourceSyncInfo. This should not happen.", e);
         }
     }
 

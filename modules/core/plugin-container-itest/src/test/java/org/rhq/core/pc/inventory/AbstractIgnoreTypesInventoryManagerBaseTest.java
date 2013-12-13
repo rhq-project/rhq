@@ -40,6 +40,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -82,7 +83,7 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
 
     protected Resource platform;
 
-    protected HashMap<String, Resource> simulatedInventory; // key == UUID
+    protected HashMap<Integer, Resource> simulatedInventory; // key == resourceId == UUID.hashcode()
 
     protected HashSet<ResourceType> ignoredTypes;
 
@@ -101,7 +102,7 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
     @BeforeDiscovery
     public void resetServerServices() throws Exception {
         platform = null;
-        simulatedInventory = new HashMap<String, Resource>();
+        simulatedInventory = new HashMap<Integer, Resource>();
         gotIgnoredTypeFromAgent = new CountDownLatch(1); // will be open once we know agent discovered types we want ignored
 
         initializeIgnoredTypes();
@@ -110,6 +111,8 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
 
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             mergeInventoryReport());
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            getResourceSyncInfo());
     }
 
     @AfterDiscovery
@@ -131,23 +134,26 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
         if (platform != null) {
             platform.getChildResources().clear();
             if (simulatedInventory != null) {
-                simulatedInventory.put(platform.getUuid(), platform);
+                simulatedInventory.put(platform.getId(), platform);
             }
         }
     }
 
     protected void waitForInventory(int depth) throws Exception {
         long start = System.currentTimeMillis();
-        while (getInventoryDepth(platform) < depth) {
-            Thread.sleep(1000);
-            if (System.currentTimeMillis() - start > 30000L) {
-                break; // this should never take longer than 30s
+        int inventoryDepth = getInventoryDepth(platform);
+        while (inventoryDepth < depth) {
+            if (System.currentTimeMillis() - start > 60000L) {
+                assert false : "Failed to get proper depth, depth is currently at=" + inventoryDepth;
             }
+            Thread.sleep(1000);
+            inventoryDepth = getInventoryDepth(platform);
         }
         return;
     }
 
     protected int getInventoryDepth(Resource root) {
+        System.out.println("Inventory depth chart: " + root);
         if (root == null) {
             return 0;
         }
@@ -172,27 +178,31 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
     }
 
     protected MergeInventoryReportResults simulateInventoryReportServerProcessing(InventoryReport inventoryReport) {
-        ResourceSyncInfo syncInfo = null;
+        PlatformSyncInfo syncInfo = null;
         if (inventoryReport.getAddedRoots() != null && !inventoryReport.getAddedRoots().isEmpty()) {
             for (Resource res : inventoryReport.getAddedRoots()) {
                 persistInSimulatedInventory(res);
             }
-            syncInfo = ResourceSyncInfo.buildResourceSyncInfo(platform);
+            syncInfo = PlatformSyncInfo.buildPlatformSyncInfo(platform);
         }
-        return new MergeInventoryReportResults(syncInfo, ignoredTypes);
+
+        MergeInventoryReportResults result = new MergeInventoryReportResults(syncInfo, ignoredTypes);
+        return result;
     }
 
     protected void persistInSimulatedInventory(Resource res) {
         if (!ignoredTypes.contains(res.getResourceType())) {
-            if (!simulatedInventory.containsKey(res.getUuid())) {
+            if (!simulatedInventory.containsKey(res.getUuid().hashCode())) {
                 Resource persisted = new Resource(res.getResourceKey(), res.getName(), res.getResourceType());
+                persisted.setId(res.getUuid().hashCode());
                 persisted.setUuid(res.getUuid());
                 persisted.setInventoryStatus(InventoryStatus.COMMITTED);
-                simulatedInventory.put(persisted.getUuid(), persisted);
+                // System.out.println("***** PERSISTED:\n" + persisted.getUuid() + ", " + persisted.getName() + "\n****");
+                simulatedInventory.put(persisted.getUuid().hashCode(), persisted);
                 if (res.getParentResource() == Resource.ROOT) {
                     platform = persisted;
                 } else {
-                    Resource parent = simulatedInventory.get(res.getParentResource().getUuid());
+                    Resource parent = simulatedInventory.get(res.getParentResource().getUuid().hashCode());
                     if (parent != null) {
                         parent.addChildResource(persisted);
                     }
@@ -205,6 +215,17 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
             gotIgnoredTypeFromAgent.countDown();
         }
         return;
+    }
+
+    protected Answer<ResourceSyncInfo> getResourceSyncInfo() {
+        return new Answer<ResourceSyncInfo>() {
+            @Override
+            public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
+                Integer resourceId = (Integer) invocation.getArguments()[0];
+                ResourceSyncInfo result = ResourceSyncInfo.buildResourceSyncInfo(simulatedInventory.get(resourceId));
+                return result;
+            }
+        };
     }
 
     protected void validateFullInventory() {

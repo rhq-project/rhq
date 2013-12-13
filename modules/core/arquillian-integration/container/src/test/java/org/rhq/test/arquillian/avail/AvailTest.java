@@ -5,8 +5,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -18,7 +16,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
-import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.ResourceContainer;
@@ -55,7 +52,7 @@ public class AvailTest extends Arquillian {
     private FakeServerInventory fakeServerInventory;
 
     private FakeServerInventory.CompleteDiscoveryChecker completeDiscoveryChecker;
-    
+
     @ResourceContainers(plugin = "availPlugin", resourceType = "AvailParentServer1")
     private Set<ResourceContainer> parentContainers1;
 
@@ -98,16 +95,19 @@ public class AvailTest extends Arquillian {
         fakeServerInventory = new FakeServerInventory();
 
         completeDiscoveryChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
-        
+
         //autoimport everything
-        when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
+            fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(int.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
     }
 
     @AfterDiscovery
     public void waitForDiscovery() throws Exception {
         completeDiscoveryChecker.waitForDiscoveryComplete();
     }
-    
+
     @Test
     @RunDiscovery
     public void testConfirmInitialInventory() throws Exception {

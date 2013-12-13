@@ -85,6 +85,8 @@ public class InventoryManagerTest extends Arquillian {
         discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(2);
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
     }
 
     @AfterDiscovery

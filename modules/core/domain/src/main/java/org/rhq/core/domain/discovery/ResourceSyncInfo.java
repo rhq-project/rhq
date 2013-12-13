@@ -28,14 +28,7 @@ import java.util.HashSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -43,68 +36,31 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 
 /**
+ * Sync info for any non-platform resource.
+ *
  * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 @Entity
 @Table(name = "RHQ_RESOURCE")
-public class ResourceSyncInfo implements Serializable {
+public class ResourceSyncInfo extends SyncInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Server-assigned id
-     */
-    @Column(name = "ID", nullable = false)
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(name = "PARENT_RESOURCE_ID")
+    private Integer parentId;
 
-    /**
-     * Agent-assigned uuid
-     */
-    @Column(name = "UUID")
-    private String uuid;
-
-    /**
-     * Last modified time
-     */
-    @Column(name = "MTIME")
-    private long mtime;
-
-    @Column(name = "INVENTORY_STATUS")
-    @Enumerated(EnumType.STRING)
-    private InventoryStatus inventoryStatus;
-
-    @JoinColumn(name = "PARENT_RESOURCE_ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    private ResourceSyncInfo parent;
-
-    @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "parentId", fetch = FetchType.EAGER)
     private Collection<ResourceSyncInfo> childSyncInfos;
 
     // JPA requires public or protected no-param constructor; Externalizable requires public no-param constructor.
     public ResourceSyncInfo() {
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public long getMtime() {
-        return mtime;
-    }
-
-    public InventoryStatus getInventoryStatus() {
-        return inventoryStatus;
-    }
-
     public Collection<ResourceSyncInfo> getChildSyncInfos() {
         return childSyncInfos;
     }
 
+    // for testing
     public static ResourceSyncInfo buildResourceSyncInfo(Resource resource) {
         Collection<ResourceSyncInfo> children;
 
@@ -117,18 +73,35 @@ public class ResourceSyncInfo implements Serializable {
             children = new HashSet<ResourceSyncInfo>(0);
         }
 
+        return buildResourceSyncInfo(resource, children);
+    }
+
+    // for testing
+    public static ResourceSyncInfo buildResourceSyncInfo(Resource resource, Collection<ResourceSyncInfo> children) {
+
         ResourceSyncInfo syncInfo = new ResourceSyncInfo(resource.getId(), resource.getUuid(), resource.getMtime(),
             resource.getInventoryStatus(), children);
 
         return syncInfo;
     }
 
+
+    public static ResourceSyncInfo buildResourceSyncInfo(SyncInfo syncInfo) {
+
+        return buildResourceSyncInfo(syncInfo, ((Collection<ResourceSyncInfo>) null));
+    }
+
+    public static ResourceSyncInfo buildResourceSyncInfo(SyncInfo syncInfo, Collection<ResourceSyncInfo> children) {
+
+        ResourceSyncInfo resourceSyncInfo = new ResourceSyncInfo(syncInfo.getId(), syncInfo.getUuid(),
+            syncInfo.getMtime(), syncInfo.getInventoryStatus(), children);
+
+        return resourceSyncInfo;
+    }
+
     private ResourceSyncInfo(int id, String uuid, long mtime, InventoryStatus istatus,
         Collection<ResourceSyncInfo> children) {
-        this.id = id;
-        this.uuid = uuid;
-        this.mtime = mtime;
-        this.inventoryStatus = istatus;
+        super(id, uuid, mtime, istatus);
         this.childSyncInfos = children;
     }
 }

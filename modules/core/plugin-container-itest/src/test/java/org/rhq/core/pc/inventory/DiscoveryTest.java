@@ -97,6 +97,8 @@ public class DiscoveryTest extends Arquillian {
         discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
     }
 
     @AfterDiscovery
@@ -187,7 +189,7 @@ public class DiscoveryTest extends Arquillian {
             response.getResourceId(),
             "Operation subsystem isn't aware of the correct resource id for manual add resource");
     }
-    
+
     private void validatePluginContainerInventory() throws Exception {
         System.out.println("Validating PC inventory...");
 

@@ -108,6 +108,8 @@ public class AvailTest extends Arquillian {
         // autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
     }
 
     @AfterDiscovery
@@ -118,7 +120,7 @@ public class AvailTest extends Arquillian {
     }
 
     @BeforeMethod
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! BEFORE METHOD (" + Thread.currentThread().getName() + ")");
         scrub();
     }

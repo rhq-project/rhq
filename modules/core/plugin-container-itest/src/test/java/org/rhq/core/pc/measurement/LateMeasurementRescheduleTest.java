@@ -76,6 +76,8 @@ public class LateMeasurementRescheduleTest extends Arquillian {
         // autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
 
         // set up the metric schedules using the metric metadata to determine default intervals and enablement
         when(serverServices.getDiscoveryServerService().postProcessNewlyCommittedResources(any(Set.class))).then(
@@ -119,7 +121,7 @@ public class LateMeasurementRescheduleTest extends Arquillian {
         // ** metric2 - starting at time 90 (completes at time 91)
         // ** metric2 - starting at time 105 (completes at time 105)
         // ** metric1 - starting at time [121..150] (completes at time 90 + 30 + [1..30])
-        // 
+        //
         // Metric 1 is late because it was supposed to start at t60 but instead came up for eval at t=90. It is then
         // rescheduled by our fix for (currentTime=t90 + delay=30s + randomInterval=[1..30] based on the 30s Interval).
         // And you can see above, that is when the next request to collect metric1 is done.

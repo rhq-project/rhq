@@ -67,6 +67,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -190,8 +191,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
         assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
-        ResourceSyncInfo syncInfo = results.getResourceSyncInfo();
-        assert syncInfo != null;
+        assertNotNull(results.getPlatformSyncInfo());
     }
 
     @Test(groups = "integration.ejb3")
@@ -204,7 +204,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
         assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
-        ResourceSyncInfo syncInfo = results.getResourceSyncInfo();
+        assertNotNull(results.getPlatformSyncInfo());
+        ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(results.getPlatformSyncInfo().getId());
         assert syncInfo != null;
 
         platform.setId(syncInfo.getId());
@@ -227,8 +228,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
         assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
-        syncInfo = results.getResourceSyncInfo();
-        assert syncInfo != null;
+        assertNotNull(results.getPlatformSyncInfo());
     }
 
     @Test(groups = "integration.ejb3")
@@ -250,7 +250,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
         assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
-        ResourceSyncInfo syncInfo = results.getResourceSyncInfo();
+        assertNotNull(results.getPlatformSyncInfo());
+        ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(results.getPlatformSyncInfo().getId());
         assert syncInfo != null;
 
         ResourceSyncInfo serverSyncInfo = syncInfo.getChildSyncInfos().iterator().next();
@@ -290,18 +291,18 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert mergeResults != null;
         assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
             + mergeResults.getIgnoredResourceTypes();
-        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
 
         // Check merge result
         assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
-        assertEquals(platform.getChildResources().size(), platformSyncInfo.getChildSyncInfos().size());
+        assertEquals(platform.getChildResources().size(), platformSyncInfo.getTopLevelServers().size());
 
         // Collect the resource ids generated for the platform and the servers
 
         int platformId = platformSyncInfo.getId();
         List<Integer> serverIds = new LinkedList<Integer>();
-        for (ResourceSyncInfo serverSyncInfo : platformSyncInfo.getChildSyncInfos()) {
+        for (Resource serverSyncInfo : platformSyncInfo.getTopLevelServers()) {
             serverIds.add(serverSyncInfo.getId());
         }
         int[] arrayOfServerIds = ArrayUtils.unwrapCollection(serverIds);
@@ -360,7 +361,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
         assertNotNull(mergeResults.getIgnoredResourceTypes());
         assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
@@ -368,7 +369,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // Check merge result - make sure we should not see any children under the platform (it should have been ignored)
         assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
-        assertEquals(platformSyncInfo.getChildSyncInfos().size(), 0);
+        assertEquals(platformSyncInfo.getTopLevelServers().size(), 0);
     }
 
     @Test(groups = "integration.ejb3")
@@ -392,7 +393,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
 
         // now see that we were told about the service types being ignored (even though we had no resources of that type in the report)
@@ -423,13 +424,13 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert mergeResults != null;
         assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
             + mergeResults.getIgnoredResourceTypes();
-        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
 
         // Collect the resource ids generated for the platform and the servers
         int platformId = platformSyncInfo.getId();
         List<Integer> serverIds = new LinkedList<Integer>();
-        for (ResourceSyncInfo serverSyncInfo : platformSyncInfo.getChildSyncInfos()) {
+        for (Resource serverSyncInfo : platformSyncInfo.getTopLevelServers()) {
             serverIds.add(serverSyncInfo.getId());
         }
         int[] arrayOfServerIds = ArrayUtils.unwrapCollection(serverIds);
@@ -462,14 +463,14 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge the inventory report again to simulate another discovery - the servers should be ignored now
         mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        platformSyncInfo = mergeResults.getResourceSyncInfo();
+        platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
         assertNotNull(mergeResults.getIgnoredResourceTypes());
         assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
         assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
         assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus()); // notice platform is committed now
-        assertEquals(platformSyncInfo.getChildSyncInfos().size(), 0); // notice there are no server children now
+        assertEquals(platformSyncInfo.getTopLevelServers().size(), 0); // notice there are no server children now
     }
 
     @Test(groups = "integration.ejb3")
@@ -496,15 +497,15 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert mergeResults != null;
         assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
             + mergeResults.getIgnoredResourceTypes();
-        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
 
         // Check merge result
         assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus());
-        assertEquals(storagePlatform.getChildResources().size(), platformSyncInfo.getChildSyncInfos().size());
+        assertEquals(storagePlatform.getChildResources().size(), platformSyncInfo.getTopLevelServers().size());
 
         storageNode = resourceManager.getResourceById(subjectManager.getOverlord(), platformSyncInfo
-            .getChildSyncInfos().iterator().next().getId());
+            .getTopLevelServers().iterator().next().getId());
         assertNotNull(storageNode);
         assertEquals(InventoryStatus.COMMITTED, storageNode.getInventoryStatus());
     }
@@ -526,13 +527,13 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assertNotNull(results);
         assertNull("nothing should have been ignored in this test", results.getIgnoredResourceTypes());
-        final ResourceSyncInfo firstDiscoverySyncInfo = results.getResourceSyncInfo();
+        final PlatformSyncInfo firstDiscoverySyncInfo = results.getPlatformSyncInfo();
         assertNotNull(firstDiscoverySyncInfo);
 
         // Then simulate a create resource request
         final String userSuppliedResourceName = prefix("User Supplied Resource Name");
         final String newResourceKey = prefix("Created Resource Key");
-        ResourceSyncInfo serverSyncInfo = firstDiscoverySyncInfo.getChildSyncInfos().iterator().next();
+        Resource serverSyncInfo = firstDiscoverySyncInfo.getTopLevelServers().iterator().next();
         final int serverResourceId = serverSyncInfo.getId();
 
         executeInTransaction(false, new TransactionCallback() {
@@ -562,13 +563,14 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assertNotNull(results);
         assertNull("nothing should have been ignored in this test", results.getIgnoredResourceTypes());
-        ResourceSyncInfo secondDiscoverySyncInfo = results.getResourceSyncInfo();
+        PlatformSyncInfo secondDiscoverySyncInfo = results.getPlatformSyncInfo();
         assertNotNull(secondDiscoverySyncInfo);
 
         // Check that the resource ends with the user supplied name in inventory
 
-        serverSyncInfo = secondDiscoverySyncInfo.getChildSyncInfos().iterator().next();
-        ResourceSyncInfo service1SyncInfo = serverSyncInfo.getChildSyncInfos().iterator().next();
+        ResourceSyncInfo topLevelServerSyncInfo = discoveryBoss.getResourceSyncInfo(secondDiscoverySyncInfo
+            .getTopLevelServers().iterator().next().getId());
+        ResourceSyncInfo service1SyncInfo = topLevelServerSyncInfo.getChildSyncInfos().iterator().next();
         Resource service1Resource = getEntityManager().find(Resource.class, service1SyncInfo.getId());
         assertEquals(userSuppliedResourceName, service1Resource.getName());
     }

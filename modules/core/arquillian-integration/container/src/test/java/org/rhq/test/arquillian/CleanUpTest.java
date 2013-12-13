@@ -23,12 +23,12 @@
 
 package org.rhq.test.arquillian;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+
+import java.util.Arrays;
+import java.util.HashSet;
 
 import org.testng.annotations.Test;
 
@@ -80,6 +80,8 @@ public class CleanUpTest extends Arquillian {
         //autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(int.class))).then(
+            fakeServerInventory.getResourceSyncInfo());
     }
 
     @BeforeDiscovery(testMethods = {"testCleanAll", "testClearingAfterTest", "checkDiscoveryCanRunFullBecauseInventoryClear"})

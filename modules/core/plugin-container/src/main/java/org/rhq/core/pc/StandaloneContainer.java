@@ -50,6 +50,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -899,6 +900,11 @@ public class StandaloneContainer {
         @Override
         public boolean mergeAvailabilityReport(AvailabilityReport availabilityReport) {
             return false;
+        }
+
+        @Override
+        public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
+            return null;
         }
 
         @Override

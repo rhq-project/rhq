@@ -19,6 +19,9 @@
 
 package org.rhq.core.pc.inventory;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -45,13 +48,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -70,6 +71,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -198,12 +200,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * UUID to ResourceContainer map
      */
-    private final Map<String, ResourceContainer> resourceContainersByUUID = new ConcurrentHashMap<String, ResourceContainer>(500);
+    private final Map<String, ResourceContainer> resourceContainersByUUID = new ConcurrentHashMap<String, ResourceContainer>(
+        500);
 
     /**
      * ResourceID to ResourceContainer map
      */
-    private final TIntObjectMap<ResourceContainer> resourceContainerByResourceId = new TIntObjectHashMap<ResourceContainer>(500);
+    private final TIntObjectMap<ResourceContainer> resourceContainerByResourceId = new TIntObjectHashMap<ResourceContainer>(
+        500);
 
     /**
      * Collection of event listeners to inform of changes to the inventory.
@@ -354,7 +358,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // find the discovery callbacks defined, if there are none, just return the results as-is
-        Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(context.getResourceType());
+        Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(
+            context.getResourceType());
         if (callbacks == null || callbacks.isEmpty()) {
             return results;
         }
@@ -365,7 +370,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
         ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
 
-        for (Iterator<DiscoveredResourceDetails> detailsIterator = results.iterator(); detailsIterator.hasNext(); ) {
+        for (Iterator<DiscoveredResourceDetails> detailsIterator = results.iterator(); detailsIterator.hasNext();) {
             DiscoveredResourceDetails details = detailsIterator.next();
             int callbackCount = 0;
             boolean stopProcessing = false; // if true, a callback told us he found a details that he modified and we should stop
@@ -375,38 +380,39 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 String pluginName = entry.getKey();
                 List<String> callbackClassNames = entry.getValue();
                 for (String className : callbackClassNames) {
-                    ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName, className);
+                    ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName,
+                        className);
                     try {
                         Thread.currentThread().setContextClassLoader(callback.getClass().getClassLoader());
-                        callbackResults= callback.discoveredResources(details);// inline in our calling thread - no time outs or anything; hopefully the plugin plays nice
+                        callbackResults = callback.discoveredResources(details);// inline in our calling thread - no time outs or anything; hopefully the plugin plays nice
                         callbackCount++;
                         if (log.isDebugEnabled()) {
                             log.debug("Discovery callback [{" + pluginName + "}" + className + "] returned ["
-                                    + callbackResults + "] #invocations=" + callbackCount);
+                                + callbackResults + "] #invocations=" + callbackCount);
                         }
                         switch (callbackResults) {
-                            case PROCESSED: {
-                                if (stopProcessing) {
-                                    abortDiscovery = true;
-                                    log.warn("Another discovery callback [{" + pluginName + "}" + className
-                                            + "] processed details [" + details
-                                            + "]. This is not allowed. Discovery will be aborted for that resource");
-                                } else {
-                                    stopProcessing = true;
-                                }
-                                break;
+                        case PROCESSED: {
+                            if (stopProcessing) {
+                                abortDiscovery = true;
+                                log.warn("Another discovery callback [{" + pluginName + "}" + className
+                                    + "] processed details [" + details
+                                    + "]. This is not allowed. Discovery will be aborted for that resource");
+                            } else {
+                                stopProcessing = true;
                             }
-                            case VETO: {
-                                vetoDiscovery = true;
-                                log.warn("Discovery callback [{" + pluginName + "}" + className
-                                        + "] vetoed resource [" + details
-                                        + "]. Discovery will be skipped for that resource and it will not be inventoried.");
-                                break;
-                            }
-                            default: {
-                                // callback left the details unprocessed, nothing to do.
-                                break;
-                            }
+                            break;
+                        }
+                        case VETO: {
+                            vetoDiscovery = true;
+                            log.warn("Discovery callback [{" + pluginName + "}" + className + "] vetoed resource ["
+                                + details
+                                + "]. Discovery will be skipped for that resource and it will not be inventoried.");
+                            break;
+                        }
+                        default: {
+                            // callback left the details unprocessed, nothing to do.
+                            break;
+                        }
                         }
                         // note that we keep going, even if we set stopProcessing is true - this is because we
                         // want to keep calling callbacks and check if they, too, think they can identify the details. If
@@ -681,8 +687,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @NotNull
     public InventoryReport executeServiceScanImmediately(Resource resource) {
-        RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
-            resource);
+        RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration, resource);
         return submit(discoveryExecutor);
     }
 
@@ -747,7 +752,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             //make sure we have the full version of the resource
             ResourceContainer container = getResourceContainer(resource.getId());
-            if (container  == null) {
+            if (container == null) {
                 //don't bother doing anything
                 return new AvailabilityReport(changesOnly, getAgent().getName());
             }
@@ -1127,7 +1132,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return true;
         }
 
-        ResourceSyncInfo syncInfo;
+        PlatformSyncInfo platformSyncInfo;
         Collection<ResourceTypeFlyweight> ignoredTypes;
         try {
             String reportType = (report.isRuntimeReport()) ? "runtime" : "server";
@@ -1137,10 +1142,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .getDiscoveryServerService();
             MergeInventoryReportResults results = discoveryServerService.mergeInventoryReport(report);
             if (results != null) {
-                syncInfo = results.getResourceSyncInfo();
+                platformSyncInfo = results.getPlatformSyncInfo();
                 ignoredTypes = results.getIgnoredResourceTypes();
             } else {
-                syncInfo = null;
+                platformSyncInfo = null;
                 ignoredTypes = null;
             }
             if (log.isDebugEnabled()) {
@@ -1185,8 +1190,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         //Another (rare) scenario where this would happen would be when the platform resource type
         //would change.
         //In either case, let's sync up with the server - if it's got nothing, neither should the agent.
-        if (syncInfo != null) {
-            synchInventory(syncInfo);
+        if (platformSyncInfo != null) {
+            syncPlatform(platformSyncInfo);
         } else {
             purgeObsoleteResources(Collections.<String> emptySet());
 
@@ -1198,24 +1203,86 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * Performs a sync so that resources passed in are reflected in the agent's inventory.
-     * This assumes the resource sync infos passed in represent the full inventory tree.
+     * Performs a full platform sync so that resources passed in are reflected in the agent's inventory.
      *
-     * @param syncInfo information on all resources in the entire inventory tree
+     * @param platformSyncInfo sync info on the platform and references to the top level servers
      */
-    private void synchInventory(ResourceSyncInfo syncInfo) {
-        synchInventory(syncInfo, false);
+    private void syncPlatform(PlatformSyncInfo platformSyncInfo) {
+        final Set<String> allServerSideUuids = new HashSet<String>();
+        boolean hadSyncedResources = false;
+
+        // always sync the platform because it does not get included in the top level server sync
+        allServerSideUuids.add(platformSyncInfo.getUuid());
+        ResourceSyncInfo platformResourceSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(platformSyncInfo);
+        log.info("Sync Starting: Platform [" + platformResourceSyncInfo.getId() + "]");
+        hadSyncedResources = syncResource(platformResourceSyncInfo) || hadSyncedResources;
+        log.info("Sync Complete: Platform [" + platformResourceSyncInfo.getId() + "]. Local inventory changed: ["
+            + hadSyncedResources + "]");
+
+        // then sync the top level servers by calling back to the server for the sync info for each. We
+        // do this one at a time to avoid forcing the whole inventory into active memory at one time during the sync.
+        Collection<Resource> topLevelServers = platformSyncInfo.getTopLevelServers();
+        if (null != topLevelServers) {
+            DiscoveryServerService service = configuration.getServerServices().getDiscoveryServerService();
+
+            for (Resource topLevelServer : topLevelServers) {
+                ResourceSyncInfo topLevelServerSyncInfo = service.getResourceSyncInfo(topLevelServer.getId());
+                if (null != topLevelServerSyncInfo) {
+                    //topLevelServerSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(platformSyncInfo,
+                    //    topLevelServerSyncInfo);
+                    getAllUuids(topLevelServerSyncInfo, allServerSideUuids);
+                    log.info("Sync Starting: Top Level Server  [" + topLevelServerSyncInfo.getId() + "]");
+                    hadSyncedResources = syncResource(topLevelServerSyncInfo) || hadSyncedResources;
+                    log.info("Sync Complete: Top Level Server  [" + topLevelServerSyncInfo.getId()
+                        + "] Local inventory changed: [" + hadSyncedResources + "]");
+                }
+            }
+        }
+
+        purgeObsoleteResources(allServerSideUuids);
+
+        // If we synced any Resources, one or more Resource components were probably started, request a
+        // full avail report to make sure their availabilities are determined on the next avail run (typically
+        // < 30s away). A full avail report will ensure an initial avail check is performed for a resource.
+        //
+        // Also kick off a service scan to scan those Resources for new child Resources. Kick both tasks off
+        // asynchronously.
+        //
+        // Do this only if we are finished with resource upgrade because no availability checks
+        // or discoveries can happen during upgrade. This is to ensure maximum consistency of the
+        // inventory with the server side as well as to disallow any other server-agent traffic during
+        // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
+        // time the upgrade kicks in..
+        if (hadSyncedResources && !isResourceUpgradeActive()) {
+
+            // TODO: If someday this is undesirable for scalability reasons, we could probably instead call
+            // requestAvailabilityCheck on each unknown or modified resource.
+            requestFullAvailabilityReport();
+
+            this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor,
+                configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
+        }
+    }
+
+    private void getAllUuids(ResourceSyncInfo syncInfo, Set<String> allServerSideUuids) {
+        allServerSideUuids.add(syncInfo.getUuid());
+
+        if (null != syncInfo.getChildSyncInfos()) {
+            for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
+                getAllUuids(child, allServerSideUuids);
+            }
+        }
     }
 
     /**
-     * Performs a sync so that resources passed in are reflected in the agent's inventory.
+     * Performs a synch on only the single resource and its descendants. This is assumed to be a partial
+     * inventory.  To synch on the full inventory call {@link #syncPlatform(PlatformSyncInfo)}
      *
      * @param syncInfo the resources' sync data
-     * @param partialInventory if true, syncInfo represents only a partial inventory.
-     *                         if false, syncInfo represents the full inventory tree of all resources
+     * @return true if any resources needed synchronization, false otherwise
      */
-    private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory) {
-        log.info("Syncing local inventory with Server inventory...");
+    private boolean syncResource(ResourceSyncInfo syncInfo) {
+        boolean result = false;
         final long startTime = System.currentTimeMillis();
         final Set<Resource> syncedResources = new LinkedHashSet<Resource>();
         final Set<ResourceSyncInfo> unknownResourceSyncInfos = new LinkedHashSet<ResourceSyncInfo>();
@@ -1223,20 +1290,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
         final Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
         final Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
         final Set<Resource> ignoredResources = new LinkedHashSet<Resource>();
-        final Set<String> allServerSideUuids = new HashSet<String>();
 
         // rhq-980 Adding agent-side logging to report any unexpected synch failure.
         try {
-            // don't bother doing this if we are processing a partial inventory.
-            // allServerSideUuids is only ever used to purge obsolete resources, but we don't
-            // do that for partial inventories, so we don't need to prepare that collection for partials.
-            if (!partialInventory) {
-                getAllUuids(syncInfo, allServerSideUuids);
-            }
-
             log.debug("Processing Server sync info...");
+
             processSyncInfo(syncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
                 deletedResourceIds, newlyCommittedResources, ignoredResources);
+
             if (log.isDebugEnabled()) {
                 log.debug(String.format("DONE Processing sync info: [%d] ms: synced [%d] resources: "
                     + "[%d] unknown, [%d] modified, [%d] deleted, [%d] newly committed",
@@ -1247,9 +1308,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             mergeUnknownResources(unknownResourceSyncInfos);
             mergeModifiedResources(modifiedResourceIds);
             purgeIgnoredResources(ignoredResources);
-            if (!partialInventory) {
-                purgeObsoleteResources(allServerSideUuids);
-            }
+
             postProcessNewlyCommittedResources(newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 if (!deletedResourceIds.isEmpty()) {
@@ -1259,41 +1318,26 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     (System.currentTimeMillis() - startTime)));
             }
 
-            // If we synced any Resources, one or more Resource components were probably started, request a
-            // full avail report to make sure their availabilities are determined on the next avail run (typically
-            // < 30s away). A full avail report will ensure an initial avail check is performed for a resource.
-            //
-            // Also kick off a service scan to scan those Resources for new child Resources. Kick both tasks off
-            // asynchronously.
-            //
-            // Do this only if we are finished with resource upgrade because no availability checks
-            // or discoveries can happen during upgrade. This is to ensure maximum consistency of the
-            // inventory with the server side as well as to disallow any other server-agent traffic during
-            // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
-            // time the upgrade kicks in..
-            if (!isResourceUpgradeActive()
-                && (!syncedResources.isEmpty() || !unknownResourceSyncInfos.isEmpty() || !modifiedResourceIds.isEmpty())) {
+            result = !(syncedResources.isEmpty() && unknownResourceSyncInfos.isEmpty() && modifiedResourceIds.isEmpty());
 
-                // TODO: If someday this is undesirable for scalability reasons, we could probably instead call
-                // requestAvailabilityCheck on each unknown or modified resource.
-                requestFullAvailabilityReport();
-
-                this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor,
-                    configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
-            }
         } catch (Throwable t) {
             log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + syncInfo.getId()
                 + "] and its descendants: " + t.getMessage());
             // convert to runtime exception so as not to change the api
             throw new RuntimeException(t);
         }
+
+        return result;
     }
 
-    private void getAllUuids(ResourceSyncInfo syncInfo, Set<String> allServerSideUuids) {
-        allServerSideUuids.add(syncInfo.getUuid());
-        for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
-            getAllUuids(child, allServerSideUuids);
-        }
+    public void synchronizeInventory(ResourceSyncInfo resourceSyncInfo) {
+        log.info("Synchronizing local inventory with Server inventory for Resource [" + resourceSyncInfo.getId()
+            + "] and its descendants...");
+
+        // Get the latest resource data rooted at the given id.
+        syncResource(resourceSyncInfo); // this method assumes we only get a single resource and its children (BZ 887411)
+        performServiceScan(resourceSyncInfo.getId()); // NOTE: This will block (the initial scan blocks).
+        // TODO: (jshaughn) should we also request a full avail scan?
     }
 
     /**
@@ -1423,8 +1467,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     log.debug("Asked to remove an unknown Resource [" + resource + "] with UUID [" + resource.getUuid()
                         + "]");
                 }
-            }
-            else {
+            } else {
                 this.resourceContainerByResourceId.remove(resource.getId());
             }
 
@@ -1972,8 +2015,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource),
-            getInventoryContext(resource), this.configuration.getPluginContainerDeployment(), // helps components make determinations of what to do
+            getAvailabilityContext(resource), getInventoryContext(resource),
+            this.configuration.getPluginContainerDeployment(), // helps components make determinations of what to do
             new ComponentInvocationContextImpl());
     }
 
@@ -2170,8 +2213,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     compactResource(resource);
                 }
 
-                log.info("Inventory with size [" + this.resourceContainersByUUID.size() + "] loaded from data file in ["
-                    + (System.currentTimeMillis() - start) + "ms]");
+                log.info("Inventory with size [" + this.resourceContainersByUUID.size()
+                    + "] loaded from data file in [" + (System.currentTimeMillis() - start) + "ms]");
             }
         } catch (Exception e) {
             this.platform = null;
@@ -2352,15 +2395,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         platform.setUuid(UUID.randomUUID().toString());
         platform.setAgent(this.agent);
         return platform;
-    }
-
-    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
-        log.info("Synchronizing local inventory with Server inventory for Resource [" + syncInfo.getId()
-            + "] and its descendants...");
-
-        // Get the latest resource data rooted at the given id.
-        synchInventory(syncInfo, true); // this method assumes we only get a single resource and its children (BZ 887411)
-        performServiceScan(syncInfo.getId()); // NOTE: This will block (the initial scan blocks).
     }
 
     /**
@@ -2953,9 +2987,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
 
                 // Recurse...
-                for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
-                        deletedResourceIds, newlyCommittedResources, ignoredResources);
+                if (null != syncInfo.getChildSyncInfos()) {
+                    for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
+                        processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
+                            deletedResourceIds, newlyCommittedResources, ignoredResources);
+                    }
                 }
             }
         }
@@ -3237,8 +3273,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         while (!queue.isEmpty()) {
             ResourceSyncInfo node = queue.remove();
             result.add(node.getId());
-            for (ResourceSyncInfo child : node.getChildSyncInfos()) {
-                queue.add(child);
+            if (null != node.getChildSyncInfos()) {
+                for (ResourceSyncInfo child : node.getChildSyncInfos()) {
+                    queue.add(child);
+                }
             }
         }
 

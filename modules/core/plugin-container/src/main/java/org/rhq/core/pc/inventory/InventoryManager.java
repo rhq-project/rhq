@@ -1300,7 +1300,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Performs a synch on only the single resource and its descendants. This is assumed to be a partial
      * inventory.  To synch on the full inventory call {@link #syncPlatform(PlatformSyncInfo)}
      *
-     * @param syncInfo the resources' sync data
+     * @param syncInfos the resources' sync data
      * @return true if any resources needed synchronization, false otherwise
      */
     private boolean syncResources(int rootResourceId, Collection<ResourceSyncInfo> syncInfos) {

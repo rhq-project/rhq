@@ -1031,7 +1031,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     @Nullable
     public Availability getAvailabilityIfKnown(Resource resource) {
-        ResourceContainer resourceContainer = getResourceContainer(resource);
+        ResourceContainer resourceContainer = getResourceContainer(resource.getId());
 
         if (resourceContainer != null) {
             if (ResourceComponentState.STARTED == resourceContainer.getResourceComponentState()) {
@@ -1926,6 +1926,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // because we're not actually STARTED
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
 
+                String message = "Failed to start component for resource " + resource
+                    + ".";
+                if (t.getCause()!=null) {
+                    message += " Cause: " + t.getCause().getMessage();
+                }
+
                 if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Resource has a bad config, waiting for this to go away: " + resource);
@@ -1933,11 +1939,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     InventoryEventListener iel = new ResourceGotActivatedListener();
                     addInventoryEventListener(iel);
 
-                    throw new InvalidPluginConfigurationException("Failed to start component for resource " + resource
-                        + ".", t);
+                    throw new InvalidPluginConfigurationException(message);
                 }
 
-                throw new PluginContainerException("Failed to start component for resource " + resource + ".", t);
+                throw new PluginContainerException(message);
             }
 
             // We purposefully do not get availability of this resource yet

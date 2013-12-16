@@ -77,7 +77,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
     }
 
     public CountTime checkConfigurations(Resource resource, boolean checkChildren) {
-        ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
+        ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource.getId());
         ConfigurationFacet resourceComponent = null;
         ResourceType resourceType = resource.getResourceType();
 

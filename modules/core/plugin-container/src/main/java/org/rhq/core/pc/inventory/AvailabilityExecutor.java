@@ -355,7 +355,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                     this.inventoryManager.sendResourceErrorToServer(resourceError);
                     LOG.warn("Availability collection failed with exception on " + resource
-                        + ", availability will be reported as " + DOWN.name(), t);
+                        + ", availability will be reported as " + DOWN.name() + ", reason=" + t.getMessage());
                     current = DOWN;
                 }
             } else {

@@ -23,6 +23,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LoginView;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.util.Log;
 
@@ -86,6 +87,11 @@ public class TrackingRequestCallback implements RequestCallback {
 
         switch (statusCode) {
         case STATUS_CODE_OK:
+            if (response != null && response.getText() != null && response.getText().isEmpty()
+                && !LoginView.isLoginShowing()) { // this happen when the RHQ server was restarted
+                new LoginView().showLoginDialog();
+                break;
+            }
             RPCTracker.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
             break;

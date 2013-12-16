@@ -953,6 +953,11 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         if (properties==null) {
             return;
         }
+
+        if (copy.properties==null) {
+            copy.properties=new LinkedHashMap<String, Property>(this.properties.size());
+        }
+
         for (Property property : this.properties.values()) {
             copy.put(property.deepCopy(keepId));
         }

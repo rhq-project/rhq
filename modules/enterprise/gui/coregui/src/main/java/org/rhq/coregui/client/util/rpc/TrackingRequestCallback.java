@@ -87,6 +87,11 @@ public class TrackingRequestCallback implements RequestCallback {
 
         switch (statusCode) {
         case STATUS_CODE_OK:
+            if (response != null && response.getText() != null && response.getText().isEmpty()
+                && !LoginView.isLoginShowing()) { // this happen when the RHQ server was restarted
+                new LoginView().showLoginDialog();
+                break;
+            }
             RPCTracker.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
             break;

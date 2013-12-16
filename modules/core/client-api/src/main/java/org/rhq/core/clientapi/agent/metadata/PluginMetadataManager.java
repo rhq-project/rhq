@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,7 +69,7 @@ public class PluginMetadataManager {
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();
     private Set<ResourceType> types = new HashSet<ResourceType>();
-    private Object typesLock = new Object();
+    private final Object typesLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
 
@@ -80,12 +80,13 @@ public class PluginMetadataManager {
     private List<String> disabledResourceTypesAsStrings = null;
     private Map<ResourceType, String> disabledResourceTypes = null;
     private Set<ResourceType> ignoredResourceTypes = null;
-    private Object disabledIgnoredTypesLock = new Object(); // used when accessing disabled and ignored collections
+    private final Object disabledIgnoredTypesLock = new Object(); // used when accessing disabled and ignored collections
 
     // these define the discovery callbacks per resource type. The key is the resource type whose discovered details
     // need to be funneled through callbacks. The value is a map whose key is plugin names and whose values are
     // discovery callback implementation classes defined in the plugins.
     private Map<ResourceType, Map<String, List<String>>> discoveryCallbacks = new HashMap<ResourceType, Map<String, List<String>>>();
+    private final Object discoveryCallbacksLock = new Object();
 
     public PluginMetadataManager() {
     }
@@ -516,14 +517,14 @@ public class PluginMetadataManager {
      * @return the collection of callbacks, grouped by the plugins that defined them (may be null)
      */
     public Map<String, List<String>> getDiscoveryCallbacks(ResourceType resourceType) {
-        synchronized (discoveryCallbacks) {
+        synchronized (discoveryCallbacksLock) {
             Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
             return map;
         }
     }
 
     private void addDiscoveryCallbackClassName(ResourceType resourceType, String pluginName, String className) {
-        synchronized (discoveryCallbacks) {
+        synchronized (discoveryCallbacksLock) {
             Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
             if (map == null) {
                 map = new HashMap<String, List<String>>(1);

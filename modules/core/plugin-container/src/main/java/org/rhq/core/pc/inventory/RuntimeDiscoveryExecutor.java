@@ -161,7 +161,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         log.debug("Discovering child Resources for " + parent + "...");
 
-        ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent);
+        ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent.getId());
         if (parentContainer == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Cannot perform service scan on parent [" + parent + "] without a container");

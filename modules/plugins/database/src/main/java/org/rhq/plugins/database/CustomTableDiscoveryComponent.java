@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,12 +13,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.database;
 
+import static org.rhq.plugins.database.DatabasePluginUtil.canProvideConnection;
+import static org.rhq.plugins.database.DatabasePluginUtil.getConnectionFromComponent;
+import static org.rhq.plugins.database.DatabasePluginUtil.hasConnectionPoolingSupport;
+
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
@@ -26,14 +32,15 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * Discovery for a generic component that can read data out of a table for
@@ -46,62 +53,85 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent<?>>,
-    ResourceDiscoveryComponent<DatabaseComponent<?>> {
+public class CustomTableDiscoveryComponent implements ManualAddFacet<ResourceComponent<?>>,
+    ResourceDiscoveryComponent<ResourceComponent<?>> {
 
     protected Log log = LogFactory.getLog(getClass());
 
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
-        throws InvalidPluginConfigurationException, Exception {
+        ResourceDiscoveryContext<ResourceComponent<?>> discoveryContext) throws InvalidPluginConfigurationException,
+        Exception {
 
-        Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
+        ResourceComponent<?> parentComponent = discoveryContext.getParentResourceComponent();
+
+        Configuration config = discoveryContext.getDefaultPluginConfiguration();
         String table = config.getSimpleValue("table", "");
-        ResourceType rt = resourceDiscoveryContext.getResourceType();
-        String resourceName = config.getSimpleValue("name", rt.getName());
-        String resourceDescription = config.getSimpleValue("description", rt.getDescription());
+        ResourceType resourceType = discoveryContext.getResourceType();
+        String resourceName = config.getSimpleValue("name", resourceType.getName());
+        String resourceDescription = config.getSimpleValue("description", resourceType.getDescription());
+
+        if (!canProvideConnection(parentComponent)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Parent component does not provide JDBC connections, cannot discover" + resourceName);
+            }
+            return Collections.emptySet();
+        }
 
         if (table.isEmpty()) {
-            log.debug("'table' value not set, cannot discover " + resourceName);
+            if (log.isDebugEnabled()) {
+                log.debug("'table' value not set, cannot discover " + resourceName);
+            }
             return Collections.emptySet();
         }
 
         Statement statement = null;
+        Connection connection = null;
+        ResultSet resultSet = null;
         try {
-            Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
-            if (conn == null)
+            connection = getConnectionFromComponent(parentComponent);
+            if (connection == null) {
                 throw new InvalidPluginConfigurationException("cannot obtain connection from parent");
-
-            statement = conn.createStatement();
+            }
+            statement = connection.createStatement();
             statement.setMaxRows(1);
             statement.setFetchSize(1);
             // This is more efficient than 'count(*)'
             // unless the JDBC driver fails to support setMaxRows or doesn't stream results
-            statement.executeQuery("SELECT * FROM " + table).close();
-            DiscoveredResourceDetails details = new DiscoveredResourceDetails(
-                resourceDiscoveryContext.getResourceType(), table + resourceName, resourceName, null,
-                resourceDescription, config, null);
+            resultSet = statement.executeQuery("SELECT * FROM " + table);
 
-            log.debug("discovered " + details);
+            DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), table
+                + resourceName, resourceName, null, resourceDescription, config, null);
+
+            if (log.isDebugEnabled()) {
+                log.debug("discovered " + details);
+            }
             return Collections.singleton(details);
+
         } catch (SQLException e) {
-            log.debug("discovery failed " + e + " for " + table);
+            if (log.isDebugEnabled()) {
+                log.debug("discovery failed " + e + " for " + table);
+            }
             // table not found, don't inventory
         } finally {
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(null, statement, resultSet);
+            if (hasConnectionPoolingSupport(parentComponent)) {
+                DatabasePluginUtil.safeClose(connection, statement, resultSet);
+            }
         }
 
         return Collections.emptySet();
     }
 
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
-        ResourceDiscoveryContext<DatabaseComponent<?>> discoveryContext) throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext<ResourceComponent<?>> discoveryContext) throws InvalidPluginConfigurationException {
 
         Configuration config = pluginConfiguration;
         String table = config.getSimpleValue("table", null);
         String resourceName = config.getSimpleValue("name", table);
-        String resourceDescription = config.getSimpleValue("description",
-                discoveryContext.getResourceType().getDescription());
+        String resourceDescription = config.getSimpleValue("description", discoveryContext.getResourceType()
+            .getDescription());
         String resourceVersion = config.getSimpleValue("version", null);
 
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), table

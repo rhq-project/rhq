@@ -127,7 +127,7 @@
 
     <table name="RHQ_RAW_CONFIG">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
-        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG(ID)"/>
+        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG(ID)"/>
         <column name="PATH" type="VARCHAR2" required="false" size="512"/>
         <column name="CONTENTS" type="CLOB" required="true"/>
         <column name="SHA256" type="VARCHAR2" size="64" required="true"/>

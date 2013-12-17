@@ -210,7 +210,7 @@ public class FakeServerInventory {
                                 ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
                                     request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(),
                                     request.getTimestamp());
-                                resource.getResourceErrors().add(error);
+                                resource.addResourceError(error);
                             }
 
                             responses.add(resp);
@@ -372,7 +372,7 @@ public class FakeServerInventory {
         if (parent != null && parent != Resource.ROOT) {
             parent = fakePersist(agentSideResource.getParentResource(), statusJudge, inProgressUUIds);
             persisted.setParentResource(parent);
-            parent.getChildResources().add(persisted);
+            parent.addChildResource(persisted);
         } else {
             persisted.setParentResource(parent);
         }

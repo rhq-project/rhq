@@ -769,7 +769,11 @@ public class PluginMetadataParser {
     private void registerResourceTypeAndComponentClasses(ResourceType resourceType, String discoveryClass,
         String componentClass) {
         this.resourceTypes.add(resourceType);
-        this.componentClasses.put(resourceType, componentClass.intern());
+        if (componentClass!=null) {
+            this.componentClasses.put(resourceType, componentClass.intern());
+        } else {
+            this.componentClasses.put(resourceType, null);
+        }
         if (discoveryClass != null) {
             this.discoveryClasses.put(resourceType, discoveryClass.intern());
         }

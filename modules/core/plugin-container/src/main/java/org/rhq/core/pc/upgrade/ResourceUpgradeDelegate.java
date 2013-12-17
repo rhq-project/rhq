@@ -47,12 +47,12 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 /**
  * This is a helper class to {@link InventoryManager} that takes care of resource upgrade.
  * Note that this class is not thread-safe in any manner.
- * 
+ *
  * This class must not call (explicitly or implicitly anywhere in its outgoing call chain)
  * any other plugin container manager other than the InventoryManager.  This is because
  * this delegate is called within the Inventory Manager's initialize method and hence
  * many other managers are not yet initialized themselves yet.
- * 
+ *
  * @author Lukas Krejci
  */
 public class ResourceUpgradeDelegate {
@@ -73,7 +73,7 @@ public class ResourceUpgradeDelegate {
     }
 
     /**
-     * Is the delegate enabled? In another words has the resource upgrade phase finished in the {@link IventoryManager#initialize()}
+     * Is the delegate enabled? In another words has the resource upgrade phase finished in the {@link InventoryManager#initialize()}
      * method?
      */
     public boolean enabled() {
@@ -96,7 +96,7 @@ public class ResourceUpgradeDelegate {
      * If later on the upgrade fails to finish due to communication error with server or the
      * server doesn't approve some upgrades for whatever reason, the resources will be restarted
      * with the original data.
-     * 
+     *
      * @param resourceContainer
      * @return true if the resource was queued for upgrade with no problems,
      * false if there was some problem upgrading and the resource container was deactivated as
@@ -120,7 +120,7 @@ public class ResourceUpgradeDelegate {
 
     /**
      * Tells whether given resource had a upgrade failure during the {@link #processAndQueue(ResourceContainer)} invocation.
-     * 
+     *
      * @param resource the resource to test
      * @return true if there was an error upgrading this resource, false otherwise
      */
@@ -131,7 +131,7 @@ public class ResourceUpgradeDelegate {
     /**
      * Tells whether at least one of the children with given resource type of the given parent resource
      * had an upgrade failure during {@link #processAndQueue(ResourceContainer)} invocation.
-     * 
+     *
      * @return true if at least one of the children of given type failed to upgrade, false otherwise
      */
     public boolean hasUpgradeFailedInChildren(Resource parentResource, ResourceType childrenResourceType) {
@@ -157,7 +157,7 @@ public class ResourceUpgradeDelegate {
                         if ((upgradeErrors = checkUpgradeValid(resource, request)) != null) {
                             //the resource is in its upgraded state but it's going to get reverted back to the original state
                             //in the code below. Let's use the original resource for the error message so that we don't confuse
-                            //the user.  
+                            //the user.
                             ResourceUpgradeRequest orig = findOriginal(request);
 
                             //orig should never be null, but let's be paranoid
@@ -193,7 +193,7 @@ public class ResourceUpgradeDelegate {
 
                 //now before we talk to server and sync up the upgraded data,
                 //reset the resources to their original values so that any changes
-                //the server makes to the upgrade data are applied to the "vanilla" state 
+                //the server makes to the upgrade data are applied to the "vanilla" state
                 //of the resources. i.e we only want to make changes the server approves.
                 for (ResourceUpgradeRequest request : originalResourceData) {
                     ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());

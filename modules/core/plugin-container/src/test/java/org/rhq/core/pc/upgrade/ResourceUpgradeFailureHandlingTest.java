@@ -53,7 +53,7 @@ import org.rhq.test.pc.PluginContainerSetup;
  *                                       /        \
  *               ParentDependency(parentdep)  ParentDepSibling(parentsibling)
  *                      /          \
- *            TestResource(test) TestResourceSibling(sibling)  
+ *            TestResource(test) TestResourceSibling(sibling)
  * </pre>
  * The dependencies in the above "chart" are formed using either the <code>&lt;runs-inside&gt;</code>
  * or <code>sourcePlugin/sourceType</code> approaches just to test that both are handled correctly.
@@ -61,7 +61,7 @@ import org.rhq.test.pc.PluginContainerSetup;
  * The <code>parentdep</code>, <code>parentsibling</code>, <code>test</code> and <code>sibling</code> plugins are present
  * in two versions and support the {@link ResourceUpgradeFacet}, while the rest of the plugins is
  * present only in single version.
- *                    
+ *
  * @author Lukas Krejci
  */
 @Test(singleThreaded = true, invocationCount = 1)
@@ -72,7 +72,7 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
     private static final String FAILURE_ON_LEAF_TEST = "FAILURE_ON_LEAF_TEST";
     private static final String FAILURE_ON_DEPENDENCIES_TEST = "FAILURE_ON_DEPENDENCIES_TEST";
     private static final String RESOURCES_REVERTED_TO_ORIGINAL_STATE_AFTER_FAILED_UPGRAGE_TEST = "RESOURCES_REVERTED_TO_ORIGINAL_STATE_AFTER_FAILED_UPGRAGE_TEST";
-    
+
     //plugin names
     private static final String BASE_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-base-1.0.0.jar";
     private static final String PARENT_DEP_V1_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-parentdep-1.0.0.jar";
@@ -101,17 +101,17 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
     public void testSuccess_V1() throws Exception {
         final FakeServerInventory inv = new FakeServerInventory();
         setServerSideFake(SUCCESS_TEST, inv);
-        
+
         context.checking(new Expectations() {
             {
                 defineDefaultExpectations(inv, this);
             }
         });
-        
-        //let the discovery run in V1        
+
+        //let the discovery run in V1
         startConfiguredPluginContainer();
     }
-    
+
     @Test(dependsOnMethods = "testSuccess_V1")
     @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME},
         sharedGroup = SUCCESS_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 3)
@@ -124,9 +124,9 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         });
 
         startConfiguredPluginContainer();
-        
+
         Map<ResType, Set<Resource>> resources = getResourcesFromInventory(inventory, ALL_TYPES);
-        
+
         checkPresenceOfResourceTypes(resources, ALL_TYPES);
 
         checkNumberOfResources(resources, ROOT_TYPE, 1);
@@ -138,14 +138,14 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         checkResourcesUpgraded(resources.get(SIBLING_TYPE), 45);
         checkResourcesUpgraded(resources.get(TEST_TYPE), 45);
     }
-    
+
     @Test
-    @PluginContainerSetup(plugins = {TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, SIBLING_V1_PLUGIN_NAME}, 
+    @PluginContainerSetup(plugins = {TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, SIBLING_V1_PLUGIN_NAME},
         sharedGroup = FAILURE_ON_LEAF_TEST, clearDataDir = true, numberOfInitialDiscoveries = 3)
     public void testFailureOnLeaf_V1() throws Exception {
         final FakeServerInventory inventory = new FakeServerInventory();
         setServerSideFake(FAILURE_ON_LEAF_TEST, inventory);
-        
+
         context.checking(new Expectations() {
             {
                 defineDefaultExpectations(inventory, this);
@@ -167,7 +167,7 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
     }
 
     @Test(dependsOnMethods = "testFailureOnLeaf_V1")
-    @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME}, 
+    @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME},
         sharedGroup = FAILURE_ON_LEAF_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 3)
     public void testFailureOnLeaf_V2() throws Exception {
         final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(FAILURE_ON_LEAF_TEST);
@@ -176,11 +176,11 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
                 defineDefaultExpectations(inventory, this);
             }
         });
-        
+
         startConfiguredPluginContainer();
-        
+
         Map<ResType, Set<Resource>> resources = getResourcesFromInventory(inventory, ALL_TYPES);
-        
+
         checkPresenceOfResourceTypes(resources, ALL_TYPES);
 
         checkNumberOfResources(resources, ROOT_TYPE, 1);
@@ -192,14 +192,14 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         Resource parent0 = findResourceWithOrdinal(PARENT_TYPE, 0);
         Resource parent1 = findResourceWithOrdinal(PARENT_TYPE, 1);
         Resource parent2 = findResourceWithOrdinal(PARENT_TYPE, 2);
-        
+
         Set<Resource> testsUnderParent0 = filterResources(parent0.getChildResources(), TEST_TYPE);
         Set<Resource> siblingsUnderParent0 = filterResources(parent0.getChildResources(), SIBLING_TYPE);
         Set<Resource> testsUnderParent1 = filterResources(parent1.getChildResources(), TEST_TYPE);
         Set<Resource> siblingsUnderParent1 = filterResources(parent1.getChildResources(), SIBLING_TYPE);
         Set<Resource> testsUnderParent2 = filterResources(parent2.getChildResources(), TEST_TYPE);
         Set<Resource> siblingsUnderParent2 = filterResources(parent2.getChildResources(), SIBLING_TYPE);
-        
+
         //first check for the successful upgrades
         checkResourcesUpgraded(testsUnderParent2, 15);
         checkResourcesUpgraded(siblingsUnderParent2, 15);
@@ -212,8 +212,8 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
 
         //check that the failed resources have the error attached to them
         //we find the resource instance from the map provided to this method
-        //because that map contains the resources as found on the server-side 
-        //(i.e. they include error objects). 
+        //because that map contains the resources as found on the server-side
+        //(i.e. they include error objects).
         Resource failedTest1 = getEqualFrom(resources.get(TEST_TYPE),
             findResourceWithOrdinal(testsUnderParent0, 1));
         Resource failedTest2 = getEqualFrom(resources.get(TEST_TYPE),
@@ -227,35 +227,35 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
             findResourceWithOrdinal(siblingsUnderParent1, 1));
 
         checkResourceFailedUpgrade(failedSibling);
-        checkOthersUpgraded(siblingsUnderParent1, failedSibling);        
+        checkOthersUpgraded(siblingsUnderParent1, failedSibling);
     }
-    
+
     @Test
-    @PluginContainerSetup(plugins = {TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, SIBLING_V1_PLUGIN_NAME}, 
+    @PluginContainerSetup(plugins = {TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, SIBLING_V1_PLUGIN_NAME},
         sharedGroup = FAILURE_ON_DEPENDENCIES_TEST, clearDataDir = true, numberOfInitialDiscoveries = 3)
     public void testFailureOnDependencies_V1() throws Exception {
         final FakeServerInventory inventory = new FakeServerInventory();
         setServerSideFake(FAILURE_ON_DEPENDENCIES_TEST, inventory);
-        
+
         context.checking(new Expectations() {
             {
                 defineDefaultExpectations(inventory, this);
             }
         });
-        
-        startConfiguredPluginContainer();        
-        
+
+        startConfiguredPluginContainer();
+
         //in here we set up the failures that are going to happen when
         //the v2 plugins are run
 
         Resource parent = findResourceWithOrdinal(PARENT_DEP_TYPE, 0);
         assertNotNull(parent, "Failed to find the parent to setup the failures for.");
-        
+
         addChildrenToFail(parent, PARENT_TYPE, 0);
     }
-    
+
     @Test(dependsOnMethods = "testFailureOnDependencies_V1")
-    @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME}, 
+    @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME},
         sharedGroup = FAILURE_ON_DEPENDENCIES_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 3)
     public void testFailureOnDependencies_V2() throws Exception {
         final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(FAILURE_ON_DEPENDENCIES_TEST);
@@ -264,11 +264,11 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
                 defineDefaultExpectations(inventory, this);
             }
         });
-        
+
         startConfiguredPluginContainer();
-        
+
         Map<ResType, Set<Resource>> resources = getResourcesFromInventory(inventory, ALL_TYPES);
-        
+
         checkPresenceOfResourceTypes(resources, ALL_TYPES);
 
         checkNumberOfResources(resources, ROOT_TYPE, 1);
@@ -277,7 +277,7 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
 
         //check that the failed resources have the error attached to them
         //we find the resource instance from the map provided to this method
-        //because that map contains the resources as found on the server-side 
+        //because that map contains the resources as found on the server-side
         //(i.e. they include error objects).
         Resource parent0 = getEqualFrom(resources.get(PARENT_TYPE), findResourceWithOrdinal(PARENT_TYPE, 0));
         Resource parent1 = getEqualFrom(resources.get(PARENT_TYPE), findResourceWithOrdinal(PARENT_TYPE, 1));
@@ -288,37 +288,37 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         //v2 plugin discovers 3 resources but because parent0 failed to upgrade,
         //the discovery shouldn't have occurred leaving us with the 2 already existing resources.
         checkNumberOfResources(resources, PARENT_TYPE, 2);
-        
+
         //parent1 upgraded ok, so discovering its children should have executed.
         //this is v2, so we should find 15 of each.
         checkResourcesUpgraded(filterResources(parent1.getChildResources(), TEST_TYPE), 15);
         checkResourcesUpgraded(filterResources(parent1.getChildResources(), SIBLING_TYPE), 15);
-                           
+
         //these shouldn't have been upgraded. in v1 we had 10 resources of TEST_TYPE
         //and 10 resources of SIBLING_TYPE and that's what we should be seeing
         //now.
         checkResourcesNotUpgraded(filterResources(parent0.getChildResources(), TEST_TYPE), 10);
-        checkResourcesNotUpgraded(filterResources(parent0.getChildResources(), SIBLING_TYPE), 10);        
+        checkResourcesNotUpgraded(filterResources(parent0.getChildResources(), SIBLING_TYPE), 10);
     }
-    
+
     @Test
-    @PluginContainerSetup(plugins = {TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, SIBLING_V1_PLUGIN_NAME}, 
+    @PluginContainerSetup(plugins = {TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, SIBLING_V1_PLUGIN_NAME},
         sharedGroup = RESOURCES_REVERTED_TO_ORIGINAL_STATE_AFTER_FAILED_UPGRAGE_TEST, clearDataDir = true, numberOfInitialDiscoveries = 3)
     public void testResourcesRevertedToOriginalStateAfterFailedUpgrade_V1() throws Exception {
         final FakeServerInventory inventory = new FakeServerInventory();
         setServerSideFake(RESOURCES_REVERTED_TO_ORIGINAL_STATE_AFTER_FAILED_UPGRAGE_TEST, inventory);
-        
+
         context.checking(new Expectations() {
             {
                 defineDefaultExpectations(inventory, this);
             }
         });
-        
-        startConfiguredPluginContainer();        
+
+        startConfiguredPluginContainer();
     }
-    
+
     @Test(dependsOnMethods = "testResourcesRevertedToOriginalStateAfterFailedUpgrade_V1")
-    @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME}, 
+    @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME},
         sharedGroup = RESOURCES_REVERTED_TO_ORIGINAL_STATE_AFTER_FAILED_UPGRAGE_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 3)
     public void testResourcesRevertedToOriginalStateAfterFailedUpgrade_V2() throws Exception {
         final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(RESOURCES_REVERTED_TO_ORIGINAL_STATE_AFTER_FAILED_UPGRAGE_TEST);
@@ -329,11 +329,11 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         });
 
         inventory.setFailUpgrade(true);
-        
+
         startConfiguredPluginContainer();
-        
+
         Map<ResType, Set<Resource>> resources = getResourcesFromInventory(inventory, ALL_TYPES);
-        
+
         checkPresenceOfResourceTypes(resources, ALL_TYPES);
 
         checkNumberOfResources(resources, ROOT_TYPE, 1);
@@ -343,7 +343,7 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         checkResourcesNotUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
         checkResourcesNotUpgraded(resources.get(PARENT_TYPE), 2);
         checkResourcesNotUpgraded(resources.get(SIBLING_TYPE), 20);
-        checkResourcesNotUpgraded(resources.get(TEST_TYPE), 20);        
+        checkResourcesNotUpgraded(resources.get(TEST_TYPE), 20);
     }
 
     protected static void checkPresenceOfResourceTypes(Map<ResType, Set<Resource>> resources, Collection<ResType> expectedTypes) {
@@ -367,6 +367,9 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
         ResourceContainer parentContainer = inventoryManager.getResourceContainer(parent);
         BaseResourceComponentInterface parentComponent = (BaseResourceComponentInterface) parentContainer
             .getResourceComponent();
+        if (parentComponent==null) {
+            throw new RuntimeException("Did not get a container for parent " + parent.getName() + ", " + parent.getUuid() + ", " + parent.getId());
+        }
 
         Map<String, Set<Integer>> childrenToFail = new HashMap<String, Set<Integer>>();
         Set<Integer> ordinals = new HashSet<Integer>();
@@ -416,7 +419,7 @@ public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeH
             Set<Resource> rs = inventory.findResourcesByType(resType);
             resources.put(type, rs);
         }
-        
+
         return resources;
     }
 

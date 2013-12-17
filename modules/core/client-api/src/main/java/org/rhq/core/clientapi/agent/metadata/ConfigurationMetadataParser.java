@@ -29,6 +29,7 @@ import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
@@ -79,13 +80,17 @@ public class ConfigurationMetadataParser {
 
     private static Log log = LogFactory.getLog("ConfigurationMetadataParser");
 
-    public static ConfigurationDefinition parse(String configurationName, ConfigurationDescriptor descriptor)
+    public static ConfigurationDefinition parse(@NotNull String configurationName, ConfigurationDescriptor descriptor)
         throws InvalidPluginDescriptorException {
         if (descriptor == null) {
             return null;
         }
 
-        ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName.intern(),
+        if (configurationName==null) {
+            throw new IllegalArgumentException("ConfigurationName must not be null");
+        }
+
+        ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName,
             descriptor.getNotes());
         configurationDefinition.setConfigurationFormat(getConfigurationFormat(descriptor));
 

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -402,27 +403,33 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         @Override
         public int size() {
-            return properties.size();
+            return properties==null ? 0: properties.size();
         }
 
         @Override
         public boolean isEmpty() {
-            return properties.isEmpty();
+            return properties == null || properties.isEmpty();
         }
 
         @Override
         public boolean contains(Object o) {
-            return properties.containsValue(o);
+            return properties==null ? false : properties.containsValue(o);
         }
 
         @Override
         public Iterator<Property> iterator() {
-            return properties.values().iterator();
+            if (properties == null) {
+                // TODO replace with Collections.emptyIterator(); when we require java 7
+                return Configuration.emptyIterator();
+            }
+            else {
+                return properties.values().iterator();
+            }
         }
 
         @Override
         public Object[] toArray() {
-            return properties.values().toArray();
+            return properties==null ? new Object[]{} :properties.values().toArray();
         }
 
         @Override
@@ -481,7 +488,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         @Override
         public void clear() {
-            properties.clear();
+            if (properties!=null) {
+                properties.clear();
+            }
         }
 
         @Override
@@ -510,9 +519,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private transient PropertiesProxy propertiesProxy;
 
-    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.LAZY)
     @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
-    private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
+    private Set<RawConfiguration> rawConfigurations;
 
     @Column(name = "NOTES")
     private String notes;
@@ -852,7 +861,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             rawConfiguration.setConfiguration(null);
         }
         if (rawConfigurations.isEmpty()) {
-            rawConfigurations = null;
+            rawConfigurations = Collections.emptySet();
         }
         return removed;
     }
@@ -982,16 +991,34 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         Configuration that = (Configuration) obj;
 
+        if (this.properties == null || this.properties.isEmpty()){
+            if ( that.properties== null || that.properties.isEmpty()) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        } else {
+            if (!this.properties.equals(that.properties)) {
+                return false;
+            }
+        }
+
         boolean rcEquals=true;
         if (this.rawConfigurations!=null) {
             rcEquals = this.getRawConfigurations().equals(that.getRawConfigurations());
-    }
-        return (this.properties.equals(that.properties)) && rcEquals;
+        }
+
+        return rcEquals;
     }
 
     @Override
     public int hashCode() {
-        int hc = properties.hashCode(); // TODO this requires loading of all properties and is expensive
+        int hc = 1;
+        if (properties!=null ) {
+            hc = properties.hashCode(); // TODO this requires loading of all properties and is expensive
+        }
+
         if (rawConfigurations!=null) {
             int rchc = rawConfigurations.hashCode() ;
             hc = hc * rchc + 19;
@@ -1062,6 +1089,32 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * @return {@code Map&lt;String, Property&gt;}
      */
     public Map<String, Property> getAllProperties() {
+        if (this.properties==null) {
+            return Collections.emptyMap();
+        }
         return this.properties;
     }
+
+
+    /*
+     ************ Copied from JDK7, as JDK6 is lacking that
+     * remove when we can require JDK 7
+     */
+
+    @SuppressWarnings("unchecked")
+    @Deprecated
+    public static <T> Iterator<T> emptyIterator() {
+        return (Iterator<T>) EmptyIterator.EMPTY_ITERATOR;
+    }
+
+    @Deprecated
+    private static class EmptyIterator<E> implements Iterator<E> {
+        static final EmptyIterator<Object> EMPTY_ITERATOR
+            = new EmptyIterator();
+
+        public boolean hasNext() { return false; }
+        public E next() { throw new NoSuchElementException(); }
+        public void remove() { throw new IllegalStateException(); }
+    }
+
 }

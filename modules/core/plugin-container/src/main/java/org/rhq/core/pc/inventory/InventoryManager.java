@@ -3243,7 +3243,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (parentResourceFromServer != null) {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceFromServer);
             if (parentResourceContainer == null) {
-                parentResourceContainer = getResourceContainer(parentResourceFromServer.getId());
+                parentResourceContainer = getResourceContainer(parentResourceFromServer);
             }
             if (parentResourceContainer != null) {
                 parentResource = parentResourceContainer.getResource();

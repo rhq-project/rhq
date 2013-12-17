@@ -95,7 +95,7 @@ public class ConfigurationDefinition implements Serializable {
     @MapKey(name = "name")
     // base the insert-order on propDef Id (asc).  Since rows are inserted in the order presented in the
     // plugin descriptor, iterating on the map (LinkedHashMap) will give us the same ordering. So, unless
-    // propDef.order is set and used for ordering by the accessing code, we'll default to the descriptor order.    
+    // propDef.order is set and used for ordering by the accessing code, we'll default to the descriptor order.
     @OrderBy
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
@@ -104,7 +104,7 @@ public class ConfigurationDefinition implements Serializable {
     // use the configTemplate name as the map key
     @MapKey(name = "name")
     // base the insert-order on configTemplate Id (asc).  Since rows are inserted in the order presented in the
-    // plugin descriptor, iterating on the map (LinkedHashMap) will give us the same ordering.    
+    // plugin descriptor, iterating on the map (LinkedHashMap) will give us the same ordering.
     @OrderBy
     @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Map<String, ConfigurationTemplate> templates = new LinkedHashMap<String, ConfigurationTemplate>();
@@ -118,7 +118,7 @@ public class ConfigurationDefinition implements Serializable {
     }
 
     public ConfigurationDefinition(@NotNull String name, String description) {
-        this.name = name;
+        this.name = name.intern();
         this.description = description;
     }
 
@@ -136,7 +136,7 @@ public class ConfigurationDefinition implements Serializable {
     }
 
     public void setName(@NotNull String name) {
-        this.name = name;
+        this.name = name.intern();
     }
 
     public String getDescription() {
@@ -151,7 +151,7 @@ public class ConfigurationDefinition implements Serializable {
      * This property is currently used only for resource configuration which may support structured config, raw
      * config, both, or neither. For an older plugin that was implemented prior to raw config support, this would be
      * <code>null</code>.
-     * 
+     *
      * @return The configuration format which may be structured, raw, or both. <code>null</code> indicates an older
      * plugin that was developed prior to raw configuration being supported.
      */

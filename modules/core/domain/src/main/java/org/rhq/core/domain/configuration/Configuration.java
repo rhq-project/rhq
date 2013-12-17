@@ -515,9 +515,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private transient PropertiesProxy propertiesProxy;
 
-    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.LAZY)
     @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
-    private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
+    private Set<RawConfiguration> rawConfigurations;
 
     @Column(name = "NOTES")
     private String notes;
@@ -847,6 +847,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         if (removed) {
             rawConfiguration.setConfiguration(null);
         }
+        if (rawConfigurations.isEmpty()) {
+            rawConfigurations = Collections.emptySet();
+        }
         return removed;
     }
 
@@ -976,7 +979,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         if (this.properties == null || this.properties.isEmpty()){
             if ( that.properties== null || that.properties.isEmpty()) {
                 return true;
-    }
+            }
             else {
                 return false;
             }
@@ -989,8 +992,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         boolean rcEquals=true;
         if (this.rawConfigurations!=null) {
             rcEquals = this.getRawConfigurations().equals(that.getRawConfigurations());
-    }
-        return (this.properties.equals(that.properties)) && rcEquals;
+        }
+
+        return rcEquals;
     }
 
     @Override

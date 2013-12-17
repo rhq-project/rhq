@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.oracle;
 
 import java.sql.Connection;
@@ -23,26 +24,27 @@ import java.sql.DatabaseMetaData;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.util.jdbc.JDBCUtil;
-
+import org.rhq.plugins.database.DatabasePluginUtil;
 
 /**
  * @author Greg Hinkle
  */
 public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
-    private static Log log = LogFactory.getLog(OracleDiscoveryComponent.class);
+    private static final Log LOG = LogFactory.getLog(OracleDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
@@ -51,7 +53,7 @@ public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, Man
         for (ProcessScanResult process : autoDiscoveryResults) {
             String sid = process.getProcessInfo().getEnvironmentVariable("ORACLE_SID");
             if ((sid == null) || (sid.length() == 0)) {
-                log.info("Unable to discover Oracle instance SID. Use manual inventory to complete setup.");
+                LOG.info("Unable to discover Oracle instance SID. Use manual inventory to complete setup.");
                 continue;
             }
 
@@ -74,22 +76,21 @@ public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, Man
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext resourceDiscoveryContext)
-            throws InvalidPluginConfigurationException {
-        
+        ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
+
         Connection connection = null;
         try {
             connection = OracleServerComponent.buildConnection(pluginConfig);
             DatabaseMetaData dbmd = connection.getMetaData();
             String version = dbmd.getDatabaseMajorVersion() + "." + dbmd.getDatabaseMinorVersion();
-            DiscoveredResourceDetails details = createResourceDetails(resourceDiscoveryContext, pluginConfig,
-                version, null);
+            DiscoveredResourceDetails details = createResourceDetails(resourceDiscoveryContext, pluginConfig, version,
+                null);
             return details;
         } catch (Exception e) {
-            log.warn("Could not connect to oracle with supplied configuration", e);
-            throw new InvalidPluginConfigurationException("Unable to connect to Oracle",e);
+            LOG.warn("Could not connect to oracle with supplied configuration", e);
+            throw new InvalidPluginConfigurationException("Unable to connect to Oracle", e);
         } finally {
-            JDBCUtil.safeClose(connection);
+            DatabasePluginUtil.safeClose(connection);
         }
     }
 

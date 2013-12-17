@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,20 +13,24 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.plugins.mysql;
 
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -34,20 +38,21 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
-import org.rhq.plugins.database.DatabaseQueryUtility;
+import org.rhq.plugins.database.DatabasePluginUtil;
+import org.rhq.plugins.database.PooledConnectionProvider;
 
 /**
- *
  * @author Steve Millidge (C2B2 Consulting Limited)
  */
-public class MySqlUserComponent implements MeasurementFacet, DatabaseComponent {
+public class MySqlUserComponent implements MeasurementFacet, DatabaseComponent, ConnectionPoolingSupport {
+    private static final Log LOG = LogFactory.getLog(MySqlUserComponent.class);
 
     private String userName;
     private String host;
     private MySqlComponent parent;
-    private Log log = LogFactory.getLog(this.getClass());
-    private ResourceContext context;
+    private ResourceContext resourceContext;
 
     @Override
     public Connection getConnection() {
@@ -60,69 +65,85 @@ public class MySqlUserComponent implements MeasurementFacet, DatabaseComponent {
     }
 
     @Override
-    public void start(ResourceContext rc) throws InvalidPluginConfigurationException, Exception {
-        parent = (MySqlComponent)rc.getParentResourceComponent();
-        context = rc;
-        userName = context.getPluginConfiguration().getSimple("userName").getStringValue();
-        host = context.getPluginConfiguration().getSimple("host").getStringValue();
+    public boolean supportsConnectionPooling() {
+        return true;
+    }
+
+    @Override
+    public PooledConnectionProvider getPooledConnectionProvider() {
+        return parent.getPooledConnectionProvider();
+    }
+
+    @Override
+    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
+        parent = (MySqlComponent) resourceContext.getParentResourceComponent();
+        this.resourceContext = resourceContext;
+        userName = this.resourceContext.getPluginConfiguration().getSimple("userName").getStringValue();
+        host = this.resourceContext.getPluginConfiguration().getSimple("host").getStringValue();
     }
 
     @Override
     public void stop() {
+        parent = null;
+        resourceContext = null;
+        userName = null;
+        host = null;
     }
 
-
     public void getValues(MeasurementReport mr, Set<MeasurementScheduleRequest> requests) throws Exception {
-        Connection conn = getConnection();
-        ResultSet rs = null;
-        Statement stmt = null;
+        Connection jdbcConnection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
         int activeConnections = 0;
         int totalConnections = 0;
         try {
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery("select User,Host,State from information_schema.processlist where User='"+userName+"'");
-            while(rs.next()) {
-                String hostVal = rs.getString(2);
-                String state = rs.getString(3);
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            statement = jdbcConnection.createStatement();
+            resultSet = statement.executeQuery("select User,Host,State from information_schema.processlist where User='" + userName
+                + "'");
+            while (resultSet.next()) {
+                String hostVal = resultSet.getString(2);
+                String state = resultSet.getString(3);
                 if (hostVal.startsWith(host)) {
                     if (state.length() > 1) {
-                        activeConnections ++;
+                        activeConnections++;
                     }
                     totalConnections++;
                 }
             }
-        }catch(SQLException sqle) {
-
+        } catch (SQLException ignore) {
         } finally {
-           DatabaseQueryUtility.close(stmt, rs);
+            DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
         }
 
         for (MeasurementScheduleRequest request : requests) {
             if (request.getName().equals("TotalConnections")) {
-                mr.addData(new MeasurementDataNumeric(request, new Double((double)totalConnections)));
+                mr.addData(new MeasurementDataNumeric(request, new Double((double) totalConnections)));
             } else if (request.getName().equals("ActiveConnections")) {
-                 mr.addData(new MeasurementDataNumeric(request, new Double((double)activeConnections)));
+                mr.addData(new MeasurementDataNumeric(request, new Double((double) activeConnections)));
             }
         }
     }
 
     public AvailabilityType getAvailability() {
-        AvailabilityType result = AvailabilityType.DOWN;
-        Connection conn = getConnection();
-        ResultSet rs = null;
-        Statement stmt = null;
+        Connection jdbcConnection = null;
+        ResultSet resultSet = null;
+        Statement statement = null;
         try {
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery("select User from mysql.user where User='"+userName+"' and Host='" + host +"'");
-            if (rs.first()) {
-                result = AvailabilityType.UP;
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            statement = jdbcConnection.createStatement();
+            resultSet = statement.executeQuery("select User from mysql.user where User='" + userName + "' and Host='"
+                + host + "'");
+            if (resultSet.first()) {
+                return UP;
             }
-        }catch(SQLException sqle) {
-
+        } catch (SQLException sqle) {
+            // Will return DOWN
+            System.out.println("sqle = " + sqle);
         } finally {
-           DatabaseQueryUtility.close(stmt, rs);
+            DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
         }
-        return result;
+        return DOWN;
     }
 
 }

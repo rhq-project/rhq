@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres;
+
+import static org.rhq.plugins.database.DatabasePluginUtil.getNumericQueryValues;
+import static org.rhq.plugins.database.DatabasePluginUtil.getSingleNumericQueryValue;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -27,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -44,16 +50,20 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
+import org.rhq.plugins.database.DatabasePluginUtil;
 import org.rhq.plugins.database.DatabaseQueryUtility;
+import org.rhq.plugins.database.PooledConnectionProvider;
 
 /**
  * Represents a postgres table
  *
  * @author Greg Hinkle
  */
-public class PostgresTableComponent implements DatabaseComponent<PostgresDatabaseComponent>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet, OperationFacet {
+public class PostgresTableComponent implements DatabaseComponent<PostgresDatabaseComponent>, ConnectionPoolingSupport,
+    MeasurementFacet, ConfigurationFacet, DeleteResourceFacet, OperationFacet {
+
     private static final List<String> PG_STAT_USER_TABLE_STATS = Arrays.asList("seq_scan", "seq_tup_read", "idx_scan",
         "idx_tup_fetch", "n_tup_ins", "n_tup_upd", "n_tup_del", "table_size", "total_size");
 
@@ -77,6 +87,16 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         this.resourceContext = null;
     }
 
+    @Override
+    public boolean supportsConnectionPooling() {
+        return true;
+    }
+
+    @Override
+    public PooledConnectionProvider getPooledConnectionProvider() {
+        return resourceContext.getParentResourceComponent().getPooledConnectionProvider();
+    }
+
     public String getTableName() {
         return this.resourceContext.getPluginConfiguration().getSimple("tableName").getStringValue();
     }
@@ -88,28 +108,35 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         this.resourceContext.getParentResourceComponent().getConnection();
 
-        Map<String, Double> results = DatabaseQueryUtility.getNumericQueryValues(this, PG_STAT_USER_TABLES_QUERY,
-            getTableName());
+        Map<String, Double> results = getNumericQueryValues(this, PG_STAT_USER_TABLES_QUERY, getTableName());
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             Double value;
             if (metricName.equals("rows")) {
-                value = DatabaseQueryUtility.getSingleNumericQueryValue(this, PG_COUNT_ROWS + getTableName());
+                value = getSingleNumericQueryValue(this, PG_COUNT_ROWS + getTableName());
             } else if (metricName.equals("rows_approx")) {
-                value = DatabaseQueryUtility.getSingleNumericQueryValue(this, PG_COUNT_ROWS_APPROX, getTableName());
+                value = getSingleNumericQueryValue(this, PG_COUNT_ROWS_APPROX, getTableName());
             } else {
                 value = results.get(metricName);
             }
 
-            if (value!=null) {
+            if (value != null) {
                 MeasurementDataNumeric mdn = new MeasurementDataNumeric(request, value);
                 report.addData(mdn);
             }
         }
     }
 
-    public void deleteResource() throws SQLException {
-        DatabaseQueryUtility.executeUpdate(this, "DROP TABLE " + getTableName(), new Object[] {});
+    public void deleteResource() throws Exception {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = getPooledConnectionProvider().getPooledConnection();
+            statement = connection.prepareStatement("DROP TABLE " + getTableName());
+            statement.executeUpdate();
+        } finally {
+            DatabasePluginUtil.safeClose(connection, statement);
+        }
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -117,29 +144,31 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         config.put(new PropertySimple("tableName", resourceContext.getPluginConfiguration().getSimple("tableName")
             .getStringValue()));
 
-        Connection connection = this.resourceContext.getParentResourceComponent().getConnection();
-
-        DatabaseMetaData dmd = connection.getMetaData();
-        ResultSet rs = dmd.getColumns("", "", getTableName(), "");
+        Connection connection = null;
+        ResultSet columns = null;
         try {
+            connection = this.resourceContext.getParentResourceComponent().getConnection();
+            DatabaseMetaData databaseMetaData = connection.getMetaData();
+            columns = databaseMetaData.getColumns("", "", getTableName(), "");
+
             PropertyList columnList = new PropertyList("columns");
 
-            while (rs.next()) {
+            while (columns.next()) {
                 PropertyMap col = new PropertyMap("columnDefinition");
 
-                col.put(new PropertySimple("columnName", rs.getString("COLUMN_NAME")));
-                col.put(new PropertySimple("columnType", rs.getString("TYPE_NAME")));
-                col.put(new PropertySimple("columnLength", rs.getInt("COLUMN_SIZE")));
-                col.put(new PropertySimple("columnPrecision", rs.getInt("DECIMAL_DIGITS")));
-                col.put(new PropertySimple("columnDefault", rs.getString("COLUMN_DEF")));
-                col.put(new PropertySimple("columnNullable", rs.getBoolean("IS_NULLABLE")));
+                col.put(new PropertySimple("columnName", columns.getString("COLUMN_NAME")));
+                col.put(new PropertySimple("columnType", columns.getString("TYPE_NAME")));
+                col.put(new PropertySimple("columnLength", columns.getInt("COLUMN_SIZE")));
+                col.put(new PropertySimple("columnPrecision", columns.getInt("DECIMAL_DIGITS")));
+                col.put(new PropertySimple("columnDefault", columns.getString("COLUMN_DEF")));
+                col.put(new PropertySimple("columnNullable", columns.getBoolean("IS_NULLABLE")));
 
                 columnList.add(col);
             }
 
             config.put(columnList);
         } finally {
-            rs.close();
+            DatabasePluginUtil.safeClose(connection);
         }
 
         return config;
@@ -177,13 +206,12 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                     }
                 } else {
                     existingDefs.remove(existingDef.columnName);
-                    boolean columnLengthChanged = ((existingDef.columnLength != null && !existingDef.columnLength.equals(newDef.columnLength)) ||
-                                                   (existingDef.columnLength == null && existingDef.columnLength != null));
-                    boolean columnPrecisionChanged = ((existingDef.columnPrecision != null && !existingDef.columnPrecision.equals(newDef.columnPrecision)) ||
-                                                   (existingDef.columnPrecision == null && existingDef.columnPrecision != null));
-                    if (!existingDef.columnType.equals(newDef.columnType) ||
-                         columnLengthChanged ||
-                         columnPrecisionChanged) {
+                    boolean columnLengthChanged = ((existingDef.columnLength != null && !existingDef.columnLength
+                        .equals(newDef.columnLength)) || (existingDef.columnLength == null && existingDef.columnLength != null));
+                    boolean columnPrecisionChanged = ((existingDef.columnPrecision != null && !existingDef.columnPrecision
+                        .equals(newDef.columnPrecision)) || (existingDef.columnPrecision == null && existingDef.columnPrecision != null));
+                    if (!existingDef.columnType.equals(newDef.columnType) || columnLengthChanged
+                        || columnPrecisionChanged) {
                         String sql = "ALTER TABLE " + getTableName() + " ALTER COLUMN " + newDef.columnName + " TYPE "
                             + newDef.columnType;
                         if (newDef.columnLength != null) {
@@ -200,8 +228,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                     }
 
                     // Set default separately.
-                    boolean columnDefaultChanged = ((existingDef.columnDefault != null && !existingDef.columnDefault.equals(newDef.columnDefault)) ||
-                            (existingDef.columnDefault == null && newDef.columnDefault != null));
+                    boolean columnDefaultChanged = ((existingDef.columnDefault != null && !existingDef.columnDefault
+                        .equals(newDef.columnDefault)) || (existingDef.columnDefault == null && newDef.columnDefault != null));
                     if (columnDefaultChanged) {
                         String sql = "ALTER TABLE " + getTableName() + " ALTER COLUMN " + newDef.columnName;
                         if (newDef.columnDefault == null) {
@@ -242,7 +270,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         Exception {
 
         if ("vacuum".equals(name)) {
-            DatabaseQueryUtility.executeUpdate(this,"vacuum " + getTableName());
+            DatabaseQueryUtility.executeUpdate(this, "vacuum " + getTableName());
         }
         return null;
     }

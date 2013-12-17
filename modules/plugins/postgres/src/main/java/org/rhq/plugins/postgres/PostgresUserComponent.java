@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres;
+
+import static org.rhq.plugins.database.DatabasePluginUtil.getNumericQueryValues;
+import static org.rhq.plugins.database.DatabasePluginUtil.getSingleNumericQueryValue;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.Set;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -37,15 +42,17 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
-import org.rhq.plugins.database.DatabaseQueryUtility;
+import org.rhq.plugins.database.DatabasePluginUtil;
+import org.rhq.plugins.database.PooledConnectionProvider;
 
 /**
  * @author Greg Hinkle
  */
-public class PostgresUserComponent implements DatabaseComponent<PostgresServerComponent<?>>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet {
+public class PostgresUserComponent implements DatabaseComponent<PostgresServerComponent<?>>, ConnectionPoolingSupport,
+    MeasurementFacet, ConfigurationFacet, DeleteResourceFacet {
+
     private ResourceContext<PostgresServerComponent<?>> resourceContext;
 
     public void start(ResourceContext<PostgresServerComponent<?>> resourceContext) {
@@ -56,13 +63,22 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
         this.resourceContext = null;
     }
 
+    @Override
+    public boolean supportsConnectionPooling() {
+        return true;
+    }
+
+    @Override
+    public PooledConnectionProvider getPooledConnectionProvider() {
+        return resourceContext.getParentResourceComponent().getPooledConnectionProvider();
+    }
+
     public String getUserName() {
         return this.resourceContext.getPluginConfiguration().getSimpleValue("userName", null);
     }
 
     public AvailabilityType getAvailability() {
-        if (DatabaseQueryUtility.getSingleNumericQueryValue(this, "SELECT COUNT(*) FROM PG_ROLES WHERE rolname = ?",
-            getUserName()) == 1) {
+        if (getSingleNumericQueryValue(this, "SELECT COUNT(*) FROM PG_ROLES WHERE rolname = ?", getUserName()) == 1) {
             return AvailabilityType.UP;
         } else {
             return AvailabilityType.DOWN;
@@ -78,7 +94,7 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValues(this,
+        Map<String, Double> values = getNumericQueryValues(this,
             "SELECT (SELECT COUNT(*) FROM pg_stat_activity where usename = ? AND current_query != '<IDLE>') AS active,\n"
                 + "  (SELECT COUNT(*) FROM pg_stat_activity WHERE usename = ?) AS total", getUserName(), getUserName());
 
@@ -88,49 +104,49 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        Connection connection = null;
         PreparedStatement statement = null;
-        ResultSet rs = null;
+        ResultSet resultSet = null;
         try {
-            statement = getConnection().prepareStatement("SELECT * FROM PG_ROLES WHERE rolname = ?");
+            connection = getPooledConnectionProvider().getPooledConnection();
+            statement = connection.prepareStatement("SELECT * FROM PG_ROLES WHERE rolname = ?");
             statement.setString(1, getUserName());
 
-            rs = statement.executeQuery();
-            rs.next();
+            resultSet = statement.executeQuery();
+            resultSet.next();
             Configuration config = new Configuration();
-            config.put(new PropertySimple("user", rs.getString("rolname")));
-            config.put(new PropertySimple("canLogin", rs.getBoolean("rolcanlogin")));
-            config.put(new PropertySimple("inheritRights", rs.getBoolean("rolinherit")));
-            config.put(new PropertySimple("superuser", rs.getBoolean("rolsuper")));
-            config.put(new PropertySimple("canCreateDatabaseObjects", rs.getBoolean("rolcreatedb")));
-            config.put(new PropertySimple("canCreateRoles", rs.getBoolean("rolcreaterole")));
-            config.put(new PropertySimple("canModifyCatalogDirectly", rs.getBoolean("rolcatupdate")));
-            config.put(new PropertySimple("connectionLimit", rs.getInt("rolconnlimit")));
+            config.put(new PropertySimple("user", resultSet.getString("rolname")));
+            config.put(new PropertySimple("canLogin", resultSet.getBoolean("rolcanlogin")));
+            config.put(new PropertySimple("inheritRights", resultSet.getBoolean("rolinherit")));
+            config.put(new PropertySimple("superuser", resultSet.getBoolean("rolsuper")));
+            config.put(new PropertySimple("canCreateDatabaseObjects", resultSet.getBoolean("rolcreatedb")));
+            config.put(new PropertySimple("canCreateRoles", resultSet.getBoolean("rolcreaterole")));
+            config.put(new PropertySimple("canModifyCatalogDirectly", resultSet.getBoolean("rolcatupdate")));
+            config.put(new PropertySimple("connectionLimit", resultSet.getInt("rolconnlimit")));
             return config;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         } finally {
-            JDBCUtil.safeClose(statement, rs);
+            DatabasePluginUtil.safeClose(connection, statement, resultSet);
         }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         Configuration config = report.getConfiguration();
-
-        Statement statement = null;
         String sql = getUserSQL(config, UpdateType.ALTER);
+
+        Connection connection = null;
+        Statement statement = null;
         try {
+            connection = getPooledConnectionProvider().getPooledConnection();
             statement = getConnection().createStatement();
-            int updates = statement.executeUpdate(sql);
-            if (updates != 1) {
-                report.setErrorMessage("Failed to update user " + config.getSimpleValue("user", null));
-            } else {
-                report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            }
+            statement.executeUpdate(sql);
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (SQLException e) {
             report.setErrorMessageFromThrowable(e);
         } finally {
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(connection, statement);
         }
     }
 
@@ -145,36 +161,32 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
             connectionLimit = connLimit.getIntegerValue();
         }
 
-        String sql = type.name()
-            + " USER "
-            + config.getSimpleValue("user", null)
-            + " ";
+        String sql = type.name() + " USER " + config.getSimpleValue("user", null) + " ";
 
         if (type != UpdateType.DROP) {
-            String password = config.getSimpleValue("password",null);
+            String password = config.getSimpleValue("password", null);
             if (password != null && password.length() != 0) {
-                sql += " WITH PASSWORD '" + config.getSimpleValue("password",null) + "' ";
+                sql += " WITH PASSWORD '" + config.getSimpleValue("password", null) + "' ";
             }
 
             sql += (config.getSimple("canCreateDatabaseObjects").getBooleanValue() ? "CREATEDB " : "NOCREATEDB ");
             sql += (config.getSimple("canCreateRoles").getBooleanValue() ? "CREATEUSER " : "NOCREATEUSER ");
-            sql += (connectionLimit > -1) ? ("CONNECTION LIMIT " + connectionLimit): "";
+            sql += (connectionLimit > -1) ? ("CONNECTION LIMIT " + connectionLimit) : "";
         }
 
         return sql;
     }
 
     public void deleteResource() throws Exception {
-        Statement statement = null;
         String sql = "DROP USER " + this.resourceContext.getResourceKey();
+        Connection connection = null;
+        Statement statement = null;
         try {
+            connection = getPooledConnectionProvider().getPooledConnection();
             statement = getConnection().createStatement();
-
-            // Note: Postgres doesn't seem to return the expected update count of 1 here... but this does work
-            // Note: executeUpdate()  returns 0 for statements that don't return rows like e.g. drop xxx
             statement.executeUpdate(sql);
         } finally {
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(connection, statement);
         }
     }
 }

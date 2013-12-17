@@ -5,43 +5,89 @@
         description="Plugin supporting H2 database"
         package="org.rhq.plugins.database"
         pluginLifecycleListener="DatabasePluginLifecycleListener"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:c="urn:xmlns:rhq-configuration"
         xmlns="urn:xmlns:rhq-plugin">
 
-    <depends plugin="Database" useClasses="true"/>
+  <depends plugin="Database" useClasses="true"/>
 
-    <server name="H2 Database" class="org.rhq.plugins.database.H2Database" discovery="org.rhq.plugins.database.H2DatabaseDiscovery">
-        <plugin-configuration>
-            <c:simple-property name="url" type="string" default="jdbc:h2:mem:"/>
-            <c:simple-property name="username" type="string" default="sa"/>
-            <c:simple-property name="password" type="string" default=""/>
-        </plugin-configuration>
+  <server name="H2 Database" class="org.rhq.plugins.database.H2Database"
+          discovery="org.rhq.plugins.database.H2DatabaseDiscovery">
+    <plugin-configuration>
+      <c:simple-property name="url" type="string" default="jdbc:h2:mem:testdb"/>
+      <c:simple-property name="username" type="string" default="sa"/>
+      <c:simple-property name="password" type="string" default=""/>
+    </plugin-configuration>
 
-    </server>
+  </server>
 
-    <service name="Generic Query" class="org.rhq.plugins.database.CustomTableComponent"
-        discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
-        description="Query the database for various results"
-        supportsManualAdd="true" singleton="false"
-        createDeletePolicy="both">
+  <service name="Generic Query" class="org.rhq.plugins.database.CustomTableComponent"
+           discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+           description="Query the database for various results"
+           supportsManualAdd="true" singleton="false"
+           createDeletePolicy="both">
 
-        <runs-inside>
-            <parent-resource-type name="H2 Database" plugin="H2"/>
-        </runs-inside>
+    <runs-inside>
+      <parent-resource-type name="H2 Database" plugin="H2"/>
+    </runs-inside>
 
-        <plugin-configuration>
-            <c:simple-property name="metricQuery" type="string" default="select a, b from sometable"/>
-            <c:simple-property name="column" type="boolean" default="true"/>
-        </plugin-configuration>
-        <metric property="A" displayName="A results" displayType="summary"
+    <plugin-configuration>
+      <c:simple-property name="table" type="string" default="table_a"/>
+      <c:simple-property name="metricQuery" type="string" default="select a, b from table_a"/>
+      <c:simple-property name="column" type="boolean" default="true"/>
+    </plugin-configuration>
+    <metric property="A" displayName="A results" displayType="summary"
             description="Number appearing in A column"
             units="none" dataType="measurement"/>
-        <metric property="B" displayName="B results" displayType="summary"
+    <metric property="B" displayName="B results" displayType="summary"
             description="Number appearing in B column"
             units="none" dataType="measurement"/>
-    </service>
+  </service>
 
+  <service name="Generic Query Non Pooling" class="org.rhq.plugins.database.NonPoolingCustomTableComponent"
+           discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+           description="Query the database for various results"
+           supportsManualAdd="true" singleton="false"
+           createDeletePolicy="both">
+
+    <runs-inside>
+      <parent-resource-type name="Generic Query" plugin="H2"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="table" type="string" default="table_b"/>
+      <c:simple-property name="metricQuery" type="string" default="select a, b from table_b"/>
+      <c:simple-property name="column" type="boolean" default="true"/>
+    </plugin-configuration>
+    <metric property="A" displayName="A results" displayType="summary"
+            description="Number appearing in A column"
+            units="none" dataType="measurement"/>
+    <metric property="B" displayName="B results" displayType="summary"
+            description="Number appearing in B column"
+            units="none" dataType="measurement"/>
+  </service>
+
+  <service name="Nested Generic Query" class="org.rhq.plugins.database.CustomTableComponent"
+           discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+           description="Query the database for various results"
+           supportsManualAdd="true" singleton="false"
+           createDeletePolicy="both">
+
+    <runs-inside>
+      <parent-resource-type name="Generic Query Non Pooling" plugin="H2"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="table" type="string" default="table_c"/>
+      <c:simple-property name="metricQuery" type="string" default="select a, b from table_c"/>
+      <c:simple-property name="column" type="boolean" default="true"/>
+    </plugin-configuration>
+    <metric property="A" displayName="A results" displayType="summary"
+            description="Number appearing in A column"
+            units="none" dataType="measurement"/>
+    <metric property="B" displayName="B results" displayType="summary"
+            description="Number appearing in B column"
+            units="none" dataType="measurement"/>
+  </service>
 
 </plugin>
 

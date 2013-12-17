@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashSet;
@@ -27,7 +29,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.plugins.database.DatabasePluginUtil;
 
 /**
  * @author Greg Hinkle
@@ -37,10 +39,12 @@ public class PostgresDatabaseDiscoveryComponent implements ResourceDiscoveryComp
         throws Exception {
         Set<DiscoveredResourceDetails> databases = new HashSet<DiscoveredResourceDetails>();
 
+        Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         try {
-            statement = context.getParentResourceComponent().getConnection().createStatement();
+            connection = context.getParentResourceComponent().getPooledConnectionProvider().getPooledConnection();
+            statement = connection.createStatement();
             resultSet = statement
                 .executeQuery("SELECT *, pg_database_size(datname) FROM pg_database where datistemplate = false");
             while (resultSet.next()) {
@@ -51,7 +55,7 @@ public class PostgresDatabaseDiscoveryComponent implements ResourceDiscoveryComp
                 databases.add(database);
             }
         } finally {
-            JDBCUtil.safeClose(statement, resultSet);
+            DatabasePluginUtil.safeClose(connection, statement, resultSet);
         }
 
         return databases;

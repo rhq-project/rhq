@@ -20,19 +20,20 @@
 package org.rhq.plugins.database;
 
 import java.sql.Connection;
-
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import java.sql.SQLException;
 
 /**
- * @author Greg Hinkle
- * @deprecated as of RHQ 4.10. Use {@link ConnectionPoolingSupport} instead.
+ * Contract for resource components providing pooled {@link Connection} objects.
+ *
+ * @author Thomas Segismont
  */
-@Deprecated
-public interface DatabaseComponent<T extends ResourceComponent<?>> extends ResourceComponent<T> {
-
-    @Deprecated
-    Connection getConnection();
-
-    @Deprecated
-    void removeConnection();
+public interface PooledConnectionProvider {
+    /**
+     * Get a pooled connection. It's the responsibility of the caller to return the connection to the pool by calling
+     * {@link java.sql.Connection#close()} on the returned {@link Connection} object.
+     *
+     * @return a pooled {@link Connection}
+     * @throws SQLException if a pooled connection could not be retrieved
+     */
+    Connection getPooledConnection() throws SQLException;
 }

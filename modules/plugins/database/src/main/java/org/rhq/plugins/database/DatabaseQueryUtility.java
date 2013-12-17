@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.database;
 
 import java.sql.Connection;
@@ -39,7 +40,9 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * Various database (JDBC) query functions.
  *
  * @author Greg Hinkle
+ * @deprecated as of RHQ 4.10, use {@link DatabasePluginUtil} instead.
  */
+@Deprecated
 public class DatabaseQueryUtility {
 
     private static final Log LOG = LogFactory.getLog(DatabaseQueryUtility.class);
@@ -59,6 +62,7 @@ public class DatabaseQueryUtility {
      * @return
      * @throws SQLException
      */
+    @Deprecated
     public static int executeUpdate(DatabaseComponent databaseComponent, String query, Object... parameters)
         throws SQLException {
         PreparedStatement statement = null;
@@ -79,6 +83,7 @@ public class DatabaseQueryUtility {
      * Returns the result of a query as a single Double value.
      * Returns {@link Double#NaN} if the query fails.
      */
+    @Deprecated
     public static Double getSingleNumericQueryValue(DatabaseComponent databaseComponent, String query,
         Object... parameters) {
         PreparedStatement statement = null;
@@ -111,6 +116,7 @@ public class DatabaseQueryUtility {
      *
      * @return a map of query results
      */
+    @Deprecated
     public static Map<String, Double> getNumericQueryValues(DatabaseComponent databaseComponent, String query,
         Object... parameters) {
         PreparedStatement statement = null;
@@ -156,6 +162,7 @@ public class DatabaseQueryUtility {
      *
      * @throws SQLException if query fails
      */
+    @Deprecated
     public static List<Map<String, Object>> getGridValues(DatabaseComponent databaseComponent, String query,
         Object... parameters) throws SQLException {
         PreparedStatement statement = null;
@@ -197,6 +204,7 @@ public class DatabaseQueryUtility {
      *
      * @return a Map<String,Double> of the keys against the value
      */
+    @Deprecated
     public static Map<String, Double> getNumericQueryValueMap(DatabaseComponent databaseComponent, String query,
         Object... parameters) {
         PreparedStatement statement = null;
@@ -251,6 +259,7 @@ public class DatabaseQueryUtility {
     /**
      * Returns an array of strings as upper-case column names.
      */
+    @Deprecated
     public static String[] getColumns(ResultSetMetaData rsmd) throws SQLException {
         String[] names = new String[rsmd.getColumnCount()];
         for (int i = 0; i < rsmd.getColumnCount(); i++) {
@@ -263,6 +272,7 @@ public class DatabaseQueryUtility {
     /**
      * Closes statements and result sets.
      */
+    @Deprecated
     public static void close(Statement statement, ResultSet resultSet) {
         if (resultSet != null) {
             try {

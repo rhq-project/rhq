@@ -17,9 +17,33 @@
 
    <properties>
       <rhq.internal>false</rhq.internal>
+      <slf4j.version>1.7.2</slf4j.version>
    </properties>
    
    <dependencies>
+
+     <!-- Bone CP and its dependencies -->
+     <dependency>
+       <groupId>com.jolbox</groupId>
+       <artifactId>bonecp</artifactId>
+       <version>0.8.0.RELEASE</version>
+     </dependency>
+     <dependency>
+       <groupId>com.google.guava</groupId>
+       <artifactId>guava</artifactId>
+       <version>15.0</version>
+     </dependency>
+     <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-api</artifactId>
+       <version>${slf4j.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-log4j12</artifactId>
+       <version>${slf4j.version}</version>
+     </dependency>
+     <!-- Test dependencies -->
      <dependency>
        <groupId>com.h2database</groupId>
        <artifactId>h2</artifactId>
@@ -28,7 +52,45 @@
      </dependency>
    </dependencies>
 
-   <profiles>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependency-jars</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.jolbox</groupId>
+                  <artifactId>bonecp</artifactId>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.google.guava</groupId>
+                  <artifactId>guava</artifactId>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.slf4j</groupId>
+                  <artifactId>slf4j-api</artifactId>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.slf4j</groupId>
+                  <artifactId>slf4j-log4j12</artifactId>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
 
       <profile>
          <id>dev</id>

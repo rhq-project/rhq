@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres.util;
 
 import java.io.BufferedOutputStream;
@@ -33,11 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.core.util.jdbc.JDBCUtil;
+
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Represents a PostgreSQL configuration file (i.e. postgresql.conf) - provides methods for reading and updating
@@ -99,7 +102,7 @@ public class PostgresqlConfFile {
                 }
             }
         } finally {
-            JDBCUtil.safeClose(r);
+            StreamUtil.safeClose(r);
         }
     }
 

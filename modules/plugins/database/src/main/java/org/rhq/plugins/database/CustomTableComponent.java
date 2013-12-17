@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,12 +13,19 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.database;
 
+import static org.rhq.plugins.database.DatabasePluginUtil.getConnectionFromComponent;
+import static org.rhq.plugins.database.DatabasePluginUtil.getNumericQueryValueMap;
+import static org.rhq.plugins.database.DatabasePluginUtil.getNumericQueryValues;
+import static org.rhq.plugins.database.DatabasePluginUtil.hasConnectionPoolingSupport;
+
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
@@ -36,24 +43,40 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * The component for the {@link CustomTableDiscoveryComponent}.
  *
  * @author Greg Hinkle
  */
-public class CustomTableComponent implements DatabaseComponent<DatabaseComponent<?>>, MeasurementFacet {
-    private ResourceContext<DatabaseComponent<?>> context;
+public class CustomTableComponent implements DatabaseComponent<DatabaseComponent<?>>, ConnectionPoolingSupport,
+    MeasurementFacet {
+    private static final Log LOG = LogFactory.getLog(CustomTableComponent.class);
 
-    private static final Log log = LogFactory.getLog(CustomTableComponent.class);
+    private ResourceContext<DatabaseComponent<?>> context;
+    private PooledConnectionProvider pooledConnectionProvider;
 
     public void start(ResourceContext<DatabaseComponent<?>> resourceContext)
         throws InvalidPluginConfigurationException, Exception {
         this.context = resourceContext;
+        if (hasConnectionPoolingSupport(context.getParentResourceComponent())) {
+            pooledConnectionProvider = ((ConnectionPoolingSupport) context.getParentResourceComponent())
+                .getPooledConnectionProvider();
+        }
     }
 
     public void stop() {
+        pooledConnectionProvider = null;
+    }
+
+    @Override
+    public boolean supportsConnectionPooling() {
+        return pooledConnectionProvider != null;
+    }
+
+    @Override
+    public PooledConnectionProvider getPooledConnectionProvider() {
+        return pooledConnectionProvider;
     }
 
     public String getTable() {
@@ -66,16 +89,22 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
             return AvailabilityType.UP;
         }
         Statement statement = null;
+        Connection connection = null;
+        ResultSet resultSet = null;
         try {
-            statement = getConnection().createStatement();
+            connection = getConnectionFromComponent(this);
+            statement = connection.createStatement();
             statement.setMaxRows(1);
             statement.setFetchSize(1);
-            statement.executeQuery("SELECT * FROM " + getTable()).close();
+            resultSet = statement.executeQuery("SELECT * FROM " + getTable());
             return AvailabilityType.UP;
         } catch (SQLException e) {
             return AvailabilityType.DOWN;
         } finally {
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(null, statement, resultSet);
+            if (supportsConnectionPooling()) {
+                DatabasePluginUtil.safeClose(connection, statement, resultSet);
+            }
         }
     }
 
@@ -85,10 +114,10 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
         String query = config.getSimpleValue("metricQuery", null);
 
         if (query == null) {
-            if (log.isTraceEnabled()) {
+            if (LOG.isTraceEnabled()) {
                 ResourceType type = this.context.getResourceType();
                 String resourceKey = this.context.getResourceKey();
-                log.trace("Resource "
+                LOG.trace("Resource "
                     + resourceKey
                     + " ("
                     + type.getName()
@@ -104,13 +133,13 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
         Map<String, Double> values;
         if (Boolean.parseBoolean(column)) {
             // data in column format
-            values = DatabaseQueryUtility.getNumericQueryValues(this, query);
+            values = getNumericQueryValues(this, query);
         } else {
             // data in row format
-            values = DatabaseQueryUtility.getNumericQueryValueMap(this, query);
+            values = getNumericQueryValueMap(this, query);
         }
-        if (log.isDebugEnabled())
-            log.debug("returned values " + values);
+        if (LOG.isDebugEnabled())
+            LOG.debug("returned values " + values);
 
         // this is a for loop because the name of each column can be the name of the metric
         for (MeasurementScheduleRequest request : metrics) {
@@ -129,7 +158,9 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
             if (value != null) {
                 report.addData(new MeasurementDataNumeric(request, value));
             } else {
-                log.debug("Missing column in query results - metric not collected: " + columnName);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Missing column in query results - metric not collected: " + columnName);
+                }
             }
         }
     }

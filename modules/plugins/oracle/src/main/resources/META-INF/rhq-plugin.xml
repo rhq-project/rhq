@@ -641,14 +641,6 @@
          discovery="org.rhq.plugins.oracle.OracleAsmDiskGroupDiscoveryComponent"
          class="org.rhq.plugins.oracle.OracleAsmDiskGroupComponent">
 
-         <!--plugin-configuration>
-            <c:simple-property name="table" default="V$ASM_DISKGROUP"/>
-            <c:simple-property name="metricQuery" default="SELECT {key} FROM V$ASM_DISKGROUP"/>
-            <c:simple-property name="keyColumn" default="GROUP_NUMBER"/>
-            <c:simple-property name="name" default="NAME"/>
-            <c:simple-property name="description" default="Oracle ASM Disk Groups"/>
-         </plugin-configuration -->
-
          <metric property="sectorSize" displayName="Sector Size" description="Physical block size (in bytes)" units="bytes" dataType="trait"/>
          <metric property="blockSize" displayName="Block Size" description="Automatic Storage Management metadata block size (in bytes)" units="bytes" dataType="trait"/>
          <metric property="allocationUnitSize" displayName="Allocation Unit Size" description="Size of the allocation unit (in bytes)" units="bytes" dataType="trait"/>

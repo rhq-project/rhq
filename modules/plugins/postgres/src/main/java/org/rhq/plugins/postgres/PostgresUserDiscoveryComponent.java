@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres;
 
 import java.sql.Connection;
@@ -31,7 +32,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.plugins.database.DatabasePluginUtil;
 
 /**
  * Discovers Postgres Users though shouldn't need super user access
@@ -39,25 +40,22 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  * @author Greg Hinkle
  */
 public class PostgresUserDiscoveryComponent implements ResourceDiscoveryComponent<PostgresServerComponent<?>> {
-    private static final Log log = LogFactory.getLog(PostgresUserDiscoveryComponent.class);
+    private static final Log LOG = LogFactory.getLog(PostgresUserDiscoveryComponent.class);
 
     public static final String USERS_QUERY = "select * from pg_roles";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PostgresServerComponent<?>> context)
         throws Exception {
-        log.debug("Discovering postgres users for " + context.getParentResourceComponent().getJDBCUrl() + "...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Discovering postgres users for " + context.getParentResourceComponent().getJDBCUrl() + "...");
+        }
         Set<DiscoveredResourceDetails> discoveredUsers = new HashSet<DiscoveredResourceDetails>();
 
-        Connection connection = context.getParentResourceComponent().getConnection();
-        if (connection == null) // For databases we don't have access to don't find the tables
-        {
-            return discoveredUsers;
-        }
-
+        Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;
-
         try {
+            connection = context.getParentResourceComponent().getPooledConnectionProvider().getPooledConnection();
             statement = connection.createStatement();
             resultSet = statement.executeQuery(USERS_QUERY);
             while (resultSet.next()) {
@@ -68,7 +66,7 @@ public class PostgresUserDiscoveryComponent implements ResourceDiscoveryComponen
                 discoveredUsers.add(service);
             }
         } finally {
-            JDBCUtil.safeClose(statement, resultSet);
+            DatabasePluginUtil.safeClose(connection, statement, resultSet);
         }
 
         return discoveredUsers;

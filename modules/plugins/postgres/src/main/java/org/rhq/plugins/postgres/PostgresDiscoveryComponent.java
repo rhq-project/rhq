@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres;
 
 import java.io.File;
@@ -39,6 +40,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.ProcExe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -51,7 +53,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
-import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.plugins.database.DatabasePluginUtil;
 import org.rhq.plugins.postgres.util.PostgresqlConfFile;
 
 /**
@@ -59,8 +61,7 @@ import org.rhq.plugins.postgres.util.PostgresqlConfFile;
  * @author Ian Springer
  */
 public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
-
-    private static final Log log = LogFactory.getLog(PostgresDiscoveryComponent.class);
+    private static final Log LOG = LogFactory.getLog(PostgresDiscoveryComponent.class);
 
     public static final String PGDATA_DIR_CONFIGURATION_PROPERTY = "pgdataDir";
     public static final String CONFIG_FILE_CONFIGURATION_PROPERTY = "configFile";
@@ -82,15 +83,15 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
         // Process any auto-discovered resources.
         List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
         for (ProcessScanResult result : autoDiscoveryResults) {
-            log.info("Discovered a postgres process: " + result);
+            LOG.info("Discovered a postgres process: " + result);
 
             ProcessInfo procInfo = result.getProcessInfo();
 
             String pgDataPath = getDataDirPath(procInfo);
             if (pgDataPath == null) {
-                log.error("Unable to obtain data directory for postgres process with pid " + procInfo.getPid()
-                    + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
-                    + " environment variable).");
+                LOG.error("Unable to obtain data directory for postgres process with pid " + procInfo.getPid()
+                        + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
+                        + " environment variable).");
                 continue;
             }
 
@@ -99,26 +100,28 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             PostgresqlConfFile confFile = null;
 
             if (!pgData.exists()) {
-                log.warn("PostgreSQL data directory (" + pgData + ") does not exist or is not readable. "
+                LOG.warn("PostgreSQL data directory ("
+                        + pgData
+                        + ") does not exist or is not readable. "
                         + "Make sure the user the RHQ Agent is running as has read permissions on the directory and its parent directory.");
             } else {
-                log.debug("PostgreSQL data directory: " + pgData);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("PostgreSQL data directory: " + pgData);
+                }
 
                 File postgresConfFile = (configFilePath != null) ? new File(configFilePath) : new File(pgData,
                     PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
-                log.debug("PostgreSQL configuration file: " + postgresConfFile);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("PostgreSQL configuration file: " + postgresConfFile);
+                }
 
                 if (!postgresConfFile.exists()) {
-                    log.warn("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
+                    LOG.warn("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
                 } else {
                     try {
                         confFile = new PostgresqlConfFile(postgresConfFile);
                     } catch (IOException e) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Could not load PostgreSQL configuration file [" + postgresConfFile + "].", e);
-                        } else {
-                            log.warn("Could not load PostgreSQL configuration file [" + postgresConfFile + "]: " + e);
-                        }
+                        LOG.warn("Could not load PostgreSQL configuration file [" + postgresConfFile + "]: " + e);
                     }
                 }
             }
@@ -167,14 +170,19 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration, @Nullable ProcessInfo processInfo, boolean logConnectionFailure) {
+        Configuration pluginConfiguration, @Nullable
+        ProcessInfo processInfo, boolean logConnectionFailure) {
         String key = buildUrl(pluginConfiguration);
-        Connection conn = buildConnection(pluginConfiguration, logConnectionFailure);
-        String name = getServerResourceName(pluginConfiguration, conn);
-        String version = getVersion(processInfo, discoveryContext.getSystemInformation(), conn);
-        JDBCUtil.safeClose(conn);
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
-            DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+        Connection conn = null;
+        try {
+            conn = buildConnection(pluginConfiguration, logConnectionFailure);
+            String name = getServerResourceName(pluginConfiguration, conn);
+            String version = getVersion(processInfo, discoveryContext.getSystemInformation(), conn);
+            return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
+                    DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+        } finally {
+            DatabasePluginUtil.safeClose(conn);
+        }
     }
 
     protected static String buildUrl(Configuration config) {
@@ -193,7 +201,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             }
         } catch (SQLException e) {
             // TODO GH: How to put this back to the server while inventorying this resource in an unconfigured state
-            log.info("Exception detecting postgres instance version.", e);
+            LOG.info("Exception detecting postgres instance version.", e);
         }
 
         //now try to extract the version information by asking the server executable itself
@@ -211,11 +219,11 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     if (m.find()) {
                         version = versionInfo.substring(m.start(), m.end());
                     } else {
-                        log.debug("Can't get the process executable - does the agent have the right permissions?");
+                        LOG.debug("Can't get the process executable - does the agent have the right permissions?");
                     }
                 }
             } catch (Exception e) {
-                log.info("Failed to obtain Postgres version information from the executable file.", e);
+                LOG.info("Failed to obtain Postgres version information from the executable file.", e);
             }
         }
 
@@ -240,16 +248,19 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
             return DriverManager.getConnection(url, principal, credentials);
         } catch (SQLException e) {
             if (logFailure) {
-                log.info("Failed to connect to the database: " + e.getMessage());
+                LOG.info("Failed to connect to the database: " + e.getMessage());
             } else {
-                log.debug("Failed to connect to the database: " + e.getMessage());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Failed to connect to the database: " + e.getMessage());
+                }
             }
             return null;
         }
     }
 
     @Nullable
-    protected static String getDataDirPath(@NotNull ProcessInfo procInfo) {
+    protected static String getDataDirPath(@NotNull
+    ProcessInfo procInfo) {
         String dataDirPath = null;
         String[] cmdLine = procInfo.getCommandLine();
         for (int i = 0; i < cmdLine.length; i++) {
@@ -258,7 +269,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     dataDirPath = cmdLine[i + 1];
                     break;
                 } else {
-                    log.error("-D option was last option on postgres command line: " + Arrays.asList(cmdLine));
+                    LOG.error("-D option was last option on postgres command line: " + Arrays.asList(cmdLine));
                 }
             }
         }
@@ -274,7 +285,8 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     @Nullable
-    private static String getConfigFilePath(@NotNull ProcessInfo procInfo) {
+    private static String getConfigFilePath(@NotNull
+    ProcessInfo procInfo) {
         String configFilePath = null;
         String[] cmdLine = procInfo.getCommandLine();
         for (int i = 0; i < cmdLine.length; i++) {
@@ -283,8 +295,8 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                     String paramString = cmdLine[i + 1];
                     int equalsIndex = paramString.indexOf('=');
                     if (equalsIndex == -1) {
-                        log.error("Invalid value '" + paramString + "' for -c option on postgres command line: "
-                            + Arrays.asList(cmdLine));
+                        LOG.error("Invalid value '" + paramString + "' for -c option on postgres command line: "
+                                + Arrays.asList(cmdLine));
                         continue;
                     }
 
@@ -294,7 +306,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
                         break;
                     }
                 } else {
-                    log.error("-c option was last option on postgres command line: " + Arrays.asList(cmdLine));
+                    LOG.error("-c option was last option on postgres command line: " + Arrays.asList(cmdLine));
                 }
             }
         }
@@ -303,13 +315,12 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
     }
 
     private static List<String> getDatabaseNames(Connection conn) {
-        Statement statement = null;
-        ResultSet resultSet = null;
-
         if (conn == null) {
             return Collections.emptyList();
         }
 
+        Statement statement = null;
+        ResultSet resultSet = null;
         try {
             List<String> ret = new ArrayList<String>();
 
@@ -323,10 +334,10 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent, M
 
             return ret;
         } catch (SQLException e) {
-            log.info("Failed to obtain the list of databases in a postgres instance", e);
+            LOG.error("Failed to obtain the list of databases in a postgres instance", e);
             return Collections.emptyList();
         } finally {
-            JDBCUtil.safeClose(statement, resultSet);
+            DatabasePluginUtil.safeClose(null, statement, resultSet);
         }
     }
 

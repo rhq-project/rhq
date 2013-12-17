@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.postgres;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -61,8 +65,10 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
+import org.rhq.plugins.database.DatabasePluginUtil;
+import org.rhq.plugins.database.PooledConnectionProvider;
 import org.rhq.plugins.postgres.util.PostgresqlConfFile;
 
 /**
@@ -70,43 +76,48 @@ import org.rhq.plugins.postgres.util.PostgresqlConfFile;
  *
  * @author Greg Hinkle
  */
-public class PostgresServerComponent<T extends ResourceComponent<?>> implements DatabaseComponent<T>, ConfigurationFacet, MeasurementFacet,
-    OperationFacet, CreateChildResourceFacet {
+public class PostgresServerComponent<T extends ResourceComponent<?>> implements DatabaseComponent<T>,
+    ConnectionPoolingSupport, ConfigurationFacet, MeasurementFacet, OperationFacet, CreateChildResourceFacet {
 
-    private static Log log = LogFactory.getLog(PostgresServerComponent.class);
-
-    private Connection connection;
-
-    private AggregateProcessInfo aggregateProcessInfo;
-
-    private ResourceContext resourceContext;
+    private static final Log LOG = LogFactory.getLog(PostgresServerComponent.class);
 
     static final String DEFAULT_CONFIG_FILE_NAME = "postgresql.conf";
 
-    /*
-     * TODO: Other things to support active sessions: select * from pg_stat_activity
-     */
+    private AggregateProcessInfo aggregateProcessInfo;
+    @Deprecated
+    private Connection connection;
+    private ResourceContext resourceContext;
+    private PostgresPooledConnectionProvider pooledConnectionProvider;
 
-    public void start(ResourceContext context) throws SQLException {
+    public void start(ResourceContext context) throws Exception {
         this.resourceContext = context;
-        Configuration config = context.getPluginConfiguration();
-
-        JDBCUtil.safeClose(this.connection); // just to be sure we don't leak a connection
-        this.connection = PostgresDiscoveryComponent.buildConnection(config, true);
-
+        buildSharedConnectionIfNeeded();
+        pooledConnectionProvider = new PostgresPooledConnectionProvider(resourceContext.getPluginConfiguration());
         ProcessInfo processInfo = resourceContext.getNativeProcess();
         if (processInfo != null) {
             aggregateProcessInfo = processInfo.getAggregateProcessTree();
         } else {
             findProcessInfo();
-            //log.debug("Unable to locate native process information. Process level statistics will be unavailable.");
         }
     }
 
     public void stop() {
-        this.resourceContext = null;
-        JDBCUtil.safeClose(this.connection);
-        this.connection = null;
+        resourceContext = null;
+        DatabasePluginUtil.safeClose(connection);
+        connection = null;
+        pooledConnectionProvider.close();
+        pooledConnectionProvider = null;
+        aggregateProcessInfo = null;
+    }
+
+    @Override
+    public boolean supportsConnectionPooling() {
+        return true;
+    }
+
+    @Override
+    public PooledConnectionProvider getPooledConnectionProvider() {
+        return pooledConnectionProvider;
     }
 
     protected String getJDBCUrl() {
@@ -114,15 +125,15 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     }
 
     public AvailabilityType getAvailability() {
-        AvailabilityType type;
-        getConnection(); // This retries the connection if its null
-        if (connection == null) {
-            type = AvailabilityType.DOWN;
-        } else {
-            type = AvailabilityType.UP;
+        Connection jdbcConnection = null;
+        try {
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            return jdbcConnection.isValid(1) ? UP : DOWN;
+        } catch (SQLException e) {
+            return DOWN;
+        } finally {
+            DatabasePluginUtil.safeClose(jdbcConnection);
         }
-
-        return type;
     }
 
     ResourceContext getResourceContext() {
@@ -130,20 +141,25 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     }
 
     public Connection getConnection() {
-        // TODO: This method should probably be synchronized to prevent connection leaks. (ips, 10/4/07)
-        try {
-            if ((connection == null) || connection.isClosed()) {
-                connection = PostgresDiscoveryComponent.buildConnection(this.resourceContext.getPluginConfiguration(), true);
-            }
-        } catch (SQLException e) {
-            // TODO Should we throw this?
-        }
-
+        buildSharedConnectionIfNeeded();
         return connection;
     }
 
+    private void buildSharedConnectionIfNeeded() {
+        try {
+            if ((connection == null) || connection.isClosed()) {
+                connection = PostgresDiscoveryComponent.buildConnection(this.resourceContext.getPluginConfiguration(),
+                    true);
+            }
+        } catch (SQLException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not build shared connection", e);
+            }
+        }
+    }
+
     public void removeConnection() {
-        JDBCUtil.safeClose(this.connection);
+        DatabasePluginUtil.safeClose(this.connection);
         this.connection = null;
     }
 
@@ -177,12 +193,12 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         }
 
         // Runtime settings (session params) - obtained via SQL.
-        // TODO (ips, 05/16/12): We should move these to a separate Resource, since they are loaded via a completely
-        //                       separate mechanism than the static config above.
+        Connection jdbcConnection = null;
         Statement statement = null;
         ResultSet resultSet = null;
         try {
-            statement = connection.createStatement();
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            statement = jdbcConnection.createStatement();
             resultSet = statement.executeQuery("show all");
 
             PropertyMap runtimeSettings = new PropertyMap("runtimeSettings");
@@ -201,7 +217,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                 }
             }
         } finally {
-            JDBCUtil.safeClose(statement, resultSet);
+            DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
         }
 
         return config;
@@ -230,69 +246,80 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             PostgresqlConfFile confFile = getConfigurationFile();
             confFile.setProperties(parameters);
         } catch (IOException e) {
-            log.error("Unable to update postgres configuration file", e);
+            LOG.error("Unable to update postgres configuration file", e);
         }
 
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
     }
 
-   /**
-    * Get data about the database server. Currently we have two categories:
-    * <ul>
-    * <li>Database.* are metrics that are obtained from the database server itself</li>
-    * <li>Process.* are metrics obtained from the native system.</li>
-    * </ul>
-    *
-    * @param  report  the report where all collected measurement data will be added
-    * @param  metrics the schedule of what needs to be collected when
-    */
+    /**
+     * Get data about the database server. Currently we have two categories:
+     * <ul>
+     * <li>Database.* are metrics that are obtained from the database server itself</li>
+     * <li>Process.* are metrics obtained from the native system.</li>
+     * </ul>
+     *
+     * @param  report  the report where all collected measurement data will be added
+     * @param  metrics the schedule of what needs to be collected when
+     */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
 
-       for (MeasurementScheduleRequest request : metrics) {
-          String property = request.getName();
-          if (property.startsWith("Process.")) {
-             if (aggregateProcessInfo != null) {
-                aggregateProcessInfo.refresh();
+        for (MeasurementScheduleRequest request : metrics) {
+            String property = request.getName();
+            if (property.startsWith("Process.")) {
+                if (aggregateProcessInfo != null) {
+                    aggregateProcessInfo.refresh();
 
-                //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
+                    //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
 
-                Object val = lookupAttributeProperty(aggregateProcessInfo, property.substring("Process.".length()));
-                if (val != null && val instanceof Number) {
-//                        aggregateProcessInfo.getAggregateMemory().Cpu().getTotal()
-                   report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
+                    Object val = lookupAttributeProperty(aggregateProcessInfo, property.substring("Process.".length()));
+                    if (val != null && val instanceof Number) {
+                        //                        aggregateProcessInfo.getAggregateMemory().Cpu().getTotal()
+                        report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
+                    }
                 }
-             }
-          } else if (property.startsWith("Database")) {
-             try {
+            } else if (property.startsWith("Database")) {
                 if (property.endsWith("startTime")) {
-                   // db start time
-                    ResultSet rs = getConnection().createStatement().executeQuery("SELECT pg_postmaster_start_time()");
+                    // db start time
+                    Connection jdbcConnection = null;
+                    Statement statement = null;
+                    ResultSet resultSet = null;
                     try {
-                        if (rs.next()) {
-                            report.addData(new MeasurementDataTrait(request, rs.getTimestamp(1).toString()));
+                        jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+                        statement = jdbcConnection.createStatement();
+                        resultSet = statement.executeQuery("SELECT pg_postmaster_start_time()");
+                        if (resultSet.next()) {
+                            report.addData(new MeasurementDataTrait(request, resultSet.getTimestamp(1).toString()));
+                        }
+                    } catch (SQLException e) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Can not collect property: " + property + ": " + e.getLocalizedMessage());
                         }
                     } finally {
-                        rs.close();
+                        DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
                     }
-                }
-                else if (property.endsWith("backends")) {
+                } else if (property.endsWith("backends")) {
                     // number of connected backends
-                    ResultSet rs = getConnection().createStatement().executeQuery("select count(*) from pg_stat_activity");
+                    Connection jdbcConnection = null;
+                    Statement statement = null;
+                    ResultSet resultSet = null;
                     try {
-                        if (rs.next()) {
-                            report.addData(new MeasurementDataNumeric(request, (double) rs.getLong(1)));
+                        jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+                        statement = jdbcConnection.createStatement();
+                        resultSet = statement.executeQuery("select count(*) from pg_stat_activity");
+                        if (resultSet.next()) {
+                            report.addData(new MeasurementDataNumeric(request, (double) resultSet.getLong(1)));
+                        }
+                    } catch (SQLException e) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Can not collect property: " + property + ": " + e.getLocalizedMessage());
                         }
                     } finally {
-                        rs.close();
+                        DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
                     }
                 }
-
-             }
-             catch (SQLException e) {
-                log.warn("Can not collect property: " + property + ": " + e.getLocalizedMessage());
-             }
-          }
-       }
+            }
+        }
     }
 
     private Double getProcessProperty(String property) {
@@ -320,8 +347,10 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                 }
             }
         } catch (Exception e) {
-            log.debug("Unable to read property from measurement attribute [" + searchProperty + "] not found on ["
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to read property from measurement attribute [" + searchProperty + "] not found on ["
                     + this.resourceContext.getResourceKey() + "]");
+            }
         }
 
         if (ps.length > 1) {
@@ -340,34 +369,31 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                 }
             }
         } catch (Exception e) {
-            log.error("Error occurred while retrieving property '" + name + "' from object [" + object + "]", e);
+            LOG.error("Error occurred while retrieving property '" + name + "' from object [" + object + "]", e);
         }
 
         return Double.NaN;
     }
 
-    /*private ProcessInfo getProcess(String pgdata)
-     * { List<ProcessScanResult> matches = this.resourceContext.getNativeProcessesForType(); for (ProcessScanResult
-     * process : matches) {   if (pgdata.equals(process.getProcessInfo().getEnvironmentProperty("PGDATA")))      return
-     * process.getProcessInfo(); } return null;}*/
-
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         if (name.equals("listProcessStatistics")) {
-            Statement stmt = null;
-            ResultSet rs = null;
+            Connection jdbcConnection = null;
+            Statement statement = null;
+            ResultSet resultSet = null;
             try {
-                stmt = getConnection().createStatement();
-                rs = stmt.executeQuery("SELECT * FROM pg_stat_activity ORDER BY current_query desc");
+                jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+                statement = jdbcConnection.createStatement();
+                resultSet = statement.executeQuery("SELECT * FROM pg_stat_activity ORDER BY current_query desc");
 
                 PropertyList procList = new PropertyList("processList");
-                while (rs.next()) {
+                while (resultSet.next()) {
                     PropertyMap pm = new PropertyMap("process");
-                    pm.put(new PropertySimple("pid", rs.getInt("procpid")));
-                    pm.put(new PropertySimple("userName", rs.getString("usename")));
-                    pm.put(new PropertySimple("query", rs.getString("current_query")));
-                    pm.put(new PropertySimple("address", rs.getString("client_addr")));
-                    pm.put(new PropertySimple("port", rs.getInt("client_port")));
+                    pm.put(new PropertySimple("pid", resultSet.getInt("procpid")));
+                    pm.put(new PropertySimple("userName", resultSet.getString("usename")));
+                    pm.put(new PropertySimple("query", resultSet.getString("current_query")));
+                    pm.put(new PropertySimple("address", resultSet.getString("client_addr")));
+                    pm.put(new PropertySimple("port", resultSet.getInt("client_port")));
 
                     procList.add(pm);
                 }
@@ -376,13 +402,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                 result.getComplexResults().put(procList);
                 return result;
             } finally {
-                if (rs != null) {
-                    rs.close();
-                }
-
-                if (stmt != null) {
-                    stmt.close();
-                }
+                DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
             }
         }
 
@@ -393,11 +413,12 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         Configuration userConfig = report.getResourceConfiguration();
         String user = userConfig.getSimpleValue("user", null);
 
+        Connection jdbcConnection = null;
         Statement statement = null;
         String sql = PostgresUserComponent.getUserSQL(userConfig, PostgresUserComponent.UpdateType.CREATE);
         try {
-            statement = getConnection().createStatement();
-
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            statement = jdbcConnection.createStatement();
             // NOTE: Postgres doesn't seem to indicate the expect count of 1 row updated but this work
             // Postgres returns 0 for DDL that does not return rows
             statement.executeUpdate(sql);
@@ -406,7 +427,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         } catch (SQLException e) {
             report.setException(e);
         } finally {
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(jdbcConnection, statement);
         }
 
         return report;
@@ -436,7 +457,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                 jonValue = Boolean.FALSE.toString();
             } else {
                 jonValue = (propDef.isRequired()) ? Boolean.FALSE.toString() : null;
-                log.warn("Boolean PostgreSQL configuration parameter '" + propDef.getName()
+                LOG.warn("Boolean PostgreSQL configuration parameter '" + propDef.getName()
                     + "' has an invalid value: '" + value + "' - defaulting value to '" + jonValue + "'");
             }
         } else {
@@ -446,16 +467,15 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return new PropertySimple(propDef.getName(), jonValue);
     }
 
-
     public void findProcessInfo() {
 
-        List<ProcessInfo> processes =
-            this.resourceContext.getSystemInformation().getProcesses(
+        List<ProcessInfo> processes = this.resourceContext
+            .getSystemInformation()
+            .getProcesses(
                 "process|basename|match=^(?i)(postgres|postmaster)\\.exe$,process|basename|nomatch|parent=^(?i)(postgres|postmaster)\\.exe$");
 
-        processes.addAll(
-                this.resourceContext.getSystemInformation().getProcesses(
-                "process|basename|match=^(postgres|postmaster)$,process|basename|nomatch|parent=^(postgres|postmaster)$"));
+        processes.addAll(this.resourceContext.getSystemInformation().getProcesses(
+            "process|basename|match=^(postgres|postmaster)$,process|basename|nomatch|parent=^(postgres|postmaster)$"));
 
         for (ProcessInfo processInfo : processes) {
             String pgDataPath = PostgresDiscoveryComponent.getDataDirPath(processInfo);

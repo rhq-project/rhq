@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.mysql;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.io.File;
 import java.io.FileReader;
@@ -43,78 +47,104 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
-import org.rhq.plugins.database.DatabaseQueryUtility;
+import org.rhq.plugins.database.DatabasePluginUtil;
+import org.rhq.plugins.database.PooledConnectionProvider;
 
 /**
  * @author Greg Hinkle
  * @author Steve Millidge
  */
-public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>,
+public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>, ConnectionPoolingSupport,
     ResourceComponent<ResourceComponent<?>>, MeasurementFacet {
+
+    private static final Log LOG = LogFactory.getLog(MySqlComponent.class);
 
     private ResourceContext resourceContext;
     private AggregateProcessInfo aggregateProcessInfo;
-    private MySqlConnectionInfo info;
-    private Log log = LogFactory.getLog(this.getClass());
     private Map<String, String> globalStatusValues = new HashMap<String, String>();
     private Map<String, String> globalVariables = new HashMap<String, String>();
+    private MySqlPooledConnectionProvider pooledConnectionProvider;
+    @Deprecated
+    private Connection sharedConnection;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
-        info = MySqlDiscoveryComponent.buildConnectionInfo(resourceContext.getPluginConfiguration());
+        buildSharedConnectionIfNeeded();
+        pooledConnectionProvider = new MySqlPooledConnectionProvider(resourceContext.getPluginConfiguration());
         ProcessInfo processInfo = resourceContext.getNativeProcess();
         if (processInfo != null) {
             aggregateProcessInfo = processInfo.getAggregateProcessTree();
         } else {
-            //findProcessInfo();
-            //log.debug("Unable to locate native process information. Process level statistics will be unavailable.");
+            findProcessInfo();
+        }
+    }
+
+    private void buildSharedConnectionIfNeeded() {
+        try {
+            if ((sharedConnection == null) || sharedConnection.isClosed()) {
+                sharedConnection = MySqlDiscoveryComponent.buildConnection(this.resourceContext
+                    .getPluginConfiguration());
+            }
+        } catch (SQLException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not build shared connection", e);
+            }
         }
     }
 
     public void stop() {
-        MySqlConnectionManager.getConnectionManager().closeConnection(info);
+        resourceContext = null;
+        DatabasePluginUtil.safeClose(sharedConnection);
+        sharedConnection = null;
+        pooledConnectionProvider.close();
+        pooledConnectionProvider = null;
+        aggregateProcessInfo = null;
+    }
+
+    @Override
+    public boolean supportsConnectionPooling() {
+        return true;
+    }
+
+    @Override
+    public PooledConnectionProvider getPooledConnectionProvider() {
+        return pooledConnectionProvider;
     }
 
     public AvailabilityType getAvailability() {
-        if (log.isDebugEnabled()) {
-            log.debug("Doing an availability check on " + info.buildURL());
+        Connection jdbcConnection = null;
+        try {
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            return jdbcConnection.isValid(1) ? UP : DOWN;
+        } catch (SQLException e) {
+            return DOWN;
+        } finally {
+            DatabasePluginUtil.safeClose(jdbcConnection);
         }
-
-        Connection conn = getConnection();
-        AvailabilityType result = AvailabilityType.DOWN;
-        if (conn != null) {
-            // the connection must be OK as the validity check will have worked
-            result = AvailabilityType.UP;
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Availability check on " + info.buildURL() + " gives " + result);
-        }
-        return result;
-
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        Connection conn = getConnection();
-        if (conn != null) {
-            ResultSet rs = null;
-            Statement stmt = null;
-            try {
-                stmt = conn.createStatement();
-                rs = stmt.executeQuery("SHOW GLOBAL STATUS");
-                while (rs.next()) {
-                    globalStatusValues.put(rs.getString(1), rs.getString(2));
-                }
-
-                rs.close();
-                rs = stmt.executeQuery("select * from information_schema.global_variables");
-                while (rs.next()) {
-                    globalVariables.put(rs.getString(1), rs.getString(2));
-                }
-            } catch (SQLException sqle) {
-            } finally {
-                DatabaseQueryUtility.close(stmt, rs);
+        Connection jdbcConnection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            statement = jdbcConnection.createStatement();
+            resultSet = statement.executeQuery("SHOW GLOBAL STATUS");
+            while (resultSet.next()) {
+                globalStatusValues.put(resultSet.getString(1), resultSet.getString(2));
             }
+
+            resultSet.close();
+            resultSet = statement.executeQuery("select * from information_schema.global_variables");
+            while (resultSet.next()) {
+                globalVariables.put(resultSet.getString(1), resultSet.getString(2));
+            }
+        } catch (SQLException ignore) {
+        } finally {
+            DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
         }
 
         // get process information
@@ -154,7 +184,7 @@ public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>,
                         String strVal = globalStatusValues.get(request.getName());
                         double val = Double.parseDouble(strVal);
                         report.addData(new MeasurementDataNumeric(request, val));
-                    } catch (Exception e) {
+                    } catch (Exception ignore) {
                     }
                 }
             }
@@ -162,17 +192,14 @@ public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>,
     }
 
     public Connection getConnection() {
-        try {
-            return MySqlConnectionManager.getConnectionManager().getConnection(info);
-        } catch (SQLException ex) {
-            log.warn("Unable to obtain database connection ", ex);
-            return null;
-        }
+        buildSharedConnectionIfNeeded();
+        return sharedConnection;
     }
 
     @Override
     public void removeConnection() {
-        MySqlConnectionManager.getConnectionManager().closeConnection(info);
+        DatabasePluginUtil.safeClose(this.sharedConnection);
+        this.sharedConnection = null;
     }
 
     private AggregateProcessInfo findProcessInfo() {
@@ -212,7 +239,7 @@ public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>,
                     pidFileReader.close();
                 }
             } catch (Exception ex) {
-                log.warn("Unable to read MySQL pid file " + pidFile);
+                LOG.warn("Unable to read MySQL pid file " + pidFile);
             }
         }
         return result;

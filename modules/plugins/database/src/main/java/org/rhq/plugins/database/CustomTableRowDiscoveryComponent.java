@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.database;
+
+import static org.rhq.plugins.database.DatabasePluginUtil.canProvideConnection;
+import static org.rhq.plugins.database.DatabasePluginUtil.getConnectionFromComponent;
+import static org.rhq.plugins.database.DatabasePluginUtil.hasConnectionPoolingSupport;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -29,13 +34,15 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
  * Discovery for a generic component that can read data out of a table for
@@ -47,57 +54,70 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryComponent<DatabaseComponent<?>> {
+public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>> {
+    private static final Log LOG = LogFactory.getLog(CustomTableRowDiscoveryComponent.class);
 
-    private final Log log = LogFactory.getLog(getClass());
-
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
-        throws InvalidPluginConfigurationException, Exception {
-        Statement statement = null;
-        ResultSet resultSet = null;
+        ResourceDiscoveryContext<ResourceComponent<?>> discoveryContext) throws InvalidPluginConfigurationException,
+        Exception {
 
-        Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
+        ResourceComponent<?> parentComponent = discoveryContext.getParentResourceComponent();
+
+        Configuration config = discoveryContext.getDefaultPluginConfiguration();
         String table = config.getSimpleValue("table", null);
         String keyColumn = config.getSimpleValue("keyColumn", null);
-        try {
-            Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
+        ResourceType resourceType = discoveryContext.getResourceType();
+        String resourceName = config.getSimpleValue("name", resourceType.getName());
+        String resourceDescription = config.getSimpleValue("description", "");
 
-            String resourceName = config.getSimpleValue("name", null);
-            String resourceDescription = config.getSimpleValue("description", "");
-
-            if (resourceName == null) {
-                throw new InvalidPluginConfigurationException("The 'name' connection property has to be specified.");
+        if (!canProvideConnection(parentComponent)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Parent component does not provide JDBC connections, cannot discover" + resourceName);
             }
+            return Collections.emptySet();
+        }
 
-            statement = conn.createStatement();
+        if (resourceName == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("'name' property not set, cannot discover" + resourceName);
+            }
+            return Collections.emptySet();
+        }
+
+        Statement statement = null;
+        Connection connection = null;
+        ResultSet resultSet = null;
+        try {
+            connection = getConnectionFromComponent(parentComponent);
+            if (connection == null) {
+                throw new InvalidPluginConfigurationException("cannot obtain connection from parent");
+            }
+            statement = connection.createStatement();
             resultSet = statement.executeQuery("SELECT * FROM " + table);
 
             Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
             while (resultSet.next()) {
-                config = resourceDiscoveryContext.getDefaultPluginConfiguration();
+                config = discoveryContext.getDefaultPluginConfiguration();
                 String key = resultSet.getString(keyColumn);
                 config.put(new PropertySimple("key", key));
-                DiscoveredResourceDetails details =
-                        new DiscoveredResourceDetails(
-                                resourceDiscoveryContext.getResourceType(),
-                                key,
-                                formatMessage(resourceName, key),
-                                null,
-                                formatMessage(resourceDescription,
-                    key), config, null);
+                DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                    key, formatMessage(resourceName, key), null, formatMessage(resourceDescription, key), config, null);
                 found.add(details);
             }
 
             return found;
+
         } catch (SQLException e) {
-            log.debug("table " + table + " column " + keyColumn, e);
+            LOG.debug("table " + table + " column " + keyColumn, e);
         } finally {
-            JDBCUtil.safeClose(resultSet);
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(null, statement, resultSet);
+            if (hasConnectionPoolingSupport(parentComponent)) {
+                DatabasePluginUtil.safeClose(connection, statement, resultSet);
+            }
         }
 
-        return Collections.emptySet();
+       return Collections.emptySet();
     }
 
     /**

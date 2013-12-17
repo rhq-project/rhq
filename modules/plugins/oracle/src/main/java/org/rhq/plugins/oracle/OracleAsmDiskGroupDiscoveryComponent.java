@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.oracle;
+
+import static org.rhq.plugins.database.DatabasePluginUtil.getConnectionFromComponent;
+import static org.rhq.plugins.database.DatabasePluginUtil.hasConnectionPoolingSupport;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -28,65 +32,66 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.plugins.database.DatabaseComponent;
+import org.rhq.plugins.database.DatabasePluginUtil;
 
 /**
  * Discovery Oracle ASM Disk Groups.
  *
  * @author Richard Hensman
  */
-public class OracleAsmDiskGroupDiscoveryComponent implements ResourceDiscoveryComponent<DatabaseComponent<?>> {
-
-    private final Log log = LogFactory.getLog(getClass());
+public class OracleAsmDiskGroupDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>> {
+    private static final Log LOG = LogFactory.getLog(OracleAsmDiskGroupDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
+        ResourceDiscoveryContext<ResourceComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
-        Statement statement = null;
-        ResultSet resultSet = null;
-        
+
         String table = "V$ASM_DISKGROUP";
         String keyColumn = "GROUP_NUMBER";
         String nameColumn = "NAME";
         String description = "Oracle ASM Disk Groups";
-        
-        try {
-            Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
 
-            statement = conn.createStatement();
+        ResourceComponent<?> parentComponent = resourceDiscoveryContext.getParentResourceComponent();
+
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = getConnectionFromComponent(parentComponent);
+            statement = connection.createStatement();
             resultSet = statement.executeQuery("SELECT * FROM " + table);
 
             Configuration config = null;
             Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
             while (resultSet.next()) {
-            	config = resourceDiscoveryContext.getDefaultPluginConfiguration();
+                config = resourceDiscoveryContext.getDefaultPluginConfiguration();
                 String key = resultSet.getString(keyColumn);
                 String name = resultSet.getString(nameColumn);
-                DiscoveredResourceDetails details =
-                        new DiscoveredResourceDetails(
-                                resourceDiscoveryContext.getResourceType(),
-                                key,
-                                name,
-                                null,
-                                description, config, null);
+                DiscoveredResourceDetails details = new DiscoveredResourceDetails(
+                    resourceDiscoveryContext.getResourceType(), key, name, null, description, config, null);
                 found.add(details);
             }
 
             return found;
         } catch (SQLException e) {
-            log.debug("table " + table + " column " + keyColumn, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("table " + table + " column " + keyColumn, e);
+            }
         } finally {
-            JDBCUtil.safeClose(resultSet);
-            JDBCUtil.safeClose(statement);
+            DatabasePluginUtil.safeClose(null, statement, resultSet);
+            if (hasConnectionPoolingSupport(parentComponent)) {
+                DatabasePluginUtil.safeClose(connection);
+            }
         }
 
-		return Collections.emptySet();
-	}
+        return Collections.emptySet();
+    }
 
 }

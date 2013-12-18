@@ -48,6 +48,10 @@ public class Aggregator {
 
     private DateTime startTime;
 
+    /**
+     * Signals when raw data index entries (in metrics_index) can be deleted. We cannot delete the row in metrics_index
+     * until we know that it has been read, successfully or otherwise.
+     */
     private SignalingCountDownLatch rawDataIndexEntriesArrival;
 
     private RateLimiter readPermits;
@@ -289,7 +293,7 @@ public class Aggregator {
         }
     }
 
-    private boolean isAggregationFinished() throws InterruptedException {
+    private boolean isAggregationFinished() {
         return state.getRemainingRawData().get() <= 0 && state.getRemaining1HourData().get() <= 0 &&
             state.getRemaining6HourData().get() <= 0 && remainingIndexEntries.get() <= 0;
     }

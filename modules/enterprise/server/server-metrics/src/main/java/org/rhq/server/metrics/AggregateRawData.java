@@ -14,6 +14,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
+ * Generates 1 hour data for a batch of raw data futures. After data is inserted for the batch, aggregation of 1 hour
+ * data will start immediately for the batch if the 6 hour time slice has finished.
+ *
+ * @see Compute1HourData
  * @author John Sanda
  */
 public class AggregateRawData implements Runnable {
@@ -55,7 +59,6 @@ public class AggregateRawData implements Runnable {
             public void onSuccess(List<ResultSet> resultSets) {
                 log.debug("Finished aggregating raw data for " + resultSets.size() + " schedules in " +
                     (System.currentTimeMillis() - start) + " ms");
-                state.getRemainingRawData().addAndGet(-scheduleIds.size());
                 start1HourDataAggregationIfNecessary();
             }
 
@@ -63,39 +66,51 @@ public class AggregateRawData implements Runnable {
             public void onFailure(Throwable t) {
                 log.warn("Failed to aggregate raw data", t);
                 // TODO maybe add debug statement to log those schedule ids for which aggregation failed
-                state.getRemainingRawData().addAndGet(-scheduleIds.size());
                 start1HourDataAggregationIfNecessary();
             }
         }, state.getAggregationTasks());
     }
 
     private void start1HourDataAggregationIfNecessary() {
-        if (state.is6HourTimeSliceFinished()) {
-            log.debug("Starting 1 hour data aggregation for " + scheduleIds.size() + " schedules");
-            try {
-                state.getOneHourIndexEntriesArrival().await();
-                try {
-                    state.getOneHourIndexEntriesLock().writeLock().lock();
-                    state.getOneHourIndexEntries().removeAll(scheduleIds);
-                } finally {
-                    state.getOneHourIndexEntriesLock().writeLock().unlock();
+        try {
+            if (state.is6HourTimeSliceFinished()) {
+                update1HourIndexEntries();
+                List<StorageResultSetFuture> oneHourDataQueryFutures = new ArrayList<StorageResultSetFuture>(
+                    scheduleIds.size());
+                for (Integer scheduleId : scheduleIds) {
+                    oneHourDataQueryFutures.add(dao.findOneHourMetricsAsync(scheduleId,
+                        state.getSixHourTimeSlice().getMillis(), state.getSixHourTimeSliceEnd().getMillis()));
                 }
-            } catch (InterruptedException e) {
-                log.warn("An interrupt occurred waiting for one hour data index entries", e);
-                return;
-            } catch (AbortedException e) {
-                // This means we failed to retrieve the index entries. We can however
-                // continue generating 1 hour data because we do not need the index
-                // here since we already have 1 hour data to aggregate along with the
-                // schedule ids.
+                state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
+                    oneHourDataQueryFutures));
             }
-            List<StorageResultSetFuture> oneHourDataQueryFutures = new ArrayList<StorageResultSetFuture>(
-                scheduleIds.size());
-            for (Integer scheduleId : scheduleIds) {
-                oneHourDataQueryFutures.add(dao.findOneHourMetricsAsync(scheduleId,
-                    state.getSixHourTimeSlice().getMillis(), state.getSixHourTimeSliceEnd().getMillis()));
+        } catch (InterruptedException e) {
+            log.debug("An interrupt occurred while waiting for 1 hour data index entries. Aborting data aggregation",
+                e);
+            log.info("An interrupt occurred while waiting for 1 hour data index entries. Aborting data aggregation: " +
+                e.getMessage());
+        } finally {
+            state.getRemainingRawData().addAndGet(-scheduleIds.size());
+        }
+    }
+
+    private void update1HourIndexEntries() throws InterruptedException {
+        try {
+            // Wait for the arrival so that we can remove the schedules ids in this
+            // batch from the one hour index entries. This will prevent duplicate tasks
+            // being submitted to process the same 1 hour data.
+            state.getOneHourIndexEntriesArrival().await();
+            try {
+                state.getOneHourIndexEntriesLock().writeLock().lock();
+                state.getOneHourIndexEntries().removeAll(scheduleIds);
+            } finally {
+                state.getOneHourIndexEntriesLock().writeLock().unlock();
             }
-            state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds, oneHourDataQueryFutures));
+        } catch (AbortedException e) {
+            // This means we failed to retrieve the index entries. We can however
+            // continue generating 1 hour data because we do not need the index
+            // here since we already have 1 hour data to aggregate along with the
+            // schedule ids.
         }
     }
 }

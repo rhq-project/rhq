@@ -62,6 +62,10 @@ public class AggregationState {
         return this;
     }
 
+    /**
+     * @return A {@link SignalingCountDownLatch} to signal the arrival of index entries for schedules with 1 hour
+     * data to be aggregated
+     */
     public SignalingCountDownLatch getOneHourIndexEntriesArrival() {
         return oneHourIndexEntriesArrival;
     }
@@ -71,6 +75,10 @@ public class AggregationState {
         return this;
     }
 
+    /**
+     * @return A {@link SignalingCountDownLatch} to signal the arrival of index entries for schedules with 6 hour
+     * data to be aggregated
+     */
     public SignalingCountDownLatch getSixHourIndexEntriesArrival() {
         return sixHourIndexEntriesArrival;
     }
@@ -80,6 +88,9 @@ public class AggregationState {
         return this;
     }
 
+    /**
+     * @return The remaining number of schedules with raw data to be aggregated
+     */
     public AtomicInteger getRemainingRawData() {
         return remainingRawData;
     }
@@ -89,6 +100,9 @@ public class AggregationState {
         return this;
     }
 
+    /**
+     * @return The remaining number of schedules with 1 hour data to be aggregated
+     */
     public AtomicInteger getRemaining1HourData() {
         return remaining1HourData;
     }
@@ -98,6 +112,9 @@ public class AggregationState {
         return this;
     }
 
+    /**
+     * @return The remaining number of schedules with 6 hour data to be aggregated
+     */
     public AtomicInteger getRemaining6HourData() {
         return remaining6HourData;
     }
@@ -107,6 +124,9 @@ public class AggregationState {
         return this;
     }
 
+    /**
+     * @return The schedule ids with 1 hour data to be aggregated
+     */
     public Set<Integer> getOneHourIndexEntries() {
         return oneHourIndexEntries;
     }

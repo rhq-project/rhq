@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 import com.codahale.metrics.ConsoleReporter;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -65,6 +67,20 @@ public class Simulator implements ShutdownManager {
         Metrics metrics = new Metrics();
         final ConsoleReporter consoleReporter = createConsoleReporter(metrics, plan.getMetricsReportInterval());
 
+        createSchema(plan.getNodes(), plan.getCqlPort());
+
+        Session session = createSession(plan.getNodes(), plan.getCqlPort());
+        StorageSession storageSession = new StorageSession(session);
+
+        MetricsDAO metricsDAO = new MetricsDAO(storageSession, plan.getMetricsServerConfiguration());
+        final MetricsServer metricsServer = new MetricsServer();
+        metricsServer.setDAO(metricsDAO);
+        metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
+        metricsServer.setAggregationBatchSize(plan.getAggregationBatchSize());
+        metricsServer.setUseAsyncAggregation(plan.getAggregationType() == SimulationPlan.AggregationType.ASYNC);
+
+        metricsServer.setDateTimeService(plan.getDateTimeService());
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -72,24 +88,18 @@ public class Simulator implements ShutdownManager {
                 shutdown(readers, "readers", 5);
                 shutdown(aggregators, "aggregators", 1);
                 shutdown(aggregationQueue, "aggregationQueue", Integer.MAX_VALUE);
+                metricsServer.shutdown();
+                log.info("Wait for console reporter...");
+                try {
+                    Thread.sleep(181000);
+                } catch (InterruptedException e) {
+                }
                 consoleReporter.stop();
             }
         });
 
-        createSchema(plan.getNodes(), plan.getCqlPort());
-
-        Session session = createSession(plan.getNodes(), plan.getCqlPort());
-        StorageSession storageSession = new StorageSession(session);
-
-        MetricsDAO metricsDAO = new MetricsDAO(storageSession, plan.getMetricsServerConfiguration());
-        MetricsServer metricsServer = new MetricsServer();
-        metricsServer.setDAO(metricsDAO);
-        metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
-
-        metricsServer.setDateTimeService(plan.getDateTimeService());
-
         MeasurementAggregator measurementAggregator = new MeasurementAggregator(metricsServer, this, metrics,
-            aggregationQueue);
+            aggregationQueue, plan.getNumMeasurementCollectors() * plan.getBatchSize());
 
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             collectors.scheduleAtFixedRate(new MeasurementCollector(plan.getBatchSize(),
@@ -169,6 +179,11 @@ public class Simulator implements ShutdownManager {
             Cluster cluster = new ClusterBuilder().addContactPoints(nodes).withPort(cqlPort)
                 .withCredentials("rhqadmin", "rhqadmin")
                 .build();
+            PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+            poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 24);
+            poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 24);
+            poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL, 32);
+            poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, 32);
 
             log.debug("Created cluster object with " + cluster.getConfiguration().getProtocolOptions().getCompression()
                 + " compression.");

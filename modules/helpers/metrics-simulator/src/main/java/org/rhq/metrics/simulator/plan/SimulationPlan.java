@@ -56,6 +56,26 @@ public class SimulationPlan {
         }
     }
 
+    public static enum AggregationType {
+        SYNC("sync"), ASYNC("async");
+
+        private final String text;
+
+        AggregationType(String text) {
+            this.text = text;
+        }
+
+        public static AggregationType fromText(String text) {
+            if (text.equals("sync")) {
+                return SYNC;
+            }
+            if (text.equals("async")) {
+                return ASYNC;
+            }
+            throw new IllegalArgumentException(text + " is not a valid aggregation type");
+        }
+    }
+
     private long collectionInterval;
 
     private long aggregationInterval;
@@ -83,6 +103,10 @@ public class SimulationPlan {
     private long readInterval;
 
     private long simulationRate;
+
+    private int aggregationBatchSize;
+
+    private AggregationType aggregationType;
 
     public DateTimeService getDateTimeService() {
         return dateTimeService;
@@ -194,5 +218,21 @@ public class SimulationPlan {
 
     public void setSimulationRate(long simulationRate) {
         this.simulationRate = simulationRate;
+    }
+
+    public int getAggregationBatchSize() {
+        return aggregationBatchSize;
+    }
+
+    public void setAggregationBatchSize(int aggregationBatchSize) {
+        this.aggregationBatchSize = aggregationBatchSize;
+    }
+
+    public AggregationType getAggregationType() {
+        return aggregationType;
+    }
+
+    public void setAggregationType(AggregationType aggregationType) {
+        this.aggregationType = aggregationType;
     }
 }

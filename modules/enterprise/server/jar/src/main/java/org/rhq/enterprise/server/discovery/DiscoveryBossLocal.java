@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.discovery;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -87,9 +88,11 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
 
     /**
      * @param resourceid the root resourceId on which we want to sync
-     * @return null if resource not found, otherwise the entire tree rooted at the specified resource
+     * @return null if resource not found, otherwise the entire tree rooted at the specified resource, as an
+     * unordered collection.  Although not strictly a Set (to save on computation) this collection should not
+     * contain duplicates.
      */
-    ResourceSyncInfo getResourceSyncInfo(int resourceId);
+    Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId);
 
     /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not

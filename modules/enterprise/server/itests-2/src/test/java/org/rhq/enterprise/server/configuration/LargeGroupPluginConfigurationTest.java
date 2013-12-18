@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.configuration;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +35,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -112,7 +113,7 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         int groupUpdateId = configurationManager.scheduleGroupPluginConfigurationUpdate(env.normalSubject,
             env.compatibleGroup.getId(), existingMap);
 
-        // group plugin configuration update has been kicked off, wait for the mock agents to each complete their update 
+        // group plugin configuration update has been kicked off, wait for the mock agents to each complete their update
         System.out.print("Waiting for mock agents");
         assert latch.await(5, TimeUnit.MINUTES) : "agents should not have taken this long";
         System.out.println(" Mock agents are done.");
@@ -222,10 +223,6 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         }
 
         @Override
-        public void synchronizeInventory(ResourceSyncInfo syncInfo) {
-        }
-
-        @Override
         public void uninventoryResource(int resourceId) {
         }
 
@@ -240,6 +237,14 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         @Override
         public void requestFullAvailabilityReport() {
             return;
+        }
+
+        @Override
+        public void synchronizePlatform(PlatformSyncInfo syncInfo) {
+        }
+
+        @Override
+        public void synchronizeServer(int resourceId, Collection<ResourceSyncInfo> toplevelServerSyncInfo) {
         }
     }
 }

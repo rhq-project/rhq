@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -903,7 +904,7 @@ public class StandaloneContainer {
         }
 
         @Override
-        public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
+        public Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId) {
             return null;
         }
 

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -121,10 +122,10 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     @Override
-    public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
+    public Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId) {
         long start = System.currentTimeMillis();
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        ResourceSyncInfo results;
+        Collection<ResourceSyncInfo> results;
 
         results = discoveryBoss.getResourceSyncInfo(resourceId);
 

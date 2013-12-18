@@ -228,6 +228,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * @see ContainerService#initialize()
      */
+    @Override
     public void initialize() {
         inventoryLock.writeLock().lock();
 
@@ -290,6 +291,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * @see ContainerService#shutdown()
      */
+    @Override
     public void shutdown() {
         PluginContainer pluginContainer = PluginContainer.getInstance();
         pluginContainer.shutdownExecutorService(this.inventoryThreadPoolExecutor, true);
@@ -626,10 +628,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @Override
     public void setConfiguration(PluginContainerConfiguration configuration) {
         this.configuration = configuration;
     }
 
+    @Override
     public void updatePluginConfiguration(int resourceId, Configuration newPluginConfiguration)
         throws InvalidPluginConfigurationClientException, PluginContainerException {
         ResourceContainer container = getResourceContainer(resourceId);
@@ -673,11 +677,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @Override
     @NotNull
     public InventoryReport executeServerScanImmediately() {
         return submit(serverScanExecutor);
     }
 
+    @Override
     @NotNull
     public InventoryReport executeServiceScanImmediately() {
         return submit(serviceScanExecutor);
@@ -689,6 +695,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return submit(discoveryExecutor);
     }
 
+    @Override
     public void executeServiceScanDeferred() {
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
     }
@@ -705,6 +712,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param changedOnlyReport
      * @return The report, for inspection
      */
+    @Override
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport) {
         return executeAvailabilityScanImmediately(changedOnlyReport, false);
     }
@@ -745,6 +753,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @Override
     @NotNull
     public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {
         try {
@@ -790,6 +799,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         configuration.getServerServices().getDiscoveryServerService().setResourceEnablement(resourceId, setEnabled);
     }
 
+    @Override
     public MergeResourceResponse manuallyAddResource(ResourceType resourceType, int parentResourceId,
         Configuration pluginConfiguration, int ownerSubjectId) throws InvalidPluginConfigurationClientException,
         PluginContainerException {
@@ -1202,36 +1212,45 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Performs a full platform sync so that resources passed in are reflected in the agent's inventory.
      *
-     * @param platformSyncInfo sync info on the platform and references to the top level servers
+     * @param platformSyncInfo sync info on the platform and references to the top level servers. not null.
      */
     private void syncPlatform(PlatformSyncInfo platformSyncInfo) {
         final Set<String> allServerSideUuids = new HashSet<String>();
         boolean hadSyncedResources = false;
+        ResourceSyncInfo platformResourceSyncInfo = platformSyncInfo.getPlatform();
 
-        // always sync the platform because it does not get included in the top level server sync
-        allServerSideUuids.add(platformSyncInfo.getUuid());
-        ResourceSyncInfo platformResourceSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(platformSyncInfo);
-        log.info("Sync Starting: Platform [" + platformResourceSyncInfo.getId() + "]");
-        hadSyncedResources = syncResource(platformResourceSyncInfo) || hadSyncedResources;
-        log.info("Sync Complete: Platform [" + platformResourceSyncInfo.getId() + "]. Local inventory changed: ["
+        // sync the platform because it does not get included in the top level server sync
+        allServerSideUuids.add(platformResourceSyncInfo.getUuid());
+        // sync the top level service hierarchy
+        addAllUuids(platformSyncInfo.getServices(), allServerSideUuids);
+
+        // Add the platform sync info to the service hierarchy in order to process in one batch
+        Collection<ResourceSyncInfo> syncInfos = platformSyncInfo.getServices();
+        syncInfos.add(platformResourceSyncInfo);
+
+        log.info("Sync Starting: Platform [" + platformSyncInfo.getPlatform().getId() + "] and top level services.");
+        hadSyncedResources = syncResources(platformResourceSyncInfo.getId(), syncInfos) || hadSyncedResources;
+        log.info("Sync Complete: Platform [" + platformSyncInfo.getPlatform().getId() + "]. Local inventory changed: ["
             + hadSyncedResources + "]");
+
+        syncInfos = null; // release to GC
 
         // then sync the top level servers by calling back to the server for the sync info for each. We
         // do this one at a time to avoid forcing the whole inventory into active memory at one time during the sync.
-        Collection<Resource> topLevelServers = platformSyncInfo.getTopLevelServers();
-        if (null != topLevelServers) {
+        Collection<Integer> topLevelServerIds = platformSyncInfo.getTopLevelServerIds();
+        if (null != topLevelServerIds) {
             DiscoveryServerService service = configuration.getServerServices().getDiscoveryServerService();
 
-            for (Resource topLevelServer : topLevelServers) {
-                ResourceSyncInfo topLevelServerSyncInfo = service.getResourceSyncInfo(topLevelServer.getId());
-                if (null != topLevelServerSyncInfo) {
-                    //topLevelServerSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(platformSyncInfo,
-                    //    topLevelServerSyncInfo);
-                    getAllUuids(topLevelServerSyncInfo, allServerSideUuids);
-                    log.info("Sync Starting: Top Level Server  [" + topLevelServerSyncInfo.getId() + "]");
-                    hadSyncedResources = syncResource(topLevelServerSyncInfo) || hadSyncedResources;
-                    log.info("Sync Complete: Top Level Server  [" + topLevelServerSyncInfo.getId()
-                        + "] Local inventory changed: [" + hadSyncedResources + "]");
+            for (Integer topLevelServerId : topLevelServerIds) {
+                syncInfos = service.getResourceSyncInfo(topLevelServerId);
+                if (null != syncInfos) {
+                    addAllUuids(syncInfos, allServerSideUuids);
+                    log.info("Sync Starting: Top Level Server  [" + topLevelServerId + "]");
+                    hadSyncedResources = syncResources(topLevelServerId, syncInfos) || hadSyncedResources;
+                    log.info("Sync Complete: Top Level Server  [" + topLevelServerId + "] Local inventory changed: ["
+                        + hadSyncedResources + "]");
+
+                    syncInfos = null; // release to GC
                 }
             }
         }
@@ -1261,13 +1280,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void getAllUuids(ResourceSyncInfo syncInfo, Set<String> allServerSideUuids) {
-        allServerSideUuids.add(syncInfo.getUuid());
-
-        if (null != syncInfo.getChildSyncInfos()) {
-            for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
-                getAllUuids(child, allServerSideUuids);
-            }
+    private void addAllUuids(Collection<ResourceSyncInfo> syncInfos, Set<String> allServerSideUuids) {
+        for (ResourceSyncInfo syncInfo : syncInfos) {
+            allServerSideUuids.add(syncInfo.getUuid());
         }
     }
 
@@ -1278,7 +1293,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param syncInfo the resources' sync data
      * @return true if any resources needed synchronization, false otherwise
      */
-    private boolean syncResource(ResourceSyncInfo syncInfo) {
+    private boolean syncResources(int rootResourceId, Collection<ResourceSyncInfo> syncInfos) {
         boolean result = false;
         final long startTime = System.currentTimeMillis();
         final Set<Resource> syncedResources = new LinkedHashSet<Resource>();
@@ -1292,7 +1307,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             log.debug("Processing Server sync info...");
 
-            processSyncInfo(syncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
+            processSyncInfo(syncInfos, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
                 deletedResourceIds, newlyCommittedResources, ignoredResources);
 
             if (log.isDebugEnabled()) {
@@ -1318,7 +1333,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             result = !(syncedResources.isEmpty() && unknownResourceSyncInfos.isEmpty() && modifiedResourceIds.isEmpty());
 
         } catch (Throwable t) {
-            log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + syncInfo.getId()
+            log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + rootResourceId
                 + "] and its descendants: " + t.getMessage());
             // convert to runtime exception so as not to change the api
             throw new RuntimeException(t);
@@ -1327,13 +1342,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return result;
     }
 
-    public void synchronizeInventory(ResourceSyncInfo resourceSyncInfo) {
-        log.info("Synchronizing local inventory with Server inventory for Resource [" + resourceSyncInfo.getId()
-            + "] and its descendants...");
+    @Override
+    public void synchronizePlatform(PlatformSyncInfo syncInfo) {
+        syncPlatform(syncInfo);
+        performServiceScan(syncInfo.getPlatform().getId()); // NOTE: This will block (the initial scan blocks).
+        // TODO: (jshaughn) should we also request a full avail scan?
+    }
 
-        // Get the latest resource data rooted at the given id.
-        syncResource(resourceSyncInfo); // this method assumes we only get a single resource and its children (BZ 887411)
-        performServiceScan(resourceSyncInfo.getId()); // NOTE: This will block (the initial scan blocks).
+    @Override
+    public void synchronizeServer(int resourceId, Collection<ResourceSyncInfo> topLevelServerSyncInfo) {
+        log.info("Synchronizing local inventory with Server inventory for Resource [" + resourceId
+            + "] and its descendants...");
+        syncResources(resourceId, topLevelServerSyncInfo);
+        performServiceScan(resourceId); // NOTE: This will block (the initial scan blocks).
         // TODO: (jshaughn) should we also request a full avail scan?
     }
 
@@ -1397,6 +1418,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.getResourceComponent();
     }
 
+    @Override
     public void uninventoryResource(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
@@ -1542,6 +1564,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return parentContainerResource.getChildResources();
     }
 
+    @Override
     public Resource getPlatform() {
         return platform;
     }
@@ -2541,6 +2564,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return mgr;
     }
 
+    @Override
     public void requestFullAvailabilityReport() {
         if (null != availabilityExecutor) {
             availabilityExecutor.sendFullReportNextTime();
@@ -2684,10 +2708,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @Override
     public void enableServiceScans(int serverResourceId, Configuration config) {
         throw new UnsupportedOperationException("not implemented yet"); // TODO: Implement this method.
     }
 
+    @Override
     public void disableServiceScans(int serverResourceId) {
         throw new UnsupportedOperationException("not implemented yet"); // TODO: Implement this method.
     }
@@ -2905,82 +2931,77 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return versionUpdated;
     }
 
-    private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
+    private void processSyncInfo(Collection<ResourceSyncInfo> syncInfos, Set<Resource> syncedResources,
         Set<ResourceSyncInfo> unknownResourceSyncInfos, Set<Integer> modifiedResourceIds,
         Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources, Set<Resource> ignoredResources) {
 
-        if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
-            // A previously deleted resource still being reported by the server. Support for this option can
-            // be removed if the server is ever modified to not report deleted resources. It is happening currently
-            // because deleted resources are kept to support resource history. The deleted resources are rightfully not
-            // in the PC inventory, and so must be handled separately, and not as unknown resources.
-            deletedResourceIds.add(syncInfo.getId());
-        } else {
-            ResourceContainer container = getResourceContainer(syncInfo.getUuid());
-            if (container == null) {
-                // Either a manually added Resource or just something we haven't discovered.
-                // If this unknown resource is to be ignored, then don't bother to do anything.
-                if (InventoryStatus.IGNORED != syncInfo.getInventoryStatus()) {
-                    unknownResourceSyncInfos.add(syncInfo);
-                    log.info("Got unknown resource: " + syncInfo.getId());
-                } else {
-                    log.info("Got an unknown but ignored resource - ignoring it: " + syncInfo.getId());
-                }
+        for (ResourceSyncInfo syncInfo : syncInfos) {
+            if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
+                // A previously deleted resource still being reported by the server. Support for this option can
+                // be removed if the server is ever modified to not report deleted resources. It is happening currently
+                // because deleted resources are kept to support resource history. The deleted resources are rightfully not
+                // in the PC inventory, and so must be handled separately, and not as unknown resources.
+                deletedResourceIds.add(syncInfo.getId());
             } else {
-                Resource resource = container.getResource();
-                // Ensure the Resource classloader is initialized on the Resource container.
-                initResourceContainer(resource);
-
-                if (log.isDebugEnabled()) {
-                    log.debug("Local Resource: id=" + resource.getId() + ", status=" + resource.getInventoryStatus()
-                        + ", mtime=" + resource.getMtime());
-                    log.debug("Sync Resource: " + syncInfo.getId() + ", status=" + syncInfo.getInventoryStatus()
-                        + ", mtime=" + syncInfo.getMtime());
-                }
-
-                final boolean ignoreResource = (InventoryStatus.IGNORED == syncInfo.getInventoryStatus());
-                final boolean ignoreResourceType = this.pluginManager.getMetadataManager()
-                    .isDisabledOrIgnoredResourceType(resource.getResourceType());
-                if (ignoreResource || ignoreResourceType) {
-                    // a resource or its type has been tagged to be ignored - we need to remove it from our inventory
-                    ignoredResources.add(resource);
-                } else {
-                    if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
-                        && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
-                        newlyCommittedResources.add(resource);
-                    }
-
-                    if (resource.getId() == 0) {
-                        // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
-                        resource.setId(syncInfo.getId());
-                        resource.setMtime(syncInfo.getMtime());
-                        resource.setInventoryStatus(syncInfo.getInventoryStatus());
-                        refreshResourceComponentState(container, true);
-                        syncedResources.add(resource);
+                ResourceContainer container = getResourceContainer(syncInfo.getUuid());
+                if (container == null) {
+                    // Either a manually added Resource or just something we haven't discovered.
+                    // If this unknown resource is to be ignored, then don't bother to do anything.
+                    if (InventoryStatus.IGNORED != syncInfo.getInventoryStatus()) {
+                        unknownResourceSyncInfos.add(syncInfo);
+                        log.info("Got unknown resource: " + syncInfo.getId());
                     } else {
-                        // It's a resource that was already synced at least once.
-                        if (resource.getId() != syncInfo.getId()) {
-                            // This really should never happen, but check for it just to be bulletproof.
-                            log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
-                                + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
-                            modifiedResourceIds.add(syncInfo.getId());
-                        }
-                        // See if it's been modified on the Server since the last time we synced.
-                        else if (resource.getMtime() < syncInfo.getMtime()) {
-                            modifiedResourceIds.add(resource.getId());
-                        } else {
-                            // Only try to start up the component if the Resource has *not* been modified on the Server.
-                            // Otherwise, hold off until we've synced the Resource with the Server.
-                            refreshResourceComponentState(container, false);
-                        }
+                        log.info("Got an unknown but ignored resource - ignoring it: " + syncInfo.getId());
                     }
-                }
+                } else {
+                    Resource resource = container.getResource();
+                    // Ensure the Resource classloader is initialized on the Resource container.
+                    initResourceContainer(resource);
 
-                // Recurse...
-                if (null != syncInfo.getChildSyncInfos()) {
-                    for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                        processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
-                            deletedResourceIds, newlyCommittedResources, ignoredResources);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Local Resource: id=" + resource.getId() + ", status="
+                            + resource.getInventoryStatus() + ", mtime=" + resource.getMtime());
+                        log.debug("Sync Resource: " + syncInfo.getId() + ", status=" + syncInfo.getInventoryStatus()
+                            + ", mtime=" + syncInfo.getMtime());
+                    }
+
+                    final boolean ignoreResource = (InventoryStatus.IGNORED == syncInfo.getInventoryStatus());
+                    final boolean ignoreResourceType = this.pluginManager.getMetadataManager()
+                        .isDisabledOrIgnoredResourceType(resource.getResourceType());
+                    if (ignoreResource || ignoreResourceType) {
+                        // a resource or its type has been tagged to be ignored - we need to remove it from our inventory
+                        ignoredResources.add(resource);
+                    } else {
+                        if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
+                            && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                            newlyCommittedResources.add(resource);
+                        }
+
+                        if (resource.getId() == 0) {
+                            // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
+                            resource.setId(syncInfo.getId());
+                            resource.setMtime(syncInfo.getMtime());
+                            resource.setInventoryStatus(syncInfo.getInventoryStatus());
+                            refreshResourceComponentState(container, true);
+                            syncedResources.add(resource);
+                        } else {
+                            // It's a resource that was already synced at least once.
+                            if (resource.getId() != syncInfo.getId()) {
+                                // This really should never happen, but check for it just to be bulletproof.
+                                log.error("PC Resource id (" + resource.getId()
+                                    + ") does not match Server Resource id (" + syncInfo.getId()
+                                    + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
+                                modifiedResourceIds.add(syncInfo.getId());
+                            }
+                            // See if it's been modified on the Server since the last time we synced.
+                            else if (resource.getMtime() < syncInfo.getMtime()) {
+                                modifiedResourceIds.add(resource.getId());
+                            } else {
+                                // Only try to start up the component if the Resource has *not* been modified on the Server.
+                                // Otherwise, hold off until we've synced the Resource with the Server.
+                                refreshResourceComponentState(container, false);
+                            }
+                        }
                     }
                 }
             }
@@ -3037,46 +3058,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private Set<Resource> getResourcesFromSyncInfos(Set<ResourceSyncInfo> syncInfos) {
-
-        final StopWatch stopWatch = new StopWatch();
-        final int syncInfosSize = syncInfos.size();
-        final Set<Resource> result = new HashSet<Resource>(syncInfosSize);
-
-        for (ResourceSyncInfo syncInfo : syncInfos) {
-            Resource resource = getResourceFromSyncInfo(syncInfo);
-            result.add(resource);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("Time to build resource tree from [" + syncInfosSize + "] sync infos=" + stopWatch.getElapsed());
-        }
-
-        return result;
-    }
-
-    private Resource getResourceFromSyncInfo(ResourceSyncInfo syncInfo) {
-        final boolean isDebugEnabled = log.isDebugEnabled();
-        final StopWatch stopWatch = new StopWatch();
-        String marker = null;
-
         /////
-        // First we need to do a breadth first traversal of the sync info tree and build a list of all resource IDs.
-
-        if (isDebugEnabled) {
-            marker = "a. Breadth-first retrieval of sync info tree";
-            stopWatch.markTimeBegin(marker);
-        }
-
-        List<Integer> resourceIdList = treeToBreadthFirstList(syncInfo);
-        int fullResourceTreeSize = resourceIdList.size();
-        if (isDebugEnabled) {
-            stopWatch.markTimeEnd(marker);
+        // First we need to get a list of the unknown resource ids
+        List<Integer> resourceIdList = new ArrayList<Integer>(syncInfos.size());
+        for (ResourceSyncInfo syncInfo : syncInfos) {
+            resourceIdList.add(syncInfo.getId());
         }
 
         /////
         // Now we need to loop over batches of the resource ID list - asking the server for their resource representations.
         // When we get the resources from the server, we put them in our resourceMap, keyed on ID.
 
+        final boolean isDebugEnabled = log.isDebugEnabled();
+        final StopWatch stopWatch = new StopWatch();
+        String marker = null;
         Map<Integer, Resource> resourceMap = new HashMap<Integer, Resource>(resourceIdList.size());
         int batchNumber = 0;
         while (!resourceIdList.isEmpty()) {
@@ -3091,7 +3086,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // This usage of .clear() will remove the processed resources from the backing list.
             String markerPrefix = null;
             if (isDebugEnabled) {
-                markerPrefix = String.format("b. Batch [%03d] (%d): ", batchNumber, fullResourceTreeSize);
+                markerPrefix = String.format("a. Batch [%03d] (%d): ", batchNumber, syncInfos.size());
                 marker = String.format("%sGet resource ID sublist - %d of %d remaining", markerPrefix, end, size);
                 stopWatch.markTimeBegin(marker);
             }
@@ -3136,61 +3131,39 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         }
 
-        if (fullResourceTreeSize != resourceMap.size()) {
-            log.warn("Expected [" + fullResourceTreeSize + "] but found [" + resourceMap.size()
+        if (syncInfos.size() != resourceMap.size()) {
+            log.warn("Expected [" + syncInfos.size() + "] but found [" + resourceMap.size()
                 + "] resources when fetching from server");
         }
 
         /////
         // We now have all the resources associated with all sync infos in a map.
-        // We need to build the full resource tree using the sync info as the blueprint for how to order the resources in a tree.
+        // We need to build the full resource tree using the resource parent info as the blueprint for how to
+        // link the resources in the tree.
         if (isDebugEnabled) {
-            marker = "c. Build the full resource tree";
+            marker = "b. Build the resource hierarchies";
             stopWatch.markTimeBegin(marker);
         }
 
-        Resource result = syncInfoTreeToResourceTree(syncInfo, resourceMap);
-        resourceMap.clear();
+        // The root resources to be merged (i.e. the resources whose parents are not in the map)
+        Set<Resource> result = new HashSet<Resource>();
+        for (Resource resource : resourceMap.values()) {
+            if (null == resource.getParentResource()) {
+                result.add(resource); // the platform, make sure we have this
+                continue;
+            }
+            Resource parent = resourceMap.get(resource.getParentResource().getId());
+            if (null != parent) {
+                parent.addChildResource(resource);
+            } else {
+                result.add(resource);
+            }
+        }
 
         if (isDebugEnabled) {
             stopWatch.markTimeEnd(marker);
 
-            log.debug("Full resource tree built from sync info - performance: " + stopWatch);
-        }
-
-        return result;
-    }
-
-    private Resource syncInfoTreeToResourceTree(ResourceSyncInfo syncInfo, Map<Integer, Resource> resourceMap) {
-        Resource result = resourceMap.get(syncInfo.getId());
-
-        if (null == result || null == syncInfo.getChildSyncInfos()) {
-            return result;
-        }
-
-        for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
-            Resource childResource = syncInfoTreeToResourceTree(child, resourceMap);
-            if (null != childResource) {
-                result.addChildResource(childResource);
-            }
-        }
-
-        return result;
-    }
-
-    private List<Integer> treeToBreadthFirstList(ResourceSyncInfo syncInfo) {
-        List<Integer> result = new ArrayList<Integer>();
-
-        LinkedList<ResourceSyncInfo> queue = new LinkedList<ResourceSyncInfo>();
-        queue.add(syncInfo);
-        while (!queue.isEmpty()) {
-            ResourceSyncInfo node = queue.remove();
-            result.add(node.getId());
-            if (null != node.getChildSyncInfos()) {
-                for (ResourceSyncInfo child : node.getChildSyncInfos()) {
-                    queue.add(child);
-                }
-            }
+            log.debug("Resource trees built from map - performance: " + stopWatch);
         }
 
         return result;
@@ -3500,6 +3473,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     class ResourceGotActivatedListener implements InventoryEventListener {
 
+        @Override
         public void resourceActivated(Resource resource) {
             if (resource != null && resource.getId() > 0) {
                 if (log.isDebugEnabled()) {
@@ -3514,14 +3488,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
             removeInventoryEventListener(this);
         }
 
+        @Override
         public void resourceDeactivated(Resource resource) {
             // nothing to do
         }
 
+        @Override
         public void resourcesAdded(Set<Resource> resources) {
             // nothing to do
         }
 
+        @Override
         public void resourcesRemoved(Set<Resource> resources) {
             // nothing to do
         }

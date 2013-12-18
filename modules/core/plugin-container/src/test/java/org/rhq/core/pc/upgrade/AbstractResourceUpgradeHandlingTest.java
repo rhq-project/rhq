@@ -56,6 +56,10 @@ public abstract class AbstractResourceUpgradeHandlingTest extends ResourceUpgrad
                 expectations.with(Expectations.any(InventoryReport.class)));
             expectations.will(inventory.mergeInventoryReport(InventoryStatus.COMMITTED));
 
+            expectations.allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(
+                expectations.with(Expectations.any(Integer.class)));
+            expectations.will(inventory.getResourceSyncInfo());
+
             expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(
                 expectations.with(Expectations.any(Set.class)));
             expectations.will(inventory.upgradeResources());

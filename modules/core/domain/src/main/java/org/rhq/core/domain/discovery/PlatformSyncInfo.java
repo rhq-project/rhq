@@ -23,52 +23,69 @@
 package org.rhq.core.domain.discovery;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 
 /**
- * @author Ian Springer
+ * This immutable POJO returns the information necessary for the agent to perform a complete sync with the server
+ * inventory.  It does not provide *all* of the sync info, only the platform and its top level *service* hierarchy. It
+ * expects the agent to call back to the server for each of the platform's top level servers and therefore provides
+ * only the top level server Ids.
+ *
  * @author Jay Shaughnessy
  */
-@Entity
-@Table(name = "RHQ_RESOURCE")
-public class PlatformSyncInfo extends SyncInfo implements Serializable {
+public class PlatformSyncInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "parentResource", fetch = FetchType.EAGER)
-    private Set<Resource> topLevelServers;
+    private ResourceSyncInfo platform;
+    private Set<ResourceSyncInfo> services;
+    private Set<Integer> topLevelServerIds;
 
-    // JPA requires public or protected no-param constructor; Externalizable requires public no-param constructor.
-    public PlatformSyncInfo() {
+    public PlatformSyncInfo(ResourceSyncInfo platform, Set<ResourceSyncInfo> services, Set<Integer> topLevelServerIds) {
+        super();
+        this.platform = platform;
+        this.services = services;
+        this.topLevelServerIds = topLevelServerIds;
     }
 
-    public Collection<Resource> getTopLevelServers() {
-        return topLevelServers;
+    /**
+     * @return just the platform sync info
+     */
+    public ResourceSyncInfo getPlatform() {
+        return platform;
+    }
+
+    /**
+     * @return the sync info for the platform hierarchy excluding the platform itself and the top level servers
+     */
+    public Set<ResourceSyncInfo> getServices() {
+        return services;
+    }
+
+    /**
+     * @return just the type level server ids, so that the agent can call back for sync info on each top level server
+     */
+    public Set<Integer> getTopLevelServerIds() {
+        return topLevelServerIds;
     }
 
     // for testing
     public static PlatformSyncInfo buildPlatformSyncInfo(Resource platform) {
-        Set<Resource> toplevelServers = platform.getChildResources();
+        Set<Integer> toplevelServerIds = new HashSet<Integer>();
+        for (Resource r : platform.getChildResources()) {
+            if (r.getResourceType().getCategory().equals(ResourceCategory.SERVER)) {
+                toplevelServerIds.add(r.getId());
+            }
+        }
 
-        PlatformSyncInfo syncInfo = new PlatformSyncInfo(platform.getId(), platform.getUuid(), platform.getMtime(),
-            platform.getInventoryStatus(), (null == toplevelServers ? Collections.EMPTY_SET : toplevelServers));
+        ResourceSyncInfo resSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(platform);
+
+        PlatformSyncInfo syncInfo = new PlatformSyncInfo(resSyncInfo, new HashSet<ResourceSyncInfo>(1),
+            toplevelServerIds);
 
         return syncInfo;
     }
-
-    // for testing
-    private PlatformSyncInfo(int id, String uuid, long mtime, InventoryStatus istatus, Set<Resource> children) {
-        super(id, uuid, mtime, istatus);
-        this.topLevelServers = children;
-    }
-
 }

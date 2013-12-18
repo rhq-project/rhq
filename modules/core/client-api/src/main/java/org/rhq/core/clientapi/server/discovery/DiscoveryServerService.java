@@ -22,6 +22,7 @@
  */
 package org.rhq.core.clientapi.server.discovery;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +74,7 @@ public interface DiscoveryServerService {
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
     @Timeout(0L)
     // should be something like 1000L * 60 * 30 but until we can be assured we never take longer, disable timeout
-    ResourceSyncInfo getResourceSyncInfo(int resourceId);
+    Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId);
 
     /**
      * Merges a new availability report from the agent into the server. This updates the availability statuses of known

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +36,6 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
-import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -50,8 +50,8 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -227,7 +227,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             inProgress = configurationManager.isResourceConfigurationUpdateInProgress(overlord, resourceId);
 
             if (inProgress) {
-                // history2 should be history1 since the update is not complete                
+                // history2 should be history1 since the update is not complete
                 assert history2 != null;
                 assert history2.getId() == history1.getId();
                 myprop = history2.getConfiguration().getSimple("myboolean");
@@ -235,7 +235,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 assert "true".equals(myprop.getStringValue());
                 myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
                 assert myprop == null;
-                // record that this test case ran, we expect it will if the agent delay is there 
+                // record that this test case ran, we expect it will if the agent delay is there
                 inProgressTested = true;
             } else {
                 // update is complete, history 2 should be different
@@ -284,7 +284,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert "true".equals(myprop.getStringValue());
 
         // now update to config2 - the "agent" will sleep for a bit before it completes
-        // so we will have an INPROGRESS configuration for a few seconds before it goes to SUCCESS                
+        // so we will have an INPROGRESS configuration for a few seconds before it goes to SUCCESS
         configurationManager.updateResourceConfiguration(overlord, resourceId, configuration2);
 
         // now update to config3 - this should fail as you can't update while there is one in progress
@@ -306,7 +306,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 inProgress = configurationManager.isResourceConfigurationUpdateInProgress(overlord, resourceId);
 
                 if (inProgress) {
-                    // history2 should be history1 since the update is not complete                
+                    // history2 should be history1 since the update is not complete
                     assert history2 != null;
                     assert history2.getId() == history1.getId();
                     myprop = history2.getConfiguration().getSimple("myboolean");
@@ -314,7 +314,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                     assert "true".equals(myprop.getStringValue());
                     myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
                     assert myprop == null;
-                    // record that this test case ran, we expect it will if the agent delay is there 
+                    // record that this test case ran, we expect it will if the agent delay is there
                     inProgressTested = true;
                 } else {
                     // update is complete, history 2 should be different
@@ -741,7 +741,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     }
 
     /** Exercise the ConfigurationManagerBean getOptionsForConfigurationDefinition.
-     * 
+     *
      * @throws Exception
      */
     @Test(enabled = ENABLE_TESTS)
@@ -1219,10 +1219,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         public void uninventoryResource(int resourceId) {
         }
 
-        @Asynchronous(guaranteedDelivery = true)
-        public void synchronizeInventory(ResourceSyncInfo syncInfo) {
-        }
-
         public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
             throws PluginContainerException {
             return null;
@@ -1231,6 +1227,14 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         @Override
         public void requestFullAvailabilityReport() {
             return;
+        }
+
+        @Override
+        public void synchronizePlatform(PlatformSyncInfo syncInfo) {
+        }
+
+        @Override
+        public void synchronizeServer(int resourceId, Collection<ResourceSyncInfo> toplevelServerSyncInfo) {
         }
     }
 }

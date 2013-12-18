@@ -42,7 +42,7 @@ import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -90,6 +90,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
                 allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
                 will(inv.mergeInventoryReport(InventoryStatus.COMMITTED));
+
+                allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(with(any(Integer.class)));
+                will(inv.getResourceSyncInfo());
 
                 oneOf(ss.getDiscoveryServerService()).upgradeResources(with(any(Set.class)));
                 will(inv.upgradeResources());
@@ -159,6 +162,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                 allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
                 will(inv.mergeInventoryReport(InventoryStatus.COMMITTED));
 
+                allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(with(any(Integer.class)));
+                will(inv.getResourceSyncInfo());
+
                 never(ss.getDiscoveryServerService()).upgradeResources(with(any(Set.class)));
             }
         });
@@ -207,6 +213,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                 //discovered stuff into the server-side inventory.
                 allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
                 will(inv.mergeInventoryReport(InventoryStatus.COMMITTED));
+
+                allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(with(any(Integer.class)));
+                will(inv.getResourceSyncInfo());
 
                 never(ss.getDiscoveryServerService()).upgradeResources(with(any(Set.class)));
             }
@@ -258,6 +267,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
                 allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
                 will(inv.mergeInventoryReport(InventoryStatus.COMMITTED));
 
+                allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(with(any(Integer.class)));
+                will(inv.getResourceSyncInfo());
+
                 oneOf(ss.getDiscoveryServerService()).upgradeResources(with(any(Set.class)));
                 will(inv.upgradeResources());
             }
@@ -297,6 +309,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
                 allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
                 will(inv.mergeInventoryReport(requiredInventoryStatus));
+
+                allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(with(any(Integer.class)));
+                will(inv.getResourceSyncInfo());
             }
         });
 
@@ -333,6 +348,9 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
                 allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
                 will(serverInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+
+                allowing(ss.getDiscoveryServerService()).getResourceSyncInfo(with(any(Integer.class)));
+                will(serverInventory.getResourceSyncInfo());
 
                 oneOf(ss.getDiscoveryServerService()).upgradeResources(with(any(Set.class)));
                 will(serverInventory.upgradeResources());

@@ -22,8 +22,10 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -217,15 +219,41 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
         return;
     }
 
-    protected Answer<ResourceSyncInfo> getResourceSyncInfo() {
-        return new Answer<ResourceSyncInfo>() {
+    protected Answer<Collection<ResourceSyncInfo>> getResourceSyncInfo() {
+        return new Answer<Collection<ResourceSyncInfo>>() {
             @Override
-            public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
+            public Collection<ResourceSyncInfo> answer(InvocationOnMock invocation) throws Throwable {
                 Integer resourceId = (Integer) invocation.getArguments()[0];
-                ResourceSyncInfo result = ResourceSyncInfo.buildResourceSyncInfo(simulatedInventory.get(resourceId));
+                Collection<ResourceSyncInfo> result = convert(simulatedInventory.get(resourceId));
                 return result;
             }
         };
+    }
+
+    private static Collection<ResourceSyncInfo> convert(Resource root) {
+        Set<ResourceSyncInfo> result = new HashSet<ResourceSyncInfo>();
+        convertInternal(root, result);
+        return result;
+    }
+
+    private static void convertInternal(Resource root, Collection<ResourceSyncInfo> result) {
+
+        ResourceSyncInfo rootSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(root);
+
+        if (result.contains(rootSyncInfo)) {
+            return;
+        }
+        try {
+            result.add(rootSyncInfo);
+
+            for (Resource child : root.getChildResources()) {
+                convertInternal(child, result);
+            }
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to convert resource " + root
+                + " to a ResourceSyncInfo. This should not happen.", e);
+        }
     }
 
     protected void validateFullInventory() {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -122,10 +123,10 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     @Override
-    public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
+    public Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId) {
         long start = System.currentTimeMillis();
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        ResourceSyncInfo results;
+        Collection<ResourceSyncInfo> results;
 
         results = discoveryBoss.getResourceSyncInfo(resourceId);
 

@@ -22,6 +22,8 @@
  */
 package org.rhq.core.clientapi.agent.discovery;
 
+import java.util.Collection;
+
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -29,8 +31,8 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -56,11 +58,20 @@ public interface DiscoveryAgentService {
         throws InvalidPluginConfigurationClientException, PluginContainerException;
 
     /**
-     * Called to inform the agent of a status change for the resource represented by syncInfo. The agent processes the syncInfo for the resource and initiates a status update for its sub-tree.
+     * Called by the server when requesting a full platform sync.  The provided info will guide the subsequent
+     * agent-initiated sync.
      *
-     * @param syncInfo for the root of the tree to be updated.
+     * @param syncInfo for the platform to be synchronized with the server.
      */
-    void synchronizeInventory(ResourceSyncInfo syncInfo);
+    void synchronizePlatform(PlatformSyncInfo syncInfo);
+
+    /**
+     * Called by the server to update the agent with changed for specified top level server. The agent will
+     * synchronize its inventory for the server and its subtree given the provided information.
+     *
+     * @param syncInfo for the top level server to be synchronized with the server.
+     */
+    void synchronizeServer(int resourceId, Collection<ResourceSyncInfo> toplevelServerSyncInfo);
 
     /**
      * Access to the current inventory managed by the plugin container.

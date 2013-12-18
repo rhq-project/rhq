@@ -45,7 +45,7 @@ import org.rhq.core.pc.drift.ScheduleQueue;
  * <br/><br/>
  * Note that inventory sync happens regularly after the plugin container is initialized.
  * Discovery scans are performed at fixed intervals. The results of a discovery scan are
- * reported to the server, and the server sends back {@link org.rhq.core.domain.discovery.ResourceSyncInfo resource sync info}
+ * reported to the server, and the server sends back {@link org.rhq.core.domain.discovery.OldResourceSyncInfo resource sync info}
  * which is then used to sync with the local inventory.
  */
 class RuntimeSynchronizer implements DriftSynchronizer {

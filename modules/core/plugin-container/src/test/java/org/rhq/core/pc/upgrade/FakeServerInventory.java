@@ -19,7 +19,6 @@
 
 package org.rhq.core.pc.upgrade;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -132,12 +131,12 @@ public class FakeServerInventory {
                     throwIfFailing();
 
                     Integer resourceId = (Integer) invocation.getParameter(0);
-
-                    for (Resource c : platform.getChildResources()) {
-                        if (c.getId() == resourceId) {
-                            return getResourceSyncInfo(c);
+                    for (Resource r : resourceStore.values()) {
+                        if (resourceId.equals(r.getId())) {
+                            return convert(r);
                         }
                     }
+
                     return null;
                 }
             }
@@ -422,51 +421,34 @@ public class FakeServerInventory {
         return platform == null ? null : PlatformSyncInfo.buildPlatformSyncInfo(platform);
     }
 
-    private ResourceSyncInfo getResourceSyncInfo(Resource resource) {
+    private Collection<ResourceSyncInfo> getResourceSyncInfo(Resource resource) {
         return resource == null ? null : convert(resource);
     }
 
-    private static ResourceSyncInfo convert(Resource root) {
-        return convertInternal(root, true, new HashMap<String, ResourceSyncInfo>());
+    private static Collection<ResourceSyncInfo> convert(Resource root) {
+        Set<ResourceSyncInfo> result = new HashSet<ResourceSyncInfo>();
+        convertInternal(root, result);
+        return result;
     }
 
-    private static ResourceSyncInfo convertInternal(Resource root, boolean isTopLevelServer,
-        Map<String, ResourceSyncInfo> intermediateResults) {
+    private static void convertInternal(Resource root, Collection<ResourceSyncInfo> result) {
 
-        ResourceSyncInfo ret = intermediateResults.get(root.getUuid());
+        ResourceSyncInfo rootSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(root);
 
-        if (ret != null) {
-            return ret;
+        if (result.contains(rootSyncInfo)) {
+            return;
         }
         try {
-            ret = ResourceSyncInfo.buildResourceSyncInfo(root);
-            intermediateResults.put(root.getUuid(), ret);
+            result.add(rootSyncInfo);
 
-            Integer parentId = root.getParentResource() == null ? null : root.getParentResource().getId();
-            getPrivateField(ResourceSyncInfo.class, "parentId").set(ret, parentId);
-
-            Set<ResourceSyncInfo> children = new LinkedHashSet<ResourceSyncInfo>();
             for (Resource child : root.getChildResources()) {
-                ResourceSyncInfo syncChild = convertInternal(child, false, intermediateResults);
-
-                children.add(syncChild);
+                convertInternal(child, result);
             }
-            getPrivateField(ResourceSyncInfo.class, "childSyncInfos").set(ret, children);
-            return ret;
 
         } catch (Exception e) {
             throw new IllegalStateException("Failed to convert resource " + root
                 + " to a ResourceSyncInfo. This should not happen.", e);
         }
-    }
-
-    private static Field getPrivateField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-        Field field = clazz.getDeclaredField(fieldName);
-        if (!field.isAccessible()) {
-            field.setAccessible(true);
-        }
-
-        return field;
     }
 
     private static Resource findResource(Resource root, Resource template, Comparator<Resource> comparator) {

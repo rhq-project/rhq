@@ -205,10 +205,12 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert results != null;
         assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
         assertNotNull(results.getPlatformSyncInfo());
-        ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(results.getPlatformSyncInfo().getId());
-        assert syncInfo != null;
+        Collection<ResourceSyncInfo> syncInfos = discoveryBoss.getResourceSyncInfo(results.getPlatformSyncInfo()
+            .getPlatform().getId());
+        assert syncInfos != null;
+        assert !syncInfos.isEmpty();
 
-        platform.setId(syncInfo.getId());
+        platform.setId(results.getPlatformSyncInfo().getPlatform().getId());
 
         // Now submit the server and its children as an update report
         inventoryReport = new InventoryReport(agent);
@@ -251,16 +253,19 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert results != null;
         assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
         assertNotNull(results.getPlatformSyncInfo());
-        ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(results.getPlatformSyncInfo().getId());
-        assert syncInfo != null;
+        assertNotNull(results.getPlatformSyncInfo().getTopLevelServerIds());
+        assertTrue(!results.getPlatformSyncInfo().getTopLevelServerIds().isEmpty());
+        Integer resourceId = results.getPlatformSyncInfo().getTopLevelServerIds().iterator().next();
+        Collection<ResourceSyncInfo> syncInfos = discoveryBoss.getResourceSyncInfo(resourceId);
+        assert syncInfos != null;
+        assert !syncInfos.isEmpty();
 
-        ResourceSyncInfo serverSyncInfo = syncInfo.getChildSyncInfos().iterator().next();
         Resource resource1 = discoveryBoss.manuallyAddResource(subjectManager.getOverlord(), serviceType2.getId(),
-            serverSyncInfo.getId(), new Configuration());
+            resourceId, new Configuration());
 
         try {
             Resource resource2 = discoveryBoss.manuallyAddResource(subjectManager.getOverlord(), serviceType2.getId(),
-                serverSyncInfo.getId(), new Configuration());
+                resourceId, new Configuration());
             fail("Manually adding a singleton that already existed succeeded: " + resource2);
         } catch (EJBException e) {
             assertEquals(String.valueOf(e.getCause()), RuntimeException.class, e.getCause().getClass());
@@ -295,15 +300,15 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert platformSyncInfo != null;
 
         // Check merge result
-        assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
-        assertEquals(platform.getChildResources().size(), platformSyncInfo.getTopLevelServers().size());
+        assertEquals(InventoryStatus.NEW, platformSyncInfo.getPlatform().getInventoryStatus());
+        assertEquals(platform.getChildResources().size(), platformSyncInfo.getTopLevelServerIds().size());
 
         // Collect the resource ids generated for the platform and the servers
 
-        int platformId = platformSyncInfo.getId();
+        int platformId = platformSyncInfo.getPlatform().getId();
         List<Integer> serverIds = new LinkedList<Integer>();
-        for (Resource serverSyncInfo : platformSyncInfo.getTopLevelServers()) {
-            serverIds.add(serverSyncInfo.getId());
+        for (Integer serverId : platformSyncInfo.getTopLevelServerIds()) {
+            serverIds.add(serverId);
         }
         int[] arrayOfServerIds = ArrayUtils.unwrapCollection(serverIds);
 
@@ -368,8 +373,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
         // Check merge result - make sure we should not see any children under the platform (it should have been ignored)
-        assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
-        assertEquals(platformSyncInfo.getTopLevelServers().size(), 0);
+        assertEquals(InventoryStatus.NEW, platformSyncInfo.getPlatform().getInventoryStatus());
+        assertEquals(platformSyncInfo.getTopLevelServerIds().size(), 0);
     }
 
     @Test(groups = "integration.ejb3")
@@ -428,10 +433,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert platformSyncInfo != null;
 
         // Collect the resource ids generated for the platform and the servers
-        int platformId = platformSyncInfo.getId();
+        int platformId = platformSyncInfo.getPlatform().getId();
         List<Integer> serverIds = new LinkedList<Integer>();
-        for (Resource serverSyncInfo : platformSyncInfo.getTopLevelServers()) {
-            serverIds.add(serverSyncInfo.getId());
+        for (Integer serverId : platformSyncInfo.getTopLevelServerIds()) {
+            serverIds.add(serverId);
         }
         int[] arrayOfServerIds = ArrayUtils.unwrapCollection(serverIds);
 
@@ -469,8 +474,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
         assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
-        assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus()); // notice platform is committed now
-        assertEquals(platformSyncInfo.getTopLevelServers().size(), 0); // notice there are no server children now
+        assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getPlatform().getInventoryStatus()); // notice platform is committed now
+        assertEquals(platformSyncInfo.getTopLevelServerIds().size(), 0); // notice there are no server children now
     }
 
     @Test(groups = "integration.ejb3")
@@ -501,11 +506,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert platformSyncInfo != null;
 
         // Check merge result
-        assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus());
-        assertEquals(storagePlatform.getChildResources().size(), platformSyncInfo.getTopLevelServers().size());
+        assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getPlatform().getInventoryStatus());
+        assertEquals(storagePlatform.getChildResources().size(), platformSyncInfo.getTopLevelServerIds().size());
 
         storageNode = resourceManager.getResourceById(subjectManager.getOverlord(), platformSyncInfo
-            .getTopLevelServers().iterator().next().getId());
+            .getTopLevelServerIds().iterator().next());
         assertNotNull(storageNode);
         assertEquals(InventoryStatus.COMMITTED, storageNode.getInventoryStatus());
     }
@@ -533,8 +538,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Then simulate a create resource request
         final String userSuppliedResourceName = prefix("User Supplied Resource Name");
         final String newResourceKey = prefix("Created Resource Key");
-        Resource serverSyncInfo = firstDiscoverySyncInfo.getTopLevelServers().iterator().next();
-        final int serverResourceId = serverSyncInfo.getId();
+        final int serverResourceId = firstDiscoverySyncInfo.getTopLevelServerIds().iterator().next();
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
@@ -568,10 +572,13 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // Check that the resource ends with the user supplied name in inventory
 
-        ResourceSyncInfo topLevelServerSyncInfo = discoveryBoss.getResourceSyncInfo(secondDiscoverySyncInfo
-            .getTopLevelServers().iterator().next().getId());
-        ResourceSyncInfo service1SyncInfo = topLevelServerSyncInfo.getChildSyncInfos().iterator().next();
-        Resource service1Resource = getEntityManager().find(Resource.class, service1SyncInfo.getId());
+        Integer toplevelServerId = secondDiscoverySyncInfo.getTopLevelServerIds().iterator().next();
+        Collection<ResourceSyncInfo> topLevelServerSyncInfo = discoveryBoss.getResourceSyncInfo(toplevelServerId);
+        assert topLevelServerSyncInfo.size() == 2;
+        Iterator<ResourceSyncInfo> iter = topLevelServerSyncInfo.iterator();
+        Integer childId = iter.next().getId();
+        childId = childId.equals(toplevelServerId) ? iter.next().getId() : childId;
+        Resource service1Resource = getEntityManager().find(Resource.class, childId);
         assertEquals(userSuppliedResourceName, service1Resource.getName());
     }
 

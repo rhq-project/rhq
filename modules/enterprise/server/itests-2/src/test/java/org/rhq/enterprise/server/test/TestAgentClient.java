@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.test;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,17 +54,16 @@ import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
 import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
-import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -333,12 +333,6 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
         throws InvalidPluginConfigurationClientException, PluginContainerException {
     }
 
-    @Asynchronous(guaranteedDelivery = true)
-    @Override
-    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
-        return;
-    }
-
     @Override
     public void createResource(CreateResourceRequest request) throws PluginContainerException {
     }
@@ -420,5 +414,13 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     @Override
     public void requestFullAvailabilityReport() {
         return;
+    }
+
+    @Override
+    public void synchronizePlatform(PlatformSyncInfo syncInfo) {
+    }
+
+    @Override
+    public void synchronizeServer(int resourceId, Collection<ResourceSyncInfo> toplevelServerSyncInfo) {
     }
 }

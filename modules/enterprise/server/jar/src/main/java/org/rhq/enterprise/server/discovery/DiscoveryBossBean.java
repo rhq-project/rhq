@@ -24,6 +24,7 @@ import static org.rhq.core.util.StringUtil.isBlank;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -271,14 +272,78 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             return null;
         }
 
-        PlatformSyncInfo result = entityManager.find(PlatformSyncInfo.class, platform.getId());
+        Set<Resource> toplevelServices = new HashSet<Resource>();
+        Set<Integer> topLevelServerIds = new HashSet<Integer>();
+
+        for (Resource platformChild : platform.getChildResources()) {
+            switch (platformChild.getResourceType().getCategory()) {
+            case SERVER:
+                topLevelServerIds.add(platformChild.getId());
+                break;
+            case SERVICE:
+                toplevelServices.add(platformChild);
+                break;
+            default:
+                break;
+            }
+        }
+
+        ResourceSyncInfo platformSyncInfo = ResourceSyncInfo.buildResourceSyncInfo(platform);
+        Set<ResourceSyncInfo> topLevelServiceSyncInfo = getToplevelServiceSyncInfo(toplevelServices);
+        PlatformSyncInfo result = new PlatformSyncInfo(platformSyncInfo, topLevelServiceSyncInfo, topLevelServerIds);
+
         return result;
     }
 
+    /**
+     * At the time of writing (4.10) platform top level services don't have children so this will be quick, but
+     * write it to handle any future children.  In general this will still be a relatively small number of resources.
+     *
+     * @param topLevelServices
+     * @return The top level service hierarchy sync info
+     */
+    private Set<ResourceSyncInfo> getToplevelServiceSyncInfo(Set<Resource> topLevelServices) {
+        Set<ResourceSyncInfo> result = new HashSet<ResourceSyncInfo>(topLevelServices.size());
+        Set<Integer> topLevelServiceIds = new HashSet<Integer>();
+
+        for (Resource topLevelService : topLevelServices) {
+            result.add(ResourceSyncInfo.buildResourceSyncInfo(topLevelService));
+            topLevelServiceIds.add(topLevelService.getId());
+        }
+
+        getToplevelServiceSyncInfoHierarchy(topLevelServiceIds, result);
+
+        return result;
+    }
+
+    private void getToplevelServiceSyncInfoHierarchy(Set<Integer> parentIds, Set<ResourceSyncInfo> result) {
+        if (parentIds.isEmpty()) {
+            return;
+        }
+
+        Query q = entityManager.createNamedQuery(ResourceSyncInfo.QUERY_SERVICE_CHILDREN);
+        q.setParameter("parentIds", parentIds);
+        List<ResourceSyncInfo> childSyncInfos = q.getResultList();
+
+        if (!childSyncInfos.isEmpty()) {
+            result.addAll(childSyncInfos);
+
+            Set<Integer> childIds = new HashSet<Integer>(childSyncInfos.size());
+            for (ResourceSyncInfo childSyncInfo : childSyncInfos) {
+                childIds.add(childSyncInfo.getId());
+            }
+            getToplevelServiceSyncInfoHierarchy(childIds, result);
+        }
+    }
+
     @Override
-    public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
-        // [PERF] this is expensive, it let's hibernate grab the whole hierarchy via eager fetch of children.
-        ResourceSyncInfo result = entityManager.find(ResourceSyncInfo.class, resourceId);
+    public Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId) {
+        // [PERF] this is an expensive query that can return a large collection.  But it's faster than the old way of
+        // letting hibernate grab the whole hierarchy via eager fetch of children...
+        Query q = entityManager.createNamedQuery(ResourceSyncInfo.QUERY_TOP_LEVEL_SERVER);
+        q.setParameter("resourceId", resourceId);
+
+        Collection<ResourceSyncInfo> result = q.getResultList();
 
         return result;
     }
@@ -360,7 +425,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         servers = attachedServers;
 
         // Update and persist the actual inventory statuses
-        // This is done is a separate transaction to stop failures in the agent from rolling back the transaction
+        // This is done in a separate transaction to stop failures in the agent from rolling back the transaction
         discoveryBoss.updateInventoryStatusInNewTransaction(user, platforms, servers, status);
 
         scheduleAgentInventoryOperationJob(platforms, servers);
@@ -422,7 +487,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * Synchronize the agents inventory status for platforms, and then the servers,
+     * Synchronize the agent's inventory status for platforms, and then the servers,
      * omitting servers under synced platforms since they will have been handled
      * already. On status change request an agent sync on the affected resources.
      * The agent will sync status and determine what other sync work needs to be
@@ -438,8 +503,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             if (agentClient != null) {
                 try {
-                    syncInfo = entityManager.find(ResourceSyncInfo.class, platform.getId());
-                    agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
+                    //syncInfo = entityManager.find(ResourceSyncInfo.class, platform.getId());
+                    PlatformSyncInfo platformSyncInfo = getPlatformSyncInfo(platform.getAgent());
+                    agentClient.getDiscoveryAgentService().synchronizePlatform(platformSyncInfo);
                 } catch (Exception e) {
                     LOG.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
                         + "]", e);
@@ -455,8 +521,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 if (agentClient != null) {
                     try {
-                        syncInfo = entityManager.find(ResourceSyncInfo.class, server.getId());
-                        agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
+                        //syncInfo = entityManager.find(ResourceSyncInfo.class, server.getId());
+                        Collection<ResourceSyncInfo> syncInfos = getResourceSyncInfo(server.getId());
+                        agentClient.getDiscoveryAgentService().synchronizeServer(server.getId(), syncInfos);
                     } catch (Exception e) {
                         LOG.warn("Could not perform commit synchronization with agent for server [" + server.getName()
                             + "]", e);

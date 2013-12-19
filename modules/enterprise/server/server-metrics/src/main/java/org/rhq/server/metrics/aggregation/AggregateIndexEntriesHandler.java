@@ -1,14 +1,19 @@
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.aggregation;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.server.metrics.SignalingCountDownLatch;
 
 /**
 * @author John Sanda
@@ -23,18 +28,18 @@ class AggregateIndexEntriesHandler implements FutureCallback<ResultSet> {
 
     private SignalingCountDownLatch indexEntriesArrival;
 
-    private long startTime;
+    private Stopwatch stopwatch;
 
     private String src;
 
     private String dest;
 
     public AggregateIndexEntriesHandler(Set<Integer> indexEntries, AtomicInteger remainingData,
-        SignalingCountDownLatch indexEntriesArrival, long startTime, String src, String dest) {
+        SignalingCountDownLatch indexEntriesArrival, Stopwatch stopwatch, String src, String dest) {
         this.indexEntries = indexEntries;
         this.remainingData = remainingData;
         this.indexEntriesArrival = indexEntriesArrival;
-        this.startTime = startTime;
+        this.stopwatch = stopwatch;
         this.src = src;
         this.dest = dest;
     }
@@ -46,16 +51,22 @@ class AggregateIndexEntriesHandler implements FutureCallback<ResultSet> {
         }
         remainingData.set(indexEntries.size());
         indexEntriesArrival.countDown();
+        stopwatch.stop();
         if (log.isDebugEnabled()) {
             log.debug("Finished loading " + indexEntries.size() + " " + src + " index entries in " +
-                (System.currentTimeMillis() - startTime) + " ms");
+                stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
     @Override
     public void onFailure(Throwable t) {
-        log.warn("Failed to retrieve " + src + " index entries. Some " + dest + " aggregates may not get generated.",
-            t);
+        if (log.isDebugEnabled()) {
+            log.debug("Some " + dest + " aggregates may not get computed. An unexpected error occurred while " +
+                "retrieving " + src + " index entries", t);
+        } else {
+            log.warn("Some " + dest + " aggregates may not get computed. An unexpected error occurred while " +
+                "retrieving " + src + " index entries: " + ThrowableUtil.getRootMessage(t));
+        }
         remainingData.set(0);
         indexEntriesArrival.abort();
     }

@@ -1,10 +1,12 @@
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.aggregation;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.ResultSet;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
@@ -13,6 +15,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.server.metrics.AbortedException;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.StorageResultSetFuture;
+
 /**
  * Generates 1 hour data for a batch of raw data futures. After data is inserted for the batch, aggregation of 1 hour
  * data will start immediately for the batch if the 6 hour time slice has finished.
@@ -20,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
  * @see Compute1HourData
  * @author John Sanda
  */
-public class AggregateRawData implements Runnable {
+class AggregateRawData implements Runnable {
 
     private final Log log = LogFactory.getLog(AggregateRawData.class);
 
@@ -42,7 +49,7 @@ public class AggregateRawData implements Runnable {
 
     @Override
     public void run() {
-        final long start = System.currentTimeMillis();
+        final Stopwatch stopwatch = new Stopwatch().start();
         ListenableFuture<List<ResultSet>> rawDataFutures = Futures.successfulAsList(queryFutures);
         Futures.withFallback(rawDataFutures, new FutureFallback<List<ResultSet>>() {
             @Override
@@ -57,15 +64,22 @@ public class AggregateRawData implements Runnable {
         Futures.addCallback(insert1HourDataFutures, new FutureCallback<List<ResultSet>>() {
             @Override
             public void onSuccess(List<ResultSet> resultSets) {
+                stopwatch.stop();
                 log.debug("Finished aggregating raw data for " + resultSets.size() + " schedules in " +
-                    (System.currentTimeMillis() - start) + " ms");
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
                 start1HourDataAggregationIfNecessary();
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("Failed to aggregate raw data", t);
-                // TODO maybe add debug statement to log those schedule ids for which aggregation failed
+                if (log.isDebugEnabled()) {
+                    // TODO should we log the schedule ids?
+                    log.debug("Failed to aggregate raw data for " + scheduleIds.size() + " schedules. An unexpected " +
+                        "error occurred.", t);
+                } else {
+                    log.warn("Failed to aggregate raw data for " + scheduleIds.size() + " schedules. An " +
+                        "unexpected error occurred: " + ThrowableUtil.getRootMessage(t));
+                }
                 start1HourDataAggregationIfNecessary();
             }
         }, state.getAggregationTasks());
@@ -85,10 +99,13 @@ public class AggregateRawData implements Runnable {
                     oneHourDataQueryFutures));
             }
         } catch (InterruptedException e) {
-            log.debug("An interrupt occurred while waiting for 1 hour data index entries. Aborting data aggregation",
-                e);
-            log.info("An interrupt occurred while waiting for 1 hour data index entries. Aborting data aggregation: " +
-                e.getMessage());
+            if (log.isDebugEnabled()) {
+                log.debug("An interrupt occurred while waiting for 1 hour data index entries. Aborting data aggregation",
+                    e);
+            } else {
+                log.info("An interrupt occurred while waiting for 1 hour data index entries. Aborting data " +
+                    "aggregation: " + e.getMessage());
+            }
         } finally {
             state.getRemainingRawData().addAndGet(-scheduleIds.size());
         }

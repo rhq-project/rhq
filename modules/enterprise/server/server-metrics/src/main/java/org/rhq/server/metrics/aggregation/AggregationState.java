@@ -1,4 +1,4 @@
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.aggregation;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,10 +8,12 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 
 import org.joda.time.DateTime;
 
+import org.rhq.server.metrics.SignalingCountDownLatch;
+
 /**
  * @author John Sanda
  */
-public class AggregationState {
+class AggregationState {
 
     private ListeningExecutorService aggregationTasks;
 

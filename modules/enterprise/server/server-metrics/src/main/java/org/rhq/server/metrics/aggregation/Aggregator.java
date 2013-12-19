@@ -1,4 +1,4 @@
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.aggregation;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -7,11 +7,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -23,10 +25,19 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
 import org.joda.time.Duration;
 
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.server.metrics.AbortedException;
+import org.rhq.server.metrics.DateTimeService;
+import org.rhq.server.metrics.MetricsConfiguration;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.SignalingCountDownLatch;
+import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
+ * This class provides the main interface for metric data aggregation.
+ *
  * @author John Sanda
  */
 public class Aggregator {
@@ -149,8 +160,8 @@ public class Aggregator {
                 state.getRemainingRawData().set(rows.size());
                 rawDataIndexEntriesArrival.countDown();
 
-                log.debug("Starting raw data aggregation for " + rows.size() + " schedules");
-                long start = System.currentTimeMillis();
+                Stopwatch stopwatch = new Stopwatch().start();
+
                 final DateTime endTime = startTime.plus(configuration.getRawTimeSliceDuration());
                 Set<Integer> scheduleIds = new TreeSet<Integer>();
                 List<StorageResultSetFuture> rawDataFutures = new ArrayList<StorageResultSetFuture>(batchSize);
@@ -170,14 +181,23 @@ public class Aggregator {
                     state.getAggregationTasks().submit(new AggregateRawData(dao, state, scheduleIds,
                         rawDataFutures));
                 }
-                log.debug("Finished processing one hour index entries in " + (System.currentTimeMillis() - start) +
-                    " ms");
+
+                if (log.isDebugEnabled()) {
+                    stopwatch.stop();
+                    log.debug("Finished scheduling raw data aggregation tasks for " + rows.size() + " schedules in " +
+                        stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("Failed to retrieve raw data index entries. Raw data aggregation for time slice [" +
-                    startTime + "] cannot proceed.", t);
+                if (log.isDebugEnabled()) {
+                    log.debug("Aggregation for time slice [" + startTime + "] cannot proceed. There was an " +
+                        "unexpected error while retrieving raw data index entries.", t);
+                } else {
+                    log.warn("Aggregation for time slice [" + startTime + "] cannot proceed. There was an " +
+                        "unexpected error while retrieving raw data index entries: " + ThrowableUtil.getRootMessage(t));
+                }
                 state.setRemainingRawData(new AtomicInteger(0));
                 rawDataIndexEntriesArrival.abort();
                 deleteIndexEntries(MetricsTable.ONE_HOUR);
@@ -185,22 +205,22 @@ public class Aggregator {
         }, state.getAggregationTasks());
 
         if (state.is6HourTimeSliceFinished()) {
-            long start = System.currentTimeMillis();
             log.debug("Fetching 1 hour index entries");
+            Stopwatch stopwatch = new Stopwatch().start();
             StorageResultSetFuture oneHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.SIX_HOUR,
                 state.getSixHourTimeSlice().getMillis());
             Futures.addCallback(oneHourFuture, new AggregateIndexEntriesHandler(state.getOneHourIndexEntries(),
-                state.getRemaining1HourData(), state.getOneHourIndexEntriesArrival(), start, "1 hour", "6 hour"),
+                state.getRemaining1HourData(), state.getOneHourIndexEntriesArrival(), stopwatch, "1 hour", "6 hour"),
                 state.getAggregationTasks());
         }
 
         if (state.is24HourTimeSliceFinished()) {
-            long start = System.currentTimeMillis();
             log.debug("Fetching 6 hour index entries");
+            Stopwatch stopwatch = new Stopwatch().start();
             StorageResultSetFuture sixHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
                 state.getTwentyFourHourTimeSlice().getMillis());
             Futures.addCallback(sixHourFuture, new AggregateIndexEntriesHandler(state.getSixHourIndexEntries(),
-                state.getRemaining6HourData(), state.getSixHourIndexEntriesArrival(), start, "6 hour", "24 hour"),
+                state.getRemaining6HourData(), state.getSixHourIndexEntriesArrival(), stopwatch, "6 hour", "24 hour"),
                 state.getAggregationTasks());
         }
 
@@ -220,6 +240,8 @@ public class Aggregator {
                     List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                     Set<Integer> scheduleIds = new TreeSet<Integer>();
                     state.getOneHourIndexEntriesLock().writeLock().lock();
+                    log.debug("Preparing to submit 1 hour data aggregation tasks for " +
+                        state.getOneHourIndexEntries().size() + " schedules");
                     for (Integer scheduleId : state.getOneHourIndexEntries()) {
                         queryFutures.add(dao.findOneHourMetricsAsync(scheduleId, state.getSixHourTimeSlice().getMillis(),
                             state.getSixHourTimeSliceEnd().getMillis()));
@@ -238,7 +260,13 @@ public class Aggregator {
                         scheduleIds = null;
                     }
                 } catch (AbortedException e) {
-                    log.warn("Failed to load 1 hour index entries. Some 6 hour aggregates may not get generated.", e);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Some 6 hour aggregates may not get generated. There was an unexpected error while " +
+                            "loading 1 hour index entries", e);
+                    } else {
+                        log.warn("Some 6 hour aggregates may not get generated. There was an unexpected error while " +
+                            "loading 1 hour index entries: " + ThrowableUtil.getRootMessage(e));
+                    }
                 } finally {
                     state.getOneHourIndexEntriesLock().writeLock().unlock();
                 }
@@ -253,6 +281,8 @@ public class Aggregator {
                     List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                     Set<Integer> scheduleIds = new TreeSet<Integer>();
                     state.getSixHourIndexEntriesLock().writeLock().lock();
+                    log.debug("Preparing to submit 6 hour data aggregation tasks for " +
+                        state.getSixHourIndexEntries().size() + " schedules");
                     for (Integer scheduleId : state.getSixHourIndexEntries()) {
                         queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, state.getTwentyFourHourTimeSlice().getMillis(),
                             state.getTwentyFourHourTimeSliceEnd().getMillis()));
@@ -265,14 +295,19 @@ public class Aggregator {
                         }
                     }
                     if (!queryFutures.isEmpty()) {
-                        log.debug("Submitting 6 hour aggregation task for schedule ids " + scheduleIds);
                         state.getAggregationTasks().submit(new Aggregate6HourData(dao, state, scheduleIds,
                             queryFutures));
                         queryFutures = null;
                         scheduleIds = null;
                     }
                 } catch (AbortedException e) {
-                    log.warn("Failed to load 6 hour index entries. Some 24 hour aggregates may not get generated.", e);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Some 24 hour aggregates may not get generated. There was an unexpected error while " +
+                            "loading 6 hour index entries", e);
+                    } else {
+                        log.warn("Some 24 hour aggregates may not get generated. There was an unexpected error while " +
+                            "loading 6 hour index entries: " + ThrowableUtil.getRootMessage(e));
+                    }
                 } finally {
                     state.getSixHourIndexEntriesLock().writeLock().unlock();
                 }
@@ -282,6 +317,12 @@ public class Aggregator {
                 Thread.sleep(50);
             }
         } catch (InterruptedException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("An interrupt occurred while waiting for aggregation to finish. Aborting remaining work.", e);
+            } else {
+                log.warn("An interrupt occurred while waiting for aggregation to finish. Aborting remaining work: " +
+                    ThrowableUtil.getRootMessage(e));
+            }
             log.warn("An interrupt occurred while waiting for aggregation to finish", e);
         }
         return oneHourData;
@@ -322,7 +363,13 @@ public class Aggregator {
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("Failed to delete index entries for table " + table + " at time [" + time + "]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to delete index entries for table " + table + " at time [" + time + "]. An " +
+                        "unexpected error occurred.", t);
+                } else {
+                    log.warn("Failed to delete index entries for table " + table + " at time [" + time + "]. An " +
+                        "unexpected error occurred: " + ThrowableUtil.getRootMessage(t));
+                }
                 remainingIndexEntries.decrementAndGet();
             }
         });

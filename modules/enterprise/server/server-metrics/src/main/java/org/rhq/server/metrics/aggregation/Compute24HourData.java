@@ -1,10 +1,12 @@
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.aggregation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -14,13 +16,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
+import org.rhq.server.metrics.ArithmeticMeanCalculator;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 
 /**
+ * Computes 24 hour data for a batch of raw data result sets. The generated 6 hour aggregates are inserted.
+ *
  * @author John Sanda
  */
-public class Compute24HourData implements AsyncFunction<List<ResultSet>, List<ResultSet>> {
+class Compute24HourData implements AsyncFunction<List<ResultSet>, List<ResultSet>> {
 
     private final Log log = LogFactory.getLog(Compute24HourData.class);
 
@@ -41,7 +48,7 @@ public class Compute24HourData implements AsyncFunction<List<ResultSet>, List<Re
         if (log.isDebugEnabled()) {
             log.debug("Computing and storing 24 hour data for " + sixHourDataResultSets.size() + " schedules");
         }
-        long start = System.currentTimeMillis();
+        Stopwatch stopwatch = new Stopwatch().start();
         try {
             List<StorageResultSetFuture> insertFutures =
                 new ArrayList<StorageResultSetFuture>(sixHourDataResultSets.size());
@@ -58,8 +65,9 @@ public class Compute24HourData implements AsyncFunction<List<ResultSet>, List<Re
             return Futures.successfulAsList(insertFutures);
         } finally {
             if (log.isDebugEnabled()) {
+                stopwatch.stop();
                 log.debug("Finished computing and storing 24 hour data for " + sixHourDataResultSets.size() +
-                    " schedules in " + (System.currentTimeMillis() - start) + " ms");
+                    " schedules in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         }
     }

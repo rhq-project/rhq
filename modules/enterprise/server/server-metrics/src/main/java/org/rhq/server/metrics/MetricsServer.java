@@ -92,7 +92,7 @@ public class MetricsServer {
 
     private int aggregationBatchSize;
 
-    private boolean useAsyncAggregation = System.getProperty("rhq.metrics.aggregation.async") != null;
+    private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;

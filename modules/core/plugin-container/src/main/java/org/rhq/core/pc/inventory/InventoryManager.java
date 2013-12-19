@@ -1228,10 +1228,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Collection<ResourceSyncInfo> syncInfos = platformSyncInfo.getServices();
         syncInfos.add(platformResourceSyncInfo);
 
-        log.info("Sync Starting: Platform [" + platformSyncInfo.getPlatform().getId() + "] and top level services.");
+        log.info("Sync Starting: Platform [" + platformSyncInfo.getPlatform().getId() + "]");
+
+        log.info("Sync Starting: Platform Top level services [" + platformSyncInfo.getPlatform().getId() + "]");
         hadSyncedResources = syncResources(platformResourceSyncInfo.getId(), syncInfos) || hadSyncedResources;
-        log.info("Sync Complete: Platform [" + platformSyncInfo.getPlatform().getId() + "]. Local inventory changed: ["
-            + hadSyncedResources + "]");
+        log.info("Sync Complete: Platform Top level services [" + platformSyncInfo.getPlatform().getId()
+            + "] Local inventory changed: [" + hadSyncedResources + "]");
 
         syncInfos = null; // release to GC
 
@@ -1257,6 +1259,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         purgeObsoleteResources(allServerSideUuids);
 
+        log.info("Sync Complete: Platform [" + platformSyncInfo.getPlatform().getId() + "].");
+
         // If we synced any Resources, one or more Resource components were probably started, request a
         // full avail report to make sure their availabilities are determined on the next avail run (typically
         // < 30s away). A full avail report will ensure an initial avail check is performed for a resource.
@@ -1270,6 +1274,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
         // time the upgrade kicks in..
         if (hadSyncedResources && !isResourceUpgradeActive()) {
+
+            log.info("Sync changes detected, requesting full availability report and service discovery: Platform ["
+                + platformSyncInfo.getPlatform().getId() + "]");
 
             // TODO: If someday this is undesirable for scalability reasons, we could probably instead call
             // requestAvailabilityCheck on each unknown or modified resource.

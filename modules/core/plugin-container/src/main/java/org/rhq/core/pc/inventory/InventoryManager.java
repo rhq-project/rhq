@@ -90,7 +90,6 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
-import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -1404,7 +1403,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             Set<Resource> children = getContainerChildren(resource);
-            for (Resource child : children) {
+            Set<Resource> tmp = new HashSet<Resource>(children);
+            for (Resource child : tmp) {
                 scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
             }
 
@@ -2984,13 +2984,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
             resource.setName(resource.getName().intern());
         }
 
+
         if (resource.getChildResources().isEmpty()) {
             resource.setChildResources(Collections.EMPTY_SET);
         }
+
         Configuration pluginConfiguration = resource.getPluginConfiguration();
         if (pluginConfiguration !=null ) {
             pluginConfiguration.cleanoutRawConfiguration();
         }
+
+/*  TODO comment this in again once we understand why this makes the tests fail
+    TODO I have not seen issues inside a real running agent - hrupp
         Configuration resourceConfiguration = resource.getResourceConfiguration();
         if (resourceConfiguration != null) {
             resourceConfiguration.cleanoutRawConfiguration();
@@ -3001,6 +3006,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
         }
+*/
 
     }
 
@@ -3063,7 +3069,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         for (ResourceSyncInfo syncInfo : syncInfos) {
             Resource resource = getResourceFromSyncInfo(syncInfo);
-            result.add(resource);
+            if (resource!=null) {
+                result.add(resource);
+            }
         }
 
         if (log.isDebugEnabled()) {

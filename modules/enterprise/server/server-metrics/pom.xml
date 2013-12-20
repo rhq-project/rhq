@@ -70,6 +70,7 @@
       <version>2.1</version>
     </dependency>
 
+    <!-- cassandra driver dep -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>

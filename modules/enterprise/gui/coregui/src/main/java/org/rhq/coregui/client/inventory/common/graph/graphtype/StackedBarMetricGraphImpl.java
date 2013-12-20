@@ -40,6 +40,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
+        "use strict";
         //console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
@@ -759,7 +760,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             return {
                 // Public API
                 draw: function (chartContext) {
-                    "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
                         //console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);

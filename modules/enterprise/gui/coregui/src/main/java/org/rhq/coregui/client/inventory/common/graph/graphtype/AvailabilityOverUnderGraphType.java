@@ -140,6 +140,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
      * The magic JSNI to draw the charts with d3.
      */
     public native void drawJsniChart() /*-{
+        "use strict";
         //console.log("Draw Enhanced Availability chart");
 
         var global = this,
@@ -163,14 +164,11 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
 
         var availabilityGraph = function () {
-            "use strict";
-            // privates
 
             var margin = {top: 5, right: 5, bottom: 5, left: 40},
                     barOffset = 10,
                     width = 750 - margin.left - margin.right + barOffset,
-                    height = 40 - margin.top - margin.bottom,
-                    svg;
+                    height = 40 - margin.top - margin.bottom;
 
 
             function drawBars(availChartContext) {
@@ -362,7 +360,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             return {
                 // Public API
                 draw: function (availChartContext) {
-                    "use strict";
                     drawBars(availChartContext);
                 }
             }; // end public closure
@@ -426,4 +423,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
     public String getChartXaxisTimeFormatHoursMinutes() {
         return MSG.chart_xaxis_time_format_hours_minutes();
     }
+
+
 }

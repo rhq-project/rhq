@@ -42,11 +42,6 @@ class MySqlConnectionManager {
 
     private MySqlConnectionManager() {
         connections = new HashMap<MySqlConnectionInfo,Connection>();
-        try {
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
-        } catch (Exception ex) {
-            logger.error("Unable to find com.mysql.jdbc.Driver");
-        }
     }
 
     static MySqlConnectionManager getConnectionManager() {
@@ -93,6 +88,12 @@ class MySqlConnectionManager {
     }
 
     Connection getConnection (MySqlConnectionInfo info) throws SQLException {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+        } catch (Exception ex) {
+            logger.error("Unable to find com.mysql.jdbc.Driver");
+        }
+
        Connection conn = connections.get(info);
        String url = info.buildURL();
        if (conn == null) {

@@ -351,11 +351,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
              * @return the parent context
              */
             public Builder closeRawConfiguration() {
-                Configuration map = getMap();
-                if (map.rawConfigurations==null) {
-                    map.rawConfigurations = new HashSet<RawConfiguration>(1);
-                }
-                map.getRawConfigurations().add(rawConfig);
+                getMap().getRawConfigurations().add(rawConfig);
                 return Builder.this;
             }
         }
@@ -397,7 +393,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
-    private Map<String, Property> properties;
+    private Map<String, Property> properties = new LinkedHashMap<String, Property>();
 
     private class PropertiesProxy implements Collection<Property> {
 
@@ -519,9 +515,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private transient PropertiesProxy propertiesProxy;
 
-    @OneToMany(mappedBy = "configuration", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
-    private Set<RawConfiguration> rawConfigurations;
+    private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
 
     @Column(name = "NOTES")
     private String notes;
@@ -577,9 +573,6 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      */
     @Override
     public void put(Property value) {
-        if (this.properties==null) {
-            this.properties=new LinkedHashMap<String, Property>(5);
-        }
         getMap().put(value.getName(), value);
         value.setConfiguration(this);
     }
@@ -718,9 +711,6 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     @Override
     @NotNull
     public Map<String, Property> getMap() {
-        if (this.properties==null) {
-            return Collections.emptyMap();
-        }
         return this.properties;
     }
 
@@ -772,12 +762,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return;
         }
 
-        if (this.properties==null) {
-            this.properties= new LinkedHashMap<String, Property>(properties.size());
-        } else {
-            this.properties.clear();
-        }
-
+        this.properties.clear();
         for (Property p : properties) {
             this.put(p);
         }
@@ -838,30 +823,18 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     public Set<RawConfiguration> getRawConfigurations() {
-        if (rawConfigurations==null) {
-            return Collections.emptySet();
-        }
         return rawConfigurations;
     }
 
     public void addRawConfiguration(RawConfiguration rawConfiguration) {
         rawConfiguration.setConfiguration(this);
-        if (rawConfigurations==null) {
-            rawConfigurations=new HashSet<RawConfiguration>(1);
-        }
         rawConfigurations.add(rawConfiguration);
     }
 
     public boolean removeRawConfiguration(RawConfiguration rawConfiguration) {
-        if (rawConfigurations==null) {
-            return false;
-        }
         boolean removed = rawConfigurations.remove(rawConfiguration);
         if (removed) {
             rawConfiguration.setConfiguration(null);
-        }
-        if (rawConfigurations.isEmpty()) {
-            rawConfigurations = Collections.emptySet();
         }
         return removed;
     }
@@ -950,23 +923,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     private void createDeepCopyOfRawConfigs(Configuration copy, boolean keepId) {
-        if (rawConfigurations==null)
-            return;
-
         for (RawConfiguration rawConfig : rawConfigurations) {
             copy.addRawConfiguration(rawConfig.deepCopy(keepId));
         }
     }
 
     private void createDeepCopyOfProperties(Configuration copy, boolean keepId) {
-        if (properties==null) {
-            return;
-        }
-
-        if (copy.properties==null) {
-            copy.properties=new LinkedHashMap<String, Property>(this.properties.size());
-        }
-
         for (Property property : this.properties.values()) {
             copy.put(property.deepCopy(keepId));
         }
@@ -991,39 +953,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         Configuration that = (Configuration) obj;
 
-        if (this.properties == null || this.properties.isEmpty()){
-            if ( that.properties== null || that.properties.isEmpty()) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        } else {
-            if (!this.properties.equals(that.properties)) {
-                return false;
-            }
-        }
-
-        boolean rcEquals=true;
-        if (this.rawConfigurations!=null) {
-            rcEquals = this.getRawConfigurations().equals(that.getRawConfigurations());
-        }
-
-        return rcEquals;
+        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations));
     }
 
     @Override
     public int hashCode() {
-        int hc = 1;
-        if (properties!=null ) {
-            hc = properties.hashCode(); // TODO this requires loading of all properties and is expensive
-        }
-
-        if (rawConfigurations!=null) {
-            int rchc = rawConfigurations.hashCode() ;
-            hc = hc * rchc + 19;
-    }
-        return hc ;
+        return properties.hashCode() * rawConfigurations.hashCode() * 19;
     }
 
     @Override
@@ -1061,12 +996,8 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
             builder.append("], rawConfigurations[");
 
-            if (rawConfigurations==null) {
-                builder.append("-none-");
-            } else {
             for (RawConfiguration rawConfig : rawConfigurations) {
                 builder.append("[").append(rawConfig.getPath()).append(", ").append(rawConfig.getSha256()).append("]");
-            }
             }
             builder.append("]");
         }

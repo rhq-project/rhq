@@ -2988,14 +2988,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getChildResources().isEmpty()) {
             resource.setChildResources(Collections.EMPTY_SET);
         }
+/*  TODO comment this in again once we understand why this makes the tests fail
+    TODO I have not seen issues inside a real running agent - hrupp
 
         Configuration pluginConfiguration = resource.getPluginConfiguration();
         if (pluginConfiguration !=null ) {
             pluginConfiguration.cleanoutRawConfiguration();
         }
 
-/*  TODO comment this in again once we understand why this makes the tests fail
-    TODO I have not seen issues inside a real running agent - hrupp
         Configuration resourceConfiguration = resource.getResourceConfiguration();
         if (resourceConfiguration != null) {
             resourceConfiguration.cleanoutRawConfiguration();

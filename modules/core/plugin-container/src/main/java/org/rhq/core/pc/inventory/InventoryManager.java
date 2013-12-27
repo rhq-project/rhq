@@ -1958,7 +1958,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private <T extends ResourceComponent<?>> ResourceContext<T> createResourceContext(Resource resource,
         T parentComponent, ResourceContext<?> parentResourceContext, ResourceDiscoveryComponent<T> discoveryComponent) {
-        File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceContext<T>(resource, // the resource itself
             parentComponent, // its parent component
@@ -1966,7 +1965,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             discoveryComponent, // the discovery component (this is actually the proxy to it)
             SystemInfoFactory.createSystemInfo(), // for native access
             this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-            pluginDataDir, // location for plugin to write data files
+            this.configuration.getDataDirectory(), // location for plugin to write data files
             this.configuration.getContainerName(), // the name of the agent/PC
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access

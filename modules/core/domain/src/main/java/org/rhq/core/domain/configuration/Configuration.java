@@ -393,7 +393,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
-    private Map<String, Property> properties = new LinkedHashMap<String, Property>();
+    private Map<String, Property> properties = new LinkedHashMap<String, Property>(1);
 
     private class PropertiesProxy implements Collection<Property> {
 
@@ -828,10 +828,16 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     public void addRawConfiguration(RawConfiguration rawConfiguration) {
         rawConfiguration.setConfiguration(this);
+        if (rawConfigurations==null) {
+            rawConfigurations = new HashSet<RawConfiguration>(1);
+        }
         rawConfigurations.add(rawConfiguration);
     }
 
     public boolean removeRawConfiguration(RawConfiguration rawConfiguration) {
+        if (rawConfigurations==null) {
+            return true;
+        }
         boolean removed = rawConfigurations.remove(rawConfiguration);
         if (removed) {
             rawConfiguration.setConfiguration(null);
@@ -923,6 +929,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     private void createDeepCopyOfRawConfigs(Configuration copy, boolean keepId) {
+        if (rawConfigurations==null) {
+            return;
+        }
         for (RawConfiguration rawConfig : rawConfigurations) {
             copy.addRawConfiguration(rawConfig.deepCopy(keepId));
         }
@@ -953,12 +962,38 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         Configuration that = (Configuration) obj;
 
-        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations));
+        if (this.properties == null || this.properties.isEmpty()){
+            if ( that.properties== null || that.properties.isEmpty()) {
+                return true;
+    }
+            else {
+                return false;
+            }
+        } else {
+            if (!this.properties.equals(that.properties)) {
+                return false;
+            }
+        }
+
+        boolean rcEquals=true;
+        if (this.rawConfigurations!=null) {
+            rcEquals = this.getRawConfigurations().equals(that.getRawConfigurations());
+    }
+        return (this.properties.equals(that.properties)) && rcEquals;
     }
 
     @Override
     public int hashCode() {
-        return properties.hashCode() * rawConfigurations.hashCode() * 19;
+        int hc = 1;
+        if (properties!=null ) {
+            hc = properties.hashCode(); // TODO this requires loading of all properties and is expensive
+        }
+
+        if (rawConfigurations!=null) {
+            int rchc = rawConfigurations.hashCode() ;
+            hc = hc * rchc + 19;
+    }
+        return hc ;
     }
 
     @Override
@@ -996,8 +1031,13 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
             builder.append("], rawConfigurations[");
 
-            for (RawConfiguration rawConfig : rawConfigurations) {
-                builder.append("[").append(rawConfig.getPath()).append(", ").append(rawConfig.getSha256()).append("]");
+            if (rawConfigurations!=null) {
+                for (RawConfiguration rawConfig : rawConfigurations) {
+                    builder.append("[").append(rawConfig.getPath()).append(", ").append(rawConfig.getSha256()).append("]");
+                }
+            }
+            else {
+                builder.append("-none-");
             }
             builder.append("]");
         }

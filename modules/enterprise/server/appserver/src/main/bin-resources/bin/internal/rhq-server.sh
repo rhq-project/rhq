@@ -610,7 +610,7 @@ case "$1" in
         if [ "$_SERVER_RUNNING" = "1" ]; then
            echo "$_SERVER_STATUS"
            echo "Please shutdown the server before cleaning."
-           exit 0
+           exit 1
         fi
 
         echo "Cleaning data, tmp and log directories..."
@@ -622,6 +622,9 @@ case "$1" in
 'status')
         echo "$_SERVER_STATUS"
         echo "$_JVM_STATUS"
+	if [ "$_SERVER_RUNNING" = "0" ] || [ "$_JVM_RUNNING" = 0 ]; then
+	    exit 3
+	fi
         exit 0
         ;;
 

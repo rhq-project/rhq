@@ -2974,6 +2974,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
         resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
         resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
+        if (resource.getSchedules()!=null) {  // TODO used at all in the agent?
+            if (resource.getSchedules().size()==0) {
+                resource.setSchedules(Collections.EMPTY_SET);
+            }
+        }
 
         if (resource.getVersion()!=null) {
             resource.setVersion(resource.getVersion().intern());
@@ -2999,7 +3004,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resourceConfiguration != null) {
             resourceConfiguration.cleanoutRawConfiguration();
 
-            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(resource.getId(),resourceConfiguration, log);
+            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(resource.getId(),
+                resourceConfiguration, log);
             if (persisted) {
                 resource.setResourceConfiguration(null);
             }

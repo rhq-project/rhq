@@ -581,7 +581,7 @@ public class ResourceContainer implements Serializable {
 
         private final ResourceContainer container;
         private final Lock lock;
-        private final long timeout;
+        private final int timeoutInSeconds;
         private final boolean daemonThread;
         private final Class facetInterface;
         private final boolean transferInterrupt;
@@ -618,7 +618,7 @@ public class ResourceContainer implements Serializable {
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
             }
-            this.timeout = timeout;
+            this.timeoutInSeconds = (int) (timeout/1000);
             this.daemonThread = daemonThread;
             this.facetInterface = facetInterface;
             this.transferInterrupt = transferInterrupt;
@@ -638,7 +638,7 @@ public class ResourceContainer implements Serializable {
             ComponentInvocation componentInvocation = new ComponentInvocation(this.container, method, args, this.lock);
             Future<?> future = threadPool.submit(componentInvocation);
             try {
-                return future.get(this.timeout, TimeUnit.MILLISECONDS);
+                return future.get(this.timeoutInSeconds, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 LOG.error("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
@@ -653,8 +653,8 @@ public class ResourceContainer implements Serializable {
                 }
                 throw e.getCause();
             } catch (java.util.concurrent.TimeoutException e) {
-                String msg = invokedMethodString(method, args, "timed out after " + timeout
-                    + " milliseconds - invocation thread will be interrupted.");
+                String msg = invokedMethodString(method, args, "timed out after " + timeoutInSeconds
+                    + " seconds - invocation thread will be interrupted.");
                 LOG.debug(msg);
                 Throwable cause = new Throwable();
                 cause.setStackTrace(componentInvocation.getStackTrace());

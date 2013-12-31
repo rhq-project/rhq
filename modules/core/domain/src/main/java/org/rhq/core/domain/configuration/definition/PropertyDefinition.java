@@ -120,7 +120,9 @@ public class PropertyDefinition implements Serializable {
     }
 
     protected PropertyDefinition(@NotNull String name, String description, boolean required) {
-        this.name = name;
+        if (name!=null) {
+            this.name = name.intern();
+        }
         this.description = description;
         this.required = required;
     }
@@ -164,7 +166,11 @@ public class PropertyDefinition implements Serializable {
     }
 
     public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+        if (displayName!=null) {
+            this.displayName = displayName.intern();
+        } else {
+            this.displayName = displayName;
+        }
     }
 
     public String getDescription() {

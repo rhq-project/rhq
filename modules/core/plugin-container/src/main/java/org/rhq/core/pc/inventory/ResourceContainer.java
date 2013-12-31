@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.hash.THashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -253,7 +254,7 @@ public class ResourceContainer implements Serializable {
 
     public void setMeasurementSchedule(Set<MeasurementScheduleRequest> measurementSchedule) {
         synchronized (this) {
-            this.measurementSchedule = measurementSchedule;
+            this.measurementSchedule = new THashSet<MeasurementScheduleRequest>(measurementSchedule);
 
             // this should not happen but if it does, protect against it because it will sink the agent
             if (null != this.measurementSchedule) {

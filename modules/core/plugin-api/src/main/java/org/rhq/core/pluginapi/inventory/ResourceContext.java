@@ -186,7 +186,11 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
         this.baseDataDirectory = baseDataDirectory;
-        this.pluginContainerName = pluginContainerName.intern();
+        if (pluginContainerName!=null) {
+            this.pluginContainerName = pluginContainerName.intern();
+        } else {
+            this.pluginContainerName = null;
+        }
         this.pluginContainerDeployment = pluginContainerDeployment;
         this.temporaryDirectory = temporaryDirectory;
 

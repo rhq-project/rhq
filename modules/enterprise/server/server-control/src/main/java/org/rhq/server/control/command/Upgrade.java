@@ -186,7 +186,7 @@ public class Upgrade extends AbstractInstall {
                 return exitValue;
             }
 
-             // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
+            // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
                 public void performUndoWork() throws Exception {
@@ -229,7 +229,7 @@ public class Upgrade extends AbstractInstall {
                 }
             } catch (Throwable t) {
                 log.warn("Unable to stop services: " + t.getMessage());
-				rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         }
 
@@ -262,7 +262,7 @@ public class Upgrade extends AbstractInstall {
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(getBinDir());
+            executor.setWorkingDirectory(new File(getBaseDir(), "bin")); // data migrator script is not in bin/internal
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitValue = executor.execute(commandLine);
@@ -546,7 +546,7 @@ public class Upgrade extends AbstractInstall {
         }
 
         // now merge the old settings in with the default properties from the new server install
-        String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
+        String newServerPropsFilePath = new File(getBaseDir(), "bin/rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
         newServerPropsFile.update(oldServerProps);
 

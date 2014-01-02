@@ -60,7 +60,6 @@ public abstract class ControlCommand {
     public static final String SERVER_OPTION = "server";
     public static final String STORAGE_OPTION = "storage";
     public static final String AGENT_OPTION = "agent";
-    public static final String RHQ_STORAGE_BASEDIR_PROP = "rhq.storage.basedir";
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
@@ -300,7 +299,7 @@ public abstract class ControlCommand {
     }
 
     protected String getStoragePid() throws IOException {
-    	File pidFile = getStoragePidFile();
+        File pidFile = getStoragePidFile();
 
         if (pidFile.exists()) {
             return StreamUtil.slurp(new FileReader(pidFile));
@@ -494,18 +493,18 @@ public abstract class ControlCommand {
 
     protected boolean isStorageRunning() throws IOException {
         String pid = getStoragePid();
-        if(pid == null) {
-        	return false;
-        } else if(pid != null && !isUnixPidRunning(pid)) {
-    		// There is a phantom pidfile
-    		File pidFile = getStoragePidFile();
-    		if(!pidFile.delete()) {
-    			throw new RHQControlException("Could not delete storage pidfile " + pidFile.getAbsolutePath());
-    		}
-    		return false;
-    	} else {
-    		return true;
-    	}
+        if (pid == null) {
+            return false;
+        } else if (pid != null && !isUnixPidRunning(pid)) {
+            // There is a phantom pidfile
+            File pidFile = getStoragePidFile();
+            if (!pidFile.delete()) {
+                throw new RHQControlException("Could not delete storage pidfile " + pidFile.getAbsolutePath());
+            }
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private class NullOutputStream extends OutputStream {

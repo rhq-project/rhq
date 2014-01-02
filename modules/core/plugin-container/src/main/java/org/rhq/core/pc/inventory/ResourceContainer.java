@@ -121,7 +121,7 @@ public class ResourceContainer implements Serializable {
     private transient TIntObjectMap<Object> proxyCache = new TIntObjectHashMap<Object>(5);
     private transient ClassLoader resourceClassLoader;
     // the currently known availability
-    private transient Availability availability;
+    private transient SlimAvailability availability = new SlimAvailability();
     // the time at which this resource is up for an avail check. null indicates unscheduled.
     private transient Long availabilityScheduleTime;
     private transient AvailabilityProxy availabilityProxy;
@@ -158,8 +158,9 @@ public class ResourceContainer implements Serializable {
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
         synchronized (this) {
-            this.availability = new Availability(this.resource, availabilityType);
-            return this.availability;
+            this.availability = new SlimAvailability(availabilityType);
+
+            return this.availability.toAvailability(this.resource);
         }
     }
 
@@ -176,7 +177,7 @@ public class ResourceContainer implements Serializable {
     @Nullable
     public Availability getAvailability() {
         synchronized (this) {
-            return this.availability;
+            return this.availability.toAvailability(this.resource);
         }
     }
 
@@ -451,7 +452,7 @@ public class ResourceContainer implements Serializable {
 
     @Override
     public String toString() {
-        AvailabilityType avail = (this.availability != null) ? this.availability.getAvailabilityType() : null;
+        AvailabilityType avail = (this.availability != null) ? this.availability.type : null;
         return this.getClass().getSimpleName() + "[resource=" + this.resource + ", syncState="
             + this.synchronizationState + ", componentState=" + this.resourceComponentState + ", avail=" + avail + "]";
     }
@@ -781,6 +782,32 @@ public class ResourceContainer implements Serializable {
             }
             sb.append("] on resource [").append(resourceContainer.getResource()).append("]");
             return sb.toString();
+        }
+    }
+
+    private static class SlimAvailability {
+
+        private long startTime;
+        private AvailabilityType type = AvailabilityType.UNKNOWN;
+
+        private SlimAvailability() {
+            type = AvailabilityType.UNKNOWN;
+        }
+
+        private SlimAvailability(AvailabilityType type) {
+            this.type = type;
+            this.startTime = System.currentTimeMillis();
+        }
+
+        private SlimAvailability(long startTime, AvailabilityType type) {
+            this.startTime = startTime;
+            this.type = type;
+        }
+
+        Availability toAvailability(Resource r) {
+            Availability tmp = new Availability(r,type);
+            tmp.setStartTime(startTime);
+            return tmp;
         }
     }
 }

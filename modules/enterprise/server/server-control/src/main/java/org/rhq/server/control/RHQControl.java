@@ -135,7 +135,7 @@ public class RHQControl {
             } catch (Throwable t) {
                 log.warn("Failed to clean up after the failed installation attempt. "
                     + "You may have to clean up some things before attempting to install again", t);
-	            rValue = EXIT_CODE_OPERATION_FAILED;
+                rValue = EXIT_CODE_OPERATION_FAILED;
             }
         }
 

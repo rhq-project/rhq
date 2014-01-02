@@ -121,9 +121,10 @@ public class ResourceContainer implements Serializable {
     private transient TIntObjectMap<Object> proxyCache = new TIntObjectHashMap<Object>(5);
     private transient ClassLoader resourceClassLoader;
     // the currently known availability
-    private transient SlimAvailability availability = new SlimAvailability();
-    // the time at which this resource is up for an avail check. null indicates unscheduled.
-    private transient Long availabilityScheduleTime;
+    private transient AvailabilityType currentAvailType = AvailabilityType.UNKNOWN;
+    private transient long currentAvailStart;
+    // the time at which this resource is up for an avail check. 0 indicates unscheduled.
+    private transient long availabilityScheduleTime;
     private transient AvailabilityProxy availabilityProxy;
 
     /**
@@ -158,9 +159,12 @@ public class ResourceContainer implements Serializable {
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
         synchronized (this) {
-            this.availability = new SlimAvailability(availabilityType);
+            this.currentAvailType = availabilityType;
+            this.currentAvailStart = System.currentTimeMillis();
 
-            return this.availability.toAvailability(this.resource);
+            Availability tmp = new Availability(this.resource,availabilityType);
+            tmp.setStartTime(this.currentAvailStart);
+            return tmp;
         }
     }
 
@@ -177,7 +181,9 @@ public class ResourceContainer implements Serializable {
     @Nullable
     public Availability getAvailability() {
         synchronized (this) {
-            return this.availability.toAvailability(this.resource);
+            Availability tmp = new Availability(this.resource,this.currentAvailType);
+            tmp.setStartTime(this.currentAvailStart);
+            return tmp;
         }
     }
 
@@ -302,13 +308,13 @@ public class ResourceContainer implements Serializable {
     public void setAvailabilitySchedule(MeasurementScheduleRequest availabilitySchedule) {
         synchronized (this) {
             this.availabilitySchedule = availabilitySchedule;
-            // when the schedule is (re)set just null out the schedule time and it will get rescheduled on the
+            // when the schedule is (re)set just 0 out the schedule time and it will get rescheduled on the
             // next avail execution.
-            this.availabilityScheduleTime = null;
+            this.availabilityScheduleTime = 0;
         }
     }
 
-    public Long getAvailabilityScheduleTime() {
+    public long getAvailabilityScheduleTime() {
         return availabilityScheduleTime;
     }
 
@@ -452,7 +458,7 @@ public class ResourceContainer implements Serializable {
 
     @Override
     public String toString() {
-        AvailabilityType avail = (this.availability != null) ? this.availability.type : null;
+        AvailabilityType avail = (this.currentAvailType != null) ? this.currentAvailType : null;
         return this.getClass().getSimpleName() + "[resource=" + this.resource + ", syncState="
             + this.synchronizationState + ", componentState=" + this.resourceComponentState + ", avail=" + avail + "]";
     }
@@ -782,32 +788,6 @@ public class ResourceContainer implements Serializable {
             }
             sb.append("] on resource [").append(resourceContainer.getResource()).append("]");
             return sb.toString();
-        }
-    }
-
-    private static class SlimAvailability {
-
-        private long startTime;
-        private AvailabilityType type = AvailabilityType.UNKNOWN;
-
-        private SlimAvailability() {
-            type = AvailabilityType.UNKNOWN;
-        }
-
-        private SlimAvailability(AvailabilityType type) {
-            this.type = type;
-            this.startTime = System.currentTimeMillis();
-        }
-
-        private SlimAvailability(long startTime, AvailabilityType type) {
-            this.startTime = startTime;
-            this.type = type;
-        }
-
-        Availability toAvailability(Resource r) {
-            Availability tmp = new Availability(r,type);
-            tmp.setStartTime(startTime);
-            return tmp;
         }
     }
 }

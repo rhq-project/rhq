@@ -240,12 +240,12 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         // See if this resource is scheduled for an avail check
         boolean checkAvail = false;
         boolean deferToParent = false;
-        Long availabilityScheduleTime = resourceContainer.getAvailabilityScheduleTime();
+        long availabilityScheduleTime = resourceContainer.getAvailabilityScheduleTime();
         MeasurementScheduleRequest availScheduleRequest = resourceContainer.getAvailabilitySchedule();
 
         // if no avail check is scheduled or we're forcing the check, schedule the next check. Note that a forcedCheck
         // is "off-schedule" so we need to push out the next check.
-        if ((null == availabilityScheduleTime) || isForced) {
+        if ((0 == availabilityScheduleTime) || isForced) {
             // if there is no availability schedule (platform) then just perform the avail check
             // (note, platforms always return UP anyway).
             if (null == availScheduleRequest) {

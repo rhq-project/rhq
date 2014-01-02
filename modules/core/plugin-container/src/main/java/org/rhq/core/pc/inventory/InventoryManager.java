@@ -65,6 +65,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
@@ -90,6 +91,7 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
+import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -2992,12 +2994,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getChildResources().isEmpty()) {
             resource.setChildResources(Collections.EMPTY_SET);
         }
-/*  TODO comment this in again once we understand why this makes the tests fail
+/*  TODO the next will make the tests fail
     TODO I have not seen issues inside a real running agent - hrupp
-
+*/
         Configuration pluginConfiguration = resource.getPluginConfiguration();
         if (pluginConfiguration !=null ) {
             pluginConfiguration.cleanoutRawConfiguration();
+            compactConfiguration(pluginConfiguration);
         }
 
         Configuration resourceConfiguration = resource.getResourceConfiguration();
@@ -3011,8 +3014,23 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
         }
-*/
 
+
+    }
+
+    private void compactConfiguration(Configuration config) {
+        if (config==null) {
+            return;
+        }
+        if (config.getProperties()==null) {
+            return;
+        }
+        for (Property prop : config.getProperties()) {
+            if (prop.getName()!=null) {
+                prop.setName(prop.getName().intern());
+            }
+        }
+        config.resize();
     }
 
     private void mergeModifiedResources(Set<Integer> modifiedResourceIds) {

@@ -851,6 +851,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
     }
 
+    public void resize() {
+        Map<String,Property> tmp =new LinkedHashMap<String, Property>(this.properties.size());
+        tmp.putAll(this.properties);
+        this.properties=tmp;
+    }
+
     public String getNotes() {
         return notes;
     }

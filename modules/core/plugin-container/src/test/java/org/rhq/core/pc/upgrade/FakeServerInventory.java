@@ -421,10 +421,6 @@ public class FakeServerInventory {
         return platform == null ? null : PlatformSyncInfo.buildPlatformSyncInfo(platform);
     }
 
-    private Collection<ResourceSyncInfo> getResourceSyncInfo(Resource resource) {
-        return resource == null ? null : convert(resource);
-    }
-
     private static Collection<ResourceSyncInfo> convert(Resource root) {
         Set<ResourceSyncInfo> result = new HashSet<ResourceSyncInfo>();
         convertInternal(root, result);

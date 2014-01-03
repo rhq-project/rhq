@@ -60,7 +60,7 @@ import org.rhq.test.JMockTest;
  * <p>
  * This class is used to declaratively setup a plugin container a test wants
  * to use using the {@link PluginContainerSetup} annotation on a test method or class.
- * 
+ *
  * @author Lukas Krejci
  */
 public class PluginContainerTest extends JMockTest {
@@ -96,9 +96,9 @@ public class PluginContainerTest extends JMockTest {
      * provided by JMock.
      * <p>
      * This method together with {@link #setServerSideFake(String, Object)} provides a generic
-     * "storage" for tests to share these objects and is only provided as a convenience to 
+     * "storage" for tests to share these objects and is only provided as a convenience to
      * the test writers. There's nothing that would manadate using it.
-     *  
+     *
      * @param name
      * @return
      */
@@ -114,7 +114,7 @@ public class PluginContainerTest extends JMockTest {
     }
 
     /**
-     * Returns the {@link PluginContainerConfiguration} as configured using 
+     * Returns the {@link PluginContainerConfiguration} as configured using
      * the {@link PluginContainerSetup} annotation on the current test (or null
      * if no such thing is configured).
      * @return
@@ -202,7 +202,7 @@ public class PluginContainerTest extends JMockTest {
      * <p>
      * This is not done automatically to support sharing the plugin container among
      * multiple tests to simulate upgrades, etc.
-     * 
+     *
      * @throws IOException
      */
     public static void clearStorageOfCurrentPluginContainer() throws IOException {
@@ -219,9 +219,9 @@ public class PluginContainerTest extends JMockTest {
 
     /**
      * This method clears the storage of all tests made. This is useful in {@link AfterSuite}
-     * method to clean up after all the tests (annotated with {@link PluginContainerSetup}) 
+     * method to clean up after all the tests (annotated with {@link PluginContainerSetup})
      * that have been run.
-     * 
+     *
      * @throws IOException
      */
     public synchronized static void clearStorage() throws IOException {
@@ -238,9 +238,9 @@ public class PluginContainerTest extends JMockTest {
      * this method is provided to automatically clean up after all the plugin container tests that ran
      * in the test suite.
      * <p>
-     * If you use PluginContainerTest as a listener, you have to call {@link #clearStorage()} method 
+     * If you use PluginContainerTest as a listener, you have to call {@link #clearStorage()} method
      * on your own.
-     * 
+     *
      * @throws IOException
      */
     @AfterSuite
@@ -249,12 +249,12 @@ public class PluginContainerTest extends JMockTest {
     }
 
     /**
-     * This method returns the {@link PluginContainerConfiguration} that will be used in 
-     * the current test as was configured by the PluginContainerSetup annotation. 
+     * This method returns the {@link PluginContainerConfiguration} that will be used in
+     * the current test as was configured by the PluginContainerSetup annotation.
      * <p>
-     * If your test class inherits from PluginContainerTest, you can override this method 
+     * If your test class inherits from PluginContainerTest, you can override this method
      * to provide custom configuration.
-     * 
+     *
      * @param testObject the object of the current test
      * @param testMethod the test method currently being executed on the test object
      * @return
@@ -293,7 +293,7 @@ public class PluginContainerTest extends JMockTest {
     }
 
     /**
-     * This method is called after the test to tear down resources associated with the 
+     * This method is called after the test to tear down resources associated with the
      * current plugin container configuration.
      */
     protected void tearDownPluginContainerConfiguration() {
@@ -371,9 +371,16 @@ public class PluginContainerTest extends JMockTest {
         }
     }
 
+    // Note that on WINDOWS this does not always/usually work and therefore test failures
+    // tend to happen.  For unknown reasons windows/jvm keeps a lock on the plugin jar and it
+    // fails to delete, thus allowing for multiple versions of the plugin in the same path. I've
+    // added a system out to make it more clear in the log. There was no obvious workaround.
     private void deletePlugins(File deployDirectory) throws IOException {
         if (deployDirectory.exists()) {
-            FileUtil.purge(deployDirectory, false);
+            FileUtil.purge(deployDirectory, true);
+        }
+        if (deployDirectory.exists()) {
+            throw new IllegalStateException("Failed to clean up plugins in [" + deployDirectory.getPath() + "]");
         }
     }
 

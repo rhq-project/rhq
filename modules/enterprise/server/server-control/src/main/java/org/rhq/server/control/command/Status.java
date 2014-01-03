@@ -131,7 +131,13 @@ public class Status extends ControlCommand {
             commandLine = getCommandLine("rhq-storage", "status");
             try {
                 rValue = executor.execute(commandLine);
-
+            } catch (ExecuteException ee) {
+                log.debug("Failed to check storage service status", ee);
+                rValue = ee.getExitValue();
+                if (rValue == RHQControl.EXIT_CODE_OK) {
+                    // if somehow we were told it was OK, change it to unknown since it can't be OK
+                    rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
+                }
             } catch (Exception e) {
                 log.debug("Failed to check storage service status", e);
                 rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
@@ -154,7 +160,18 @@ public class Status extends ControlCommand {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
-        return executor.execute(commandLine);
+
+        int rValue;
+        try {
+            rValue = executor.execute(commandLine);
+        } catch (ExecuteException ee) {
+            rValue = ee.getExitValue();
+            if (rValue == RHQControl.EXIT_CODE_OK) {
+                // if somehow we were told it was OK, change it to unknown since it can't be OK
+                rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
+            }
+        }
+        return rValue;
     }
 
     private int checkAgentStatus() throws Exception {
@@ -166,16 +183,27 @@ public class Status extends ControlCommand {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
+
+        int rValue;
         try {
-            return executor.execute(commandLine);
+            rValue = executor.execute(commandLine);
         } catch (ExecuteException e) {
             // For windows the JSW exit code for a status check is expected to be a mask value and the agent wrapper
             // .bat will return it explicitly.  We can ignore it and assume that the logged output is sufficient.
             // See http://wrapper.tanukisoftware.com/doc/english/launch-win.html#standalone-status
             if (!isWindows()) {
-                throw e;
+                // UNIX script will exit with 1 if its not running, this is expected, so don't throw exception on 1
+                if (e.getExitValue() != 1) {
+                    throw e;
+                }
             }
-            return RHQControl.EXIT_CODE_STATUS_UNKNOWN;
+            rValue = e.getExitValue();
+            if (rValue == RHQControl.EXIT_CODE_OK) {
+                // if somehow we were told it was OK, change it to unknown since it can't be OK
+                rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
+            }
         }
+
+        return rValue;
     }
 }

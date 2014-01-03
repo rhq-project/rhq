@@ -61,8 +61,6 @@ public class RHQControl {
     public static final int EXIT_CODE_OPERATION_FAILED = 1;
     public static final int EXIT_CODE_INVALID_ARGUMENT = 2;
     public static final int EXIT_CODE_NOT_INSTALLED = 5;
-//    public static final int EXIT_CODE_OPERATION_NOT_RUNNING = 7;
-
 
     private Commands commands = new Commands();
 

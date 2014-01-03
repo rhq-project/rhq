@@ -43,7 +43,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
@@ -158,31 +157,6 @@ public abstract class AbstractInstall extends ControlCommand {
             }
         }
 
-    }
-
-    protected boolean isUnixPidRunning(String pid) {
-
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine;
-
-        commandLine = new org.apache.commons.exec.CommandLine("/bin/kill").addArgument("-0").addArgument(pid);
-
-        try {
-            int code = executor.execute(commandLine);
-            if (code != 0) {
-                return false;
-            }
-        } catch (ExecuteException ee) {
-            if (ee.getExitValue() == 1) {
-                // return code 1 means process does not exist
-                return false;
-            }
-        } catch (IOException e) {
-            log.error("Checking for running process failed: " + e.getMessage());
-        }
-        return true;
     }
 
     protected void waitForRHQServerToInitialize() throws Exception {
@@ -520,8 +494,12 @@ public abstract class AbstractInstall extends ControlCommand {
 
             executor.execute(commandLine, executeHandler);
             log.info("The server installer is running");
-            return executeHandler.getExitValue();
-        } catch (IOException e) {
+            if (executeHandler.hasResult()) {
+                return executeHandler.getExitValue();
+            } else {
+                return RHQControl.EXIT_CODE_OK; // the installer really didn't exit yet, but just indicate we started it OK
+            }
+        } catch (Exception e) {
             log.error("An error occurred while starting the server installer: " + e.getMessage());
             return RHQControl.EXIT_CODE_NOT_INSTALLED;
         }
@@ -575,7 +553,7 @@ public abstract class AbstractInstall extends ControlCommand {
     }
 
     protected int installStorageNode(final File storageBasedir, CommandLine rhqctlCommandLine, boolean start)
-        throws IOException {
+        throws Exception {
         try {
             log.info("Preparing to install RHQ storage node.");
 
@@ -621,7 +599,7 @@ public abstract class AbstractInstall extends ControlCommand {
             addUndoTaskToStopComponent("--storage");
 
             return exitCode;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("An error occurred while running the storage installer: " + e.getMessage());
             if (e.getMessage().toLowerCase().contains("exit value: 3")) {
                 log.error("Try to point your root data directory via --" + STORAGE_DATA_ROOT_DIR
@@ -638,7 +616,7 @@ public abstract class AbstractInstall extends ControlCommand {
         return rValue;
     }
 
-    private int installAgent(final File agentBasedir) throws IOException {
+    private int installAgent(final File agentBasedir) throws Exception {
         try {
             log.info("Installing RHQ agent");
 
@@ -668,7 +646,7 @@ public abstract class AbstractInstall extends ControlCommand {
             int exitValue = executor.execute(commandLine);
             log.info("The agent installer finished running with exit value " + exitValue);
             return exitValue;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("An error occurred while running the agent installer: " + e.getMessage());
             throw e;
         }

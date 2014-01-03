@@ -351,8 +351,11 @@ public class Upgrade extends AbstractInstall {
 
         // start the server, the invoke the installer and wait for the server to be completely installed
         startRHQServerForInstallation();
-        rValue = Math.max(rValue, runRHQServerInstaller());
-        waitForRHQServerToInitialize();
+        int installerStatusCode = runRHQServerInstaller();
+        rValue = Math.max(rValue, installerStatusCode);
+        if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
+            waitForRHQServerToInitialize();
+        }
 
         return rValue;
     }
@@ -546,7 +549,7 @@ public class Upgrade extends AbstractInstall {
         }
 
         // now merge the old settings in with the default properties from the new server install
-        String newServerPropsFilePath = new File(getBaseDir(), "bin/rhq-server.properties").getAbsolutePath();
+        String newServerPropsFilePath = getServerPropertiesFile().getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
         newServerPropsFile.update(oldServerProps);
 

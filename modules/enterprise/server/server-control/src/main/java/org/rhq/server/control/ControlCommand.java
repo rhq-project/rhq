@@ -162,9 +162,8 @@ public abstract class ControlCommand {
             rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
         } catch (ConfigurationException e) {
             throw new RHQControlException("Failed to update " + getRhqCtlProperties(), e);
-        } finally {
-            return rValue;
         }
+        return rValue;
     }
 
     public void printUsage() {
@@ -457,7 +456,7 @@ public abstract class ControlCommand {
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
+        PumpStreamHandler streamHandler = new PumpStreamHandler(createNullOutputStream(), createNullOutputStream());
         executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine;
 
@@ -469,19 +468,18 @@ public abstract class ControlCommand {
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
-        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
+        PumpStreamHandler streamHandler = new PumpStreamHandler(createNullOutputStream(), createNullOutputStream());
         executor.setStreamHandler(streamHandler);
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("/bin/kill")
-            .addArgument("-0")
-            .addArgument(pid);
+        org.apache.commons.exec.CommandLine commandLine;
+        commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument("-0").addArgument(pid);
 
         try {
             int code = executor.execute(commandLine);
-            if (code!=0) {
+            if (code != 0) {
                 return false;
             }
         } catch (ExecuteException ee ) {
-            if (ee.getExitValue()==1) {
+            if (ee.getExitValue() == 1) {
                 // return code 1 means process does not exist
                 return false;
             }
@@ -505,6 +503,17 @@ public abstract class ControlCommand {
         } else {
             return true;
         }
+    }
+
+    /**
+     * Call this method to get an output stream that throws away all data. Useful
+     * when executing commands which you don't care about seeing its output on stdout.
+     * Example usage:
+     *    executor.setStreamHandler(new PumpStreamHandler(createNullOutputStream(), createNullOutputStream()));
+     * @return a null output stream
+     */
+    protected OutputStream createNullOutputStream() {
+        return new NullOutputStream();
     }
 
     private class NullOutputStream extends OutputStream {

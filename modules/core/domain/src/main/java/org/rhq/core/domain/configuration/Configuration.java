@@ -573,7 +573,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      */
     @Override
     public void put(Property value) {
-        getMap().put(value.getName(), value);
+        Map<String, Property> map = getMap();
+        if (value.getName()!=null) {
+            map.put(value.getName().intern(),value);
+        } else {
+            map.put(value.getName(), value);
+        }
         value.setConfiguration(this);
     }
 

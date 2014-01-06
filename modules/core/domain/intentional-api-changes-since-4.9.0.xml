@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+    <className>org/rhq/core/domain/discovery/MergeInventoryReportResults</className>
+    <differenceType>7005</differenceType> <!-- parameter type changed -->
+    <method>public MergeInventoryReportResults(org.rhq.core.domain.discovery.ResourceSyncInfo, java.util.Collection)</method>
+    <to>public MergeInventoryReportResults(org.rhq.core.domain.discovery.PlatformSyncInfo, java.util.Collection)</to>
+    <justification>Class only used internally for inventory sync</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/discovery/MergeInventoryReportResults</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>public org.rhq.core.domain.discovery.ResourceSyncInfo getResourceSyncInfo()</method>
+    <justification>Class only used internally for inventory sync</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/core/domain/discovery/MergeInventoryReportResults</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>public java.util.Collection getChildSyncInfos()</method>
+    <justification>Class only used internally for inventory sync</justification>
+  </difference>
+</differences>

@@ -201,9 +201,9 @@ public class AlertTokenReplacer {
         case RESOURCE_PARENT_NAME:
             parent = mgr.getParentResource(resource.getId());
             if (parent == null)
-                return "0";
+                return "N/A";
             else
-                return String.valueOf(parent.getId());
+                return parent.getName();
         case RESOURCE_TYPE_ID:
             return String.valueOf(resource.getResourceType().getId());
         case RESOURCE_TYPE_NAME:

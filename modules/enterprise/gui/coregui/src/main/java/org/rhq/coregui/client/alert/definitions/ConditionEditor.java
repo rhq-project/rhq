@@ -1110,6 +1110,13 @@ public class ConditionEditor extends EnhancedVLayout {
         Set<String> metricIdsToHide = new HashSet<String>();
         if (BooleanExpression.ALL.name().equals(this.conditionExpression.getValue().toString())) {
             for (AlertCondition condition : this.conditions) {
+                if (editMode) { // do not hide the metric if it is part of the currently modified condition
+                    AlertCondition conditionWithoutId = new AlertCondition(existingCondition); // newly created conditions don't have id yet
+                    AlertCondition modifiedConditionWithoutId = new AlertCondition(condition);
+                    if (conditionWithoutId.equals(modifiedConditionWithoutId)) {
+                        continue;
+                    }
+                }
                 if (condition.getMeasurementDefinition() != null) {
                     metricIdsToHide.add(String.valueOf(condition.getMeasurementDefinition().getId()));
                 }

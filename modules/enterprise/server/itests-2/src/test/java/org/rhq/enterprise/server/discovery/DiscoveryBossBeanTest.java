@@ -190,7 +190,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
-        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        assert checkIgnoredTypes(results) : "nothing should have been ignored in this test";
         assertNotNull(results.getPlatformSyncInfo());
     }
 
@@ -203,7 +203,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         inventoryReport.addAddedRoot(platform);
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
-        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        assert checkIgnoredTypes(results) : "nothing should have been ignored in this test";
         assertNotNull(results.getPlatformSyncInfo());
         Collection<ResourceSyncInfo> syncInfos = discoveryBoss.getResourceSyncInfo(results.getPlatformSyncInfo()
             .getPlatform().getId());
@@ -229,8 +229,33 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
-        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        assert checkIgnoredTypes(results) : "nothing should have been ignored in this test";
         assertNotNull(results.getPlatformSyncInfo());
+    }
+
+    // given test interaction there could be ignored types, make sure they are not relevant to these tests
+    private boolean checkIgnoredTypes(MergeInventoryReportResults results) {
+        return checkIgnoredTypes(results, 0);
+    }
+
+    // given test interaction there could be ignored types, make sure they are not relevant to these tests
+    private boolean checkIgnoredTypes(MergeInventoryReportResults results, int expectedNumberOfIgnoredTypes) {
+        int numberOfRelevantIgnoredTypes = 0;
+        Collection<ResourceTypeFlyweight> ignoredTypes = results.getIgnoredResourceTypes();
+
+        if (null != ignoredTypes) {
+            if (ignoredTypes.contains(new ResourceTypeFlyweight(serverType))) {
+                ++numberOfRelevantIgnoredTypes;
+            }
+            if (ignoredTypes.contains(new ResourceTypeFlyweight(serviceType1))) {
+                ++numberOfRelevantIgnoredTypes;
+            }
+            if (ignoredTypes.contains(new ResourceTypeFlyweight(serviceType2))) {
+                ++numberOfRelevantIgnoredTypes;
+            }
+        }
+
+        return expectedNumberOfIgnoredTypes == numberOfRelevantIgnoredTypes;
     }
 
     @Test(groups = "integration.ejb3")
@@ -251,7 +276,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert results != null;
-        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        assert checkIgnoredTypes(results) : "nothing should have been ignored in this test";
         assertNotNull(results.getPlatformSyncInfo());
         assertNotNull(results.getPlatformSyncInfo().getTopLevelServerIds());
         assertTrue(!results.getPlatformSyncInfo().getTopLevelServerIds().isEmpty());
@@ -294,7 +319,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
+        assert checkIgnoredTypes(mergeResults) : "nothing should have been ignored: "
             + mergeResults.getIgnoredResourceTypes();
         PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
@@ -369,7 +394,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
         assertNotNull(mergeResults.getIgnoredResourceTypes());
-        assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
+        assert checkIgnoredTypes(mergeResults, 1) : "expected one ignored type";
         assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
         // Check merge result - make sure we should not see any children under the platform (it should have been ignored)
@@ -404,7 +429,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // now see that we were told about the service types being ignored (even though we had no resources of that type in the report)
         Collection<ResourceTypeFlyweight> ignoredResourceTypes = mergeResults.getIgnoredResourceTypes();
         assertNotNull(ignoredResourceTypes);
-        assertEquals(ignoredResourceTypes.size(), 2);
+        assert checkIgnoredTypes(mergeResults, 2) : "expected two ignored types";
         assert ignoredResourceTypes.contains(new ResourceTypeFlyweight(serviceType1));
         assert ignoredResourceTypes.contains(new ResourceTypeFlyweight(serviceType2));
     }
@@ -427,7 +452,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report to get platform and servers in NEW state
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
+        assert checkIgnoredTypes(mergeResults) : "nothing should have been ignored: "
             + mergeResults.getIgnoredResourceTypes();
         PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
@@ -471,7 +496,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
         assertNotNull(mergeResults.getIgnoredResourceTypes());
-        assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
+        assert checkIgnoredTypes(mergeResults, 1) : "expected one ignored type";
         assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
         assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getPlatform().getInventoryStatus()); // notice platform is committed now
@@ -500,7 +525,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // Merge this inventory report
         MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert mergeResults != null;
-        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored: "
+        assert checkIgnoredTypes(mergeResults) : "nothing should have been ignored: "
             + mergeResults.getIgnoredResourceTypes();
         PlatformSyncInfo platformSyncInfo = mergeResults.getPlatformSyncInfo();
         assert platformSyncInfo != null;
@@ -531,7 +556,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assertNotNull(results);
-        assertNull("nothing should have been ignored in this test", results.getIgnoredResourceTypes());
+        assert checkIgnoredTypes(results) : "nothing should have been ignored in this test "
+            + results.getIgnoredResourceTypes();
         final PlatformSyncInfo firstDiscoverySyncInfo = results.getPlatformSyncInfo();
         assertNotNull(firstDiscoverySyncInfo);
 
@@ -566,7 +592,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assertNotNull(results);
-        assertNull("nothing should have been ignored in this test", results.getIgnoredResourceTypes());
+        assert checkIgnoredTypes(results) : "nothing should have been ignored in this test "
+            + results.getIgnoredResourceTypes();
         PlatformSyncInfo secondDiscoverySyncInfo = results.getPlatformSyncInfo();
         assertNotNull(secondDiscoverySyncInfo);
 

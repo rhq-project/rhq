@@ -1370,7 +1370,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void addChildResource(Resource childResource) {
         childResource.setParentResource(this);
-        if (null == this.childResources) {
+        if (null == this.childResources || this.childResources.equals(Collections.EMPTY_SET)) {
             this.childResources = new HashSet<Resource>(1);
         }
         this.childResources.add(childResource);

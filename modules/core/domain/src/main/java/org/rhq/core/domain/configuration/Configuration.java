@@ -515,7 +515,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private transient PropertiesProxy propertiesProxy;
 
-    @OneToMany(mappedBy = "configuration", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
     private Set<RawConfiguration> rawConfigurations;
 

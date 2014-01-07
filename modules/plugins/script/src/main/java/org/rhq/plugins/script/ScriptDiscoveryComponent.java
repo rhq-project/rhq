@@ -30,12 +30,16 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.exception.ThrowableUtil;
 
@@ -48,10 +52,16 @@ import org.rhq.core.util.exception.ThrowableUtil;
  *
  * @author John Mazzitelli
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>>, ManualAddFacet<ResourceComponent<?>>,
+    ResourceUpgradeFacet<ResourceComponent<?>> {
+
+    public static final String ESCAPE_CHARACTER_PROP_NAME = "escapeCharacter";
+    private static final String ESCAPE_CHARACTER_DEFAULT = "__TO_BE_SET_TO_\\_OR_^__";
+
     private final Log log = LogFactory.getLog(ScriptDiscoveryComponent.class);
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+    @Override
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent<?>> context) {
         log.debug("Processing discovered management script resources...");
 
         HashSet<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
@@ -72,8 +82,9 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
         return details;
     }
 
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
+                                                      ResourceDiscoveryContext<ResourceComponent<?>> discoveryContext)
             throws InvalidPluginConfigurationException {
         String executable = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_EXECUTABLE).getStringValue();
         String version = determineVersion(discoveryContext, pluginConfig);
@@ -94,7 +105,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
      *
      * @return the details object that represents the discovered resource
      */
-    protected DiscoveredResourceDetails processAutoDiscoveredResource(ResourceDiscoveryContext context,
+    protected DiscoveredResourceDetails processAutoDiscoveredResource(ResourceDiscoveryContext<ResourceComponent<?>> context,
         ProcessScanResult autoDiscoveryResult) {
 
         return null; // this implementation is a no-op - nothing will be discovered
@@ -108,7 +119,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
      *
      * @return the description or <code>null</code> if it could not be determined
      */
-    protected String determineDescription(ResourceDiscoveryContext context, Configuration pluginConfig) {
+    protected String determineDescription(ResourceDiscoveryContext<ResourceComponent<?>> context, Configuration pluginConfig) {
         String description = null;
         try {
             PropertySimple descriptionProp = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_FIXED_DESC);
@@ -153,6 +164,23 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
         return description;
     }
 
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ResourceComponent<?>> inventoriedResource) {
+        PropertySimple escapeCharacter = inventoriedResource.getPluginConfiguration().getSimple(ESCAPE_CHARACTER_PROP_NAME);
+
+        if (escapeCharacter != null && !ESCAPE_CHARACTER_DEFAULT.equals(escapeCharacter.getStringValue())) {
+            return null;
+        }
+
+        char escapeChar = File.separatorChar == '/' ? '\\' : '^';
+
+        ResourceUpgradeReport report = new ResourceUpgradeReport();
+        report.setNewPluginConfiguration(inventoriedResource.getPluginConfiguration().clone());
+        report.getNewPluginConfiguration().put(new PropertySimple(ESCAPE_CHARACTER_PROP_NAME, Character.toString(escapeChar)));
+
+        return report;
+    }
+
     /**
      * Attempts to determine the version of the resource managed by the CLI.
      * 
@@ -161,7 +189,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
      *
      * @return the version or <code>null</code> if it could not be determined
      */
-    protected String determineVersion(ResourceDiscoveryContext context, Configuration pluginConfig) {
+    protected String determineVersion(ResourceDiscoveryContext<ResourceComponent<?>> context, Configuration pluginConfig) {
         String version = null;
         try {
             PropertySimple versionProp = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_FIXED_VERSION);

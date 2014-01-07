@@ -515,8 +515,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private transient PropertiesProxy propertiesProxy;
 
+    // If we don't actually get rid of this soon (say, 4.10) then we may want to make this
+    // lazy, so we don't run around doing a fetch for every config we pull.  But that means
+    // we have to protect against the unresolved proxy in various places (scrub the proxies)
+    // which has its own issues.  Please let's kill this...
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
-    @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
+    @Cascade({ CascadeType.PERSIST, CascadeType.MERGE })
     private Set<RawConfiguration> rawConfigurations;
 
     @Column(name = "NOTES")
@@ -828,6 +832,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     public Set<RawConfiguration> getRawConfigurations() {
+        if (rawConfigurations == null) {
+            rawConfigurations = new HashSet<RawConfiguration>(1);
+        }
         return rawConfigurations;
     }
 

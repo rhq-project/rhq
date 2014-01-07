@@ -1047,7 +1047,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     @Nullable
     public Availability getAvailabilityIfKnown(Resource resource) {
-        ResourceContainer resourceContainer = getResourceContainer(resource.getId());
+        ResourceContainer resourceContainer = getResourceContainer(resource);
 
         if (resourceContainer != null) {
             if (ResourceComponentState.STARTED == resourceContainer.getResourceComponentState()) {
@@ -3289,7 +3289,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (parentResourceFromServer != null) {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceFromServer);
             if (parentResourceContainer == null) {
-                parentResourceContainer = getResourceContainer(parentResourceFromServer);
+                // must get the resContainer via Id here, the uuid is not necessarily set in the parent
+                parentResourceContainer = getResourceContainer(parentResourceFromServer.getId());
             }
             if (parentResourceContainer != null) {
                 parentResource = parentResourceContainer.getResource();

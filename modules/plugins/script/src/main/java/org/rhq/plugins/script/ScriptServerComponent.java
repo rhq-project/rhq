@@ -403,7 +403,9 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
         ProcessExecution processExecution = getProcessExecutionInfo(pluginConfig);
         if (args != null) {
-            processExecution.setArguments(args.split(" "));
+            char escapeChar = pluginConfig.getSimpleValue(ScriptDiscoveryComponent.ESCAPE_CHARACTER_PROP_NAME, "\\").charAt(
+                0);
+            processExecution.setArguments(ScriptArgumentParser.parse(args, escapeChar));
         }
         processExecution.setCaptureOutput(captureOutput);
         processExecution.setWaitForCompletion(wait);

@@ -1256,6 +1256,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + hadSyncedResources + "]");
 
                     syncInfos = null; // release to GC
+                    try {
+                        // Wait a little to get other tasks room for breathing
+                        Thread.sleep(800L);
+                    } catch (InterruptedException e) {
+                        ;
+                    }
                 }
             }
         }

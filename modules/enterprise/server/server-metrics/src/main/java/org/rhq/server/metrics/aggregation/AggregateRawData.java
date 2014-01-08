@@ -11,6 +11,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,12 +40,15 @@ class AggregateRawData implements Runnable {
 
     private List<StorageResultSetFuture> queryFutures;
 
+    private RateLimiter readPermits;
+
     public AggregateRawData(MetricsDAO dao, AggregationState state, Set<Integer> scheduleIds,
-        List<StorageResultSetFuture> queryFutures) {
+        List<StorageResultSetFuture> queryFutures, RateLimiter readPermits) {
         this.dao = dao;
         this.state = state;
         this.scheduleIds = scheduleIds;
         this.queryFutures = queryFutures;
+        this.readPermits = readPermits;
     }
 
     @Override
@@ -92,11 +96,12 @@ class AggregateRawData implements Runnable {
                 List<StorageResultSetFuture> oneHourDataQueryFutures = new ArrayList<StorageResultSetFuture>(
                     scheduleIds.size());
                 for (Integer scheduleId : scheduleIds) {
+                    readPermits.acquire();
                     oneHourDataQueryFutures.add(dao.findOneHourMetricsAsync(scheduleId,
                         state.getSixHourTimeSlice().getMillis(), state.getSixHourTimeSliceEnd().getMillis()));
                 }
                 state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
-                    oneHourDataQueryFutures));
+                    oneHourDataQueryFutures, readPermits));
             }
         } catch (InterruptedException e) {
             if (log.isDebugEnabled()) {

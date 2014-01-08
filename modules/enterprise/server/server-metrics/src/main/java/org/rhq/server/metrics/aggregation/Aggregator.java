@@ -172,14 +172,14 @@ public class Aggregator {
                         endTime.getMillis()));
                     if (rawDataFutures.size() == batchSize) {
                         state.getAggregationTasks().submit(new AggregateRawData(dao, state, scheduleIds,
-                            rawDataFutures));
+                            rawDataFutures, readPermits));
                         rawDataFutures = new ArrayList<StorageResultSetFuture>();
                         scheduleIds = new TreeSet<Integer>();
                     }
                 }
                 if (!rawDataFutures.isEmpty()) {
                     state.getAggregationTasks().submit(new AggregateRawData(dao, state, scheduleIds,
-                        rawDataFutures));
+                        rawDataFutures, readPermits));
                 }
 
                 if (log.isDebugEnabled()) {
@@ -248,14 +248,14 @@ public class Aggregator {
                         scheduleIds.add(scheduleId);
                         if (queryFutures.size() == batchSize) {
                             state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
-                                queryFutures));
+                                queryFutures, readPermits));
                             queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                             scheduleIds = new TreeSet<Integer>();
                         }
                     }
                     if (!queryFutures.isEmpty()) {
                         state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
-                            queryFutures));
+                            queryFutures, readPermits));
                         queryFutures = null;
                         scheduleIds = null;
                     }

@@ -136,7 +136,12 @@ public class ConfigurationDefinition implements Serializable {
     }
 
     public void setName(@NotNull String name) {
-        this.name = name.intern();
+        // Need to protect due to possible deserialization from Coregui.
+        if (name!=null) {
+            this.name = name.intern();
+        } else {
+            this.name = null;
+        }
     }
 
     public String getDescription() {

@@ -65,7 +65,12 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.rest.domain.*;
+import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
+import org.rhq.enterprise.server.rest.domain.AlertRest;
+import org.rhq.enterprise.server.rest.domain.IntegerValue;
+import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.StringValue;
 
 /**
  * Deal with alert related stuff
@@ -98,6 +103,7 @@ public class AlertHandlerBean extends AbstractRestBean {
         @ApiParam(value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch") @QueryParam("since") Long since,
         @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
         @ApiParam(value = "If of an alert definition to search for") @QueryParam("definitionId") Integer definitionId,
+        @ApiParam(value = "Should only unacknowledged alerts be sent") @QueryParam("unacknowledgedOnly") @DefaultValue("false") boolean unacknowledgedOnly,
         @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
         if (resourceId!=null && definitionId!=null) {
@@ -135,6 +141,10 @@ public class AlertHandlerBean extends AbstractRestBean {
         if (!prio.equals("All")) {
             AlertPriority alertPriority = AlertPriority.valueOf(prio.toUpperCase());
             criteria.addFilterPriorities(alertPriority);
+        }
+
+        if (unacknowledgedOnly) {
+            criteria.addFilterUnacknowledgedOnly(Boolean.TRUE);
         }
         criteria.addSortCtime(PageOrdering.DESC);
 

@@ -338,7 +338,11 @@ public class DashboardView extends EnhancedVLayout {
             public void onItemClick(ItemClickEvent itemClickEvent) {
                 String key = itemClickEvent.getItem().getAttribute("portletKey");
                 String name = itemClickEvent.getItem().getTitle();
-                addPortlet(key, name);
+                try {
+                    addPortlet(key, name);
+                } catch (Exception ex) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error3(), ex);
+                }
             }
         });
 
@@ -543,14 +547,18 @@ public class DashboardView extends EnhancedVLayout {
     private void loadPortletWindows() {
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
+                try {
+                    PortletWindow portletWindow = new PortletWindow(this, storedPortlet, context);
+                    portletWindow.setTitle(storedPortlet.getName());
+                    portletWindow.setHeight(storedPortlet.getHeight());
+                    portletWindow.setVisible(true);
 
-                PortletWindow portletWindow = new PortletWindow(this, storedPortlet, context);
-                portletWindow.setTitle(storedPortlet.getName());
-                portletWindow.setHeight(storedPortlet.getHeight());
-                portletWindow.setVisible(true);
-
-                portletWindows.add(portletWindow);
-                portalLayout.addPortletWindow(portletWindow, i);
+                    portletWindows.add(portletWindow);
+                    portalLayout.addPortletWindow(portletWindow, i);
+                } catch (Exception ex) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error2(), ex);
+                    continue;
+                }
             }
         }
     }
@@ -926,7 +934,11 @@ public class DashboardView extends EnhancedVLayout {
 
         for (PortletWindow pw : portletWindows) {
             // I think this should work with markForRedraw but for some reason it does not
-            ((Canvas) pw.getView()).redraw();
+            try {
+                ((Canvas) pw.getView()).redraw();
+            } catch (Exception ex) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error4(), ex);
+            }
         }
     }
 }

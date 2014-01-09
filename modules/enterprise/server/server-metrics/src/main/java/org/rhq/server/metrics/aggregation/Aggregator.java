@@ -207,6 +207,7 @@ public class Aggregator {
         if (state.is6HourTimeSliceFinished()) {
             log.debug("Fetching 1 hour index entries");
             Stopwatch stopwatch = new Stopwatch().start();
+            readPermits.acquire();
             StorageResultSetFuture oneHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.SIX_HOUR,
                 state.getSixHourTimeSlice().getMillis());
             Futures.addCallback(oneHourFuture, new AggregateIndexEntriesHandler(state.getOneHourIndexEntries(),
@@ -217,6 +218,7 @@ public class Aggregator {
         if (state.is24HourTimeSliceFinished()) {
             log.debug("Fetching 6 hour index entries");
             Stopwatch stopwatch = new Stopwatch().start();
+            readPermits.acquire();
             StorageResultSetFuture sixHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
                 state.getTwentyFourHourTimeSlice().getMillis());
             Futures.addCallback(sixHourFuture, new AggregateIndexEntriesHandler(state.getSixHourIndexEntries(),
@@ -243,6 +245,7 @@ public class Aggregator {
                     log.debug("Preparing to submit 1 hour data aggregation tasks for " +
                         state.getOneHourIndexEntries().size() + " schedules");
                     for (Integer scheduleId : state.getOneHourIndexEntries()) {
+                        readPermits.acquire();
                         queryFutures.add(dao.findOneHourMetricsAsync(scheduleId, state.getSixHourTimeSlice().getMillis(),
                             state.getSixHourTimeSliceEnd().getMillis()));
                         scheduleIds.add(scheduleId);
@@ -284,6 +287,7 @@ public class Aggregator {
                     log.debug("Preparing to submit 6 hour data aggregation tasks for " +
                         state.getSixHourIndexEntries().size() + " schedules");
                     for (Integer scheduleId : state.getSixHourIndexEntries()) {
+                        readPermits.acquire();
                         queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, state.getTwentyFourHourTimeSlice().getMillis(),
                             state.getTwentyFourHourTimeSliceEnd().getMillis()));
                         scheduleIds.add(scheduleId);

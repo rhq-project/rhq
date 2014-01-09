@@ -75,11 +75,11 @@ public class MetricsServer {
 
     private MetricsConfiguration configuration;
 
-    private RateLimiter readPermits = RateLimiter.create(Integer.parseInt(
+    private RateLimiter readPermits = RateLimiter.create(Double.parseDouble(
         System.getProperty("rhq.storage.read-limit", "1000")), 3, TimeUnit.MINUTES);
 
-    private RateLimiter writePermits = RateLimiter.create(Integer.parseInt(
-        System.getProperty("rhq.storage.write-limit", "2500")), 3, TimeUnit.MINUTES);
+    private RateLimiter writePermits = RateLimiter.create(Double.parseDouble(
+        System.getProperty("rhq.storage.write-limit", "6000")), 3, TimeUnit.MINUTES);
 
     private boolean pastAggregationMissed;
 
@@ -430,7 +430,7 @@ public class MetricsServer {
                         }
                         callback.onFailure(throwable);
                     }
-                });
+                }, aggregationWorkers);
             }
         } catch (Exception e) {
             log.error("An error occurred while inserting raw numeric data ", e);

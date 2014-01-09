@@ -39,7 +39,7 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings({"unused", "FieldCanBeLocal"})
+@SuppressWarnings({ "unused", "FieldCanBeLocal" })
 public class AlertCriteria extends Criteria {
     private static final long serialVersionUID = 2L;
 
@@ -65,6 +65,7 @@ public class AlertCriteria extends Criteria {
     private List<Integer> filterAlertDefinitionIds; // requires overrides
     private List<Integer> filterGroupAlertDefinitionIds; // requires overrides
     private String filterAcknowledgingSubject;
+    private NonBindingOverrideFilter filterUnacknowledgedOnly; // requires overrides
 
     private boolean fetchAlertDefinition;
     private boolean fetchConditionLogs;
@@ -95,6 +96,7 @@ public class AlertCriteria extends Criteria {
             + "   WHERE rg.id = ? )");
         filterOverrides.put("alertDefinitionIds", "alertDefinition.id IN ( ? )");
         filterOverrides.put("groupAlertDefinitionIds", "alertDefinition.groupAlertDefinition.id IN ( ? )");
+        filterOverrides.put("unacknowledgedOnly", "acknowledgingSubject IS NULL");
 
         sortOverrides.put(SORT_FIELD_NAME, "alertDefinition.name");
         sortOverrides.put(SORT_FIELD_PRIORITY, "alertDefinition.priority");
@@ -167,8 +169,22 @@ public class AlertCriteria extends Criteria {
         this.filterGroupAlertDefinitionIds = CriteriaUtils.getListIgnoringNulls(filterGroupAlertDefinitionIds);
     }
 
+    /**
+     * Note that by default this is a substring search.  Use {@link Criteria#setStrict(boolean)} to perform an
+     * exact string match.
+     *
+     * @param acknowledgingSubject The subject or subject substring. Set to empty string to match all acknowledged alerts.
+     */
     public void addFilterAcknowledgingSubject(String acknowledgingSubject) {
         this.filterAcknowledgingSubject = acknowledgingSubject;
+    }
+
+    /**
+     * @param unacknowledged If TRUE limit to only unacknowledged alerts.
+     */
+    public void addFilterUnacknowledgedOnly(Boolean filterUnacknowledgedOnly) {
+        this.filterUnacknowledgedOnly = (Boolean.TRUE.equals(filterUnacknowledgedOnly) ? NonBindingOverrideFilter.ON
+            : NonBindingOverrideFilter.OFF);
     }
 
     public void fetchAlertDefinition(boolean fetchAlertDefinition) {

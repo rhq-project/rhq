@@ -20,6 +20,8 @@
 
 package org.rhq.enterprise.server.alert.test;
 
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -191,6 +193,64 @@ public class AlertManagerTest extends AbstractEJB3Test {
                     EntityContext.forGroup(testData.getResourceGroup().getId()));
                 foundAlerts = findAlertsByDefinitionIds(resourceAlertDefinitionId);
                 assertEquals(0, foundAlerts.size());
+            }
+        });
+    }
+
+    @Test
+    public void testAcknowledgeAlertCriteria() {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                int resourceAlertDefinitionId = createResourceAlertDefinitionAndGetId("fake resource alertdef");
+                alertManager.fireAlert(resourceAlertDefinitionId);
+
+                // find the unacked alert
+                AlertCriteria c = new AlertCriteria();
+                c.addFilterAlertDefinitionIds(resourceAlertDefinitionId);
+                c.addFilterUnacknowledgedOnly(Boolean.TRUE);
+                List<Alert> result = alertManager.findAlertsByCriteria(testData.getSubject(), c);
+                assertEquals(1, result.size());
+
+                // fail to find any acked alert
+                c.addFilterUnacknowledgedOnly(Boolean.FALSE);
+                c.addFilterAcknowledgingSubject(""); // should match anything acknowledged
+                result = alertManager.findAlertsByCriteria(testData.getSubject(), c);
+                assertTrue(result.isEmpty());
+
+                // ack the alert
+                long testStartTimeStamp = System.currentTimeMillis();
+                int count = alertManager.acknowledgeAlertsByContext(testData.getSubject(),
+                    EntityContext.forResource(testData.getResource().getId()));
+                assertEquals(1, count);
+
+                // find any acked alert
+                result = alertManager.findAlertsByCriteria(testData.getSubject(), c);
+                assertEquals(1, result.size());
+                Alert alert = result.get(0);
+                em.refresh(alert);
+                assertNotNull(alert.getAcknowledgingSubject());
+                assertNotNull(alert.getAcknowledgeTime());
+                assertEquals(testData.getSubject().getName(), alert.getAcknowledgingSubject());
+                assertTrue("Alert should just have been acknowledged", alert.getAcknowledgeTime() >= testStartTimeStamp);
+
+                // find the acked alert by subject
+                c.addFilterAcknowledgingSubject(testData.getSubject().getName());
+                c.setStrict(true);
+                result = alertManager.findAlertsByCriteria(testData.getSubject(), c);
+                assertEquals(1, result.size());
+                alert = result.get(0);
+                em.refresh(alert);
+                assertNotNull(alert.getAcknowledgingSubject());
+                assertNotNull(alert.getAcknowledgeTime());
+                assertEquals(testData.getSubject().getName(), alert.getAcknowledgingSubject());
+                assertTrue("Alert should just have been acknowledged", alert.getAcknowledgeTime() >= testStartTimeStamp);
+
+                // fail to find the acked alert
+                c.addFilterUnacknowledgedOnly(Boolean.TRUE);
+                c.addFilterAcknowledgingSubject(null);
+                result = alertManager.findAlertsByCriteria(testData.getSubject(), c);
+                assertTrue(result.isEmpty());
             }
         });
     }

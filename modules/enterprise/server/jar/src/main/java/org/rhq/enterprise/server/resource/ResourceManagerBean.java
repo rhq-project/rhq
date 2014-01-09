@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -49,6 +51,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SimpleTrigger;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -81,7 +88,6 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -138,6 +144,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.ResourceHandlerBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
@@ -2887,24 +2894,59 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             service.mergeAvailabilityReport(report);
         }
 
-        // On a best effort basic, ask the relevant agents that their next avail report be full, so that we get
-        // the current avail type for the newly enabled resources.  If we can't contact the agent don't worry about
-        // it; if it's down we'll get a full report when it comes up.
-        // TODO: This may need to be made out of band if perf becomes an issue.
-        for (Agent agent : reports.keySet()) {
-            try {
-                AgentClient agentClient = agentManager.getAgentClient(agent);
-                agentClient.getDiscoveryAgentService().requestFullAvailabilityReport();
-            } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Failed to notify Agent ["
-                        + agent
-                        + "] of enabled resources. The agent is likely down. This is ok, the avails will be updated when the agent is restarted or prompt command 'avail --force is executed'.");
-                }
-            }
-        }
+        // Ask the relevant agents to send a full availability check so that the newly enabled resources get
+        // current availability as soon as possible.  Do this async (via Quartz) so we don't hang waiting for
+        // Agent connections.
+        scheduleAgentRequestFullAvailabilityJob(reports.keySet());
 
         return enableResourceIds;
+    }
+
+    private void scheduleAgentRequestFullAvailabilityJob(Collection<Agent> agents) {
+        Scheduler scheduler = LookupUtil.getSchedulerBean();
+        try {
+            final String DEFAULT_JOB_NAME = "AgentRequestFullAvailabilityJob";
+            final String DEFAULT_JOB_GROUP = "AgentRequestFullAvailabilityGroup";
+            final String TRIGGER_PREFIX = "AgentRequestFullAvailabilityTrigger";
+
+            final String randomSuffix = UUID.randomUUID().toString();
+
+            final String triggerName = TRIGGER_PREFIX + " - " + randomSuffix;
+            SimpleTrigger trigger = new SimpleTrigger(triggerName, DEFAULT_JOB_GROUP, new Date());
+
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap.put(AgentRequestFullAvailabilityJob.KEY_TRIGGER_NAME, triggerName);
+            jobDataMap.put(AgentRequestFullAvailabilityJob.KEY_TRIGGER_GROUP_NAME, DEFAULT_JOB_GROUP);
+            AgentRequestFullAvailabilityJob.externalizeJobValues(jobDataMap, AgentRequestFullAvailabilityJob.AGENTS,
+                agents);
+
+            trigger.setJobName(DEFAULT_JOB_NAME);
+            trigger.setJobGroup(DEFAULT_JOB_GROUP);
+            trigger.setJobDataMap(jobDataMap);
+
+            if (isJobScheduled(scheduler, DEFAULT_JOB_NAME, DEFAULT_JOB_GROUP)) {
+                scheduler.scheduleJob(trigger);
+            } else {
+                JobDetail jobDetail = new JobDetail(DEFAULT_JOB_NAME, DEFAULT_JOB_GROUP,
+                    AgentRequestFullAvailabilityJob.class);
+                scheduler.scheduleJob(jobDetail, trigger);
+            }
+        } catch (SchedulerException e) {
+            log.error("Failed to schedule AgentRequestFullAvailabilityJob.", e);
+        }
+    }
+
+    private boolean isJobScheduled(Scheduler scheduler, String name, String group) {
+        boolean isScheduled = false;
+        try {
+            JobDetail jobDetail = scheduler.getJobDetail(name, group);
+            if (jobDetail != null) {
+                isScheduled = true;
+            }
+        } catch (SchedulerException se) {
+            log.error("Error getting job detail", se);
+        }
+        return isScheduled;
     }
 
     @Override

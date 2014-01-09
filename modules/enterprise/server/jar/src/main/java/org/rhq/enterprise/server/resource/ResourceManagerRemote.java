@@ -180,7 +180,7 @@ public interface ResourceManagerRemote {
      * Resources already disabled are ignored.
      *
      * @param subject The logged in user's subject.
-     * @param resourceIds The resources to uninventory.
+     * @param resourceIds The resources to disable.
      * @return the disabled resource ids, not null
      *
      * @see #enableResources(Subject, int[])
@@ -195,7 +195,7 @@ public interface ResourceManagerRemote {
      * The calling user must possess {@link Permission#DELETE_RESOURCE} permission on all of the provided resources.
      *
      * @param subject The logged in user's subject.
-     * @param resourceIds The resources to uninventory.
+     * @param resourceIds The resources to enable.
      * @return the enable resource ids, not null
      *
      * @see #disableResources(Subject, int[])

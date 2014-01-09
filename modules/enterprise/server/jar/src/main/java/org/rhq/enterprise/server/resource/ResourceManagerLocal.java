@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -40,7 +39,6 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
-import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
@@ -63,7 +61,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
  * @author Ian Springer
  */
 @Local
-public interface ResourceManagerLocal {
+public interface ResourceManagerLocal extends ResourceManagerRemote {
     /**
      * Create a new Resource. This method creates only the supplied Resource, it will *NOT* create
      * the parent or any childResources.
@@ -98,7 +96,7 @@ public interface ResourceManagerLocal {
     List<Integer> uninventoryResource(Subject user, int resourceId);
 
     /**
-     * Internal use only. use with care, avoids authz checking overhead. 
+     * Internal use only. use with care, avoids authz checking overhead.
      *
      * @param resourceId
      * @return
@@ -173,7 +171,7 @@ public interface ResourceManagerLocal {
     /**
      * Returns the direct lineage of a resource up to the top most resource in the hierarchy.
      * Composites are returned that indicate whether the resource is viewable or not by the user.
-     * 
+     *
      * @param resourceId id of resource
      * @return resource lineage
      */
@@ -183,7 +181,7 @@ public interface ResourceManagerLocal {
      * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
      * useful for prepopulating all the resources visible in an expanded tree. Composites are returned
      * that indicate whether the resource is viewable or should be locked in the tree.
-     * 
+     *
      * @param resourceId id of resource
      * @return resource lineage and siblings
      */
@@ -227,8 +225,8 @@ public interface ResourceManagerLocal {
         PageControl pageControl);
 
     /**
-     * Get a summary of counts, by category, of the user's viewable resources having the provided inventory status.  
-     * 
+     * Get a summary of counts, by category, of the user's viewable resources having the provided inventory status.
+     *
      * @param user
      * @param status
      * @return A 3 element int array with counts for platform, service, service as a[0], a[1], a[2], respectively.
@@ -414,7 +412,7 @@ public interface ResourceManagerLocal {
      * Returns the platform Resource associated with the specified Agent.
      *
      * @param agent an Agent
-     * 
+     *
      * @return the platform Resource associated with the specified Agent or null if the platform for the agent is not known yet.
      */
     Resource getPlatform(Agent agent);
@@ -442,11 +440,11 @@ public interface ResourceManagerLocal {
      * Update the ancestry for the specified resource and its child lineage.
      * <pre>
      * The ancestry is recursively defined as:
-     * 
+     *
      *     resourceAncestry=parentResourceResourceTypeId_:_parentResourceId_:_parentResourceName_::_parentResourceAncestry
-     *     
+     *
      *     * note that platform resources have no parent and therefore have a null ancestry
-     * 
+     *
      * </pre>
      * @param subject
      * @param resourceId
@@ -456,14 +454,14 @@ public interface ResourceManagerLocal {
     /**
      * This method exists to support the GUI resource tree, by not returning an unlimited number of resources
      * but instead bounding the returned size.  Note, this routine does not offer paging and any PageControl set in
-     * the Criteria is ignored. This is for use when paging is not required or possible, such as in a tree. 
-     *  
+     * the Criteria is ignored. This is for use when paging is not required or possible, such as in a tree.
+     *
      * @param subject
      * @param criteria
      * @param maxResources Will not return more than this number of resources.  If the original fetch exceeds maxResources
      * then maxResourcesByType will be enforced.  If, after trimming by type, maxResources is still exceeded, then the least
      * significant resources (the tail, assuming a sorted set) will be removed to enforce the limit. If <=0 the default
-     * will be used.     
+     * will be used.
      * @param maxResourcesByType If maxResources is exceeded by the initial result set then members of each type will be
      * trimmed down to meet this limit.  If <=0 the default will be used.
      * @return The resulting resources, trimmed if necessary to meet the specify sizing bounds.
@@ -477,61 +475,13 @@ public interface ResourceManagerLocal {
     Map<Agent, AvailabilityReport> getEnableResourcesReportInNewTransaction(Subject subject, int[] resourceIds,
         List<Integer> enableResourceIds);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
-
-    /**
-     * #see {@link ResourceManagerRemote#getLiveResourceAvailability(Subject, int)
-     */
-    ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId);
-
-    /**
-     * #see {@link ResourceManagerRemote#getResource(Subject, int)
-     */
-    Resource getResource(Subject subject, int resourceId);
-
-    /**
-     * #see {@link ResourceManagerRemote#findResourceLineage(Subject, int)
-     */
-    List<Resource> findResourceLineage(Subject subject, int resourceId);
-
-    void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent);
-
-    void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId);
-
-    /**
-     * This will uninventory the resources with the given ID along with all of their child resources. This method will not
-     * create its own transaction; each individual child resource as well as the top level resources identified with the
-     * given IDs will be uninventoried in their own transaction. This will ensure that resources are uninventoried in the proper
-     * order (for example, if a given resource is actually a child of one of the other given resources, this method
-     * ensures the uninventory occurs properly).
-     *
-     * @param  subject     the user performing the uninventory action
-     * @param  resourceIds the ID of the resource to be deleted
-     *
-     * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
-     *         their childrens' IDs
-     */
-    List<Integer> uninventoryResources(Subject subject, int[] resourceIds);
-
     List<ResourceInstallCount> findResourceComplianceCounts(Subject subject);
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 
     PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria);
 
-    PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria);
-
-    PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl);
-
     Resource getPlaformOfResource(Subject subject, int resourceId);
-
-    Resource getParentResource(Subject subject, int resourceId);
 
     /**
      * @return the disambiguation result or null on error
@@ -544,10 +494,6 @@ public interface ResourceManagerLocal {
     Integer getResourceCount(List<Integer> resourceTypeIds);
 
     Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds, ResourceAncestryFormat format);
-
-    List<Integer> disableResources(Subject subject, int[] resourceIds);
-
-    List<Integer> enableResources(Subject subject, int[] resourceIds);
 
     PageList<Resource> findGroupMemberCandidateResources(Subject subject, ResourceCriteria criteria,
         int[] alreadySelectedResourceIds);

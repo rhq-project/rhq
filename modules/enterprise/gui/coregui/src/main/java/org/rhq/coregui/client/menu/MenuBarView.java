@@ -101,7 +101,6 @@ public class MenuBarView extends EnhancedVLayout {
 
     private Canvas getLogoSection() {
         final ProductInfo productInfo = CoreGUI.get().getProductInfo();
-        final AboutModalWindow aboutModalWindow = new AboutModalWindow(productInfo);
         HLayout logoSection = new HLayout();
         logoSection.setOverflow(Overflow.VISIBLE);
 
@@ -109,6 +108,7 @@ public class MenuBarView extends EnhancedVLayout {
         Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
         logo.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
+                final AboutModalWindow aboutModalWindow = new AboutModalWindow(productInfo);
                 aboutModalWindow.show();
             }
         });

@@ -53,6 +53,14 @@ public class AuthFilter implements javax.servlet.Filter {
 
         String authHeader = hreq.getHeader("authorization");
 
+        if(hreq.getHeader("Access-Control-Request-Method") != null &&
+            hreq.getMethod() != null &&
+            hreq.getMethod().equals("OPTIONS")){
+
+            chain.doFilter(req, resp);
+            return;
+        }
+
         if (authHeader==null || authHeader.isEmpty()) {
             log.warn("Client sent no authorization header");
             ((HttpServletResponse) resp).sendError(HttpServletResponse.SC_UNAUTHORIZED);

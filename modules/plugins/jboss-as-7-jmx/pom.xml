@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-plugins-parent</artifactId>
+    <version>4.10.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-jboss-as-7-jmx-util</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ JBossAS 7.x Plugin JMX Util</name>
+  <description>Utility classes to help monitoring MBeans of an application deployed on AS7 or EAP6</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-jboss-as-7-plugin</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-jmx-plugin</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>

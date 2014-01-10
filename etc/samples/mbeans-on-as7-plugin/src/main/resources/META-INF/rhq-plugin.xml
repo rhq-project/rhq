@@ -1,0 +1,45 @@
+<plugin
+    name="MyappMBeansPlugin"
+    displayName="Myapp MBeans Plugin"
+    package="com.myapp.services.plugin"
+    xmlns="urn:xmlns:rhq-plugin"
+    xmlns:c="urn:xmlns:rhq-configuration">
+
+  <depends plugin="JBossAS7" useClasses="true"/>
+
+  <service name="Myapp Services"
+           discovery="org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansDiscoveryComponent"
+           class="org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansComponent"
+           description="Container for Myapp Services"
+           singleton="true">
+
+    <runs-inside>
+      <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+      <parent-resource-type name="Managed Server" plugin="JBossAS7"/>
+    </runs-inside>
+
+    <plugin-configuration>
+      <c:simple-property name="beansQueryString" readOnly="true" default="myapp:service=*"/>
+      <c:simple-property name="newResourceKey" readOnly="true" default="myappServices"/>
+      <c:simple-property name="newResourceName" readOnly="true" default="Myapp Services"/>
+      <c:simple-property name="newResourceDescription" readOnly="true" default="Container for Myapp Services"/>
+    </plugin-configuration>
+
+    <service name="HelloService" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent" singleton="true">
+      <plugin-configuration>
+        <c:simple-property name="objectName" default="myapp:service=HelloService" readOnly="true"/>
+      </plugin-configuration>
+      <operation name="helloTo">
+        <parameters>
+          <c:simple-property name="p1" displayName="somebody" type="string" required="true"/>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" type="string"/>
+        </results>
+      </operation>
+    </service>
+
+  </service>
+
+</plugin>

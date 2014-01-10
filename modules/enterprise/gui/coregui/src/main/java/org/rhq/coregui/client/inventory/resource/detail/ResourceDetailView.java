@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 
@@ -103,6 +104,8 @@ public class ResourceDetailView extends
     private TwoLevelTab driftTab;
     private TwoLevelTab contentTab;
 
+    private TwoLevelTab customTab;
+
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
     private SubTab monitorMetrics;
@@ -127,6 +130,8 @@ public class ResourceDetailView extends
     private SubTab contentNew;
     private SubTab contentSubscrip;
     private SubTab contentHistory;
+
+    private SubTab customTabContent;
 
     public ResourceDetailView(ResourceTreeView platformTree) {
         super(BASE_VIEW_PATH, createTitleBar(platformTree), createTabs());
@@ -172,6 +177,9 @@ public class ResourceDetailView extends
         contentNew = contentTab.getSubTabByName(Tab.Content.SubTab.NEW);
         contentSubscrip = contentTab.getSubTabByName(Tab.Content.SubTab.SUBSCRIPTIONS);
         contentHistory = contentTab.getSubTabByName(Tab.Content.SubTab.HISTORY);
+
+        customTab = getTabSet().getTabByName(Tab.Custom.NAME);
+        customTabContent = customTab.getSubTabByName(Tab.Custom.SubTab.CONTENT);
 
         // hide until we have our tabs in place
         this.hide();
@@ -273,6 +281,12 @@ public class ResourceDetailView extends
         contentTab.registerSubTabs(contentDeployed, contentNew, contentSubscrip, contentHistory);
         tabs.add(contentTab);
 
+        TwoLevelTab customTab = new TwoLevelTab(new ViewName(Tab.Custom.NAME, "Plugin UI"),
+            ImageManager.getResourceIcon(ResourceCategory.SERVICE, AvailabilityType.UP));
+        SubTab customTabContent = new SubTab(customTab, new ViewName(Tab.Custom.SubTab.CONTENT, "Content"), null);
+        customTab.registerSubTabs(customTabContent);
+        tabs.add(customTab);
+
         return tabs.toArray(new TwoLevelTab[tabs.size()]);
     }
 
@@ -321,6 +335,8 @@ public class ResourceDetailView extends
             updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
             updateDriftTabContent(resourceComposite, facets);
             updateContentTabContent(resource, facets);
+
+            updateCustomTabContent(resource, facets);
 
             this.show();
             markForRedraw();
@@ -541,6 +557,22 @@ public class ResourceDetailView extends
         }
     }
 
+    private void updateCustomTabContent(final Resource resource, Set<ResourceTypeFacet> facets) {
+        boolean visible = false;
+        if(resource.getName().contains("Storage")){
+            visible = true;
+        }
+        if (updateTab(this.customTab, visible, true)) {
+            updateSubTab(this.customTab, this.customTabContent, true, true, new ViewFactory() {
+                @Override
+                public Canvas createView() {
+                    String hostName = Window.Location.getHostName();
+                    return new FullHTMLPane("http://" + hostName + ":8087/");
+                }
+            });
+        }
+    }
+
     private void updateContentTabContent(final Resource resource, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.contentTab, facets.contains(ResourceTypeFacet.CONTENT), true)) {
 
@@ -736,6 +768,14 @@ public class ResourceDetailView extends
                 public static final String NEW = "New";
                 public static final String SUBSCRIPTIONS = "Subscriptions";
                 public static final String HISTORY = "History";
+            }
+        }
+
+        public static class Custom {
+            public static final String NAME = "Custom";
+
+            public static class SubTab {
+                public static final String CONTENT = "Content";
             }
         }
     }

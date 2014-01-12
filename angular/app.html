@@ -1,0 +1,305 @@
+<html>
+
+<head>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.min.js"></script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.min.css">
+<script src="//code.angularjs.org/1.2.5/angular.js"></script>
+<script src="//code.angularjs.org/1.2.5/angular-resource.js"></script>
+
+<style>
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #d9edf7;
+  border: 4px solid #fff;
+  box-shadow: 0 0 0 5px #bce8f1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.btn {
+  border: 0px solid transparent;
+  font-size: 12px;
+}
+
+.panel-heading {
+  padding: 3px 5px;
+}
+</style>
+
+
+<script type="text/javascript">
+var m = angular.module('StorageClusterApp', [
+  'ngResource'
+]);
+
+m.factory('MathFun', function($window){
+  return {
+    getBubbleDimensions: function(){
+      return {
+        width: 140,
+        height: 70
+      };
+    },
+    getCircleDimensions: function(numberOfPoints){
+      circle = {};
+      if(numberOfPoints && numberOfPoints >= 4){
+          circle.size = 250 + 40 * (numberOfPoints - 3);
+      } else {
+        circle.size = 250;
+      }
+
+      //for page centering
+      //circle.top = (($window.innerHeight)/2) - (circle.size/2);
+      //circle.left = (($window.innerWidth)/2) - (circle.size/2);
+      circle.top = 50;
+      circle.left = 100;
+
+      if(circle.top<(this.getBubbleDimensions().height/2)){
+        circle.top = this.getBubbleDimensions().height/2;
+      }
+
+      if(circle.left<(this.getBubbleDimensions().width/2)){
+        circle.left = this.getBubbleDimensions().width/2;
+      }
+
+      return circle;
+    },
+    findPointOnCircle: function(pointIndex, totalPoints, circleRadius){
+      var step = ((3.14159265 * 2) / totalPoints);
+      return {
+        x: Math.sin(step * pointIndex) * circleRadius,
+        y: Math.cos(step * pointIndex) * circleRadius
+      }
+    },
+    findBubblePosition: function(pointIndex, numberOfPoints, bubble, circle){
+      var point = this.findPointOnCircle(pointIndex, numberOfPoints, circle.size/2);
+      return {
+        top: circle.size/2 + circle.top + point.y - bubble.height/2,
+        left: circle.size/2 + circle.left + point.x - bubble.width/2
+      }
+    }
+  }
+});
+
+m.factory('CONFIG', function($window){
+  return {
+    apiRoot: 'http://'+$window.location.hostname+':7080/rest'
+  };
+});
+
+m.filter('capitalize', function() {
+  return function(input) {
+    if(input){
+      return input.substring(0,1).toUpperCase()+input.substring(1);
+    }
+  }
+});
+
+m.filter('fixName', function() {
+  return function(input, scope) {
+    if(input){
+      return [input.slice(0, input.indexOf('(')),' ',input.slice(input.indexOf('('))].join('');
+    }
+  }
+});
+
+m.factory('restHook', function($rootScope, $window) {
+  return {
+    request: function(config) {
+      config.headers['Access-Control-Allow-Origin'] = '*';
+      config.headers['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Methods, Authorization';
+      config.headers['Accept'] = 'application/json';
+      config.headers['Authorization'] = 'Basic ' +  $window.btoa('rhqadmin' + ':' + 'rhqadmin');
+      return config;
+    }
+  };
+});
+
+m.factory('Resource', function($resource, CONFIG) {
+  return $resource(
+    CONFIG.apiRoot + '/resource', {}, {
+    all: {method: 'GET', isArray: true}
+  });
+});
+
+m.factory('Availability', function($resource, CONFIG){
+  return $resource(
+    CONFIG.apiRoot + '/resource/:id/availability', {}, {
+    get: {method: 'GET'}
+  });
+});
+
+m.factory('OperationDefinitions', function($resource, CONFIG){
+  return $resource(
+    CONFIG.apiRoot + '/operation/definitions', {}, {
+    get: {method: 'GET', isArray: true}
+  });
+});
+
+m.factory('OperationScheduleDefinition', function($resource, CONFIG){
+  return $resource(
+    CONFIG.apiRoot + '/operation/definition/:operationId/', {
+    operationId: '@operationId',
+    resourceId: '@resourceId'
+   }, {
+    create: {method: 'POST'}
+  });
+});
+
+m.factory('OperationExecution', function($resource, CONFIG){
+  return $resource(
+    CONFIG.apiRoot + '/operation/:operationId', {
+    operationId: '@operationId'
+   }, {
+    execute: {method: 'PUT'}
+  });
+});
+
+m.controller('AppController', function($scope, $window, $timeout, Resource, Availability, OperationDefinitions, OperationScheduleDefinition, OperationExecution, MathFun) {
+  $scope.circle = MathFun.getCircleDimensions();
+  $scope.bubble = MathFun.getBubbleDimensions();
+
+  Resource.all({})
+  .$promise
+  .then(function(resources){
+    $scope.resources = resources.filter(function(resource){
+      return resource.typeName.indexOf('Storage Node') != -1;
+    });
+
+    for(var i=6;i--;){
+      $scope.resources.push(JSON.parse(JSON.stringify($scope.resources[0])));
+    }
+
+    $scope.resources.forEach(function(resource, index){
+      resource.operationDefinitions = OperationDefinitions.get({resourceId: resource.resourceId});
+    });
+
+    $scope.resources.forEach(function(resource, index){
+      if(index>4){
+        resource.currentAvailability = {type: 'DOWN'};
+        return;
+      }
+      $scope.refreshAvailability(resource);
+    });
+
+    $scope.positionUI();
+  });
+
+  $scope.positionUI = function(){
+    $scope.circle = MathFun.getCircleDimensions($scope.resources.length);
+    $scope.circle.style = $scope.getCircleStyle();
+
+    $scope.resources.forEach(function(resource, index){
+      resource.style = $scope.getBubbleStyle(index);
+    });
+  };
+
+  $scope.getBubbleStyle = function(index){
+    var bubblePos = MathFun.findBubblePosition(index, $scope.resources.length, $scope.bubble, $scope.circle);
+    return {
+      position: 'absolute',
+      top: bubblePos.top,
+      left: bubblePos.left,
+      width: $scope.bubble.width+'px'
+    };
+  };
+
+  $scope.getCircleStyle = function(){
+    return {
+      height: $scope.circle.size+'px',
+      width: $scope.circle.size+'px',
+      'line-height': $scope.circle.size+'px',
+      top: $scope.circle.top + 'px',
+      left: $scope.circle.left + 'px'
+    }
+  };
+
+  $scope.executeOperation = function(resource, operation){
+    OperationScheduleDefinition.create({operationId: operation.id, resourceId: resource.resourceId},{})
+      .$promise
+      .then(function(execution){
+        execution.readyToSubmit = true;
+        OperationExecution.execute({operationId: execution.id},execution)
+          .$promise
+          .then(function(response){
+            toastr.success("Operation '" + operation.name +"' executed for " + resource.resourceName);
+          });
+      });
+  };
+
+  $scope.refreshAvailability = function(resource){
+    Availability.get({id: resource.resourceId}).$promise.then(function(result){
+      if(!resource.currentAvailability || resource.currentAvailability.type !== result.type){
+        resource.currentAvailability = result;
+      }
+    });
+  };
+
+  var refresher = function(){
+    $scope.resources.forEach(function(resource, index){
+      $scope.refreshAvailability(resource);
+    });
+    $timeout(refresher,5000);
+  };
+  $timeout(refresher,5000);
+
+  angular.element($window).bind('resize',function(){
+    $scope.$apply(function(){
+      $scope.positionUI();
+    });
+  });
+});
+
+m.config(function($httpProvider) {  
+  $httpProvider.interceptors.unshift('restHook');
+  toastr.options = {
+    "closeButton": false,
+    "debug": false,
+    "positionClass": "toast-bottom-full-width",
+    "onclick": null,
+    "showDuration": "3000",
+    "hideDuration": "1000",
+    "timeOut": "2000",
+    "extendedTimeOut": "1000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+  };
+});
+</script>
+</head>
+
+<body ng-app="StorageClusterApp" ng-controller="AppController">
+  <div class="circle" ng-style="circle.style">RHQ Storage Cluster</div>
+
+  <div class="panel" ng-class="{'panel-primary': resource.currentAvailability.type == 'UP', 'panel-danger': resource.currentAvailability.type !== 'UP'}" ng-style="resource.style" ng-repeat="resource in resources">
+    <div class="panel-heading">
+      <span>{{resource.resourceName | fixName}}</span>
+      <i ng-show="resource.currentAvailability.type === 'UP'" class="glyphicon glyphicon-ok"></i>
+      <i ng-show="resource.currentAvailability.type !== 'UP'" class="glyphicon glyphicon-remove"></i>
+    </div>
+    <div class="btn-group btn-group-justified">
+      <a type="button" class="btn btn-default" ng-click="refreshAvailability(resource)">
+        {{resource.currentAvailability.type}} <i class="glyphicon glyphicon-refresh"></i>
+      </a>
+      <div class="btn-group">
+        <a type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          Ops
+          <i class="glyphicon glyphicon-flash"></i>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+          <li ng-repeat="operation in resource.operationDefinitions" ng-show="operation.params.length==0">
+            <a href="#" ng-click="executeOperation(resource,operation)">{{operation.name | capitalize}}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

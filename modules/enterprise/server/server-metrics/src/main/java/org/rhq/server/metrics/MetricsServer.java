@@ -481,16 +481,22 @@ public class MetricsServer {
         try {
             DateTime theHour = currentHour();
 
-            if (pastAggregationMissed) {
-                theHour = roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1);
-                pastAggregationMissed = false;
-            }
-
             if (useAsyncAggregation) {
+                if (pastAggregationMissed) {
+                    DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
+                    new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
+                        aggregationBatchSize, writePermits, readPermits).run();
+                    pastAggregationMissed = false;
+                }
+
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
                 return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
                     aggregationBatchSize, writePermits, readPermits).run();
             } else {
+                if (pastAggregationMissed) {
+                    calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());
+                    pastAggregationMissed = false;
+                }
                 return calculateAggregates(theHour.getMillis());
             }
         } finally {

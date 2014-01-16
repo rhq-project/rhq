@@ -80,7 +80,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private MetricsDAO dao;
 
-    private DateTimeService dateTimeService;
+    private DateTimeServiceStub dateTimeService;
 
     private MetricsConfiguration configuration = new MetricsConfiguration();
 
@@ -101,12 +101,37 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     }
 
+    private static class DateTimeServiceStub extends DateTimeService {
+
+        private DateTime now;
+
+        public void setNow(DateTime now) {
+            this.now = now;
+        }
+
+        @Override
+        public DateTime now() {
+            if (now == null) {
+                return super.now();
+            }
+            return now;
+        }
+
+        @Override
+        public long nowInMillis() {
+            if (now == null) {
+                return super.nowInMillis();
+            }
+            return now.getMillis();
+        }
+    }
+
     @BeforeMethod
     public void initServer() throws Exception {
         metricsServer = new MetricsServerStub();
         metricsServer.setConfiguration(configuration);
 
-        dateTimeService = new DateTimeService();
+        dateTimeService = new DateTimeServiceStub();
         dateTimeService.setConfiguration(configuration);
         metricsServer.setDateTimeService(dateTimeService);
 
@@ -114,6 +139,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         metricsServer.setDAO(dao);
 
         purgeDB();
+    }
+
+    private void setNow(DateTime now) {
+        metricsServer.setCurrentHour(now.minusHours(1));
+        dateTimeService.setNow(now);
     }
 
     private void purgeDB() throws Exception {
@@ -184,7 +214,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
-        metricsServer.setCurrentHour(hour6);
+        setNow(hour6.plusHours(1));
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
@@ -240,7 +270,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
         waitForIndexUpdates.await("Failed to update metrics index for raw data");
 
-        metricsServer.setCurrentHour(hour9);
+        setNow(hour9.plusHours(1));
         metricsServer.calculateAggregates();
 
         // verify that the 1 hour aggregates are calculated
@@ -272,7 +302,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         int scheduleId = 123;
 
         DateTime hour0 = hour0();
-        DateTime hour12 = hour0.plusHours(12);
         DateTime hour6 = hour0.plusHours(6);
         DateTime hour7 = hour0.plusHours(7);
         DateTime hour8 = hour0.plusHours(8);
@@ -302,7 +331,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dao.updateMetricsIndex(MetricsTable.SIX_HOUR, indexUpdates);
 
         // execute the system under test
-        metricsServer.setCurrentHour(hour12);
+        setNow(hour0().plusHours(13));
         metricsServer.calculateAggregates();
 
         // verify the results
@@ -352,7 +381,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
-        metricsServer.setCurrentHour(hour15);
+        setNow(hour0().plusHours(16));
         metricsServer.init();
 
         rawData = new HashSet<MeasurementDataNumeric>();
@@ -417,7 +446,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
-        metricsServer.setCurrentHour(hour9);
+        setNow(hour0().plusHours(10));
         metricsServer.init();
 
         rawData = new HashSet<MeasurementDataNumeric>();
@@ -494,7 +523,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, indexUpdates);
 
         // execute the system under test
-        metricsServer.setCurrentHour(hour24);
+        setNow(hour24.plusHours(1));
         metricsServer.calculateAggregates();
 
         // verify the results

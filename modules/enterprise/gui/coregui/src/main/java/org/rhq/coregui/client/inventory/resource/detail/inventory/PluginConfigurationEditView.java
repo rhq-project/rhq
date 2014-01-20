@@ -25,7 +25,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -39,10 +38,11 @@ import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.MessageCenter;
-import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view for editing a Resource's plugin configuration (aka connection settings).
@@ -72,12 +72,12 @@ public class PluginConfigurationEditView extends EnhancedVLayout implements Prop
     @Override
     protected void onDraw() {
         super.onDraw();
-
-        ToolStrip toolStrip = new ToolStrip();
+        
+        EnhancedToolStrip toolStrip = new EnhancedToolStrip();
+        toolStrip.setBackgroundImage(null);
         toolStrip.setWidth100();
-        toolStrip.setExtraSpace(10);
-        toolStrip.setMembersMargin(5);
-        toolStrip.setLayoutMargin(5);
+        toolStrip.setMembersMargin(3);
+        toolStrip.setPadding(3);
 
         this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
@@ -89,13 +89,13 @@ public class PluginConfigurationEditView extends EnhancedVLayout implements Prop
         toolStrip.addMember(this.saveButton);
 
         addMember(toolStrip);
-        refresh();
 
         if (!this.resourcePermission.isInventory()) {
             Message message = new Message(MSG.view_connectionSettingsDetails_noPermission(), Message.Severity.Info,
                 EnumSet.of(Message.Option.Transient));
             CoreGUI.getMessageCenter().notify(message);
         }
+        refresh();
     }
 
     @Override
@@ -131,7 +131,7 @@ public class PluginConfigurationEditView extends EnhancedVLayout implements Prop
             }
         });
 
-        addMember(editor);
+        addMember(editor, 0);
         // TODO (ips): If editor != null, use editor.reload() instead.
     }
 

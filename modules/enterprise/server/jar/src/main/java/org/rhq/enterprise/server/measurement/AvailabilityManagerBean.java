@@ -80,6 +80,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
  * Manager for availability related tasks.
@@ -678,14 +679,22 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void setResourceAvailabilities(int[] resourceIds, AvailabilityType avail) {
+    public void setResourceAvailabilities(Map<Agent, int[]> map, AvailabilityType avail) {
         long now = System.currentTimeMillis();
-        AvailabilityReport report = new AvailabilityReport(true, null);
-        report.setServerSideReport(true);
-        for (int resourceId : resourceIds) {
-            report.addAvailability(new Datum(resourceId, avail, now));
+        for (Agent agent : map.keySet()) {
+            AvailabilityReport report = new AvailabilityReport(true, null);
+            report.setServerSideReport(true);
+            for (int resourceId : map.get(agent)) {
+                report.addAvailability(new Datum(resourceId, avail, now));
+            }
+            AvailabilityReportSerializer.getSingleton().lock(agent.getName());
+            try {
+                this.availabilityManager.mergeAvailabilityReport(report);
+            } finally {
+                AvailabilityReportSerializer.getSingleton().unlock(agent.getName());
+            }
         }
-        this.availabilityManager.mergeAvailabilityReport(report);
+
         return;
     }
 

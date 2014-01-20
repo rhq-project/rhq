@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.measurement;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -27,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationCacheElement;
@@ -144,19 +146,19 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
 
     /**
      * Allows for resources to have their availabilities explicit set to the given avail type.
-     * This circumvents the last availability the resources' agents reported for them.
+     * This circumvents the last availability the resource's agents reported for them.
      *
-     * @param resourceIds identifies the resources whose availabilities should be explicitly set
+     * @param map map of Agents to the resources for that agent that need to be updated with the provided avail
      * @param avail the new availability for the resources
      */
-    void setResourceAvailabilities(int[] resourceIds, AvailabilityType avail);
+    void setResourceAvailabilities(Map<Agent, int[]> map, AvailabilityType avail);
 
     /**
      * Merge an {@link AvailabilityReport} that has been received from an agent. A report will only contain those
      * availabilities that have changed since the agent's last sent report. Note that if an agent has been restarted, it
      * will always send a full report as its first. An agent is obliged to sent at least one availability record in the
      * report in order for the server to determine which agent is sending the report (since a record has a Resource in
-     * it and from any Resource we can dsetermine the Agent).
+     * it and from any Resource we can determine the Agent).
      *
      * @param  report the report containing 1 or more availabilities for 1 or more resources.
      *

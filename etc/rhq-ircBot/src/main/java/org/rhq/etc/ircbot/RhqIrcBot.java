@@ -25,11 +25,15 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.pircbotx.PircBotX;
 
@@ -64,6 +68,10 @@ public class RhqIrcBot extends PircBotX {
         if (channel.charAt(0) != '#') {
             channel = '#' + channel;
         }
+        // setupTrustStore();
+        // use the all-trusting trust manager instead. Certificate are changed almost each month so ignore them at all.
+        // setupDummyTrustStore();
+        XTrustAllProvider.install();
 
         RhqIrcBotListener rhqBotListener = new RhqIrcBotListener(server, channel);
         if (args.length == 3) {
@@ -85,8 +93,6 @@ public class RhqIrcBot extends PircBotX {
 //                System.exit(3);
 //            }
 //            fis.close();
-            
-            setupTrustStore();
         }
 
         PircBotX bot = new RhqIrcBot(rhqBotListener);
@@ -117,6 +123,28 @@ public class RhqIrcBot extends PircBotX {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private static void setupDummyTrustStore() {
+        // Create a trust manager that does not validate certificate chains
+        System.setProperty( "sun.security.ssl.allowUnsafeRenegotiation", "true" );
+        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+        } };
+
+        // Install the all-trusting trust manager
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new SecureRandom());
+            SSLContext.setDefault(sc);
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

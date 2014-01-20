@@ -69,7 +69,6 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -84,7 +83,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -1329,6 +1327,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         checkStatus(subject, resourceIds, InventoryStatus.IGNORED,
             EnumSet.of(InventoryStatus.NEW, InventoryStatus.COMMITTED));
 
+        // Previously we set all availabilities for the ignored resources UNKNOWN because they won't be tracked
+        // after this point.  The problem (see Bug 1053888) is that the underlying code did not use locking and
+        // therefore could conflict with agent availReporting/Shutdown/Backfill.  To do it right would mean that
+        // we'd need to process the resources for each agent separately, so that a proper AvailabilitySerializationLock
+        // could be applied.  Instead of incurring the overhead of creating the necessary Map for Agents to
+        // Resources, we're just going to leave the Availabilities as is.  It's unlikely to cause confusion but if it
+        // does then this decision/code can ve revisited. For now, commenting out the old, flawed code-block:
+        /*
         // We want to set all availabilities for the ignored resources to "unknown" since we won't be tracking them anymore.
         // This is more of a convienence; if it fails for any reason, just log an error but don't roll back ignoring the resources.
         try {
@@ -1336,6 +1342,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         } catch (Exception e) {
             LOG.error("Failed to reset availabilities for resources being ignored: " + ThrowableUtil.getAllMessages(e));
         }
+        */
 
         return;
     }

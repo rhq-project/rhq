@@ -42,6 +42,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.coregui.client.dashboard.Portlet;
@@ -94,29 +95,30 @@ public class InventorySummaryPortlet extends EnhancedVLayout implements AutoRefr
                 //                formItems.add(headerItem);
 
                 StaticTextItem platformTotal = createSummaryRow("platformTotal", MSG.common_title_platform_total(),
-                    summary.getPlatformCount(), "Inventory/Resources/Platforms");
+                    summary.getPlatformCount(), LinkManager.getHubPlatformsLink());
                 formItems.add(platformTotal);
 
                 StaticTextItem serverTotal = createSummaryRow("serverTotal", MSG.common_title_server_total(),
-                    summary.getServerCount(), "Inventory/Resources/Servers");
+                    summary.getServerCount(), LinkManager.getHubServersLink());
                 formItems.add(serverTotal);
 
                 StaticTextItem serviceTotal = createSummaryRow("serviceTotal", MSG.common_title_service_total(),
-                    summary.getServiceCount(), "Inventory/Resources/Services");
+                    summary.getServiceCount(), LinkManager.getHubServicesLink());
                 formItems.add(serviceTotal);
 
                 StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal",
                     MSG.common_title_compatibleGroups_total(), summary.getCompatibleGroupCount(),
-                    "Inventory/Groups/CompatibleGroups");
+                    LinkManager.getHubCompatibleGroupsLink());
                 formItems.add(compatibleGroupTotal);
 
                 StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal",
-                    MSG.common_title_mixedGroups_total(), summary.getMixedGroupCount(), "Inventory/Groups/MixedGroups");
+                    MSG.common_title_mixedGroups_total(), summary.getMixedGroupCount(),
+                    LinkManager.getHubMixedGroupsLink());
                 formItems.add(mixedGroupTotal);
 
                 StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal",
                     MSG.common_title_group_def_total(), summary.getGroupDefinitionCount(),
-                    "Inventory/Groups/DynagroupDefinitions");
+                    LinkManager.getHubGroupDefinitionsLink());
                 formItems.add(groupDefinitionTotal);
 
                 StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
@@ -144,8 +146,7 @@ public class InventorySummaryPortlet extends EnhancedVLayout implements AutoRefr
         } else {
             item = new StaticTextItem(name);
         }
-
-        item.setTitle(label);
+        item.setTitle(viewPath == null ? label : LinkManager.getHref(viewPath, label));
         item.setDefaultValue(value);
         item.setAlign(Alignment.CENTER);
 

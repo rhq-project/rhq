@@ -315,23 +315,22 @@ public class LinkManager {
 
     public static String getHubPlatformsLink() {
         if (GWT) {
-            return "#Inventory/Platforms";
+            return "#Inventory/Resources/Platforms";
         } else {
             return "/portal/rhq/inventory/browseResources.xhtml?subtab=platform";
         }
     }
 
-    public static String getHubServerssLink() {
+    public static String getHubServersLink() {
         if (GWT) {
-            return "#Inventory/Servers";
+            return "#Inventory/Resources/Servers";
         } else {
             return "/portal/rhq/inventory/browseResources.xhtml?subtab=server";
         }
     }
-
     public static String getHubServicesLink() {
         if (GWT) {
-            return "#Inventory/Services";
+            return "#Inventory/Resources/Services";
         } else {
             return "/portal/rhq/inventory/browseResources.xhtml?subtab=service";
         }

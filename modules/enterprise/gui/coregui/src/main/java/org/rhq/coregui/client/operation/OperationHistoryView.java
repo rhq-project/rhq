@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.form.EnumSelectItem;
 import org.rhq.coregui.client.components.table.TableAction;
@@ -235,6 +237,23 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                     deleteSelectedRecords(requestProperties);
                 }
             });
+
+        if (!context.isSubsystemView()) {
+            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return hasControlPermission();
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Operations", "Schedules/0"));
+                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not 
+                    // -> using the relative URL hack
+                    String oldurl = History.getToken();
+                    String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
+                    CoreGUI.goToView(newUrl);
+                }
+            });
+        }
     }
 
     @Override

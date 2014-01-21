@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -63,7 +64,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-public abstract class AbstractOperationHistoryListView<T extends AbstractOperationHistoryDataSource> extends
+public abstract class AbstractOperationHistoryListView<T extends AbstractOperationHistoryDataSource<?, ?>> extends
     TableSection<T> {
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
@@ -164,7 +165,18 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                     deleteSelectedRecords(requestProperties);
                 }
             });
+        
+        addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return hasControlPermission();
+            }
 
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                String oldurl = History.getToken();
+                String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
+                CoreGUI.goToView(newUrl);
+            }
+        });
         super.configureTable();
     }
 

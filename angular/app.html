@@ -6,19 +6,55 @@
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.min.js"></script>
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.min.css">
-<script src="//code.angularjs.org/1.2.5/angular.js"></script>
-<script src="//code.angularjs.org/1.2.5/angular-resource.js"></script>
+<script src="//code.angularjs.org/1.2.8/angular.js"></script>
+<script src="//code.angularjs.org/1.2.8/angular-resource.js"></script>
 
 <style>
-.circle {
-  position: absolute;
-  border-radius: 50%;
-  background-color: #d9edf7;
-  border: 4px solid #fff;
-  box-shadow: 0 0 0 5px #bce8f1;
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+
+@media (max-width: 500px)
+{
+  .circle {
+    border-radius: 4px;
+    position: relative;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 5px;
+    margin-bottom: 20px;
+  }
+	.circle-down {
+    color: red;
+    background-color: #ebccd1;
+    border: 4px solid #fff;
+	  box-shadow: 0 0 0 5px #ebccd1;
+	}
+  .circle-up {
+		color: white;
+    background-color: #428bca;
+    border: 4px solid #fff;
+	  box-shadow: 0 0 0 5px #428bca;
+	}
+}
+
+
+@media (min-width: 501px) {
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+	}
+  .circle-down {
+    background-color: #ebccd1;
+    border: 4px solid #fff;
+    box-shadow: 0 0 0 5px #ebccd1;
+	}
+  .circle-up {
+    background-color: #d9edf7;
+    border: 4px solid #fff;
+    box-shadow: 0 0 0 5px #bce8f1;
+  }
 }
 
 .btn {
@@ -163,6 +199,7 @@ m.factory('OperationExecution', function($resource, CONFIG){
 m.controller('AppController', function($scope, $window, $timeout, Resource, Availability, OperationDefinitions, OperationScheduleDefinition, OperationExecution, MathFun) {
   $scope.circle = MathFun.getCircleDimensions();
   $scope.bubble = MathFun.getBubbleDimensions();
+  $scope.status = 'UP';
 
   Resource.all({})
   .$promise
@@ -200,6 +237,11 @@ m.controller('AppController', function($scope, $window, $timeout, Resource, Avai
   };
 
   $scope.getBubbleStyle = function(index){
+    if($window.innerWidth <=500){
+      return {
+        position: 'relative'
+      }
+    }
     var bubblePos = MathFun.findBubblePosition(index, $scope.resources.length, $scope.bubble, $scope.circle);
     return {
       position: 'absolute',
@@ -210,6 +252,10 @@ m.controller('AppController', function($scope, $window, $timeout, Resource, Avai
   };
 
   $scope.getCircleStyle = function(){
+    if($window.innerWidth <= 500){
+      return {};
+    }
+
     return {
       height: $scope.circle.size+'px',
       width: $scope.circle.size+'px',
@@ -225,19 +271,49 @@ m.controller('AppController', function($scope, $window, $timeout, Resource, Avai
       .then(function(execution){
         execution.readyToSubmit = true;
         OperationExecution.execute({operationId: execution.id},execution)
-          .$promise
-          .then(function(response){
-            toastr.success("Operation '" + operation.name +"' executed for " + resource.resourceName);
-          });
+        .$promise
+        .then(function(response){
+          toastr.success("Operation '" + operation.name +"' executed for " + resource.resourceName);
+        });
       });
   };
 
   $scope.refreshAvailability = function(resource){
     Availability.get({id: resource.resourceId}).$promise.then(function(result){
       if(!resource.currentAvailability || resource.currentAvailability.type !== result.type){
+        if(resource.currentAvailability){
+          if(result.type === 'UP'){
+            toastr.success("Node '" + resource.resourceName +"' is now " + result.type);
+          } else {
+            toastr.error("Node '" + resource.resourceName +"' is now " + result.type);
+          }
+        }
+
         resource.currentAvailability = result;
       }
     });
+  };
+
+	$scope.$watch('resources', function(){
+		$scope.refreshStatus();
+	}, true);
+
+  $scope.refreshStatus = function() {
+    if($scope.resources){
+      var upResources = $scope.resources.filter(function(element) {
+        return element.currentAvailability && element.currentAvailability.type === 'UP';
+      });
+
+      if(upResources.length != $scope.resources.length) {
+        if($scope.status === 'UP'){
+          $scope.status = 'DOWN';
+        }
+      } else {
+        $scope.status = 'UP';
+      }
+    } else {
+      $scope.status = 'DOWN';
+    }
   };
 
   var refresher = function(){
@@ -246,7 +322,7 @@ m.controller('AppController', function($scope, $window, $timeout, Resource, Avai
     });
     $timeout(refresher,5000);
   };
-  $timeout(refresher,5000);
+  $timeout(refresher,15000);
 
   angular.element($window).bind('resize',function(){
     $scope.$apply(function(){
@@ -257,6 +333,7 @@ m.controller('AppController', function($scope, $window, $timeout, Resource, Avai
 
 m.config(function($httpProvider) {  
   $httpProvider.interceptors.unshift('restHook');
+
   toastr.options = {
     "closeButton": false,
     "debug": false,
@@ -276,9 +353,17 @@ m.config(function($httpProvider) {
 </head>
 
 <body ng-app="StorageClusterApp" ng-controller="AppController">
-  <div class="circle" ng-style="circle.style">RHQ Storage Cluster</div>
+  <div ng-app="Placeholder">
+  </div>
 
-  <div class="panel" ng-class="{'panel-primary': resource.currentAvailability.type == 'UP', 'panel-danger': resource.currentAvailability.type !== 'UP'}" ng-style="resource.style" ng-repeat="resource in resources">
+
+
+  <div class='circle' ng-class="{'circle-up': status === 'UP' , 'circle-down': status === 'DOWN'}" ng-style="circle.style">
+    RHQ Storage Cluster
+  </div>
+
+  <div class="panel" ng-class="{'panel-primary': resource.currentAvailability.type == 'UP', 'panel-danger': resource.currentAvailability.type !== 'UP'}" 
+      ng-style="resource.style" ng-repeat="resource in resources">
     <div class="panel-heading">
       <span>{{resource.resourceName | fixName}}</span>
       <i ng-show="resource.currentAvailability.type === 'UP'" class="glyphicon glyphicon-ok"></i>

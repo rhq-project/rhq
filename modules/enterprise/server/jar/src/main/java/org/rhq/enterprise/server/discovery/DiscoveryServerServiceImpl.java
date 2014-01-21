@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -183,6 +184,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);
             if (isVisibleInInventory(resource)) {
                 resource = convertToPojoResource(resource, includeDescendants);
+                cleanoutResource(resource);
                 resources.add(resource);
             }
         }
@@ -215,7 +217,36 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             log.debug("Performance: get ResourcesAsList [" + resourceIds + "], timing ("
                 + (System.currentTimeMillis() - start) + ")ms");
         }
+
+        // Now do some clean out of stuff the agent does not need
+        // Perhaps we should limit the query above to only return relevant stuff
+
+        for (Resource resource: result) {
+            cleanoutResource(resource);
+        }
+
         return result;
+    }
+
+    private void cleanoutResource(Resource resource) {
+        resource.setAncestry(null);
+        resource.setAlertDefinitions(Collections.EMPTY_SET);
+        resource.setLocation(null);
+        resource.setDescription(null);
+        resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
+        resource.setExplicitGroups(Collections.EMPTY_SET);
+        resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
+        resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
+        resource.setImplicitGroups(Collections.EMPTY_SET);
+        resource.setInstalledPackageHistory(Collections.EMPTY_LIST);
+        resource.setInstalledPackages(Collections.EMPTY_SET);
+        resource.setPluginConfigurationUpdates(Collections.EMPTY_LIST);
+        resource.setResourceConfigurationUpdates(Collections.EMPTY_LIST);
+        if (resource.getPluginConfiguration()!=null) {
+            resource.getPluginConfiguration().cleanoutRawConfiguration();
+        }
+
+
     }
 
     @Override

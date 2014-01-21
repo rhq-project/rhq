@@ -178,7 +178,7 @@ done
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_AGENT_JAVA_OPTS" ]; then
-   RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties"
+   RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties -XX:StringTableSize=1000003"
 fi
 debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
 
@@ -215,7 +215,7 @@ fi
 debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
 
 # ----------------------------------------------------------------------
-# Ensure the agent uses our custom JavaPreferences implementation 
+# Ensure the agent uses our custom JavaPreferences implementation
 # ----------------------------------------------------------------------
 _JAVA_PREFERENCES_FACTORY_OPT="\"-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory\""
 

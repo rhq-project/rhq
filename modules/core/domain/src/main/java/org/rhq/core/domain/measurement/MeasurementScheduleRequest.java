@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,67 +40,55 @@ public class MeasurementScheduleRequest implements Serializable {
      */
     public static final int NO_SCHEDULE_ID = 1;
 
-    private int scheduleId;
-    private String name;
-    private long interval;
+    private final int scheduleId;
+    private final String name;
+    private int interval;
     private boolean enabled;
-    private DataType dataType;
-    private NumericType rawNumericType;
+    byte dataNumType;
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
-        this.scheduleId = schedule.getId();
-        this.name = schedule.getDefinition().getName();
-        this.interval = schedule.getInterval();
-        this.enabled = schedule.isEnabled();
-        this.dataType = schedule.getDefinition().getDataType();
-        this.rawNumericType = schedule.getDefinition().getRawNumericType();
+        this(schedule.getId(),schedule.getDefinition().getName(),schedule.getInterval(),
+            schedule.isEnabled(),schedule.getDefinition().getDataType(),schedule.getDefinition().getRawNumericType());
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType) {
         this(scheduleId, name, interval, enabled, dataType, null);
     }
 
+    public MeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
+        this(scheduleRequest.getScheduleId(),scheduleRequest.getName(),scheduleRequest.getInterval(),
+            scheduleRequest.isEnabled(),scheduleRequest.getDataType(),
+            scheduleRequest.getRawNumericType());
+    }
+
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
                                       NumericType rawNumericType) {
         this.scheduleId = scheduleId;
-        this.name = name;
-        this.interval = interval;
+        if (name!=null) {
+            this.name = name.intern();
+    }
+        else
+            this.name = null;
+        this.interval = (int) (interval/1000);
         this.enabled = enabled;
-        this.dataType = dataType;
-        this.rawNumericType = rawNumericType;
+        this.dataNumType = toDataNumType(dataType,rawNumericType);
     }
 
-    public MeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
-        this.scheduleId = scheduleRequest.scheduleId;
-        this.name = scheduleRequest.name;
-        this.interval = scheduleRequest.interval;
-        this.enabled = scheduleRequest.enabled;
-        this.dataType = scheduleRequest.dataType;
-        this.rawNumericType = scheduleRequest.rawNumericType;
-    }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public int getScheduleId() {
         return scheduleId;
     }
 
-    public void setScheduleId(int scheduleId) {
-        this.scheduleId = scheduleId;
-    }
-
     public long getInterval() {
-        return interval;
+        return interval*1000L;
     }
 
     public void setInterval(long interval) {
-        this.interval = interval;
+        this.interval = (int) (interval/1000);
     }
 
     public boolean isEnabled() {
@@ -112,21 +100,21 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public DataType getDataType() {
-        return dataType;
-    }
-
-    public boolean isPerMinute() {
-        return rawNumericType != null;
+        return DataType.values()[dataNumType/16 -1];
     }
 
     public NumericType getRawNumericType() {
-        return rawNumericType;
+        byte tmp = (byte) (dataNumType & 0x0f);
+        if (tmp==0)
+            return null;
+        return NumericType.values()[tmp-1];
+//        return rawNumericType;
     }
 
     @Override
     public String toString() {
-        return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
-            + ", enabled=" + enabled + ", dataType=" + dataType + ", rawNumericType=" + rawNumericType + "]";
+        return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval*1000L
+            + ", enabled=" + enabled + /*", dataType=" + dataType + ", rawNumericType=" + rawNumericType +*/ "]";
     }
 
     @Override
@@ -160,8 +148,13 @@ public class MeasurementScheduleRequest implements Serializable {
         } else if (!name.equals(other.name)) {
             return false;
         }
-        
+
         return true;
     }
 
+    private byte toDataNumType(DataType dataType, NumericType numericType) {
+        byte dTmp = (byte) (dataType != null ? dataType.ordinal()+1 : 0);
+        byte nTmp = (byte) (numericType != null ? numericType.ordinal()+1 : 0);
+        return (byte) (dTmp * 16 + nTmp);
+    }
 }

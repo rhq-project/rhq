@@ -29,6 +29,7 @@ import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
@@ -79,10 +80,14 @@ public class ConfigurationMetadataParser {
 
     private static Log log = LogFactory.getLog("ConfigurationMetadataParser");
 
-    public static ConfigurationDefinition parse(String configurationName, ConfigurationDescriptor descriptor)
+    public static ConfigurationDefinition parse(@NotNull String configurationName, ConfigurationDescriptor descriptor)
         throws InvalidPluginDescriptorException {
         if (descriptor == null) {
             return null;
+        }
+
+        if (configurationName==null) {
+            throw new IllegalArgumentException("ConfigurationName must not be null");
         }
 
         ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName,
@@ -181,14 +186,14 @@ public class ConfigurationMetadataParser {
         }
     }
 
-    private static ConfigurationTemplate parseTemplate(ConfigurationTemplateDescriptor templateDescripter)
+    private static ConfigurationTemplate parseTemplate(ConfigurationTemplateDescriptor templateDescriptor)
         throws InvalidPluginDescriptorException {
-        ConfigurationTemplate template = new ConfigurationTemplate(templateDescripter.getName(),
-            templateDescripter.getDescription());
+        ConfigurationTemplate template = new ConfigurationTemplate(templateDescriptor.getName(),
+            templateDescriptor.getDescription());
         Configuration templateConfiguration = new Configuration();
         template.setConfiguration(templateConfiguration);
 
-        parseProperties(templateDescripter, templateConfiguration, null);
+        parseProperties(templateDescriptor, templateConfiguration, null);
         return template;
     }
 
@@ -313,12 +318,14 @@ public class ConfigurationMetadataParser {
         PropertyDefinition memberDefinition = (memberProperty != null) ? parseProperty(memberProperty.getValue(), 0)
             : null;
 
-        PropertyDefinitionList list = new PropertyDefinitionList(listProperty.getName(), description,
+        PropertyDefinitionList list = new PropertyDefinitionList(listProperty.getName().intern(), description,
             listProperty.isRequired(), memberDefinition);
 
         String displayName = (listProperty.getDisplayName() != null) ? listProperty.getDisplayName() : StringUtils
             .deCamelCase(listProperty.getName());
-        list.setDisplayName(displayName);
+        if (displayName!=null) {
+            list.setDisplayName(displayName.intern());
+        }
         list.setReadOnly(listProperty.isReadOnly());
         list.setSummary(listProperty.isSummary());
 
@@ -336,12 +343,14 @@ public class ConfigurationMetadataParser {
         AbstractPropertyMap defaultConfigurationParentMap) throws InvalidPluginDescriptorException {
         String description = parseMultiValue(mapProperty.getDescription(), mapProperty.getLongDescription());
 
-        PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(mapProperty.getName(), description,
+        PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(mapProperty.getName().intern(), description,
             mapProperty.isRequired());
 
         String displayName = (mapProperty.getDisplayName() != null) ? mapProperty.getDisplayName() : StringUtils
             .deCamelCase(mapProperty.getName());
-        propDefMap.setDisplayName(displayName);
+        if (displayName!=null) {
+            propDefMap.setDisplayName(displayName.intern());
+        }
         propDefMap.setReadOnly(mapProperty.isReadOnly());
         propDefMap.setSummary(mapProperty.isSummary());
 

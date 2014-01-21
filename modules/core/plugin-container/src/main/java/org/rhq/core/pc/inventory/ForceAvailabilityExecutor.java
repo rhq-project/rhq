@@ -37,9 +37,9 @@ public class ForceAvailabilityExecutor extends AvailabilityExecutor {
 
     @Override
     protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
-        AvailabilityType parentAvailType, boolean forceCheck, Scan scan) throws InterruptedException {
+                                  AvailabilityType parentAvailType, boolean forceCheck, Scan scan, boolean traceEnabled) throws InterruptedException {
 
         scan.setForced(true);
-        super.checkInventory(resource, availabilityReport, parentAvailType, true, scan);
+        super.checkInventory(resource, availabilityReport, parentAvailType, true, scan, traceEnabled);
     }
 }

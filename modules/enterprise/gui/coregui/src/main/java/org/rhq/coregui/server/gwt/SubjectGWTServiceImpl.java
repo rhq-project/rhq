@@ -121,7 +121,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     public Subject updateSubjectAndPreferences(Subject subjectToModify, Set<String> changedPrefs) throws RuntimeException {
         return updateSubjectAndPreferences(subjectToModify, changedPrefs, true, true);
     }
-    
+
     public Subject processSubjectForLdap(Subject subjectToModify, String password) throws RuntimeException {
         //no permissions check as embedded in the SLSB call.
         try {
@@ -159,7 +159,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             throw getExceptionToThrowToClient(t);
         }
     }
-    
+
     private Subject updateSubjectAndPreferences(Subject subjectToModify, Set<String> changedPrefs, boolean updateSubject, boolean updatePrefs) {
         try {
             Subject sessionSubject = getSessionSubject();
@@ -167,13 +167,16 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             synchronized (subjectLock) {
                 if (!updateSubject) {
                     //make sure to use the prefs passed to us. getSubjectById() would overwrite them
-                    Configuration prefs = subjectToModify.getUserConfiguration();                    
+                    Configuration prefs = subjectToModify.getUserConfiguration();
                     subjectToModify = subjectManager.getSubjectById(subjectToModify.getId());
+                    subjectToModify = SerialUtility.prepare(subjectToModify,
+                        "SubjectManager.updateSubjectAndPreferences(1)");
                     subjectToModify.setUserConfiguration(prefs);
                 }
 
                 Configuration persistedPrefs = prefsCache.getPreferences(subjectToModify.getId());
-                
+                persistedPrefs = SerialUtility.prepare(persistedPrefs, "SubjectManager.updateSubjectAndPreferences(2)");
+
                 if (updatePrefs && changedPrefs != null) {
                     Configuration userPrefs = subjectToModify.getUserConfiguration();
                     for(String name : changedPrefs) {
@@ -185,20 +188,21 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
                         }
                     }
                 }
-                
+
                 subjectToModify.setUserConfiguration(persistedPrefs);
-                
+
                 modifiedSubject = subjectManager.updateSubject(sessionSubject, subjectToModify);
-                
+                modifiedSubject = SerialUtility.prepare(modifiedSubject,
+                    "SubjectManager.updateSubjectAndPreferences(3)");
+
                 if (updatePrefs) {
                     //clear the prefs cache so that JSF UI refreshes it
                     prefsCache.clearConfiguration(subjectToModify.getId());
                 }
             }
-            
-            Subject subject = SerialUtility.prepare(modifiedSubject, "SubjectManager.updateSubjectPW");
-            
-            return subject;
+
+            return modifiedSubject;
+
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

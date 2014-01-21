@@ -602,7 +602,7 @@ public class PluginMetadataParser {
         }
 
         try {
-            resourceType.setPlugin(pluginDescriptor.getName());
+            resourceType.setPlugin(pluginDescriptor.getName().intern());
 
             if (resourceDescriptor.getPluginConfiguration() != null) {
                 resourceType.setPluginConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType.getName(),
@@ -744,7 +744,11 @@ public class PluginMetadataParser {
      * @return the resource discovery component class name
      */
     public String getDiscoveryComponentClass(ResourceType resourceType) {
-        return this.discoveryClasses.get(resourceType);
+        String s = this.discoveryClasses.get(resourceType);
+        if (s!=null) {
+            s = s.intern();
+    }
+        return s;
     }
 
     /**
@@ -755,15 +759,23 @@ public class PluginMetadataParser {
      * @return the resource component class name
      */
     public String getComponentClass(ResourceType resourceType) {
-        return this.componentClasses.get(resourceType);
+        String s = this.componentClasses.get(resourceType);
+        if (s!=null) {
+            s=s.intern();
+    }
+        return s;
     }
 
     private void registerResourceTypeAndComponentClasses(ResourceType resourceType, String discoveryClass,
         String componentClass) {
         this.resourceTypes.add(resourceType);
-        this.componentClasses.put(resourceType, componentClass);
+        if (componentClass!=null) {
+            this.componentClasses.put(resourceType, componentClass.intern());
+        } else {
+            this.componentClasses.put(resourceType, null);
+        }
         if (discoveryClass != null) {
-            this.discoveryClasses.put(resourceType, discoveryClass);
+            this.discoveryClasses.put(resourceType, discoveryClass.intern());
         }
     }
 
@@ -924,4 +936,7 @@ public class PluginMetadataParser {
         return null;
     }
 
+    public void cleanDescriptor() {
+        pluginDescriptor=null;
+    }
 }

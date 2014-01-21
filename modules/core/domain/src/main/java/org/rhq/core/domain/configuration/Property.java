@@ -124,7 +124,9 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
             this.id = original.id;
         }
         this.errorMessage = original.errorMessage;
-        this.name = original.name;
+        if (original.name!=null) {
+            this.name = original.name.intern();
+        }
     }
 
     public int getId() {
@@ -152,7 +154,9 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
      * @param name the name that this property will be associated with
      */
     public void setName(@NotNull String name) {
-        this.name = name;
+        if (name!=null) {
+            this.name = name.intern();
+        }
     }
 
     /**

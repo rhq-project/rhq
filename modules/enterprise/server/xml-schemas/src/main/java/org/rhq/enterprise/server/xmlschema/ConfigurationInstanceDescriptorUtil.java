@@ -66,7 +66,7 @@ import org.rhq.enterprise.server.xmlschema.generated.configuration.instance.Prop
 import org.rhq.enterprise.server.xmlschema.generated.configuration.instance.SimplePropertyInstanceDescriptor;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -420,7 +420,7 @@ public class ConfigurationInstanceDescriptorUtil {
             ConfigurationInstanceDescriptor descriptor) {
             ConfigurationAndDefinition ret = new ConfigurationAndDefinition();
             Configuration configuration = new Configuration();
-            ConfigurationDefinition definition = new ConfigurationDefinition(null, null);
+            ConfigurationDefinition definition = new ConfigurationDefinition("tmp", null);
 
             ret.configuration = configuration;
             ret.definition = definition;
@@ -514,7 +514,7 @@ public class ConfigurationInstanceDescriptorUtil {
                 ConfigurationDescriptor tmp = new ConfigurationDescriptor();
                 tmp.getConfigurationProperty().add(
                     new JAXBElement<ConfigurationProperty>(getTagName(def), ConfigurationProperty.class, def));
-                ConfigurationDefinition configDef = ConfigurationMetadataParser.parse(null, tmp);
+                ConfigurationDefinition configDef = ConfigurationMetadataParser.parse("null", tmp);
 
                 return configDef.getPropertyDefinitions().values().iterator().next();
             } catch (InvalidPluginDescriptorException e) {
@@ -572,7 +572,7 @@ public class ConfigurationInstanceDescriptorUtil {
      * configuration instance with defined values. This is used during the config synchronization
      * to output the default configuration of an importer directly in the export file so that the
      * users have an easy way of modifying that configuration.
-     * 
+     *
      * @param definition
      * @param configuration
      * @return

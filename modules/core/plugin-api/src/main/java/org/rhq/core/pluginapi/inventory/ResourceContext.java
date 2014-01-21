@@ -64,18 +64,14 @@ public class ResourceContext<T extends ResourceComponent<?>> {
 
     private static final Log LOG = LogFactory.getLog(ResourceContext.class);
 
-    private final String resourceKey;
-    private final String resourceUuid;
-    private final ResourceType resourceType;
-    private final String version;
-    private final String resourceDetails;
     private final T parentResourceComponent;
     private final ResourceContext<?> parentResourceContext;
     private final Configuration pluginConfiguration;
     private final SystemInfo systemInformation;
     private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
-    private final File temporaryDirectory;
-    private final File dataDirectory;
+    private final Resource resource;
+    private File temporaryDirectory; // Lazily evaluated
+    private final File baseDataDirectory; // base data directory from system
     private final String pluginContainerName;
     private final EventContext eventContext;
     private final OperationContext operationContext;
@@ -87,8 +83,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ComponentInvocationContext componentInvocationContext;
 
     private static class Children {
-        public ResourceType resourceType;
-        public String parentResourceUuid;
+        public final ResourceType resourceType;
+        public final String parentResourceUuid;
 
         public Children(String parentResourceUuid, ResourceType resourceType) {
             this.parentResourceUuid = parentResourceUuid;
@@ -128,11 +124,11 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     @Deprecated
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
-        File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
+        File baseDataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
         ContentContext contentContext, AvailabilityContext availabilityContext, InventoryContext inventoryContext,
         PluginContainerDeployment pluginContainerDeployment) {
         this(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
-            temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
+            temporaryDirectory, baseDataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
             availabilityContext, inventoryContext, pluginContainerDeployment, new ComponentInvocationContext() {
                 @Override
                 public boolean isInterrupted() {
@@ -161,7 +157,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @param systemInfo                 information about the system on which the plugin and its plugin container are
      *                                   running
      * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at plugin container shutdown
-     * @param dataDirectory              a directory where plugins can store persisted data that survives plugin container restarts
+     * @param baseDataDirectory              a directory where plugins can store persisted data that survives plugin container restarts
      * @param pluginContainerName        the name of the plugin container in which the discovery component is running.
      *                                   Components can be assured this name is unique across <b>all</b> plugin
      *                                   containers/agents running in the RHQ environment.
@@ -179,28 +175,24 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      */
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
-        File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
+        File baseDataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
         ContentContext contentContext, AvailabilityContext availabilityContext, InventoryContext inventoryContext,
         PluginContainerDeployment pluginContainerDeployment, ComponentInvocationContext componentInvocationContext) {
 
-        this.resourceKey = resource.getResourceKey();
-        this.resourceType = resource.getResourceType();
-        this.version = resource.getVersion();
-        this.resourceDetails = resource.toString();
+        this.resource = resource;
         this.parentResourceComponent = parentResourceComponent;
         this.parentResourceContext = parentResourceContext;
         this.resourceDiscoveryComponent = resourceDiscoveryComponent;
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
-        this.dataDirectory = dataDirectory;
-        this.pluginContainerName = pluginContainerName;
-        this.pluginContainerDeployment = pluginContainerDeployment;
-        if (temporaryDirectory == null) {
-            this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "AGENT_TMP");
-            this.temporaryDirectory.mkdirs();
+        this.baseDataDirectory = baseDataDirectory;
+        if (pluginContainerName!=null) {
+            this.pluginContainerName = pluginContainerName.intern();
         } else {
-            this.temporaryDirectory = temporaryDirectory;
+            this.pluginContainerName = null;
         }
+        this.pluginContainerDeployment = pluginContainerDeployment;
+        this.temporaryDirectory = temporaryDirectory;
 
         this.eventContext = eventContext;
         this.operationContext = operationContext;
@@ -212,9 +204,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         if (resource.getParentResource() != null) {
             parentResourceUuid = resource.getParentResource().getUuid();
         }
-        this.trackedProcesses = getTrackedProcesses(parentResourceUuid, resourceType);
+        this.trackedProcesses = getTrackedProcesses(parentResourceUuid, resource.getResourceType());
 
-        this.resourceUuid = resource.getUuid();
         this.componentInvocationContext = componentInvocationContext;
     }
 
@@ -226,7 +217,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return resource key of the associated resource
      */
     public String getResourceKey() {
-        return this.resourceKey;
+        return this.resource.getResourceKey();
     }
 
     /**
@@ -235,7 +226,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return type of the associated resource
      */
     public ResourceType getResourceType() {
-        return this.resourceType;
+        return this.resource.getResourceType();
     }
 
     /**
@@ -246,7 +237,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @since 1.2
      */
     public String getVersion() {
-        return this.version;
+        return this.resource.getVersion();
     }
 
     /**
@@ -255,10 +246,10 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return resource data directory
      */
     public File getResourceDataDirectory() {
-        File resourceDataDirectory = new File(dataDirectory, this.getAncestryBasedResourceKey());
+        File resourceDataDirectory = new File(baseDataDirectory, this.getAncestryBasedResourceKey());
 
         try {
-            File oldResourceDataDirectory = new File(dataDirectory, this.resourceUuid);
+            File oldResourceDataDirectory = new File(baseDataDirectory, this.resource.getUuid());
             if (oldResourceDataDirectory.exists()) {
                 oldResourceDataDirectory.renameTo(resourceDataDirectory);
             }
@@ -282,7 +273,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return child resource data directory
      */
     public File getFutureChildResourceDataDirectory(String childResourceKey) {
-        File childResourceDataDirectory = new File(dataDirectory, this.getAncestryBasedResourceKey(childResourceKey));
+        File childResourceDataDirectory = new File(baseDataDirectory, this.getAncestryBasedResourceKey(childResourceKey));
         if (!childResourceDataDirectory.exists()) {
             childResourceDataDirectory.mkdirs();
         }
@@ -305,7 +296,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * (This method is protected to be able to share that information with the {@link ResourceUpgradeContext}
      * but at the same time to not pollute the ResourceContext public API with data that doesn't belong
      * to it).
-     * 
+     *
      * @return
      */
     protected ResourceContext<?> getParentResourceContext() {
@@ -339,7 +330,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * Returns the information on the native operating system process in which the managed resource is running. If
      * native support is not available or the process for some reason can no longer be found, this may return <code>
      * null</code>.
-     * 
+     *
      * The returned {@link ProcessInfo} always has a fresh snapshot of non static data: it's whether newly created
      * or got refreshed in order to determine if the process was still running.
      *
@@ -352,7 +343,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
             //right, we've entered the critical section...
             //we might have waited for another thread to actually fill in the tracked processes
             //so let's check again if we really need to run the discovery
-            processInfo = trackedProcesses.getProcessInfo(resourceKey);
+            processInfo = trackedProcesses.getProcessInfo(resource.getResourceKey());
 
             if (isRediscoveryRequired(processInfo)) {
 
@@ -367,7 +358,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                     if (!processes.isEmpty()) {
                         ResourceDiscoveryContext<T> context;
 
-                        context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent,
+                        context = new ResourceDiscoveryContext<T>(this.resource.getResourceType(), this.parentResourceComponent,
                             this.parentResourceContext, this.systemInformation, processes, Collections.EMPTY_LIST,
                             getPluginContainerName(), getPluginContainerDeployment());
 
@@ -375,9 +366,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                     }
 
                     trackedProcesses.update(details);
-                    processInfo = trackedProcesses.getProcessInfo(resourceKey);
+                    processInfo = trackedProcesses.getProcessInfo(resource.getResourceKey());
                 } catch (Exception e) {
-                    LOG.warn("Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
+                    LOG.warn("Cannot get native process for resource [" + this.resource.getResourceKey() + "] - discovery failed", e);
                 }
             }
         }
@@ -409,7 +400,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
         try {
-            Set<ProcessScan> processScans = this.resourceType.getProcessScans();
+            Set<ProcessScan> processScans = this.resource.getResourceType().getProcessScans();
             if (processScans != null && !processScans.isEmpty()) {
                 ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
                 for (ProcessScan processScan : processScans) {
@@ -437,6 +428,10 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return location for plugin temporary files
      */
     public File getTemporaryDirectory() {
+        if (this.temporaryDirectory==null) {
+            this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "AGENT_TMP");
+            this.temporaryDirectory.mkdirs();
+        }
         return temporaryDirectory;
     }
 
@@ -448,14 +443,14 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return location for plugins to store persisted data
      */
     public File getDataDirectory() {
-        return dataDirectory;
+        return new File(baseDataDirectory, resource.getResourceType().getPlugin());
     }
 
     /**
      * The name of the plugin container in which the resource component is running. Components
      * can be assured this name is unique across <b>all</b> plugin containers/agents running
      * in the RHQ environment.
-     * 
+     *
      * @return the name of the plugin container
      */
     public String getPluginContainerName() {
@@ -465,7 +460,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     /**
      * Indicates where the plugin container (and therefore where the plugins) are deployed and running.
      * See {@link PluginContainerDeployment} for more information on what the return value means.
-     * 
+     *
      * @return indicator of where the plugin container is deployed and running
      *
      * @since 1.3
@@ -540,7 +535,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * Note that this comes from a static field so it is shared by any resource contexts representing a
      * resource of the same type under a single parent. This is to reduce the number of needed discoveries
      * to a minimum.
-     * 
+     *
      * @param parentResourceUuid
      * @param resourceType
      * @return
@@ -581,7 +576,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
             messageDigest.add(prefixKey.getBytes());
         }
 
-        messageDigest.add(this.resourceKey.getBytes());
+        messageDigest.add(this.resource.getResourceKey().getBytes());
 
         ResourceContext<?> ancestor = this.parentResourceContext;
         while (ancestor != null) {
@@ -607,6 +602,6 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return a {@link String} representation of the underlying resource
      */
     public String getResourceDetails() {
-        return resourceDetails;
+        return resource.toString();
     }
 }

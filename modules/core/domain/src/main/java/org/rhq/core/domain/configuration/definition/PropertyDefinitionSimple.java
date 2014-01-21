@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,7 +70,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
 
     @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "propertyDefinitionSimple", cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-    private Set<Constraint> constraints = new HashSet<Constraint>();
+    private Set<Constraint> constraints = null;
 
     /**
      * The <options> within <property-options> for a <simple-property>
@@ -77,7 +78,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @IndexColumn(name = "order_index")
     @OneToMany(mappedBy = "propertyDefinitionSimple", fetch = FetchType.EAGER)
-    private List<PropertyDefinitionEnumeration> enumeratedValues = new ArrayList<PropertyDefinitionEnumeration>();
+    private List<PropertyDefinitionEnumeration> enumeratedValues = null;
 
     /**
      * This property's default value. This field should have a non-null value for properties whose
@@ -99,7 +100,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
 
     @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "propertyDefinition", fetch = FetchType.EAGER)
-    List<PropertyOptionsSource> optionsSource = new ArrayList<PropertyOptionsSource>();
+    List<PropertyOptionsSource> optionsSource = null;
 
     public PropertyDefinitionSimple(@NotNull String name, String description, boolean required,
         @NotNull PropertySimpleType type) {
@@ -126,10 +127,20 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @NotNull
     public Set<Constraint> getConstraints() {
+        if (this.constraints==null) {
+            return Collections.EMPTY_SET;
+        }
         return this.constraints;
     }
 
     public void setConstraints(Set<Constraint> constraints) {
+        if (constraints==null || constraints.isEmpty()) {
+            this.constraints=null;
+            return;
+        }
+        if (this.constraints==null) {
+            this.constraints = new HashSet<Constraint>(constraints.size());
+        }
         for (Constraint constraint : constraints) {
             getConstraints().add(constraint);
             constraint.setPropertyDefinitionSimple(this);
@@ -137,6 +148,9 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public void addConstraints(Constraint... constraintsToAdd) {
+        if (this.constraints==null) {
+            this.constraints = new HashSet<Constraint>(constraintsToAdd.length);
+        }
         for (Constraint constraint : constraintsToAdd) {
             getConstraints().add(constraint);
             constraint.setPropertyDefinitionSimple(this);
@@ -149,6 +163,9 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @NotNull
     public List<PropertyDefinitionEnumeration> getEnumeratedValues() {
+        if (this.enumeratedValues==null) {
+            return new ArrayList<PropertyDefinitionEnumeration>(1);
+        }
         return this.enumeratedValues;
     }
 
@@ -159,6 +176,9 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public void addEnumeratedValues(PropertyDefinitionEnumeration... enumerations) {
+        if (this.enumeratedValues==null) {
+            this.enumeratedValues = new ArrayList<PropertyDefinitionEnumeration>(1);
+        }
         for (PropertyDefinitionEnumeration enumeration : enumerations) {
             enumeration.setPropertyDefinitionSimple(this);
             getEnumeratedValues().add(enumeration);
@@ -169,6 +189,9 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     public void removeEnumeratedValues(PropertyDefinitionEnumeration... enumerations) {
         for (PropertyDefinitionEnumeration enumeration : enumerations) {
             getEnumeratedValues().remove(enumeration);
+        }
+        if (this.enumeratedValues.isEmpty()) {
+            this.enumeratedValues=null;
         }
         ensureOrdering();
     }
@@ -243,12 +266,15 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     }
 
     public PropertyOptionsSource getOptionsSource() {
-        if (optionsSource.isEmpty())
+        if (optionsSource==null || optionsSource.isEmpty())
             return null;
         return optionsSource.get(0);
     }
 
     public void setOptionsSource(PropertyOptionsSource source) {
+        if (this.optionsSource==null) {
+            optionsSource = new ArrayList<PropertyOptionsSource>(1);
+        }
         this.optionsSource.clear();
         if (source==null)
             return;

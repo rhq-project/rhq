@@ -24,6 +24,8 @@ package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -527,7 +529,15 @@ public class AlertDefinition implements Serializable {
     public void setResource(Resource resource) {
         this.resource = resource;
         if (this.resource != null) {
-            this.resource.getAlertDefinitions().add(this);
+            Set<AlertDefinition> alertDefinitions = this.resource.getAlertDefinitions();
+            if (alertDefinitions.equals(Collections.emptySet())) {
+                alertDefinitions = new HashSet<AlertDefinition>(1);
+                alertDefinitions.add(this);
+                this.resource.setAlertDefinitions(alertDefinitions);
+            }
+            else {
+                alertDefinitions.add(this);
+            }
         }
     }
 

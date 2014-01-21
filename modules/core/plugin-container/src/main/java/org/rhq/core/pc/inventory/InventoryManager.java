@@ -66,6 +66,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
@@ -92,6 +93,7 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
+import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -917,7 +919,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     log.debug("Adding manually discovered resource [" + resource + "] to inventory...");
                 }
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                parentResource.addChildResource(resource);
+                parentResource.addChildResourceWithoutAncestry(resource);
                 initResourceContainer(resource);
             }
 
@@ -995,8 +997,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     static Resource createNewResource(DiscoveredResourceDetails details) {
         // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
-        Resource resource = new Resource(childResources);
+//        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource resource = new Resource();
 
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceKey(details.getResourceKey());
@@ -1016,8 +1018,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private Resource cloneResourceWithoutChildren(Resource resourceFromServer) {
         // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
-        Resource resource = new Resource(childResources);
+//        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource resource = new Resource();
 
         resource.setId(resourceFromServer.getId());
         resource.setUuid(resourceFromServer.getUuid());
@@ -1032,6 +1034,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setDescription(resourceFromServer.getDescription());
         resource.setLocation(resourceFromServer.getLocation());
 
+        compactResource(resource);
         return resource;
     }
 
@@ -1253,6 +1256,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + hadSyncedResources + "]");
 
                     syncInfos = null; // release to GC
+
+                    // (jshaughn) Is this really necessary?
+                    try {
+                        // Wait a little to get other tasks room for breathing
+                        Thread.sleep(800L);
+                    } catch (InterruptedException e) {
+                        ;
+                    }
                 }
             }
         }
@@ -1297,7 +1308,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Performs a synch on only the single resource and its descendants. This is assumed to be a partial
      * inventory.  To synch on the full inventory call {@link #syncPlatform(PlatformSyncInfo)}
      *
-     * @param syncInfo the resources' sync data
+     * @param syncInfos the resource's sync data
      * @return true if any resources needed synchronization, false otherwise
      */
     private boolean syncResources(int rootResourceId, Collection<ResourceSyncInfo> syncInfos) {
@@ -1475,7 +1486,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             Set<Resource> children = getContainerChildren(resource);
-            for (Resource child : children) {
+            Set<Resource> tmp = new HashSet<Resource>(children);
+            for (Resource child : tmp) {
                 scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
             }
 
@@ -1687,7 +1699,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 throw new IllegalStateException(
                     "An attempt was made to add a platform Resource as a child of another Resource.");
             }
-            parent.addChildResource(resource);
+            parent.addChildResourceWithoutAncestry(resource);
         } else {
             if (resource.getResourceType().getCategory() != ResourceCategory.PLATFORM)
                 throw new IllegalStateException(
@@ -1997,6 +2009,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // because we're not actually STARTED
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
 
+                String message = "Failed to start component for resource " + resource
+                    + ".";
+                if (t.getCause()!=null) {
+                    message += " Cause: " + t.getCause().getMessage();
+                }
+
                 if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Resource has a bad config, waiting for this to go away: " + resource);
@@ -2004,11 +2022,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     InventoryEventListener iel = new ResourceGotActivatedListener();
                     addInventoryEventListener(iel);
 
-                    throw new InvalidPluginConfigurationException("Failed to start component for resource " + resource
-                        + ".", t);
+                    throw new InvalidPluginConfigurationException(message);
                 }
 
-                throw new PluginContainerException("Failed to start component for resource " + resource + ".", t);
+                throw new PluginContainerException(message);
             }
 
             // We purposefully do not get availability of this resource yet
@@ -2024,7 +2041,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private <T extends ResourceComponent<?>> ResourceContext<T> createResourceContext(Resource resource,
         T parentComponent, ResourceContext<?> parentResourceContext, ResourceDiscoveryComponent<T> discoveryComponent) {
-        File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceContext<T>(resource, // the resource itself
             parentComponent, // its parent component
@@ -2032,7 +2048,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             discoveryComponent, // the discovery component (this is actually the proxy to it)
             SystemInfoFactory.createSystemInfo(), // for native access
             this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-            pluginDataDir, // location for plugin to write data files
+            this.configuration.getDataDirectory(), // location for plugin to write data files
             this.configuration.getContainerName(), // the name of the agent/PC
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
@@ -2232,6 +2248,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     this.resourceContainersByUUID.put(uuid, resourceContainer);
                     Resource resource = resourceContainer.getResource();
                     this.resourceContainerByResourceId.put(resource.getId(), resourceContainer);
+                    compactResource(resource);
                 }
 
                 log.info("Inventory with size [" + this.resourceContainersByUUID.size()
@@ -3015,6 +3032,76 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private void compactResource(final Resource resource) {
+        resource.setAncestry(null);
+        resource.setAlertDefinitions(null);
+        resource.setLocation(null);
+        resource.setModifiedBy(null);
+        resource.setOperationHistories(Collections.EMPTY_LIST);
+        resource.setTags(Collections.EMPTY_SET);
+        resource.setInstalledPackages(Collections.EMPTY_SET);
+        resource.setInstalledPackageHistory(Collections.EMPTY_LIST);
+        resource.setDescription(null);
+        resource.setImplicitGroups(Collections.EMPTY_SET);
+        resource.setExplicitGroups(Collections.EMPTY_SET);
+        resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
+        resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
+        resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
+        if (resource.getSchedules()!=null) {  // TODO used at all in the agent?
+            if (resource.getSchedules().size()==0) {
+                resource.setSchedules(Collections.EMPTY_SET);
+            }
+        }
+
+        if (resource.getVersion()!=null) {
+            resource.setVersion(resource.getVersion().intern());
+        }
+
+        if (resource.getName()!=null) {
+            resource.setName(resource.getName().intern());
+        }
+
+
+        if (resource.getChildResources().isEmpty()) {
+            resource.setChildResources(Collections.EMPTY_SET);
+        }
+/*  TODO the next will make the tests fail
+    TODO I have not seen issues inside a real running agent - hrupp
+*/
+        Configuration pluginConfiguration = resource.getPluginConfiguration();
+        if (pluginConfiguration !=null ) {
+            pluginConfiguration.cleanoutRawConfiguration();
+            compactConfiguration(pluginConfiguration);
+        }
+
+        Configuration resourceConfiguration = resource.getResourceConfiguration();
+        if (resourceConfiguration != null) {
+            resourceConfiguration.cleanoutRawConfiguration();
+
+            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(resource.getId(),
+                resourceConfiguration, log);
+            if (persisted) {
+                resource.setResourceConfiguration(null);
+            }
+
+        }
+    }
+
+    private void compactConfiguration(Configuration config) {
+        if (config==null) {
+            return;
+        }
+        if (config.getProperties()==null) {
+            return;
+        }
+        for (Property prop : config.getProperties()) {
+            if (prop.getName()!=null) {
+                prop.setName(prop.getName().intern());
+            }
+        }
+        config.resize();
+    }
+
     private void mergeModifiedResources(Set<Integer> modifiedResourceIds) {
         if (modifiedResourceIds != null && !modifiedResourceIds.isEmpty()) {
             if (log.isDebugEnabled()) {
@@ -3026,6 +3113,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
             syncDriftDefinitions(modifiedResources);
             for (Resource modifiedResource : modifiedResources) {
+                compactResource(modifiedResource);
                 mergeResource(modifiedResource);
             }
         }
@@ -3047,6 +3135,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource unknownResource : unknownResources) {
                 ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
                 if (resourceType != null) {
+                    compactResource(unknownResource);
                     mergeResource(unknownResource);
                     syncSchedulesRecursively(unknownResource);
                     syncDriftDefinitionsRecursively(unknownResource);
@@ -3127,8 +3216,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource r : resourceBatch) {
                 //  protect against childResources notNull assumptions downstream
                 if (null == r.getChildResources()) {
-                    r.setChildResources(null); // this will actually initialize to an empty Set
+                    r.setChildResources(Collections.EMPTY_SET); // this will actually initialize to an empty Set
                 }
+                compactResource(r);
                 resourceMap.put(r.getId(), r);
             }
             resourceBatch.clear();
@@ -3205,6 +3295,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (parentResourceFromServer != null) {
             ResourceContainer parentResourceContainer = getResourceContainer(parentResourceFromServer);
             if (parentResourceContainer == null) {
+                // must get the resContainer via Id here, the uuid is not necessarily set in the parent
                 parentResourceContainer = getResourceContainer(parentResourceFromServer.getId());
             }
             if (parentResourceContainer != null) {
@@ -3263,7 +3354,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             if (parentResource != null) {
-                parentResource.addChildResource(mergedResource);
+                parentResource.addChildResourceWithoutAncestry(mergedResource);
             } else {
                 this.platform = mergedResource;
             }
@@ -3315,8 +3406,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         targetResource.setPluginConfiguration(sourceResource.getPluginConfiguration());
 
         targetResource.setName(sourceResource.getName());
-        targetResource.setDescription(sourceResource.getDescription());
-        targetResource.setLocation(sourceResource.getLocation());
+        compactResource(targetResource);
 
         return pluginConfigUpdated;
     }

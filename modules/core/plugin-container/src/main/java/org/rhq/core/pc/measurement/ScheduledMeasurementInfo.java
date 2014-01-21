@@ -1,6 +1,6 @@
  /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2013 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,6 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 public class ScheduledMeasurementInfo extends MeasurementScheduleRequest implements
     Comparable<ScheduledMeasurementInfo> {
     private int resourceId;
-    private long lastCollection;
     private long nextCollection;
 
     public ScheduledMeasurementInfo(MeasurementScheduleRequest scheduleRequest, Integer resourceId) {
@@ -48,13 +47,6 @@ public class ScheduledMeasurementInfo extends MeasurementScheduleRequest impleme
         return resourceId;
     }
 
-    public long getLastCollection() {
-        return lastCollection;
-    }
-
-    public void setLastCollection(long lastCollection) {
-        this.lastCollection = lastCollection;
-    }
 
     public long getNextCollection() {
         return nextCollection;

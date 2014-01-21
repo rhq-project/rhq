@@ -169,8 +169,9 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             parentAvailabilityType = UP;
         }
 
+        boolean traceEnabled = LOG.isTraceEnabled();
         try {
-            checkInventory(scanRoot, availabilityReport, parentAvailabilityType, false, scan);
+            checkInventory(scanRoot, availabilityReport, parentAvailabilityType, false, scan, traceEnabled);
         } catch (InterruptedException e) {
             LOG.debug("Availability check was interrupted", e);
             return;
@@ -217,14 +218,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
       * @throws InterruptedException if this checking thread was interrupted
       */
     protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
-        AvailabilityType parentAvailType, boolean isForced, Scan scan) throws InterruptedException {
+                                  AvailabilityType parentAvailType, boolean isForced, Scan scan, boolean traceEnabled) throws InterruptedException {
 
         // Only report avail for committed Resources - that's all the Server cares about.
         if (resource.getId() == 0 || resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
             return;
         }
 
-        ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
+        ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource.getId());
         // Only report avail for synchronized Resources, otherwise the Server will likely know nothing of the Resource.
         if (resourceContainer == null
             || resourceContainer.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
@@ -239,16 +240,16 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         // See if this resource is scheduled for an avail check
         boolean checkAvail = false;
         boolean deferToParent = false;
-        Long availabilityScheduleTime = resourceContainer.getAvailabilityScheduleTime();
+        long availabilityScheduleTime = resourceContainer.getAvailabilityScheduleTime();
         MeasurementScheduleRequest availScheduleRequest = resourceContainer.getAvailabilitySchedule();
 
         // if no avail check is scheduled or we're forcing the check, schedule the next check. Note that a forcedCheck
         // is "off-schedule" so we need to push out the next check.
-        if ((null == availabilityScheduleTime) || isForced) {
+        if ((0 == availabilityScheduleTime) || isForced) {
             // if there is no availability schedule (platform) then just perform the avail check
             // (note, platforms always return UP anyway).
             if (null == availScheduleRequest) {
-                if (LOG.isTraceEnabled()) {
+                if (traceEnabled) {
                     LOG.trace("No availScheduleRequest for " + resource + ". checkAvail set to true");
                 }
                 checkAvail = true;
@@ -263,14 +264,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     availabilityScheduleTime = scan.startTime + RANDOM.nextInt(interval + 1);
                     resourceContainer.setAvailabilityScheduleTime(availabilityScheduleTime);
 
-                    if (LOG.isTraceEnabled()) {
+                    if (traceEnabled) {
                         LOG.trace("Forced availabilityScheduleTime to " + new Date(availabilityScheduleTime) + " for "
                             + resource);
                     }
                     ++scan.numScheduledRandomly;
 
                 } else {
-                    if (LOG.isTraceEnabled()) {
+                    if (traceEnabled) {
                         LOG.trace("Deferred availability to parent for " + resource);
                     }
                     deferToParent = true;
@@ -281,14 +282,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             checkAvail = scan.startTime >= availabilityScheduleTime;
 
             if (checkAvail) {
-                if (LOG.isTraceEnabled()) {
+                if (traceEnabled) {
                     LOG.trace("Scheduled time has been reached for " + resource);
                 }
                 long interval = availScheduleRequest.getInterval(); // intervals are short enough for safe cast
                 resourceContainer.setAvailabilityScheduleTime(scan.startTime + interval);
                 ++scan.numPushedByInterval;
             } else {
-                if (LOG.isTraceEnabled()) {
+                if (traceEnabled) {
                     LOG.trace("Scheduled time has not been reached for " + resource);
                 }
             }
@@ -311,7 +312,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             // the child.  For now, we'll leave it alone and let the next check happen according to the
             // schedule already established.
 
-            if (LOG.isTraceEnabled()) {
+            if (traceEnabled) {
                 LOG.trace("Gave parent availability " + parentAvailType + " to " + resource);
             }
         } else {
@@ -322,7 +323,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             }
 
             if (checkAvail) {
-                if (LOG.isTraceEnabled()) {
+                if (traceEnabled) {
                     LOG.trace("Now checking availability for " + resource);
                 }
 
@@ -346,7 +347,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                             current = DOWN;
                         }
                     }
-                    if (LOG.isTraceEnabled()) {
+                    if (traceEnabled) {
                         LOG.trace("Current availability is " + current + " for " + resource);
                     }
                 } catch (Throwable t) {
@@ -354,7 +355,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                     this.inventoryManager.sendResourceErrorToServer(resourceError);
                     LOG.warn("Availability collection failed with exception on " + resource
-                        + ", availability will be reported as " + DOWN.name(), t);
+                        + ", availability will be reported as " + DOWN.name() + ", reason=" + t.getMessage());
                     current = DOWN;
                 }
             } else {
@@ -370,7 +371,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             Availability availability;
 
             if (availChanged) {
-                if (LOG.isTraceEnabled()) {
+                if (traceEnabled) {
                     LOG.trace("Availability changed for " + resource);
                 }
                 ++scan.numAvailabilityChanges;
@@ -381,7 +382,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 // children, to ensure their avails are up to date. Note that if it changed to NOT UP
                 // then the children will just get the parent avail type and there is no avail check anyway.
                 if (!isForced && (UP == current)) {
-                    if (LOG.isTraceEnabled()) {
+                    if (traceEnabled) {
                         LOG.trace("Forcing availability check for children of " + resource);
                     }
                     isForced = true;
@@ -396,7 +397,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         }
 
         for (Resource child : this.inventoryManager.getContainerChildren(resource, resourceContainer)) {
-            checkInventory(child, availabilityReport, current, isForced, scan);
+            checkInventory(child, availabilityReport, current, isForced, scan, traceEnabled);
         }
 
     }

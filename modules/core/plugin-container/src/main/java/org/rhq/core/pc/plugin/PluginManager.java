@@ -172,6 +172,7 @@ public class PluginManager implements ContainerService {
                 }
             }
             log.info("Deployed plugins: " + this.loadedPlugins);
+            metadataManager.cleanupDescriptors();
         } catch (Exception e) {
             shutdown(); // have to clean up the environments (e.g. unpacked jars) we might have already created
             log.error("Error initializing plugin container", e);

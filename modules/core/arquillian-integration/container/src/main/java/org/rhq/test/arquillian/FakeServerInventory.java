@@ -595,7 +595,7 @@ public class FakeServerInventory {
         if (parent != null && parent != Resource.ROOT) {
             parent = fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus, inProgressUUIds);
             persisted.setParentResource(parent);
-            parent.getChildResources().add(persisted);
+            parent.addChildResource(persisted);
         } else {
             persisted.setParentResource(parent);
         }

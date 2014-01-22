@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * "JBossAS7 Standalone Server".
  */
 public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent, ManualAddFacet, ResourceUpgradeFacet {
+    private static final Log LOG = LogFactory.getLog(BaseProcessDiscovery.class);
 
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
@@ -137,8 +138,6 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         START_SCRIPT_OPTION_EXCLUDES.add(new CommandLineOption("Djboss.home.dir", null));
     }
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
     // Auto-discover running AS7 instances.
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
@@ -150,15 +149,17 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 AS7CommandLine commandLine = new AS7CommandLine(process);
                 DiscoveredResourceDetails details = buildResourceDetails(discoveryContext, process, commandLine);
                 discoveredResources.add(details);
-                log.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Discovered new " + discoveryContext.getResourceType().getName() + " Resource (key=["
                         + details.getResourceKey() + "], name=[" + details.getResourceName() + "], version=["
                         + details.getResourceVersion() + "]).");
+                }
             } catch (RuntimeException e) {
                 // Only barf a stack trace for runtime exceptions.
-                log.error("Discovery of a " + discoveryContext.getResourceType().getName()
+                LOG.error("Discovery of a " + discoveryContext.getResourceType().getName()
                         + " Resource failed for " + processScanResult.getProcessInfo() + ".", e);
             } catch (Exception e) {
-                log.error("Discovery of a " + discoveryContext.getResourceType().getName()
+                LOG.error("Discovery of a " + discoveryContext.getResourceType().getName()
                         + " Resource failed for " + processScanResult.getProcessInfo() + " - cause: " + e);
             }
         }
@@ -204,6 +205,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostPort managementHostPort = hostConfig.getManagementHostPort(commandLine, getMode());
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
+        serverPluginConfig.setSecure(managementHostPort.isSecure);
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
@@ -264,7 +266,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 File homeDir = new File(pluginConfig.getSimpleValue("homeDir"));
                 File startScriptAbsolute = new File(homeDir, startScript.getPath());
                 if (!startScriptAbsolute.exists()) {
-                    log.warn("Failed to find start script file for AS7 server with command line [" + commandLine
+                    LOG.warn("Failed to find start script file for AS7 server with command line [" + commandLine
                             + "] - defaulting 'startScripFile' plugin config prop to [" + startScript + "].");
                 }
             }
@@ -438,13 +440,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         String hostname = serverPluginConfig.getHostname();
         Integer port = serverPluginConfig.getPort();
         String user = serverPluginConfig.getUser();
-        String pass = serverPluginConfig.getPassword();
 
         if (hostname == null || port == null) {
             throw new InvalidPluginConfigurationException("Hostname and port must both be set.");
         }
 
-        ProductInfo productInfo = new ProductInfo(hostname, user, pass, port).getFromRemote();
+        ProductInfo productInfo = new ProductInfo(ASConnectionParams.createFrom(serverPluginConfig)).getFromRemote();
         JBossProductType productType = productInfo.getProductType();
 
         if (productType==null) {
@@ -491,7 +492,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 report.setNewResourceKey(createKeyForRemoteResource(currentResourceKey));
             } else {
                 upgraded = FALSE;
-                log.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
+                LOG.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
             }
         }
 
@@ -535,14 +536,14 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         Properties props = new Properties();
 
         if (!mgmUsersPropsFile.exists()) {
-            if (log.isDebugEnabled()) {
-                log.debug("Management user properties file not found at [" + mgmUsersPropsFile + "].");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Management user properties file not found at [" + mgmUsersPropsFile + "].");
             }
             return props;
         }
 
         if (!mgmUsersPropsFile.canRead()) {
-            log.warn("Management user properties at [" + mgmUsersPropsFile + "] is not readable.");
+            LOG.warn("Management user properties at [" + mgmUsersPropsFile + "] is not readable.");
             return props;
         }
 
@@ -550,20 +551,22 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         try {
             inputStream = new FileInputStream(mgmUsersPropsFile);
         } catch (FileNotFoundException e) {
-            log.debug("Management user properties file not found at [" + mgmUsersPropsFile + "].");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Management user properties file not found at [" + mgmUsersPropsFile + "].");
+            }
             return props;
         }
 
         try {
             props.load(inputStream);
         } catch (IOException e) {
-            log.error("Failed to parse management users properties file at [" + mgmUsersPropsFile + "]: "
+            LOG.error("Failed to parse management users properties file at [" + mgmUsersPropsFile + "]: "
                     + e.getMessage());
         } finally {
             try {
                 inputStream.close();
             } catch (IOException e) {
-                log.error("Failed to close management users properties file at [" + mgmUsersPropsFile + "]: "
+                LOG.error("Failed to close management users properties file at [" + mgmUsersPropsFile + "]: "
                         + e.getMessage());
             }
         }
@@ -584,7 +587,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 is.close();
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            LOG.error(e.getMessage());
         }
         if (hostName == null)
             hostName = "local"; // Fallback to the installation default
@@ -649,8 +652,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                     .toString();
             }
         } catch (IOException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Could not read file " + file.getAbsolutePath(), e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not read file " + file.getAbsolutePath(), e);
             }
         }
         return null;
@@ -674,22 +677,15 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     private class ProductInfo {
-        private String hostname;
-        private String user;
-        private String pass;
-        private int port;
+        private ASConnectionParams asConnectionParams;
         private String productVersion;
         private JBossProductType productType;
         private String releaseVersion;
         private String releaseCodeName;
         private boolean fromRemote = false;
-        private String serverName;
 
-        public ProductInfo(String hostname, String user, String pass, int port) {
-            this.hostname = hostname;
-            this.user = user;
-            this.pass = pass;
-            this.port = port;
+        public ProductInfo(ASConnectionParams asConnectionParams) {
+            this.asConnectionParams = asConnectionParams;
         }
 
         public String getProductVersion() {
@@ -701,7 +697,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         }
 
         public ProductInfo getFromRemote() {
-            ASConnection connection = new ASConnection(hostname, port, user, pass);
+            ASConnection connection = new ASConnection(asConnectionParams);
             try {
                 String productName = getServerAttribute(connection, "product-name");
                 if ((productName != null) && !productName.isEmpty())
@@ -717,15 +713,16 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 }
                 releaseVersion = getServerAttribute(connection, "release-version");
                 releaseCodeName = getServerAttribute(connection, "release-codename");
-                serverName = getServerAttribute(connection, "name");
                 productVersion = getServerAttribute(connection, "product-version");
                 if (productVersion == null) {
                     productVersion = releaseVersion;
                 }
                 fromRemote = true;
             } catch (InvalidPluginConfigurationException e) {
-                log.debug("Could not get the product info from [" + hostname + ":" + port
-                    + "] - probably a connection failure");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Could not get the product info from [" + asConnectionParams.getHost() + ":"
+                        + asConnectionParams.getPort() + "] - probably a connection failure");
+                }
             } finally {
                 connection.shutdown();
             }
@@ -734,10 +731,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         @Override
         public String toString() {
-            return "ProductInfo{" + "hostname='" + hostname + '\'' + ", port=" + port + ", productVersion='"
-                + productVersion + '\'' + ", productType='" + productType + '\'' + ", releaseVersion='"
-                + releaseVersion + '\'' + ", releaseCodeName='" + releaseCodeName + '\'' + ", fromRemote=" + fromRemote
-                + '}';
+            return "ProductInfo{" + "hostname='" + asConnectionParams.getHost() + '\'' + ", port="
+                + asConnectionParams.getPort() + ", productVersion='" + productVersion + '\'' + ", productType='"
+                + productType + '\'' + ", releaseVersion='" + releaseVersion + '\'' + ", releaseCodeName='"
+                + releaseCodeName + '\'' + ", fromRemote=" + fromRemote + '}';
         }
     }
 

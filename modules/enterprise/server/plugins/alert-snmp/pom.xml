@@ -21,7 +21,6 @@
         <dependency>
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
-            <version>1.8.2</version>
         </dependency>
 
       <!-- Test dependencies  -->
@@ -148,7 +147,6 @@
                                         <artifactItem>
                                             <groupId>org.snmp4j</groupId>
                                             <artifactId>snmp4j</artifactId>
-                                            <version>1.8.2</version>
                                         </artifactItem>
                                     </artifactItems>
                                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

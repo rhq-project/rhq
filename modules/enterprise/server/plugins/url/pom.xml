@@ -36,7 +36,6 @@
         <dependency>
             <groupId>rss4j</groupId>
             <artifactId>rss4j</artifactId>
-            <version>0.92-on.2</version>
             <scope>provided</scope>
         </dependency>
 

@@ -20,14 +20,14 @@
           <artifactId>rhq-scripting-api</artifactId>
           <version>${project.version}</version>
        </dependency>
+
        
        <dependency>
           <groupId>org.python</groupId>
           <artifactId>jython-standalone</artifactId>
-          <version>2.5.2</version>
          <!-- we actually repackage jython inside our jar -->
-         <scope>provided</scope>           
-       </dependency>       
+         <scope>provided</scope>
+       </dependency>
     </dependencies>
     
     <build>

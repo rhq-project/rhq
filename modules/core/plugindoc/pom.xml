@@ -30,13 +30,11 @@
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>1.1.0.jboss</version>
       </dependency>
 
       <dependency>
          <groupId>commons-collections</groupId>
          <artifactId>commons-collections</artifactId>
-         <version>3.2</version>
       </dependency>
 
       <dependency>
@@ -53,13 +51,11 @@
       <dependency>
          <groupId>org.apache.maven</groupId>
          <artifactId>maven-plugin-api</artifactId>
-         <version>2.0.8</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.maven</groupId>
          <artifactId>maven-project</artifactId>
-         <version>2.0.8</version>
       </dependency>
 
       <dependency>
@@ -73,9 +69,9 @@
          <artifactId>swizzle-confluence</artifactId>
          <version>1.6.1</version>
       </dependency>
-      
+
    </dependencies>
-   
+
 
   <build>
     <plugins>

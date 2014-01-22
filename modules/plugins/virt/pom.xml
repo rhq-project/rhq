@@ -35,7 +35,6 @@
       <dependency>
          <groupId>jdom</groupId>
          <artifactId>jdom</artifactId>
-         <version>1.0</version>
       </dependency>
 
     </dependencies>
@@ -63,7 +62,6 @@
                          <artifactItem>
                            <groupId>jdom</groupId>
                            <artifactId>jdom</artifactId>
-                           <version>1.0</version>
                         </artifactItem>
                       	<artifactItem>
 					         <groupId>org.libvirt</groupId>

@@ -273,6 +273,12 @@ public class ResourceUpgradeDelegate {
             return true;
         }
 
+        // upgrade requires the resource configuration be present on the resource. It may have been compacted to disk
+        boolean isResConfigCompacted = (null == resource.getResourceConfiguration());
+        if (isResConfigCompacted) {
+            resource.setResourceConfiguration(InventoryManager.getResourceConfiguration(resource));
+        }
+
         ResourceUpgradeContext<ResourceComponent<T>> upgradeContext = inventoryManager.createResourceUpgradeContext(
             resource, parentResourceContext, parentResourceComponent, discoveryComponent);
 
@@ -287,6 +293,10 @@ public class ResourceUpgradeDelegate {
         } catch (Throwable t) {
             log.error("ResourceUpgradeFacet threw an exception while upgrading resource [" + resource + "]", t);
             request.setErrorProperties(t);
+        } finally {
+            if (isResConfigCompacted) {
+                resource.setResourceConfiguration(null);
+            }
         }
 
         if (upgradeReport != null && upgradeReport.hasSomethingToUpgrade()) {

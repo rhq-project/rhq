@@ -997,7 +997,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     static Resource createNewResource(DiscoveredResourceDetails details) {
         // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-//        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        //        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
         Resource resource = new Resource();
 
         resource.setUuid(UUID.randomUUID().toString());
@@ -1018,7 +1018,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private Resource cloneResourceWithoutChildren(Resource resourceFromServer) {
         // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-//        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        //        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
         Resource resource = new Resource();
 
         resource.setId(resourceFromServer.getId());
@@ -2009,9 +2009,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // because we're not actually STARTED
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
 
-                String message = "Failed to start component for resource " + resource
-                    + ".";
-                if (t.getCause()!=null) {
+                String message = "Failed to start component for resource " + resource + ".";
+                if (t.getCause() != null) {
                     message += " Cause: " + t.getCause().getMessage();
                 }
 
@@ -2060,7 +2059,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public <T extends ResourceComponent<?>> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
         ResourceContext<?> parentResourceContext, T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
-        File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceUpgradeContext<T>(resource, // the resource itself
             parentResourceContext, //the context of its parent resource
@@ -2068,7 +2066,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             discoveryComponent, // the discovery component (this is actually the proxy to it)
             SystemInfoFactory.createSystemInfo(), // for native access
             this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-            pluginDataDir, // location for plugin to write data files
+            this.configuration.getDataDirectory(), // base location for plugin to write data files
             this.configuration.getContainerName(), // the name of the agent/PC
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
@@ -3047,29 +3045,26 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
         resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
         resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
-        if (resource.getSchedules()!=null) {  // TODO used at all in the agent?
-            if (resource.getSchedules().size()==0) {
+        if (resource.getSchedules() != null) { // TODO used at all in the agent?
+            if (resource.getSchedules().size() == 0) {
                 resource.setSchedules(Collections.EMPTY_SET);
             }
         }
 
-        if (resource.getVersion()!=null) {
+        if (resource.getVersion() != null) {
             resource.setVersion(resource.getVersion().intern());
         }
 
-        if (resource.getName()!=null) {
+        if (resource.getName() != null) {
             resource.setName(resource.getName().intern());
         }
-
 
         if (resource.getChildResources().isEmpty()) {
             resource.setChildResources(Collections.EMPTY_SET);
         }
-/*  TODO the next will make the tests fail
-    TODO I have not seen issues inside a real running agent - hrupp
-*/
+
         Configuration pluginConfiguration = resource.getPluginConfiguration();
-        if (pluginConfiguration !=null ) {
+        if (pluginConfiguration != null) {
             pluginConfiguration.cleanoutRawConfiguration();
             compactConfiguration(pluginConfiguration);
         }
@@ -3083,19 +3078,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (persisted) {
                 resource.setResourceConfiguration(null);
             }
-
         }
     }
 
+    public static Configuration getResourceConfiguration(Resource agentSideResource) {
+        return ConfigurationCheckExecutor.getResourceConfiguration(agentSideResource);
+    }
+
     private void compactConfiguration(Configuration config) {
-        if (config==null) {
+        if (config == null) {
             return;
         }
-        if (config.getProperties()==null) {
+        if (config.getProperties() == null) {
             return;
         }
         for (Property prop : config.getProperties()) {
-            if (prop.getName()!=null) {
+            if (prop.getName() != null) {
                 prop.setName(prop.getName().intern());
             }
         }

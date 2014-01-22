@@ -56,7 +56,7 @@ public class ResourceContainerTest {
     private static final Log LOG = LogFactory.getLog(ResourceContainerTest.class);
 
     @BeforeClass
-    public void beforeClass() {
+    protected void beforeClass() {
         PluginContainerConfiguration config = new PluginContainerConfiguration();
         File dataDir = new File("target/PluginContainerTest");
         dataDir.mkdirs();
@@ -67,7 +67,7 @@ public class ResourceContainerTest {
     }
 
     @AfterClass
-    public void afterClass() {
+    protected void afterClass() {
         PluginContainer.getInstance().shutdown();
     }
 
@@ -77,7 +77,7 @@ public class ResourceContainerTest {
             LOG.debug("Testing proxy call that should timeout...");
         }
         AvailabilityFacet resourceComponentProxy = resourceContainer.createResourceComponentProxy(
-            AvailabilityFacet.class, FacetLockType.NONE, 50, true, false, true);
+            AvailabilityFacet.class, FacetLockType.NONE, 1000L, true, false, true);
         try {
             resourceComponentProxy.getAvailability();
             assert (false);
@@ -91,7 +91,7 @@ public class ResourceContainerTest {
             LOG.debug("Testing proxy call that should complete successfully...");
         }
         resourceComponentProxy = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-            FacetLockType.NONE, 150, true, false, true);
+            FacetLockType.NONE, 2000L, true, false, true);
         AvailabilityType avail = resourceComponentProxy.getAvailability();
         assert (avail == AvailabilityType.UP);
         if (LOG.isDebugEnabled()) {
@@ -117,7 +117,7 @@ public class ResourceContainerTest {
             LOG.debug("Testing proxy call should not timeout; its not to a declared method in proxied interface");
         }
         resourceComponentProxy = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-            FacetLockType.NONE, 50, true, false, true);
+            FacetLockType.NONE, 1000L, true, false, true);
         String string = resourceComponentProxy.toString();
         assert (string.equals(MockResourceComponent.class.toString()));
         if (LOG.isDebugEnabled()) {
@@ -129,7 +129,7 @@ public class ResourceContainerTest {
     public void testInterruptedComponentInvocationContext() throws Exception {
         ResourceContainer resourceContainer = getResourceContainer();
         OperationFacet proxy = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-            FacetLockType.WRITE, SECONDS.toMillis(1), true, false, true);
+            FacetLockType.WRITE, SECONDS.toMillis(1L), true, false, true);
         try {
             proxy.invokeOperation("op", new Configuration());
             fail("Expected invokeOperation to throw a TimeoutException");
@@ -148,7 +148,7 @@ public class ResourceContainerTest {
     public void testUninterruptedComponentInvocationContext() throws Exception {
         ResourceContainer resourceContainer = getResourceContainer();
         OperationFacet proxy = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-            FacetLockType.WRITE, SECONDS.toMillis(10), true, false, true);
+            FacetLockType.WRITE, SECONDS.toMillis(10L), true, false, true);
         try {
             OperationResult op = proxy.invokeOperation("op", new Configuration());
             assertTrue(op.getSimpleResult().equals(MockResourceComponent.OPERATION_RESULT));
@@ -198,7 +198,7 @@ public class ResourceContainerTest {
                 throw new MockRuntimeException();
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(1100L);
             } catch (InterruptedException e) {
                 return AvailabilityType.DOWN;
             }
@@ -208,7 +208,7 @@ public class ResourceContainerTest {
         @Override
         public String toString() {
             try {
-                Thread.sleep(100);
+                Thread.sleep(100L);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

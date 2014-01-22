@@ -35,7 +35,7 @@ import org.rhq.core.system.SystemInfo;
 
 /**
  * Represents a resource during the resource upgrade phase of discovery.
- * 
+ *
  * @see ResourceUpgradeFacet
  *
  * @since 3.0
@@ -54,12 +54,12 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
      */
     public ResourceUpgradeContext(Resource resource, ResourceContext<?> parentResourceContext,
         T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
-        File temporaryDirectory, File dataDirectory, String pluginContainerName, EventContext eventContext,
+        File temporaryDirectory, File baseDataDirectory, String pluginContainerName, EventContext eventContext,
         OperationContext operationContext, ContentContext contentContext, AvailabilityContext availabilityContext,
         InventoryContext inventoryContext, PluginContainerDeployment pluginContainerDeployment) {
 
         super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
-            temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
+            temporaryDirectory, baseDataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
             availabilityContext, inventoryContext, pluginContainerDeployment);
 
         this.resourceConfiguration = resource.getResourceConfiguration();

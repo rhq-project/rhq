@@ -94,7 +94,7 @@ public class DiscoveryTest extends Arquillian {
         // Set up our fake server discovery ServerService, which will auto-import all Resources in reports it receives.
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
-        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(5);
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
         when(serverServices.getDiscoveryServerService().getResourceSyncInfo(any(Integer.class))).then(

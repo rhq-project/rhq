@@ -19,6 +19,10 @@
 
 package org.rhq.core.pc.inventory;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.hash.THashSet;
+
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -39,10 +43,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.hash.THashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -319,12 +319,12 @@ public class ResourceContainer implements Serializable {
     }
 
     // TODO: Is there a reason for this to be synchronized like the other setters? I don't see why it would need to be.
-    public void setAvailabilityScheduleTime(Long availabilityScheduleTime) {
+    public void setAvailabilityScheduleTime(long availabilityScheduleTime) {
         this.availabilityScheduleTime = availabilityScheduleTime;
     }
 
     /**
-     * Submits a task to perform an availability check asynchonrously.
+     * Submits a task to perform an availability check asynchronously.
      * NOTE: this is package scoped so the avail proxy can call it and submit itself as a task to the containers thread pool.
      *
      * @return the future that will provide the avail value
@@ -472,8 +472,8 @@ public class ResourceContainer implements Serializable {
      *
      * @param  facetInterface the interface that the component implements and will expose via the proxy
      * @param  lockType       the type of lock to use when synchronizing access; must not be null
-     * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt
-     *                        it; value must be positive
+     * @param  timeout        if the method invocation thread has not completed after this many seconds
+     *                        (in milliseconds), interrupt it; value must be positive and is rounded up to nearest second.
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
      * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
      * @param transferInterrupt whether or not interruption of the calling thread should be transfered to the executor
@@ -623,10 +623,10 @@ public class ResourceContainer implements Serializable {
                 break;
             }
             }
-            if (timeout <= 0) {
+            if (timeout <= 0L) {
                 throw new IllegalArgumentException("timeout value is not positive.");
             }
-            this.timeoutInSeconds = (int) (timeout/1000);
+            this.timeoutInSeconds = (int) ((timeout + 999L) / 1000L); // round up, ensure 1sec minimum.
             this.daemonThread = daemonThread;
             this.facetInterface = facetInterface;
             this.transferInterrupt = transferInterrupt;

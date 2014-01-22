@@ -72,7 +72,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
 
 /**
- * Manages the bundle subsystem, which allows bundles of content to be installed. 
+ * Manages the bundle subsystem, which allows bundles of content to be installed.
  *
  * <p>This is an agent service; its interface is made remotely accessible if this is deployed within the agent.</p>
  *
@@ -205,8 +205,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         if (result.isSuccess()) {
                             completeDeployment(resourceDeployment, BundleDeploymentStatus.SUCCESS, deploymentMessage);
                         } else {
-                            completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, result
-                                .getErrorMessage());
+                            completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE,
+                                result.getErrorMessage());
                         }
                     } catch (InterruptedException ie) {
                         log.error("Failed to complete bundle deployment due to interrupt", ie);
@@ -346,8 +346,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     }
 
     /**
-     * Downloads the bundle's files into the bundle plugin's tmp directory and returns that tmp directory. 
-     * 
+     * Downloads the bundle's files into the bundle plugin's tmp directory and returns that tmp directory.
+     *
      * @param resourceDeployment access to deployment information, including what bundle files need to be downloaded
      * @param downloadDir location where the bundle files should be downloaded
      * @return map of the package versions to their files that were downloaded
@@ -420,7 +420,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * If the file doesn't exist or the hash doesn't match, an exception is thrown.
      * This method returns normally if the hash matches the file.
      * If there is no known hash in the package version, this method returns normally.
-     * 
+     *
      * @param packageVersion contains the hash that is expected
      * @param packageFile the local file whose hash is to be checked
      * @throws Exception if the file does not match the hash or the file doesn't exist
@@ -453,9 +453,9 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     /**
      * Given a deployment, this examines the destination and the resource to determine where exactly
      * the bundle distribution should be written.
-     * 
+     *
      * @param bundleResourceDeployment describes where the bundle should be or is deployed
-     * 
+     *
      * @return absolute directory location where the bundle should be deployed
      */
     private File getAbsoluteDestinationDir(BundleResourceDeployment bundleResourceDeployment) {
@@ -517,7 +517,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             break;
         }
         case resourceConfiguration: {
-            baseLocation = resource.getResourceConfiguration().getSimpleValue(destBaseDirValueName, null);
+            baseLocation = InventoryManager.getResourceConfiguration(resource).getSimpleValue(destBaseDirValueName,
+                null);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
                     + "there is no resource configuration setting for [" + destBaseDirValueName + "]");
@@ -584,7 +585,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     /**
      * Returns the manager that can provide data on the inventory. This is a separate protected method
      * so we can extend our manger class to have a mock manager for testing.
-     * 
+     *
      * @return the inventory manager
      */
     protected InventoryManager getInventoryManager() {
@@ -594,7 +595,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     /**
      * Returns the manager that can provide data on the measurements/metrics. This is a separate protected method
      * so we can extend our manger class to have a mock manager for testing.
-     * 
+     *
      * @return the inventory manager
      */
     protected MeasurementManager getMeasurementManager() {

@@ -103,7 +103,7 @@ public class AvailTest extends Arquillian {
     public void resetServerServices() throws Exception {
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
-        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(5);
 
         // autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
@@ -140,7 +140,7 @@ public class AvailTest extends Arquillian {
         // scrub res containers of avail state and ensure schedules are blanked
         for (Set<ResourceContainer> cs : containerSets) {
             for (ResourceContainer c : cs) {
-                c.setAvailabilityScheduleTime(null);
+                c.setAvailabilityScheduleTime(0);
                 c.updateAvailability(null);
                 c.setAvailabilitySchedule(null);
                 // reset state of res component

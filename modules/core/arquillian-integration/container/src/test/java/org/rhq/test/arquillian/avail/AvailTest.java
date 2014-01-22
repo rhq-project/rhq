@@ -94,7 +94,7 @@ public class AvailTest extends Arquillian {
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
 
-        completeDiscoveryChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
+        completeDiscoveryChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(5);
 
         //autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
@@ -105,7 +105,7 @@ public class AvailTest extends Arquillian {
 
     @AfterDiscovery
     public void waitForDiscovery() throws Exception {
-        completeDiscoveryChecker.waitForDiscoveryComplete();
+        completeDiscoveryChecker.waitForDiscoveryComplete(10000);
     }
 
     @Test

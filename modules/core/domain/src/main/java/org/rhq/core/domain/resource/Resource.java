@@ -52,6 +52,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -999,7 +1001,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
     // by primary key which will also put the resource configuration updates in chronological order
-    private List<ResourceConfigurationUpdate> resourceConfigurationUpdates ;
+    private List<ResourceConfigurationUpdate> resourceConfigurationUpdates;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
@@ -1068,7 +1070,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
-    private Set<EventSource> eventSources ; // = new HashSet<EventSource>();
+    private Set<EventSource> eventSources; // = new HashSet<EventSource>();
 
     @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
@@ -1362,7 +1364,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<Resource> getChildResources() {
-        if (this.childResources==null) {
+        if (this.childResources == null) {
             return Collections.emptySet();
         }
         return this.childResources;
@@ -1387,7 +1389,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     public boolean removeChildResource(Resource childResource) {
         boolean removed = this.childResources.remove(childResource);
         if (this.childResources.isEmpty()) {
-            this.childResources=null;
+            this.childResources = null;
         }
         return removed;
     }
@@ -1409,6 +1411,15 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.parentResource = parentResource;
     }
 
+    /**
+     * NOTE! On the agent side this can return null because Resources get compacted and the resource
+     * configuration is held on disk.  On the agent side one should call:
+     * </p>
+     * <code>InventoryManager.getResourceConfiguration(Resource)</code>
+     *
+     * @return The resource configuration.  Can be null (see above).
+     */
+    @Nullable
     public Configuration getResourceConfiguration() {
         return resourceConfiguration;
     }
@@ -1426,7 +1437,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public List<ResourceConfigurationUpdate> getResourceConfigurationUpdates() {
-        if (this.resourceConfigurationUpdates==null) {
+        if (this.resourceConfigurationUpdates == null) {
             return Collections.emptyList();
         }
         return resourceConfigurationUpdates;
@@ -1437,7 +1448,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addResourceConfigurationUpdates(ResourceConfigurationUpdate update) {
-        if (this.resourceConfigurationUpdates==null) {
+        if (this.resourceConfigurationUpdates == null) {
             this.resourceConfigurationUpdates = new ArrayList<ResourceConfigurationUpdate>(1);
         }
         update.setResource(this);
@@ -1483,7 +1494,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addAlertDefinition(AlertDefinition alertDefinition) {
-        if (this.alertDefinitions==null) {
+        if (this.alertDefinitions == null) {
             this.alertDefinitions = new HashSet<AlertDefinition>(1);
         }
         this.alertDefinitions.add(alertDefinition);
@@ -1491,7 +1502,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public List<ContentServiceRequest> getContentServiceRequests() {
-        if (contentServiceRequests==null) {
+        if (contentServiceRequests == null) {
             return Collections.emptyList();
         }
         return contentServiceRequests;
@@ -1502,7 +1513,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addContentServiceRequest(ContentServiceRequest request) {
-        if (contentServiceRequests==null) {
+        if (contentServiceRequests == null) {
             contentServiceRequests = new ArrayList<ContentServiceRequest>(1);
         }
         request.setResource(this);
@@ -1510,7 +1521,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public List<CreateResourceHistory> getCreateChildResourceRequests() {
-        if (createChildResourceRequests==null) {
+        if (createChildResourceRequests == null) {
             return Collections.emptyList();
         }
         return createChildResourceRequests;
@@ -1521,7 +1532,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addCreateChildResourceHistory(CreateResourceHistory request) {
-        if (createChildResourceRequests==null) {
+        if (createChildResourceRequests == null) {
             createChildResourceRequests = new ArrayList<CreateResourceHistory>(1);
         }
         request.setParentResource(this);
@@ -1529,8 +1540,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public List<DeleteResourceHistory> getDeleteResourceRequests() {
-        if (deleteResourceRequests==null) {
-            deleteResourceRequests=new ArrayList<DeleteResourceHistory>(1);
+        if (deleteResourceRequests == null) {
+            deleteResourceRequests = new ArrayList<DeleteResourceHistory>(1);
         }
         return deleteResourceRequests;
     }
@@ -1553,7 +1564,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<ResourceGroup> getImplicitGroups() {
-        if (implicitGroups==null) {
+        if (implicitGroups == null) {
             return Collections.emptySet();
         }
         return implicitGroups;
@@ -1564,7 +1575,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addImplicitGroup(ResourceGroup implicitGroup) {
-        if (implicitGroups==null) {
+        if (implicitGroups == null) {
             implicitGroups = new HashSet<ResourceGroup>(1);
         }
         this.implicitGroups.add(implicitGroup);
@@ -1578,7 +1589,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<ResourceGroup> getExplicitGroups() {
-        if (explicitGroups==null) {
+        if (explicitGroups == null) {
             return Collections.emptySet();
         }
         return explicitGroups;
@@ -1589,7 +1600,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addExplicitGroup(ResourceGroup explicitGroup) {
-        if (explicitGroups==null) {
+        if (explicitGroups == null) {
             explicitGroups = new HashSet<ResourceGroup>(1);
         }
         this.explicitGroups.add(explicitGroup);
@@ -1633,7 +1644,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      *         null</code>)
      */
     public List<ResourceError> getResourceErrors(ResourceErrorType type) {
-        if (resourceErrors==null) {
+        if (resourceErrors == null) {
             return Collections.emptyList();
         }
         List<ResourceError> errors = new ArrayList<ResourceError>();
@@ -1653,8 +1664,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void addResourceError(ResourceError resourceError) {
-        if (this.resourceErrors==null) {
-            this.resourceErrors=new ArrayList<ResourceError>(1);
+        if (this.resourceErrors == null) {
+            this.resourceErrors = new ArrayList<ResourceError>(1);
         }
         resourceError.setResource(this);
         this.resourceErrors.add(resourceError);
@@ -1680,7 +1691,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * @see    #getResourceRepos()
      */
     public Set<ResourceRepo> getResourceRepos() {
-        if (resourceRepos==null) {
+        if (resourceRepos == null) {
             return Collections.emptySet();
         }
         return resourceRepos;
@@ -1693,7 +1704,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * {@link #getResourceRepos()} or {@link #addRepo(Repo)}, {@link #removeRepo(Repo)}.</p>
      */
     public Set<Repo> getRepos() {
-        if (resourceRepos==null) {
+        if (resourceRepos == null) {
             return Collections.emptySet();
         }
 
@@ -1753,14 +1764,14 @@ public class Resource implements Comparable<Resource>, Serializable {
             this.resourceRepos.remove(doomed);
         }
         if (this.resourceRepos.isEmpty()) {
-            this.resourceRepos=null;
+            this.resourceRepos = null;
         }
 
         return doomed;
     }
 
     public Set<InstalledPackage> getInstalledPackages() {
-        if (installedPackages==null) {
+        if (installedPackages == null) {
             return Collections.emptySet();
         }
         return installedPackages;
@@ -1800,7 +1811,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public Set<EventSource> getEventSources() {
-        if (eventSources==null) {
+        if (eventSources == null) {
             return Collections.emptySet();
         }
         return eventSources;

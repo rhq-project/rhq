@@ -49,7 +49,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
  */
 public class ConfigurationCheckExecutor implements Runnable, Callable {
 
-    private final Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
+    private static final Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
 
     private ConfigurationServerService configurationServerService;
     private InventoryManager inventoryManager;
@@ -126,7 +126,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                                     + errorMessage);
                             }
 
-                            Configuration original = resource.getResourceConfiguration();
+                            Configuration original = getResourceConfiguration(resource);
 
                             if (original==null) {
                                 original = loadConfigurationFromFile(resource.getId());
@@ -176,6 +176,14 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         return countTime;
     }
 
+    public static Configuration getResourceConfiguration(Resource resource) {
+        Configuration result = resource.getResourceConfiguration();
+        if (null == result) {
+            result = loadConfigurationFromFile(resource.getId());
+        }
+        return result;
+    }
+
     public static boolean persistConfigurationToFile(int resourceId, Configuration liveConfiguration, Log log) {
 
         boolean success = true;
@@ -205,7 +213,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
 
     }
 
-    private Configuration loadConfigurationFromFile(int resourceId) {
+    static private Configuration loadConfigurationFromFile(int resourceId) {
         String pathname = "data/rc/" + String.valueOf(resourceId/1000); // Don't put too many files into one data dir
         File dataDir = new File(pathname);
         File file = new File(dataDir, String.valueOf(resourceId));
@@ -222,9 +230,9 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             fis.close();
             return config;
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customize this generated block
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customize this generated block
         }
 
         return new Configuration();

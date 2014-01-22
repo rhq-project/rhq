@@ -19,8 +19,6 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
-import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.ModuleOptionType;
-import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.createAddModuleOptionTypeOperation;
 import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.loadModuleOptionType;
 import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.populateSecurityDomainModuleOptions;
@@ -28,7 +26,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,7 +37,6 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -65,6 +61,8 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
 import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
+import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.ModuleOptionType;
+import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;

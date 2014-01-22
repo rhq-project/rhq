@@ -106,7 +106,19 @@ public class SimulationPlan {
 
     private int aggregationBatchSize;
 
+    private boolean aggregationEnabled = true;
+
     private AggregationType aggregationType;
+
+    private int readerThreadPoolSize = 1;
+
+    public int getReaderThreadPoolSize() {
+        return readerThreadPoolSize;
+    }
+
+    public void setReaderThreadPoolSize(int readerThreadPoolSize) {
+        this.readerThreadPoolSize = readerThreadPoolSize;
+    }
 
     public DateTimeService getDateTimeService() {
         return dateTimeService;
@@ -234,5 +246,13 @@ public class SimulationPlan {
 
     public void setAggregationType(AggregationType aggregationType) {
         this.aggregationType = aggregationType;
+    }
+
+    public boolean isAggregationEnabled() {
+        return aggregationEnabled;
+    }
+
+    public void setAggregationEnabled(boolean aggregationEnabled) {
+        this.aggregationEnabled = aggregationEnabled;
     }
 }

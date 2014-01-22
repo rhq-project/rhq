@@ -61,7 +61,7 @@ public class Simulator implements ShutdownManager {
         final ScheduledExecutorService collectors = Executors.newScheduledThreadPool(
             plan.getNumMeasurementCollectors(), new SimulatorThreadFactory());
         final ExecutorService aggregationQueue = Executors.newSingleThreadExecutor(new SimulatorThreadFactory());
-        final ScheduledExecutorService readers = Executors.newScheduledThreadPool(plan.getNumReaders(),
+        final ScheduledExecutorService readers = Executors.newScheduledThreadPool(plan.getReaderThreadPoolSize(),
             new SimulatorThreadFactory());
 
         Metrics metrics = new Metrics();
@@ -107,12 +107,16 @@ public class Simulator implements ShutdownManager {
                 plan.getCollectionInterval(), TimeUnit.MILLISECONDS);
         }
 
-        aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
-            TimeUnit.MILLISECONDS);
+        if (plan.isAggregationEnabled()) {
+            aggregators.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
+                TimeUnit.MILLISECONDS);
+        }
 
-        MeasurementReader reader = new MeasurementReader(plan.getSimulationRate(), metrics, metricsServer, 0,
-            plan.getBatchSize());
-        readers.scheduleAtFixedRate(reader, 30, 30, TimeUnit.SECONDS);
+        for (int i = 0; i < plan.getNumReaders(); ++i) {
+            MeasurementReader reader = new MeasurementReader(plan.getSimulationRate(), metrics, metricsServer,
+                plan.getBatchSize() * i, plan.getBatchSize());
+            readers.scheduleAtFixedRate(reader, 30, 30, TimeUnit.SECONDS);
+        }
 
         try {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());

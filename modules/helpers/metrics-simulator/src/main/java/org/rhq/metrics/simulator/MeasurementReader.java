@@ -42,18 +42,22 @@ public class MeasurementReader implements Runnable {
 
     @Override
     public void run() {
-        log.info("Running metrics queries");
+        Timer.Context context = metrics.totalReadTime.time();
+        try {
+            log.info("Running metrics queries");
 
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        int bound = startingSchedule + batchSize;
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            int bound = startingSchedule + batchSize;
 
-        findResourceDataForPast24Hours(random.nextInt(startingSchedule, bound));
-        findResourceDataForPastWeek(random.nextInt(startingSchedule, bound));
-        findResourceDataForPast2Weeks(random.nextInt(startingSchedule, bound));
-        findResourceDataForPast31Days(random.nextInt(startingSchedule, bound));
-        findResourceDataForPastYear(random.nextInt(startingSchedule, bound));
-
-        log.info("Finished running metrics queries");
+            findResourceDataForPast24Hours(random.nextInt(startingSchedule, bound));
+            findResourceDataForPastWeek(random.nextInt(startingSchedule, bound));
+            findResourceDataForPast2Weeks(random.nextInt(startingSchedule, bound));
+            findResourceDataForPast31Days(random.nextInt(startingSchedule, bound));
+            findResourceDataForPastYear(random.nextInt(startingSchedule, bound));
+        } finally {
+            log.info("Finished running metrics queries");
+            context.stop();
+        }
     }
 
     private void findResourceDataForPast24Hours(int scheduleId) {

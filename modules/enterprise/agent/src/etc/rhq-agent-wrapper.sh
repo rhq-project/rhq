@@ -46,8 +46,9 @@ check_status ()
         _PID=`cat "${_PIDFILE}"`
         check_status_of_pid $_PID
     else
-        _STATUS=`printf "%-30s (no pid file) IS NOT running" "RHQ Agent"`
+        _STATUS=`printf "%-30s (no pid file) is down" "RHQ Agent"`
         _RUNNING=0
+        add_colors
     fi
 }
 
@@ -59,11 +60,28 @@ check_status ()
 check_status_of_pid ()
 {
     if [ -n "$1" ] && kill -0 $1 2>/dev/null ; then
-        _STATUS=`printf "%-30s (pid %-7s) IS running %s" "RHQ Agent" $1`
+        _STATUS=`printf "%-30s (pid %-7s) is running %s" "RHQ Agent" $1`
         _RUNNING=1
     else
-        _STATUS=`printf "%-30s (pid %-7s) IS NOT running" "RHQ Agent" $1`
+        _STATUS=`printf "%-30s (pid %-7s) is down" "RHQ Agent" $1`
         _RUNNING=0
+    fi
+    add_colors
+}
+
+# ----------------------------------------------------------------------
+# Function that colors _STATUS if terminal supports it
+# ----------------------------------------------------------------------
+add_colors () {
+    # find out if terminal support colors
+    _COLORS_NUM=$(tput colors 2> /dev/null)
+    if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
+        _COLOR=true
+        _GREEN=$(tput setaf 2)
+        _RED=$(tput setaf 1)
+        _RESET_FORMATTING=$(tput sgr0)
+        _STATUS=${_STATUS/running/${_GREEN}running${_RESET_FORMATTING}}
+        _STATUS=${_STATUS/down/${_RED}down${_RESET_FORMATTING}}
     fi
 }
 

@@ -75,10 +75,11 @@ public class Status extends ControlCommand {
     protected int exec(CommandLine commandLine) {
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
+            final boolean isColorSupported = Boolean.parseBoolean(System.getProperty("color")); 
             // if no options specified, then check the status of whatever is installed
             if (commandLine.getOptions().length == 0) {
                 if (isStorageInstalled()) {
-                    rValue = Math.max(rValue, checkStorageStatus());
+                    rValue = Math.max(rValue, checkStorageStatus(isColorSupported));
                 }
                 if (isServerInstalled()) {
                     rValue = Math.max(rValue, checkServerStatus());
@@ -89,7 +90,7 @@ public class Status extends ControlCommand {
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        rValue = Math.max(rValue, checkStorageStatus());
+                        rValue = Math.max(rValue, checkStorageStatus(isColorSupported));
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
@@ -118,7 +119,7 @@ public class Status extends ControlCommand {
         return rValue;
     }
 
-    private int checkStorageStatus() throws Exception {
+    private int checkStorageStatus(boolean isColorSupported) throws Exception {
         log.debug("Checking RHQ storage node status");
 
         int rValue = RHQControl.EXIT_CODE_OK;
@@ -143,10 +144,16 @@ public class Status extends ControlCommand {
                 rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
             }
         } else {
-            if(isStorageRunning()) {
-                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid " + String.format("%-7s", getStoragePid()) + ") IS running");
+            final String ANSI_RED = "\u001B[31m";
+            final String ANSI_GREEN = "\u001B[32m";
+            final String ANSI_RESET = "\u001B[0m";
+            if (isStorageRunning()) {
+                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid "
+                    + String.format("%-7s", getStoragePid()) + ") is " + (isColorSupported ? ANSI_GREEN : "")
+                    + "running" + (isColorSupported ? ANSI_RESET : ""));
             } else {
-                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) IS NOT running");
+                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) is "
+                    + (isColorSupported ? ANSI_RED : "") + "down" + (isColorSupported ? ANSI_RESET : ""));
                 rValue = RHQControl.EXIT_CODE_STATUS_NOT_RUNNING;
             }
         }

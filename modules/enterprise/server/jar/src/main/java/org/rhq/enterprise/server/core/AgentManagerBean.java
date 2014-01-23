@@ -29,6 +29,7 @@ import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -200,6 +201,9 @@ public class AgentManagerBean implements AgentManagerLocal {
         return getAgentClient(agent);
     }
 
+    // Let the agent continue shutting down without waiting for a lengthy backfill. Also, this is called
+    // only from the agent, ignore the standard interceptors
+    @Asynchronous
     @ExcludeDefaultInterceptors
     public void agentIsShuttingDown(String agentName) {
         Agent downedAgent = getAgentByName(agentName);

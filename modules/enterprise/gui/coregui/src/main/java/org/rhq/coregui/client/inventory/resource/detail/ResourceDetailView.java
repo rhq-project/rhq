@@ -212,7 +212,7 @@ public class ResourceDetailView extends
             MSG.view_tabs_common_history()), null);
         SubTab alertDef = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.DEFINITIONS,
             MSG.common_title_definitions()), null);
-        alertsTab.registerSubTabs(alertHistory, alertDef);
+        alertsTab.registerSubTabs(alertDef, alertHistory);
         tabs.add(alertsTab);
 
         TwoLevelTab monitoringTab = new TwoLevelTab(

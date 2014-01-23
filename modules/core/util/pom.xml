@@ -19,12 +19,10 @@
   </properties>
 
   <dependencies>
-
     <!-- Used by the (deprecated) legacy XML parser, which is used to parse RHQ license files. -->
     <dependency>
       <groupId>jdom</groupId>
       <artifactId>jdom</artifactId>
-      <version>1.0</version>
     </dependency>
 
     <dependency>

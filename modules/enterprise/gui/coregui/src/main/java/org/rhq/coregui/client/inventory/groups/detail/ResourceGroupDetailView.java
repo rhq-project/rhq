@@ -238,7 +238,7 @@ public class ResourceGroupDetailView extends
         TwoLevelTab alertsTab = new TwoLevelTab(new ViewName(Tab.Alerts.NAME, MSG.common_title_alerts()), IconEnum.ALERT_DEFINITIONS);
         SubTab alertHistory = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
         SubTab alertDef = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        alertsTab.registerSubTabs(alertHistory, alertDef);
+        alertsTab.registerSubTabs(alertDef, alertHistory);
         tabs.add(alertsTab);
 
         TwoLevelTab monitoringTab = new TwoLevelTab(new ViewName(Tab.Monitoring.NAME, MSG.view_tabs_common_monitoring()),

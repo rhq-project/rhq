@@ -82,6 +82,8 @@ public class SimulationPlanner {
         simulation.setDateTimeService(dateTimeService);
 
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
+        simulation.setNumReaders(getInt(root.get("numReaders"), 1));
+        simulation.setReaderThreadPoolSize(getInt(root.get("readerThreadPoolSize"), 1));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
         simulation.setBatchSize(getInt(root.get("batchSize"), 5000));
 
@@ -101,6 +103,7 @@ public class SimulationPlanner {
         simulation.setAggregationBatchSize(getInt(root.get("aggregationBatchSize"), 250));
         simulation.setAggregationType(SimulationPlan.AggregationType.fromText(getString(root.get("aggregationType"),
             "sync")));
+        simulation.setAggregationEnabled(getBoolean(root.get("aggregationEnabled"), true));
 
         return simulation;
     }
@@ -164,6 +167,13 @@ public class SimulationPlanner {
             return defaultValue;
         }
         return node.intValue();
+    }
+
+    private boolean getBoolean(JsonNode node, boolean defaultValue) {
+        if (node == null) {
+            return defaultValue;
+        }
+        return node.booleanValue();
     }
 
 }

@@ -32,6 +32,8 @@ public class Metrics {
 
     public final Counter totalAggregationRuns;
 
+    public final Timer totalReadTime;
+
     public Metrics() {
         registry = new MetricRegistry();
 
@@ -44,6 +46,7 @@ public class Metrics {
         monthResourceQueryTime = registry.timer(name(MeasurementReader.class, "monthResourceQueryTime"));
         yearResourceQueryTime = registry.timer(name(MeasurementReader.class, "yearResourceQueryTime"));
         totalAggregationRuns = registry.counter(name(MeasurementAggregator.class, "totalAggregationRuns"));
+        totalReadTime = registry.timer(name(MeasurementReader.class, "totalReadTime"));
     }
 
 }

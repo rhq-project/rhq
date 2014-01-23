@@ -20,7 +20,6 @@
 
   <properties>
     <json.version>${project.json.version}</json.version>
-    <jackson.version>1.9.5</jackson.version>
     <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
     <!-- If you change httpclient4.version make sure to update httpcore version below accordingly  -->
     <httpclient4.version>4.2.3</httpclient4.version>
@@ -52,13 +51,11 @@
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
-      <version>${jackson.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
-      <version>${jackson.version}</version>
     </dependency>
 
     <!-- for the password hashing - we may want to copy the relevant stuff over ourselves -->
@@ -85,6 +82,7 @@
         </exclusion>
       </exclusions>
     </dependency>
+
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>

@@ -23,6 +23,8 @@
 
 package org.rhq.enterprise.client.security.test;
 
+import static org.testng.Assert.assertNotEquals;
+
 import java.util.UUID;
 
 import javax.script.ScriptEngine;
@@ -47,8 +49,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.client.ScriptableAbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import static org.testng.Assert.assertNotEquals;
 
 /**
  * @author Lukas Krejci

@@ -147,29 +147,54 @@ check_status ()
     if [ -f "$_SERVER_PIDFILE" ]; then
         _SERVER_PID=`cat "$_SERVER_PIDFILE"`
         if [ -n "$_SERVER_PID" ] && kill -0 $_SERVER_PID 2>/dev/null ; then
-            _SERVER_STATUS=`printf "%-30s (pid %-7s) IS %s" "RHQ Server" $_SERVER_PID $1`
+            _SERVER_STATUS=`printf "%-30s (pid %-7s) is %s" "RHQ Server" $_SERVER_PID $1`
             _SERVER_RUNNING=1
         else
-            _SERVER_STATUS=`printf "%-30s (pid %-7s) IS NOT running" "RHQ Server" $_SERVER_PID`
+            _SERVER_STATUS=`printf "%-30s (pid %-7s) is down" "RHQ Server" $_SERVER_PID`
             _SERVER_RUNNING=0
         fi
     else
-        _SERVER_STATUS=`printf "%-30s (no pid file) IS NOT running" "RHQ Server"`
+        _SERVER_STATUS=`printf "%-30s (no pid file) is down" "RHQ Server"`
         _SERVER_RUNNING=0
     fi
 
     if [ -f "$_JVM_PIDFILE" ]; then
         _JVM_PID=`cat "$_JVM_PIDFILE"`
         if [ -n "$_JVM_PID" ] && kill -0 $_JVM_PID 2>/dev/null ; then
-            _JVM_STATUS=`printf "%-30s (pid %-7s) IS %s" "JBossAS Java VM child process" $_SERVER_PID $1`
+            _JVM_STATUS=`printf "%-30s (pid %-7s) is %s" "JBossAS Java VM child process" $_SERVER_PID $1`
             _JVM_RUNNING=1
         else
-            _JVM_STATUS=`printf "%-30s (pid %-7s) IS NOT running" "JBossAS Java VM child process" $_SERVER_PID`
+            _JVM_STATUS=`printf "%-30s (pid %-7s) is down" "JBossAS Java VM child process" $_SERVER_PID`
             _JVM_RUNNING=0
         fi
     else
-        _JVM_STATUS=`printf "%-30s (no pid file) IS NOT running" "JBossAS Java VM child process"`
+        _JVM_STATUS=`printf "%-30s (no pid file) is down" "JBossAS Java VM child process"`
         _JVM_RUNNING=0
+    fi
+    add_colors
+}
+
+# ----------------------------------------------------------------------
+# Function that colors _SERVER_STATUS and _JVM_STATUS if terminal
+# supports colors
+# ----------------------------------------------------------------------
+
+add_colors () {
+    # find out if terminal support colors
+    _COLORS_NUM=$(tput colors 2> /dev/null)
+    if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
+        _GREEN=$(tput setaf 2)
+        _RED=$(tput setaf 1)
+        _ORANGE=$(tput setaf 172)
+        _RESET_FORMATTING=$(tput sgr0)
+        _SERVER_STATUS=${_SERVER_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
+        _SERVER_STATUS=${_SERVER_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
+        _SERVER_STATUS=${_SERVER_STATUS/starting/${_ORANGE}starting${_RESET_FORMATTING}}
+        _SERVER_STATUS=${_SERVER_STATUS/killing.../${_ORANGE}killing...${_RESET_FORMATTING}}
+        _JVM_STATUS=${_JVM_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
+        _JVM_STATUS=${_JVM_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
+        _JVM_STATUS=${_JVM_STATUS/starting/${_ORANGE}starting${_RESET_FORMATTING}}
+        _JVM_STATUS=${_JVM_STATUS/killing.../${_ORANGE}killing...${_RESET_FORMATTING}}
     fi
 }
 

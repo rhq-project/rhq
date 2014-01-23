@@ -59,7 +59,6 @@
       <dependency>
          <groupId>jdom</groupId>
          <artifactId>jdom</artifactId>
-         <version>1.0</version>
       </dependency>
 
       <!-- test -->
@@ -112,7 +111,6 @@
                         <artifactItem>
                            <groupId>jdom</groupId>
                            <artifactId>jdom</artifactId>
-                           <version>1.0</version>
                         </artifactItem>
                         <artifactItem>
                            <groupId>bsh</groupId>

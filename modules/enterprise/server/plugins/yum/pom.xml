@@ -28,7 +28,6 @@
         <dependency>
             <groupId>jdom</groupId>
             <artifactId>jdom</artifactId>
-            <version>1.0</version>
             <scope>provided</scope> <!-- this version of jdom is included in the server, we'll juse reuse it -->
         </dependency>
 

@@ -588,7 +588,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Nullable
     public ResourceContainer getResourceContainer(int resourceId) {
-        if (resourceId <= 0) {
+        if (resourceId == 0) {
             // I've already found one place where passing in 0 was very bad - I want to be very noisy in the log
             // when this happens but not throw an exception, for fear I might break something.
             // I'll just return null instead; hopefully, callers are checking for null appropriately.

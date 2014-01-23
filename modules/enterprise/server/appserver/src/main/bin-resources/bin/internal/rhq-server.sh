@@ -174,11 +174,11 @@ check_status ()
     add_colors
 }
 
-
 # ----------------------------------------------------------------------
 # Function that colors _SERVER_STATUS and _JVM_STATUS if terminal
 # supports colors
 # ----------------------------------------------------------------------
+
 add_colors () {
     # find out if terminal support colors
     _COLORS_NUM=$(tput colors 2> /dev/null)
@@ -187,12 +187,12 @@ add_colors () {
         _RED=$(tput setaf 1)
         _ORANGE=$(tput setaf 172)
         _RESET_FORMATTING=$(tput sgr0)
-        _SERVER_STATUS=${_SERVER_STATUS/running/${_GREEN}running${_RESET_FORMATTING}}
-        _SERVER_STATUS=${_SERVER_STATUS/down/${_RED}down${_RESET_FORMATTING}}
+        _SERVER_STATUS=${_SERVER_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
+        _SERVER_STATUS=${_SERVER_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
         _SERVER_STATUS=${_SERVER_STATUS/starting/${_ORANGE}starting${_RESET_FORMATTING}}
         _SERVER_STATUS=${_SERVER_STATUS/killing.../${_ORANGE}killing...${_RESET_FORMATTING}}
-        _JVM_STATUS=${_JVM_STATUS/running/${_GREEN}running${_RESET_FORMATTING}}
-        _JVM_STATUS=${_JVM_STATUS/down/${_RED}down${_RESET_FORMATTING}}
+        _JVM_STATUS=${_JVM_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
+        _JVM_STATUS=${_JVM_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
         _JVM_STATUS=${_JVM_STATUS/starting/${_ORANGE}starting${_RESET_FORMATTING}}
         _JVM_STATUS=${_JVM_STATUS/killing.../${_ORANGE}killing...${_RESET_FORMATTING}}
     fi

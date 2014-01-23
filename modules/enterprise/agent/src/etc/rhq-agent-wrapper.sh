@@ -72,6 +72,7 @@ check_status_of_pid ()
 # ----------------------------------------------------------------------
 # Function that colors _STATUS if terminal supports it
 # ----------------------------------------------------------------------
+
 add_colors () {
     # find out if terminal support colors
     _COLORS_NUM=$(tput colors 2> /dev/null)
@@ -80,8 +81,8 @@ add_colors () {
         _GREEN=$(tput setaf 2)
         _RED=$(tput setaf 1)
         _RESET_FORMATTING=$(tput sgr0)
-        _STATUS=${_STATUS/running/${_GREEN}running${_RESET_FORMATTING}}
-        _STATUS=${_STATUS/down/${_RED}down${_RESET_FORMATTING}}
+        _STATUS=${_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
+        _STATUS=${_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
     fi
 }
 

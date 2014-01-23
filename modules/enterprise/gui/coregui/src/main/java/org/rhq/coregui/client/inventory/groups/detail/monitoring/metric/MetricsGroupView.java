@@ -30,8 +30,8 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -147,16 +147,16 @@ public class MetricsGroupView extends AbstractD3GraphListView implements
     protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
 
         // now return the availability
-        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getGroupId(), startTime,
-                endTime, new AsyncCallback<List<Availability>>() {
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(context.getGroupId(), startTime,
+            endTime, new AsyncCallback<List<ResourceGroupAvailability>>() {
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
             }
 
             @Override
-            public void onSuccess(List<Availability> availList) {
-                availabilityGraph.setAvailabilityList(availList);
+                public void onSuccess(List<ResourceGroupAvailability> availList) {
+                    availabilityGraph.setGroupAvailabilityList(availList);
                 new Timer() {
                     @Override
                     public void run() {

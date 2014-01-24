@@ -52,11 +52,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  *
  * @author John Mazzitelli
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>>, ManualAddFacet<ResourceComponent<?>>,
-    ResourceUpgradeFacet<ResourceComponent<?>> {
-
-    public static final String ESCAPE_CHARACTER_PROP_NAME = "escapeCharacter";
-    private static final String ESCAPE_CHARACTER_DEFAULT = "__TO_BE_SET_TO_\\_OR_^__";
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>>, ManualAddFacet<ResourceComponent<?>> {
 
     private final Log log = LogFactory.getLog(ScriptDiscoveryComponent.class);
 
@@ -128,7 +124,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Reso
             } else {
                 String args = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_DESC_ARGS, null);
                 ProcessExecutionResults results = ScriptServerComponent.executeExecutable(context
-                    .getSystemInformation(), pluginConfig, args, 5000L, true);
+                    .getSystemInformation(), pluginConfig, args, 5000L, true, ScriptServerComponent.getConfiguredEscapeCharacter(pluginConfig));
                 if (results != null) {
                     if (results.getError() != null) {
                         log.warn("Failed to execute cli executable to get description. Cause: "
@@ -164,23 +160,6 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Reso
         return description;
     }
 
-    @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ResourceComponent<?>> inventoriedResource) {
-        PropertySimple escapeCharacter = inventoriedResource.getPluginConfiguration().getSimple(ESCAPE_CHARACTER_PROP_NAME);
-
-        if (escapeCharacter != null && !ESCAPE_CHARACTER_DEFAULT.equals(escapeCharacter.getStringValue())) {
-            return null;
-        }
-
-        char escapeChar = File.separatorChar == '/' ? '\\' : '^';
-
-        ResourceUpgradeReport report = new ResourceUpgradeReport();
-        report.setNewPluginConfiguration(inventoriedResource.getPluginConfiguration().clone());
-        report.getNewPluginConfiguration().put(new PropertySimple(ESCAPE_CHARACTER_PROP_NAME, Character.toString(escapeChar)));
-
-        return report;
-    }
-
     /**
      * Attempts to determine the version of the resource managed by the CLI.
      * 
@@ -198,7 +177,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Reso
             } else {
                 String args = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_VERSION_ARGS, null);
                 ProcessExecutionResults results = ScriptServerComponent.executeExecutable(context
-                    .getSystemInformation(), pluginConfig, args, 5000L, true);
+                    .getSystemInformation(), pluginConfig, args, 5000L, true, ScriptServerComponent.getConfiguredEscapeCharacter(pluginConfig));
                 if (results != null) {
                     if (results.getError() != null) {
                         log.warn("Failed to execute cli executable to get version. Cause: "

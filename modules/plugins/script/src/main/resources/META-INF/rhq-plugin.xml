@@ -42,9 +42,16 @@
             <c:simple-property name="descriptionRegex" required="false" description="The regex that can pick out the description from the executable output. If the regex has a captured group, its matched content will be used as the description. If there is no captured group, the entire output will be used as the description."/>
             <c:simple-property name="fixedDescription" required="false" description="If specified, this will be the description of the managed resource - the executable will not be invoked to determine it." />
          </c:group>
-         <c:group name="advanced" displayName="Advanced">
-             <c:simple-property name="escapeCharacter" required="true" description="The escape character to be used when parsing arguments. By default this is (without quotes) '^' on Windows and '\' everywhere else."
-                     default="__TO_BE_SET_TO_\_OR_^__">
+         <c:group name="argumentsParsing" displayName="Parsing of Arguments">
+             <c:simple-property name="quotingEnabled" displayName="Enable Quoting of Arguments" required="true" type="boolean" default="false">
+                 <c:description>
+                     1) In unquoted text: the escape character preserves the value of any following character
+                     2) In double-quoted text: the escape character escapes " and itself otherwise is both the escape character and the following character are left intact
+                     3) In single-quoted text: no escaping can occur
+                 </c:description>
+             </c:simple-property>
+             <c:simple-property name="escapeCharacter" required="true" description="The escape character to be used when parsing arguments. By default the escape character is backslash."
+                     default="\">
                  <c:constraint>
                      <c:regex-constraint expression="." />
                  </c:constraint>

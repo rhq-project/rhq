@@ -125,6 +125,9 @@ class Aggregate1HourData implements Runnable {
             // continue generating 6 hour data because we do not need the index
             // here since we already have 6 hour data to aggregate along with the
             // schedule ids.
+            log.debug("The wait for 6 hour index entries has been aborted. Proceeding with scheduling computation of " +
+                "1 hour aggregates for previously assigned schedules.");
+            state.getRemaining6HourData().addAndGet(scheduleIds.size());
         }
     }
 }

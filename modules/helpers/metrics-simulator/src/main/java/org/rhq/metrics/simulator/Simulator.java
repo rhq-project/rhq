@@ -201,11 +201,6 @@ public class Simulator implements ShutdownManager {
 
     @SuppressWarnings("deprecation")
     private Session initSession(Cluster cluster) {
-        NodeFailureListener listener = new NodeFailureListener();
-        for (Host host : cluster.getMetadata().getAllHosts()) {
-            host.getMonitor().register(listener);
-        }
-
         return cluster.connect("rhq");
     }
 

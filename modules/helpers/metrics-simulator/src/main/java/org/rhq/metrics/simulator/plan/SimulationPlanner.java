@@ -75,6 +75,7 @@ public class SimulationPlanner {
             simulation.setAggregationInterval(3600000L);
             simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 1200));
             simulation.setSimulationRate(1000);
+            simulation.setMetricsServerConfiguration(new MetricsConfiguration());
             dateTimeService = new DateTimeService();
         }
 

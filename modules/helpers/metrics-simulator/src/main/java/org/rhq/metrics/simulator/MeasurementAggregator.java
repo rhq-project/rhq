@@ -67,7 +67,7 @@ public class MeasurementAggregator implements Runnable {
                 Timer.Context context = metrics.totalAggregationTime.time();
                 long start = System.currentTimeMillis();
                 try {
-                    log.debug("Starting metrics aggregation");
+                    log.info("Starting metrics aggregation");
                     metricsServer.calculateAggregates();
                 } catch (Exception e) {
                     log.error("An error occurred while trying to perform aggregation", e);
@@ -75,7 +75,7 @@ public class MeasurementAggregator implements Runnable {
                     shutdownManager.shutdown(1);
                 } finally {
                     context.stop();
-                    log.debug("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
+                    log.info("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
                     metrics.totalAggregationRuns.inc();
                 }
             }

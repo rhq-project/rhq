@@ -28,8 +28,10 @@ package org.rhq.metrics.simulator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Timer;
+import com.google.common.base.Stopwatch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -80,10 +82,13 @@ public class MeasurementCollector implements Runnable {
     @Override
     public void run() {
         final Timer.Context context = metrics.batchInsertTime.time();
+        final Stopwatch stopwatch = new Stopwatch().start();
         metricsServer.addNumericData(generateData(), new RawDataInsertedCallback() {
             @Override
             public void onFinish() {
-                 context.stop();
+                stopwatch.stop();
+                log.info("Finished inserting raw data in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                context.stop();
             }
 
             @Override

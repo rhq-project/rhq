@@ -746,10 +746,11 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
      */
     @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigurationDefinitionsOptions() throws Exception {
-        Resource resource = newResource1;
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+
         getTransactionManager().begin();
+        Resource resource = em.find(Resource.class, newResource1.getId());
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
         try {
             // this is simulating what the UI would be doing, build the config and call the server-side API
@@ -759,20 +760,16 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             int loadCount = 300;
             HashSet<String> parsedNames = new HashSet<String>();
             for (int i = 0; i < loadCount; i++) {
-                String name = "fake property" + i;
+                String name = "fakeProperty_" + i;
                 initialDefinition
-                    .put(new PropertyDefinitionSimple(name, "fake" + i, false, PropertySimpleType.BOOLEAN));
+                    .put(new PropertyDefinitionSimple(name, "fake_" + i, false, PropertySimpleType.BOOLEAN));
                 parsedNames.add(name);
             }
             newResource1Type.setResourceConfigurationDefinition(initialDefinition);
-            em.merge(newResource1Type);
-            em.flush();
+            newResource1Type = em.merge(newResource1Type);
+            em.flush(); // so that slsb calls below will see the change reflected in the db
 
-            Configuration configuration = new Configuration();
-            configuration.put(new PropertySimple("myboolean", "true"));
-
-            ConfigurationDefinition configurationDefinition = newResource1.getResourceType()
-                .getResourceConfigurationDefinition();
+            ConfigurationDefinition configurationDefinition = newResource1Type.getResourceConfigurationDefinition();
             assert configurationDefinition != null : "Configuration Definition could not be located.";
             //retrieve the options for ConfigurationDefinition
             ConfigurationDefinition options = configurationManager.getOptionsForConfigurationDefinition(overlord,
@@ -786,15 +783,14 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             for (Map.Entry<String, PropertyDefinition> entry : options.getPropertyDefinitions().entrySet()) {
                 PropertyDefinition pd = entry.getValue();
                 if (pd instanceof PropertyDefinitionSimple) {
-                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
-                    locatedPropertyDefSimple = pds;
+                    locatedPropertyDefSimple = (PropertyDefinitionSimple) pd;
                     locatedCount++;
-                    parsedNames.remove(pds.getName());
+                    parsedNames.remove(locatedPropertyDefSimple.getName());
                 }
             }
             assert locatedPropertyDefSimple != null : "PropertyDefinitionSimple was not located!";
-            assert locatedCount >= loadCount : "All expected properties were not loaded. Found '" + locatedCount + "'.";
-            assert parsedNames.size() == 0 : "Not all loaded options were parsed.";
+            assert locatedCount != loadCount : "All expected properties were not loaded. Found '" + locatedCount + "'.";
+            assert parsedNames.isEmpty() : "Not all loaded options were parsed.";
 
         } finally {
             getTransactionManager().rollback();

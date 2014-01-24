@@ -19,6 +19,8 @@
 
 package org.rhq.plugins.mysql;
 
+import java.sql.SQLException;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -53,9 +55,16 @@ public class PluginTest extends ComponentTest {
     }
 
     public void test() throws Exception {
-        manuallyAdd("MySql Server");
+        try {
+            manuallyAdd("MySql Server");
+        } catch (Exception e) {
+            assert e instanceof SQLException;
+            assert e.getCause().getClass().getName().equals("com.mysql.jdbc.exceptions.jdbc4.CommunicationsException");
+            return; // can't proceed with test in this non-mysql env
+        }
+
         ResourceComponent resourceComponent = getComponent("MySql Server");
-//        assertUp(resource); // TODO this requires a running mysql server
+        //        assertUp(resource); // TODO this requires a running mysql server
         assert resourceComponent != null;
     }
 

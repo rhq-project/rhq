@@ -329,7 +329,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.2.0.Alpha1-redhat-4/jboss-as-naming-7.2.0.Alpha1-redhat-4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.2.0.Alpha1-redhat-4/jboss-as-server-7.2.0.Alpha1-redhat-4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ee/7.2.0.Alpha1-redhat-4/jboss-as-ee-7.2.0.Alpha1-redhat-4.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ejb3/7.2.0.Alpha1-redhat-4/jboss-as-ejb3-7.2.0.Alpha1-redhat-4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ejb3/7.2.0.Alpha1-redhat-4/jboss-as-ejb3-7.2.0.Alpha1-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-ejb3/7.2.0.Alpha1-redhat-4/jboss-as-ejb3-7.2.0.Alpha1-redhat-4-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/staxmapper/1.1.0.Final/staxmapper-1.1.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/modules/jboss-modules/1.1.1.GA/jboss-modules-1.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-subsystem-test/7.1.1.Final/jboss-as-subsystem-test-7.1.1.Final.jar"/>

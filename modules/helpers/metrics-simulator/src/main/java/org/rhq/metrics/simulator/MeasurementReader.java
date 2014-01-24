@@ -2,8 +2,10 @@ package org.rhq.metrics.simulator;
 
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Timer;
+import com.google.common.base.Stopwatch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,6 +45,7 @@ public class MeasurementReader implements Runnable {
     @Override
     public void run() {
         Timer.Context context = metrics.totalReadTime.time();
+        Stopwatch stopwatch = new Stopwatch().start();
         try {
             log.info("Running metrics queries");
 
@@ -55,7 +58,8 @@ public class MeasurementReader implements Runnable {
             findResourceDataForPast31Days(random.nextInt(startingSchedule, bound));
             findResourceDataForPastYear(random.nextInt(startingSchedule, bound));
         } finally {
-            log.info("Finished running metrics queries");
+            stopwatch.stop();
+            log.info("Finished running metrics queries in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             context.stop();
         }
     }

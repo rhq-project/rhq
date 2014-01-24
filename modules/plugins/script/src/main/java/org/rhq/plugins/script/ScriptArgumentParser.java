@@ -10,7 +10,7 @@ import java.util.List;
 public final class ScriptArgumentParser {
 
     private enum State {
-        SPACE, ESCAPE, ARG, QUOTE
+        SPACE, ESCAPE, ARG, DOUBLE_QUOTE, DOUBLE_QUOTE_ESCAPE, SINGLE_QUOTE
     }
 
     private ScriptArgumentParser() {
@@ -18,7 +18,6 @@ public final class ScriptArgumentParser {
 
     public static String[] parse(String args, char escape) {
         State state = State.SPACE;
-        char activeQuote = '\u0000';
         List<String> parsedArgs = new ArrayList<String>();
 
         int i = 0;
@@ -37,9 +36,10 @@ public final class ScriptArgumentParser {
 
                 if (c == escape) {
                     state = State.ESCAPE;
-                } else if (isQuote(c)) {
-                    activeQuote = c;
-                    state = State.QUOTE;
+                } else if (c == '"') {
+                    state = State.DOUBLE_QUOTE;
+                } else if (c == '\'') {
+                    state = State.SINGLE_QUOTE;
                 } else if (isNotWhitespace) {
                     arg.append(c);
                     state = State.ARG;
@@ -52,20 +52,35 @@ public final class ScriptArgumentParser {
             case ARG:
                 if (c == escape) {
                     state = State.ESCAPE;
-                } else if (isQuote(c)) {
-                    activeQuote = c;
-                    state = State.QUOTE;
+                } else if (c == '"') {
+                    state = State.DOUBLE_QUOTE;
+                } else if (c == '\'') {
+                    state = State.SINGLE_QUOTE;
                 } else if (!Character.isWhitespace(c)) {
                     arg.append(c);
                 } else {
                     state = State.SPACE;
                 }
                 break;
-            case QUOTE:
-                if (c == activeQuote) {
+            case DOUBLE_QUOTE:
+                if (c == '"') {
                     state = State.ARG;
                 } else if (c == escape) {
-                    state = State.ESCAPE;
+                    state = State.DOUBLE_QUOTE_ESCAPE;
+                } else {
+                    arg.append(c);
+                }
+                break;
+            case DOUBLE_QUOTE_ESCAPE:
+                if (c != '"' && c != escape) {
+                    arg.append(escape);
+                }
+                arg.append(c);
+                state = State.DOUBLE_QUOTE;
+                break;
+            case SINGLE_QUOTE:
+                if (c == '\'') {
+                    state = State.ARG;
                 } else {
                     arg.append(c);
                 }
@@ -87,9 +102,5 @@ public final class ScriptArgumentParser {
             args.add(bld.toString());
             bld.delete(0, bld.length());
         }
-    }
-
-    private static boolean isQuote(char c) {
-        return c == '\'' || c == '"';
     }
 }

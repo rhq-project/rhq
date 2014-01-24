@@ -49,13 +49,25 @@ class AggregateIndexEntriesHandler implements FutureCallback<ResultSet> {
         for (Row row : resultSet) {
             indexEntries.add(row.getInt(1));
         }
-        remainingData.set(indexEntries.size());
-        indexEntriesArrival.countDown();
+
+        // Even if indexInetries is empty, it is possible (though unlikely) that a subsequent query could return a
+        // non-empty result set. This might happen if the index was updated at the very end of the last time slice, and
+        // we do an inconsistent read. When it is empty, abort() is called to let the AggregateXXXData objects know that
+        // the should update remainingData.
+        if (indexEntries.isEmpty()) {
+            indexEntriesArrival.abort();
+        } else {
+            remainingData.set(indexEntries.size());
+            indexEntriesArrival.countDown();
+        }
+
         stopwatch.stop();
+
         if (log.isDebugEnabled()) {
             log.debug("Finished loading " + indexEntries.size() + " " + src + " index entries in " +
                 stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
+
     }
 
     @Override

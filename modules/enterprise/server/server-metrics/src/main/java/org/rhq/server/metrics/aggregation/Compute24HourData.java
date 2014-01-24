@@ -79,6 +79,11 @@ class Compute24HourData implements AsyncFunction<List<ResultSet>, List<ResultSet
         ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
         List<Row> rows = resultSet.all();
 
+        // Inserting an aggregate metric currently requires three writes. If one of those writes fails, we could wind
+        // update with an IndexOutOfBoundsException in the loop below because it assumes rows.size() % 3 == 0 and that
+        // would could be false if writes fail. This won't be an issue though when the changes for BZ 1049054 are
+        // implemented, and this long comment can then be deleted.
+
         for (int i = 0; i < rows.size(); i += 3) {
             if (i == 0) {
                 min = rows.get(i + 1).getDouble(3);

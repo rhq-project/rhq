@@ -136,6 +136,9 @@ class AggregateRawData implements Runnable {
             // continue generating 1 hour data because we do not need the index
             // here since we already have 1 hour data to aggregate along with the
             // schedule ids.
+            log.debug("The wait for 1 hour index entries has been aborted. Proceeding with scheduling computation of " +
+                "1 hour aggregates for previously assigned schedules.");
+            state.getRemaining1HourData().addAndGet(scheduleIds.size());
         }
     }
 }

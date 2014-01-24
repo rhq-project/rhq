@@ -88,7 +88,7 @@ public class AvailabilityProxyConcurrencyTest implements AvailabilityFacet {
                 new Availability(new Resource(1), AvailabilityType.UP)); // our last avail is UP and will always be UP from now on
 
             // create several threads that will concurrently call getAvailability
-            final int numThreads = 10;
+            final int numThreads = 15;
             final Hashtable<String, AvailabilityType> availResults = new Hashtable<String, AvailabilityType>(numThreads);
             final Hashtable<String, Date> dateResults = new Hashtable<String, Date>(numThreads);
             final Hashtable<String, Throwable> throwableResults = new Hashtable<String, Throwable>(numThreads);
@@ -142,7 +142,7 @@ public class AvailabilityProxyConcurrencyTest implements AvailabilityFacet {
     public synchronized AvailabilityType getAvailability() {
         try {
             System.out.println("~~~AVAILABILITY FACET CALL #" + numberOfFacetCalls.incrementAndGet());
-            Thread.sleep(250); // just make it slow enough so a few proxy calls are done concurrently while this method is running
+            Thread.sleep(350); // just make it slow enough so a few proxy calls are done concurrently while this method is running
         } catch (Exception e) {
             System.out.println("~~~AVAILABILITY SLEEP WAS ABORTED: " + e);
         }

@@ -10,7 +10,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,17 +34,13 @@ class Compute6HourData implements AsyncFunction<List<ResultSet>, List<ResultSet>
 
     private DateTime startTime;
 
-    private RateLimiter writePermits;
-
     private MetricsDAO dao;
 
     private DateTime twentyFourHourTimeSlice;
 
-    public Compute6HourData(DateTime startTime, DateTime twentyFourHourTimeSlice, RateLimiter writePermits,
-        MetricsDAO dao) {
+    public Compute6HourData(DateTime startTime, DateTime twentyFourHourTimeSlice, MetricsDAO dao) {
         this.startTime = startTime;
         this.twentyFourHourTimeSlice = twentyFourHourTimeSlice;
-        this.writePermits = writePermits;
         this.dao = dao;
     }
 
@@ -59,8 +54,13 @@ class Compute6HourData implements AsyncFunction<List<ResultSet>, List<ResultSet>
             List<StorageResultSetFuture> insertFutures =
                 new ArrayList<StorageResultSetFuture>(oneHourDataResultSets.size());
             for (ResultSet resultSet : oneHourDataResultSets) {
+                if (resultSet == null) {
+                    // resultSet could be null if the 1 hr data query failed for whatever reason. We currently lack
+                    // a way of correlating the failed query back to a schedule id. It could be useful to log the
+                    // schedule id, possibly for debugging purposes.
+                    continue;
+                }
                 AggregateNumericMetric aggregate = calculateAggregate(resultSet);
-                writePermits.acquire(4);
                 insertFutures.add(dao.insertSixHourDataAsync(aggregate.getScheduleId(), aggregate.getTimestamp(),
                     AggregateType.MIN, aggregate.getMin()));
                 insertFutures.add(dao.insertSixHourDataAsync(aggregate.getScheduleId(), aggregate.getTimestamp(),

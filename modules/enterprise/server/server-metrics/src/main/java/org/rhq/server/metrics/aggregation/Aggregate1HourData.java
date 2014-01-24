@@ -11,7 +11,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,15 +39,12 @@ class Aggregate1HourData implements Runnable {
 
     private List<StorageResultSetFuture> queryFutures;
 
-    private RateLimiter readPermits;
-
     public Aggregate1HourData(MetricsDAO dao, AggregationState state, Set<Integer> scheduleIds,
-        List<StorageResultSetFuture> queryFutures, RateLimiter readPermits) {
+        List<StorageResultSetFuture> queryFutures) {
         this.dao = dao;
         this.state = state;
         this.scheduleIds = scheduleIds;
         this.queryFutures = queryFutures;
-        this.readPermits = readPermits;
     }
 
     @Override
@@ -94,7 +90,6 @@ class Aggregate1HourData implements Runnable {
                 update6HourIndexEntries();
                 List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(scheduleIds.size());
                 for (Integer scheduleId : scheduleIds) {
-                    readPermits.acquire();
                     queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, state.getTwentyFourHourTimeSlice().getMillis(),
                         state.getTwentyFourHourTimeSliceEnd().getMillis()));
                 }
@@ -109,7 +104,10 @@ class Aggregate1HourData implements Runnable {
                     "aggregation: " + e.getMessage());
             }
         } finally {
-            state.getRemaining1HourData().addAndGet(-scheduleIds.size());
+            int remainingSchedules = state.getRemaining1HourData().addAndGet(-scheduleIds.size());
+            if (log.isDebugEnabled()) {
+                log.debug("There are " + remainingSchedules + " remaining schedules with 1 hr data to be aggregated");
+            }
         }
     }
 

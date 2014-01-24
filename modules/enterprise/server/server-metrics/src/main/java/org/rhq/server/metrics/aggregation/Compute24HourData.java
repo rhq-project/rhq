@@ -10,7 +10,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,13 +32,10 @@ class Compute24HourData implements AsyncFunction<List<ResultSet>, List<ResultSet
 
     private DateTime startTime;
 
-    private RateLimiter writePermits;
-
     private MetricsDAO dao;
 
-    public Compute24HourData(DateTime startTime, RateLimiter writePermits, MetricsDAO dao) {
+    public Compute24HourData(DateTime startTime, MetricsDAO dao) {
         this.startTime = startTime;
-        this.writePermits = writePermits;
         this.dao = dao;
     }
 
@@ -53,8 +49,13 @@ class Compute24HourData implements AsyncFunction<List<ResultSet>, List<ResultSet
             List<StorageResultSetFuture> insertFutures =
                 new ArrayList<StorageResultSetFuture>(sixHourDataResultSets.size());
             for (ResultSet resultSet : sixHourDataResultSets) {
+                if (resultSet == null) {
+                    // resultSet could be null if the 6 hr data query failed for whatever reason. We currently lack
+                    // a way of correlating the failed query back to a schedule id. It could be useful to log the
+                    // schedule id, possibly for debugging purposes.
+                    continue;
+                }
                 AggregateNumericMetric aggregate = calculateAggregate(resultSet);
-                writePermits.acquire(3);
                 insertFutures.add(dao.insertTwentyFourHourDataAsync(aggregate.getScheduleId(), aggregate.getTimestamp(),
                     AggregateType.MIN, aggregate.getMin()));
                 insertFutures.add(dao.insertTwentyFourHourDataAsync(aggregate.getScheduleId(), aggregate.getTimestamp(),

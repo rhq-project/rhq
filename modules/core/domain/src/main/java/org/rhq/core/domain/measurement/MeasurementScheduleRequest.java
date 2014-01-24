@@ -25,8 +25,8 @@ package org.rhq.core.domain.measurement;
 import java.io.Serializable;
 
 /**
- * This class is a stripped down version of the {@link MeasurementSchedule} from the domain project. It is used to send
- * between Agent and Server, so it does not need all fields.
+ * This class is a stripped down version of the {@link MeasurementSchedule} from the domain
+ * project. It is used to send between Agent and Server, so it does not need all fields.
  *
  * @author <a href="mailto:heiko.rupp@redhat.com">Heiko W. Rupp</a>
  * @see    org.rhq.core.domain.measurement.MeasurementSchedule
@@ -40,15 +40,15 @@ public class MeasurementScheduleRequest implements Serializable {
      */
     public static final int NO_SCHEDULE_ID = 1;
 
-    private final int scheduleId;
-    private final String name;
+    private int scheduleId;
+    private String name;
     private int interval;
     private boolean enabled;
     byte dataNumType;
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
-        this(schedule.getId(),schedule.getDefinition().getName(),schedule.getInterval(),
-            schedule.isEnabled(),schedule.getDefinition().getDataType(),schedule.getDefinition().getRawNumericType());
+        this(schedule.getId(), schedule.getDefinition().getName(), schedule.getInterval(), schedule.isEnabled(),
+            schedule.getDefinition().getDataType(), schedule.getDefinition().getRawNumericType());
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType) {
@@ -56,24 +56,21 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public MeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
-        this(scheduleRequest.getScheduleId(),scheduleRequest.getName(),scheduleRequest.getInterval(),
-            scheduleRequest.isEnabled(),scheduleRequest.getDataType(),
-            scheduleRequest.getRawNumericType());
+        this(scheduleRequest.getScheduleId(), scheduleRequest.getName(), scheduleRequest.getInterval(), scheduleRequest
+            .isEnabled(), scheduleRequest.getDataType(), scheduleRequest.getRawNumericType());
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
-                                      NumericType rawNumericType) {
+        NumericType rawNumericType) {
         this.scheduleId = scheduleId;
-        if (name!=null) {
+        if (name != null) {
             this.name = name.intern();
-    }
-        else
+        } else
             this.name = null;
-        this.interval = (int) (interval/1000);
+        this.interval = (int) (interval / 1000);
         this.enabled = enabled;
-        this.dataNumType = toDataNumType(dataType,rawNumericType);
+        this.dataNumType = toDataNumType(dataType, rawNumericType);
     }
-
 
     public String getName() {
         return name;
@@ -84,11 +81,35 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public long getInterval() {
-        return interval*1000L;
+        return interval * 1000L;
     }
 
+    /**
+     * @deprecated since 4.10. Bad API, should not be called. This class should be treated as immutable by plugin code.
+     */
+    @Deprecated
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @deprecated since 4.10. Bad API, should not be called. This class should be treated as immutable by plugin code.
+     */
+    @Deprecated
+    public void setScheduleId(int scheduleId) {
+        this.scheduleId = scheduleId;
+    }
+
+    public boolean isPerMinute() {
+        return getRawNumericType() != null;
+    }
+
+    /**
+     * This method should never be called by plugin code. It is for internal use only.
+     * This class should be treated as immutable by plugin code.
+     */
     public void setInterval(long interval) {
-        this.interval = (int) (interval/1000);
+        this.interval = (int) (interval / 1000);
     }
 
     public boolean isEnabled() {
@@ -100,21 +121,21 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     public DataType getDataType() {
-        return DataType.values()[dataNumType/16 -1];
+        return DataType.values()[dataNumType / 16 - 1];
     }
 
     public NumericType getRawNumericType() {
         byte tmp = (byte) (dataNumType & 0x0f);
-        if (tmp==0)
+        if (tmp == 0)
             return null;
-        return NumericType.values()[tmp-1];
-//        return rawNumericType;
+        return NumericType.values()[tmp - 1];
     }
 
     @Override
     public String toString() {
-        return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval*1000L
-            + ", enabled=" + enabled + /*", dataType=" + dataType + ", rawNumericType=" + rawNumericType +*/ "]";
+        return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
+            * 1000L + ", enabled=" + enabled
+            + /*", dataType=" + dataType + ", rawNumericType=" + rawNumericType +*/"]";
     }
 
     @Override
@@ -153,8 +174,8 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     private byte toDataNumType(DataType dataType, NumericType numericType) {
-        byte dTmp = (byte) (dataType != null ? dataType.ordinal()+1 : 0);
-        byte nTmp = (byte) (numericType != null ? numericType.ordinal()+1 : 0);
+        byte dTmp = (byte) (dataType != null ? dataType.ordinal() + 1 : 0);
+        byte nTmp = (byte) (numericType != null ? numericType.ordinal() + 1 : 0);
         return (byte) (dTmp * 16 + nTmp);
     }
 }

@@ -64,7 +64,7 @@ class Aggregate6HourData implements Runnable {
                 stopwatch.stop();
                 log.debug("Finished aggregating 6 hour data for " + result.size() + " schedules in " +
                     stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-                state.getRemaining6HourData().addAndGet(-scheduleIds.size());
+                updateRemaining6HrData();
             }
 
             @Override
@@ -77,8 +77,15 @@ class Aggregate6HourData implements Runnable {
                     log.warn("Failed to aggregate 6 hour data for " + scheduleIds.size() + " schedules. An " +
                         "unexpected error occurred: " + ThrowableUtil.getRootMessage(t));
                 }
-                state.getRemaining6HourData().addAndGet(-scheduleIds.size());
+                updateRemaining6HrData();
             }
         });
+    }
+
+    private void updateRemaining6HrData() {
+        int remainingSchedules = state.getRemaining6HourData().addAndGet(-scheduleIds.size());
+        if (log.isDebugEnabled()) {
+            log.debug("There are " + remainingSchedules + " remaining schedules with 6 hr data to be aggregated");
+        }
     }
 }

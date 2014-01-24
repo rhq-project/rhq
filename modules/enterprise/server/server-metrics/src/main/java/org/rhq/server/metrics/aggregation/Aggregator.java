@@ -17,7 +17,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,9 +64,6 @@ public class Aggregator {
      */
     private SignalingCountDownLatch rawDataIndexEntriesArrival;
 
-    private RateLimiter readPermits;
-    private RateLimiter writePermits;
-
     private int batchSize;
 
     private AggregationState state;
@@ -77,14 +73,11 @@ public class Aggregator {
     private AtomicInteger remainingIndexEntries;
 
     public Aggregator(ListeningExecutorService aggregationTasks, MetricsDAO dao, MetricsConfiguration configuration,
-        DateTimeService dtService, DateTime startTime, int batchSize, RateLimiter writePermits,
-        RateLimiter readPermits) {
+        DateTimeService dtService, DateTime startTime, int batchSize) {
         this.dao = dao;
         this.configuration = configuration;
         this.dtService = dtService;
         this.startTime = startTime;
-        this.readPermits = readPermits;
-        this.writePermits = writePermits;
         this.batchSize = batchSize;
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
         rawDataIndexEntriesArrival = new SignalingCountDownLatch(new CountDownLatch(1));
@@ -100,9 +93,9 @@ public class Aggregator {
             .setSixHourTimeSliceEnd(sixHourTimeSlice.plus(configuration.getOneHourTimeSliceDuration()))
             .setTwentyFourHourTimeSlice(twentyFourHourTimeSlice)
             .setTwentyFourHourTimeSliceEnd(twentyFourHourTimeSlice.plus(configuration.getSixHourTimeSliceDuration()))
-            .setCompute1HourData(new Compute1HourData(startTime, sixHourTimeSlice, writePermits, dao, oneHourData))
-            .setCompute6HourData(new Compute6HourData(sixHourTimeSlice, twentyFourHourTimeSlice, writePermits, dao))
-            .setCompute24HourData(new Compute24HourData(twentyFourHourTimeSlice, writePermits, dao))
+            .setCompute1HourData(new Compute1HourData(startTime, sixHourTimeSlice, dao, oneHourData))
+            .setCompute6HourData(new Compute6HourData(sixHourTimeSlice, twentyFourHourTimeSlice, dao))
+            .setCompute24HourData(new Compute24HourData(twentyFourHourTimeSlice, dao))
             .set6HourTimeSliceFinished(hasTimeSliceEnded(sixHourTimeSlice, configuration.getOneHourTimeSliceDuration()))
             .set24HourTimeSliceFinished(hasTimeSliceEnded(twentyFourHourTimeSlice,
                 configuration.getSixHourTimeSliceDuration()))
@@ -150,13 +143,14 @@ public class Aggregator {
 
     public Set<AggregateNumericMetric> run() {
         log.info("Starting aggregation for time slice " + startTime);
-        readPermits.acquire();
         StorageResultSetFuture rawFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR,
             startTime.getMillis());
         Futures.addCallback(rawFuture, new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(ResultSet result) {
+                int schedules = 0;
                 List<Row> rows = result.all();
+                log.debug("Retrieved " + rows.size() + " schedule ids from raw data index");
                 state.getRemainingRawData().set(rows.size());
                 rawDataIndexEntriesArrival.countDown();
 
@@ -167,24 +161,25 @@ public class Aggregator {
                 List<StorageResultSetFuture> rawDataFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                 for (final Row row : rows) {
                     scheduleIds.add(row.getInt(1));
-                    readPermits.acquire();
                     rawDataFutures.add(dao.findRawMetricsAsync(row.getInt(1), startTime.getMillis(),
                         endTime.getMillis()));
                     if (rawDataFutures.size() == batchSize) {
                         state.getAggregationTasks().submit(new AggregateRawData(dao, state, scheduleIds,
-                            rawDataFutures, readPermits));
+                            rawDataFutures));
+                        schedules += rawDataFutures.size();
                         rawDataFutures = new ArrayList<StorageResultSetFuture>();
                         scheduleIds = new TreeSet<Integer>();
                     }
                 }
                 if (!rawDataFutures.isEmpty()) {
                     state.getAggregationTasks().submit(new AggregateRawData(dao, state, scheduleIds,
-                        rawDataFutures, readPermits));
+                        rawDataFutures));
+                    schedules += rawDataFutures.size();
                 }
 
                 if (log.isDebugEnabled()) {
                     stopwatch.stop();
-                    log.debug("Finished scheduling raw data aggregation tasks for " + rows.size() + " schedules in " +
+                    log.debug("Finished scheduling raw data aggregation tasks for " + schedules + " schedules in " +
                         stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
                 }
             }
@@ -207,7 +202,6 @@ public class Aggregator {
         if (state.is6HourTimeSliceFinished()) {
             log.debug("Fetching 1 hour index entries");
             Stopwatch stopwatch = new Stopwatch().start();
-            readPermits.acquire();
             StorageResultSetFuture oneHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.SIX_HOUR,
                 state.getSixHourTimeSlice().getMillis());
             Futures.addCallback(oneHourFuture, new AggregateIndexEntriesHandler(state.getOneHourIndexEntries(),
@@ -218,7 +212,6 @@ public class Aggregator {
         if (state.is24HourTimeSliceFinished()) {
             log.debug("Fetching 6 hour index entries");
             Stopwatch stopwatch = new Stopwatch().start();
-            readPermits.acquire();
             StorageResultSetFuture sixHourFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
                 state.getTwentyFourHourTimeSlice().getMillis());
             Futures.addCallback(sixHourFuture, new AggregateIndexEntriesHandler(state.getSixHourIndexEntries(),
@@ -245,20 +238,19 @@ public class Aggregator {
                     log.debug("Preparing to submit 1 hour data aggregation tasks for " +
                         state.getOneHourIndexEntries().size() + " schedules");
                     for (Integer scheduleId : state.getOneHourIndexEntries()) {
-                        readPermits.acquire();
                         queryFutures.add(dao.findOneHourMetricsAsync(scheduleId, state.getSixHourTimeSlice().getMillis(),
                             state.getSixHourTimeSliceEnd().getMillis()));
                         scheduleIds.add(scheduleId);
                         if (queryFutures.size() == batchSize) {
                             state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
-                                queryFutures, readPermits));
+                                queryFutures));
                             queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                             scheduleIds = new TreeSet<Integer>();
                         }
                     }
                     if (!queryFutures.isEmpty()) {
                         state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
-                            queryFutures, readPermits));
+                            queryFutures));
                         queryFutures = null;
                         scheduleIds = null;
                     }
@@ -287,7 +279,6 @@ public class Aggregator {
                     log.debug("Preparing to submit 6 hour data aggregation tasks for " +
                         state.getSixHourIndexEntries().size() + " schedules");
                     for (Integer scheduleId : state.getSixHourIndexEntries()) {
-                        readPermits.acquire();
                         queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, state.getTwentyFourHourTimeSlice().getMillis(),
                             state.getTwentyFourHourTimeSliceEnd().getMillis()));
                         scheduleIds.add(scheduleId);
@@ -357,7 +348,6 @@ public class Aggregator {
             break;
         }
         log.debug("Deleting " + table + " index entries for time slice " + time);
-        writePermits.acquire();
         StorageResultSetFuture future = dao.deleteMetricsIndexEntriesAsync(table, time.getMillis());
         Futures.addCallback(future, new FutureCallback<ResultSet>() {
             @Override

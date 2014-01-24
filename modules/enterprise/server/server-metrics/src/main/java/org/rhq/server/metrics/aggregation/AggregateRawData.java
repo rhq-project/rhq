@@ -11,7 +11,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,53 +39,54 @@ class AggregateRawData implements Runnable {
 
     private List<StorageResultSetFuture> queryFutures;
 
-    private RateLimiter readPermits;
-
     public AggregateRawData(MetricsDAO dao, AggregationState state, Set<Integer> scheduleIds,
-        List<StorageResultSetFuture> queryFutures, RateLimiter readPermits) {
+        List<StorageResultSetFuture> queryFutures) {
         this.dao = dao;
         this.state = state;
         this.scheduleIds = scheduleIds;
         this.queryFutures = queryFutures;
-        this.readPermits = readPermits;
     }
 
     @Override
     public void run() {
         final Stopwatch stopwatch = new Stopwatch().start();
-        ListenableFuture<List<ResultSet>> rawDataFutures = Futures.successfulAsList(queryFutures);
-        Futures.withFallback(rawDataFutures, new FutureFallback<List<ResultSet>>() {
-            @Override
-            public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
-                log.error("An error occurred while fetching raw data", t);
-                return Futures.immediateFailedFuture(t);
-            }
-        });
-
-        final ListenableFuture<List<ResultSet>> insert1HourDataFutures = Futures.transform(rawDataFutures,
-            state.getCompute1HourData(), state.getAggregationTasks());
-        Futures.addCallback(insert1HourDataFutures, new FutureCallback<List<ResultSet>>() {
-            @Override
-            public void onSuccess(List<ResultSet> resultSets) {
-                stopwatch.stop();
-                log.debug("Finished aggregating raw data for " + resultSets.size() + " schedules in " +
-                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-                start1HourDataAggregationIfNecessary();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                if (log.isDebugEnabled()) {
-                    // TODO should we log the schedule ids?
-                    log.debug("Failed to aggregate raw data for " + scheduleIds.size() + " schedules. An unexpected " +
-                        "error occurred.", t);
-                } else {
-                    log.warn("Failed to aggregate raw data for " + scheduleIds.size() + " schedules. An " +
-                        "unexpected error occurred: " + ThrowableUtil.getRootMessage(t));
+        try {
+            ListenableFuture<List<ResultSet>> rawDataFutures = Futures.successfulAsList(queryFutures);
+            Futures.withFallback(rawDataFutures, new FutureFallback<List<ResultSet>>() {
+                @Override
+                public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
+                    log.error("An error occurred while fetching raw data", t);
+                    return Futures.immediateFailedFuture(t);
                 }
-                start1HourDataAggregationIfNecessary();
-            }
-        }, state.getAggregationTasks());
+            });
+
+            final ListenableFuture<List<ResultSet>> insert1HourDataFutures = Futures.transform(rawDataFutures,
+                state.getCompute1HourData(), state.getAggregationTasks());
+            Futures.addCallback(insert1HourDataFutures, new FutureCallback<List<ResultSet>>() {
+                @Override
+                public void onSuccess(List<ResultSet> resultSets) {
+                    stopwatch.stop();
+                    log.debug("Finished aggregating raw data for " + scheduleIds.size() + " schedules in " +
+                        stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                    start1HourDataAggregationIfNecessary();
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    if (log.isDebugEnabled()) {
+                        // TODO should we log the schedule ids?
+                        log.debug("Failed to aggregate raw data for " + scheduleIds.size() + " schedules. An unexpected " +
+                            "error occurred.", t);
+                    } else {
+                        log.warn("Failed to aggregate raw data for " + scheduleIds.size() + " schedules. An " +
+                            "unexpected error occurred: " + ThrowableUtil.getRootMessage(t));
+                    }
+                    start1HourDataAggregationIfNecessary();
+                }
+            }, state.getAggregationTasks());
+        } catch (Exception e) {
+            log.error("An unexpected error occurred while aggregating raw data", e);
+        }
     }
 
     private void start1HourDataAggregationIfNecessary() {
@@ -96,12 +96,11 @@ class AggregateRawData implements Runnable {
                 List<StorageResultSetFuture> oneHourDataQueryFutures = new ArrayList<StorageResultSetFuture>(
                     scheduleIds.size());
                 for (Integer scheduleId : scheduleIds) {
-                    readPermits.acquire();
                     oneHourDataQueryFutures.add(dao.findOneHourMetricsAsync(scheduleId,
                         state.getSixHourTimeSlice().getMillis(), state.getSixHourTimeSliceEnd().getMillis()));
                 }
                 state.getAggregationTasks().submit(new Aggregate1HourData(dao, state, scheduleIds,
-                    oneHourDataQueryFutures, readPermits));
+                    oneHourDataQueryFutures));
             }
         } catch (InterruptedException e) {
             if (log.isDebugEnabled()) {
@@ -112,7 +111,11 @@ class AggregateRawData implements Runnable {
                     "aggregation: " + e.getMessage());
             }
         } finally {
-            state.getRemainingRawData().addAndGet(-scheduleIds.size());
+            int remainingSchedules = state.getRemainingRawData().addAndGet(-scheduleIds.size());
+            if (log.isDebugEnabled()) {
+                log.debug("There are " + remainingSchedules + " remaining schedules with raw data to be aggregated");
+            }
+
         }
     }
 

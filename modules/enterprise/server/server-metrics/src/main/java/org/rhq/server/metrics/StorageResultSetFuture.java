@@ -51,7 +51,7 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
         try {
             return wrapperFuture.getUninterruptibly();
         } catch (NoHostAvailableException e) {
-            session.fireClusterDownEvent(e);
+            session.handleNoHostAvailable(e);
             throw e;
         }
     }
@@ -64,7 +64,7 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
         try {
             return wrapperFuture.getUninterruptibly(timeout, unit);
         } catch (NoHostAvailableException e) {
-            session.fireClusterDownEvent(e);
+            session.handleNoHostAvailable(e);
             throw e;
         }
     }

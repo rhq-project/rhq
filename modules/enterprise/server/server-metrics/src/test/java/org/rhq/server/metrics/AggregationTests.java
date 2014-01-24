@@ -440,11 +440,11 @@ public class AggregationTests extends MetricsTest {
     private class AggregatorTestStub extends Aggregator {
 
         public AggregatorTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250);
         }
 
         public AggregatorTestStub(DateTime startTime, MetricsDAO dao) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250, writePermits, readPermits);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, 250);
         }
 
         @Override

@@ -1,8 +1,10 @@
 package org.rhq.server.metrics;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
@@ -12,6 +14,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,9 +32,30 @@ public class StorageSession implements Host.StateListener {
 
     private boolean isClusterAvailable = false;
 
+    private int minRequestLimit = 5000;
+
+    private RateLimiter permits = RateLimiter.create(Double.parseDouble(
+        System.getProperty("rhq.storage.request-limit", "50000")), 3, TimeUnit.MINUTES);
+
+    private int requestLimitDelta;
+
+    private long permitsLastChanged = System.currentTimeMillis();
+
+    private long permitsChangeWindow = 1000 * 10;
+
+    private boolean permitsChanging;
+
+    private ReentrantReadWriteLock permitsLock = new ReentrantReadWriteLock();
+
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
+
+        if (System.getProperty("rhq.storage.request-limit.delta") != null) {
+            requestLimitDelta = Integer.parseInt(System.getProperty("rhq.storage.request-limit.delta"));
+        } else {
+            requestLimitDelta = (int) (permits.getRate() * 0.2);
+        }
     }
 
     public void registerNewSession(Session newWrappedSession) {
@@ -52,39 +76,65 @@ public class StorageSession implements Host.StateListener {
         oldWrappedSession.shutdown();
     }
 
+    RateLimiter getPermits() {
+        return permits;
+    }
+
+    void setPermits(RateLimiter permits) {
+        this.permits = permits;
+    }
+
+    int getRequestLimitDelta() {
+        return requestLimitDelta;
+    }
+
+    void setRequestLimitDelta(int requestLimitDelta) {
+        this.requestLimitDelta = requestLimitDelta;
+    }
+
     public void addStorageStateListener(StorageStateListener listener) {
         listeners.add(listener);
     }
 
     public ResultSet execute(String query) {
         try {
+//            permits.acquire();
+            acquirePermit();
             return wrappedSession.execute(query);
         } catch (NoHostAvailableException e) {
-            fireClusterDownEvent(e);
+            handleNoHostAvailable(e);
             throw e;
         }
     }
 
     public ResultSet execute(Query query) {
         try {
+//            permits.acquire();
+            acquirePermit();
             return wrappedSession.execute(query);
         } catch (NoHostAvailableException e) {
-            fireClusterDownEvent(e);
+            handleNoHostAvailable(e);
             throw e;
         }
     }
 
     public StorageResultSetFuture executeAsync(String query) {
+//        permits.acquire();
+        acquirePermit();
         ResultSetFuture future = wrappedSession.executeAsync(query);
         return new StorageResultSetFuture(future, this);
     }
 
     public StorageResultSetFuture executeAsync(Query query) {
+//        permits.acquire();
+        acquirePermit();
         ResultSetFuture future = wrappedSession.executeAsync(query);
         return new StorageResultSetFuture(future, this);
     }
 
     public PreparedStatement prepare(String query) {
+//        permits.acquire();
+        acquirePermit();
         return wrappedSession.prepare(query);
     }
 
@@ -139,6 +189,56 @@ public class StorageSession implements Host.StateListener {
         log.info(host + " has been removed");
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeRemoved(host.getAddress());
+        }
+    }
+
+    void handleNoHostAvailable(NoHostAvailableException e) {
+        log.warn("Encountered " + NoHostAvailableException.class.getSimpleName() + " due to following error(s): " +
+            e.getErrors());
+        for (InetAddress address : e.getErrors().keySet()) {
+            String error = e.getErrors().get(address);
+            if (error != null && error.contains("Timeout during read")) {
+                try {
+                    permitsLock.writeLock().lock();
+                    if (System.currentTimeMillis() - permitsLastChanged > permitsChangeWindow) {
+                        permitsChanging = true;
+                        int newRate = (int) permits.getRate() - requestLimitDelta;
+                        if (newRate < minRequestLimit) {
+                            newRate = minRequestLimit;
+                        }
+                        log.warn("The request timed out. Decreasing request throughput to " + newRate);
+//                        permits.setRate(newRate);
+                        permits = RateLimiter.create(newRate, 2, TimeUnit.MINUTES);
+                        permitsLastChanged = System.currentTimeMillis();
+                        requestLimitDelta = requestLimitDelta * 2;
+                    }
+                } finally {
+                    permitsChanging = false;
+                    permitsLock.writeLock().unlock();
+                }
+
+                break;
+            }
+        }
+//        for (String error  : e.getErrors().values()) {
+//            if (error.contains("Timeout during read")) {
+//                log.warn("The request timed out. Decreasing request throughput.");
+//                permits.setRate(permits.getRate() - requestLimitDelta);
+//                break;
+//            }
+//        }
+    }
+
+    private void acquirePermit() {
+        if (permitsChanging) {
+            try {
+                permitsLock.readLock().lock();
+                permits.acquire();
+            } finally {
+                permitsLock.readLock().unlock();
+            }
+        } else {
+            permits.acquire();
         }
     }
 

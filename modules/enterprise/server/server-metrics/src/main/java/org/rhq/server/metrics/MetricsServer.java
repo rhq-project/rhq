@@ -45,7 +45,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -74,12 +73,6 @@ public class MetricsServer {
     private MetricsDAO dao;
 
     private MetricsConfiguration configuration;
-
-    private RateLimiter readPermits = RateLimiter.create(Double.parseDouble(
-        System.getProperty("rhq.storage.read-limit", "1000")), 3, TimeUnit.MINUTES);
-
-    private RateLimiter writePermits = RateLimiter.create(Double.parseDouble(
-        System.getProperty("rhq.storage.write-limit", "6000")), 3, TimeUnit.MINUTES);
 
     private boolean pastAggregationMissed;
 
@@ -112,22 +105,6 @@ public class MetricsServer {
 
     public void setUseAsyncAggregation(boolean useAsyncAggregation) {
         this.useAsyncAggregation = useAsyncAggregation;
-    }
-
-    public RateLimiter getReadPermits() {
-        return readPermits;
-    }
-
-    public void setReadPermits(RateLimiter readPermits) {
-        this.readPermits = readPermits;
-    }
-
-    public RateLimiter getWritePermits() {
-        return writePermits;
-    }
-
-    public void setWritePermits(RateLimiter writePermits) {
-        this.writePermits = writePermits;
     }
 
     public void init() {
@@ -411,7 +388,6 @@ public class MetricsServer {
             final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
             for (final MeasurementDataNumeric data : dataSet) {
-                writePermits.acquire();
                 StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
                 Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
                     @Override
@@ -443,7 +419,6 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
-        writePermits.acquire();
         StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
             timeSlice);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
@@ -485,13 +460,13 @@ public class MetricsServer {
                 if (pastAggregationMissed) {
                     DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                     new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
-                        aggregationBatchSize, writePermits, readPermits).run();
+                        aggregationBatchSize).run();
                     pastAggregationMissed = false;
                 }
 
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
                 return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                    aggregationBatchSize, writePermits, readPermits).run();
+                    aggregationBatchSize).run();
             } else {
                 if (pastAggregationMissed) {
                     calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());

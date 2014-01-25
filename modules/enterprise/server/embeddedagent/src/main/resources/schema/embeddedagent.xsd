@@ -1,0 +1,26 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:org.rhq:embeddedagent:1.0"
+           xmlns="urn:org.rhq.embeddedagent:1.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           version="1.0">
+
+    <xs:element name="subsystem" type="subsystemType"/>
+
+    <xs:complexType name="subsystemType">
+        <xs:attribute name="enabled" type="xs:boolean" use="required" default="false"/>
+        <xs:all>
+            <xs:element name="plugins" type="pluginsType"/>
+        </xs:all>
+    </xs:complexType>
+
+   <xs:complexType name="pluginsType">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+         <xs:element name="plugin" type="pluginType"/>
+      </xs:choice>
+   </xs:complexType>
+   <xs:complexType name="pluginType">
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="enabled" type="xs:boolean" use="required" default="true"/>
+   </xs:complexType>
+</xs:schema>

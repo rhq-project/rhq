@@ -77,6 +77,8 @@
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/startup-subsystem/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/startup-subsystem/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/embeddedagent/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/embeddedagent/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/filetemplate-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-subject/src/main/java"/>

@@ -1,0 +1,6 @@
+<subsystem xmlns="urn:org.rhq:embeddedagent:1.0" enabled="true">
+    <plugins>
+        <plugin name="platform" enabled="true" />
+        <plugin name="blah" enabled="false" />
+    </plugins>
+</subsystem>

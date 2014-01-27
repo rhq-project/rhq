@@ -113,7 +113,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE =
         "Configuration and child resource creation/deletion support for Apache is optional. "
             + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
-            + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
+            + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform."
+            + " Please refer to your agent's log for the precise exception that is causing this behavior. It will logged at error level only once "
+            + "per plugin container lifetime";
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
     public static final String PLUGIN_CONFIG_PROP_EXECUTABLE_PATH = "executablePath";
@@ -170,6 +172,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
+    private boolean augeasErrorLogged;
 
     private Map<String, String> moduleNames;
 
@@ -1067,7 +1070,13 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             try {
                 ag = new Augeas();
             } catch (Exception e) {
-                LOG.error("Augeas is enabled in configuration but was not found on the system.", e);
+                logAugeasError(e);
+                throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            } catch (NoClassDefFoundError e) {
+                logAugeasError(e);
+                throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            } catch (UnsatisfiedLinkError e) {
+                logAugeasError(e);
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             } finally {
                 if (ag != null) {
@@ -1081,12 +1090,23 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             String version = getVersion();
 
             if (!version.startsWith("2.")) {
-                LOG.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+                if (!augeasErrorLogged) {
+                    augeasErrorLogged = true;
+                    LOG.error("Augeas is only supported with Apache version 2.x but version '" + version +
+                        "' was detected.");
+                }
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             }
             return true;
         } else {
             return false;
+        }
+    }
+
+    private void logAugeasError(Throwable cause) {
+        if (!augeasErrorLogged) {
+            LOG.error("Augeas is enabled in configuration but was not found on the system.", cause);
+            augeasErrorLogged = true;
         }
     }
 

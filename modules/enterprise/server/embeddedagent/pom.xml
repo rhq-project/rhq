@@ -30,13 +30,28 @@
         </resources>
 
         <plugins>
-            <!-- COPY AGENT BINARIES <plugin> <artifactId>maven-dependency-plugin</artifactId> 
-                <executions> <execution> <id>copy-agent</id> <phase>process-resources</phase> 
-                <goals> <goal>unpack</goal> </goals> <configuration> <artifactItems> <artifactItem> 
-                <groupId>org.rhq</groupId> <artifactId>rhq-enterprise-server-ear</artifactId> 
-                <type>ear</type> <outputDirectory>${project.build.directory}/agent/</outputDirectory> 
-                </artifactItem> </artifactItems> </configuration> </execution> </executions> 
-                </plugin> -->
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-agent</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-enterprise-agent</artifactId>
+                                    <type>zip</type>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -67,6 +82,12 @@
         <dependency>
             <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-server</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-agent</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
 

@@ -4,7 +4,7 @@
 
     <resources>
         <resource-root path="${project.build.finalName}.jar"/>
-        <!-- <resource-root path="agent" /> -->
+        <resource-root path="rhq-agent" />
     </resources>
     
     <dependencies>

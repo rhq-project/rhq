@@ -27,8 +27,11 @@
             <directoryMode>0755</directoryMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/agent</directory>
-            <outputDirectory>/org/rhq/${artifactId}/main/agent</outputDirectory>
+            <directory>${project.build.directory}/rhq-agent</directory>
+            <outputDirectory>/org/rhq/${artifactId}/main/rhq-agent</outputDirectory>
+            <excludes>
+                <exclude>plugins</exclude>
+            </excludes>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>

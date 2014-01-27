@@ -4,7 +4,33 @@
 
     <resources>
         <resource-root path="${project.build.finalName}.jar"/>
-        <resource-root path="rhq-agent" />
+        <resource-root path="rhq-agent/lib/commons-httpclient-2.0.2.jar" /> <!-- agent seems to want this specific version -->
+        <resource-root path="rhq-agent/lib/commons-io-${commons-io.version}.jar" />
+        <resource-root path="rhq-agent/lib/commons-logging-${commons-logging.version}.jar" />
+        <resource-root path="rhq-agent/lib/concurrent-${concurrent.version}.jar" />
+        <resource-root path="rhq-agent/lib/dom4j-1.6.jar" /> <!-- agent seems to want this specific version -->
+        <resource-root path="rhq-agent/lib/getopt-${getopt.version}.jar" />
+        <resource-root path="rhq-agent/lib/i18nlog-${i18nlog.version}.jar" />
+        <resource-root path="rhq-agent/lib/jboss-common-core-${jboss-common-core.version}.jar" />
+        <resource-root path="rhq-agent/lib/jboss-jmx-${jboss-jmx.version}.jar" />
+        <resource-root path="rhq-agent/lib/jboss-logging-${jboss-logging.version}.jar" />
+        <resource-root path="rhq-agent/lib/jboss-remoting-${jboss-remoting.version}.jar" />
+        <resource-root path="rhq-agent/lib/jboss-serialization-${jboss-serialization.version}.jar" />
+        <resource-root path="rhq-agent/lib/jline-${jline.version}.jar" />
+        <resource-root path="rhq-agent/lib/log4j-${log4j.version}.jar" />
+        <resource-root path="rhq-agent/lib/persistence-api-1.0.jar" />
+        <resource-root path="rhq-agent/lib/rhq-common-drift-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-client-api-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-comm-api-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-domain-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-native-system-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-plugin-api-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-plugin-container-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-core-util-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-enterprise-agent-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/rhq-enterprise-comm-${project.version}.jar" />
+        <resource-root path="rhq-agent/lib/sigar-${sigar.version}.jar" />
+        <resource-root path="rhq-agent/lib/trove4j-3.0.3.jar" />
     </resources>
     
     <dependencies>

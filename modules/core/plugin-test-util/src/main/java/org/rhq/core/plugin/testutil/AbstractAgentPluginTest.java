@@ -117,7 +117,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
     @Deployment(name = "platform", order = 1)
-    public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
+    protected static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
         MavenResolverSystem mavenDependencyResolver = Maven.resolver();
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:" + getRhqVersion();
         return mavenDependencyResolver.offline().loadPomFromFile("pom.xml").resolve(platformPluginArtifact)
@@ -125,7 +125,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     @Deployment(name = "pluginUnderTest", order = 2)
-    public static RhqAgentPluginArchive getPluginUnderTest() throws Exception {
+    protected static RhqAgentPluginArchive getPluginUnderTest() throws Exception {
         // This is the jar that was just built during the Maven package phase, just prior to this test getting run
         // during the Maven integration-test phase. This is exactly what we want, because it's the real Maven-produced
         // jar, freshly assembled from the classes being tested.
@@ -158,7 +158,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * @throws Exception if an error occurs
      */
     @BeforeDiscovery
-    public void resetServerServices() throws Exception {
+    protected void resetServerServices() throws Exception {
         System.out.println("\n=== Resetting fake Server prior to running discovery scan...");
 
         this.serverInventory = new FakeServerInventory();
@@ -172,6 +172,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 this.serverServices.getDiscoveryServerService()
                     .mergeInventoryReport(Mockito.any(InventoryReport.class))).then(
                 serverInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+            Mockito.when(serverServices.getDiscoveryServerService().getResourceSyncInfo(Mockito.any(int.class))).then(
+                serverInventory.getResourceSyncInfo());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -180,7 +182,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     protected abstract int getTypeHierarchyDepth();
 
     @AfterDiscovery
-    public void waitForAsyncDiscoveries() throws Exception {
+    protected void waitForAsyncDiscoveries() throws Exception {
         try {
             discoveryCompleteChecker.waitForDiscoveryComplete(12000);
             System.out.println("\n====== Discovery completed.");

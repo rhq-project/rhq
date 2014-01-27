@@ -284,7 +284,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
     protected abstract List<String> getExpectedStartScriptArgs();
 
-    public void killServerProcesses() {
+    protected void killServerProcesses() {
         List<ProcessInfo> processes = getServerProcesses();
         System.out.println("\n=== Killing " + processes.size() + " " + getServerResourceType() + " processes...");
         for (ProcessInfo process : processes) {

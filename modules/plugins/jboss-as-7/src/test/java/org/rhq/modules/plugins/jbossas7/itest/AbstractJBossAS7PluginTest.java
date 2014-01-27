@@ -55,21 +55,23 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
 
     private static int OVERRIDE_TYPE_HIERARCHY_DEPTH = -1;
 
-    public static int getMaxDiscoveryDepthOverride() {
+    protected static int getMaxDiscoveryDepthOverride() {
         return OVERRIDE_TYPE_HIERARCHY_DEPTH;
     }
 
-    public static void setMaxDiscoveryDepthOverride(int overrideDepth) {
+    protected static void setMaxDiscoveryDepthOverride(int overrideDepth) {
         OVERRIDE_TYPE_HIERARCHY_DEPTH = overrideDepth;
     }
 
     private static boolean createdManagementUsers;
 
     /**
-     * Make sure a management user is configured on both discovered AS7 test servers.     
+     * Make sure a management user is configured on both discovered AS7 test servers.
      */
     @AfterDiscovery
-    public void installManagementUsers() throws PluginContainerException {
+    protected void installManagementUsers() throws PluginContainerException, Exception {
+        waitForAsyncDiscoveries();
+
         System.out.println("\n=== Discovery scan completed.");
         if (!createdManagementUsers) {
             System.out.println("====== Installing management users...");
@@ -110,7 +112,7 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         Configuration pluginConfig = resourceFromServer.getPluginConfiguration();
         pluginConfig.setSimpleValue("user", MANAGEMENT_USERNAME);
         pluginConfig.setSimpleValue("password", MANAGEMENT_PASSWORD);
-        
+
         // Restart the ResourceComponent, so it will start using the new plugin config.
         InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
         try {

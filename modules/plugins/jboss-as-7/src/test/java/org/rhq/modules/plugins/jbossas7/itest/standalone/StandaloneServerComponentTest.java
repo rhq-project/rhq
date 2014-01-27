@@ -172,7 +172,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     @AfterSuite
-    public void killServerProcesses() {
+    protected void killServerProcesses() {
         super.killServerProcesses();
     }
 

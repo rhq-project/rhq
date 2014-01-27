@@ -97,7 +97,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     }
 
     @AfterSuite
-    public void killServerProcesses() {
+    protected void killServerProcesses() {
         super.killServerProcesses();
     }
 

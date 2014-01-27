@@ -553,11 +553,13 @@ public class FakeServerInventory {
 
     public void removeResource(Resource r) {
         resourceStore.remove(r.getUuid());
+        HashSet<Resource> safeChildren = new HashSet<Resource>(r.getChildResources());
         Resource parent = r.getParentResource();
         if (parent != null) {
-            parent.getChildResources().remove(r);
+            parent.removeChildResource(r);
+            r.setParentResourceWithoutAncestry(null);
         }
-        for (Resource child : r.getChildResources()) {
+        for (Resource child : safeChildren) {
             removeResource(child);
         }
     }

@@ -346,17 +346,6 @@ public class FakeServerInventory {
         return result;
     }
 
-    public void removeResource(Resource r) {
-        resourceStore.remove(r.getUuid());
-        Resource parent = r.getParentResource();
-        if (parent != null) {
-            parent.getChildResources().remove(r);
-        }
-        for (Resource child : r.getChildResources()) {
-            removeResource(child);
-        }
-    }
-
     private Resource fakePersist(Resource agentSideResource, InventoryStatusJudge statusJudge,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());

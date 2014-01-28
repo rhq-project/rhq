@@ -79,6 +79,18 @@ public class DriftServerServiceImpl implements DriftServerService {
 
     @Override
     public Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds) {
+        List<Integer> ids = new ArrayList<Integer>(resourceIds);
+        Map<Integer, List<DriftDefinition>> result = new HashMap<Integer, List<DriftDefinition>>();
+        while (!ids.isEmpty()) {
+            // fix for Oracle > 1000 entries
+            List<Integer> subList = ids.subList(0, Math.min(500, ids.size()));
+            getDriftDefinitions0(result, subList);
+            subList.clear(); // removes entries from parent
+        }
+        return result;
+    }
+
+    private void getDriftDefinitions0(Map<Integer, List<DriftDefinition>> result, List<Integer> resourceIds) {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterResourceIds(resourceIds.toArray(new Integer[resourceIds.size()]));
         criteria.fetchConfiguration(true);
@@ -96,8 +108,6 @@ public class DriftServerServiceImpl implements DriftServerService {
         CriteriaQuery<DriftDefinition, DriftDefinitionCriteria> definitions = new CriteriaQuery<DriftDefinition, DriftDefinitionCriteria>(
             criteria, queryExecutor);
 
-        Map<Integer, List<DriftDefinition>> result = new HashMap<Integer, List<DriftDefinition>>();
-
         for (DriftDefinition driftDef : definitions) {
             Integer resourceId = driftDef.getResource().getId();
             List<DriftDefinition> list = result.get(resourceId);
@@ -107,8 +117,6 @@ public class DriftServerServiceImpl implements DriftServerService {
             }
             list.add(driftDef);
         }
-
-        return result;
     }
 
     @Override

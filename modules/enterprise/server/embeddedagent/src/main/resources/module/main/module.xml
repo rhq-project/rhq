@@ -4,6 +4,7 @@
 
     <resources>
         <resource-root path="${project.build.finalName}.jar"/>
+        <resource-root path="rhq-agent"/>
         <resource-root path="rhq-agent/lib/commons-httpclient-2.0.2.jar" /> <!-- agent seems to want this specific version -->
         <resource-root path="rhq-agent/lib/commons-io-${commons-io.version}.jar" />
         <resource-root path="rhq-agent/lib/commons-logging-${commons-logging.version}.jar" />

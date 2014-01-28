@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -52,14 +51,6 @@ class AggregateRawData implements Runnable {
         final Stopwatch stopwatch = new Stopwatch().start();
         try {
             ListenableFuture<List<ResultSet>> rawDataFutures = Futures.successfulAsList(queryFutures);
-            Futures.withFallback(rawDataFutures, new FutureFallback<List<ResultSet>>() {
-                @Override
-                public ListenableFuture<List<ResultSet>> create(Throwable t) throws Exception {
-                    log.error("An error occurred while fetching raw data", t);
-                    return Futures.immediateFailedFuture(t);
-                }
-            });
-
             final ListenableFuture<List<ResultSet>> insert1HourDataFutures = Futures.transform(rawDataFutures,
                 state.getCompute1HourData(), state.getAggregationTasks());
             Futures.addCallback(insert1HourDataFutures, new FutureCallback<List<ResultSet>>() {
@@ -124,10 +115,12 @@ class AggregateRawData implements Runnable {
             // Wait for the arrival so that we can remove the schedules ids in this
             // batch from the one hour index entries. This will prevent duplicate tasks
             // being submitted to process the same 1 hour data.
+            log.debug("Waiting for arrival of 1 hour index entries");
             state.getOneHourIndexEntriesArrival().await();
             try {
                 state.getOneHourIndexEntriesLock().writeLock().lock();
                 state.getOneHourIndexEntries().removeAll(scheduleIds);
+                log.debug("Finished updating state.oneHourIndexEntries");
             } finally {
                 state.getOneHourIndexEntriesLock().writeLock().unlock();
             }

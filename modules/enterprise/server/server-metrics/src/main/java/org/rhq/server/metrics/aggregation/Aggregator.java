@@ -222,15 +222,15 @@ public class Aggregator {
         try {
             try {
                 rawDataIndexEntriesArrival.await();
-                deleteIndexEntries(MetricsTable.ONE_HOUR);
             } catch (AbortedException e) {
             }
+            deleteIndexEntries(MetricsTable.ONE_HOUR);
 
             if (state.is6HourTimeSliceFinished()) {
+                boolean is1HourIndexWaitAborted = false;
                 waitFor(state.getRemainingRawData());
                 try {
                     state.getOneHourIndexEntriesArrival().await();
-                    deleteIndexEntries(MetricsTable.SIX_HOUR);
 
                     List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                     Set<Integer> scheduleIds = new TreeSet<Integer>();
@@ -255,6 +255,7 @@ public class Aggregator {
                         scheduleIds = null;
                     }
                 } catch (AbortedException e) {
+                    is1HourIndexWaitAborted = true;
                     if (log.isDebugEnabled()) {
                         log.debug("Some 6 hour aggregates may not get generated. There was an unexpected error while " +
                             "loading 1 hour index entries", e);
@@ -263,15 +264,18 @@ public class Aggregator {
                             "loading 1 hour index entries: " + ThrowableUtil.getRootMessage(e));
                     }
                 } finally {
-                    state.getOneHourIndexEntriesLock().writeLock().unlock();
+                    deleteIndexEntries(MetricsTable.SIX_HOUR);
+                    if (!is1HourIndexWaitAborted) {
+                        state.getOneHourIndexEntriesLock().writeLock().unlock();
+                    }
                 }
             }
 
             if (state.is24HourTimeSliceFinished()) {
+                boolean is6HourIndexWaitAborted = false;
                 waitFor(state.getRemaining1HourData());
                 try {
                     state.getSixHourIndexEntriesArrival().await();
-                    deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
 
                     List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(batchSize);
                     Set<Integer> scheduleIds = new TreeSet<Integer>();
@@ -296,6 +300,7 @@ public class Aggregator {
                         scheduleIds = null;
                     }
                 } catch (AbortedException e) {
+                    is6HourIndexWaitAborted = true;
                     if (log.isDebugEnabled()) {
                         log.debug("Some 24 hour aggregates may not get generated. There was an unexpected error while " +
                             "loading 6 hour index entries", e);
@@ -304,12 +309,23 @@ public class Aggregator {
                             "loading 6 hour index entries: " + ThrowableUtil.getRootMessage(e));
                     }
                 } finally {
-                    state.getSixHourIndexEntriesLock().writeLock().unlock();
+                    deleteIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
+                    if (!is6HourIndexWaitAborted) {
+                        state.getSixHourIndexEntriesLock().writeLock().unlock();
+                    }
                 }
             }
 
+            long lastUpdated = System.currentTimeMillis();
             while (!isAggregationFinished()) {
-                Thread.sleep(50);
+                if (log.isDebugEnabled() && ((System.currentTimeMillis() - lastUpdated) >= 30000)) {
+                    log.debug("Remaining aggregation:\n" +
+                        "raw data - " + state.getRemainingRawData().get() + "\n" +
+                        "1 hour data - " + state.getRemaining1HourData().get() + "\n" +
+                        "6 hour data - " + state.getRemaining6HourData().get() + "\n");
+                    lastUpdated = System.currentTimeMillis();
+                }
+                Thread.sleep(3000);
             }
         } catch (InterruptedException e) {
             if (log.isDebugEnabled()) {

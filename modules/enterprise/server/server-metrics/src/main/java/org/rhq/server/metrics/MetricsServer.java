@@ -81,7 +81,7 @@ public class MetricsServer {
     private AtomicLong totalAggregationTime = new AtomicLong();
 
     private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
-        Executors.newFixedThreadPool(5));
+        Executors.newFixedThreadPool(5, new StorageClientThreadFactory()));
 
     private int aggregationBatchSize;
 
@@ -440,7 +440,7 @@ public class MetricsServer {
                     rawData);
                 callback.onFailure(throwable);
             }
-        });
+        }, aggregationWorkers);
     }
 
     /**

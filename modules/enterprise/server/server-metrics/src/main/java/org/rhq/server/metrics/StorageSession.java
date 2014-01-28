@@ -32,7 +32,7 @@ public class StorageSession implements Host.StateListener {
 
     private boolean isClusterAvailable = false;
 
-    private int minRequestLimit = 5000;
+    private int minRequestLimit = Integer.parseInt(System.getProperty("rhq.storage.request-limit.min", "1000"));
 
     private RateLimiter permits = RateLimiter.create(Double.parseDouble(
         System.getProperty("rhq.storage.request-limit", "50000")), 3, TimeUnit.MINUTES);

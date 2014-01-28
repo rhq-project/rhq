@@ -54,6 +54,61 @@
             </plugin>
 
             <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>rename-native-libs-and-reconfigure</id>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <target>
+                                <echo>Must move native libraries so JBoss Modules can find them</echo>
+                                <property name="agent.lib" location="${project.build.directory}/rhq-agent/lib"/>
+                                <property name="module.lib" location="${project.build.directory}/module-lib"/>
+                                <!-- Notice that the agent's "augeas" native libs are not copied.
+                                     I think its only used for some plugins we won't be using in embedded mode anyway. -->
+                                <!-- TODO these should probably be "move", I don't think we need dup copies in agent lib anymore -->
+                                <copy tofile="${module.lib}/linux-i686/libsigar.so"       file="${agent.lib}/libsigar-x86-linux.so"       preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/linux-x86_64/libsigar.so"     file="${agent.lib}/libsigar-amd64-linux.so"     preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/linux-ia64/libsigar.so"       file="${agent.lib}/libsigar-ia64-linux.so"      preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/linux-ppc64/libsigar.so"      file="${agent.lib}/libsigar-ppc64-linux.so"     preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/linux-ppc/libsigar.so"        file="${agent.lib}/libsigar-ppc-linux.so"       preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/linux-s390x/libsigar.so"      file="${agent.lib}/libsigar-s390x-linux.so"     preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/win-i686/sigar.dll"           file="${agent.lib}/sigar-x86-winnt.dll"         preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/win-x86_64/sigar.dll"         file="${agent.lib}/sigar-amd64-winnt.dll"       preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/hpux-ia64w/libsigar.sl"       file="${agent.lib}/libsigar-ia64-hpux-11.sl"    preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/hpux-parisc/libsigar.sl"      file="${agent.lib}/libsigar-pa-hpux-11.sl"      preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/aix-ppc/libsigar.so"          file="${agent.lib}/libsigar-ppc-aix-5.so"       preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/aix-ppc64/libsigar.so"        file="${agent.lib}/libsigar-ppc64-aix-5.so"     preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/solaris-i686/libsigar.so"     file="${agent.lib}/libsigar-x86-solaris.so"     preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/solaris-x86_64/libsigar.so"   file="${agent.lib}/libsigar-amd64-solaris.so"   preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/solaris-sparc/libsigar.so"    file="${agent.lib}/libsigar-sparc-solaris.so"   preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/solaris-sparcv9/libsigar.so"  file="${agent.lib}/libsigar-sparc64-solaris.so" preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/freebsd-i686/libsigar.so"     file="${agent.lib}/libsigar-x86-freebsd-6.so"   preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/freebsd-x86_64/libsigar.so"   file="${agent.lib}/libsigar-amd64-freebsd-6.so" preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/macosx-i686/libsigar.dylib"   file="${agent.lib}/libsigar-universal-macosx.dylib"   preservelastmodified="true"/>
+                                <copy tofile="${module.lib}/macosx-x86_64/libsigar.dylib" file="${agent.lib}/libsigar-universal64-macosx.dylib" preservelastmodified="true"/>
+
+                                <echo>Adjust default configuration</echo>
+                                <property name="config.xml" location="${project.build.directory}/rhq-agent/conf/agent-configuration.xml"/>
+                                <!-- because we are embedded, as can't have a prompt and ask user, so we will ensure the agent is always fully setup -->
+                                <replaceregexp file="${config.xml}" flags="s"
+                                               match='&lt;!--(\s*)&lt;entry key="rhq.agent.configuration-setup-flag" value="false" /&gt;(\s*)--&gt;'
+                                               replace='&lt;entry key="rhq.agent.configuration-setup-flag" value="true" /&gt; BOOO' />
+                                <!-- we don't support agent auto-update while the agent is embedded -->
+                                <replaceregexp file="${config.xml}"
+                                               match='&lt;entry key="rhq.agent.agent-update.enabled" value="true" /&gt;'
+                                               replace='&lt;entry key="rhq.agent.agent-update.enabled" value="false" /&gt; BOOO' />
+
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>

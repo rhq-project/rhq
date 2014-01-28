@@ -35,6 +35,12 @@
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/module-lib</directory>
+            <outputDirectory>/org/rhq/${artifactId}/main/lib</outputDirectory>
+            <fileMode>0755</fileMode>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
     </fileSets>
 </assembly>
 

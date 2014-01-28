@@ -7,6 +7,8 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.ServiceVerificationHandler;
+import org.jboss.as.server.ServerEnvironment;
+import org.jboss.as.server.ServerEnvironmentService;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.jboss.logging.Logger;
@@ -62,8 +64,12 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         service.setPlugins(pluginsWithEnableFlag);
 
         ServiceName name = AgentService.SERVICE_NAME;
-        ServiceController<AgentService> controller = context.getServiceTarget().addService(name, service)
-                .addListener(verificationHandler).setInitialMode(Mode.ACTIVE).install();
+        ServiceController<AgentService> controller = context.getServiceTarget() //
+            .addService(name, service) //
+            .addDependency(ServerEnvironmentService.SERVICE_NAME, ServerEnvironment.class, service.envServiceValue) //
+            .addListener(verificationHandler) //
+            .setInitialMode(Mode.ACTIVE) //
+            .install();
         newControllers.add(controller);
         return;
     }

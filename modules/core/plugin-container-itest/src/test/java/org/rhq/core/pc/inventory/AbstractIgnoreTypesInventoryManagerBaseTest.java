@@ -143,25 +143,25 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
 
     protected void waitForInventory(int depth) throws Exception {
         long start = System.currentTimeMillis();
-        int inventoryDepth = getInventoryDepth(platform);
+        int inventoryDepth = getInventoryDepth(pluginContainer.getInventoryManager().getPlatform(), "");
         while (inventoryDepth < depth) {
             if (System.currentTimeMillis() - start > 60000L) {
                 assert false : "Failed to get proper depth, depth is currently at=" + inventoryDepth;
             }
             Thread.sleep(1000);
-            inventoryDepth = getInventoryDepth(platform);
+            inventoryDepth = getInventoryDepth(platform, "");
         }
         return;
     }
 
-    protected int getInventoryDepth(Resource root) {
-        System.out.println("Inventory depth chart: " + root);
+    protected int getInventoryDepth(Resource root, String indent) {
+        System.out.println("Inventory depth chart: " + indent + root);
         if (root == null) {
             return 0;
         }
         int maxDepth = 0;
         for (Resource c : root.getChildResources()) {
-            int childDepth = getInventoryDepth(c);
+            int childDepth = getInventoryDepth(c, "  " + indent);
             if (maxDepth < childDepth) {
                 maxDepth = childDepth;
             }

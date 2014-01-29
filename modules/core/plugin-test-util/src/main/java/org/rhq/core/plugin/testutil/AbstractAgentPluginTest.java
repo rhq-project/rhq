@@ -153,6 +153,17 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     /**
+     * Superclass can override this to add additional mocked services to those already
+     * defined in this abstract base class.  The base class will call for injection each
+     * time the mocks are reset.
+     *
+     * @param serverServices
+     */
+    protected void injectMocks(MockingServerServices serverServices) {
+        return;
+    }
+
+    /**
      * Set up our fake server discovery ServerService, which will auto-import all Resources in reports it receives.
      *
      * @throws Exception if an error occurs
@@ -174,6 +185,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 serverInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
             Mockito.when(serverServices.getDiscoveryServerService().getResourceSyncInfo(Mockito.any(int.class))).then(
                 serverInventory.getResourceSyncInfo());
+
+            injectMocks(this.serverServices);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -457,13 +457,26 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             report.setErrorMessage("An error occured while the agent was preparing for content download");
             return report;
         }
+
+        long size = 0L;
         try {
-            contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
+            size = contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(),
+                out);
         } catch (Exception e) {
             uploadConnection.cancelUpload();
             report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage("An error occured while the agent was downloading the content");
+            report.setErrorMessage("An error occured while the agent was uploading the content for ["
+                + details.getKey() + "]");
             return report;
+        }
+
+        if (0L == size) {
+            uploadConnection.cancelUpload();
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("An error occured (0 bytes) while the agent was uploading the content for ["
+                + details.getKey() + "]");
+            return report;
+
         }
 
         JsonNode uploadResult = uploadConnection.finishUpload();

@@ -67,12 +67,12 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.DiscoveredResources;
+import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.ResourceComponentInstances;
 import org.rhq.test.arquillian.RunDiscovery;
-import org.rhq.test.arquillian.ServerServicesSetup;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -95,20 +95,16 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
     private static TestDeployments DEPLOYMENT_TO_SERVE = TestDeployments.DEPLOYMENT_1;
 
-    //this is no test method
-    @ServerServicesSetup
-    @Test(enabled = false)
-    public void setupContentServices() {
+    @Override
+    protected void injectMocks(MockingServerServices serverServices) {
         Mockito.when(
             serverServices.getContentServerService().downloadPackageBitsForChildResource(Mockito.anyInt(),
                 Mockito.anyString(), Mockito.any(PackageDetailsKey.class), Mockito.any(OutputStream.class))).then(
             new Answer<Long>() {
                 @Override
                 public Long answer(InvocationOnMock invocation) throws Throwable {
-                    InputStream str = getClass().getClassLoader().getResourceAsStream(
-                        DEPLOYMENT_TO_SERVE.getResourcePath());
                     OutputStream out = (OutputStream) invocation.getArguments()[invocation.getArguments().length - 1];
-                    return copyStreamAndReturnCount(str, out);
+                    return copyStreamAndReturnCount(out);
                 }
             });
 
@@ -117,10 +113,8 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
                 Mockito.any(PackageDetailsKey.class), Mockito.any(OutputStream.class))).then(new Answer<Long>() {
             @Override
             public Long answer(InvocationOnMock invocation) throws Throwable {
-                InputStream str = getClass().getClassLoader()
-                    .getResourceAsStream(DEPLOYMENT_TO_SERVE.getResourcePath());
                 OutputStream out = (OutputStream) invocation.getArguments()[invocation.getArguments().length - 1];
-                return copyStreamAndReturnCount(str, out);
+                return copyStreamAndReturnCount(out);
             }
         });
     }
@@ -243,6 +237,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     }
 
     @Test(priority = 16)
+    @RunDiscovery
     public void testUndeploy() throws Exception {
         Resource deployment = deploymentResources.iterator().next();
         DeleteResourceRequest request = new DeleteResourceRequest(0, deployment.getId());
@@ -300,14 +295,28 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         }
     }
 
-    static long copyStreamAndReturnCount(InputStream in, OutputStream out) throws IOException {
-        int data;
+    private long copyStreamAndReturnCount(OutputStream out) throws IOException {
+        if (null == out) {
+            System.out.println("**** Unexepected null output stream in mock code!!");
+            return 0L;
+        }
+
+        String path = DEPLOYMENT_TO_SERVE.getResourcePath();
+        InputStream in = getClass().getClassLoader().getResourceAsStream(path);
+
         long cnt = 0;
-        while ((data = in.read()) != -1) {
-            if (out != null) {
-                out.write(data);
+
+        try {
+            int data;
+            while ((data = in.read()) != -1) {
+                if (out != null) {
+                    out.write(data);
+                }
+                cnt++;
             }
-            cnt++;
+        } finally {
+            in.close();
+            out.flush();
         }
         return cnt;
     }

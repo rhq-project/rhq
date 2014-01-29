@@ -448,17 +448,35 @@
                 </configuration>
               </execution>
               <execution>
-                 <id>delete</id>
+                 <id>delete-post</id>
                  <phase>post-integration-test</phase>
                  <goals>
                     <goal>run</goal>
                 </goals>
                 <configuration>
                    <target>
+                      <echo>*** Deleting AS7 ${jboss7.home}...</echo>                   
                       <delete dir="${jboss7.home}" />
+                      <echo>*** Deleting data ./data...</echo>
+                      <delete dir="./data" />                      
                    </target>
                 </configuration>
               </execution>
+              <execution>
+                 <id>delete-clean</id>
+                 <phase>clean</phase>
+                 <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                   <target>
+                      <echo>*** Deleting AS7 ${jboss7.home}...</echo>                   
+                      <delete dir="${jboss7.home}" />
+                      <echo>*** Deleting data ./data...</echo>
+                      <delete dir="./data" />                      
+                   </target>
+                </configuration>
+              </execution>              
             </executions>
           </plugin>
 
@@ -609,7 +627,7 @@
               <skipITs>false</skipITs>
               <includes>
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
-                <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
+                <include>org/rhq/modules/plugins/jbossas7/itest/**/DeploymentTest.java</include>
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>-->

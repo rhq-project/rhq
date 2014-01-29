@@ -154,7 +154,7 @@ public class FakeServerInventory {
 
     private Resource platform;
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
-    private int counter;
+    //private int counter;
     private AtomicInteger metricScheduleCounter = new AtomicInteger(1); // used when creating measurement schedules
     private boolean failing;
     private boolean failUpgrade;
@@ -576,10 +576,11 @@ public class FakeServerInventory {
         }
         if (persisted == null) {
             persisted = new Resource();
-            if (agentSideResource.getId() != 0 && counter < agentSideResource.getId()) {
-                counter = agentSideResource.getId() - 1;
+            if (agentSideResource.getId() != 0) {
+                persisted.setId(agentSideResource.getId());
+            } else {
+                persisted.setId(agentSideResource.getUuid().hashCode());
             }
-            persisted.setId(++counter);
             persisted.setUuid(agentSideResource.getUuid());
             persisted.setAgent(agentSideResource.getAgent());
             persisted.setCurrentAvailability(agentSideResource.getCurrentAvailability());

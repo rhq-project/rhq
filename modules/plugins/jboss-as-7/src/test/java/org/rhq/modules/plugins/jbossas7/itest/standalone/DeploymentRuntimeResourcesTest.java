@@ -19,17 +19,14 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.copyStreamAndReturnCount;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getMeasurementScheduleRequests;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getMissingMeasurements;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getTestDeploymentPackageDetails;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
@@ -40,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -59,15 +57,15 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.DiscoveredResources;
+import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
-import org.rhq.test.arquillian.ServerServicesSetup;
 
 /**
  * This test ensures that "* Runtime" (JPA, Messaging, EJB3) child resources of a deployment get discovered.
  *
  * @author Thomas Segismont
  */
-@Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
+@Test
 public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     private static final Log LOG = LogFactory.getLog(DeploymentRuntimeResourcesTest.class);
 
@@ -100,39 +98,59 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
         }
     }
 
-    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "JBossAS7 Standalone Server")
-    private Set<Resource> standaloneResources;
+    protected void injectMocks(MockingServerServices serverServices) {
+        Mockito.when(
+            serverServices.getContentServerService().downloadPackageBitsGivenResource(Mockito.anyInt(),
+                Mockito.any(PackageDetailsKey.class), Mockito.any(OutputStream.class))).then(new Answer<Long>() {
+            @Override
+            public Long answer(InvocationOnMock invocation) throws Throwable {
+                OutputStream out = (OutputStream) invocation.getArguments()[invocation.getArguments().length - 1];
+                return copyStreamAndReturnCount(out);
+            }
+        });
 
-    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "Deployment")
-    private Set<Resource> deploymentResources;
-
-    @ServerServicesSetup
-    @Test(enabled = false)
-    public void setupContentServices() {
         Mockito.when(
             serverServices.getContentServerService().downloadPackageBitsForChildResource(Mockito.anyInt(),
                 Mockito.anyString(), Mockito.any(PackageDetailsKey.class), Mockito.any(OutputStream.class))).then(
             new Answer<Long>() {
                 @Override
                 public Long answer(InvocationOnMock invocation) throws Throwable {
-                    InputStream str = getClass().getClassLoader().getResourceAsStream(
-                        TestDeployments.JAVAEE6_TEST_APP.getResourcePath());
                     OutputStream out = (OutputStream) invocation.getArguments()[invocation.getArguments().length - 1];
-                    return copyStreamAndReturnCount(str, out);
+                    return copyStreamAndReturnCount(out);
                 }
             });
+    }
 
-        Mockito.when(
-            serverServices.getContentServerService().downloadPackageBitsGivenResource(Mockito.anyInt(),
-                Mockito.any(PackageDetailsKey.class), Mockito.any(OutputStream.class))).then(new Answer<Long>() {
-            @Override
-            public Long answer(InvocationOnMock invocation) throws Throwable {
-                InputStream str = getClass().getClassLoader().getResourceAsStream(
-                    TestDeployments.JAVAEE6_TEST_APP.getResourcePath());
-                OutputStream out = (OutputStream) invocation.getArguments()[invocation.getArguments().length - 1];
-                return copyStreamAndReturnCount(str, out);
+    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "JBossAS7 Standalone Server")
+    private Set<Resource> standaloneResources;
+
+    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "Deployment")
+    private Set<Resource> deploymentResources;
+
+    private long copyStreamAndReturnCount(OutputStream out) throws IOException {
+        if (null == out) {
+            System.out.println("**** Unexepected null output stream in mock code!!");
+            return 0L;
+        }
+
+        String path = TestDeployments.JAVAEE6_TEST_APP.getResourcePath();
+        InputStream in = getClass().getClassLoader().getResourceAsStream(path);
+
+        long cnt = 0;
+
+        try {
+            int data;
+            while ((data = in.read()) != -1) {
+                if (out != null) {
+                    out.write(data);
+                }
+                cnt++;
             }
-        });
+        } finally {
+            in.close();
+            out.flush();
+        }
+        return cnt;
     }
 
     @Test(priority = 10)
@@ -174,7 +192,7 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     }
 
     private void ensureAllRuntimeServicesAreFound() throws InterruptedException {
-        long start = currentTimeMillis();
+        long start = System.currentTimeMillis();
         boolean foundAllRuntimeServices = false;
         do {
             boolean runtimeServiceMissing = false;
@@ -187,10 +205,11 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
                 }
             }
             foundAllRuntimeServices = !runtimeServiceMissing;
-            Thread.sleep(SECONDS.toMillis(5));
-        } while (!foundAllRuntimeServices && (currentTimeMillis() - start) < MINUTES.toMillis(10));
-        assertTrue(foundAllRuntimeServices, "Could not find all runtime services");
-        Thread.sleep(MINUTES.toMillis(5));
+            //Thread.sleep(SECONDS.toMillis(5));
+        } while (!foundAllRuntimeServices
+            && (System.currentTimeMillis() - start) < java.util.concurrent.TimeUnit.MINUTES.toMillis(10));
+        Assert.assertTrue(foundAllRuntimeServices, "Could not find all runtime services");
+        //Thread.sleep(MINUTES.toMillis(5));
     }
 
     private boolean canGetMeasurementFacet(Set<Resource> resources) {
@@ -247,6 +266,7 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     }
 
     @Test(priority = 99)
+    @RunDiscovery
     public void testUndeploy() throws Exception {
         Resource deploymentResource = getDeploymentResource();
         DeleteResourceRequest request = new DeleteResourceRequest(0, deploymentResource.getId());

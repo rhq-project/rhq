@@ -33,7 +33,7 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
-import com.smartgwt.client.widgets.form.fields.TimeItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
@@ -257,18 +257,21 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         public CustomDateRangeWindow(String title, String windowTitle,
             final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {
             super();
-            setTitle(windowTitle + ": " + title);
+            setTitle("");
             setShowMinimizeButton(false);
             setShowMaximizeButton(false);
             setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);
-            setWidth(450);
-            setHeight(340);
+            setWidth(420);
+            setHeight(450);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();
+
             DynamicForm form = new DynamicForm();
+            form.setGroupTitle(windowTitle + " "+title);
+            form.setIsGroup(true);
             form.setMargin(25);
             form.setAutoFocus(true);
             form.setShowErrorText(true);
@@ -277,15 +280,44 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             form.setWidth100();
             form.setPadding(5);
             form.setLayoutAlign(VerticalAlignment.BOTTOM);
+
             final DateItem startDateItem = new DateItem("startDate", MSG.common_buttonbar_start_date());
             startDateItem.setValue(startTime);
-            final TimeItem startTimeItem = new TimeItem("startTime", MSG.common_buttonbar_start_time());
-            startTimeItem.setValue(startTime);
+
+            final SpinnerItem startTimeHours = new SpinnerItem("startTimeHours",MSG.chart_slider_button_bar_hour());
+            startTimeHours.setMax(23);
+            startTimeHours.setMin(0);
+            startTimeHours.setWidth(60);
+            startTimeHours.setValue(startDateItem.getValueAsDate().getHours());
+
+            final SpinnerItem startTimeMinutes = new SpinnerItem("startTimeMinutes",MSG.chart_slider_button_bar_minute());
+            startTimeMinutes.setMax(59);
+            startTimeMinutes.setStep(5);
+            startTimeMinutes.setMin(0);
+            startTimeMinutes.setWidth(60);
+            startTimeMinutes.setEndRow(true);
+            startTimeMinutes.setValue(startDateItem.getValueAsDate().getMinutes());
+
             final DateItem endDateItem = new DateItem("endDate", MSG.common_buttonbar_end_date());
             endDateItem.setValue(endTime);
-            final TimeItem endTimeItem = new TimeItem("endTime", MSG.common_buttonbar_end_time());
-            endTimeItem.setValue(endTime);
-            form.setFields(startDateItem, startTimeItem, new RowSpacerItem(), endDateItem, endTimeItem,
+
+            final SpinnerItem endTimeHours = new SpinnerItem("endTimeHours", MSG.chart_slider_button_bar_hour());
+            endTimeHours.setMax(23);
+            endTimeHours.setMin(0);
+            endTimeHours.setWidth(60);
+            endTimeHours.setValue(endDateItem.getValueAsDate().getHours());
+
+            final SpinnerItem endTimeMinutes = new SpinnerItem("endTimeMinutes",MSG.chart_slider_button_bar_minute());
+            endTimeMinutes.setMax(59);
+            endTimeMinutes.setMin(0);
+            endTimeMinutes.setStep(5);
+            endTimeMinutes.setWidth(60);
+            endTimeMinutes.setValue(endDateItem.getValueAsDate().getMinutes());
+
+            form.setFields(startDateItem,  startTimeHours,  startTimeMinutes,
+                    new RowSpacerItem(), new RowSpacerItem(),
+                    endDateItem,
+                    endTimeHours, endTimeMinutes,
                 new RowSpacerItem());
             this.addItem(form);
 
@@ -305,15 +337,13 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             saveButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
-                    Date startTimeDate = (Date) startTimeItem.getValue();
-                    Date endTimeDate = (Date) endTimeItem.getValue();
-
+                    //@todo: eventually get rid of deprecated calls but not in 3.2.1 minor release
                     Date newStartDate = new Date(startDateItem.getValueAsDate().getYear(), startDateItem
-                        .getValueAsDate().getMonth(), startDateItem.getValueAsDate().getDate(), startTimeDate
-                        .getHours(), startTimeDate.getMinutes());
+                        .getValueAsDate().getMonth(), startDateItem.getValueAsDate().getDate(),  (Integer) startTimeHours.getValue(),
+                            (Integer) startTimeMinutes.getValue());
                     Date newEndDate = new Date(endDateItem.getValueAsDate().getYear(), endDateItem.getValueAsDate()
-                        .getMonth(), endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate
-                        .getMinutes());
+                        .getMonth(), endDateItem.getValueAsDate().getDate(), (Integer) endTimeHours.getValue(),
+                            (Integer) endTimeMinutes.getValue());
                     buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), newEndDate.getTime());
                     redrawGraphs();
                     showUserFriendlyTimeRange(newStartDate.getTime(), newEndDate.getTime());

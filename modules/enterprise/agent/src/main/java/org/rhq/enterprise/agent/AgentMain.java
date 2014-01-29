@@ -2741,8 +2741,7 @@ public class AgentMain {
 
         // The JBoss remoting HTTP transport can wait indefinitely for a response
         // This ensures the client does not wait forever
-        long clientSenderCommandTimeout = m_configuration.getClientSenderCommandTimeout();
-        long timeout = clientSenderCommandTimeout;
+        long timeout = m_configuration.getClientSenderCommandTimeout();
         if (timeout > 0) {
             config.put("timeout", Long.toString(timeout));
         }

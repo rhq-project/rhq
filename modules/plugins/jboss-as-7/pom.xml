@@ -627,7 +627,7 @@
               <skipITs>false</skipITs>
               <includes>
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
-                <include>org/rhq/modules/plugins/jbossas7/itest/**/DeploymentTest.java</include>
+                <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>-->

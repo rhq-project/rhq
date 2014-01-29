@@ -83,7 +83,7 @@ public class MetricsServer {
     private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
         Executors.newFixedThreadPool(5, new StorageClientThreadFactory()));
 
-    private int aggregationBatchSize;
+    private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "25"));
 
     private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 

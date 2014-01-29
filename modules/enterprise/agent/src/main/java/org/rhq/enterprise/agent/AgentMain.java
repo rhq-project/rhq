@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.agent;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -2736,6 +2737,14 @@ public class AgentMain {
 
             // in case the transport floats over https - we want to make sure a hostname verifier is installed and allows all hosts
             config.put(HTTPSClientInvoker.IGNORE_HTTPS_HOST, "true");
+        }
+
+        // The JBoss remoting HTTP transport can wait indefinitely for a response
+        // This ensures the client does not wait forever
+        long clientSenderCommandTimeout = m_configuration.getClientSenderCommandTimeout();
+        long timeout = clientSenderCommandTimeout;
+        if (timeout > 0) {
+            config.put("timeout", Long.toString(timeout));
         }
 
         RemoteCommunicator remote_comm = new JBossRemotingRemoteCommunicator(uri, config);

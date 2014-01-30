@@ -34,7 +34,7 @@
         <resource-root path="rhq-agent/lib/sigar-${sigar.version}.jar" />
         <resource-root path="rhq-agent/lib/trove4j-3.0.3.jar" />
     </resources>
-    
+
     <dependencies>
         <!-- modules required by any subsystem -->
         <module name="javax.api"/>
@@ -45,5 +45,8 @@
         <module name="org.jboss.msc"/>
         <module name="org.jboss.logging"/>
         <module name="org.jboss.vfs"/>
+
+        <!-- the standalone agent had this in its endorsed dir, but the embedded agent adds it as a dependency -->
+        <module name="javax.xml.bind.api"/>
     </dependencies>
 </module>

@@ -7,14 +7,15 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceNotFoundException;
+import org.jboss.msc.service.StartException;
 
 class AgentSubsystemRestart implements OperationStepHandler {
 
-	static final AgentSubsystemRestart INSTANCE = new AgentSubsystemRestart();
+    static final AgentSubsystemRestart INSTANCE = new AgentSubsystemRestart();
 
-	private final Logger log = Logger.getLogger(AgentSubsystemRestart.class);
+    private final Logger log = Logger.getLogger(AgentSubsystemRestart.class);
 
-	private AgentSubsystemRestart() {
+    private AgentSubsystemRestart() {
     }
 
     @Override
@@ -22,15 +23,17 @@ class AgentSubsystemRestart implements OperationStepHandler {
         try {
             ServiceName name = AgentService.SERVICE_NAME;
             AgentService service = (AgentService) opContext.getServiceRegistry(true).getRequiredService(name)
-                    .getValue();
+                .getValue();
             log.info("Asked to restart the embedded agent");
             service.stopAgent();
             service.startAgent();
         } catch (ServiceNotFoundException snfe) {
             throw new OperationFailedException("Cannot restart embedded agent - the agent is disabled", snfe);
-		}
+        } catch (StartException se) {
+            throw new OperationFailedException("Cannot restart embedded agent", se);
+        }
 
         opContext.completeStep();
         return;
-	}
+    }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static org.rhq.modules.plugins.jbossas7.ASConnection.verbose;
@@ -361,7 +362,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
 
     @Override
     public void deleteResource() throws Exception {
-        getLog().info("Removing AS7 resource [" + path + "]...");
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Removing AS7 resource [" + path + "]...");
+        }
 
         if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
             // We need to do two steps because of AS7-4032

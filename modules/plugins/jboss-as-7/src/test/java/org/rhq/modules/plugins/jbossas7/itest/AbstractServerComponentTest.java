@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest;
 
 import static org.testng.Assert.assertEquals;
@@ -199,17 +200,17 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     }
 
     protected void validateStartScriptEnv(Map<String, String> env) {
-        Assert.assertTrue(env.size() <= 4, env.toString());
-
         String javaHome = env.get("JAVA_HOME");
-        Assert.assertNotNull(javaHome);
-        Assert.assertTrue(new File(javaHome).isDirectory());
+        if (javaHome != null) {
+            Assert.assertTrue(new File(javaHome).isDirectory());
+        }
 
         String path = env.get("PATH");
-        Assert.assertNotNull(path);
-        String[] pathElements = path.split(File.pathSeparator);
-        Assert.assertTrue(pathElements.length >= 1);
-        Assert.assertTrue(new File(pathElements[0]).isDirectory());
+        if (path != null) {
+            String[] pathElements = path.split(File.pathSeparator);
+            Assert.assertTrue(pathElements.length >= 1);
+            Assert.assertTrue(new File(pathElements[0]).isDirectory());
+        }
     }
 
     protected abstract String getBindAddressSystemPropertyName();

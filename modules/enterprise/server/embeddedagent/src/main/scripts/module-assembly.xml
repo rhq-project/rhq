@@ -8,15 +8,18 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <baseDirectory>${project.build.finalName}-module</baseDirectory>
     <fileSets>
+        <!-- the module.xml which only does in the zip, it is not in the jar -->
         <fileSet>
-            <directory>${project.build.outputDirectory}/module</directory>
+            <directory>${basedir}/src/main/resources/module</directory>
             <outputDirectory>/org/rhq/${artifactId}</outputDirectory>
             <includes>
                 <include>main/module.xml</include>
             </includes>
+            <filtered>true</filtered>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
+        <!-- the extension subsystem jar - this is just the extension classes, not the agent itself -->
         <fileSet>
             <directory>${project.build.directory}</directory>
             <outputDirectory>/org/rhq/${artifactId}/main</outputDirectory>
@@ -26,6 +29,7 @@
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
+        <!-- the agent distro itself, inside the module's rhq-agent subdirectory -->
         <fileSet>
             <directory>${project.build.directory}/rhq-agent</directory>
             <outputDirectory>/org/rhq/${artifactId}/main/rhq-agent</outputDirectory>
@@ -35,6 +39,7 @@
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
+        <!-- the agent's native libraries which has to be specially organized for JBoss Modules to find them -->
         <fileSet>
             <directory>${project.build.directory}/module-lib</directory>
             <outputDirectory>/org/rhq/${artifactId}/main/lib</outputDirectory>

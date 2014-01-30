@@ -1,8 +1,10 @@
 package org.rhq.embeddedagent.extension;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jboss.as.server.ServerEnvironment;
@@ -15,6 +17,8 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+
+import org.rhq.enterprise.agent.AgentMain;
 
 public class AgentService implements Service<AgentService> {
 
@@ -37,6 +41,17 @@ public class AgentService implements Service<AgentService> {
      * TODO: For any plugin not specified will, by default, be WHAT? Disabled???
      */
     private Map<String, Boolean> plugins = Collections.synchronizedMap(new HashMap<String, Boolean>());
+
+    /**
+     * Provides a mechanism to pre-configure the agent.
+     */
+    private AgentConfigurationSetup configSetup;
+
+    /**
+     * This is the actual embedded agent. This is what handles the plugin container lifecycle
+     * and communication to/from the server.
+     */
+    private AgentMain theAgent;
 
     /**
      * Provides the status flag of the embedded agent itself (not of this service).
@@ -96,12 +111,45 @@ public class AgentService implements Service<AgentService> {
         return agentStarted.get();
     }
 
-    protected void startAgent() {
+    protected void startAgent()  throws StartException {
+        if (isAgentStarted()) {
+            log.info("Embedded agent is already started.");
+            return;
+        }
+
         log.info("Starting the embedded agent now");
-        agentStarted.set(true);
+        try {
+            // make sure we pre-configure the agent with some settings taken from our runtime environment
+            ServerEnvironment env = envServiceValue.getValue();
+            Properties overrides = new Properties();
+            boolean resetConfigurationAtStartup = true;
+            AgentConfigurationSetup configSetup = new AgentConfigurationSetup(
+                getExportedResource("conf/agent-configuration.xml"), resetConfigurationAtStartup, overrides, env);
+            // prepare the agent logging first thing so the agent logs messages using this config
+            configSetup.prepareLogConfigFile(getExportedResource("conf/log4j.xml"));
+            configSetup.preConfigureAgent();
+
+            // build the startup command line arguments to pass to the agent
+            String[] args = new String[3];
+            args[0] = "--daemon";
+            args[1] = "--pref=" + configSetup.getPreferencesNodeName();
+            args[2] = "--output=" + new File(env.getServerLogDir(), "embedded-agent.out").getAbsolutePath();
+
+            theAgent = new AgentMain(args);
+            theAgent.start();
+
+            agentStarted.set(true);
+        } catch (Exception e) {
+            throw new StartException(e);
+        }
     }
 
     protected void stopAgent() {
+        if (!isAgentStarted()) {
+            log.info("Embedded agent is already stopped.");
+            return;
+        }
+
         log.info("Stopping the embedded agent now");
         agentStarted.set(false);
     }

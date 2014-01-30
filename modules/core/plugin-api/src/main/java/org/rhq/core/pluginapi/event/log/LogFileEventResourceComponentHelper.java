@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pluginapi.event.log;
 
 import java.io.File;
@@ -49,6 +50,8 @@ import org.rhq.core.system.SystemInfoFactory;
  * @author Ian Springer  
  */
 public class LogFileEventResourceComponentHelper {
+    private static final Log LOG = LogFactory.getLog(LogFileEventResourceComponentHelper.class);
+
     public static final String LOG_ENTRY_EVENT_TYPE = "logEntry";
 
     public static final String LOG_EVENT_SOURCES_CONFIG_PROP = "logEventSources";
@@ -64,8 +67,6 @@ public class LogFileEventResourceComponentHelper {
 
     // TODO: Make this configurable via a plugin config prop.
     private static final int POLLING_INTERVAL_IN_SECONDS = 60;
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext<?> resourceContext;
     private List<PropertyMap> startedEventSources = new ArrayList<PropertyMap>();
@@ -105,7 +106,7 @@ public class LogFileEventResourceComponentHelper {
             boolean nativeSystemInfoDisabled = SystemInfoFactory.isNativeSystemInfoDisabled();
             ResourceType resourceType = this.resourceContext.getResourceType();
             List<String> logFilePaths = getLogFilePaths(enabledEventSources);
-            log.warn("Log files " + logFilePaths + " for [" + resourceType.getPlugin() + ":"
+            LOG.warn("Log files " + logFilePaths + " for [" + resourceType.getPlugin() + ":"
                 + resourceType.getName() + "] Resource with key [" + this.resourceContext.getResourceKey()
                 + "] cannot be polled, because log file polling requires RHQ native support, which "
                 + ((nativeSystemInfoDisabled) ? "has been disabled for this Agent" : "is not available on this platform") + ".");
@@ -121,9 +122,8 @@ public class LogFileEventResourceComponentHelper {
             }
             File logFile = new File(logFilePath);
             if (!logFile.canRead()) {
-                log.error("LOGFILE: Logfile at location " + logFilePath
-                    + " does not exist or is not readable. Can not start watching the event log.");
-                continue;
+                LOG.warn("LOGFILE: Logfile at location " + logFilePath + " does not exist or is not readable. "
+                    + "The poller will be started but no events will be polled until the file is created.");
             }
 
             Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(LOG_ENTRY_EVENT_TYPE, logFile);

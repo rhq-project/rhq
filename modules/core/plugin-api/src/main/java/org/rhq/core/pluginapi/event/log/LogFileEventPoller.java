@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pluginapi.event.log;
 
 import java.io.BufferedReader;
@@ -47,7 +44,7 @@ import org.rhq.core.pluginapi.event.EventPoller;
  * @author Ian Springer
  */
 public class LogFileEventPoller implements EventPoller {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(LogFileEventPoller.class);
 
     private String eventType;
     private File logFile;
@@ -76,24 +73,27 @@ public class LogFileEventPoller implements EventPoller {
 
     @Nullable
     public Set<Event> poll() {
+        if (!this.logFile.exists()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Log file [" + this.logFile + "] being polled does not exist.");
+            }
+            return null;
+        }
+        if (this.logFile.isDirectory()) {
+            LOG.error("Log file [" + this.logFile + "] being polled is a directory, not a regular file.");
+            return null;
+        }
         if (!this.initialized) {
             init();
         }
         if (this.logFileInfo == null) {
-            // This means SIGAR, which we require, is unavailable, so just return null. 
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Cannot poll log file [" + this.logFile
+                    + "] because native integration is either disabled or unavailable.");
+            }
             return null;
         }
-        
-        if (!this.logFile.exists()) {
-            log.warn("Log file [" + this.logFile + "] being polled does not exist.");
-            return null;
-        }
-        if (this.logFile.isDirectory()) {
-            log.error("Log file [" + this.logFile + "] being polled is a directory, not a regular file.");
-            return null;
-        }
-        
-        try {            
+        try {
             if (!this.logFileInfo.changed()) {
                 return null;
             }
@@ -118,7 +118,7 @@ public class LogFileEventPoller implements EventPoller {
                 throw new RuntimeException("Failed to obtain file info for log file [" + this.logFile + "].", e);
             }
         } else {
-            log.warn("SIGAR is unavailable - cannot poll log file [" + this.logFile + "] for events.");
+            LOG.warn("SIGAR is unavailable - cannot poll log file [" + this.logFile + "] for events.");
         }
 
         this.initialized = true;
@@ -138,7 +138,7 @@ public class LogFileEventPoller implements EventPoller {
             BufferedReader bufferedReader = new BufferedReader(reader);
             events = this.entryProcessor.processLines(bufferedReader);
         } catch (IOException e) {
-            log.error("Failed to read log file being tailed: " + this.logFile, e);
+            LOG.error("Failed to read log file being tailed: " + this.logFile, e);
         } finally {
             if (reader != null) {
                 //noinspection EmptyCatchBlock
@@ -155,29 +155,29 @@ public class LogFileEventPoller implements EventPoller {
         FileInfo previousFileInfo = fileInfo.getPreviousInfo();
 
         if (previousFileInfo == null) {
-            if (log.isDebugEnabled()) {
-                log.debug(this.logFile + ": first stat");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(this.logFile + ": first stat");
             }
             return fileInfo.getSize();
         }
 
         if (fileInfo.getInode() != previousFileInfo.getInode()) {
-            if (log.isDebugEnabled()) {
-                log.debug(this.logFile + ": file inode changed");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(this.logFile + ": file inode changed");
             }
             return -1;
         }
 
         if (fileInfo.getSize() < previousFileInfo.getSize()) {
-            if (log.isDebugEnabled()) {
-                log.debug(this.logFile + ": file truncated");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(this.logFile + ": file truncated");
             }
             return -1;
         }
 
-        if (log.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
             long diff = fileInfo.getSize() - previousFileInfo.getSize();
-            log.debug(this.logFile + ": " + diff + " new bytes");
+            LOG.debug(this.logFile + ": " + diff + " new bytes");
         }
 
         return previousFileInfo.getSize();

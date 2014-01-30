@@ -181,19 +181,20 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         // Validate the product type (e.g. AS or EAP).
         String expectedRuntimeProductName = pluginConfiguration.getSimpleValue("expectedRuntimeProductName");
+        String runtimeProductName;
         try {
-            String runtimeProductName = readAttribute(getHostAddress(), "product-name");
-            if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
-                runtimeProductName = JBossProductType.AS.PRODUCT_NAME;
-            }
-            if (!runtimeProductName.equals(expectedRuntimeProductName)) {
-                throw new InvalidPluginConfigurationException(
-                    "The original product type discovered for this server was " + expectedRuntimeProductName
-                        + ", but the server is now reporting its product type is [" + runtimeProductName + "]");
-            }
+            runtimeProductName = readAttribute(getHostAddress(), "product-name");
         } catch (Exception e) {
             throw new InvalidPluginConfigurationException("Failed to validate product type for "
                 + getResourceDescription(), e);
+        }
+        if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
+            runtimeProductName = JBossProductType.AS.PRODUCT_NAME;
+        }
+        if (!runtimeProductName.equals(expectedRuntimeProductName)) {
+            throw new InvalidPluginConfigurationException(
+                    "The original product type discovered for this server was " + expectedRuntimeProductName
+                            + ", but the server is now reporting its product type is [" + runtimeProductName + "]");
         }
     }
 

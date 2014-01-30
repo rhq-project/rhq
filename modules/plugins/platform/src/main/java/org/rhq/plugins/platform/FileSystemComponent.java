@@ -59,8 +59,8 @@ public class FileSystemComponent implements ResourceComponent<PlatformComponent>
 
     public AvailabilityType getAvailability() {
         FileSystemInfo fileSystemInfo = getFileSystemInfo();
-        // fileSystemInfo can be != null even if the fs is unmounted.
-        if (fileSystemInfo != null && fileSystemInfo.getFileSystem() != null) {
+        if (fileSystemInfo != null && fileSystemInfo.getFileSystem() != null
+            && this.resourceContext.getResourceKey().equals(fileSystemInfo.getFileSystem().getDirName())) {
             return AvailabilityType.UP;
         } else {
             return AvailabilityType.DOWN;
@@ -94,5 +94,4 @@ public class FileSystemComponent implements ResourceComponent<PlatformComponent>
         SystemInfo systemInfo = resourceContext.getSystemInformation();
         return systemInfo.getFileSystem(resourceContext.getResourceKey());
     }
-
 }

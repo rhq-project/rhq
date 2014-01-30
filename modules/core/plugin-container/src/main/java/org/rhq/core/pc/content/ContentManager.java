@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.content;
 
 import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
@@ -588,10 +589,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
         ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
 
         Set<ResourcePackageDetails> updatedPackageSet = new HashSet<ResourcePackageDetails>(details);
-        Set<ResourcePackageDetails> existingInstalledPackagesSet = container.getInstalledPackages();
-        if (existingInstalledPackagesSet == null) {
-            existingInstalledPackagesSet = new HashSet<ResourcePackageDetails>();
-        }
+        Set<ResourcePackageDetails> existingInstalledPackagesSet = new HashSet<ResourcePackageDetails>(
+            container.getInstalledPackages());
 
         // Strip out content that have been removed (i.e. not returned on the latest discovery)
         int originalPackageCount = existingInstalledPackagesSet.size();

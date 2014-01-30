@@ -21,6 +21,8 @@ package org.rhq.coregui.client.inventory.groups.detail.monitoring.metric;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -256,24 +258,23 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
     }
 
     private void organizeMeasurementDefinitionOrder(ResourceGroup resourceGroup) {
-        Set<MeasurementDefinition> definitions = getMetricDefinitions(resourceGroup);
+        List<MeasurementDefinition> definitions = getMetricDefinitions(resourceGroup);
 
-        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-        for (MeasurementDefinition definition : definitions) {
-            measurementDefMap.put(definition.getDisplayName(), definition);
-        }
         //bundle definition ids for asynch call.
         definitionArrayIds = new int[definitions.size()];
-        final String[] displayOrder = new String[definitions.size()];
-        measurementDefMap.keySet().toArray(displayOrder);
+
         //sort the charting data ex. Free Memory, Free Swap Space,..System Load
-        Arrays.sort(displayOrder);
+        Collections.sort(definitions, new Comparator<MeasurementDefinition>() {
+            @Override
+            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                return o1.getDisplayName().compareTo(o2.getDisplayName());
+            }
+        });
 
         //organize definitionArrayIds for ordered request on server.
         int index = 0;
-        for (String definitionToDisplay : displayOrder) {
-            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
+        for (MeasurementDefinition definitionToDisplay : definitions) {
+            definitionArrayIds[index++] = definitionToDisplay.getId();
         }
     }
 
@@ -302,8 +303,8 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-    private Set<MeasurementDefinition> getMetricDefinitions(ResourceGroup resourceGroup) {
-        Set<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
+    private List<MeasurementDefinition> getMetricDefinitions(ResourceGroup resourceGroup) {
+        List<MeasurementDefinition> definitions = new ArrayList<MeasurementDefinition>();
         for (MeasurementDefinition measurementDefinition : resourceGroup.getResourceType().getMetricDefinitions()) {
             if (measurementDefinition.getDataType() == MEASUREMENT || measurementDefinition.getDataType() == COMPLEX) {
                 definitions.add(measurementDefinition);

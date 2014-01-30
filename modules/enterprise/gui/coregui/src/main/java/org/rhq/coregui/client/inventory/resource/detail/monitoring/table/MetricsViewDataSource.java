@@ -24,6 +24,8 @@ import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -351,7 +353,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
     private void queryResourceMetrics(final Resource resource, final Long startTime, final Long endTime,
         final CountDownLatch countDownLatch) {
-        HashSet<MeasurementDefinition> definitions = getMetricDefinitions(resource);
+        List<MeasurementDefinition> definitions = getMetricDefinitions(resource);
         if (definitions.size() == 0) {
             countDownLatch.countDown();
             return;
@@ -366,22 +368,21 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
             }
         }
 
-        //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-        final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-        for (MeasurementDefinition definition : definitions) {
-            measurementDefMap.put(definition.getDisplayName(), definition);
-        }
         //bundle definition ids for asynch call.
         definitionArrayIds = new int[definitions.size()];
-        final String[] displayOrder = new String[definitions.size()];
-        measurementDefMap.keySet().toArray(displayOrder);
+
         //sort the charting data ex. Free Memory, Free Swap Space,..System Load
-        Arrays.sort(displayOrder);
+        Collections.sort(definitions, new Comparator<MeasurementDefinition>() {
+            @Override
+            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                return o1.getDisplayName().compareTo(o2.getDisplayName());
+            }
+        });
 
         //organize definitionArrayIds for ordered request on server.
         int index = 0;
-        for (String definitionToDisplay : displayOrder) {
-            definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
+        for (MeasurementDefinition definitionToDisplay : definitions) {
+            definitionArrayIds[index++] = definitionToDisplay.getId();
         }
 
         GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), definitionArrayIds,
@@ -405,8 +406,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
     }
 
-    private HashSet<MeasurementDefinition> getMetricDefinitions(Resource resource) {
-        HashSet<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
+    private List<MeasurementDefinition> getMetricDefinitions(Resource resource) {
+        List<MeasurementDefinition> definitions = new ArrayList<MeasurementDefinition>();
         for (MeasurementDefinition measurementDefinition : resource.getResourceType().getMetricDefinitions()) {
             if (measurementDefinition.getDataType() == MEASUREMENT || measurementDefinition.getDataType() == COMPLEX) {
                 definitions.add(measurementDefinition);

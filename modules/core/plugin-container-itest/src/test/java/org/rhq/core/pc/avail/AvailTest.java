@@ -195,7 +195,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
         List<Datum> availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource ID should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
@@ -238,7 +238,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
         List<Datum> availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
@@ -297,7 +297,7 @@ public class AvailTest extends Arquillian {
         List<Datum> availData = report.getResourceAvailability();
         int numUp = 0;
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             if (datum.getAvailabilityType() == AvailabilityType.UP) {
                 ++numUp;
             }
@@ -342,7 +342,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.getResourceAvailability().size(), 14, "should report half the resources");
         availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         scan = executor.getMostRecentScanHistory();
@@ -362,7 +362,7 @@ public class AvailTest extends Arquillian {
         List<Datum> availData = report.getResourceAvailability();
         int numUp = 0;
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be > zero since it should be committed";
             if (datum.getAvailabilityType() == AvailabilityType.UP) {
                 ++numUp;
             }
@@ -414,7 +414,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.getResourceAvailability().size(), 14, "should report half the resources");
         availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.DOWN, "should be DOWN");
         }
         scan = executor.getMostRecentScanHistory();
@@ -433,7 +433,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
         List<Datum> availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
@@ -474,7 +474,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.getResourceAvailability().size(), 0, "no changes, everything was already up");
         availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         scan = executor.getMostRecentScanHistory();
@@ -499,7 +499,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
         List<Datum> availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
@@ -525,7 +525,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.getResourceAvailability().size(), 0, "no changes, everything was already up");
         availData = report.getResourceAvailability();
         for (Datum datum : availData) {
-            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            assert datum.getResourceId() != 0 : "resource IDs should be != zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         scan = executor.getMostRecentScanHistory();

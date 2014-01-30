@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -159,7 +159,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         try {
             if ((availabilityType == AvailabilityType.UP) && (previousAvailabilityType != AvailabilityType.UP)) {
                 validateServerAttributes();
-                log.info(getResourceDescription() + " has just come UP.");
+                if (log.isDebugEnabled()) {
+                    log.debug(getResourceDescription() + " has just come UP.");
+                }
             }
         } finally {
             previousAvailabilityType = availabilityType;
@@ -455,13 +457,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     errors.add("Start script '" + startScriptFile + "' is not executable.");
                 }
             }
-        }
-
-        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
-        if (startScriptEnv.isEmpty()) {
-            errors.add("No start script environment variables are set. At a minimum, PATH should be set "
-                + "(on UNIX, it should contain at least /bin and /usr/bin). It is recommended that "
-                + "JAVA_HOME also be set, otherwise the PATH will be used to find java.");
         }
 
         return errors;

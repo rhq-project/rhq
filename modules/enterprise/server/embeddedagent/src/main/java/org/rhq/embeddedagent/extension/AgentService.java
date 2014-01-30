@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.logging.Logger;
@@ -30,6 +30,7 @@ public class AgentService implements Service<AgentService> {
     /**
      * Our subsystem add-step handler will inject this as a dependency for us.
      * This service gives us information about the server, like the install directory, data directory, etc.
+     * Package-scoped so the add-step handler can access this.
      */
     InjectedValue<ServerEnvironment> envServiceValue = new InjectedValue<ServerEnvironment>();
 
@@ -43,20 +44,15 @@ public class AgentService implements Service<AgentService> {
     private Map<String, Boolean> plugins = Collections.synchronizedMap(new HashMap<String, Boolean>());
 
     /**
-     * Provides a mechanism to pre-configure the agent.
-     */
-    private AgentConfigurationSetup configSetup;
-
-    /**
      * This is the actual embedded agent. This is what handles the plugin container lifecycle
      * and communication to/from the server.
      */
-    private AgentMain theAgent;
+    private AtomicReference<AgentMain> theAgent = new AtomicReference<AgentMain>();
 
     /**
-     * Provides the status flag of the embedded agent itself (not of this service).
+     * This is the daemon thread running the agent.
      */
-    private AtomicBoolean agentStarted = new AtomicBoolean(false);
+    private Thread agentThread;
 
     public AgentService() {
     }
@@ -108,7 +104,8 @@ public class AgentService implements Service<AgentService> {
     }
 
     protected boolean isAgentStarted() {
-        return agentStarted.get();
+        AgentMain agent = theAgent.get();
+        return (agent != null && agent.isStarted());
     }
 
     protected void startAgent()  throws StartException {
@@ -135,23 +132,41 @@ public class AgentService implements Service<AgentService> {
             args[1] = "--pref=" + configSetup.getPreferencesNodeName();
             args[2] = "--output=" + new File(env.getServerLogDir(), "embedded-agent.out").getAbsolutePath();
 
-            theAgent = new AgentMain(args);
-            theAgent.start();
+            theAgent.set(new AgentMain(args));
 
-            agentStarted.set(true);
+            agentThread = new Thread("Embedded Agent Start Thread") {
+                public void run() {
+                    try {
+                        theAgent.get().start();
+                    } catch (InterruptedException e) {
+                        // agent just exited due to being shutdown, die quietly
+                        log.debug("Embedded agent has exited.");
+                    } catch (Throwable t) {
+                        log.error("Embedded agent aborted with exception.", t);
+                    }
+                };
+            };
+            agentThread.setDaemon(true);
+            agentThread.start();
         } catch (Exception e) {
             throw new StartException(e);
         }
     }
 
     protected void stopAgent() {
-        if (!isAgentStarted()) {
-            log.info("Embedded agent is already stopped.");
-            return;
+        try {
+            if (!isAgentStarted()) {
+                log.info("Embedded agent is already stopped.");
+            } else {
+                log.info("Stopping the embedded agent now");
+                theAgent.get().shutdown();
+            }
+        } finally {
+            if (agentThread != null) {
+                agentThread.interrupt();
+            }
         }
-
-        log.info("Stopping the embedded agent now");
-        agentStarted.set(false);
+        theAgent.set(null);
     }
 
     /**

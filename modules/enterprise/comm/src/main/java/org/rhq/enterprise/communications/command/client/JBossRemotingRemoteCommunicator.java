@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
@@ -30,7 +31,6 @@ import mazz.i18n.Logger;
 import org.jboss.remoting.Client;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.ServerInvoker;
-
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
@@ -47,12 +47,11 @@ import org.rhq.enterprise.communications.util.NotPermittedException;
  * where the command is to be invoked.</p>
  *
  * <p>Under the covers, a {@link org.jboss.remoting.Client remoting client} is created and maintained by this object.
- * The users of this object may manually {@link #connect() connect} and {@link #disconnect() disconnect} that remoting
- * client. Typically, there will not be a need to connect since it will be done automatically when appropriate; however,
- * it is good practice to tell this object to disconnect its remoting client when this object is no longer needed to
+ * There is no need to call {@link #connect()} since it will be done automatically when appropriate; however,
+ * it is good practice to tell this object to {@link #disconnect()} its client when no longer necessary to
  * issue commands to the remote server.</p>
  *
- * <p>All subclasses should include a no-arg constructor so they can be built dynamically by the cmdline client.</p>
+ * <p>All subclasses should include a no-arg constructor so they can be built dynamically by the command line client.</p>
  *
  * @author John Mazzitelli
  */
@@ -67,41 +66,40 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     /**
      * the JBoss/Remoting locator that this client will use to remotely connect to the command server
      */
-    private InvokerLocator m_invokerLocator;
+    private volatile InvokerLocator m_invokerLocator;
 
     /**
      * The subsystem to target when invoking commands. The subsystem is defined by the JBoss/Remoting API - it specifies
      * the actual invoker handler to target. The Command framework uses the subsystem to organize command processors
      * into different domains.
      */
-    private String m_subsystem;
+    private final String m_subsystem;
 
     /**
      * The configuration to send to the client - used to configure things like the SSL setup.
      */
-    private Map<String, String> m_clientConfiguration;
+    private final Map<String, String> m_clientConfiguration;
 
     /**
      * the actual JBoss/Remoting client object that will be used to transport the commands to the server
      */
-    private Client m_remotingClient;
+    private volatile AtomicReference<Client> m_client = new AtomicReference<Client>();
 
     /**
-     * Optionally-defined callback that will be called when a failure is detected when sending a message. 
+     * Optionally-defined callback that will be called when a failure is detected when sending a message.
      */
-    private FailureCallback m_failureCallback;
+    private volatile FailureCallback m_failureCallback;
 
     /**
-     * Optionally-defined callback that will be called when this communicator sends its first command
-     * after it has been {@link #connect() connected}. 
+     * Optionally-defined callback that will be called when this communicator sends its first command.
      */
-    private InitializeCallback m_initializeCallback;
+    private volatile InitializeCallback m_initializeCallback;
 
     /**
      * When <code>true</code>, the initialize callback will need to be called prior
      * to sending any commands. Used in conjunection with its associated RW lock.
      */
-    private boolean m_needToCallInitializeCallback;
+    private volatile boolean m_needToCallInitializeCallback;
 
     /**
      * RW lock when needing to access its associated atomic boolean flag.
@@ -109,23 +107,11 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     private final ReentrantReadWriteLock m_needToCallInitializeCallbackLock;
 
     /**
-     * Number of minutes to wait while attempting to aquire a lock before attempting
+     * Number of minutes to wait while attempting to acquire a lock before attempting
      * to invoke the initialize callback. If this amount of minutes expires before the lock
      * is acquired, an error will occur and the initialize callback will have to be attempted later.
      */
     private final long m_initializeCallbackLockAcquisitionTimeoutMins;
-
-    /**
-     * Constructor for {@link JBossRemotingRemoteCommunicator} that initializes the client with no invoker locator
-     * defined. It must later be specified through {@link #setInvokerLocator(InvokerLocator)} before any client commands
-     * can be issued. In addition, the {@link #getSubsystem()} will be set to the {@link #DEFAULT_SUBSYSTEM}.
-     *
-     * <p>Note that all subclasses are strongly urged to include this no-arg constructor so it can plug into the cmdline
-     * client seamlessly.</p>
-     */
-    public JBossRemotingRemoteCommunicator() {
-        this((InvokerLocator) null, DEFAULT_SUBSYSTEM);
-    }
 
     /**
      * Constructor for {@link JBossRemotingRemoteCommunicator} that allows you to indicate the
@@ -137,7 +123,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * @throws MalformedURLException if failed to create the locator (see {@link InvokerLocator#InvokerLocator(String)})
      */
     public JBossRemotingRemoteCommunicator(String locatorUri) throws MalformedURLException {
-        this(new InvokerLocator(locatorUri), DEFAULT_SUBSYSTEM);
+        this(new InvokerLocator(locatorUri), DEFAULT_SUBSYSTEM, null);
     }
 
     /**
@@ -154,45 +140,6 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     public JBossRemotingRemoteCommunicator(String locatorUri, Map<String, String> client_config)
         throws MalformedURLException {
         this(new InvokerLocator(locatorUri), DEFAULT_SUBSYSTEM, client_config);
-    }
-
-    /**
-     * Constructor for {@link JBossRemotingRemoteCommunicator} that allows you to specify the
-     * {@link InvokerLocator invoker locator} to use. <code>locator</code> may be <code>null</code>, in which case, it
-     * must later be specified through {@link #setInvokerLocator(InvokerLocator)} before any client commands can be
-     * issued. The subsystem will be set to the {@link #DEFAULT_SUBSYSTEM}.
-     *
-     * @param locator the locator to use (may be <code>null</code>)
-     */
-    public JBossRemotingRemoteCommunicator(InvokerLocator locator) {
-        this(locator, DEFAULT_SUBSYSTEM);
-    }
-
-    /**
-     * Constructor for {@link JBossRemotingRemoteCommunicator} that allows you to specify the
-     * {@link InvokerLocator invoker locator} to use. <code>locator</code> may be <code>null</code>, in which case, it
-     * must later be specified through {@link #setInvokerLocator(InvokerLocator)} before any client commands can be
-     * issued.The subsystem will be set to the {@link #DEFAULT_SUBSYSTEM}. The given <code>Map</code> should contain
-     * <code>Client</code> configuration attributes.
-     *
-     * @param locator       the locator to use (may be <code>null</code>)
-     * @param client_config the client configuration (may be <code>null</code> or empty)
-     */
-    public JBossRemotingRemoteCommunicator(InvokerLocator locator, Map<String, String> client_config) {
-        this(locator, DEFAULT_SUBSYSTEM, client_config);
-    }
-
-    /**
-     * Constructor for {@link JBossRemotingRemoteCommunicator} that allows you to specify the
-     * {@link InvokerLocator invoker locator} to use. <code>locator</code> may be <code>null</code>, in which case, it
-     * must later be specified through {@link #setInvokerLocator(InvokerLocator)} before any client commands can be
-     * issued.
-     *
-     * @param locator   the locator to use (may be <code>null</code>)
-     * @param subsystem the subsystem (or command domain) in which commands will be invoked (may be <code>null</code>)
-     */
-    public JBossRemotingRemoteCommunicator(InvokerLocator locator, String subsystem) {
-        this(locator, subsystem, null);
     }
 
     /**
@@ -222,42 +169,12 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         try {
             String minsStr = System.getProperty("rhq.communications.initial-callback-lock-wait-mins", "60");
             mins = Long.parseLong(minsStr);
-        } catch (Throwable t) {
+        } catch (Exception e) {
             mins = 60L;
         }
         m_initializeCallbackLockAcquisitionTimeoutMins = mins;
 
         return;
-    }
-
-    /**
-     * Constructor for {@link JBossRemotingRemoteCommunicator} that allows you to indicate the
-     * {@link InvokerLocator invoker locator} to use by specifying the locator's URI.
-     *
-     * @param  locatorUri the locator's URI (must not be <code>null</code>)
-     * @param  subsystem  the subsystem (or command domain) in which commands will be invoked (may be <code>null</code>)
-     *
-     * @throws MalformedURLException if failed to create the locator (see {@link InvokerLocator#InvokerLocator(String)})
-     */
-    public JBossRemotingRemoteCommunicator(String locatorUri, String subsystem) throws MalformedURLException {
-        this(new InvokerLocator(locatorUri), subsystem);
-    }
-
-    /**
-     * Constructor for {@link JBossRemotingRemoteCommunicator} that allows you to indicate the
-     * {@link InvokerLocator invoker locator} to use by specifying the locator's URI. The given <code>Map</code> should
-     * contain <code>Client</code> configuration attributes.
-     *
-     * @param  locatorUri    the locator's URI (must not be <code>null</code>)
-     * @param  subsystem     the subsystem (or command domain) in which commands will be invoked (may be <code>
-     *                       null</code>)
-     * @param  client_config the client configuration (may be <code>null</code> or empty)
-     *
-     * @throws MalformedURLException if failed to create the locator (see {@link InvokerLocator#InvokerLocator(String)})
-     */
-    public JBossRemotingRemoteCommunicator(String locatorUri, String subsystem, Map<String, String> client_config)
-        throws MalformedURLException {
-        this(new InvokerLocator(locatorUri), subsystem, client_config);
     }
 
     /**
@@ -281,81 +198,14 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      *                    null</code>)
      *
      * @throws MalformedURLException if failed to create the locator (see {@link InvokerLocator#InvokerLocator(String)})
-     *
-     * @see    #setInvokerLocator(InvokerLocator)
      */
-    public void setInvokerLocator(String locatorUri) throws MalformedURLException {
-        setInvokerLocator(new InvokerLocator(locatorUri));
-    }
-
-    /**
-     * Sets the invoker locator URI and creates a new locator that is to be used to find the remote JBoss/Remoting
-     * server for its subsequent command client invocations. Any existing remoting client is automatically disconnected.
-     * New remoting clients will also be configured with the new set of configuration properties - thus allowing you to
-     * configure the client to be able to handle the new locator.
-     *
-     * @param  locatorUri    the new invoker locator's URI to use for future command client invocations (must not be
-     *                       <code>null</code>)
-     * @param  client_config the client configuration for any new remoting clients that are created (may be <code>
-     *                       null</code> or empty)
-     *
-     * @throws MalformedURLException if failed to create the locator (see {@link InvokerLocator#InvokerLocator(String)})
-     *
-     * @see    #setInvokerLocator(InvokerLocator)
-     */
-    public void setInvokerLocator(String locatorUri, Map<String, String> client_config) throws MalformedURLException {
-        setInvokerLocator(new InvokerLocator(locatorUri), client_config);
-    }
-
-    /**
-     * Sets the invoker locator that this communicator should use for its subsequent command client invocations. Any
-     * existing remoting client is automatically disconnected.The client configuration properties will, however, remain
-     * the same as before - so the new clients that are created will have the same configuration attributes. See
-     * {@link #setInvokerLocator(InvokerLocator, Map)} if you want to reconfigure the client with different properties
-     * that are more appropriate for the new locator.
-     *
-     * @param  locator the new invoker locator to use for future command client invocations (must not be <code>
-     *                 null</code>)
-     *
-     * @throws IllegalArgumentException if locator is <code>null</code>
-     */
-    public void setInvokerLocator(InvokerLocator locator) {
-        setInvokerLocator(locator, null);
-    }
-
-    /**
-     * Sets the invoker locator that this communicator should use for its subsequent command client invocations. Any
-     * existing remoting client is automatically disconnected. New remoting clients will also be configured with the new
-     * set of configuration properties - thus allowing you to configure the client to be able to handle the new locator.
-     *
-     * @param  locator       the new invoker locator to use for future command client invocations (must not be <code>
-     *                       null</code>)
-     * @param  client_config the client configuration for any new remoting clients that are created (may be <code>
-     *                       null</code> or empty)
-     *
-     * @throws IllegalArgumentException if locator is <code>null</code>
-     */
-    public void setInvokerLocator(InvokerLocator locator, Map<String, String> client_config) {
-        if (locator == null) {
-            throw new IllegalArgumentException("locator=null");
-        }
-
-        // since a new invoker locator is being specified, disconnect any old client that already exists
-        if (m_remotingClient != null) {
-            m_remotingClient.disconnect();
-            m_remotingClient = null;
-            m_needToCallInitializeCallback = (getInitializeCallback() != null); // specifically do not synchrononize by using lock, just set it
-        }
-
+    public void setRemoteEndpoint(String endpoint) throws Exception {
+        InvokerLocator locator = new InvokerLocator(endpoint);
         LOG.info(CommI18NResourceKeys.COMMUNICATOR_CHANGING_ENDPOINT, m_invokerLocator, locator);
         m_invokerLocator = locator;
 
-        if (client_config != null) {
-            m_clientConfiguration.clear();
-            m_clientConfiguration.putAll(client_config);
-        }
-
-        return;
+        // since a new invoker locator is being specified, disconnect any old client that already exists
+        disconnect();
     }
 
     /**
@@ -367,25 +217,6 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      */
     public String getSubsystem() {
         return m_subsystem;
-    }
-
-    /**
-     * Sets the value of the subsystem that will be used to target command invocations. The subsystem is defined by the
-     * JBoss/Remoting API and can be used by the Command Framework to organize command processors into different
-     * domains.
-     *
-     * <p>If a remoting client already exists, its subsystem will be changed to the given subsystem.</p>
-     *
-     * @param subsystem the new value of subsystem (may be <code>null</code>)
-     */
-    public void setSubsystem(String subsystem) {
-        m_subsystem = subsystem;
-
-        if (m_remotingClient != null) {
-            m_remotingClient.setSubsystem(subsystem);
-        }
-
-        return;
     }
 
     public FailureCallback getFailureCallback() {
@@ -402,15 +233,11 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
 
     public void setInitializeCallback(InitializeCallback callback) {
         m_initializeCallback = callback;
-        m_needToCallInitializeCallback = (callback != null); // specifically do not synchrononize by using lock, just set it
+        m_needToCallInitializeCallback = (callback != null); // specifically do not synchronize by using lock, just set it
     }
 
     public String getRemoteEndpoint() {
         return (m_invokerLocator != null) ? m_invokerLocator.getLocatorURI() : "<null>";
-    }
-
-    public void setRemoteEndpoint(String endpoint) throws Exception {
-        setInvokerLocator(endpoint);
     }
 
     /**
@@ -425,26 +252,31 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         return new HashMap<String, String>(m_clientConfiguration);
     }
 
+    /**
+     * Does nothing; send a request to connect.
+     */
     public void connect() throws Exception {
-        if ((m_remotingClient != null) && !m_remotingClient.isConnected()) {
-            m_remotingClient.connect();
-            m_needToCallInitializeCallback = (getInitializeCallback() != null); // specifically do not synchrononize by using lock, just set it
+        /*
+         * For the HTTP invoker, simply calling connect() doesn't do anything. It makes
+         * sense to at least send something to test connectivity. However, the code doesn't
+         * make use of this method.
+        try {
+            send(new EchoCommand());
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new Error(t);
         }
-
-        return;
+        */
     }
 
     public void disconnect() {
-        if (m_remotingClient != null) {
-            m_remotingClient.disconnect();
-            m_needToCallInitializeCallback = (getInitializeCallback() != null); // specifically do not synchrononize by using lock, just set it
-        }
-
-        return;
+        cacheClient(null);
     }
 
     public boolean isConnected() {
-        return (m_remotingClient != null) && m_remotingClient.isConnected();
+        Client client = m_client.get();
+        return (client != null) && client.isConnected();
     }
 
     public CommandResponse sendWithoutCallbacks(Command command) throws Throwable {
@@ -455,7 +287,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             retry = false;
             ret_response = rawSend(command);
             Throwable exception = ret_response.getException();
-            if ((exception != null) && (exception instanceof NotPermittedException)) {
+            if (exception instanceof NotPermittedException) {
                 long pause = ((NotPermittedException) exception).getSleepBeforeRetry();
                 LOG.debug(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, command, pause);
                 retry = true;
@@ -498,11 +330,11 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
 
     /**
      * The code that sends the command via the remote client.
-     * 
+     *
      * @param command the command to send
-     * 
+     *
      * @return the command response
-     * 
+     *
      * @throws Throwable if a low-level, unhandled exception occurred
      */
     private CommandResponse rawSend(Command command) throws Throwable {
@@ -511,13 +343,13 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         try {
             try {
                 OutgoingCommandTrace.start(command);
-                ret_response = getRemotingClient().invoke(command, null);
+                ret_response = invoke(command);
                 OutgoingCommandTrace.finish(command, ret_response);
             } catch (ServerInvoker.InvalidStateException serverDown) {
                 // under rare condition, a bug in remoting 2.2 causes this when the server restarted
                 // try it one more time, this will get a new server thread on the server side (JBREM-745)
                 // once JBREM-745 is fixed, we can probably get rid of this catch block
-                ret_response = getRemotingClient().invoke(command, null);
+                ret_response = invoke(command);
                 OutgoingCommandTrace.finish(command, ret_response);
             }
         } catch (Throwable t) {
@@ -548,12 +380,12 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * call it.  The initialize callback has the responsibility to handle calling
      * {@link #sendWithoutInitializeCallback(Command)} if it wants to send its own commands to the server
      * but wants failover to happen when appropriate for those commands.
-     * 
+     *
      * If there is an initialize callback set, this method will block all callers until
      * the callback has been invoked.
      *
      * @param command the command that it going to be sent after the callback is invoked
-     * 
+     *
      * @return if the initialize callback had an error, this response will be non-<code>null</code> and
      *         will indicate that the sending of <code>command</code> should be aborted.
      */
@@ -600,14 +432,14 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     /**
      * This will invoke the failure callback when necessary.  It is necessary to call the callback
      * when the throwable is not <code>null</code> or the command response has a non-<code>null</code> exception.
-     * 
+     *
      * This method will force a retry by returning <code>true</code>. If <code>false</code> is returned,
      * the request need not be retried.
-     * 
+     *
      * @param command the command that was sent (or attempted to be sent)
      * @param response the response of the command (may be <code>null</code>)
      * @param throwable the exception that was thrown when the command was sent (may be <code>null</code>)
-     * 
+     *
      * @return <code>true</code> if the command should be retried, <code>false</code> otherwise
      */
     private boolean invokeFailureCallbackIfNeeded(Command command, CommandResponse response, Throwable throwable) {
@@ -615,7 +447,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         FailureCallback callback = getFailureCallback(); // get a local reference to avoid this being changed underneath us
         boolean retry = false;
 
-        // only do something if there is a callback defined        
+        // only do something if there is a callback defined
         if (callback != null) {
             // only do something if the command resulted in an exception
             if (throwable != null || ((response != null) && (response.getException() != null))) {
@@ -638,28 +470,48 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     }
 
     /**
-     * Returns the remoting client that is to be used to transport the command request to the server. If for any reason
-     * the client cannot be created, an exception is thrown. This will happen if the invoker locator has not been
-     * specified (see {@link #setInvokerLocator(InvokerLocator)}).
+     * Invokes JBoss Remoting using the given command.
+     * Attempts to cache the client if sending the message was successful.
      *
-     * <p>This method will cache the client and connect to the server automatically. Note that the client will be
-     * disconnected whenever the invoker is reset via {@link #setInvokerLocator(InvokerLocator)}. Therefore, callers
-     * should never cache the returned object themselves - always call this method to obtain a reference to the
-     * client.</p>
-     *
-     * @return the client to be used to transport the command request to the server
-     *
-     * @throws Exception if failed to create the client for whatever reason
+     * @return object as a result of this call
      */
-    protected Client getRemotingClient() throws Exception {
-        if (m_remotingClient == null) {
-            m_remotingClient = new Client(getInvokerLocator(), getSubsystem(), m_clientConfiguration);
+    private Object invoke(Command command) throws Throwable {
+        InvokerLocator locator = m_invokerLocator;
+        if (locator == null) {
+            throw new IllegalStateException("m_invokerLocator is null");
         }
 
-        if (!m_remotingClient.isConnected()) {
-            m_remotingClient.connect();
+        Client client = m_client.get();
+        if (client != null && client.getInvoker() == null) {
+            client.disconnect();
+        }
+        if (client == null || !client.isConnected()) {
+            client = new Client(locator, getSubsystem(), m_clientConfiguration);
+            client.connect();
+            try {
+                return client.invoke(command);
+            } finally {
+                cacheClient(client);
+            }
         }
 
-        return m_remotingClient;
+        // Note: Despite all the checks above, the client might have been
+        // disconnected before invoke is reached. Let's hope that doesn't happen.
+
+        return client.invoke(command);
     }
+
+    /**
+     * Cache the client, disconnecting the old client.
+     *
+     * @param client optionally null; new client to cache
+     */
+    private void cacheClient(Client client) {
+        Client old = m_client.getAndSet(client);
+        if (old != null) {
+            old.disconnect();
+            m_needToCallInitializeCallback = (getInitializeCallback() != null);
+        }
+    }
+
 }

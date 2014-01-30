@@ -20,6 +20,7 @@ package org.rhq.enterprise.communications.command.client;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
+
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +28,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+
 import mazz.i18n.Logger;
+
+import org.jboss.remoting.InvokerLocator;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.CommandType;
@@ -212,7 +216,8 @@ public class CmdlineClient {
             throw new MalformedURLException(LOG.getMsgString(CommI18NResourceKeys.CMDLINE_CLIENT_NULL_URI));
         }
 
-        JBossRemotingRemoteCommunicator communicator = new JBossRemotingRemoteCommunicator(m_locatorUri, m_subsystem);
+        InvokerLocator invokerLocator = new InvokerLocator(m_locatorUri);
+        JBossRemotingRemoteCommunicator communicator = new JBossRemotingRemoteCommunicator(invokerLocator, m_subsystem, null);
         commandClient.setRemoteCommunicator(communicator);
 
         // tell the concrete command client instance to invoke the command on the remote server

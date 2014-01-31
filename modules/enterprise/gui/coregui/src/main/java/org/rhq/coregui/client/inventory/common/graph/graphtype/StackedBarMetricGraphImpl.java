@@ -82,9 +82,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
         // Define the Stacked Bar Graph function using the module pattern
         var metricStackedBarGraph = function () {
-            "use strict";
             // privates
             var margin = {top: 10, right: 5, bottom: 5, left: 40},
+                    margin2 = {top: 150, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 50,
                     height = adjustedChartHeight - margin.top - margin.bottom,
@@ -102,10 +102,17 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     highBound,
                     calcBarWidth,
                     yScale,
-                    yAxis,
                     timeScale,
+                    yScale2,
+                    timeScale2,
+                    yAxis,
                     xAxis,
+                    yAxis2,
+                    xAxis2,
+                    brush,
+                    brushg,
                     chart,
+                    context,
                     svg;
 
             // adjust the min scale so blue low line is not in axis
@@ -205,6 +212,12 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                 return d.x;
                             }));
 
+                    timeScale2 = $wnd.d3.time.scale()
+                            .range([0, width])
+                            .domain($wnd.d3.extent(chartData, function (d) {
+                                return d.x;
+                            }));
+
                     xAxis = $wnd.d3.svg.axis()
                             .scale(timeScale)
                             .ticks(xTicks)
@@ -218,11 +231,18 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     svg = chart.append("g")
                             .attr("width", width + margin.left + margin.right)
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
-                            .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
+                            .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")"),
+
+                    context = svg.append("g")
+                        .attr("class", "context")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", 150)
+                        .attr("transform", "translate(" + margin2.left + "," + (+titleHeight + titleSpace + margin2.top) + ")"),
+//                        //.attr("transform", "translate(" + margin.left + "," + (180) + ")");
 
                     legendUnDefined = (chartContext.chartAverage === "");
                     if ((!chartContext.hideLegend &&  !useSmallCharts() && !legendUnDefined )) {
-                        createMinAvgPeakSidePanel(chartContext.minChartTitle, chartContext.chartMin, chartContext.avgChartTitle, chartContext.chartAverage, chartContext.peakChartTitle, chartContext.chartMax, chartContext.yAxisUnits);
+                        createMinAvgPeakSidePanel(chartContext.minChartTitle, chartContext.chartMin, chartContext.avgChartTitle, chartContext.chartAverage, chartContext.peakChartTitle, chartContext.chartMax );
                     }
                 }
 
@@ -298,7 +318,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             function createHeader(titleName) {
                 var title = chart.append("g").append("rect")
                         .attr("class", "title")
-                        .attr("x", 10)
+                        .attr("x", 30)
                         .attr("y", margin.top)
                         .attr("height", titleHeight)
                         .attr("width", width + 30 + margin.left)
@@ -635,6 +655,19 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .style("text-anchor", "end")
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
 
+                context.append("g")
+                    .attr("class", "x brush")
+                    .call(brush)
+                    .selectAll("rect")
+                    .attr("y", -6)
+                    .attr("height", 30);
+
+                context = svg.append("g")
+                        .attr("class", "context")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", 150)
+                        .attr("transform", "translate(" + margin.left + "," + (180) + ")");
+
             }
 
             function createAvgLines() {
@@ -712,21 +745,30 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
 
-            function createBrush(){
+            function createBrush2(){
 
-                var brush = $wnd.d3.svg.brush()
-                                .x(timeScale)
-                                .on("brushstart", brushstart)
-                                .on("brush", brushmove)
-                                .on("brushend", brushend),
-                        brushg = svg.append("g")
-                                .attr("class", "brush")
-                                .call(brush);
+                brush = $wnd.d3.svg.brush()
+                        .x(timeScale2)
+                        .on("brushstart", brushstart)
+                        .on("brush", brushmove)
+                        .on("brushend", brushend);
+
+               brushg = svg.append("g")
+                        .attr("class", "brush")
+                        .call(brush);
+
+
+                context.append("g")
+                    .attr("class", "x brush")
+                    .call(brush)
+                    .selectAll("rect")
+                    .attr("y", -6)
+                    .attr("height", 30);
 
                 brushg.selectAll(".resize").append("path");
 
                 brushg.selectAll("rect")
-                        .attr("height", height);
+                    .attr("height", height);
 
                 function brushstart() {
                     svg.classed("selecting", true);
@@ -757,6 +799,51 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
 
+//            function createBrush(){
+//
+//                brush = $wnd.d3.svg.brush()
+//                                .x(timeScale)
+//                                .on("brushstart", brushstart)
+//                                .on("brush", brushmove)
+//                                .on("brushend", brushend),
+//                        brushg = svg.append("g")
+//                                .attr("class", "brush")
+//                                .call(brush);
+//
+//                brushg.selectAll(".resize").append("path");
+//
+//                brushg.selectAll("rect")
+//                        .attr("height", height);
+//
+//                function brushstart() {
+//                    svg.classed("selecting", true);
+//                }
+//
+//                function brushmove() {
+//                    var s = brush.extent();
+//                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+//                }
+//
+//                function brushend() {
+//                    var s = brush.extent();
+//                    var startTime = Math.round(s[0].getTime());
+//                    var endTime = Math.round(s[1].getTime() );
+//                    svg.classed("selecting", !$wnd.d3.event.target.empty());
+//                    // ignore selections less than 1 minute
+//                    if(endTime - startTime >= 60000){
+//                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::dragSelectionRefresh(DD)(startTime, endTime);
+//                    }
+//                }
+//
+//                function updateDateRangeDisplay(startDate, endDate ) {
+//                    var formattedDateRange = startDate.format(chartContext.buttonBarDateTimeFormat) + '  -  ' + endDate.format(chartContext.buttonBarDateTimeFormat);
+//                    var timeRange = endDate.from(startDate,true);
+//                    $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+'('+timeRange+')');
+//                }
+//
+//
+//            }
+
             return {
                 // Public API
                 draw: function (chartContext) {
@@ -769,7 +856,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                         createYAxisGridLines();
                         if(!chartContext.isPortalGraph){
-                            createBrush();
+                            createBrush2();
                         }
                         createStackedBars();
                         createXandYAxes();

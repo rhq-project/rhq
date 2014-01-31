@@ -234,8 +234,11 @@ public class AgentConfigurationSetup {
         // store is the default value.
         // But first we need to backup these original preferences in case the config file fails to load -
         // we'll restore the original values in that case.
+        // Note that we squirrel away any security token we already have - we need to preserve this when we can
+        // because otherwise the agent will not be able to re-register with any previous name is was registered with.
 
         Preferences prefNode = getPreferencesNode();
+        String securityToken = prefNode.get(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, null);
         ByteArrayOutputStream backup = new ByteArrayOutputStream();
         prefNode.exportSubtree(backup);
         prefNode.clear();
@@ -249,9 +252,25 @@ public class AgentConfigurationSetup {
             ByteArrayInputStream newConfigInputStream = new ByteArrayInputStream(newConfig.getBytes());
             Preferences.importPreferences(newConfigInputStream);
 
-            if (new AgentConfiguration(prefNode).getAgentConfigurationVersion() == 0) {
+            AgentConfiguration newAgentConfig = new AgentConfiguration(prefNode);
+            if (newAgentConfig.getAgentConfigurationVersion() == 0) {
                 throw new IllegalArgumentException("Bad preferences node");
             }
+
+            // If we had a security token, restore it so we can maintain our known registration with the server.
+            // Note that if the configuration file already had a security token defined, it will be used and the old
+            // token we had will be thrown away.
+            if (securityToken != null) {
+                if (newAgentConfig.getAgentSecurityToken() == null) {
+                    log.debug("Restoring embedded agent security token");
+                    newAgentConfig.setAgentSecurityToken(securityToken);
+                } else {
+                    log.debug("Not restoring embedded agent security token, the config file was preconfigured with one");
+                }
+            }
+
+            prefNode.flush();
+
         } catch (Exception e) {
             // a problem occurred importing the config file; let's restore our original values
             try {

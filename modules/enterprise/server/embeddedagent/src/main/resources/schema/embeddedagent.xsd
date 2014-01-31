@@ -10,6 +10,7 @@
     <xs:complexType name="subsystemType">
         <xs:attribute name="enabled" type="xs:boolean" use="required" default="false"/>
         <xs:all>
+            <xs:element name="rhq.agent.name" type="xs:string"/>
             <xs:element name="plugins" type="pluginsType"/>
         </xs:all>
     </xs:complexType>

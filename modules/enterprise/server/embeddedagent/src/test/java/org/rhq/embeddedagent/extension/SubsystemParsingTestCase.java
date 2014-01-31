@@ -14,6 +14,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VAL
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.WRITE_ATTRIBUTE_OPERATION;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.testng.Assert;
@@ -132,31 +133,24 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
      * operations from its describe action results in the same model
      */
     public void testDescribeHandler() throws Exception {
-        // test two subsystem xmls - one that is empty of plugins, and the second is our normal test xml
-        String subsystemXml1 = "<subsystem xmlns=\"" + AgentSubsystemExtension.NAMESPACE + "\" "
-            + AgentSubsystemExtension.AGENT_ENABLED + "=\"true\"" + "></subsystem>";
-        String subsystemXml2 = getSubsystemXml();
+        String subsystemXml = getSubsystemXml();
+        KernelServices servicesA = super.installInController(subsystemXml);
+        // Get the model and the describe operations from the first controller
+        ModelNode modelA = servicesA.readWholeModel();
+        ModelNode describeOp = new ModelNode();
+        describeOp.get(OP).set(DESCRIBE);
+        describeOp.get(OP_ADDR).set(
+            PathAddress.pathAddress(PathElement.pathElement(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME))
+                .toModelNode());
+        ModelNode executeOperation = servicesA.executeOperation(describeOp);
+        List<ModelNode> operations = super.checkResultAndGetContents(executeOperation).asList();
 
-        String[] subsystemXmlAll = new String[] { subsystemXml1, subsystemXml2 };
-        for (String subsystemXml : subsystemXmlAll) {
-            KernelServices servicesA = super.installInController(subsystemXml);
-            // Get the model and the describe operations from the first controller
-            ModelNode modelA = servicesA.readWholeModel();
-            ModelNode describeOp = new ModelNode();
-            describeOp.get(OP).set(DESCRIBE);
-            describeOp.get(OP_ADDR).set(
-                PathAddress.pathAddress(PathElement.pathElement(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME))
-                    .toModelNode());
-            ModelNode executeOperation = servicesA.executeOperation(describeOp);
-            List<ModelNode> operations = super.checkResultAndGetContents(executeOperation).asList();
+        // Install the describe options from the first controller into a second controller
+        KernelServices servicesB = super.installInController(operations);
+        ModelNode modelB = servicesB.readWholeModel();
 
-            // Install the describe options from the first controller into a second controller
-            KernelServices servicesB = super.installInController(operations);
-            ModelNode modelB = servicesB.readWholeModel();
-
-            // Make sure the models from the two controllers are identical
-            super.compare(modelA, modelB);
-        }
+        // Make sure the models from the two controllers are identical
+        super.compare(modelA, modelB);
     }
 
     /**
@@ -202,9 +196,17 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         // check the attributes
         Assert.assertTrue(content.get("attributes").isDefined());
         List<Property> attributes = content.get("attributes").asPropertyList();
-        Assert.assertEquals(attributes.size(), 2);
-        Assert.assertEquals(attributes.get(0).getName(), AgentSubsystemExtension.AGENT_ENABLED);
-        Assert.assertEquals(attributes.get(1).getName(), AgentSubsystemExtension.PLUGINS_ELEMENT);
+        Assert.assertEquals(attributes.size(), 3);
+
+        List<String> expectedAttributes = Arrays.asList( //
+            AgentSubsystemExtension.AGENT_ENABLED, //
+            AgentSubsystemExtension.PLUGINS_ELEMENT, //
+            AgentSubsystemExtension.ATTRIB_AGENT_NAME);
+
+        for (int i = 0 ; i < attributes.size(); i++) {
+            String attrib = attributes.get(i).getName();
+            Assert.assertTrue(expectedAttributes.contains(attrib), "missing attrib: " + attrib);
+        }
 
         // check the operations
         Assert.assertTrue(content.get("operations").isDefined());

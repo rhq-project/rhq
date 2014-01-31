@@ -1,4 +1,5 @@
 <subsystem xmlns="urn:org.rhq:embeddedagent:1.0" enabled="true">
+    <rhq.agent.name>embeddedagent-test</rhq.agent.name>
     <plugins>
         <plugin name="platform" enabled="true" />
         <plugin name="blah" enabled="false" />

@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.jboss.as.server.ServerEnvironment;
@@ -42,6 +41,12 @@ public class AgentService implements Service<AgentService> {
      * TODO: For any plugin not specified will, by default, be WHAT? Disabled???
      */
     private Map<String, Boolean> plugins = Collections.synchronizedMap(new HashMap<String, Boolean>());
+
+    /**
+     * Configuration settings that override the out-of-box configuration file. These are settings
+     * that the user set in the subsystem (e.g. standalone.xml or via AS CLI).
+     */
+    private Map<String, String> configOverrides = Collections.synchronizedMap(new HashMap<String, String>());
 
     /**
      * This is the actual embedded agent. This is what handles the plugin container lifecycle
@@ -103,6 +108,15 @@ public class AgentService implements Service<AgentService> {
         log.info("New plugin definitions: " + pluginsWithEnableFlag);
     }
 
+    protected void setConfigurationOverrides(Map<String, String> overrides) {
+        synchronized (configOverrides) {
+            configOverrides.clear();
+            if (overrides != null) {
+                configOverrides.putAll(overrides);
+            }
+        }
+    }
+
     protected boolean isAgentStarted() {
         AgentMain agent = theAgent.get();
         return (agent != null && agent.isStarted());
@@ -118,10 +132,9 @@ public class AgentService implements Service<AgentService> {
         try {
             // make sure we pre-configure the agent with some settings taken from our runtime environment
             ServerEnvironment env = envServiceValue.getValue();
-            Properties overrides = new Properties();
             boolean resetConfigurationAtStartup = true;
             AgentConfigurationSetup configSetup = new AgentConfigurationSetup(
-                getExportedResource("conf/agent-configuration.xml"), resetConfigurationAtStartup, overrides, env);
+                getExportedResource("conf/agent-configuration.xml"), resetConfigurationAtStartup, configOverrides, env);
             // prepare the agent logging first thing so the agent logs messages using this config
             configSetup.prepareLogConfigFile(getExportedResource("conf/log4j.xml"));
             configSetup.preConfigureAgent();

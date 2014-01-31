@@ -29,6 +29,8 @@ import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
 
+import org.rhq.enterprise.agent.AgentConfigurationConstants;
+
 public class AgentSubsystemExtension implements Extension {
 
     private final Logger log = Logger.getLogger(AgentSubsystemExtension.class);
@@ -52,6 +54,8 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String AGENT_RESTART_OP = "restart";
     protected static final String AGENT_STOP_OP = "stop";
     protected static final String AGENT_STATUS_OP = "status";
+
+    protected static final String ATTRIB_AGENT_NAME = AgentConfigurationConstants.NAME;
 
     protected static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(SUBSYSTEM, SUBSYSTEM_NAME);
 
@@ -97,17 +101,20 @@ public class AgentSubsystemExtension implements Extension {
                 opAdd.get(AGENT_ENABLED).set(agentEnabledValue);
             }
 
-            ModelNode pluginsAttributeNode = opAdd.get(PLUGINS_ELEMENT);
-
             // Read the children elements
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
-                if (!reader.getLocalName().equals(PLUGINS_ELEMENT)) {
-                    throw ParseUtils.unexpectedElement(reader);
-                }
-                while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
-                    if (reader.isStartElement()) {
-                        readPlugin(reader, pluginsAttributeNode);
+                String elementName = reader.getLocalName();
+                if (elementName.equals(PLUGINS_ELEMENT)) {
+                    ModelNode pluginsAttributeNode = opAdd.get(PLUGINS_ELEMENT);
+                    while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
+                        if (reader.isStartElement()) {
+                            readPlugin(reader, pluginsAttributeNode);
+                        }
                     }
+                } else if (elementName.equals(ATTRIB_AGENT_NAME)) {
+                    opAdd.get(ATTRIB_AGENT_NAME).set(reader.getElementText());
+                } else {
+                    throw ParseUtils.unexpectedElement(reader);
                 }
             }
 
@@ -152,6 +159,10 @@ public class AgentSubsystemExtension implements Extension {
             context.startSubsystemElement(AgentSubsystemExtension.NAMESPACE, false);
             writer.writeAttribute(AGENT_ENABLED,
                 String.valueOf(node.get(AGENT_ENABLED).asBoolean(AGENT_ENABLED_DEFAULT)));
+
+            writer.writeStartElement(ATTRIB_AGENT_NAME);
+            writer.writeCharacters(node.get(ATTRIB_AGENT_NAME).asString());
+            writer.writeEndElement();
 
             // <plugins>
             writer.writeStartElement(PLUGINS_ELEMENT);

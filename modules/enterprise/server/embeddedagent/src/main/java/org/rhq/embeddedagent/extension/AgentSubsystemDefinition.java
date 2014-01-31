@@ -2,6 +2,7 @@ package org.rhq.embeddedagent.extension;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DESCRIBE;
 
+import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
@@ -22,6 +23,11 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
         .setXmlName(AgentSubsystemExtension.AGENT_ENABLED).setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
         .setDefaultValue(new ModelNode(AgentSubsystemExtension.AGENT_ENABLED_DEFAULT)).setAllowNull(false).build();
 
+    protected static final SimpleAttributeDefinition PREF_AGENT_NAME_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_AGENT_NAME, ModelType.STRING).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_AGENT_NAME).setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+        .setAllowNull(true).build();
+
     protected static final PluginsAttributeDefinition PLUGINS_ATTRIBDEF = new PluginsAttributeDefinition();
 
     private AgentSubsystemDefinition() {
@@ -33,6 +39,8 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
     public void registerAttributes(ManagementResourceRegistration rr) {
         rr.registerReadWriteAttribute(AGENT_ENABLED_ATTRIBDEF, null, AgentEnabledAttributeHandler.INSTANCE);
         rr.registerReadWriteAttribute(PLUGINS_ATTRIBDEF, null, PluginsAttributeHandler.INSTANCE);
+        rr.registerReadWriteAttribute(PREF_AGENT_NAME_ATTRIBDEF, null, new ReloadRequiredWriteAttributeHandler(
+            PREF_AGENT_NAME_ATTRIBDEF));
     }
 
     @Override

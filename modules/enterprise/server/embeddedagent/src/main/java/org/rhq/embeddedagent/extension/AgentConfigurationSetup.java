@@ -38,7 +38,7 @@ public class AgentConfigurationSetup {
      * Properties that will be used to override preferences found in the preferences node and the configuration
      * preferences file.
      */
-    private final Properties configurationOverrides;
+    private final Map<String, String> configurationOverrides;
 
     /**
      * If <code>true</code>, will revert the agent's configuration back to the original configuration file.
@@ -57,14 +57,14 @@ public class AgentConfigurationSetup {
     private final ServerEnvironment serverEnvironment;
 
     public AgentConfigurationSetup(Resource configFile, boolean resetConfigurationAtStartup,
-        Properties configurationOverrides, ServerEnvironment serverEnv) {
+        Map<String, String> overrides, ServerEnvironment serverEnv) {
 
         this.configFile = configFile;
         this.resetConfigurationAtStartup = resetConfigurationAtStartup;
         this.serverEnvironment = serverEnv;
-        this.configurationOverrides = prepareConfigurationOverrides(configurationOverrides);
+        this.configurationOverrides = prepareConfigurationOverrides(overrides);
 
-        String agentName = configurationOverrides.getProperty(AgentConfigurationConstants.NAME, "embeddedagent");
+        String agentName = this.configurationOverrides.get(AgentConfigurationConstants.NAME);
         preferencesNodeName = agentName;
         System.setProperty("rhq.agent.preferences-node", preferencesNodeName);
     }
@@ -73,13 +73,12 @@ public class AgentConfigurationSetup {
         return this.preferencesNodeName;
     }
 
-    private Properties prepareConfigurationOverrides(Properties overrides) {
+    private Map<String, String> prepareConfigurationOverrides(Map<String, String> overrides) {
         // perform some checking to setup defaults if need be
-        String agentName = overrides.getProperty(AgentConfigurationConstants.NAME, "");
-        if (agentName.trim().length() == 0 || "-".equals(agentName)) {
+        String agentName = overrides.get(AgentConfigurationConstants.NAME);
+        if (agentName == null || agentName.trim().length() == 0 || "-".equals(agentName)) {
             agentName = "embeddedagent-" + serverEnvironment.getNodeName();
         }
-
         agentName = StringPropertyReplacer.replaceProperties(agentName);
         overrides.put(AgentConfigurationConstants.NAME, agentName);
 
@@ -201,11 +200,11 @@ public class AgentConfigurationSetup {
         }
 
         // now that the configuration preferences are loaded, we need to override them with any bootstrap override properties
-        Properties overrides = configurationOverrides;
+        Map<String, String> overrides = configurationOverrides;
         if (overrides != null) {
-            for (Map.Entry<Object, Object> entry : overrides.entrySet()) {
-                String key = entry.getKey().toString();
-                String value = entry.getValue().toString();
+            for (Map.Entry<String, String> entry : overrides.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
 
                 // allow ${var} notation in the values so we can provide variable replacements in the values
                 value = StringPropertyReplacer.replaceProperties(value);

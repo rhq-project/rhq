@@ -13,15 +13,15 @@ import org.jboss.msc.service.ServiceNotFoundException;
 
 class PluginsAttributeHandler extends AbstractWriteAttributeHandler<Void> {
 
-	public static final PluginsAttributeHandler INSTANCE = new PluginsAttributeHandler();
+    public static final PluginsAttributeHandler INSTANCE = new PluginsAttributeHandler();
 
     private final Logger log = Logger.getLogger(PluginsAttributeHandler.class);
 
-	private PluginsAttributeHandler() {
+    private PluginsAttributeHandler() {
         super(AgentSubsystemDefinition.PLUGINS_ATTRIBDEF);
     }
 
-	@Override
+    @Override
     protected boolean applyUpdateToRuntime(OperationContext context, ModelNode operation, String attributeName,
         ModelNode resolvedValue, ModelNode currentValue, HandbackHolder<Void> handbackHolder)
         throws OperationFailedException {

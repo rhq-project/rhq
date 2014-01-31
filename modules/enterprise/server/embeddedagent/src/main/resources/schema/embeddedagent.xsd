@@ -11,6 +11,12 @@
         <xs:attribute name="enabled" type="xs:boolean" use="required" default="false"/>
         <xs:all>
             <xs:element name="rhq.agent.name" type="xs:string"/>
+            <xs:element name="rhq.agent.disable-native-system" type="xs:boolean" use="optional"/>
+            <xs:element name="rhq.agent.server.transport" type="xs:string"/>
+            <xs:element name="rhq.agent.server.bind-port" type="xs:integer"/>
+            <xs:element name="rhq.agent.server.bind-address" type="xs:string" use="optional"/>
+            <xs:element name="rhq.agent.server.transport-params" type="xs:string" />
+            <xs:element name="rhq.agent.server.alias" type="xs:string" use="optional"/>
             <xs:element name="plugins" type="pluginsType"/>
         </xs:all>
     </xs:complexType>

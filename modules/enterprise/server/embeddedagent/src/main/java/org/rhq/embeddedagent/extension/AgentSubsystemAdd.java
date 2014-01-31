@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jboss.as.controller.AbstractAddStepHandler;
+import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.ServiceVerificationHandler;
@@ -16,8 +17,6 @@ import org.jboss.logging.Logger;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.msc.service.ServiceName;
-
-import org.rhq.enterprise.agent.AgentConfigurationConstants;
 
 /**
  * Handler responsible for adding the subsystem resource to the model
@@ -35,7 +34,13 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
     protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
         AgentSubsystemDefinition.AGENT_ENABLED_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.PLUGINS_ATTRIBDEF.validateAndSet(operation, model);
-        AgentSubsystemDefinition.PREF_AGENT_NAME_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.AGENT_NAME_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.DISABLE_NATIVE_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.SERVER_TRANSPORT_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.SERVER_BIND_PORT_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.SERVER_BIND_ADDRESS_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.SERVER_TRANSPORT_PARAMS_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF.validateAndSet(operation, model);
         log.info("Populating the embedded agent subsystem model: " + operation + "=" + model);
     }
 
@@ -68,11 +73,13 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
 
         // set up our runtime configuration overrides that should be used instead of the out-of-box config
         Map<String, String> overrides = new HashMap<String, String>();
-        ModelNode agentNameNode = AgentSubsystemDefinition.PREF_AGENT_NAME_ATTRIBDEF.resolveModelAttribute(context,
-            model);
-        if (agentNameNode.isDefined()) {
-            overrides.put(AgentConfigurationConstants.NAME, agentNameNode.asString());
-        }
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.AGENT_NAME_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.DISABLE_NATIVE_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_TRANSPORT_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_BIND_PORT_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_BIND_ADDRESS_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_TRANSPORT_PARAMS_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF);
 
         // create our service
         AgentService service = new AgentService();
@@ -89,5 +96,14 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
             .install();
         newControllers.add(controller);
         return;
+    }
+
+    private void addOverrideProperty(OperationContext context, ModelNode model, Map<String, String> overrides,
+        AttributeDefinition attribDef)
+        throws OperationFailedException {
+        ModelNode node = attribDef.resolveModelAttribute(context, model);
+        if (node.isDefined()) {
+            overrides.put(attribDef.getName(), node.asString());
+        }
     }
 }

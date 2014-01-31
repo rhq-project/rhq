@@ -1,5 +1,12 @@
 <subsystem xmlns="urn:org.rhq:embeddedagent:1.0" enabled="true">
     <rhq.agent.name>embeddedagent-test</rhq.agent.name>
+    <!-- <rhq.agent.disable-native-system>true</rhq.agent.disable-native-system> -->
+    <rhq.agent.server.transport>test-transport</rhq.agent.server.transport>
+    <rhq.agent.server.bind-port>12345</rhq.agent.server.bind-port>
+    <!-- <rhq.agent.server.bind-address>test-bind-address</rhq.agent.server.bind-address> -->
+    <rhq.agent.server.transport-params>test-transport-params</rhq.agent.server.transport-params>
+    <!-- <rhq.agent.server.alias>test-alias</rhq.agent.server.alias> -->
+
     <plugins>
         <plugin name="platform" enabled="true" />
         <plugin name="blah" enabled="false" />

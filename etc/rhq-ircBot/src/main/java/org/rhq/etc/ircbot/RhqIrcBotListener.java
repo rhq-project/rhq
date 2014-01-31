@@ -11,12 +11,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.j2bugzilla.base.Bug;
-import com.j2bugzilla.base.BugzillaConnector;
-import com.j2bugzilla.base.BugzillaException;
-import com.j2bugzilla.rpc.GetBug;
+import com.atlassian.jira.rest.client.domain.Issue;
+import com.atlassian.util.concurrent.Effect;
+import com.atlassian.util.concurrent.Promise;
 
-import org.apache.xmlrpc.XmlRpcException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,7 +36,9 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
  */
 public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
-    private static final Pattern BUG_PATTERN = Pattern.compile("(?i)(bz|bug)[ ]*(\\d{6,7})");
+    private static final Pattern BZ_PATTERN = Pattern.compile("(?i)(bz|bug)[ ]*(\\d{6,7})");
+    private static final String JIRA_PROJECT = "JON3-";
+    private static final Pattern JIRA_PATTERN = Pattern.compile("(?i)(" + JIRA_PROJECT + "\\d{1,5})");
     private static final Pattern COMMIT_PATTERN = Pattern.compile("(?i)(\\!commit|cm)[ ]*([0-9a-f]{3,40})");
     private static final Pattern ECHO_PATTERN = Pattern.compile("(?i)echo[ ]+(.+)");
     private static final String COMMIT_LINK = "https://git.fedorahosted.org/cgit/rhq/rhq.git/commit/?id=%s";
@@ -48,15 +48,13 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
     private static enum Command {
 
-        FORUM("Our forum is available from https://community.jboss.org/en/rhq?view=discussions", true), 
-        HELP("You can use one of the following commands: ", true), 
-        LISTS("Feel free to enroll to the user list https://lists.fedorahosted.org/mailman/listinfo/rhq-users"
-                + " or the devel list https://lists.fedorahosted.org/mailman/listinfo/rhq-devel", true), 
-        LOGS("IRC logs are available from http://transcripts.jboss.org/channel/irc.freenode.org/%23rhq/index.html", true),
-        PTO,
-        SOURCE("The code could be viewed/cloned on https://github.com/rhq-project or https://git.fedorahosted.org/cgit/rhq/rhq.git/", true), 
-        SUPPORT, 
-        WIKI("Our wiki is available from https://docs.jboss.org/author/display/RHQ/Home", true);
+        FORUM("Our forum is available from https://community.jboss.org/en/rhq?view=discussions", true), HELP(
+            "You can use one of the following commands: ", true), LISTS(
+            "Feel free to enroll to the user list https://lists.fedorahosted.org/mailman/listinfo/rhq-users"
+                + " or the devel list https://lists.fedorahosted.org/mailman/listinfo/rhq-devel", true), LOGS(
+            "IRC logs are available from http://transcripts.jboss.org/channel/irc.freenode.org/%23rhq/index.html", true), PTO, SOURCE(
+            "The code could be viewed/cloned on https://github.com/rhq-project or https://git.fedorahosted.org/cgit/rhq/rhq.git/",
+            true), SUPPORT, WIKI("Our wiki is available from https://docs.jboss.org/author/display/RHQ/Home", true);
 
         public static final String PREFIX = "!";
         private final String staticRespond;
@@ -89,9 +87,9 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
     private final String server;
     private final String channel;
+    private final BugResolver bzResolver = new BugzillaResolver();
+    private final JiraResolver jiraResolver = new JiraResolver();
     private final boolean isRedHatChannel;
-    private BugzillaConnector bzConnector = new BugzillaConnector();
-    private final Map<Integer, Long> bugLogTimestamps = new HashMap<Integer, Long>();
     private final Map<String, String> names = new HashMap<String, String>();
     private final Map<String, String> ptoCache = new HashMap<String, String>();
     private final Map<String, String> supportCache = new HashMap<String, String>();
@@ -101,7 +99,8 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         this.server = server;
         this.channel = channel;
         isRedHatChannel = "irc.devel.redhat.com".equals(server);
-        if (isRedHatChannel) System.out.print("Red Hat channel");
+        if (isRedHatChannel)
+            System.out.print("Red Hat channel");
         StringBuilder commandRegExp = new StringBuilder();
         commandRegExp.append("^(?i)[ ]*").append(Command.PREFIX).append("(");
         for (Command command : Command.values()) {
@@ -113,57 +112,47 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     }
 
     @Override
-    public void onMessage(MessageEvent<RhqIrcBot> event) throws Exception {
+    public void onMessage(final MessageEvent<RhqIrcBot> event) throws Exception {
         if (event.getUser().getNick().toLowerCase().contains("bot")) {
             return; // never talk with artificial forms of life
         }
-        
-        PircBotX bot = event.getBot();
+
+        final PircBotX bot = event.getBot();
         if (!bot.getNick().equals(bot.getName())) {
             bot.changeNick(bot.getName());
         }
+        String message = event.getMessage();
 
         // react to BZs in the messages
-        String message = event.getMessage();
-        Matcher bugMatcher = BUG_PATTERN.matcher(message);
-        while (bugMatcher.find()) {
-            int bugId = Integer.valueOf(bugMatcher.group(2));
-            GetBug getBug = new GetBug(bugId);
-            try {
-                bzConnector.executeMethod(getBug);
-            } catch (Exception e) {
-                bzConnector = new BugzillaConnector();
-                bzConnector.connectTo("https://bugzilla.redhat.com");
-                try {
-                    bzConnector.executeMethod(getBug);
-                } catch (BugzillaException e1) {
-                    //e1.printStackTrace();
-                    Throwable cause = e1.getCause();
-                    String details = (cause instanceof XmlRpcException) ? cause.getMessage() : e1.getMessage();
-                    bot.sendMessage(event.getChannel(), "Failed to access BZ " + bugId + ": " + details);
-                    continue;
+        Matcher bzMatcher = BZ_PATTERN.matcher(message);
+        while (bzMatcher.find()) {
+            final String response = bzResolver.resolve(bzMatcher.group(2));
+            bot.sendMessage(event.getChannel(), response);
+        }
+
+        // react to Jira bugs in the messages
+        Matcher jiraMatcher = JIRA_PATTERN.matcher(message);
+        while (jiraMatcher.find()) {
+            //            final String response = jiraResolver.resolve(bzMatcher.group(1));
+            //            bot.sendMessage(event.getChannel(), response);
+            final String bugId = jiraMatcher.group(1);
+            final Promise<Issue> issuePromise = jiraResolver.resolveAsync(bugId);
+            issuePromise.done(new Effect<Issue>() {
+                @Override
+                public void apply(Issue a) {
+                    bot.sendMessage(event.getChannel(), bugId + ": " + Color.RED + a.getSummary() + Color.NORMAL
+                        + ", priority: " + Color.GREEN + a.getPriority().getName() + Color.NORMAL + ", created: "
+                        + a.getCreationDate().toString("YYYY-MM-DD") + "  [ " + JiraResolver.JIRA_URL + "/browse/"
+                        + bugId + " ]");
                 }
-            }
-            Bug bug = getBug.getBug();
-            if (bug != null) {
-                String product = bug.getProduct();
-                if (product.equals("RHQ Project")) {
-                    product = "RHQ";
-                } else if (product.equals("JBoss Operations Network")) {
-                    product = "JON";
+            });
+            issuePromise.fail(new Effect<Throwable>() {
+                @Override
+                public void apply(Throwable e) {
+                    bot.sendMessage(event.getChannel(),
+                        "Failed to access bug " + bugId + " Cause: " + shorten(e.getMessage()));
                 }
-                Long timestamp = bugLogTimestamps.get(bugId);
-                if ((timestamp == null) || ((System.currentTimeMillis() - timestamp) > (5 * 60 * 1000L))) {
-                    bot.sendMessage(
-                        event.getChannel(),
-                        "BZ " + bugId + " [product=" + product + ", priority=" + bug.getPriority() + ", status="
-                            + bug.getStatus() + "] " + bug.getSummary() + " [ https://bugzilla.redhat.com/" + bugId
-                            + " ]");
-                }
-                bugLogTimestamps.put(bugId, System.currentTimeMillis());
-            } else {
-                bot.sendMessage(event.getChannel(), "BZ " + bugId + " does not exist.");
-            }
+            });
         }
 
         // react to the commit hashs included in the messages
@@ -173,11 +162,11 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
             String response = String.format(COMMIT_LINK, shaHash);
             bot.sendMessage(event.getChannel(), event.getUser().getNick() + ": " + response);
         }
-        
+
         if (message.startsWith(event.getBot().getNick())) {
-    		// someone asked bot directly, we have to remove that from message
-            	message = message.substring(event.getBot().getNick().length());
-    		message = message.replaceFirst("[^ ]*", "");
+            // someone asked bot directly, we have to remove that from message
+            message = message.substring(event.getBot().getNick().length());
+            message = message.replaceFirst("[^ ]*", "");
         }
         // react to commands included in the messages
         Matcher commandMatcher = commandPattern.matcher(message);
@@ -185,7 +174,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
             Command command = Command.valueOf(commandMatcher.group(1).toUpperCase());
             String response = prepareResponseForCommand(command);
             if (response != null) {
-                bot.sendMessage(event.getChannel(), event.getUser().getNick() + ": " + response);
+                bot.sendMessage(event.getChannel(), event.getUser().getNick() + ": " + shorten(response));
             }
         }
 
@@ -210,12 +199,12 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         String message = privateMessageEvent.getMessage();
         Matcher echoMatcher = ECHO_PATTERN.matcher(message);
         if (echoMatcher.matches()) {
-	    if (!JON_DEVS.contains(privateMessageEvent.getUser().getNick())) {
-		privateMessageEvent.respond("You're not my master, I am your master, go away");
-	    } else {
-		String echoMessage = echoMatcher.group(1);
-		bot.sendMessage(this.channel, echoMessage);
-	    }
+            if (!JON_DEVS.contains(privateMessageEvent.getUser().getNick())) {
+                privateMessageEvent.respond("You're not my master, I am your master, go away");
+            } else {
+                String echoMessage = echoMatcher.group(1);
+                bot.sendMessage(this.channel, echoMessage);
+            }
         } else if (message.equalsIgnoreCase(Command.PREFIX + "listrenames")) {
             //Generate a list of renames in the form of old1 changed to new1, old2 changed to new2, etc
             StringBuilder users = new StringBuilder();
@@ -289,10 +278,10 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         switch (command) {
         case SUPPORT:
             if (isRedHatChannel)
-            return whoIsOnSupport();
+                return whoIsOnSupport();
         case PTO:
             if (isRedHatChannel)
-            return whoIsOnPto(PTO_LINK);
+                return whoIsOnPto(PTO_LINK);
         default:
             System.err.println("Unknown command:" + command);
             break;
@@ -312,7 +301,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         supportCache.put(month + "#" + dayInMonth, value);
         return value;
     }
-    
+
     private String whoIsOnPto(String link) {
         String month = monthFormat.format(new Date());
         String dayInMonth = dayInMonthFormat.format(new Date());
@@ -340,6 +329,14 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
     private String doNotNotify(String nick) {
         //replace all vowels with unicode chars that look same not to spam users with notifications
-        return nick.toLowerCase().replaceFirst("a", "\u0430").replaceFirst("e", "\u0435").replaceFirst("i", "\u0456").replaceFirst("o", "\u043E").replaceFirst("u", "\u222A").replaceFirst("y", "\u028F");
+        return nick.toLowerCase().replaceFirst("a", "\u0430").replaceFirst("e", "\u0435").replaceFirst("i", "\u0456")
+            .replaceFirst("o", "\u043E").replaceFirst("u", "\u222A").replaceFirst("y", "\u028F");
+    }
+    
+    private String shorten(String message) {
+        if (message != null && message.length() > 300) {
+            return message.substring(0, 300) + "...";
+        } else
+            return message;
     }
 }

@@ -56,8 +56,16 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String AGENT_STATUS_OP = "status";
 
     protected static final String ATTRIB_AGENT_NAME = AgentConfigurationConstants.NAME;
+    protected static final String ATTRIB_DISABLE_NATIVE = AgentConfigurationConstants.DISABLE_NATIVE_SYSTEM;
+    protected static final String ATTRIB_SERVER_TRANSPORT = AgentConfigurationConstants.SERVER_TRANSPORT;
+    protected static final String ATTRIB_SERVER_BIND_PORT = AgentConfigurationConstants.SERVER_BIND_PORT;
+    protected static final String ATTRIB_SERVER_BIND_ADDRESS = AgentConfigurationConstants.SERVER_BIND_ADDRESS;
+    protected static final String ATTRIB_SERVER_TRANSPORT_PARAMS = AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS;
+    protected static final String ATTRIB_SERVER_ALIAS = AgentConfigurationConstants.SERVER_ALIAS;
 
     protected static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(SUBSYSTEM, SUBSYSTEM_NAME);
+
+
 
     static StandardResourceDescriptionResolver getResourceDescriptionResolver(final String keyPrefix) {
         String prefix = SUBSYSTEM_NAME + (keyPrefix == null ? "" : "." + keyPrefix);
@@ -113,6 +121,18 @@ public class AgentSubsystemExtension implements Extension {
                     }
                 } else if (elementName.equals(ATTRIB_AGENT_NAME)) {
                     opAdd.get(ATTRIB_AGENT_NAME).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_DISABLE_NATIVE)) {
+                    opAdd.get(ATTRIB_DISABLE_NATIVE).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_SERVER_TRANSPORT)) {
+                    opAdd.get(ATTRIB_SERVER_TRANSPORT).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_SERVER_BIND_PORT)) {
+                    opAdd.get(ATTRIB_SERVER_BIND_PORT).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_SERVER_BIND_ADDRESS)) {
+                    opAdd.get(ATTRIB_SERVER_BIND_ADDRESS).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_SERVER_TRANSPORT_PARAMS)) {
+                    opAdd.get(ATTRIB_SERVER_TRANSPORT_PARAMS).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_SERVER_ALIAS)) {
+                    opAdd.get(ATTRIB_SERVER_ALIAS).set(reader.getElementText());
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
                 }
@@ -160,9 +180,14 @@ public class AgentSubsystemExtension implements Extension {
             writer.writeAttribute(AGENT_ENABLED,
                 String.valueOf(node.get(AGENT_ENABLED).asBoolean(AGENT_ENABLED_DEFAULT)));
 
-            writer.writeStartElement(ATTRIB_AGENT_NAME);
-            writer.writeCharacters(node.get(ATTRIB_AGENT_NAME).asString());
-            writer.writeEndElement();
+            // our config elements
+            writeElement(writer, node, ATTRIB_AGENT_NAME);
+            writeElement(writer, node, ATTRIB_DISABLE_NATIVE);
+            writeElement(writer, node, ATTRIB_SERVER_TRANSPORT);
+            writeElement(writer, node, ATTRIB_SERVER_BIND_PORT);
+            writeElement(writer, node, ATTRIB_SERVER_BIND_ADDRESS);
+            writeElement(writer, node, ATTRIB_SERVER_TRANSPORT_PARAMS);
+            writeElement(writer, node, ATTRIB_SERVER_ALIAS);
 
             // <plugins>
             writer.writeStartElement(PLUGINS_ELEMENT);
@@ -181,6 +206,16 @@ public class AgentSubsystemExtension implements Extension {
             writer.writeEndElement();
             // </subsystem>
             writer.writeEndElement();
+        }
+
+        private void writeElement(final XMLExtendedStreamWriter writer, ModelNode node, String attribName)
+            throws XMLStreamException {
+            ModelNode attribNode = node.get(attribName);
+            if (attribNode.isDefined()) {
+                writer.writeStartElement(attribName);
+                writer.writeCharacters(attribNode.asString());
+                writer.writeEndElement();
+            }
         }
     }
 }

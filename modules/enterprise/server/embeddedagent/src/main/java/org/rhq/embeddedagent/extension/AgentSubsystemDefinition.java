@@ -2,6 +2,7 @@ package org.rhq.embeddedagent.extension;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DESCRIBE;
 
+import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
@@ -14,6 +15,8 @@ import org.jboss.as.controller.registry.OperationEntry;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
+import org.rhq.enterprise.agent.AgentConfigurationConstants;
+
 public class AgentSubsystemDefinition extends SimpleResourceDefinition {
 
     public static final AgentSubsystemDefinition INSTANCE = new AgentSubsystemDefinition();
@@ -23,12 +26,48 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
         .setXmlName(AgentSubsystemExtension.AGENT_ENABLED).setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
         .setDefaultValue(new ModelNode(AgentSubsystemExtension.AGENT_ENABLED_DEFAULT)).setAllowNull(false).build();
 
-    protected static final SimpleAttributeDefinition PREF_AGENT_NAME_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+    protected static final PluginsAttributeDefinition PLUGINS_ATTRIBDEF = new PluginsAttributeDefinition();
+
+    protected static final SimpleAttributeDefinition AGENT_NAME_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
         AgentSubsystemExtension.ATTRIB_AGENT_NAME, ModelType.STRING).setAllowExpression(true)
         .setXmlName(AgentSubsystemExtension.ATTRIB_AGENT_NAME).setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
         .setAllowNull(true).build();
 
-    protected static final PluginsAttributeDefinition PLUGINS_ATTRIBDEF = new PluginsAttributeDefinition();
+    protected static final SimpleAttributeDefinition DISABLE_NATIVE_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_DISABLE_NATIVE, ModelType.BOOLEAN).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_DISABLE_NATIVE)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES).setAllowNull(true).build();
+
+    protected static final SimpleAttributeDefinition SERVER_TRANSPORT_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_SERVER_TRANSPORT, ModelType.STRING).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_SERVER_TRANSPORT)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+        .setDefaultValue(new ModelNode(AgentConfigurationConstants.DEFAULT_SERVER_TRANSPORT)).setAllowNull(false)
+        .build();
+
+    protected static final SimpleAttributeDefinition SERVER_BIND_PORT_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_SERVER_BIND_PORT, ModelType.STRING).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_SERVER_BIND_PORT)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+        .setDefaultValue(new ModelNode(AgentConfigurationConstants.DEFAULT_SERVER_BIND_PORT)).setAllowNull(false)
+        .build();
+
+    protected static final SimpleAttributeDefinition SERVER_BIND_ADDRESS_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_SERVER_BIND_ADDRESS, ModelType.STRING).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_SERVER_BIND_ADDRESS)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES).setAllowNull(true).build();
+
+    protected static final SimpleAttributeDefinition SERVER_TRANSPORT_PARAMS_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_SERVER_TRANSPORT_PARAMS, ModelType.STRING).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_SERVER_TRANSPORT_PARAMS)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+        .setDefaultValue(new ModelNode(AgentConfigurationConstants.DEFAULT_SERVER_TRANSPORT_PARAMS))
+        .setAllowNull(false).build();
+
+    protected static final SimpleAttributeDefinition SERVER_ALIAS_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_SERVER_ALIAS, ModelType.STRING).setAllowExpression(true)
+        .setXmlName(AgentSubsystemExtension.ATTRIB_SERVER_ALIAS)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES).setAllowNull(true).build();
 
     private AgentSubsystemDefinition() {
         super(AgentSubsystemExtension.SUBSYSTEM_PATH, AgentSubsystemExtension.getResourceDescriptionResolver(null),
@@ -39,8 +78,17 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
     public void registerAttributes(ManagementResourceRegistration rr) {
         rr.registerReadWriteAttribute(AGENT_ENABLED_ATTRIBDEF, null, AgentEnabledAttributeHandler.INSTANCE);
         rr.registerReadWriteAttribute(PLUGINS_ATTRIBDEF, null, PluginsAttributeHandler.INSTANCE);
-        rr.registerReadWriteAttribute(PREF_AGENT_NAME_ATTRIBDEF, null, new ReloadRequiredWriteAttributeHandler(
-            PREF_AGENT_NAME_ATTRIBDEF));
+        registerReloadRequiredWriteAttributeHandler(rr, AGENT_NAME_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, DISABLE_NATIVE_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, SERVER_TRANSPORT_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, SERVER_BIND_PORT_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, SERVER_BIND_ADDRESS_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, SERVER_TRANSPORT_PARAMS_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, SERVER_ALIAS_ATTRIBDEF);
+    }
+
+    private void registerReloadRequiredWriteAttributeHandler(ManagementResourceRegistration rr, AttributeDefinition def) {
+        rr.registerReadWriteAttribute(def, null, new ReloadRequiredWriteAttributeHandler(def));
     }
 
     @Override

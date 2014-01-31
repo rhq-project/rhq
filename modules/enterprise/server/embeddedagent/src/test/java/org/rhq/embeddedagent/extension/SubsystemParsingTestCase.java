@@ -196,12 +196,18 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         // check the attributes
         Assert.assertTrue(content.get("attributes").isDefined());
         List<Property> attributes = content.get("attributes").asPropertyList();
-        Assert.assertEquals(attributes.size(), 3);
 
         List<String> expectedAttributes = Arrays.asList( //
+            AgentSubsystemExtension.ATTRIB_SERVER_TRANSPORT, //
+            AgentSubsystemExtension.ATTRIB_SERVER_BIND_PORT, //
+            AgentSubsystemExtension.ATTRIB_SERVER_BIND_ADDRESS, //
+            AgentSubsystemExtension.ATTRIB_SERVER_TRANSPORT_PARAMS, //
+            AgentSubsystemExtension.ATTRIB_SERVER_ALIAS, //
+            AgentSubsystemExtension.ATTRIB_DISABLE_NATIVE, //
+            AgentSubsystemExtension.ATTRIB_AGENT_NAME, //
             AgentSubsystemExtension.AGENT_ENABLED, //
-            AgentSubsystemExtension.PLUGINS_ELEMENT, //
-            AgentSubsystemExtension.ATTRIB_AGENT_NAME);
+            AgentSubsystemExtension.PLUGINS_ELEMENT);
+        Assert.assertEquals(attributes.size(), expectedAttributes.size());
 
         for (int i = 0 ; i < attributes.size(); i++) {
             String attrib = attributes.get(i).getName();

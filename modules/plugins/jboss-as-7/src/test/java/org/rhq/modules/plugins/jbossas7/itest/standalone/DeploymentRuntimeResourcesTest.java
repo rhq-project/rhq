@@ -65,7 +65,7 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Thomas Segismont
  */
-@Test
+@Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     private static final Log LOG = LogFactory.getLog(DeploymentRuntimeResourcesTest.class);
 

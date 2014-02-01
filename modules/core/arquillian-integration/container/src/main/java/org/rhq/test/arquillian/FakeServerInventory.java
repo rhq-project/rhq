@@ -99,17 +99,21 @@ public class FakeServerInventory {
             synchronized (sync) {
                 if (!depthReached) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Waiting for the discovery to complete on " + this);
+                        LOG.debug("Waiting for the discovery depth to be reached on " + this);
                     }
                     sync.wait(timeoutMillis);
                 } else {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Discovery already complete... no need to wait on " + this);
+                        LOG.debug("Discovery depth already reached... no need to wait on " + this);
                     }
                 }
 
                 finished = true;
             }
+        }
+
+        public int getExpectedDepth() {
+            return expectedDepth;
         }
 
         private void setDepth(int resourceTreeDepth) {

@@ -72,7 +72,6 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     protected void installManagementUsers() throws PluginContainerException, Exception {
         waitForAsyncDiscoveries();
 
-        System.out.println("\n=== Discovery scan completed.");
         if (!createdManagementUsers) {
             System.out.println("====== Installing management users...");
 

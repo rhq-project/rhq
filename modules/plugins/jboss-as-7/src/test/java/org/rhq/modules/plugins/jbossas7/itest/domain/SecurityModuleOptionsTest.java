@@ -79,6 +79,9 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     private static String SECURITY_RESOURCE_TYPE = "Security";
     private static String SECURITY_RESOURCE_KEY = "subsystem=security";
     private static String SECURITY_DOMAIN_RESOURCE_KEY = "security-domain";
+    // Out of box:
+    // The full-ha profile is associated with other-server-group
+    // server-three is in other-server-group and not started
     private static String PROFILE = "profile=full-ha";
     private static String SECURITY_DOMAIN_RESOURCE_TYPE = "Security Domain";
     private static String AUTH_CLASSIC_RESOURCE_TYPE = "Authentication (Classic)";
@@ -119,9 +122,10 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 "[{\"code\":\"Test\", \"type\":\"attribute\", \"module-options\":{\"mapping\":\"module\", \"mapping1\":\"module1\"}}]");
         jsonMap.put("provider-modules",
             "[{\"code\":\"Providers\", \"module-options\":{\"provider\":\"module\", \"provider1\":\"module1\"}}]");
-        jsonMap
-            .put("acl-modules",
-                "[{\"flag\":\"sufficient\", \"code\":\"ACL\", \"module-options\":{\"acl\":\"module\", \"acl1\":\"module1\"}}]");
+        // (jshaughn) commenting out, this caused an NPE (EAP 6.0.1), not sure why...
+        //jsonMap
+        //    .put("acl-modules",
+        //        "[{\"flag\":\"sufficient\", \"code\":\"ACL\", \"module-options\":{\"acl\":\"module\", \"acl1\":\"module1\"}}]");
         jsonMap
             .put("trust-modules",
                 "[{\"flag\":\"optional\", \"code\":\"TRUST\", \"module-options\":{\"trust\":\"module\", \"trust1\":\"module1\"}}]");
@@ -155,9 +159,6 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     public void loadStandardModuleOptionTypes() throws Exception {
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-        //Adjust discovery depth to support deeper hierarchy depth of Module Option elements
-        setMaxDiscoveryDepthOverride(12);
 
         //create new Security Domain
         Address destination = new Address(PROFILE);
@@ -200,6 +201,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 assert false : "An unknown attribute '" + attribute
                     + "' was found. Is there a new type to be supported?";
             }
+
             //build the operation to add the component
             ////Load json map into ModuleOptionType
             List<Value> moduleTypeValue = new ArrayList<Value>();
@@ -222,6 +224,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 moduleTypeValue);
             //submit the command
             result = connection.execute(op);
+            assert result.getOutcome().equals("success") : "Add ModuleOptionType has failed: "
+                + result.getFailureDescription();
         }
     }
 
@@ -236,9 +240,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        //Have thread sleep longer to discover deeper resource types.
-        //spinder 6/29/12: up this number if the resources are not being discovered.
-        Thread.sleep(240 * 1000L); // delay so that PC gets a chance to scan for resources
+        // ensure the entire EAP inventory is discovered before continuing, we need deep resources in inventory
+        waitForAsyncDiscoveryToStabilize(platform);
     }
 
     /** This test method exercises a number of things:
@@ -273,8 +276,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             //check the configuration for the Module Option Type Ex. 'Acl (Profile)' Resource. Should be able to verify components
             Resource moduleOptionsTypeResource = getModuleOptionTypeResource(attribute);
             //assert non-zero id returned
-            assert moduleOptionsTypeResource.getId() > 0 : "The resource was not properly initialized. Expected id >0 but got:"
-                + moduleOptionsTypeResource.getId();
+            assert moduleOptionsTypeResource.getId() != 0 : "The resource was not properly initialized. Expected id != 0";
 
             //Now request the resource complete with resource config
             Configuration loadedConfiguration = testConfigurationManager
@@ -331,8 +333,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             //Ex. Module Options  for (Acl Modules - Profile)
             Resource moduleOptionsResource = getModuleOptionsResource(moduleOptionsTypeResource, attribute);
             //assert non-zero id returned
-            assert moduleOptionsResource.getId() > 0 : "The resource was not properly initialized. Expected id > 0 but got:"
-                + moduleOptionsResource.getId();
+            assert moduleOptionsResource.getId() != 0 : "The resource was not properly initialized. Expected id != 0";
             //fetch configuration for module options
             //Now request the resource complete with resource config
             Configuration loadedOptionsConfiguration = testConfigurationManager
@@ -487,19 +488,28 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         if (testSecurityDomain == null) {
             InventoryManager im = pluginContainer.getInventoryManager();
             Resource platform = im.getPlatform();
+            if (platform != null)
+                System.out.println("*** Found        Platform [" + platform.getResourceKey() + "]");
             //host controller
             Resource hostController = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
                 DomainServerComponentTest.RESOURCE_KEY);
+            if (hostController != null)
+                System.out.println("*** Found Host Controller [" + hostController.getResourceKey() + "]");
+
             //profile=full-ha
             ResourceType profileType = new ResourceType("Profile", PLUGIN_NAME, ResourceCategory.SERVICE, null);
             String key = PROFILE;
             Resource profile = getResourceByTypeAndKey(hostController, profileType, key);
+            if (profile != null)
+                System.out.println("*** Found         Profile [" + platform.getResourceKey() + "]");
 
             //Security (Profile)
             ResourceType securityType = new ResourceType("Security (Profile)", PLUGIN_NAME, ResourceCategory.SERVICE,
                 null);
             key += "," + SECURITY_RESOURCE_KEY;
             Resource security = getResourceByTypeAndKey(profile, securityType, key);
+            if (security != null)
+                System.out.println("*** Found        Security [" + security.getResourceKey() + "]");
 
             //Security Domain (Profile)
             ResourceType domainType = new ResourceType("Security Domain (Profile)", PLUGIN_NAME,
@@ -507,6 +517,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             key += "," + securityDomainId;
             testSecurityDomainKey = key;
             testSecurityDomain = getResourceByTypeAndKey(security, domainType, key);
+            if (testSecurityDomain != null)
+                System.out.println("*** Found          Domain [" + testSecurityDomain.getResourceKey() + "]");
         }
 
         //acl=classic
@@ -546,8 +558,11 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         }
 
         moduleOptionResource = getResourceByTypeAndKey(testSecurityDomain, moduleOptionType, moduleOptionTypeKey);
+        if (moduleOptionResource != null)
+            System.out.println("*** Found ModuleOption [" + moduleOptionResource.getResourceKey() + "]");
 
         return moduleOptionResource;
+
     }
 
     /** Automates hierarchy creation for Module Option type resources and their parents

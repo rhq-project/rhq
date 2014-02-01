@@ -625,19 +625,6 @@
             <configuration>
               <skipTests>false</skipTests>
               <skipITs>false</skipITs>
-              <includes>
-                <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
-                <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/WebConnectorComponentTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>-->
-                <!--<include>org/rhq/modules/plugins/jbossas7/itest/nonpc/ManagementConnectionPersistenceTest.java</include>-->
-              </includes>
               <properties>
                 <property>
                   <name>listener</name>
@@ -658,7 +645,41 @@
               </systemPropertyVariables>
             </configuration>
             <executions>
+              <!-- Some of these test classes seem to do better when run by themseleves. So, use different executions... -->
               <execution>
+                <id>DeploymentRuntimeResourcesTest</id>              
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DeploymentTest</id>              
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>              
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>everything-else</id>
+                <configuration>
+                  <includes>                
+                    <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
+                  </includes>
+                  <excludes>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/Deployment*Test.java</exclude>
+                  </excludes>
+                </configuration>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>

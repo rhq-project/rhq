@@ -127,7 +127,6 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         serverResource = standaloneResources.iterator().next();
     }
 
-    //(dependsOnMethods = "assignServerResource")
     @Test(priority = 11)
     public void testDeploy() throws Exception {
         ResourcePackageDetails packageDetails = getTestDeploymentPackageDetails(TestDeployments.DEPLOYMENT_1);
@@ -215,7 +214,6 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     }
 
     @Test(priority = 15)
-    @RunDiscovery
     public void testWebRuntimeMetricsHaveNonNullValues() throws Exception {
         assertTrue(webRuntimeResources != null && !webRuntimeResources.isEmpty(),
             "Web Runtime resource should have been discovered");
@@ -237,7 +235,6 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     }
 
     @Test(priority = 16)
-    @RunDiscovery
     public void testUndeploy() throws Exception {
         Resource deployment = deploymentResources.iterator().next();
         DeleteResourceRequest request = new DeleteResourceRequest(0, deployment.getId());

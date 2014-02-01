@@ -58,7 +58,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        Thread.sleep(40 * 1000L);
+        //Thread.sleep(40 * 1000L);
     }
 
     @Test(priority = 11)
@@ -73,7 +73,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
             StandaloneServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
 
-        Thread.sleep(30 * 1000L);
+        //Thread.sleep(30 * 1000L);
 
         for (ResourceData resourceData : testResourceData) {
             ResourceType resourceType = new ResourceType(resourceData.resourceTypeName, PLUGIN_NAME,
@@ -100,7 +100,7 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
             for (Resource resourceUnderTest : foundResources) {
                 log.info(foundResources);
 
-                assert resourceUnderTest.getId() > 0 : "Resource not properly initialized. Id = 0. Try extending sleep after discovery.";
+                assert resourceUnderTest.getId() != 0 : "Resource not properly initialized. Id = 0. Try extending sleep after discovery.";
                 Configuration resourceUnderTestConfig = configurationManager
                     .loadResourceConfiguration(resourceUnderTest.getId());
 

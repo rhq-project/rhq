@@ -82,6 +82,8 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_BIND_ADDRESS_ATTRIBDEF);
         addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_TRANSPORT_PARAMS_ATTRIBDEF);
         addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.AGENT_TRANSPORT_ATTRIBDEF);
+        addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.AGENT_TRANSPORT_PARAMS_ATTRIBDEF);
 
         // create our service
         AgentService service = new AgentService();

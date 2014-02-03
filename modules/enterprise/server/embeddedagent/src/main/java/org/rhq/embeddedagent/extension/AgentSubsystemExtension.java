@@ -30,6 +30,7 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
 
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
+import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
 public class AgentSubsystemExtension implements Extension {
 
@@ -50,6 +51,15 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String AGENT_ENABLED = "enabled";
     protected static final boolean AGENT_ENABLED_DEFAULT = false;
     protected static final boolean PLUGIN_ENABLED_DEFAULT = true;
+    protected static final String SERVER_ENDPOINT_ELEMENT = "server-endpoint";
+    protected static final String SERVER_ENDPOINT_ADDRESS_XML = "address";
+    protected static final String SERVER_ENDPOINT_PORT_XML = "port";
+    protected static final String SERVER_ENDPOINT_TRANSPORT_XML = "transport";
+    protected static final String SERVER_ENDPOINT_TRANSPORT_PARAMS_XML = "transport-params";
+    protected static final String AGENT_ENDPOINT_ELEMENT = "agent-endpoint";
+    protected static final String AGENT_ENDPOINT_SOCKET_BINDING_XML = "socket-binding";
+    protected static final String AGENT_ENDPOINT_TRANSPORT_XML = "transport";
+    protected static final String AGENT_ENDPOINT_TRANSPORT_PARAMS_XML = "transport-params";
 
     protected static final String AGENT_RESTART_OP = "restart";
     protected static final String AGENT_STOP_OP = "stop";
@@ -62,9 +72,12 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String ATTRIB_SERVER_BIND_ADDRESS = AgentConfigurationConstants.SERVER_BIND_ADDRESS;
     protected static final String ATTRIB_SERVER_TRANSPORT_PARAMS = AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS;
     protected static final String ATTRIB_SERVER_ALIAS = AgentConfigurationConstants.SERVER_ALIAS;
-    protected static final String ATTRIB_SOCKET_BINDING = "socket-binding";
+    protected static final String ATTRIB_SOCKET_BINDING = AGENT_ENDPOINT_SOCKET_BINDING_XML;
+    protected static final String ATTRIB_AGENT_TRANSPORT = ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT;
+    protected static final String ATTRIB_AGENT_TRANSPORT_PARAMS = ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT_PARAMS;
 
     protected static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(SUBSYSTEM, SUBSYSTEM_NAME);
+
 
     static StandardResourceDescriptionResolver getResourceDescriptionResolver(final String keyPrefix) {
         String prefix = SUBSYSTEM_NAME + (keyPrefix == null ? "" : "." + keyPrefix);
@@ -118,22 +131,44 @@ public class AgentSubsystemExtension implements Extension {
                             readPlugin(reader, pluginsAttributeNode);
                         }
                     }
+                } else if (elementName.equals(SERVER_ENDPOINT_ELEMENT)) {
+                    String val = reader.getAttributeValue(null, SERVER_ENDPOINT_ADDRESS_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_SERVER_BIND_ADDRESS).set(val);
+                    }
+                    val = reader.getAttributeValue(null, SERVER_ENDPOINT_PORT_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_SERVER_BIND_PORT).set(val);
+                    }
+                    val = reader.getAttributeValue(null, SERVER_ENDPOINT_TRANSPORT_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_SERVER_TRANSPORT).set(val);
+                    }
+                    val = reader.getAttributeValue(null, SERVER_ENDPOINT_TRANSPORT_PARAMS_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_SERVER_TRANSPORT_PARAMS).set(val);
+                    }
+                    ParseUtils.requireNoContent(reader);
+                } else if (elementName.equals(AGENT_ENDPOINT_ELEMENT)) {
+                    String val = reader.getAttributeValue(null, AGENT_ENDPOINT_SOCKET_BINDING_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_SOCKET_BINDING).set(val);
+                    }
+                    val = reader.getAttributeValue(null, AGENT_ENDPOINT_TRANSPORT_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_AGENT_TRANSPORT).set(val);
+                    }
+                    val = reader.getAttributeValue(null, AGENT_ENDPOINT_TRANSPORT_PARAMS_XML);
+                    if (val != null) {
+                        opAdd.get(ATTRIB_AGENT_TRANSPORT_PARAMS).set(val);
+                    }
+                    ParseUtils.requireNoContent(reader);
                 } else if (elementName.equals(ATTRIB_AGENT_NAME)) {
                     opAdd.get(ATTRIB_AGENT_NAME).set(reader.getElementText());
                 } else if (elementName.equals(ATTRIB_DISABLE_NATIVE)) {
                     opAdd.get(ATTRIB_DISABLE_NATIVE).set(reader.getElementText());
-                } else if (elementName.equals(ATTRIB_SERVER_TRANSPORT)) {
-                    opAdd.get(ATTRIB_SERVER_TRANSPORT).set(reader.getElementText());
-                } else if (elementName.equals(ATTRIB_SERVER_BIND_PORT)) {
-                    opAdd.get(ATTRIB_SERVER_BIND_PORT).set(reader.getElementText());
-                } else if (elementName.equals(ATTRIB_SERVER_BIND_ADDRESS)) {
-                    opAdd.get(ATTRIB_SERVER_BIND_ADDRESS).set(reader.getElementText());
-                } else if (elementName.equals(ATTRIB_SERVER_TRANSPORT_PARAMS)) {
-                    opAdd.get(ATTRIB_SERVER_TRANSPORT_PARAMS).set(reader.getElementText());
                 } else if (elementName.equals(ATTRIB_SERVER_ALIAS)) {
                     opAdd.get(ATTRIB_SERVER_ALIAS).set(reader.getElementText());
-                } else if (elementName.equals(ATTRIB_SOCKET_BINDING)) {
-                    opAdd.get(ATTRIB_SOCKET_BINDING).set(reader.getElementText());
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
                 }
@@ -184,12 +219,47 @@ public class AgentSubsystemExtension implements Extension {
             // our config elements
             writeElement(writer, node, ATTRIB_AGENT_NAME);
             writeElement(writer, node, ATTRIB_DISABLE_NATIVE);
-            writeElement(writer, node, ATTRIB_SERVER_TRANSPORT);
-            writeElement(writer, node, ATTRIB_SERVER_BIND_PORT);
-            writeElement(writer, node, ATTRIB_SERVER_BIND_ADDRESS);
-            writeElement(writer, node, ATTRIB_SERVER_TRANSPORT_PARAMS);
             writeElement(writer, node, ATTRIB_SERVER_ALIAS);
-            writeElement(writer, node, ATTRIB_SOCKET_BINDING);
+
+            // <server-endpoint>
+            writer.writeStartElement(SERVER_ENDPOINT_ELEMENT);
+            ModelNode serverAddressNode = node.get(ATTRIB_SERVER_BIND_ADDRESS);
+            ModelNode serverPortNode = node.get(ATTRIB_SERVER_BIND_PORT);
+            ModelNode serverTransportNode = node.get(ATTRIB_SERVER_TRANSPORT);
+            ModelNode serverTransportParamsNode = node.get(ATTRIB_SERVER_TRANSPORT_PARAMS);
+
+            if (serverPortNode.isDefined()) {
+                writer.writeAttribute(SERVER_ENDPOINT_PORT_XML, serverPortNode.asString());
+            }
+            if (serverAddressNode.isDefined()) {
+                writer.writeAttribute(SERVER_ENDPOINT_ADDRESS_XML, serverAddressNode.asString());
+            }
+            if (serverTransportNode.isDefined()) {
+                writer.writeAttribute(SERVER_ENDPOINT_TRANSPORT_XML, serverTransportNode.asString());
+            }
+            if (serverTransportParamsNode.isDefined()) {
+                writer.writeAttribute(SERVER_ENDPOINT_TRANSPORT_PARAMS_XML, serverTransportParamsNode.asString());
+            }
+            // </server-endpoint>
+            writer.writeEndElement();
+
+            // <agent-endpoint>
+            writer.writeStartElement(AGENT_ENDPOINT_ELEMENT);
+            ModelNode agentSocketBindingNode = node.get(ATTRIB_SOCKET_BINDING);
+            ModelNode agentTransportNode = node.get(ATTRIB_AGENT_TRANSPORT);
+            ModelNode agentTransportParamsNode = node.get(ATTRIB_AGENT_TRANSPORT_PARAMS);
+
+            if (agentSocketBindingNode.isDefined()) {
+                writer.writeAttribute(AGENT_ENDPOINT_SOCKET_BINDING_XML, agentSocketBindingNode.asString());
+            }
+            if (agentTransportNode.isDefined()) {
+                writer.writeAttribute(AGENT_ENDPOINT_TRANSPORT_XML, agentTransportNode.asString());
+            }
+            if (agentTransportParamsNode.isDefined()) {
+                writer.writeAttribute(AGENT_ENDPOINT_TRANSPORT_PARAMS_XML, agentTransportParamsNode.asString());
+            }
+            // </agent-endpoint>
+            writer.writeEndElement();
 
             // <plugins>
             writer.writeStartElement(PLUGINS_ELEMENT);

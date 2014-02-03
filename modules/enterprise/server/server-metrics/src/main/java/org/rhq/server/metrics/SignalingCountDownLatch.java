@@ -11,6 +11,8 @@ public class SignalingCountDownLatch {
 
     private CountDownLatch latch;
 
+    private String msg;
+
     public SignalingCountDownLatch(CountDownLatch latch) {
         this.latch = latch;
     }
@@ -18,11 +20,11 @@ public class SignalingCountDownLatch {
     public void await() throws InterruptedException, AbortedException {
         latch.await();
         if (aborted) {
-            throw new AbortedException();
+            throw new AbortedException(msg);
         }
     }
 
-    public void abort() {
+    public void abort(String msg) {
         aborted = true;
         latch.countDown();
     }

@@ -6,6 +6,11 @@
     <server-endpoint port="7080" transport="test-transport" transport-params="test-transport-params" />
     <agent-endpoint socket-binding="embeddedagent" transport="socket"/>
 
+    <extra-configuration>
+        <preference name="custom-prop" value="custom-prop-val"/>
+        <preference name="custom-prop2" value="custom-prop-val2"/>
+    </extra-configuration>
+
     <plugins>
         <plugin name="platform" enabled="true" />
         <plugin name="blah" enabled="false" />

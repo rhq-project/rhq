@@ -17,6 +17,7 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
+import org.jboss.as.controller.parsing.Attribute;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
 import org.jboss.as.controller.parsing.ParseUtils;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
@@ -51,6 +52,8 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String AGENT_ENABLED = "enabled";
     protected static final boolean AGENT_ENABLED_DEFAULT = false;
     protected static final boolean PLUGIN_ENABLED_DEFAULT = true;
+    protected static final String AGENT_CONFIG_ELEMENT = "extra-configuration";
+    protected static final String PREFERENCE_ELEMENT = "preference";
     protected static final String SERVER_ENDPOINT_ELEMENT = "server-endpoint";
     protected static final String SERVER_ENDPOINT_ADDRESS_XML = "address";
     protected static final String SERVER_ENDPOINT_PORT_XML = "port";
@@ -131,6 +134,13 @@ public class AgentSubsystemExtension implements Extension {
                             readPlugin(reader, pluginsAttributeNode);
                         }
                     }
+                } else if (elementName.equals(AGENT_CONFIG_ELEMENT)) {
+                    ModelNode configAttributeNode = opAdd.get(AGENT_CONFIG_ELEMENT);
+                    while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
+                        if (reader.isStartElement()) {
+                            readPreference(reader, configAttributeNode);
+                        }
+                    }
                 } else if (elementName.equals(SERVER_ENDPOINT_ELEMENT)) {
                     String val = reader.getAttributeValue(null, SERVER_ENDPOINT_ADDRESS_XML);
                     if (val != null) {
@@ -206,6 +216,21 @@ public class AgentSubsystemExtension implements Extension {
             pluginsAttributeNode.add(pluginName, pluginEnabled);
         }
 
+        private void readPreference(XMLExtendedStreamReader reader, ModelNode configAttributeNode)
+            throws XMLStreamException {
+
+            if (!reader.getLocalName().equals(PREFERENCE_ELEMENT)) {
+                throw ParseUtils.unexpectedElement(reader);
+            }
+
+            ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName(), Attribute.VALUE.getLocalName());
+            String attr = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+            String val = reader.getAttributeValue(null, Attribute.VALUE.getLocalName());
+            ParseUtils.requireNoContent(reader);
+
+            configAttributeNode.add(attr, val);
+        }
+
         @Override
         public void writeContent(final XMLExtendedStreamWriter writer, final SubsystemMarshallingContext context)
             throws XMLStreamException {
@@ -259,6 +284,22 @@ public class AgentSubsystemExtension implements Extension {
                 writer.writeAttribute(AGENT_ENDPOINT_TRANSPORT_PARAMS_XML, agentTransportParamsNode.asString());
             }
             // </agent-endpoint>
+            writer.writeEndElement();
+
+            // <extra-configuration>
+            writer.writeStartElement(AGENT_CONFIG_ELEMENT);
+            ModelNode configNode = node.get(AGENT_CONFIG_ELEMENT);
+            if (configNode != null && configNode.isDefined()) {
+                for (Property property : configNode.asPropertyList()) {
+                    // <preference>
+                    writer.writeStartElement(PREFERENCE_ELEMENT);
+                    writer.writeAttribute(Attribute.NAME.getLocalName(), property.getName());
+                    writer.writeAttribute(Attribute.VALUE.getLocalName(), property.getValue().asString());
+                    // </preference>
+                    writer.writeEndElement();
+                }
+            }
+            // </extra-configuration>
             writer.writeEndElement();
 
             // <plugins>

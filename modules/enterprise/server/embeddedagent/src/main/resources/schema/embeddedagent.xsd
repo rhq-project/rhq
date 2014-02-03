@@ -15,6 +15,7 @@
             <xs:element name="rhq.agent.server.alias" type="xs:string"/>
             <xs:element name="server-endpoint" type="serverEndpointType"/>
             <xs:element name="agent-endpoint" type="agentEndpointType"/>
+            <xs:element name="extra-configuration" type="extraConfigurationType"/>
             <xs:element name="plugins" type="pluginsType"/>
         </xs:all>
     </xs:complexType>
@@ -40,5 +41,15 @@
    <xs:complexType name="pluginType">
       <xs:attribute name="name" use="required"/>
       <xs:attribute name="enabled" type="xs:boolean" use="required" default="true"/>
+   </xs:complexType>
+
+   <xs:complexType name="extraConfigurationType">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+         <xs:element name="preference" type="preferenceType"/>
+      </xs:choice>
+   </xs:complexType>
+   <xs:complexType name="preferenceType">
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="value" use="required"/>
    </xs:complexType>
 </xs:schema>

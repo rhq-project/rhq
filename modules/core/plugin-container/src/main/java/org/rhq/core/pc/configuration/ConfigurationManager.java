@@ -81,13 +81,13 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         threadPool = new ScheduledThreadPoolExecutor(1, threadFactory);
 
         ConfigurationCheckExecutor configurationChecker = new ConfigurationCheckExecutor(
-            getConfigurationServerService(), PluginContainer.getInstance().getInventoryManager());
+            getConfigurationServerService());
 
         if (pluginContainerConfiguration.getConfigurationDiscoveryPeriod() > 0
             && pluginContainerConfiguration.isInsideAgent()) {
-            threadPool.scheduleAtFixedRate(configurationChecker, pluginContainerConfiguration
-                .getConfigurationDiscoveryInitialDelay(), pluginContainerConfiguration
-                .getConfigurationDiscoveryPeriod(), TimeUnit.SECONDS);
+            threadPool.scheduleAtFixedRate(configurationChecker,
+                pluginContainerConfiguration.getConfigurationDiscoveryInitialDelay(),
+                pluginContainerConfiguration.getConfigurationDiscoveryPeriod(), TimeUnit.SECONDS);
         }
     }
 

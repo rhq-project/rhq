@@ -1864,6 +1864,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + "] as it is already in the process of starting.");
 
                     return false;
+                default:
+                    log.error("Unexpected state [" + state.name() + "], returning false...");
+
+                    return false;
                 }
             } else {
                 if (log.isTraceEnabled()) {
@@ -2038,6 +2042,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    /**
+     * @return The location for [plugins] to write data files
+     */
+    public File getDataDirectory() {
+        return this.configuration.getDataDirectory();
+    }
+
     private <T extends ResourceComponent<?>> ResourceContext<T> createResourceContext(Resource resource,
         T parentComponent, ResourceContext<?> parentResourceContext, ResourceDiscoveryComponent<T> discoveryComponent) {
 
@@ -2047,7 +2058,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             discoveryComponent, // the discovery component (this is actually the proxy to it)
             SystemInfoFactory.createSystemInfo(), // for native access
             this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-            this.configuration.getDataDirectory(), // location for plugin to write data files
+            this.configuration.getDataDirectory(), // base location for plugin to write data files
             this.configuration.getContainerName(), // the name of the agent/PC
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
@@ -3073,7 +3084,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resourceConfiguration != null) {
             resourceConfiguration.cleanoutRawConfiguration();
 
-            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(resource.getId(),
+            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(this, resource.getId(),
                 resourceConfiguration, log);
             if (persisted) {
                 resource.setResourceConfiguration(null);
@@ -3082,7 +3093,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public static Configuration getResourceConfiguration(Resource agentSideResource) {
-        return ConfigurationCheckExecutor.getResourceConfiguration(agentSideResource);
+        return ConfigurationCheckExecutor.getResourceConfiguration(PluginContainer.getInstance().getInventoryManager(),
+            agentSideResource);
     }
 
     private void compactConfiguration(Configuration config) {
@@ -3487,6 +3499,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             break;
         }
+        default:
+            // nothing to do for other states
+            break;
         }
 
         container.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);

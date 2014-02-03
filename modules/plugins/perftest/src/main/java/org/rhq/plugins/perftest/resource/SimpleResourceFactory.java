@@ -45,10 +45,15 @@ public class SimpleResourceFactory implements ResourceFactory {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
+    private long discoveryDelay = 0L;
+
     // Constructors  --------------------------------------------
 
     public SimpleResourceFactory(SimpleResourceGenerator generator) {
         this.generator = generator;
+        String tmp = System.getProperty("rhq.perftest.discoverydelayms","0");
+        discoveryDelay = Long.parseLong(tmp);
+
     }
 
     // ResourceFactory Implementation  --------------------------------------------
@@ -69,6 +74,14 @@ public class SimpleResourceFactory implements ResourceFactory {
                 resourceVersion, resourceDescription, pluginConfiguration, null);
 
             discoveredResources.add(details);
+
+            if (discoveryDelay>0) {
+                try {
+                    Thread.sleep(discoveryDelay);
+                } catch (InterruptedException e) {
+                    ; // ignored
+                }
+            }
         }
 
         return discoveredResources;

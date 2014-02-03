@@ -9,6 +9,7 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.descriptions.DefaultOperationDescriptionProvider;
 import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
+import org.jboss.as.controller.operations.validation.StringLengthValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.OperationEntry;
@@ -69,6 +70,12 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
         .setXmlName(AgentSubsystemExtension.ATTRIB_SERVER_ALIAS)
         .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES).setAllowNull(true).build();
 
+    protected static final SimpleAttributeDefinition SOCKET_BINDING_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
+        AgentSubsystemExtension.ATTRIB_SOCKET_BINDING, ModelType.STRING)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+        .setDefaultValue(new ModelNode("embeddedagent")).setValidator(new StringLengthValidator(1)).setAllowNull(false)
+        .build();
+
     private AgentSubsystemDefinition() {
         super(AgentSubsystemExtension.SUBSYSTEM_PATH, AgentSubsystemExtension.getResourceDescriptionResolver(null),
             AgentSubsystemAdd.INSTANCE, AgentSubsystemRemove.INSTANCE);
@@ -85,6 +92,7 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
         registerReloadRequiredWriteAttributeHandler(rr, SERVER_BIND_ADDRESS_ATTRIBDEF);
         registerReloadRequiredWriteAttributeHandler(rr, SERVER_TRANSPORT_PARAMS_ATTRIBDEF);
         registerReloadRequiredWriteAttributeHandler(rr, SERVER_ALIAS_ATTRIBDEF);
+        registerReloadRequiredWriteAttributeHandler(rr, SOCKET_BINDING_ATTRIBDEF);
     }
 
     private void registerReloadRequiredWriteAttributeHandler(ManagementResourceRegistration rr, AttributeDefinition def) {

@@ -62,10 +62,9 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String ATTRIB_SERVER_BIND_ADDRESS = AgentConfigurationConstants.SERVER_BIND_ADDRESS;
     protected static final String ATTRIB_SERVER_TRANSPORT_PARAMS = AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS;
     protected static final String ATTRIB_SERVER_ALIAS = AgentConfigurationConstants.SERVER_ALIAS;
+    protected static final String ATTRIB_SOCKET_BINDING = "socket-binding";
 
     protected static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(SUBSYSTEM, SUBSYSTEM_NAME);
-
-
 
     static StandardResourceDescriptionResolver getResourceDescriptionResolver(final String keyPrefix) {
         String prefix = SUBSYSTEM_NAME + (keyPrefix == null ? "" : "." + keyPrefix);
@@ -133,6 +132,8 @@ public class AgentSubsystemExtension implements Extension {
                     opAdd.get(ATTRIB_SERVER_TRANSPORT_PARAMS).set(reader.getElementText());
                 } else if (elementName.equals(ATTRIB_SERVER_ALIAS)) {
                     opAdd.get(ATTRIB_SERVER_ALIAS).set(reader.getElementText());
+                } else if (elementName.equals(ATTRIB_SOCKET_BINDING)) {
+                    opAdd.get(ATTRIB_SOCKET_BINDING).set(reader.getElementText());
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
                 }
@@ -188,6 +189,7 @@ public class AgentSubsystemExtension implements Extension {
             writeElement(writer, node, ATTRIB_SERVER_BIND_ADDRESS);
             writeElement(writer, node, ATTRIB_SERVER_TRANSPORT_PARAMS);
             writeElement(writer, node, ATTRIB_SERVER_ALIAS);
+            writeElement(writer, node, ATTRIB_SOCKET_BINDING);
 
             // <plugins>
             writer.writeStartElement(PLUGINS_ELEMENT);

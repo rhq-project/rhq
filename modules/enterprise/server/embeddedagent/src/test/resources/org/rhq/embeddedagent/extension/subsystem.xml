@@ -7,6 +7,8 @@
     <rhq.agent.server.transport-params>test-transport-params</rhq.agent.server.transport-params>
     <!-- <rhq.agent.server.alias>test-alias</rhq.agent.server.alias> -->
 
+    <socket-binding>embeddedagent</socket-binding>
+
     <plugins>
         <plugin name="platform" enabled="true" />
         <plugin name="blah" enabled="false" />

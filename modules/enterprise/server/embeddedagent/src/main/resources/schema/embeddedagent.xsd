@@ -17,6 +17,7 @@
             <xs:element name="rhq.agent.server.bind-address" type="xs:string" use="optional"/>
             <xs:element name="rhq.agent.server.transport-params" type="xs:string" />
             <xs:element name="rhq.agent.server.alias" type="xs:string" use="optional"/>
+            <xs:element name="socket-binding" type="xs:string"/>
             <xs:element name="plugins" type="pluginsType"/>
         </xs:all>
     </xs:complexType>

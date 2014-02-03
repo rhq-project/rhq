@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jboss.as.network.SocketBinding;
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.logging.Logger;
 import org.jboss.modules.Module;
@@ -18,6 +19,7 @@ import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
 public class AgentService implements Service<AgentService> {
 
@@ -31,7 +33,13 @@ public class AgentService implements Service<AgentService> {
      * This service gives us information about the server, like the install directory, data directory, etc.
      * Package-scoped so the add-step handler can access this.
      */
-    InjectedValue<ServerEnvironment> envServiceValue = new InjectedValue<ServerEnvironment>();
+    final InjectedValue<ServerEnvironment> envServiceValue = new InjectedValue<ServerEnvironment>();
+
+    /**
+     * Our subsystem add-step handler will inject this as a dependency for us.
+     * This object will provide the binding address and port for the agent listener.
+     */
+    final InjectedValue<SocketBinding> agentListenerBinding = new InjectedValue<SocketBinding>();
 
     /**
      * This service can be configured to be told explicitly about certain plugins to be
@@ -131,10 +139,17 @@ public class AgentService implements Service<AgentService> {
         log.info("Starting the embedded agent now");
         try {
             // make sure we pre-configure the agent with some settings taken from our runtime environment
+            SocketBinding agentListenerBindingValue = agentListenerBinding.getValue();
+            String agentBindAddress = agentListenerBindingValue.getAddress().getHostAddress();
+            String agentBindPort = String.valueOf(agentListenerBindingValue.getAbsolutePort());
+            configOverrides.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, agentBindAddress);
+            configOverrides.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, agentBindPort);
+
             ServerEnvironment env = envServiceValue.getValue();
             boolean resetConfigurationAtStartup = true;
             AgentConfigurationSetup configSetup = new AgentConfigurationSetup(
                 getExportedResource("conf/agent-configuration.xml"), resetConfigurationAtStartup, configOverrides, env);
+
             // prepare the agent logging first thing so the agent logs messages using this config
             configSetup.prepareLogConfigFile(getExportedResource("conf/log4j.xml"));
             configSetup.preConfigureAgent();

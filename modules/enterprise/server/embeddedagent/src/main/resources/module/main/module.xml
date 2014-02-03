@@ -48,5 +48,8 @@
 
         <!-- the standalone agent had this in its endorsed dir, but the embedded agent adds it as a dependency -->
         <module name="javax.xml.bind.api"/>
+
+        <!-- other dependencies we need -->
+        <module name="org.jboss.as.network"/>
     </dependencies>
 </module>

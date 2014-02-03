@@ -9,6 +9,7 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.ServiceVerificationHandler;
+import org.jboss.as.network.SocketBinding;
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.as.server.ServerEnvironmentService;
 import org.jboss.dmr.ModelNode;
@@ -41,6 +42,7 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         AgentSubsystemDefinition.SERVER_BIND_ADDRESS_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.SERVER_TRANSPORT_PARAMS_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.SOCKET_BINDING_ATTRIBDEF.validateAndSet(operation, model);
         log.info("Populating the embedded agent subsystem model: " + operation + "=" + model);
     }
 
@@ -87,10 +89,14 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         service.setConfigurationOverrides(overrides);
 
         // install the service
+        String binding = AgentSubsystemDefinition.SOCKET_BINDING_ATTRIBDEF.resolveModelAttribute(context, model)
+            .asString();
         ServiceName name = AgentService.SERVICE_NAME;
         ServiceController<AgentService> controller = context.getServiceTarget() //
             .addService(name, service) //
             .addDependency(ServerEnvironmentService.SERVICE_NAME, ServerEnvironment.class, service.envServiceValue) //
+            .addDependency(SocketBinding.JBOSS_BINDING_NAME.append(binding), SocketBinding.class,
+                service.agentListenerBinding) //
             .addListener(verificationHandler) //
             .setInitialMode(Mode.ACTIVE) //
             .install();

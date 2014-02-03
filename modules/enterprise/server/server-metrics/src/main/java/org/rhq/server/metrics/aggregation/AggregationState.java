@@ -1,13 +1,13 @@
 package org.rhq.server.metrics.aggregation;
 
-import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 import org.joda.time.DateTime;
 
+import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.SignalingCountDownLatch;
 
 /**
@@ -15,11 +15,21 @@ import org.rhq.server.metrics.SignalingCountDownLatch;
  */
 class AggregationState {
 
+    private DateTime startTime;
+
+    private int batchSize;
+
+    private MetricsDAO dao;
+
     private ListeningExecutorService aggregationTasks;
 
-    private SignalingCountDownLatch oneHourIndexEntriesArrival;
+    private Semaphore permits;
 
-    private SignalingCountDownLatch sixHourIndexEntriesArrival;
+    private SignalingCountDownLatch rawAggregationDone;
+
+    private SignalingCountDownLatch oneHourAggregationDone;
+
+    private SignalingCountDownLatch sixHourAggregationDone;
 
     private AtomicInteger remainingRawData;
 
@@ -27,15 +37,9 @@ class AggregationState {
 
     private AtomicInteger remaining6HourData;
 
-    private Set<Integer> oneHourIndexEntries;
-
-    private Set<Integer> sixHourIndexEntries;
-
-    private ReentrantReadWriteLock oneHourIndexEntriesLock;
-
-    private ReentrantReadWriteLock sixHourIndexEntriesLock;
-
     private DateTime oneHourTimeSlice;
+
+    private DateTime oneHourTimeSliceEnd;
 
     private DateTime sixHourTimeSlice;
 
@@ -55,6 +59,33 @@ class AggregationState {
 
     private Compute24HourData compute24HourData;
 
+    DateTime getStartTime() {
+        return startTime;
+    }
+
+    AggregationState setStartTime(DateTime startTime) {
+        this.startTime = startTime;
+        return this;
+    }
+
+    int getBatchSize() {
+        return batchSize;
+    }
+
+    AggregationState setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+
+    MetricsDAO getDao() {
+        return dao;
+    }
+
+    AggregationState setDao(MetricsDAO dao) {
+        this.dao = dao;
+        return this;
+    }
+
     public ListeningExecutorService getAggregationTasks() {
         return aggregationTasks;
     }
@@ -64,29 +95,39 @@ class AggregationState {
         return this;
     }
 
-    /**
-     * @return A {@link SignalingCountDownLatch} to signal the arrival of index entries for schedules with 1 hour
-     * data to be aggregated
-     */
-    public SignalingCountDownLatch getOneHourIndexEntriesArrival() {
-        return oneHourIndexEntriesArrival;
+    Semaphore getPermits() {
+        return permits;
     }
 
-    public AggregationState setOneHourIndexEntriesArrival(SignalingCountDownLatch oneHourIndexEntriesArrival) {
-        this.oneHourIndexEntriesArrival = oneHourIndexEntriesArrival;
+    AggregationState setPermits(Semaphore permits) {
+        this.permits = permits;
         return this;
     }
 
-    /**
-     * @return A {@link SignalingCountDownLatch} to signal the arrival of index entries for schedules with 6 hour
-     * data to be aggregated
-     */
-    public SignalingCountDownLatch getSixHourIndexEntriesArrival() {
-        return sixHourIndexEntriesArrival;
+    SignalingCountDownLatch getRawAggregationDone() {
+        return rawAggregationDone;
     }
 
-    public AggregationState setSixHourIndexEntriesArrival(SignalingCountDownLatch sixHourIndexEntriesArrival) {
-        this.sixHourIndexEntriesArrival = sixHourIndexEntriesArrival;
+    AggregationState setRawAggregationDone(SignalingCountDownLatch rawAggregationDone) {
+        this.rawAggregationDone = rawAggregationDone;
+        return this;
+    }
+
+    SignalingCountDownLatch getOneHourAggregationDone() {
+        return oneHourAggregationDone;
+    }
+
+    AggregationState setOneHourAggregationDone(SignalingCountDownLatch oneHourAggregationDone) {
+        this.oneHourAggregationDone = oneHourAggregationDone;
+        return this;
+    }
+
+    SignalingCountDownLatch getSixHourAggregationDone() {
+        return sixHourAggregationDone;
+    }
+
+    AggregationState setSixHourAggregationDone(SignalingCountDownLatch sixHourAggregationDone) {
+        this.sixHourAggregationDone = sixHourAggregationDone;
         return this;
     }
 
@@ -126,51 +167,21 @@ class AggregationState {
         return this;
     }
 
-    /**
-     * @return The schedule ids with 1 hour data to be aggregated
-     */
-    public Set<Integer> getOneHourIndexEntries() {
-        return oneHourIndexEntries;
-    }
-
-    public AggregationState setOneHourIndexEntries(Set<Integer> oneHourIndexEntries) {
-        this.oneHourIndexEntries = oneHourIndexEntries;
-        return this;
-    }
-
-    public Set<Integer> getSixHourIndexEntries() {
-        return sixHourIndexEntries;
-    }
-
-    public AggregationState setSixHourIndexEntries(Set<Integer> sixHourIndexEntries) {
-        this.sixHourIndexEntries = sixHourIndexEntries;
-        return this;
-    }
-
-    public ReentrantReadWriteLock getOneHourIndexEntriesLock() {
-        return oneHourIndexEntriesLock;
-    }
-
-    public AggregationState setOneHourIndexEntriesLock(ReentrantReadWriteLock oneHourIndexEntriesLock) {
-        this.oneHourIndexEntriesLock = oneHourIndexEntriesLock;
-        return this;
-    }
-
-    public ReentrantReadWriteLock getSixHourIndexEntriesLock() {
-        return sixHourIndexEntriesLock;
-    }
-
-    public AggregationState setSixHourIndexEntriesLock(ReentrantReadWriteLock sixHourIndexEntriesLock) {
-        this.sixHourIndexEntriesLock = sixHourIndexEntriesLock;
-        return this;
-    }
-
     public DateTime getOneHourTimeSlice() {
         return oneHourTimeSlice;
     }
 
     public AggregationState setOneHourTimeSlice(DateTime oneHourTimeSlice) {
         this.oneHourTimeSlice = oneHourTimeSlice;
+        return this;
+    }
+
+    DateTime getOneHourTimeSliceEnd() {
+        return oneHourTimeSliceEnd;
+    }
+
+    AggregationState setOneHourTimeSliceEnd(DateTime oneHourTimeSliceEnd) {
+        this.oneHourTimeSliceEnd = oneHourTimeSliceEnd;
         return this;
     }
 
@@ -254,4 +265,5 @@ class AggregationState {
         this.compute24HourData = compute24HourData;
         return this;
     }
+
 }

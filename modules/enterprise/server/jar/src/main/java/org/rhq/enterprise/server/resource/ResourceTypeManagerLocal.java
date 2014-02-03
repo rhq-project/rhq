@@ -168,5 +168,12 @@ public interface ResourceTypeManagerLocal {
 
     List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId);
 
+    /**
+     * 
+     * @param subject subject of the caller
+     * @param resourceTypeId resource type to begin with
+     * @return list of all {@link org.rhq.core.domain.resource.ResourceType}s of all descendants
+     * @deprecated This method is not currently being used at all
+     */
     List<ResourceType> getAllResourceTypeDescendants(Subject subject, int resourceTypeId);
 }

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -516,12 +517,12 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    public HashMap<Integer, String> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId) {
+    public LinkedHashMap<Integer, String> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId) {
         List<ResourceType> types = getAllResourceTypeDescendants(subject, resourceTypeId);
         excludeThoseWithoutOperations(types);
-        HashMap<Integer, String> results = new HashMap<Integer, String>(types.size());
+        LinkedHashMap<Integer, String> results = new LinkedHashMap<Integer, String>(types.size());
         for (ResourceType type : types) {
-            results.put(type.getId(), type.getName());
+            results.put(type.getId(), type.getPlugin() + " -> " + type.getName());
         }
         return results;
     }

@@ -1,10 +1,6 @@
 package org.rhq.core.pc.drift;
 
-import org.apache.commons.io.DirectoryWalker;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static java.io.File.separator;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -21,14 +17,17 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
-import org.rhq.core.util.MessageDigestGenerator;
+import org.apache.commons.io.DirectoryWalker;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import static java.io.File.separator;
+import org.rhq.core.util.MessageDigestGenerator;
 
 public class SnapshotGenerator extends DirectoryWalker {
 
-    private final Log log = LogFactory.getLog(ConfigurationCheckExecutor.class);
+    private final Log log = LogFactory.getLog(SnapshotGenerator.class);
 
     private MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 

@@ -149,6 +149,9 @@ public class CleanUpTest extends Arquillian {
         //the "changesets" directory is going to always be there because it is eagerly created during PC startup.
         sExpected.add("changesets");
 
+        //the "rc" directory is probably going to be there because it contains compacted resource configs
+        sActual.remove("rc");
+
         assertEquals(sActual, sExpected, message);
     }
 }

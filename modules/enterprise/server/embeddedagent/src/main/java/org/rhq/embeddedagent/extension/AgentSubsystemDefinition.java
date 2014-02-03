@@ -30,6 +30,8 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
 
     protected static final PluginsAttributeDefinition PLUGINS_ATTRIBDEF = new PluginsAttributeDefinition();
 
+    protected static final CustomConfigAttributeDefinition CUSTOM_CONFIG_ATTRIBDEF = new CustomConfigAttributeDefinition();
+
     protected static final SimpleAttributeDefinition AGENT_NAME_ATTRIBDEF = new SimpleAttributeDefinitionBuilder(
         AgentSubsystemExtension.ATTRIB_AGENT_NAME, ModelType.STRING).setAllowExpression(true)
         .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
@@ -97,6 +99,7 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
     public void registerAttributes(ManagementResourceRegistration rr) {
         rr.registerReadWriteAttribute(AGENT_ENABLED_ATTRIBDEF, null, AgentEnabledAttributeHandler.INSTANCE);
         rr.registerReadWriteAttribute(PLUGINS_ATTRIBDEF, null, PluginsAttributeHandler.INSTANCE);
+        registerReloadRequiredWriteAttributeHandler(rr, CUSTOM_CONFIG_ATTRIBDEF);
         registerReloadRequiredWriteAttributeHandler(rr, AGENT_NAME_ATTRIBDEF);
         registerReloadRequiredWriteAttributeHandler(rr, DISABLE_NATIVE_ATTRIBDEF);
         registerReloadRequiredWriteAttributeHandler(rr, SERVER_TRANSPORT_ATTRIBDEF);

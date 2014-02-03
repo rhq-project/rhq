@@ -43,6 +43,7 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         AgentSubsystemDefinition.SERVER_TRANSPORT_PARAMS_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.SOCKET_BINDING_ATTRIBDEF.validateAndSet(operation, model);
+        AgentSubsystemDefinition.CUSTOM_CONFIG_ATTRIBDEF.validateAndSet(operation, model);
         log.info("Populating the embedded agent subsystem model: " + operation + "=" + model);
     }
 
@@ -84,6 +85,20 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF);
         addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.AGENT_TRANSPORT_ATTRIBDEF);
         addOverrideProperty(context, model, overrides, AgentSubsystemDefinition.AGENT_TRANSPORT_PARAMS_ATTRIBDEF);
+
+        // allow the user to provide their own overrides
+        ModelNode customConfigNode = AgentSubsystemDefinition.CUSTOM_CONFIG_ATTRIBDEF.resolveModelAttribute(context,
+            model);
+        if (customConfigNode != null && customConfigNode.isDefined()) {
+            HashMap<String, String> customConfig = new HashMap<String, String>();
+            List<Property> prefList = customConfigNode.asPropertyList();
+            for (Property pref : prefList) {
+                String name = pref.getName();
+                String val = pref.getValue().asString();
+                customConfig.put(name, val);
+            }
+            overrides.putAll(customConfig);
+        }
 
         // create our service
         AgentService service = new AgentService();

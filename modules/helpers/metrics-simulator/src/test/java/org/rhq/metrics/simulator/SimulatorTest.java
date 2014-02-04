@@ -27,6 +27,7 @@ import java.io.File;
 
 import org.testng.annotations.Test;
 
+import org.rhq.metrics.simulator.Simulator;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
 import org.rhq.metrics.simulator.plan.SimulationPlanner;
 
@@ -36,12 +37,11 @@ import org.rhq.metrics.simulator.plan.SimulationPlanner;
 public class SimulatorTest {
 
     @Test
-    public void runSimulator() throws Exception {
+    public void runSimulator() throws Throwable {
         File jsonFile = new File(getClass().getResource("test-simulator.json").toURI());
         SimulationPlanner planner = new SimulationPlanner();
         SimulationPlan plan = planner.create(jsonFile);
         Simulator simulator = new Simulator();
         simulator.run(plan);
     }
-
 }

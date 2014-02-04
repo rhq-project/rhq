@@ -114,8 +114,6 @@ public class PluginUpdate {
         }
 
         try {
-            List<String> disabled_plugin_names = this.config.getDisabledPlugins();
-
             // find out what plugins we already have locally
             Map<String, Plugin> current_plugins = getCurrentPlugins();
 
@@ -132,6 +130,40 @@ public class PluginUpdate {
             }
 
             Map<String, Plugin> latest_plugins_map = new HashMap<String, Plugin>(latest_plugins.size());
+
+            // Get the list of plugins this agent was told to explicitly disable or enable.
+            // If there was a non-empty list of enabled plugins, those are the only plugins to be enabled, any other
+            // plugins not listed in the enabled plugins list will be disabled.
+            // If there was a non-empty list of disabled plugins, those plugins to be explicitly disabled, but any
+            // other plugins available from the server will be enabled by default.
+            // If there were both disabled and enabled plugins explicitly set, we have to choose what takes precendence.
+            // If a plugin was listed as both "enabled" and "disabled", the plugin will be disabled (that is, the
+            // disabled list takes precendence).
+            // For example, suppose our latest plugins on the server are named A, B, C, and D.
+            // If the following (E)nabled and (D)isabled plugins are the following,
+            // then you can see what plugins are to be (U)sed:
+            //    (E)=<empty>, (D)=<empty>, (U)=A,B,C,D
+            //    (E)=<empty>, (D)=B,C      (U)=A,D
+            //    (E)=A,B      (D)=<empty>, (U)=A,B
+            //    (E)=A,B      (D)=B,C      (U)=A [notice B was listed in both (E) and (D) - it is therefore disabled]
+            //
+            // What we do is we make sure we set disabled_plugin_names with all the names of the plugins to be disabled.
+            // This is just the disabled plugins list unless enabled plugins was also defined, in which case
+            // we have to make sure we figure out the real list of disabled plugins.
+
+            List<String> disabled_plugin_names = this.config.getDisabledPlugins();
+            List<String> enabled_plugin_names = this.config.getEnabledPlugins();
+            if (!enabled_plugin_names.isEmpty()) {
+                // start with all of the names of the plugins that the server has
+                List<String> plugin_names = new ArrayList<String>(latest_plugins.size());
+                for (Plugin latest_plugin : latest_plugins) {
+                    plugin_names.add(latest_plugin.getName());
+                }
+                // remove the explicitly enabled plugins from that list
+                plugin_names.removeAll(enabled_plugin_names);
+                // what is left are all the plugins to be disabled, so add those to the disabled plugins list
+                disabled_plugin_names.addAll(plugin_names);
+            }
 
             // determine if we need to upgrade any of our current plugins to the latest versions
             for (Plugin latest_plugin : latest_plugins) {

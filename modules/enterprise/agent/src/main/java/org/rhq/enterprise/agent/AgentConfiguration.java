@@ -1214,6 +1214,14 @@ public class AgentConfiguration {
             tmp_directory.mkdir();
         }
 
+        // determine what, if any, plugins are to be enabled
+        String enabled_pref = m_preferences.get(AgentConfigurationConstants.PLUGINS_ENABLED, null);
+        List<String> enabled_plugins = null;
+        if (enabled_pref != null) {
+            String[] array = enabled_pref.split(",");
+            enabled_plugins = new ArrayList<String>(Arrays.asList(array));
+        }
+
         // determine what, if any, plugins are to be disabled
         String disabled_pref = m_preferences.get(AgentConfigurationConstants.PLUGINS_DISABLED, null);
         List<String> disabled_plugins = null;
@@ -1246,6 +1254,7 @@ public class AgentConfiguration {
         config.setDataDirectory(data_directory);
         config.setTemporaryDirectory(tmp_directory);
         config.setDisabledPlugins(disabled_plugins);
+        config.setEnabledPlugins(enabled_plugins);
         config.setDisabledResourceTypes(disabled_types);
         config.setRootPluginClassLoaderRegex(clRegex);
         config.setServerDiscoveryInitialDelay(server_discovery_initial_delay);

@@ -46,6 +46,7 @@ public class PluginContainerConfiguration {
     private static final String CONTAINER_NAME_PROP = PROP_PREFIX + "container-name";
     private static final String DATA_DIRECTORY_PROP = PROP_PREFIX + "data-directory";
     private static final String TEMP_DIRECTORY_PROP = PROP_PREFIX + "temp-directory";
+    private static final String ENABLED_PLUGINS = PROP_PREFIX + "enabled-plugins";
     private static final String DISABLED_PLUGINS = PROP_PREFIX + "disabled-plugins";
     private static final String DISABLED_RESOURCE_TYPES = PROP_PREFIX + "disabled-resource-types";
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
@@ -231,12 +232,47 @@ public class PluginContainerConfiguration {
      * is the name found in the plugin .xml descriptor in the plugin root element.
      *
      * @param disabledPlugins
+     * @see #setEnabledPlugins(List)
      */
     public void setDisabledPlugins(List<String> disabledPlugins) {
         if (disabledPlugins != null) {
             configuration.put(DISABLED_PLUGINS, disabledPlugins);
         } else {
             configuration.remove(DISABLED_PLUGINS);
+        }
+    }
+
+    /**
+     * See {@link #setEnabledPlugins(List)} for a description of this.
+     *
+     * @return list of plugin names identifying plugins to be enabled
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> getEnabledPlugins() {
+        List<String> list = (List<String>) configuration.get(ENABLED_PLUGINS);
+        if (list == null) {
+            return new ArrayList<String>(0);
+        } else {
+            return new ArrayList<String>(list);
+        }
+    }
+
+    /**
+     * If only a specific set of plugins are to be loaded by the plugin container, the given
+     * list should be the names of the plugins to be enabled. All other plugins will be
+     * disabled by default. If a plugin name is listed in both this enabled list and the
+     * {@link #setDisabledPlugins(List)} list, the plugin will be disabled (in other words,
+     * the disabled list takes precedence). Note that the plugin name is the name found in
+     * the plugin .xml descriptor in the plugin root element.
+     *
+     * @param enabledPlugins
+     * @see #setDisabledPlugins(List)
+     */
+    public void setEnabledPlugins(List<String> enabledPlugins) {
+        if (enabledPlugins != null) {
+            configuration.put(ENABLED_PLUGINS, enabledPlugins);
+        } else {
+            configuration.remove(ENABLED_PLUGINS);
         }
     }
 

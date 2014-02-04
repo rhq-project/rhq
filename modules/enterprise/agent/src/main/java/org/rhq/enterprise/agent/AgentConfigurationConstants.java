@@ -546,6 +546,14 @@ public interface AgentConfigurationConstants {
     String PLUGINS_ROOT_PLUGIN_CLASSLOADER_REGEX = PROPERTY_NAME_PREFIX + "plugins.root-plugin-classloader-regex";
 
     /**
+     * The comma separated list of names of plugins that are to be explicitly enabled at startup.
+     * Only those plugins in this preference will be enabled, all others will be disabled.
+     * The disabled plugins setting takes precendence, however. If a plugin is specified in both
+     * the plugins.enabled and plugins.disabled preferences, the plugin will be disabled.
+     */
+    String PLUGINS_ENABLED = PROPERTY_NAME_PREFIX + "plugins.enabled";
+
+    /**
      * The comma separated list of names of plugins that are to be disabled at startup
      */
     String PLUGINS_DISABLED = PROPERTY_NAME_PREFIX + "plugins.disabled";

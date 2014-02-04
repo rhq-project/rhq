@@ -35,6 +35,7 @@
         <module>server-control</module>
         <module>safe-invoker</module>
         <module>client-api</module>
+        <module>embeddedagent</module>
         <module>itests-2</module>
       </modules>
     </profile>

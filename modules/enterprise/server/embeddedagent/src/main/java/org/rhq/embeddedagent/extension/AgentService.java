@@ -18,6 +18,7 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 
+import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
@@ -144,6 +145,26 @@ public class AgentService implements Service<AgentService> {
             String agentBindPort = String.valueOf(agentListenerBindingValue.getAbsolutePort());
             configOverrides.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, agentBindAddress);
             configOverrides.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, agentBindPort);
+
+            // if the agent was told to explicitly enable some plugins, add them to the "enabledPlugins" preference.
+            // if the agent was told to explicitly disnable some plugins, add them to the "disabledPlugins" preference.
+            StringBuilder enabledPlugins = new StringBuilder();
+            StringBuilder disabledPlugins = new StringBuilder();
+            for (Map.Entry<String, Boolean> entry : plugins.entrySet()) {
+                String pluginName = entry.getKey();
+                Boolean enabled = entry.getValue();
+                if (enabled) {
+                    enabledPlugins.append((enabledPlugins.length() > 0) ? "," : "").append(pluginName);
+                } else {
+                    disabledPlugins.append((disabledPlugins.length() > 0) ? "," : "").append(pluginName);
+                }
+            }
+            if (enabledPlugins.length() > 0) {
+                configOverrides.put(AgentConfigurationConstants.PLUGINS_ENABLED, enabledPlugins.toString());
+            }
+            if (disabledPlugins.length() > 0) {
+                configOverrides.put(AgentConfigurationConstants.PLUGINS_DISABLED, disabledPlugins.toString());
+            }
 
             ServerEnvironment env = envServiceValue.getValue();
             boolean resetConfigurationAtStartup = true;

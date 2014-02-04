@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.script;
 
@@ -78,6 +78,8 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     protected static final String PLUGINCONFIG_DESC_ARGS = "descriptionArguments";
     protected static final String PLUGINCONFIG_DESC_REGEX = "descriptionRegex";
     protected static final String PLUGINCONFIG_FIXED_DESC = "fixedDescription";
+    protected static final String PLUGINCONFIG_QUOTING_ENABLED = "quotingEnabled";
+    protected static final String PLUGINCONFIG_ESCAPE_CHARACTER = "escapeCharacter";
 
     protected static final String OPERATION_PARAM_ARGUMENTS = "arguments";
     protected static final String OPERATION_RESULT_EXITCODE = "exitCode";
@@ -87,7 +89,9 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
     protected static final String METRIC_PROPERTY_REGEX = "regex";
     protected static final String METRIC_PROPERTY_EXITCODE = "exitcode";
 
-    private Configuration resourceConfiguration;
+    protected static final char DISABLING_ESCAPE_CHARACTER = '\u0000';
+
+    private char escapeChar = DISABLING_ESCAPE_CHARACTER;
     private ResourceContext resourceContext;
 
     public void start(ResourceContext context) {
@@ -96,6 +100,8 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         }
 
         this.resourceContext = context;
+
+        escapeChar = getConfiguredEscapeCharacter(resourceContext.getPluginConfiguration());
     }
 
     public void stop() {
@@ -333,7 +339,8 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
         SystemInfo sysInfo = this.resourceContext.getSystemInformation();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
+        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput,
+            escapeChar);
 
         if (log.isDebugEnabled()) {
             logDebug("CLI results: exitcode=[" + results.getExitCode() + "]; error=[" + results.getError()
@@ -343,13 +350,36 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         return results;
     }
 
+
+    protected static char getConfiguredEscapeCharacter(Configuration pluginConfiguration) {
+        char escapeChar = DISABLING_ESCAPE_CHARACTER;
+        boolean quotingEnabled = Boolean.parseBoolean(pluginConfiguration.getSimpleValue(PLUGINCONFIG_QUOTING_ENABLED, "false"));
+        if (quotingEnabled) {
+            String ec = pluginConfiguration.getSimpleValue(PLUGINCONFIG_ESCAPE_CHARACTER, "\\");
+            escapeChar = ec.charAt(0);
+        }
+
+        return escapeChar;
+    }
+
     // This is protected static so the discovery component can use it.
     protected static ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
-        String args, long wait, boolean captureOutput) throws InvalidPluginConfigurationException {
+        String args, long wait, boolean captureOutput, char escapeChar) throws InvalidPluginConfigurationException {
+
+        return executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput, true, escapeChar);
+    }
+
+    private static ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
+        String args, long wait, boolean captureOutput, boolean killOnTimeout, char escapeChar)
+        throws InvalidPluginConfigurationException {
 
         ProcessExecution processExecution = getProcessExecutionInfo(pluginConfig);
         if (args != null) {
-            processExecution.setArguments(args.split(" "));
+            if (isQuotingEnabled(escapeChar)) {
+                processExecution.setArguments(ScriptArgumentParser.parse(args, escapeChar));
+            } else {
+                processExecution.setArguments(args.split(" "));
+            }
         }
         processExecution.setCaptureOutput(captureOutput);
         processExecution.setWaitForCompletion(wait);
@@ -542,5 +572,9 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
 
     private void logDebug(String msg) {
         log.debug("[" + this.resourceContext.getResourceKey() + "]: " + msg);
+    }
+
+    private static boolean isQuotingEnabled(char escapeChar) {
+        return escapeChar != DISABLING_ESCAPE_CHARACTER;
     }
 }

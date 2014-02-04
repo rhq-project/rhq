@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.script;
 
@@ -30,12 +30,16 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.exception.ThrowableUtil;
 
@@ -48,10 +52,12 @@ import org.rhq.core.util.exception.ThrowableUtil;
  *
  * @author John Mazzitelli
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>>, ManualAddFacet<ResourceComponent<?>> {
+
     private final Log log = LogFactory.getLog(ScriptDiscoveryComponent.class);
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+    @Override
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent<?>> context) {
         log.debug("Processing discovered management script resources...");
 
         HashSet<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
@@ -72,8 +78,9 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
         return details;
     }
 
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
+                                                      ResourceDiscoveryContext<ResourceComponent<?>> discoveryContext)
             throws InvalidPluginConfigurationException {
         String executable = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_EXECUTABLE).getStringValue();
         String version = determineVersion(discoveryContext, pluginConfig);
@@ -94,7 +101,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
      *
      * @return the details object that represents the discovered resource
      */
-    protected DiscoveredResourceDetails processAutoDiscoveredResource(ResourceDiscoveryContext context,
+    protected DiscoveredResourceDetails processAutoDiscoveredResource(ResourceDiscoveryContext<ResourceComponent<?>> context,
         ProcessScanResult autoDiscoveryResult) {
 
         return null; // this implementation is a no-op - nothing will be discovered
@@ -108,7 +115,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
      *
      * @return the description or <code>null</code> if it could not be determined
      */
-    protected String determineDescription(ResourceDiscoveryContext context, Configuration pluginConfig) {
+    protected String determineDescription(ResourceDiscoveryContext<ResourceComponent<?>> context, Configuration pluginConfig) {
         String description = null;
         try {
             PropertySimple descriptionProp = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_FIXED_DESC);
@@ -117,7 +124,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
             } else {
                 String args = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_DESC_ARGS, null);
                 ProcessExecutionResults results = ScriptServerComponent.executeExecutable(context
-                    .getSystemInformation(), pluginConfig, args, 5000L, true);
+                    .getSystemInformation(), pluginConfig, args, 5000L, true, ScriptServerComponent.getConfiguredEscapeCharacter(pluginConfig));
                 if (results != null) {
                     if (results.getError() != null) {
                         log.warn("Failed to execute cli executable to get description. Cause: "
@@ -158,7 +165,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
      *
      * @return the version or <code>null</code> if it could not be determined
      */
-    protected String determineVersion(ResourceDiscoveryContext context, Configuration pluginConfig) {
+    protected String determineVersion(ResourceDiscoveryContext<ResourceComponent<?>> context, Configuration pluginConfig) {
         String version = null;
         try {
             PropertySimple versionProp = pluginConfig.getSimple(ScriptServerComponent.PLUGINCONFIG_FIXED_VERSION);
@@ -167,7 +174,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
             } else {
                 String args = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_VERSION_ARGS, null);
                 ProcessExecutionResults results = ScriptServerComponent.executeExecutable(context
-                    .getSystemInformation(), pluginConfig, args, 5000L, true);
+                    .getSystemInformation(), pluginConfig, args, 5000L, true, ScriptServerComponent.getConfiguredEscapeCharacter(pluginConfig));
                 if (results != null) {
                     if (results.getError() != null) {
                         log.warn("Failed to execute cli executable to get version. Cause: "

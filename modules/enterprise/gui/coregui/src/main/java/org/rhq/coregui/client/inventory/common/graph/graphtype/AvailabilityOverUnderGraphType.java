@@ -328,8 +328,8 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
                 svg.append("text")
                         .attr("class", "availabilityLabel")
-                        .attr("x", -40)
-                        .attr("y", 10)
+                        .attr("x", 0)
+                        .attr("y", 15)
                         .style("font-size", "12px")
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-weight", "bold")

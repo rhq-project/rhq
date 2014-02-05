@@ -646,8 +646,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("class", "x brush")
                         .call(brush)
                         .selectAll("rect")
-                        .attr("y", -140)
-                        .attr("height", 160);
+                        .attr("y", -6)
+                        .attr("height", 30);
                 }
 
                 // create y-axis

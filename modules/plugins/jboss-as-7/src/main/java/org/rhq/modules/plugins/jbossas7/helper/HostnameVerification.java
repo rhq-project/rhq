@@ -17,19 +17,29 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.core.pc;
+package org.rhq.modules.plugins.jbossas7.helper;
 
 /**
- * An interface that all plugin container services and managers will implement.
- * Hook so container service can stop these components.
- *
- * @author Greg Hinkle
- * @author John Mazzitelli
- */
-public interface ContainerService {
+* @author Thomas Segismont
+*/
+public enum HostnameVerification {
+    STRICT("strict"), BROWSER_COMPATIBLE("browserCompatible"), SKIP("skip");
 
-    /**
-     * Stops the container service which effectively releases all runtime resources such as running threads.
-     */
-    void shutdown();
+    public final String name;
+
+    HostnameVerification(String name) {
+        this.name = name;
+    }
+
+    public static HostnameVerification findByName(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
+        }
+        for (HostnameVerification hostnameVerification : values()) {
+            if (hostnameVerification.name.equals(name)) {
+                return hostnameVerification;
+            }
+        }
+        throw new IllegalArgumentException("No constant with name: " + name);
+    }
 }

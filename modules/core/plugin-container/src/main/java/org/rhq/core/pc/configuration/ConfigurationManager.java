@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.configuration;
 
 import java.util.LinkedList;
@@ -43,6 +44,8 @@ import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
+import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
@@ -59,24 +62,29 @@ import org.rhq.core.util.MessageDigestGenerator;
  * @author Jason Dobies
  */
 public class ConfigurationManager extends AgentService implements ContainerService, ConfigurationAgentService {
-    private final Log log = LogFactory.getLog(ConfigurationManager.class);
+    private static final Log log = LogFactory.getLog(ConfigurationManager.class);
 
     private static final String SENDER_THREAD_POOL_NAME = "ConfigurationManager.threadpool";
 
     private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
 
-    private PluginContainerConfiguration pluginContainerConfiguration;
+    private final PluginContainerConfiguration pluginContainerConfiguration;
+
+    private final ComponentService componentService;
+
+    private final ConfigManagementFactory configMgmtFactory;
+
     private ScheduledExecutorService threadPool;
 
-    private ComponentService componentService;
-
-    private ConfigManagementFactory configMgmtFactory;
-
-    public ConfigurationManager() {
-        super(ConfigurationAgentService.class);
-    }
-
-    public void initialize() {
+    public ConfigurationManager(PluginContainerConfiguration configuration,
+            ComponentService componentService,
+            ConfigManagementFactory factory, AgentServiceStreamRemoter streamRemoter,
+            InventoryManager inventoryManager)
+    {
+        super(ConfigurationAgentService.class, streamRemoter);
+        this.componentService = componentService;
+        configMgmtFactory = factory;
+        pluginContainerConfiguration = configuration;
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
         threadPool = new ScheduledThreadPoolExecutor(1, threadFactory);
 
@@ -92,21 +100,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     }
 
     public void shutdown() {
-        PluginContainer pluginContainer = PluginContainer.getInstance();
         // pass false, so we don't interrupt a plugin in the middle of a config update
-        pluginContainer.shutdownExecutorService(threadPool, false);
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        pluginContainerConfiguration = configuration;
-    }
-
-    public void setComponentService(ComponentService componentService) {
-        this.componentService = componentService;
-    }
-
-    public void setConfigManagementFactory(ConfigManagementFactory factory) {
-        configMgmtFactory = factory;
+        PluginContainer.shutdownExecutorService(threadPool, false);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {

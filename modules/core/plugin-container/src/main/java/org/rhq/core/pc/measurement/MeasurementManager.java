@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
@@ -55,6 +56,7 @@ import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.ComponentUtil;
@@ -85,42 +87,39 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     static final Log LOG = LogFactory.getLog(MeasurementManager.class);
 
-    private ScheduledThreadPoolExecutor collectorThreadPool;
-    private ScheduledThreadPoolExecutor senderThreadPool;
+    private final ScheduledThreadPoolExecutor collectorThreadPool;
+    private final ScheduledThreadPoolExecutor senderThreadPool;
 
-    private MeasurementSenderRunner measurementSenderRunner;
+    private final MeasurementSenderRunner measurementSenderRunner;
     MeasurementCollectorRunner measurementCollectorRunner;
 
-    private PluginContainerConfiguration configuration;
+    private final PluginContainerConfiguration configuration;
 
-    private PriorityQueue<ScheduledMeasurementInfo> scheduledRequests = new PriorityQueue<ScheduledMeasurementInfo>(
+    private final PriorityQueue<ScheduledMeasurementInfo> scheduledRequests = new PriorityQueue<ScheduledMeasurementInfo>(
         10000);
 
-    private InventoryManager inventoryManager;
+    private final InventoryManager inventoryManager;
 
-    private Map<Integer, String> traitCache = new HashMap<Integer, String>();
+    private final Map<Integer, String> traitCache = new HashMap<Integer, String>();
 
-    private Map<Integer, CachedValue> perMinuteCache = new HashMap<Integer, CachedValue>();
+    private final Map<Integer, CachedValue> perMinuteCache = new HashMap<Integer, CachedValue>();
 
-    private MeasurementReport activeReport = new MeasurementReport();
+    private volatile MeasurementReport activeReport = new MeasurementReport();
 
-    private ReentrantReadWriteLock measurementLock = new ReentrantReadWriteLock(true);
+    private final ReentrantReadWriteLock measurementLock = new ReentrantReadWriteLock(true);
 
     // -- monitoring information
-    private AtomicLong collectedMeasurements = new AtomicLong(0);
-    private AtomicLong totalTimeCollecting = new AtomicLong(0);
-    private AtomicLong sinceLastCollectedMeasurements = new AtomicLong(0);
-    private AtomicLong sinceLastCollectedTime = new AtomicLong(System.currentTimeMillis());
+    private final AtomicLong collectedMeasurements = new AtomicLong(0);
+    private final AtomicLong totalTimeCollecting = new AtomicLong(0);
+    private final AtomicLong sinceLastCollectedMeasurements = new AtomicLong(0);
+    private final AtomicLong sinceLastCollectedTime = new AtomicLong(System.currentTimeMillis());
 
-    private AtomicLong lateCollections = new AtomicLong(0);
-    private AtomicLong failedCollection = new AtomicLong(0);
+    private final AtomicLong lateCollections = new AtomicLong(0);
+    private final AtomicLong failedCollection = new AtomicLong(0);
 
-    public MeasurementManager() {
-        super(MeasurementAgentService.class);
-    }
-
-    @Override
-    public void initialize() {
+    public MeasurementManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager inventoryManager) {
+        super(MeasurementAgentService.class, streamRemoter);
+        this.configuration = configuration;
         LOG.info("Initializing Measurement Manager...");
 
         if (configuration.isStartManagementBean()) {
@@ -132,7 +131,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             }
         }
 
-        this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        this.inventoryManager = inventoryManager;
 
         int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
         long collectionInitialDelaySecs = configuration.getMeasurementCollectionInitialDelay();
@@ -157,8 +156,16 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
             // Load persistent measurement schedules from the InventoryManager and reconstitute them.
             Resource platform = this.inventoryManager.getPlatform();
+            if (platform == null)
+                throw new IllegalStateException("null platform");
             reschedule(platform);
+        } else {
+            senderThreadPool = null;
+            collectorThreadPool = null;
+            measurementSenderRunner = null;
+            measurementCollectorRunner = null;
         }
+
 
         LOG.info("Measurement Manager initialized.");
     }
@@ -220,10 +227,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     public MeasurementReport getActiveReport() {
-        if (this.activeReport == null) {
-            this.activeReport = new MeasurementReport();
-        }
-
         return activeReport;
     }
 
@@ -261,7 +264,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      * Note that if the trait is not yet cached, this will return null, and the caller will
      * be forced to make a live call to obtain the trait value, but at least this can help
      * avoid unnecessarily calling the live resource.
-     * 
+     *
      * @param scheduleId the schedule for the trait for a specific resource
      * @return the trait's cached value, <code>null</code> if not available
      */
@@ -289,16 +292,14 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     @Override
     public void shutdown() {
-        PluginContainer pluginContainer = PluginContainer.getInstance();
-
         if (this.collectorThreadPool != null) {
             LOG.debug("Shutting down measurement collector thread pool...");
-            pluginContainer.shutdownExecutorService(this.collectorThreadPool, true);
+            PluginContainer.shutdownExecutorService(this.collectorThreadPool, true);
         }
 
         if (this.senderThreadPool != null) {
             LOG.debug("Shutting down measurement sender thread pool...");
-            pluginContainer.shutdownExecutorService(this.senderThreadPool, true);
+            PluginContainer.shutdownExecutorService(this.senderThreadPool, true);
         }
 
         if (configuration.isStartManagementBean()) {
@@ -309,11 +310,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 LOG.warn("Unable to unregister MeasurementManagerMBean", e);
             }
         }
-    }
-
-    @Override
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
     }
 
     /**
@@ -327,10 +323,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      */
     @Override
     public synchronized void updateCollection(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
-        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
-            ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
+            ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
                 // Update (not overwrite) measurement schedule data ...
                 resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());
@@ -338,7 +332,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
                 if (resourceRequest.getAvailabilitySchedule() != null) {
                     // Set availability schedule data  if present
-                    // This method also triggers a reschedule of availability check 
+                    // This method also triggers a reschedule of availability check
                     resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
                 }
             } else {
@@ -368,17 +362,15 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      */
     @Override
     public synchronized void scheduleCollection(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
-        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
-            ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
+            ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
                 // Set measurement schedule data ...
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
                 // ... and then reschedule collection
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
                 // Set availability schedule data
-                // This method also triggers a reschedule of availability check 
+                // This method also triggers a reschedule of availability check
                 resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
@@ -452,17 +444,15 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     // spinder 12/16/11. BZ 760139. Modified to return empty sets instead of 'null' even for erroneous conditions.
-    //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues 
-    //         won't have to additionally check for null values now. This is a safe and better pattern.       
-    @Override
+    //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues
+    //         won't have to additionally check for null values now. This is a safe and better pattern.
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
         if (requests.size() == 0) {
             // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
             return Collections.emptySet();
         }
         MeasurementFacet measurementFacet;
-        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager()
-            .getResourceContainer(resourceId);
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
         if (resourceContainer == null) {
             LOG.warn("Can not get resource container for resource with id " + resourceId);
             return Collections.emptySet();
@@ -566,12 +556,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      * performed due to collection falling behind.  The nextCollection will be set to:
      * <pre>
      * Now + 30s + [1..Interval]
-     * 
+     *
      * Where [1..Interval] is some random number of seconds no lower that 1 and no higher than the standard interval
      * for the measurement.
-     * </pre> 
+     * </pre>
      *
-     * @param scheduledMeasurementInfos the late schedules to reschedule  
+     * @param scheduledMeasurementInfos the late schedules to reschedule
      */
     synchronized void rescheduleLateCollections(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos) {
 
@@ -585,7 +575,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             // push out 30s from the current time to at least get a minimal 30s interval
             long nextCollection = now + 30000L;
 
-            // then add a random number of seconds [1..interval].  This will spread out the next collection times to 
+            // then add a random number of seconds [1..interval].  This will spread out the next collection times to
             // hopefully avoid the "hot-spot" that caused us to fall behind.
             long interval = scheduledMeasurement.getInterval();
             int maxRandomInterval = (int) (interval / 1000L); // exclusive upper bound
@@ -663,7 +653,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     /**
      * Given the name of a trait, this will find the value of that trait for the given resource.
-     * 
+     *
      * @param container the container of the resource whose trait value is to be obtained
      * @param traitName the name of the trait whose value is to be obtained
      *
@@ -694,7 +684,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             requests.add(new MeasurementScheduleRequest(MeasurementScheduleRequest.NO_SCHEDULE_ID, traitName, 0, true,
                 DataType.TRAIT));
             Set<MeasurementData> dataset = getRealTimeMeasurementValue(container.getResource().getId(), requests);
-            if (dataset != null && dataset.size() == 1) {
+            if (dataset.size() == 1) {
                 Object value = dataset.iterator().next().getValue();
                 if (value != null) {
                     traitValue = value.toString();
@@ -785,4 +775,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         long timestamp;
         double value;
     }
+
+    public InventoryManager getInventoryManager() {
+        return inventoryManager;
+    }
+
 }

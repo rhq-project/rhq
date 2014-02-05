@@ -44,6 +44,7 @@ public class MeasurementScheduleRequest implements Serializable {
     private String name;
     private int interval;
     private boolean enabled;
+    /** encoded data type and numeric byte to safe space. See #toDataNumType for details */
     byte dataNumType;
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
@@ -173,6 +174,14 @@ public class MeasurementScheduleRequest implements Serializable {
         return true;
     }
 
+    /**
+     * Encode the data type and numeric byte in one byte instead of two enum pointers,
+     * thus reducing memory consumption from 24(?) bytes down to 1.
+     * High nibble is the data type, low nibble the numeric type
+     * @param dataType DataType to encode
+     * @param numericType NumericType to encode
+     * @return
+     */
     private byte toDataNumType(DataType dataType, NumericType numericType) {
         byte dTmp = (byte) (dataType != null ? dataType.ordinal() + 1 : 0);
         byte nTmp = (byte) (numericType != null ? numericType.ordinal() + 1 : 0);

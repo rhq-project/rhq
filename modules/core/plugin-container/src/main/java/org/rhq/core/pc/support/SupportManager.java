@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.support;
 
 import java.io.InputStream;
@@ -23,8 +24,8 @@ import java.io.InputStream;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.pc.ContainerService;
-import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.support.SnapshotReportRequest;
@@ -40,24 +41,15 @@ import org.rhq.core.pluginapi.support.SupportFacet;
  */
 public class SupportManager extends AgentService implements SupportAgentService, ContainerService {
 
-    public SupportManager() {
-        super(SupportAgentService.class);
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        return;
-    }
-
-    public void initialize() {
-        return;
+    public SupportManager(AgentServiceStreamRemoter streamRemoter) {
+        super(SupportAgentService.class, streamRemoter);
     }
 
     public void shutdown() {
-        return;
     }
 
     public InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception {
-        SupportFacet facet = getSupportFacet(resourceId, 600000L); // give it enough time to zip up all the snapshot content 
+        SupportFacet facet = getSupportFacet(resourceId, 600000L); // give it enough time to zip up all the snapshot content
         SnapshotReportRequest request = new SnapshotReportRequest(name, description);
         SnapshotReportResults results = facet.getSnapshotReport(request);
         InputStream inputStream = results.getInputStream();

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2014 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,20 +16,25 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+package org.rhq.metrics.simulator;
 
-package org.rhq.core.pc;
+import org.joda.time.DateTime;
 
-/**
- * An interface that all plugin container services and managers will implement.
- * Hook so container service can stop these components.
- *
- * @author Greg Hinkle
- * @author John Mazzitelli
- */
-public interface ContainerService {
+import org.rhq.server.metrics.MetricsServer;
 
-    /**
-     * Stops the container service which effectively releases all runtime resources such as running threads.
-     */
-    void shutdown();
+class SimulatedMetricsServer extends MetricsServer {
+    private DateTime currentHour;
+
+    public void setCurrentHour(DateTime currentHour) {
+        this.currentHour = currentHour;
+    }
+
+    @Override
+    protected DateTime currentHour() {
+        if (currentHour == null) {
+            return super.currentHour();
+        }
+        return currentHour;
+    }
+
 }

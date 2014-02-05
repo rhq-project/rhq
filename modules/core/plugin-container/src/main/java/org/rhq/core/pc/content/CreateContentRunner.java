@@ -1,25 +1,22 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.core.pc.content;
 
 import java.util.HashSet;
@@ -29,17 +26,16 @@ import java.util.concurrent.Callable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.PackageDetailsKey;
-import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.pc.util.ComponentUtil;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 
  /**
@@ -48,16 +44,16 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author Jason Dobies
  */
 public class CreateContentRunner implements Runnable, Callable<DeployPackagesResponse> {
+     private static final Log log = LogFactory.getLog(CreateContentRunner.class);
+
     // Attributes  --------------------------------------------
 
-    private final Log log = LogFactory.getLog(CreateContentRunner.class);
-
-    private ContentManager contentManager;
+    private final ContentManager contentManager;
 
     /**
      * Request being executed by this instance.
      */
-    private DeployPackagesRequest request;
+    private final DeployPackagesRequest request;
 
     // Constructors  --------------------------------------------
 
@@ -134,7 +130,7 @@ public class CreateContentRunner implements Runnable, Callable<DeployPackagesRes
 
             try {
                 ResourceType resourceType = ComponentUtil.getResourceType(request.getResourceId());
-                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+                InventoryManager inventoryManager = contentManager.getInventoryManager();
 
                 if (executeServerScan(resourceType)) {
                     inventoryManager.executeServerScanImmediately();
@@ -164,5 +160,4 @@ public class CreateContentRunner implements Runnable, Callable<DeployPackagesRes
 
         return execute;
     }
-    
 }

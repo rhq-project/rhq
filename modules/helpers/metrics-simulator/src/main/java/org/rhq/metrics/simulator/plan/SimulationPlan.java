@@ -76,6 +76,26 @@ public class SimulationPlan {
         }
     }
 
+    public static enum SimulationType {
+        THREADED("threaded"), SEQUENTIAL("sequential");
+
+        private final String text;
+
+        SimulationType(String text) {
+            this.text = text;
+        }
+
+        public static SimulationType fromText(String text) {
+            if (text.equals("threaded") || text.equals("thread")) {
+                return THREADED;
+            }
+            if (text.equals("sequential") || text.equals("seq")) {
+                return SEQUENTIAL;
+            }
+            throw new IllegalArgumentException(text + " is not a valid simulation type");
+        }
+    }
+
     private long collectionInterval;
 
     private long aggregationInterval;
@@ -109,6 +129,8 @@ public class SimulationPlan {
     private boolean aggregationEnabled = true;
 
     private AggregationType aggregationType;
+
+    private SimulationType simulationType;
 
     private int readerThreadPoolSize = 1;
 
@@ -246,6 +268,14 @@ public class SimulationPlan {
 
     public void setAggregationType(AggregationType aggregationType) {
         this.aggregationType = aggregationType;
+    }
+
+    public SimulationType getSimulationType() {
+        return simulationType;
+    }
+
+    public void setSimulationType(SimulationType simulationType) {
+        this.simulationType = simulationType;
     }
 
     public boolean isAggregationEnabled() {

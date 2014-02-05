@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,6 @@
  */
 
 package org.rhq.core.pc.inventory;
-
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
 import java.net.URL;
@@ -47,6 +44,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -91,14 +91,19 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
 import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
+import org.rhq.core.pc.content.ContentManager;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
+import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
+import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
@@ -165,19 +170,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         SYNC_BATCH_SIZE = syncBatchSize;
     }
 
-    private final Log log = LogFactory.getLog(InventoryManager.class);
+    private static final Log log = LogFactory.getLog(InventoryManager.class);
 
-    private PluginContainerConfiguration configuration;
+    private final PluginContainerConfiguration configuration;
 
     private ScheduledThreadPoolExecutor inventoryThreadPoolExecutor;
     private ScheduledThreadPoolExecutor availabilityThreadPoolExecutor;
 
     // The executors are Callable
-    private AutoDiscoveryExecutor serverScanExecutor;
-    private RuntimeDiscoveryExecutor serviceScanExecutor;
-    private AvailabilityExecutor availabilityExecutor;
+    private final AutoDiscoveryExecutor serverScanExecutor;
+    private final RuntimeDiscoveryExecutor serviceScanExecutor;
+    private final AvailabilityExecutor availabilityExecutor;
 
-    private Agent agent;
+    private final Agent agent;
 
     /**
      * Root platform resource, required to be root of entire inventory tree in this agent
@@ -190,12 +195,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private boolean newPlatformWasDeletedRecently = false; // value only is valid/relevant if platform.getInventoryStatus == NEW
 
-    private ReentrantReadWriteLock inventoryLock = new ReentrantReadWriteLock(true);
+    private final ReentrantReadWriteLock inventoryLock = new ReentrantReadWriteLock(true);
 
     /**
      * Used only for the outside the agent model to # resources
      */
-    private AtomicInteger temporaryKeyIndex = new AtomicInteger(-1);
+    private final AtomicInteger temporaryKeyIndex = new AtomicInteger(-1);
 
     /**
      * UUID to ResourceContainer map
@@ -214,33 +219,56 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private final Set<InventoryEventListener> inventoryEventListeners = new CopyOnWriteArraySet<InventoryEventListener>();
 
-    private PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+    private final PluginManager pluginManager;
 
-    private DiscoveryComponentProxyFactory discoveryComponentProxyFactory;
+    private final DiscoveryComponentProxyFactory discoveryComponentProxyFactory;
 
     /**
      * Handles the resource upgrade during the initialization of the inventory manager.
      */
-    private ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
+    private final ResourceUpgradeDelegate resourceUpgradeDelegate = new ResourceUpgradeDelegate(this);
+    private final PluginComponentFactory pluginFactory;
+    private final EventManager eventManager;
+    private MeasurementManager measurementManager;
 
-    public InventoryManager() {
-        super(DiscoveryAgentService.class);
+    /**
+     * Constructs a new instance.
+     * Call {@link #initialize()} once constructed.
+     */
+    public InventoryManager(PluginContainerConfiguration configuration,
+            AgentServiceStreamRemoter streamRemoter, PluginManager pluginManager,
+            EventManager eventManager) {
+        super(DiscoveryAgentService.class, streamRemoter);
+        this.configuration = configuration;
+        if (pluginManager == null)
+            throw new NullPointerException("pluginManager is null");
+        this.pluginManager = pluginManager;
+        this.pluginFactory = new PluginComponentFactory(this, pluginManager);
+        this.eventManager = eventManager;
+        availabilityExecutor = new AvailabilityExecutor(this);
+        serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
+        serverScanExecutor = new AutoDiscoveryExecutor(null, this);
+        discoveryComponentProxyFactory = new DiscoveryComponentProxyFactory(pluginFactory);
+        agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
     }
 
     /**
-     * @see ContainerService#initialize()
+     * Loads the inventory, sets up the platform, measurement manager, and
+     * upgrades the resources, and schedules periodic tasks.
+     *
+     * Because of dependency circularity, initialization has to happen
+     * outside of the constructor.
+     *
+     * ClassLoaderManager depends on InventoryManager to return the platform resource.
+     * InventoryManager calls PluginComponentFactory which then calls ClassLoaderManager to load classes.
      */
-    @Override
     public void initialize() {
         inventoryLock.writeLock().lock();
 
         try {
             log.info("Initializing Inventory Manager...");
 
-            this.discoveryComponentProxyFactory = new DiscoveryComponentProxyFactory();
-            this.discoveryComponentProxyFactory.initialize();
-
-            this.agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
+            discoveryComponentProxyFactory.initialize();
 
             if (configuration.isInsideAgent()) {
                 loadFromDisk();
@@ -248,6 +276,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // Discover the platform first thing.
             executePlatformScan();
+
+            // Initialize measurement manager
+            measurementManager = new MeasurementManager(configuration, getStreamRemoter(), this);
 
             //try the resource upgrade before we have any schedulers set up
             //so that we don't get any interventions from concurrently running
@@ -257,13 +288,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Never run more than one avail check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
                 new LoggingThreadFactory(AVAIL_THREAD_POOL_NAME, true));
-            availabilityExecutor = new AvailabilityExecutor(this);
 
             // Never run more than one discovery scan at a time (service and service scans share the same pool).
             inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
                 INVENTORY_THREAD_POOL_NAME, true));
-            serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
-            serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
 
             // Only schedule periodic discovery scans and avail checks if we are running inside the RHQ Agent (versus
             // inside EmbJopr).
@@ -295,9 +323,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     @Override
     public void shutdown() {
-        PluginContainer pluginContainer = PluginContainer.getInstance();
-        pluginContainer.shutdownExecutorService(this.inventoryThreadPoolExecutor, true);
-        pluginContainer.shutdownExecutorService(this.availabilityThreadPoolExecutor, true);
+        PluginContainer.shutdownExecutorService(this.inventoryThreadPoolExecutor, true);
+        PluginContainer.shutdownExecutorService(this.availabilityThreadPoolExecutor, true);
         if (this.configuration.isInsideAgent()) {
             this.persistToDisk();
         }
@@ -628,11 +655,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } catch (PluginContainerException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    @Override
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
     }
 
     @Override
@@ -1496,8 +1518,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 parent.removeChildResource(resource);
             }
 
-            PluginContainer.getInstance().getMeasurementManager()
-                .unscheduleCollection(Collections.singleton(resource.getId()));
+            measurementManager.unscheduleCollection(Collections.singleton(resource.getId()));
 
             if (this.resourceContainersByUUID.remove(resource.getUuid()) == null) {
                 if (log.isDebugEnabled()) {
@@ -1792,10 +1813,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private ClassLoader getResourceClassLoader(Resource resource) {
-        PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
         ClassLoader classLoader;
         try {
-            classLoader = factory.getResourceClassloader(resource);
+            classLoader = pluginFactory.getResourceClassloader(resource);
         } catch (PluginContainerException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Access to resource [" + resource + "] will fail due to missing classloader.", e);
@@ -1907,7 +1927,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             try {
                 // should not throw ResourceTypeNotEnabledException because we checked for that above - if it does, just handle it as an error
-                component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(resource);
+                component = pluginFactory.buildResourceComponent(resource);
             } catch (Throwable e) {
                 throw new PluginContainerException("Could not build component for Resource [" + resource + "]", e);
             }
@@ -1920,14 +1940,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             || (parentResourceContainer.getResourceComponentState() == ResourceComponentState.STARTED);
 
         if (isParentStarted) {
-            PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
             ResourceType type = resource.getResourceType();
 
             // wrap the discovery component in a proxy to allow us to timeout discovery invocations
             ResourceDiscoveryComponent discoveryComponent;
             try {
                 // should not throw ResourceTypeNotEnabledException because we checked for that above - if it does, just handle it as an error
-                discoveryComponent = factory.getDiscoveryComponent(type, parentResourceContainer);
+                discoveryComponent = pluginFactory.getDiscoveryComponent(type, parentResourceContainer);
                 discoveryComponent = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(type,
                     discoveryComponent, getDiscoveryComponentTimeout(type), parentResourceContainer);
             } catch (Exception e) {
@@ -2246,7 +2265,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 long start = System.currentTimeMillis();
                 log.info("Loading inventory from data file [" + file + "]...");
 
-                InventoryFile inventoryFile = new InventoryFile(file);
+                InventoryFile inventoryFile = new InventoryFile(file, this);
                 inventoryFile.loadInventory();
 
                 this.platform = inventoryFile.getPlatform();
@@ -2325,7 +2344,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
             File file = new File(dataDir, "inventory.dat");
-            InventoryFile inventoryFile = new InventoryFile(file);
+            InventoryFile inventoryFile = new InventoryFile(file, this);
             inventoryFile.storeInventory(this.platform, this.resourceContainersByUUID);
         } catch (Exception e) {
             log.error("Could not persist inventory data to disk", e);
@@ -2339,10 +2358,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @return The discovered platform (which might be a dummy in case of testing)
      */
     private Resource discoverPlatform() {
-        PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-        Set<ResourceType> platformTypes = this.pluginManager.getMetadataManager().getTypesForCategory(
-            ResourceCategory.PLATFORM);
+        PluginMetadataManager metadataManager = pluginManager.getMetadataManager();
+        Set<ResourceType> platformTypes = metadataManager.getTypesForCategory(ResourceCategory.PLATFORM);
 
         // This should only ever have 1 or, at most, 2 Resources
         // (always the Java fallback platform, and the native platform if supported).
@@ -2359,7 +2377,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Go through all the platform types that are supported and see if they can detect our platform.
             for (ResourceType platformType : platformTypes) {
                 try {
-                    ResourceDiscoveryComponent component = componentFactory.getDiscoveryComponent(platformType, null);
+                    ResourceDiscoveryComponent component = pluginFactory.getDiscoveryComponent(platformType, null);
                     ResourceDiscoveryContext context = new ResourceDiscoveryContext(platformType, null, null,
                         systemInfo, Collections.EMPTY_LIST, Collections.EMPTY_LIST, configuration.getContainerName(),
                         this.configuration.getPluginContainerDeployment());
@@ -2570,22 +2588,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void installSchedules(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
-        if (PluginContainer.getInstance().getMeasurementManager() != null) {
-            PluginContainer.getInstance().getMeasurementManager().scheduleCollection(scheduleRequests);
-        } else {
-            // MeasurementManager hasn't yet been started (or is unavailable due to locking)
-            // rhq-980 Adding defensive logging to report any issues installing schedules.
-            log.info("MeasurementManager not available, persisting but not yet scheduling schedule requests.");
-            for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
-                if (log.isDebugEnabled()) {
-                    log.debug("MeasurementManager unavailable, resource [" + resourceRequest.getResourceId()
-                        + "] will have its schedules persisted but not scheduled");
-                }
-                ResourceContainer resourceContainer = getResourceContainer(resourceRequest.getResourceId());
-                resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
-                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
-            }
-        }
+        this.measurementManager.scheduleCollection(scheduleRequests);
     }
 
     private DriftSyncManager createDriftSyncManager() {
@@ -2836,7 +2839,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         EventContext eventContext;
         if (resource.getResourceType().getEventDefinitions() != null
             && !resource.getResourceType().getEventDefinitions().isEmpty()) {
-            eventContext = new EventContextImpl(resource);
+            eventContext = new EventContextImpl(resource, eventManager);
         } else {
             eventContext = null;
         }
@@ -2853,7 +2856,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.info("Resource ID is 0! Operation features will not work until the resource is synced with server");
         }
 
-        OperationContext operationContext = new OperationContextImpl(resource.getId());
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationContext operationContext = new OperationContextImpl(resource.getId(), operationManager);
         return operationContext;
     }
 
@@ -2877,7 +2881,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getId() == 0) {
             log.info("Resource ID is 0! Content features will not work until the resource is synced with server");
         }
-        ContentContext contentContext = new ContentContextImpl(resource.getId());
+        ContentManager contentManager = PluginContainer.getInstance().getContentManager();
+        ContentContext contentContext = new ContentContextImpl(resource.getId(), contentManager);
         return contentContext;
     }
 
@@ -2900,7 +2905,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.error("RESOURCE UUID IS NOT SET! Availability features may not work!");
         }
 
-        AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource);
+        AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource, this);
         return availabilityContext;
     }
 
@@ -3612,5 +3617,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
         public void resourcesRemoved(Set<Resource> resources) {
             // nothing to do
         }
+    }
+
+    public PluginComponentFactory getPluginComponentFactory() {
+        return this.pluginFactory;
+    }
+
+    public PluginManager getPluginManager() {
+        return pluginManager;
+    }
+
+    public MeasurementManager getMeasurementManager() {
+        return measurementManager;
     }
 }

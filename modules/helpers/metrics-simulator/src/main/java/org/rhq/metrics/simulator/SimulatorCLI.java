@@ -108,7 +108,11 @@ public class SimulatorCLI {
         }
 
         Simulator simulator = new Simulator();
-        simulator.run(plan);
+        try {
+            simulator.run(plan);
+        } catch (Throwable t) {
+            System.out.println(t);
+        }
     }
 
     public static void main(String[] args) {

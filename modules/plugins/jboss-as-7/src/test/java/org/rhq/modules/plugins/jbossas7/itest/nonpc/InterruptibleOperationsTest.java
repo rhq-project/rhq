@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,16 +17,22 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.modules.plugins.jbossas7.itest.standalone;
+package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.when;
 import static org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
+import static org.rhq.modules.plugins.jbossas7.helper.HostnameVerification.SKIP;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.HOSTNAME;
+import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.HOSTNAME_VERIFICATION;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.MANAGEMENT_CONNECTION_TIMEOUT;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.PASSWORD;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.PORT;
+import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.SECURE;
+import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.TRUST_STRATEGY;
 import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.USER;
+import static org.rhq.modules.plugins.jbossas7.helper.TrustStrategy.TRUST_ANY;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
@@ -47,7 +53,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -56,6 +61,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
+import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.SystemInfoFactory;
@@ -130,10 +136,14 @@ public class InterruptibleOperationsTest {
         Configuration pluginConfig = new Configuration();
         pluginConfig.setSimpleValue(HOSTNAME, "localhost");
         pluginConfig.setSimpleValue(PORT, String.valueOf(httpPort));
+        pluginConfig.setSimpleValue(SECURE, String.valueOf(false));
         pluginConfig.setSimpleValue(USER, "pipo");
         pluginConfig.setSimpleValue(PASSWORD, "molo");
         pluginConfig.setSimpleValue(MANAGEMENT_CONNECTION_TIMEOUT, "-1");
         pluginConfig.getMap().put(LOG_EVENT_SOURCES_CONFIG_PROP, new PropertyList());
+        pluginConfig.setSimpleValue(TRUST_STRATEGY, TRUST_ANY.name);
+        pluginConfig.setSimpleValue(HOSTNAME_VERIFICATION, SKIP.name);
+        pluginConfig.setSimpleValue("expectedRuntimeProductName", AS.PRODUCT_NAME);
         return pluginConfig;
     }
 

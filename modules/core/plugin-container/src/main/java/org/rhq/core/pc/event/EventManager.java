@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.event;
 
 import java.util.HashMap;
@@ -33,8 +30,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
-
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSource;
@@ -53,7 +50,7 @@ import org.rhq.core.system.SigarAccess;
  * @author Ian Springer
  */
 public class EventManager implements ContainerService {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log log = LogFactory.getLog(EventManager.class);
 
     private static final String SENDER_THREAD_POOL_NAME = "EventManager.sender";
     private static final int SENDER_THREAD_POOL_CORE_SIZE = 2;
@@ -62,21 +59,18 @@ public class EventManager implements ContainerService {
     private static final int POLLER_THREAD_POOL_CORE_SIZE = 3;
     private static final int POLLER_INITIAL_DELAY_SECS = 0;
 
-    private PluginContainerConfiguration pcConfig;
-    private ScheduledThreadPoolExecutor senderThreadPool;
-    private EventReport activeReport;
-    private ReentrantReadWriteLock reportLock = new ReentrantReadWriteLock(true);
-    private ScheduledThreadPoolExecutor pollerThreadPool;
-    private Map<PollerKey, Runnable> pollerThreads;
+    private final PluginContainerConfiguration pcConfig;
+    private final ScheduledThreadPoolExecutor senderThreadPool;
+    private volatile EventReport activeReport;
+    private final ReentrantReadWriteLock reportLock = new ReentrantReadWriteLock(true);
+    private final ScheduledThreadPoolExecutor pollerThreadPool;
+    private final Map<PollerKey, Runnable> pollerThreads;
     private SigarProxy sigar;
 
     public EventManager(PluginContainerConfiguration configuration) {
         this.pcConfig = configuration;
         this.activeReport = new EventReport(this.pcConfig.getEventReportMaxPerSource(), this.pcConfig
             .getEventReportMaxTotal());
-    }
-
-    public void initialize() {
 
         // Schedule sender thread(s) to send Event reports to the Server periodically.
         EventSenderRunner senderRunner = new EventSenderRunner(this);
@@ -93,19 +87,14 @@ public class EventManager implements ContainerService {
     }
 
     public void shutdown() {
-        PluginContainer pluginContainer = PluginContainer.getInstance();
         if (this.senderThreadPool != null) {
             log.debug("Shutting down event sender thread pool...");
-            pluginContainer.shutdownExecutorService(this.senderThreadPool, true);
+            PluginContainer.shutdownExecutorService(this.senderThreadPool, true);
         }
         if (this.pollerThreadPool != null) {
             log.debug("Shutting down event poller thread pool...");
-            pluginContainer.shutdownExecutorService(this.pollerThreadPool, true);
+            PluginContainer.shutdownExecutorService(this.pollerThreadPool, true);
         }
-    }
-
-    public void setConfiguration(PluginContainerConfiguration config) {
-        // Was already passed in the constructor
     }
 
     void publishEvents(@NotNull Set<Event> events, @NotNull Resource resource) {

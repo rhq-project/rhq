@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
 
 import java.util.concurrent.Callable;
@@ -41,6 +42,8 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -55,9 +58,10 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
  * @author Jason Dobies
  */
 public class ResourceFactoryManager extends AgentService implements ContainerService, ResourceFactoryAgentService {
+    private static final Log log = LogFactory.getLog(ResourceFactoryManager.class);
 
     // This used to be a single value fixed at 60 seconds. But create and delete actions can very well exceed 1 minute
-    // depending on the type of resource being created, or perhaps graceful shutdown of a resource being deleted. So, 
+    // depending on the type of resource being created, or perhaps graceful shutdown of a resource being deleted. So,
     // allow the timeout value to be overriden by editing rhq-agent-env.sh with new -D settings. Also, create separate
     // timeouts for create and delete, as their execution times really are not related. The properties are set in
     // milliseconds:
@@ -92,39 +96,32 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
 
     // Attributes  --------------------------------------------
 
-    private final Log log = LogFactory.getLog(ResourceFactoryManager.class);
-
     /**
      * Configuration elements for the running of this manager.
      */
-    private PluginContainerConfiguration configuration;
+    private final PluginContainerConfiguration configuration;
 
     /**
      * Executor service used to perform tasks.
      */
-    private ExecutorService executor;
+    private final ExecutorService executor;
 
     /**
      * Handle to the metadata manager.
      */
-    private PluginMetadataManager metadataManager;
+    private final PluginMetadataManager metadataManager;
 
     // Constructors  --------------------------------------------
 
     /**
      * Creates a new <code>ResourceFactoryManager</code> and initializes it as a remoted object.
      */
-    public ResourceFactoryManager() {
-        super(ResourceFactoryAgentService.class);
-    }
-
-    // ContainerService Implementation  --------------------------------------------
-
-    public void initialize() {
+    public ResourceFactoryManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, PluginManager pluginManager) {
+        super(ResourceFactoryAgentService.class, streamRemoter);
         log.debug("Initializing...");
+        this.configuration = configuration;
 
-        // Retrieve handle to metadata manager
-        metadataManager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
+        this.metadataManager = pluginManager.getMetadataManager();
 
         // Initialize thread pool for executing tasks
         int corePoolSize = configuration.getResourceFactoryCoreThreadPoolSize();
@@ -136,13 +133,8 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
     }
 
     public void shutdown() {
-        PluginContainer pluginContainer = PluginContainer.getInstance();
         // TODO (ips, 04/30/12): Is it safe to pass true here to interrupt executing threads?
-        pluginContainer.shutdownExecutorService(executor, false);
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
+        PluginContainer.shutdownExecutorService(executor, false);
     }
 
     // ResourceFactoryAgentService Implementation  --------------------------------------------
@@ -275,7 +267,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      * Returns the component that should be used to create the resource in the given request.
      *
      * @param  parentResourceId identifies the parent under which the new resource will be created
-     * @param  timeout the agent side timeout for the resource creation. if null or unusable use FACET_CREATE_TIMEOUT. 
+     * @param  timeout the agent side timeout for the resource creation. if null or unusable use FACET_CREATE_TIMEOUT.
      *
      * @return component used to create the resource
      *

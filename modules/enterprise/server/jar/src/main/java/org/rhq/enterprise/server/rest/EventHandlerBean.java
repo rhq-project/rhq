@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -333,13 +333,14 @@ public class EventHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/source/{id}/events")
-    @ApiOperation("Submit multiple events for one given event source; the event source in the passed Events is ignored.")
+    @ApiOperation("Submit multiple events for one given event source; the event source in the passed Events is ignored. "+
+    "Make sure your events are ordered by timestamp to get alerts fired correctly.")
     public Response addEventsToSource(@ApiParam("Id of the source to add data to")  @PathParam("id") int sourceId,
                                       List<EventRest> eventRest) {
 
         EventSource source = findEventSourceById(sourceId);
         Map<EventSource,Set<Event>> eventMap = new HashMap<EventSource, Set<Event>>();
-        Set<Event> events = new HashSet<Event>(eventRest.size());
+        Set<Event> events = new LinkedHashSet<Event>(eventRest.size());
         for (EventRest eRest : eventRest) {
             EventSeverity eventSeverity = EventSeverity.valueOf(eRest.getSeverity());
             Event event = new Event(eRest.getTimestamp(),eventSeverity,source,eRest.getDetail());

@@ -90,11 +90,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
-
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
-        connection = ASConnection.newInstanceForServerPluginConfiguration(serverPluginConfig);
-        // The availabilityCollector is still null at this point. So this call will always perform a real availability
-        // check and throw InvalidPluginConfigurationException as needed.
+        serverPluginConfig.validate();
+        connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
         getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();

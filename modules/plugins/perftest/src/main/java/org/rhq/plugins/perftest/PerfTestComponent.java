@@ -76,6 +76,7 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
     private ResourceContext resourceContext;
     private EventPoller eventPoller;
     private Configuration resourceConfiguration;
+    private long getValuesDelay = 0L;
 
 
     // ResourceComponent Implementation  --------------------------------------------
@@ -87,6 +88,10 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
         if (!scenarioManager.isEnabled())
             log.warn("[" + this.resourceContext.getResourceType().getName()
                     + "] perftest Resources exist in inventory, but no Perf test scenario is enabled.");
+
+        String tmp = System.getProperty("rhq.perftest.getvaluesdelayms","0");
+        getValuesDelay = Long.parseLong(tmp);
+
     }
 
     public void stop() {
@@ -140,6 +145,13 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
 
                 case COMPLEX:
                     log.error("DataType " + metric.getDataType() + " not yet supported");
+            }
+            if (getValuesDelay>0) {
+                try {
+                    Thread.sleep(getValuesDelay);
+                } catch (Exception e ) {
+                    ; // ignored
+                }
             }
         }
     }

@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.plugin;
 
 import java.io.File;
@@ -77,45 +74,60 @@ public class PluginManager implements ContainerService {
     /**
      * The map of all plugins keyed on plugin name.
      */
-    private Map<String, PluginEnvironment> loadedPluginEnvironments;
+    private final Map<String, PluginEnvironment> loadedPluginEnvironments;
 
     /**
      * A list of loaded plugins in the order in which they were loaded.
      */
-    private List<Plugin> loadedPlugins;
+    private final List<Plugin> loadedPlugins;
 
-    private PluginMetadataManager metadataManager;
-    private ClassLoaderManager classLoaderManager;
-    private PluginContainerConfiguration configuration;
-    private UpdateLoadedPlugins updateLoadedPlugins;
+    private final PluginMetadataManager metadataManager;
+    private final ClassLoaderManager classLoaderManager;
+    private final PluginContainerConfiguration pluginContainerConfiguration;
 
-    private PluginLifecycleListenerManager pluginLifecycleListenerMgr = new PluginLifecycleListenerManagerImpl();
+    private final PluginLifecycleListenerManager pluginLifecycleListenerMgr;
+    private final UpdateLoadedPlugins updateLoadedPlugins;
 
     /**
-     * Finds all plugins using the plugin finder defined in the
-     * {@link #setConfiguration(PluginContainerConfiguration) plugin container configuration} and
-     * {@link #loadPlugin(java.net.URL, ClassLoader, org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor) loads} each plugin found.
-     *
-     * @see ContainerService#initialize()
+     * Finds all plugins using the plugin finder defined in the <code>pluginContainerConfiguration</code> and
+     * {@link #loadPlugin(java.net.URL, ClassLoader, org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor) loads}
+     * each plugin found.
      */
-    public void initialize() {
+    public PluginManager(PluginContainerConfiguration pluginContainerConfiguration,
+        PluginLifecycleListenerManager pluginLifecycleListenerManager) {
+
+        if (pluginContainerConfiguration == null) {
+            throw new NullPointerException("pluginContainerConfiguration is null");
+        }
+        if (pluginLifecycleListenerManager == null) {
+            throw new NullPointerException("pluginLifecycleListenerManager is null");
+        }
+
+        this.pluginContainerConfiguration = pluginContainerConfiguration;
+        this.pluginLifecycleListenerMgr = pluginLifecycleListenerManager;
         loadedPluginEnvironments = new HashMap<String, PluginEnvironment>();
         loadedPlugins = new ArrayList<Plugin>();
         metadataManager = new PluginMetadataManager();
 
-        metadataManager.setDisabledResourceTypes(configuration.getDisabledResourceTypes());
+        metadataManager.setDisabledResourceTypes(pluginContainerConfiguration.getDisabledResourceTypes());
+        updateLoadedPlugins = new UpdateLoadedPlugins() {
+            PluginTransformer transformer = new PluginTransformer();
 
-        initUpdateLoadedPluginsCallback();
+            public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
+                Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
+                loadedPlugins.add(plugin);
+            }
+        };
 
-        PluginFinder finder = configuration.getPluginFinder();
-        File tmpDir = configuration.getTemporaryDirectory();
-        List<String> disabledPlugins = configuration.getDisabledPlugins();
+        PluginFinder finder = pluginContainerConfiguration.getPluginFinder();
+        File tmpDir = pluginContainerConfiguration.getTemporaryDirectory();
+        List<String> disabledPlugins = pluginContainerConfiguration.getDisabledPlugins();
 
         // The root classloader for all plugins will have all classes hidden except for those configured in the regex.
         // Notice this root classloader has no jar URLs - it will provide no classes except for what it will allow
         // the parent to expose as dictated by the regex.
         ClassLoader thisClassLoader = this.getClass().getClassLoader();
-        String rootPluginClassLoaderRegex = configuration.getRootPluginClassLoaderRegex();
+        String rootPluginClassLoaderRegex = pluginContainerConfiguration.getRootPluginClassLoaderRegex();
         ClassLoader rootCL = new RootPluginClassLoader(new URL[] {}, thisClassLoader, rootPluginClassLoaderRegex);
 
         // build our empty class loader manager - we use it to create and manage our plugin's classloaders
@@ -123,7 +135,7 @@ public class PluginManager implements ContainerService {
         // Save descriptors for later use, so we don't need to parse them twice.
         Map<URL, PluginDescriptor> descriptors = new HashMap<URL, PluginDescriptor>();
         PluginDependencyGraph graph = new PluginDependencyGraph();
-        boolean createResourceCL = configuration.isCreateResourceClassloaders();
+        boolean createResourceCL = pluginContainerConfiguration.isCreateResourceClassloaders();
         this.classLoaderManager = new ClassLoaderManager(pluginNamesUrls, graph, rootCL, tmpDir, createResourceCL);
 
         if (finder == null) {
@@ -178,19 +190,6 @@ public class PluginManager implements ContainerService {
             log.error("Error initializing plugin container", e);
             throw new RuntimeException("Cannot initialize the plugin container", e);
         }
-
-        return;
-    }
-
-    private void initUpdateLoadedPluginsCallback() {
-        updateLoadedPlugins = new UpdateLoadedPlugins() {
-            PluginTransformer transformer = new PluginTransformer();
-
-            public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
-                Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
-                loadedPlugins.add(plugin);
-            }
-        };
     }
 
     /**
@@ -226,26 +225,9 @@ public class PluginManager implements ContainerService {
         this.classLoaderManager.destroy();
 
         this.loadedPluginEnvironments.clear();
-        this.loadedPluginEnvironments = null;
-
         this.loadedPlugins.clear();
-        this.loadedPlugins = null;
 
         pluginLifecycleListenerMgr.shutdown();
-
-        this.metadataManager = null;
-        this.classLoaderManager = null;
-    }
-
-    /**
-     * @see ContainerService#setConfiguration(PluginContainerConfiguration)
-     */
-    public void setConfiguration(PluginContainerConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
-    public void setPluginLifecycleListenerManager(PluginLifecycleListenerManager pluginLifecycleListenerManager) {
-        this.pluginLifecycleListenerMgr = pluginLifecycleListenerManager;
     }
 
     /**
@@ -340,8 +322,6 @@ public class PluginManager implements ContainerService {
         this.metadataManager.loadPlugin(pluginDescriptor);
         pluginLifecycleListenerMgr.setListener(pluginDescriptor.getName(), overseer);
         updateLoadedPlugins.execute(pluginDescriptor, pluginUrl);
-
-        return;
     }
 
     /**
@@ -368,9 +348,9 @@ public class PluginManager implements ContainerService {
 
     private PluginContext createPluginContext(String pluginName) {
         SystemInfo sysInfo = SystemInfoFactory.createSystemInfo();
-        File dataDir = new File(this.configuration.getDataDirectory(), pluginName);
-        File tmpDir = this.configuration.getTemporaryDirectory();
-        String pcName = this.configuration.getContainerName();
+        File dataDir = new File(pluginContainerConfiguration.getDataDirectory(), pluginName);
+        File tmpDir = pluginContainerConfiguration.getTemporaryDirectory();
+        String pcName = pluginContainerConfiguration.getContainerName();
 
         PluginContext context = new PluginContext(pluginName, sysInfo, tmpDir, dataDir, pcName);
         return context;

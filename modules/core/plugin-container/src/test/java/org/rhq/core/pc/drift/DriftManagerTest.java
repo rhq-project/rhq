@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.core.pc.drift;
@@ -49,8 +49,11 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.plugin.PluginLifecycleListenerManagerImpl;
+import org.rhq.core.pc.plugin.PluginManager;
 
 public class DriftManagerTest extends DriftTest {
 
@@ -60,6 +63,8 @@ public class DriftManagerTest extends DriftTest {
 
     private PluginContainerConfiguration pcConfig;
 
+    private PluginManager pluginManager;
+
     private TestDriftManager driftMgr;
 
     @BeforeMethod
@@ -67,6 +72,7 @@ public class DriftManagerTest extends DriftTest {
         tmpDir = mkdir(basedir(), "tmp");
 
         pcConfig = new PluginContainerConfiguration();
+        pluginManager = new PluginManager(pcConfig, new PluginLifecycleListenerManagerImpl());
         ServerServices serverServices = new ServerServices();
         driftServerService = new TestDriftServerService();
         serverServices.setDriftServerService(driftServerService);
@@ -74,8 +80,7 @@ public class DriftManagerTest extends DriftTest {
         pcConfig.setDataDirectory(basedir());
         pcConfig.setTemporaryDirectory(tmpDir);
 
-        driftMgr = new TestDriftManager();
-        driftMgr.setConfiguration(pcConfig);
+        driftMgr = new TestDriftManager(pcConfig);
         driftMgr.setChangeSetMgr(changeSetMgr);
     }
 
@@ -379,18 +384,22 @@ public class DriftManagerTest extends DriftTest {
         void execute();
     }
 
-    private static class TestDriftManager extends DriftManager {
+    private class TestDriftManager extends DriftManager {
 
-        FakeInventoryManager inventoryMgr = new FakeInventoryManager();
-
-        @Override
-        public InventoryManager getInventoryManager() {
-            return inventoryMgr;
+        public TestDriftManager(PluginContainerConfiguration configuration) {
+            super(configuration, null, new FakeInventoryManager(configuration));
         }
+
     }
 
-    private static class FakeInventoryManager extends InventoryManager {
-        private Map<Integer, ResourceContainer> resourceContainers = new HashMap<Integer, ResourceContainer>();
+    private class FakeInventoryManager extends InventoryManager {
+
+        private final Map<Integer, ResourceContainer> resourceContainers = new HashMap<Integer, ResourceContainer>();
+
+        public FakeInventoryManager(PluginContainerConfiguration configuration) {
+            super(configuration, null, pluginManager, new EventManager(configuration));
+            initialize();
+        }
 
         @Override
         public ResourceContainer getResourceContainer(int resourceId) {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.core.pc.drift;
@@ -57,63 +57,56 @@ import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
-import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
-    private final Log log = LogFactory.getLog(DriftManager.class);
+    private static final Log log = LogFactory.getLog(DriftManager.class);
 
-    private PluginContainerConfiguration pluginContainerConfiguration;
+    private final PluginContainerConfiguration pluginContainerConfiguration;
 
-    private File changeSetsDir;
+    private final File changeSetsDir;
 
-    private ScheduledThreadPoolExecutor driftThreadPool;
+    private final ScheduledThreadPoolExecutor driftThreadPool;
 
-    private ScheduleQueue schedulesQueue = new ScheduleQueueImpl();
+    private final ScheduleQueue schedulesQueue = new ScheduleQueueImpl();
 
+    /**
+     * Not final for testing.
+     */
     private ChangeSetManager changeSetMgr;
 
-    private boolean initialized;
+    private final boolean initialized;
 
-    public DriftManager() {
-        super(DriftAgentService.class);
-    }
+    private final InventoryManager inventoryManager;
 
-    @Override
-    public void setConfiguration(PluginContainerConfiguration configuration) {
+    public DriftManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager inventoryManager) {
+        super(DriftAgentService.class, streamRemoter);
+        this.inventoryManager = inventoryManager;
         pluginContainerConfiguration = configuration;
         changeSetsDir = new File(pluginContainerConfiguration.getDataDirectory(), "changesets");
-    }
 
-    public boolean isInitialized() {
-        return initialized;
-    }
-
-    @Override
-    public void initialize() {
         long initStartTime = System.currentTimeMillis();
         if (!changeSetsDir.isDirectory()) {
             boolean success = changeSetsDir.mkdir();
             if (!success) {
                 log.warn("Could not create change sets directory " + changeSetsDir);
                 initialized = false;
+                driftThreadPool = null;
+                changeSetMgr = null;
                 return;
             }
         }
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
 
-        DriftDetector driftDetector = new DriftDetector();
-        driftDetector.setScheduleQueue(schedulesQueue);
-        driftDetector.setChangeSetManager(changeSetMgr);
-        driftDetector.setDriftClient(this);
+        DriftDetector driftDetector = new DriftDetector(schedulesQueue, changeSetMgr, this);
 
-        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
         long startTime = System.currentTimeMillis();
-        initSchedules(inventoryMgr.getPlatform(), inventoryMgr);
+        initSchedules(inventoryManager.getPlatform(), inventoryManager);
         long endTime = System.currentTimeMillis();
 
         if (log.isInfoEnabled()) {
@@ -139,6 +132,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (log.isInfoEnabled()) {
             log.info("Finished initialization in " + (initEndTime - initStartTime) + " ms");
         }
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     private void initSchedules(Resource r, InventoryManager inventoryMgr) {
@@ -289,17 +286,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void shutdown() {
         if (driftThreadPool != null) {
-            PluginContainer pluginContainer = PluginContainer.getInstance();
             // TODO (ips, 04/30/12): Is it safe to pass true here to interrupt executing threads?
-            pluginContainer.shutdownExecutorService(driftThreadPool, false);
-            driftThreadPool = null;
+            PluginContainer.shutdownExecutorService(driftThreadPool, false);
         }
 
-        if (schedulesQueue != null) {
-            schedulesQueue.clear();
-            schedulesQueue = null;
-        }
-
+        schedulesQueue.clear();
         changeSetMgr = null;
     }
 
@@ -421,7 +412,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             if (log.isDebugEnabled()) {
                 log.debug(schedule + " has been added to " + schedulesQueue);
             }
-            ResourceContainer container = getInventoryManager().getResourceContainer(resourceId);
+            ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
             if (container != null) {
                 container.addDriftDefinition(driftDefinition);
             }
@@ -465,7 +456,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
         });
         if (schedule != null) {
-            ResourceContainer container = getInventoryManager().getResourceContainer(resourceId);
+            ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
             if (container != null) {
                 container.removeDriftDefinition(schedule.getDriftDefinition());
             }
@@ -662,8 +653,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     public File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition) {
 
         // get the resource entity stored in our local inventory
-        InventoryManager im = getInventoryManager();
-        ResourceContainer container = im.getResourceContainer(resourceId);
+        ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
 
         if (container == null) {
             log.error("Cannot determine base directory for " + driftDefinition + ". No resource container found " +
@@ -711,7 +701,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             break;
         }
         case measurementTrait: {
-            baseLocation = getMeasurementManager().getTraitValue(container, baseDirValueName);
+            baseLocation = getTraitValue(container, baseDirValueName);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot obtain trait [" + baseDirValueName + "] for resource ["
                     + resource.getName() + "]");
@@ -734,24 +724,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         return destDir;
     }
 
-    /**
-     * Returns the manager that can provide data on the inventory. This is a separate protected method
-     * so we can extend our manger class to have a mock manager for testing.
-     *
-     * @return the inventory manager
-     */
-    protected InventoryManager getInventoryManager() {
-        return PluginContainer.getInstance().getInventoryManager();
-    }
-
-    /**
-     * Returns the manager that can provide data on the measurements/metrics. This is a separate protected method
-     * so we can extend our manger class to have a mock manager for testing.
-     *
-     * @return the inventory manager
-     */
-    protected MeasurementManager getMeasurementManager() {
-        return PluginContainer.getInstance().getMeasurementManager();
+    private String getTraitValue(ResourceContainer container, String traitName) {
+        return inventoryManager.getMeasurementManager().getTraitValue(container, traitName);
     }
 
     private void writeSnapshotToFile(DriftSnapshot snapshot, File file, Headers headers) throws IOException {
@@ -794,7 +768,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     private static class ZipFileNameFilter implements FilenameFilter {
-        private String prefix;
+        private final String prefix;
 
         public ZipFileNameFilter(String prefix) {
             this.prefix = prefix;
@@ -804,5 +778,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         public boolean accept(File dir, String name) {
             return name.startsWith(prefix) && name.endsWith(".zip");
         }
+    }
+
+    public InventoryManager getInventoryManager() {
+        return inventoryManager;
     }
 }

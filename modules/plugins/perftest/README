@@ -10,3 +10,11 @@ Usage
 
 - Some scenarios may be configurable and require other system properties to dictate their behavior. Check the
   scenario XML files for more details.
+
+Two properties allow to control the time it takes for discovery and getValues(). This allows to better mimic real
+life, where a target server never returns data in 0ms.
+
+- rhq.perftest.getvaluesdelayms  -- delay for getValues() in ms
+- rhq.perftest.discoverydelayms  -- delay for discovery of one individual resource
+
+If the values are 0 or not given, no delay happens.

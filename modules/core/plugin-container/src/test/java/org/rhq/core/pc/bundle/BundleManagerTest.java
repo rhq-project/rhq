@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.bundle;
 
 import java.io.File;
@@ -65,9 +62,13 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
+import org.rhq.core.pc.plugin.PluginLifecycleListenerManager;
+import org.rhq.core.pc.plugin.PluginLifecycleListenerManagerImpl;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
@@ -78,19 +79,30 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 @Test
 public class BundleManagerTest {
     private MockBundleManager mockBundleManager;
+    private MockInventoryManager im;
     private PluginContainerConfiguration pcConfig;
+    private PluginManager pluginManager;
+
+    private static final String BUNDLE_CONFIG_CONTEXT_VALUE_FS = getPath("/blah");
+    private static final String BUNDLE_CONFIG_LOCATION_PC = getPath("/pluginconfig/base/dir");
+    private static final String BUNDLE_CONFIG_LOCATION_RC = getPath("/resourceconfig/base/dir");
+    private static final String BUNDLE_CONFIG_LOCATION_MT = getPath("/trait/base/dir");
 
     @BeforeMethod
     public void beforeMethod() {
         ServerServices serverServices = new ServerServices();
         serverServices.setBundleServerService(new MockBundleServerService());
 
+        PluginLifecycleListenerManager pluginLifecycleListenerManager = new PluginLifecycleListenerManagerImpl();
         pcConfig = new PluginContainerConfiguration();
+        pcConfig.setStartManagementBean(false);
         pcConfig.setServerServices(serverServices);
+        ResourceContainer.initialize(pcConfig);
+        pluginManager = new PluginManager(pcConfig, pluginLifecycleListenerManager);
+        im = new MockInventoryManager();
+        im.initialize();
 
         mockBundleManager = new MockBundleManager();
-        mockBundleManager.setConfiguration(pcConfig);
-        mockBundleManager.initialize();
 
         // clear any past interrupted state
         Thread.interrupted();
@@ -99,11 +111,13 @@ public class BundleManagerTest {
     @AfterMethod
     public void afterMethod() {
         mockBundleManager.shutdown();
+        im.shutdown();
+        im.getMeasurementManager().shutdown();
+        ResourceContainer.shutdown();
         pcConfig = null;
     }
 
     public void testNonPlatformBundleDeploy_FileSystem_AbsolutePath() throws Exception {
-        MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
 
         BundleType bundleType = new BundleType("bundleTypeName", im.bundleHandlerType);
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
@@ -128,8 +142,6 @@ public class BundleManagerTest {
     }
 
     public void testNonPlatformBundleDeploy_FileSystem_RelativePath() throws Exception {
-        MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
-
         BundleType bundleType = new BundleType("bundleTypeName", im.bundleHandlerType);
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
@@ -143,7 +155,7 @@ public class BundleManagerTest {
         // to test that we are really using this context value, our tests set it to something other than "/".
         // That's why we prepend CONTEXT_VALUE_FS to the front of the destination's destDir
         // note that we expect that relative path converted to absolute
-        mockBundleManager.absolutePathToAssert = MockInventoryManager.BUNDLE_CONFIG_CONTEXT_VALUE_FS + "/relative/path";
+        mockBundleManager.absolutePathToAssert = BUNDLE_CONFIG_CONTEXT_VALUE_FS + "/relative/path";
         BundleScheduleResponse response = mockBundleManager.schedule(request);
         assertSuccess(response);
         assertBundleDeploymentStatus(BundleDeploymentStatus.SUCCESS);
@@ -151,8 +163,6 @@ public class BundleManagerTest {
     }
 
     public void testNonPlatformBundleDeploy_PluginConfig() throws Exception {
-        MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
-
         BundleType bundleType = new BundleType("bundleTypeName", im.bundleHandlerType);
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
@@ -162,7 +172,7 @@ public class BundleManagerTest {
         BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(bundleDeployment, im.serverPC);
         BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
 
-        mockBundleManager.absolutePathToAssert = MockInventoryManager.BUNDLE_CONFIG_LOCATION_PC + "/relative/path/pc";
+        mockBundleManager.absolutePathToAssert = BUNDLE_CONFIG_LOCATION_PC + "/relative/path/pc";
         BundleScheduleResponse response = mockBundleManager.schedule(request);
         assertSuccess(response);
         assertBundleDeploymentStatus(BundleDeploymentStatus.SUCCESS);
@@ -170,8 +180,6 @@ public class BundleManagerTest {
     }
 
     public void testNonPlatformBundleDeploy_ResourceConfig() throws Exception {
-        MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
-
         BundleType bundleType = new BundleType("bundleTypeName", im.bundleHandlerType);
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
@@ -181,7 +189,7 @@ public class BundleManagerTest {
         BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(bundleDeployment, im.serverRC);
         BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
 
-        mockBundleManager.absolutePathToAssert = MockInventoryManager.BUNDLE_CONFIG_LOCATION_RC + "/relative/path/rc";
+        mockBundleManager.absolutePathToAssert = BUNDLE_CONFIG_LOCATION_RC + "/relative/path/rc";
         BundleScheduleResponse response = mockBundleManager.schedule(request);
         assertSuccess(response);
         assertBundleDeploymentStatus(BundleDeploymentStatus.SUCCESS);
@@ -189,8 +197,6 @@ public class BundleManagerTest {
     }
 
     public void testNonPlatformBundleDeploy_Trait() throws Exception {
-        MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
-
         BundleType bundleType = new BundleType("bundleTypeName", im.bundleHandlerType);
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
@@ -200,7 +206,7 @@ public class BundleManagerTest {
         BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(bundleDeployment, im.serverMT);
         BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
 
-        mockBundleManager.absolutePathToAssert = MockInventoryManager.BUNDLE_CONFIG_LOCATION_MT + "/relative/path/mt";
+        mockBundleManager.absolutePathToAssert = BUNDLE_CONFIG_LOCATION_MT + "/relative/path/mt";
         BundleScheduleResponse response = mockBundleManager.schedule(request);
         assertSuccess(response);
         assertBundleDeploymentStatus(BundleDeploymentStatus.SUCCESS);
@@ -208,8 +214,6 @@ public class BundleManagerTest {
     }
 
     public void testNonPlatformBundleDeploy_FileSystem_Failure() throws Exception {
-        MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
-
         BundleType bundleType = new BundleType("bundleTypeName", im.bundleHandlerType);
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
@@ -239,17 +243,13 @@ public class BundleManagerTest {
     }
 
     private class MockBundleManager extends BundleManager {
+
+        public MockBundleManager() {
+            super(pcConfig, new MockAgentServiceStreamRemoter(), im,
+                    new MockMeasurementManager(pcConfig));
+        }
+
         public String absolutePathToAssert;
-
-        @Override
-        protected InventoryManager getInventoryManager() {
-            return new MockInventoryManager();
-        }
-
-        @Override
-        protected MeasurementManager getMeasurementManager() {
-            return new MockMeasurementManager();
-        }
 
         @Override
         protected BundleFacet getBundleFacet(int resourceId, long timeout) throws PluginContainerException {
@@ -313,21 +313,17 @@ public class BundleManagerTest {
         }
     }
 
-    private static class MockInventoryManager extends InventoryManager {
+    private class MockInventoryManager extends InventoryManager {
         private static final String BUNDLE_CONFIG_NAME_FS = "fsBaseDirLocation";
-        private static final String BUNDLE_CONFIG_CONTEXT_VALUE_FS = getPath("/blah");
 
         private static final String BUNDLE_CONFIG_NAME_PC = "pcBaseDirLocation";
         private static final String BUNDLE_CONFIG_CONTEXT_VALUE_PC = "pcPropBundle";
-        private static final String BUNDLE_CONFIG_LOCATION_PC = getPath("/pluginconfig/base/dir");
 
         private static final String BUNDLE_CONFIG_NAME_RC = "rcBaseDirLocation";
         private static final String BUNDLE_CONFIG_CONTEXT_VALUE_RC = "rcPropBundle";
-        private static final String BUNDLE_CONFIG_LOCATION_RC = getPath("/resourceconfig/base/dir");
 
         private static final String BUNDLE_CONFIG_NAME_MT = "mtBaseDirLocation";
         private static final String BUNDLE_CONFIG_CONTEXT_VALUE_MT = "traitBundle";
-        private static final String BUNDLE_CONFIG_LOCATION_MT = getPath("/trait/base/dir");
 
         // mocking the following:
         // - one platform type and a platform resource to be used as the root parent
@@ -349,10 +345,11 @@ public class BundleManagerTest {
         public Resource serverPC;
         public Resource serverRC;
         public Resource serverMT;
-        public HashMap<ResourceType, Resource> typeResourceMap = new HashMap<ResourceType, Resource>();
-        public HashMap<Integer, ResourceContainer> idResourceContainerMap = new HashMap<Integer, ResourceContainer>();
+        public final HashMap<ResourceType, Resource> typeResourceMap = new HashMap<ResourceType, Resource>();
+        public final HashMap<Integer, ResourceContainer> idResourceContainerMap = new HashMap<Integer, ResourceContainer>();
 
         public MockInventoryManager() {
+            super(pcConfig, null, pluginManager, new EventManager(pcConfig));
             platformType = new ResourceType("platformResourceTypeName", "pluginName", ResourceCategory.PLATFORM, null);
             bundleHandlerType = new ResourceType("bhRTypeName", "pluginName", ResourceCategory.SERVER, platformType);
             serverTypeFS = new ResourceType("typeName-fileSystem", "pluginName", ResourceCategory.SERVER, platformType);
@@ -461,17 +458,23 @@ public class BundleManagerTest {
 
         @Override
         public ResourceContainer getResourceContainer(Resource resource) {
+            if (idResourceContainerMap == null)
+                return null;
             return idResourceContainerMap.get(resource.getId());
         }
     }
 
     private class MockMeasurementManager extends MeasurementManager {
+        public MockMeasurementManager(PluginContainerConfiguration configuration) {
+            super(configuration, null, im);
+        }
+
         @Override
         public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
             // anytime this method gets called, it means our tests are asking for the test trait value. It will
             // always be the same value for all tests.
             MeasurementDataTrait data = new MeasurementDataTrait(requests.iterator().next(),
-                MockInventoryManager.BUNDLE_CONFIG_LOCATION_MT);
+                BUNDLE_CONFIG_LOCATION_MT);
             Set<MeasurementData> values = new HashSet<MeasurementData>();
             values.add(data);
             return values;

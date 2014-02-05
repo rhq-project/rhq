@@ -28,6 +28,8 @@ package org.rhq.metrics.simulator.plan;
 import java.io.File;
 import java.net.InetAddress;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,7 +47,9 @@ import org.rhq.server.metrics.MetricsConfiguration;
 public class SimulationPlanner {
 
     public SimulationPlan create(File jsonFile) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
+        JsonFactory jsonFactory = new JsonFactory();
+        jsonFactory.enable(Feature.ALLOW_COMMENTS);
+        ObjectMapper mapper = new ObjectMapper(jsonFactory);
         JsonNode root = mapper.readTree(jsonFile);
         SimulationPlan simulation = new SimulationPlan();
 
@@ -104,6 +108,9 @@ public class SimulationPlanner {
         simulation.setAggregationType(SimulationPlan.AggregationType.fromText(getString(root.get("aggregationType"),
             "sync")));
         simulation.setAggregationEnabled(getBoolean(root.get("aggregationEnabled"), true));
+
+        simulation.setSimulationType(SimulationPlan.SimulationType.fromText(getString(root.get("simulationType"),
+            "threaded")));
 
         return simulation;
     }

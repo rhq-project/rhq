@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -293,10 +293,10 @@ public abstract class ComponentTest {
         String rclassname = pmm.getComponentClass(type);
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
-        AvailabilityContext availContext = new AvailabilityContextImpl(cresource);
+        AvailabilityContext availContext = new AvailabilityContextImpl(cresource, pluginContainer.getInventoryManager());
         InventoryContext inventoryContext = new InventoryContextImpl(cresource);
 
-        EventContext eventContext = new EventContextImpl(resource);
+        EventContext eventContext = new EventContextImpl(resource, eventManager);
         ResourceContext context = new ResourceContext(cresource, parentComponent,
                 null, rdc, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,

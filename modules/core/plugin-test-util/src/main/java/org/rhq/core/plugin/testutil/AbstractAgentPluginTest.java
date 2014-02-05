@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.plugin.testutil;
 
 import static org.testng.Assert.assertEquals;
@@ -101,7 +102,7 @@ import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
  */
 public abstract class AbstractAgentPluginTest extends Arquillian {
 
-    private Log log = LogFactory.getLog(this.getClass());
+    private static final Log log = LogFactory.getLog(AbstractAgentPluginTest.class);
 
     @ArquillianResource
     protected MockingServerServices serverServices;
@@ -705,7 +706,6 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ignoredResources = (ignoredResources == null) ? new ArrayList<String>() : ignoredResources;
 
         ConfigurationManager configManager = this.pluginContainer.getConfigurationManager();
-        configManager.initialize();
         Thread.sleep(10 * 1000L);
 
         Queue<Resource> unparsedResources = new LinkedList<Resource>();

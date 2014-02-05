@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,13 +19,18 @@
 
 package org.rhq.core.pc.util;
 
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 public class ComponentServiceImpl implements ComponentService {
+
+    private final PluginManager pluginManager;
+
+    public ComponentServiceImpl(PluginManager pluginManager) {
+        this.pluginManager = pluginManager;
+    }
 
     public ResourceType getResourceType(int resourceId) throws PluginContainerException {
         return ComponentUtil.getResourceType(resourceId);
@@ -38,12 +43,8 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     public String getAmpsVersion(int resourceId) throws PluginContainerException {
-        PluginContainer pluginContainer = PluginContainer.getInstance();
-        PluginManager pluginMgr = pluginContainer.getPluginManager();
-
         ResourceType resourceType = getResourceType(resourceId);
-
-        return pluginMgr.getAmpsVersion(resourceType.getPlugin());
+        return pluginManager.getAmpsVersion(resourceType.getPlugin());
     }
 
     public ResourceComponent fetchResourceComponent(int resourceId) {

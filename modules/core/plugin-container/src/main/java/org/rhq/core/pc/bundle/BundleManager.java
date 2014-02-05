@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.bundle;
 
 import java.io.File;
@@ -56,6 +57,7 @@ import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
@@ -79,7 +81,7 @@ import org.rhq.core.util.file.FileUtil;
  * @author John Mazzitelli
  */
 public class BundleManager extends AgentService implements BundleAgentService, BundleManagerProvider, ContainerService {
-    private final Log log = LogFactory.getLog(BundleManager.class);
+    private static final Log log = LogFactory.getLog(BundleManager.class);
 
     private final String AUDIT_DEPLOYMENT_ENDED = "Deployment Ended";
     private final String AUDIT_DEPLOYMENT_STARTED = "Deployment Started";
@@ -90,39 +92,23 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private final String AUDIT_PURGE_STARTED = "Purge Started";
     private final String AUDIT_PURGE_ENDED = "Purge Ended";
 
-    private PluginContainerConfiguration configuration;
-    private ExecutorService deployerThreadPool;
+    private final PluginContainerConfiguration configuration;
+    private final ExecutorService deployerThreadPool;
+    private final InventoryManager im;
+    private final MeasurementManager mm;
 
-    public BundleManager() {
-        super(BundleAgentService.class);
-    }
-
-    public void setConfiguration(PluginContainerConfiguration configuration) {
+    public BundleManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager im, MeasurementManager mm) {
+        super(BundleAgentService.class, streamRemoter);
         this.configuration = configuration;
-    }
-
-    public void initialize() {
-        createDeployerThreadPool();
+        LoggingThreadFactory threadFactory = new LoggingThreadFactory("BundleDeployment", true);
+        this.deployerThreadPool = Executors.newSingleThreadExecutor(threadFactory); // single-threaded so only one deployment at a time
+        this.im = im;
+        this.mm = mm;
     }
 
     public void shutdown() {
-        shutdownDeployerThreadPool();
-    }
-
-    private void createDeployerThreadPool() {
-        shutdownDeployerThreadPool(); // paranoia - just in case somehow an old one is still around
-        LoggingThreadFactory threadFactory = new LoggingThreadFactory("BundleDeployment", true);
-        this.deployerThreadPool = Executors.newSingleThreadExecutor(threadFactory); // single-threaded so only one deployment at a time
-    }
-
-    private void shutdownDeployerThreadPool() {
-        if (this.deployerThreadPool != null) {
-            PluginContainer pluginContainer = PluginContainer.getInstance();
-            // pass false, so we don't interrupt a plugin in the middle of a bundle deployment
-            pluginContainer.shutdownExecutorService(this.deployerThreadPool, false);
-            this.deployerThreadPool = null;
-        }
-        return;
+        // pass false, so we don't interrupt a plugin in the middle of a bundle deployment
+        PluginContainer.shutdownExecutorService(this.deployerThreadPool, false);
     }
 
     public List<PackageVersion> getAllBundleVersionPackageVersions(BundleVersion bundleVersion) throws Exception {
@@ -146,7 +132,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             final BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
 
             // find the resource that will handle the bundle processing
-            InventoryManager im = getInventoryManager();
             BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
             Set<Resource> resources = im.getResourcesWithType(resourceType);
@@ -237,7 +222,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             final BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
 
             // find the resource that will purge the bundle
-            InventoryManager im = getInventoryManager();
             BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
             Set<Resource> resources = im.getResourcesWithType(resourceType);
@@ -469,7 +453,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         // get the resource entity stored in our local inventory
-        InventoryManager im = getInventoryManager();
         Resource resource = bundleResourceDeployment.getResource();
         ResourceContainer container = im.getResourceContainer(resource);
         resource = container.getResource();
@@ -526,7 +509,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             break;
         }
         case measurementTrait: {
-            baseLocation = getMeasurementManager().getTraitValue(container, destBaseDirValueName);
+            baseLocation = mm.getTraitValue(container, destBaseDirValueName);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot obtain trait [" + destBaseDirName + "] for resource ["
                     + resource.getName() + "]");
@@ -580,25 +563,5 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     protected BundleFacet getBundleFacet(int resourceId, long timeout) throws PluginContainerException {
         return ComponentUtil.getComponent(resourceId, BundleFacet.class, FacetLockType.READ, timeout, false, true,
             false);
-    }
-
-    /**
-     * Returns the manager that can provide data on the inventory. This is a separate protected method
-     * so we can extend our manger class to have a mock manager for testing.
-     *
-     * @return the inventory manager
-     */
-    protected InventoryManager getInventoryManager() {
-        return PluginContainer.getInstance().getInventoryManager();
-    }
-
-    /**
-     * Returns the manager that can provide data on the measurements/metrics. This is a separate protected method
-     * so we can extend our manger class to have a mock manager for testing.
-     *
-     * @return the inventory manager
-     */
-    protected MeasurementManager getMeasurementManager() {
-        return PluginContainer.getInstance().getMeasurementManager();
     }
 }

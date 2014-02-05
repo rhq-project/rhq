@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -154,8 +154,8 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         ResourcePackageDetails detail = packages.iterator().next();
 
-        ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
-            getServerComponent().getServerPluginConfiguration(), detail.getKey().getName());
+        ASUploadConnection uploadConnection = new ASUploadConnection(getServerComponent().getASConnection(), detail
+            .getKey().getName());
         OutputStream out = uploadConnection.getOutputStream();
         if (out == null) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);

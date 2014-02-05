@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.plugins.snmptrapd;
 
 import java.io.File;
@@ -77,9 +96,10 @@ public abstract class ComponentTest {
         pcc.setEventSenderInitialDelay(1);
         pcc.setEventSenderPeriod(1);
 
-        PluginContainer.getInstance().setConfiguration(pcc);
-        PluginContainer.getInstance().initialize();
-        eventManager = PluginContainer.getInstance().getEventManager();
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+        pluginContainer.setConfiguration(pcc);
+        pluginContainer.initialize();
+        eventManager = pluginContainer.getEventManager();
 
         Resource resource = new Resource();
         resource.setResourceType(resourceType);
@@ -93,11 +113,11 @@ public abstract class ComponentTest {
         File temporaryDirectory = temp;
         File dataDirectory = temp;
         String pluginContainerName = "rhq";
-        EventContext eventContext = new EventContextImpl(resource);
+        EventContext eventContext = new EventContextImpl(resource, eventManager);
         OperationContext operationContext = new OperationContextImpl(0);
         ContentContext contentContext = new ContentContextImpl(0);
         PluginContainerDeployment pluginContainerDeployment = null;
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource);
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, pluginContainer.getInventoryManager());
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
         ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,8 @@ import static org.rhq.modules.plugins.jbossas7.json.Result.FAILURE;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +41,11 @@ import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
@@ -74,7 +79,7 @@ public class ASConnection {
     private static final Log LOG = LogFactory.getLog(ASConnection.class);
 
     public static final String HTTP_SCHEME = "http";
-
+    public static final String HTTPS_SCHEME = "https";
     public static final String MANAGEMENT_URI = "/management";
 
     // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
@@ -89,13 +94,8 @@ public class ASConnection {
     static final String FAILURE_NO_RESPONSE = "The server closed the connection before sending the response";
 
     private static final String FAILURE_SHUTDOWN = "The HTTP connection has already been shutdown";
-
     private static final int MAX_POOLED_CONNECTIONS = 10;
-
-    private static final int DEFAULT_KEEPALIVE_TIMEOUT = 5 * 1000; // 5sec
-
     private static final String ACCEPT_HTTP_HEADER = "Accept";
-
     private static final String JSON_NODE_FAILURE_DESCRIPTION = "failure-description";
 
     // A shared scheduled executor service to free HttpClient resources
@@ -103,111 +103,86 @@ public class ASConnection {
     private static final ScheduledExecutorService cleanerExecutor = Executors
         .newSingleThreadScheduledExecutor(new ThreadFactory());
 
-    private String host;
+    private final ASConnectionParams asConnectionParams;
+    private final URI managementUri;
+    private final DefaultHttpClient httpClient;
+    private final ObjectMapper mapper;
 
-    private int port;
-
-    private UsernamePasswordCredentials credentials;
-
-    private long keepAliveTimeout;
-
-    private String managementUrl;
-
-    private DefaultHttpClient httpClient;
-
-    private ObjectMapper mapper;
-
+    private volatile long keepAliveTimeout;
     private volatile boolean shutdown;
 
     /**
-     * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
-     *
-     * The returned instance will use the default keep alive connection timeout.
-     *
-     * @param host Host of the DomainController or standalone server
-     * @param port Port of the JSON api.
-     * @param user user needed for authentication
-     * @param password password needed for authentication
+     * @deprecated as of RHQ 4.10, use {@link #ASConnection(ASConnectionParams)} instead
      */
+    @Deprecated
     public ASConnection(String host, int port, String user, String password) {
         this(host, port, user, password, null);
     }
 
     /**
-     * Create a new instance.
-     *
-     * @param host                        Host of the DomainController or standalone server
-     * @param port                        Port of the JSON api.
-     * @param user                        User needed for authentication
-     * @param password                    Password needed for authentication
-     * @param managementConnectionTimeout Maximum time to keep alive a management connection. Zero and negative values
-     *                                    will disable connection persistence.
+     * @deprecated as of RHQ 4.10, use {@link #ASConnection(ASConnectionParams)} instead
      */
+    @Deprecated
     public ASConnection(String host, int port, String user, String password, Long managementConnectionTimeout) {
+        this(new ASConnectionParamsBuilder() //
+            .setHost(host) //
+            .setPort(port) //
+            .setUsername(user) //
+            .setPassword(password) //
+            .setKeepAliveTimeout(managementConnectionTimeout) //
+            .createASConnectionParams());
+    }
+
+    public ASConnection(ASConnectionParams params) {
+        asConnectionParams = params;
 
         // Check and store the basic parameters
-        if (host == null) {
+        if (asConnectionParams.getHost() == null) {
             throw new IllegalArgumentException("Management host cannot be null.");
         }
-        if (port <= 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid port: " + port);
-        }
-        this.host = host;
-        this.port = port;
-        if (user != null && password != null) {
-            credentials = new UsernamePasswordCredentials(user, password);
+        if (asConnectionParams.getPort() <= 0 || asConnectionParams.getPort() > 65535) {
+            throw new IllegalArgumentException("Invalid port: " + asConnectionParams.getPort());
         }
 
-        managementUrl = HTTP_SCHEME + "://" + host + ":" + port + MANAGEMENT_URI;
+        UsernamePasswordCredentials credentials = null;
+        if (asConnectionParams.getUsername() != null && asConnectionParams.getPassword() != null) {
+            credentials = new UsernamePasswordCredentials(asConnectionParams.getUsername(),
+                asConnectionParams.getPassword());
+        }
 
-        // Each ASConnection instance will have its own HttpClient instance
+        keepAliveTimeout = asConnectionParams.getKeepAliveTimeout();
+
+        managementUri = buildManagementUri();
+
+        // Each ASConnection instance will have its own HttpClient instance. Setup begins here
+
+        SchemeRegistry schemeRegistry = new SchemeRegistryBuilder(asConnectionParams).buildSchemeRegistry();
+
         // HttpClient will use a pooling connection manager to allow concurrent request processing
-        PoolingClientConnectionManager httpConnectionManager = new PoolingClientConnectionManager();
+        PoolingClientConnectionManager httpConnectionManager = new PoolingClientConnectionManager(schemeRegistry);
         httpConnectionManager.setDefaultMaxPerRoute(MAX_POOLED_CONNECTIONS);
         httpConnectionManager.setMaxTotal(MAX_POOLED_CONNECTIONS);
+
         httpClient = new DefaultHttpClient(httpConnectionManager);
-        // Disable stale connection checking on connection lease to get better performance
         HttpParams httpParams = httpClient.getParams();
+
+        // Disable stale connection checking on connection lease to get better performance
         // See http://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
         HttpConnectionParams.setStaleCheckingEnabled(httpParams, false);
-        keepAliveTimeout = managementConnectionTimeout == null ? DEFAULT_KEEPALIVE_TIMEOUT : managementConnectionTimeout;
-        // Do not reuse connection if keep alive timeout has zero or negative value
-        httpClient.setReuseStrategy(new DefaultConnectionReuseStrategy() {
-            @Override
-            public boolean keepAlive(HttpResponse response, HttpContext context) {
-                return keepAliveTimeout > 0 && super.keepAlive(response, context);
-            }
-        });
+
+        httpClient.setReuseStrategy(new CustomConnectionReuseStrategy(this));
         if (keepAliveTimeout > 0) {
-            // The default keep-alive strategy does not expire connections if the 'Keep-Alive' header is not present
-            // in the response. This strategy will apply the desired duration in this case.
-            httpClient.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy() {
-                @Override
-                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    long duration = super.getKeepAliveDuration(response, context);
-                    if (duration < 0 || duration > keepAliveTimeout) {
-                        duration = keepAliveTimeout;
-                    }
-                    if (duration < keepAliveTimeout) {
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn(ASConnection.this.host + ":" + ASConnection.this.port
-                                    + " declares a keep alive timeout value of [" + duration
-                                    + "] ms. Will now use this value instead of the value from configuration ["
-                                    + keepAliveTimeout + "] ms.");
-                        }
-                        keepAliveTimeout = duration;
-                    }
-                    return duration;
-                }
-            });
+            httpClient.setKeepAliveStrategy(new CustomConnectionKeepAliveStrategy(this));
             // Initial schedule of a cleaning task. Subsequent executions will be scheduled as needed.
             // See ConnectionManagerCleaner implementation.
-            cleanerExecutor.schedule(new ConnectionManagerCleaner(this), keepAliveTimeout / 2,
-                    TimeUnit.MILLISECONDS);
+            cleanerExecutor.schedule(new ConnectionManagerCleaner(this), keepAliveTimeout / 2, TimeUnit.MILLISECONDS);
         }
+
         HttpClientParams.setRedirecting(httpParams, false);
+
         if (credentials != null) {
-            httpClient.getCredentialsProvider().setCredentials(new AuthScope(host, port), credentials);
+            httpClient.getCredentialsProvider().setCredentials(
+                new AuthScope(asConnectionParams.getHost(), asConnectionParams.getPort()), credentials);
         }
 
         mapper = new ObjectMapper();
@@ -216,9 +191,25 @@ public class ASConnection {
         shutdown = false;
     }
 
+    private URI buildManagementUri() {
+        try {
+            return new URIBuilder() //
+                .setScheme(asConnectionParams.isSecure() ? HTTPS_SCHEME : HTTP_SCHEME) //
+                .setHost(asConnectionParams.getHost()) //
+                .setPort(asConnectionParams.getPort()) //
+                .setPath(MANAGEMENT_URI) //
+                .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Could not build management URI: " + e.getMessage(), e);
+        }
+    }
 
+    /**
+     * @deprecated as of RHQ 4.10, use {@link #ASConnection(ASConnectionParams)} instead
+     */
+    @Deprecated
     public static ASConnection newInstanceForServerPluginConfiguration(ServerPluginConfiguration serverPluginConfig) {
-        return new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword(), serverPluginConfig.getManagementConnectionTimeout());
+        return new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
     }
 
     public void shutdown() {
@@ -291,7 +282,8 @@ public class ASConnection {
             HttpResponse httpResponse = httpClient.execute(httpPost);
             StatusLine statusLine = httpResponse.getStatusLine();
             if (isAuthorizationFailureResponse(statusLine)) {
-                handleAuthorizationFailureResponse(operation, statusLine);
+                throw new InvalidPluginConfigurationException(
+                    createErrorMessageForAuthorizationFailureResponse(statusLine));
             }
 
             HttpEntity httpResponseEntity = httpResponse.getEntity();
@@ -355,7 +347,7 @@ public class ASConnection {
     }
 
     private HttpPost initHttpPost(int timeoutSec, String jsonToSend) {
-        HttpPost httpPost = new HttpPost(managementUrl);
+        HttpPost httpPost = new HttpPost(managementUri);
         httpPost.addHeader(ACCEPT_HTTP_HEADER, ContentType.APPLICATION_JSON.getMimeType());
         HttpParams httpParams = httpClient.getParams();
         int timeoutMillis = timeoutSec * 1000;
@@ -373,20 +365,11 @@ public class ASConnection {
             || statusLine.getStatusCode() == HttpStatus.SC_TEMPORARY_REDIRECT;
     }
 
-    private void handleAuthorizationFailureResponse(Operation operation, StatusLine statusLine) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Response to " + operation + " was " + statusAsString(statusLine)
-                    + " - throwing InvalidPluginConfigurationException...");
-        }
-        // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
-        // warning message in the GUI.
-        String message;
+    private String createErrorMessageForAuthorizationFailureResponse(StatusLine statusLine) {
         if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
-        } else {
-            message = "Authorization to AS7 failed - did you install a management user?";
+            return "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
         }
-        throw new InvalidPluginConfigurationException(message);
+        return "Authorization to AS7 failed - did you install a management user?";
     }
 
     private void logHttpError(Operation operation, StatusLine statusLine, String responseBody) {
@@ -547,20 +530,40 @@ public class ASConnection {
         }
     }
 
+    /**
+     * @deprecated as of RHQ 4.10, use {@link #getAsConnectionParams()} instead
+     */
+    @Deprecated
     public String getHost() {
-        return host;
+        return asConnectionParams.getHost();
     }
 
+    /**
+     * @deprecated as of RHQ 4.10, use {@link #getAsConnectionParams()} instead
+     */
+    @Deprecated
     public int getPort() {
-        return port;
+        return asConnectionParams.getPort();
     }
 
+    /**
+     * @deprecated as of RHQ 4.10, use {@link #getAsConnectionParams()} instead
+     */
+    @Deprecated
     public String getUser() {
-        return credentials.getUserName();
+        return asConnectionParams.getUsername();
     }
 
+    /**
+     * @deprecated as of RHQ 4.10, use {@link #getAsConnectionParams()} instead
+     */
+    @Deprecated
     public String getPassword() {
-        return credentials.getPassword();
+        return asConnectionParams.getPassword();
+    }
+
+    public ASConnectionParams getAsConnectionParams() {
+        return asConnectionParams;
     }
 
     static String statusAsString(StatusLine statusLine) {
@@ -611,6 +614,48 @@ public class ASConnection {
             // With daemon threads, there is no need to call #shutdown on the executor to let the JVM go down
             thread.setDaemon(true);
             return thread;
+        }
+    }
+
+    private static class CustomConnectionReuseStrategy extends DefaultConnectionReuseStrategy {
+        private final ASConnection asConnection;
+
+        private CustomConnectionReuseStrategy(ASConnection asConnection) {
+            this.asConnection = asConnection;
+        }
+
+        @Override
+        public boolean keepAlive(HttpResponse response, HttpContext context) {
+            // Do not reuse connection if keep alive timeout has zero or negative value
+            return asConnection.keepAliveTimeout > 0 && super.keepAlive(response, context);
+        }
+    }
+
+    // The default keep-alive strategy does not expire connections if the 'Keep-Alive' header is not present
+    // in the response. This strategy will apply the desired duration in this case.
+    private static class CustomConnectionKeepAliveStrategy extends DefaultConnectionKeepAliveStrategy {
+        private final ASConnection asConnection;
+
+        private CustomConnectionKeepAliveStrategy(ASConnection asConnection) {
+            this.asConnection = asConnection;
+        }
+
+        @Override
+        public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+            long duration = super.getKeepAliveDuration(response, context);
+            if (duration < 0 || duration > asConnection.keepAliveTimeout) {
+                duration = asConnection.keepAliveTimeout;
+            }
+            if (duration < asConnection.keepAliveTimeout) {
+                if (LOG.isWarnEnabled()) {
+                    LOG.warn(asConnection.asConnectionParams.getHost() + ":"
+                        + asConnection.asConnectionParams.getPort() + " declares a keep alive timeout value of ["
+                        + duration + "] ms. Will now use this value instead of the value from configuration ["
+                        + asConnection.keepAliveTimeout + "] ms.");
+                }
+                asConnection.keepAliveTimeout = duration;
+            }
+            return duration;
         }
     }
 }

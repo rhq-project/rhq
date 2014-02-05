@@ -1,0 +1,25 @@
+{
+  //[threaded, sequential]
+  //threaded = multi threaded simulation
+  //sequential = single threaded simulation
+  "simulationType": "threaded",
+
+  //for threaded = total simulation time in minutes
+  //for sequential = total number of days
+  "simulationTime": 1,
+
+  //[seconds, minutes, hours]
+  //not used in sequential simulations
+  "intervalType": "seconds",
+
+  //num of collectors * batch size = total num of metrics
+  "numMeasurementCollectors": 1,
+  "batchSize": 1,
+
+  "nodes": ["127.0.0.1"],
+
+  "cqlPort": 9142,
+
+  //[async,sync]
+  "aggregationType": "sync"
+}

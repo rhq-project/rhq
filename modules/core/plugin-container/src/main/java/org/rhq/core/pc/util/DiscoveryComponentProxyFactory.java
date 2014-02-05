@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.util;
 
 import java.lang.reflect.InvocationHandler;
@@ -61,11 +58,12 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
  * @author Ian Springer
  */
 public class DiscoveryComponentProxyFactory {
-    private final Log log = LogFactory.getLog(DiscoveryComponentProxyFactory.class);
+    private static final Log log = LogFactory.getLog(DiscoveryComponentProxyFactory.class);
 
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceDiscoveryComponent.invoker.daemon";
     private ExecutorService daemonThreadPool = null;
     private final Set<ResourceType> blacklist = new HashSet<ResourceType>();
+    private final PluginComponentFactory pluginComponentFactory;
     private static boolean blacklistDisable;
     static {
         try {
@@ -75,6 +73,9 @@ public class DiscoveryComponentProxyFactory {
         } // always catch here, always let the class load, use a default if the sysprop is invalid
     }
 
+    public DiscoveryComponentProxyFactory(PluginComponentFactory pluginComponentFactory) {
+        this.pluginComponentFactory = pluginComponentFactory;
+    }
 
     /**
      * Same as {@link #getDiscoveryComponentProxy(org.rhq.core.domain.resource.ResourceType, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, long, org.rhq.core.pc.inventory.ResourceContainer)} except
@@ -91,7 +92,6 @@ public class DiscoveryComponentProxyFactory {
         }
 
         try {
-            PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
 
             ClassLoader pluginClassLoader = pluginComponentFactory.getDiscoveryComponentClassLoader(
                 parentResourceContainer, type.getPlugin());
@@ -142,10 +142,9 @@ public class DiscoveryComponentProxyFactory {
 
     public void shutdown() {
         if (daemonThreadPool != null) {
-            PluginContainer pluginContainer = PluginContainer.getInstance();
-            pluginContainer.shutdownExecutorService(daemonThreadPool, true);
+            PluginContainer.shutdownExecutorService(daemonThreadPool, true);
+            daemonThreadPool = null;
         }
-        daemonThreadPool = null;
     }
 
     public HashSet<ResourceType> getResourceTypeBlacklist() {
@@ -190,7 +189,7 @@ public class DiscoveryComponentProxyFactory {
         private final long timeout;
         private final ResourceType resourceType;
         private final ClassLoader pluginClassLoader;
-        private Class<?> componentInterface;
+        private final Class<?> componentInterface;
 
         public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
             long timeout, ClassLoader pluginClassLoader, Class<?> componentInterface) {
@@ -286,7 +285,7 @@ public class DiscoveryComponentProxyFactory {
         private final ResourceDiscoveryComponent component;
         private final Method method;
         private final Object[] args;
-        private ClassLoader pluginClassLoader;
+        private final ClassLoader pluginClassLoader;
         private Thread thread;
 
         ComponentInvocationThread(ResourceDiscoveryComponent component, Method method, Object[] args,

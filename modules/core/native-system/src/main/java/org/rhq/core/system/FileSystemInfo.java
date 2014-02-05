@@ -1,25 +1,21 @@
 /*
-* RHQ Management Platform
-* Copyright (C) 2005-2012 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 package org.rhq.core.system;
 
 import org.apache.commons.logging.Log;
@@ -36,7 +32,7 @@ import org.hyperic.sigar.SigarProxy;
  * @author John Mazzitelli
  */
 public class FileSystemInfo {
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log LOG = LogFactory.getLog(FileSystemInfo.class);
 
     private final String mountPoint;
     private FileSystem fs;
@@ -66,14 +62,14 @@ public class FileSystemInfo {
             // this happens when the file system is not available (e.g. if it's a CD-ROM without a CD loaded in it) or
             // if we don't have permission to access the filesystem. we can ignore it and set the usage data to null.
             this.fsUsage = null;
-            if (log.isTraceEnabled()) {
-                log.trace("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "].", e);
-            } else {
-                log.debug("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "]: " + e);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "].", e);
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Cannot refresh the usage data for file system mounted at [" + this.mountPoint + "]: " + e);
             }
         } catch (RuntimeException e) {
             this.fsUsage = null;
-            log.error("An error occurred while refreshing the usage data for file system mounted at [" + this.mountPoint
+            LOG.error("An error occurred while refreshing the usage data for file system mounted at [" + this.mountPoint
                     + "].", e);
         }
     }

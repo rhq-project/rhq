@@ -106,11 +106,11 @@
                                 <!-- because we don't want log4j writing files in places we don't want, don't use file appenders. -->
                                 <!-- our WildFly/EAP subsystem extension will turn this back on at runtime after log4j is properly configured. -->
                                 <replaceregexp file="${agent.config.dir}/log4j.xml" flags="g"
-                                               match='&lt;appender-ref ref="FILE".*/&gt;'
-                                               replace='&lt;!-- &lt;appender-ref ref="FILE"/&gt; --&gt;' />
+                                               match='&lt;appender-ref ref="FILE".*/&gt;\n'
+                                               replace='&lt;!-- &lt;appender-ref ref="FILE"/&gt; --&gt;&#10;' />
                                 <replaceregexp file="${agent.config.dir}/log4j.xml" flags="g"
-                                               match='&lt;appender-ref ref="COMMANDTRACE".*/&gt;'
-                                               replace='&lt;!-- &lt;appender-ref ref="COMMANDTRACE"/&gt; --&gt;' />
+                                               match='&lt;appender-ref ref="COMMANDTRACE".*/&gt;\n'
+                                               replace='&lt;!-- &lt;appender-ref ref="COMMANDTRACE"/&gt; --&gt;&#10;' />
                                 <jar destfile="${agent.lib}/rhq-enterprise-agent-${project.version}.jar"
                                      basedir="${agent.config.dir}"
                                      includes="log4j.xml"

@@ -20,7 +20,7 @@ class AgentEnabledAttributeHandler extends AbstractWriteAttributeHandler<Void> {
     protected boolean applyUpdateToRuntime(OperationContext context, ModelNode operation, String attributeName,
         ModelNode resolvedValue, ModelNode currentValue, HandbackHolder<Void> handbackHolder)
         throws OperationFailedException {
-        log.info("Embedded agent enabled attribute changed: " + attributeName + "=" + resolvedValue);
+        log.debug("Embedded agent enabled attribute changed: " + attributeName + "=" + resolvedValue);
         // there is nothing for us to do - this only affects us when we are restarted, return true to say we must reload
         return true;
     }

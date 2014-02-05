@@ -26,7 +26,7 @@ class PluginsAttributeHandler extends AbstractWriteAttributeHandler<Void> {
         ModelNode resolvedValue, ModelNode currentValue, HandbackHolder<Void> handbackHolder)
         throws OperationFailedException {
 
-        log.info("Embedded agent plugins attribute changed: " + attributeName + "=" + resolvedValue);
+        log.debug("Embedded agent plugins attribute changed: " + attributeName + "=" + resolvedValue);
         setPluginsWithEnabledFlag(context, resolvedValue);
         return true; // the service must be restarted to really pick up the change at runtime
     }
@@ -35,7 +35,7 @@ class PluginsAttributeHandler extends AbstractWriteAttributeHandler<Void> {
     protected void revertUpdateToRuntime(OperationContext context, ModelNode operation, String attributeName,
         ModelNode valueToRestore, ModelNode valueToRevert, Void handback) {
 
-        log.info("Reverting embedded agent plugins attribute: " + attributeName + "=" + valueToRestore);
+        log.debug("Reverting embedded agent plugins attribute: " + attributeName + "=" + valueToRestore);
         setPluginsWithEnabledFlag(context, valueToRestore);
     }
 

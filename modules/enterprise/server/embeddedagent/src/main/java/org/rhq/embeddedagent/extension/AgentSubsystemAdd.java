@@ -44,7 +44,7 @@ class AgentSubsystemAdd extends AbstractAddStepHandler {
         AgentSubsystemDefinition.SERVER_ALIAS_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.SOCKET_BINDING_ATTRIBDEF.validateAndSet(operation, model);
         AgentSubsystemDefinition.CUSTOM_CONFIG_ATTRIBDEF.validateAndSet(operation, model);
-        log.info("Populating the embedded agent subsystem model: " + operation + "=" + model);
+        log.debug("Populating the embedded agent subsystem model: " + operation + "=" + model);
     }
 
     @Override

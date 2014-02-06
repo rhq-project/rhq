@@ -23,8 +23,8 @@
     <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
     <!-- If you change httpclient4.version make sure to update httpcore version below accordingly  -->
     <httpclient4.version>${apache.httpcomponents.version}</httpclient4.version>
-    <as7.version>7.1.2.Final-SNAPSHOT</as7.version>
-    <as7.url>https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip</as7.url>
+    <as7.version>6.1.0.Alpha</as7.version>
+    <as7.url>http://download.jboss.org/jbosseap/6/jboss-eap-6.1.0.Alpha/jboss-eap-6.1.0.Alpha.zip</as7.url>
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
     <java.tieredCompilation>-Dxxx</java.tieredCompilation>
     <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
@@ -647,10 +647,10 @@
             <executions>
               <!-- Some of these test classes seem to do better when run by themseleves. So, use different executions... -->
               <execution>
-                <id>DeploymentRuntimeResourcesTest</id>              
+                <id>DeploymentRuntimeResourcesTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>                
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -659,10 +659,34 @@
                 </goals>
               </execution>
               <execution>
-                <id>DeploymentTest</id>              
+                <id>DeploymentTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>              
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>SocketBindingTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>SecurityModuleOptionsTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -673,11 +697,13 @@
               <execution>
                 <id>everything-else</id>
                 <configuration>
-                  <includes>                
+                  <includes>
                     <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
                   </includes>
                   <excludes>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/Deployment*Test.java</exclude>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</exclude>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</exclude>
                   </excludes>
                 </configuration>
                 <goals>

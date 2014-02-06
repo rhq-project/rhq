@@ -64,6 +64,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     static {
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0", "7.1.2.Final-redhat-1");
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.1", "7.1.3.Final-redhat-4");
+        EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.1.0.Alpha", "7.2.0.Alpha1-redhat-4");
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.1.0", "7.2.0.Final-redhat-8");
     }
 

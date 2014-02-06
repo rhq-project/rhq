@@ -19,6 +19,11 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
+import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.ModuleOptionType;
+import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
+import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.createAddModuleOptionTypeOperation;
+import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.loadModuleOptionType;
+import static org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.populateSecurityDomainModuleOptions;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -35,6 +40,9 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent;
+import org.testng.SkipException;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
@@ -57,8 +65,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ASConnectionParams;
 import org.rhq.modules.plugins.jbossas7.ASConnectionParamsBuilder;
-import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent;
-import org.rhq.modules.plugins.jbossas7.ModuleOptionsComponent.Value;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -112,7 +118,6 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     private static final String RESOURCE_KEY = SECURITY_RESOURCE_KEY;
     private static Resource testSecurityDomain = null;
     private String testSecurityDomainKey = null;
-    private ConfigurationManager testConfigurationManager = null;
 
     //Define some shared and reusable content
     static HashMap<String, String> jsonMap = new HashMap<String, String>();
@@ -137,6 +142,14 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         jsonMap
             .put("trust-modules",
                 "[{\"flag\":\"optional\", \"code\":\"TRUST\", \"module-options\":{\"trust\":\"module\", \"trust1\":\"module1\"}}]");
+    }
+
+    @BeforeTest
+    public void checkServerVersion() {
+        if (System.getProperty("as7.version").equals("6.1.0.Alpha")) {
+            // This version has issues with Security Modules
+            throw new SkipException("This test does not run on 6.1.0.Alpha");
+        }
     }
 
     /* This first discovery is only so that we can leverage existing code to install the management user needed
@@ -212,7 +225,6 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
             //build the operation to add the component
             ////Load json map into ModuleOptionType
-            List<Value> moduleTypeValue = new ArrayList<Value>();
             try {
                 // loading jsonMap contents for Ex. 'login-module'
                 JsonNode node = mapper.readTree(jsonMap.get(attribute));
@@ -226,10 +238,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             }
 
             //populate the Value component complete with module Options.
-            moduleTypeValue = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
-                ModuleOptionsComponent.loadModuleOptionType(attribute));
-            op = ModuleOptionsComponent.createAddModuleOptionTypeOperation(new Address(address), attribute,
-                moduleTypeValue);
+            List<Value> moduleTypeValue = populateSecurityDomainModuleOptions(result, loadModuleOptionType(attribute));
+            op = createAddModuleOptionTypeOperation(new Address(address), attribute, moduleTypeValue);
             //submit the command
             result = connection.execute(op);
             assert result.getOutcome().equals("success") : "Add ModuleOptionType has failed: "
@@ -263,12 +273,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
      */
     @Test(priority = 1043)
     public void testDiscoveredSecurityNodes() throws Exception {
-        //lazy-load configurationManager
-        if (testConfigurationManager == null) {
-            testConfigurationManager = this.pluginContainer.getConfigurationManager();
-            testConfigurationManager = pluginContainer.getConfigurationManager();
-            Thread.sleep(20 * 1000L);
-        }
+        ConfigurationManager testConfigurationManager = pluginContainer.getConfigurationManager();
         //iterate through list of nodes and make sure they've all been discovered
         ////Ex. profile=full-ha,subsystem=security,security-domain=testDomain2,acl=classic
         String attribute = null;
@@ -276,7 +281,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             //Ex. policy-modules
             attribute = jsonKey;
             //spinder 6/26/12: Temporarily disable until figure out why NPE happens only for this type?
-            if (attribute.equals(ModuleOptionsComponent.ModuleOptionType.Authentication.getAttribute())) {
+            if (attribute.equals(ModuleOptionType.Authentication.getAttribute())) {
                 break;//
             }
             //Ex. name=acl-modules
@@ -321,17 +326,16 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             }
 
             //populate the Value component complete with module Options.
-            List<Value> moduleTypeValue = ModuleOptionsComponent.populateSecurityDomainModuleOptions(result,
-                ModuleOptionsComponent.loadModuleOptionType(attribute));
+            List<Value> moduleTypeValue = populateSecurityDomainModuleOptions(result, loadModuleOptionType(attribute));
             Value moduleOptionType = moduleTypeValue.get(0);
             //Ex. retrieve the acl-modules component and assert values.
             //always test 'code'
             assert moduleOptionType.getCode().equals(code) : "Module Option 'code' value is not correct. Expected '"
                 + code + "' but was '" + moduleOptionType.getCode() + "'";
-            if (attribute.equals(ModuleOptionsComponent.ModuleOptionType.Mapping.getAttribute())) {
+            if (attribute.equals(ModuleOptionType.Mapping.getAttribute())) {
                 assert moduleOptionType.getType().equals(type) : "Mapping Module 'type' value is not correct. Expected '"
                     + type + "' but was '" + moduleOptionType.getType() + "'";
-            } else if (!attribute.equals(ModuleOptionsComponent.ModuleOptionType.Audit.getAttribute())) {//Audit has no second parameter
+            } else if (!attribute.equals(ModuleOptionType.Audit.getAttribute())) {//Audit has no second parameter
                 assert moduleOptionType.getFlag().equals(flag) : "Provider Module 'flag' value is not correct. Expected '"
                     + flag + "' but was '" + moduleOptionType.getFlag() + "'";
             }
@@ -532,22 +536,22 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         String descriptorName = "";
         String moduleAttribute = "";
         //acl
-        if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Acl.getAttribute())) {
+        if (optionAttributeType.equals(ModuleOptionType.Acl.getAttribute())) {
             descriptorName = "ACL (Profile)";
             moduleAttribute = "acl=classic";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Audit.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Audit.getAttribute())) {
             descriptorName = "Audit (Profile)";
             moduleAttribute = "audit=classic";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Authentication.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Authentication.getAttribute())) {
             descriptorName = "Authentication (Classic - Profile)";
             moduleAttribute = "authentication=classic";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Authorization.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Authorization.getAttribute())) {
             descriptorName = "Authorization (Profile)";
             moduleAttribute = "authorization=classic";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.IdentityTrust.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.IdentityTrust.getAttribute())) {
             descriptorName = "Identity Trust (Profile)";
             moduleAttribute = "identity-trust=classic";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Mapping.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Mapping.getAttribute())) {
             descriptorName = "Mapping (Profile)";
             moduleAttribute = "mapping=classic";
         }
@@ -582,28 +586,28 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         String descriptorName = "";
         String moduleAttribute = "";
         String moduleOptionsDescriptor = "";
-        if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Acl.getAttribute())) {
+        if (optionAttributeType.equals(ModuleOptionType.Acl.getAttribute())) {
             //            descriptorName = "ACL Modules (Profile)";
             descriptorName = "Acl Modules (Profile)";
             moduleAttribute = "acl=classic";
             moduleOptionsDescriptor = "Module Options (Acl - Profile)";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Audit.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Audit.getAttribute())) {
             descriptorName = "Provider Modules (Profile)";
             moduleAttribute = "audit=classic";
             moduleOptionsDescriptor = "Module Options (Provider Modules - Profile)";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Authentication.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Authentication.getAttribute())) {
             descriptorName = "Login Modules (Classic - Profile)";
             moduleAttribute = "authentication=classic";
             moduleOptionsDescriptor = "Module Options (Classic - Profile)";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Authorization.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Authorization.getAttribute())) {
             descriptorName = "Authorization Modules (Profile)";
             moduleAttribute = "authorization=classic";
             moduleOptionsDescriptor = "Module Options (Authorization - Profile)";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.IdentityTrust.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.IdentityTrust.getAttribute())) {
             descriptorName = "Identity Trust Modules (Profile)";
             moduleAttribute = "identity-trust=classic";
             moduleOptionsDescriptor = "Module Options (Identity Trust - Profile)";
-        } else if (optionAttributeType.equals(ModuleOptionsComponent.ModuleOptionType.Mapping.getAttribute())) {
+        } else if (optionAttributeType.equals(ModuleOptionType.Mapping.getAttribute())) {
             descriptorName = "Mapping Modules (Profile)";
             moduleAttribute = "mapping=classic";
             moduleOptionsDescriptor = "Module Options (Mapping - Profile)";

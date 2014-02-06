@@ -45,7 +45,7 @@ public class DatasourceJBossASClient extends JBossASClient {
     /**
      * Completely removes the named datasource. If the datasource does not exist,
      * this returns silently (in other words, no exception is thrown).
-     * 
+     *
      * Note that no distinguishing between XA and non-XA datasource is needed - if any datasource
      * (XA or non-XA) exists with the given name, it will be removed.
      *
@@ -331,7 +331,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @param minPoolSize
      * @param maxPoolSize
      * @param noRecovery optional, left unset if null
-     * @param noTxSeparatePools optional, left unset if null
+     * @param noTxSeparatePool optional, left unset if null
      * @param preparedStatementCacheSize
      * @param recoveryPluginClassName optional, left unset if null
      * @param securityDomain
@@ -344,7 +344,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      */
     public ModelNode createNewXADatasourceRequest(String name, int blockingTimeoutWaitMillis, String driverName,
         String exceptionSorterClassName, int idleTimeoutMinutes, int minPoolSize, int maxPoolSize, Boolean noRecovery,
-        Boolean noTxSeparatePools, int preparedStatementCacheSize, String recoveryPluginClassName,
+        Boolean noTxSeparatePool, int preparedStatementCacheSize, String recoveryPluginClassName,
         String securityDomain, String staleConnectionCheckerClassName, String transactionIsolation,
         String validConnectionCheckerClassName, Map<String, String> xaDatasourceProperties) {
 
@@ -361,7 +361,7 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"min-pool-size\" => %d " //
             + ", \"max-pool-size\" => %d " //
             + ", \"no-recovery\" => %b " //
-            + ", \"no-tx-separate-pools\" => %b " //
+            + ", \"no-tx-separate-pool\" => %b " //
             + ", \"prepared-statements-cache-size\" => %dL " //
             + ", \"recovery-plugin-class-name\" => \"%s\" " //
             + ", \"security-domain\" => \"%s\" " //
@@ -372,7 +372,7 @@ public class DatasourceJBossASClient extends JBossASClient {
             + "}";
 
         String dmr = String.format(dmrTemplate, blockingTimeoutWaitMillis, driverName, exceptionSorterClassName,
-            idleTimeoutMinutes, jndiName, minPoolSize, maxPoolSize, noRecovery, noTxSeparatePools,
+            idleTimeoutMinutes, jndiName, minPoolSize, maxPoolSize, noRecovery, noTxSeparatePool,
             preparedStatementCacheSize, recoveryPluginClassName, securityDomain, staleConnectionCheckerClassName,
             transactionIsolation, validConnectionCheckerClassName);
 
@@ -406,8 +406,8 @@ public class DatasourceJBossASClient extends JBossASClient {
         if (null == noRecovery) {
             result.get("steps").get(0).remove("no-recovery");
         }
-        if (null == noTxSeparatePools) {
-            result.get("steps").get(0).remove("no-tx-separate-pools");
+        if (null == noTxSeparatePool) {
+            result.get("steps").get(0).remove("no-tx-separate-pool");
         }
         if (null == recoveryPluginClassName) {
             result.get("steps").get(0).remove("recovery-plugin-class-name");

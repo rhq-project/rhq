@@ -506,7 +506,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * @throws Throwable if a low-level, unhandled exception occurred
      */
     private CommandResponse rawSend(Command command) throws Throwable {
-        Object ret_response;
+        Object ret_response = null;
 
         try {
             try {
@@ -519,6 +519,13 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                 // once JBREM-745 is fixed, we can probably get rid of this catch block
                 ret_response = getRemotingClient().invoke(command, null);
                 OutgoingCommandTrace.finish(command, ret_response);
+            } catch (java.rmi.MarshalException rmie) {
+                // Due to JBREM-1245 we may fail due to SSL being shutdown and we need to retry.
+                if (rmie.getCause() != null && rmie.getCause() instanceof javax.net.ssl.SSLException
+                    && rmie.getCause().getMessage().startsWith("Connection has been shutdown")) { //$NON-NLS-1$
+                    ret_response = getRemotingClient().invoke(command, null);
+                    OutgoingCommandTrace.finish(command, ret_response);
+                }
             }
         } catch (Throwable t) {
             OutgoingCommandTrace.finish(command, t);

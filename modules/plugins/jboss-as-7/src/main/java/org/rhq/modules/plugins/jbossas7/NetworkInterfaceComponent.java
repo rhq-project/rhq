@@ -20,6 +20,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
@@ -58,7 +59,32 @@ public class NetworkInterfaceComponent extends BaseComponent<NetworkInterfaceCom
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-        Configuration configuration = report.getConfiguration();
+        Configuration config = report.getConfiguration();
+
+        boolean isWildcard = false;
+        // detect if any of wildcard properties was turned on
+        for (String wildcard : wildCards) {
+            isWildcard |= Boolean.valueOf(config.getSimpleValue(wildcard));
+        }
+        if (config.getSimpleValue("inet-address") != null) {
+            if (isWildcard) {
+                // we couldn't know what user wants ... if setting inet-addr or one of wildcard props
+                report
+                    .setErrorMessage("When setting any-address or any-ipv4-address or any-ipv6-address to true inet-address must be unset");
+                report.setStatus(ConfigurationUpdateStatus.FAILURE);
+                return;
+            }
+            // auto-set all wildcards to undefined
+            for (String wildcard : wildCards) {
+                config.getSimple(wildcard).setValue(null);
+            }
+
+        } else if (!isWildcard) {
+            report
+                .setErrorMessage("You need to enable either any-address or any-ipv4-address or any-ipv6-address when inet-address is disabled");
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return;
+        }
         super.updateResourceConfiguration(report);
     }
 

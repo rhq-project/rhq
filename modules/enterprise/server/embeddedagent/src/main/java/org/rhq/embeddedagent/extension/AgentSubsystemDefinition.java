@@ -90,6 +90,10 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
         .setDefaultValue(new ModelNode(ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_TRANSPORT_PARAMS))
         .setAllowNull(true).build();
 
+    // operation parameters
+    protected static final SimpleAttributeDefinition EXECUTE_PROMPT_COMMAND_PARAM_COMMAND = new SimpleAttributeDefinitionBuilder(
+        "command", ModelType.STRING).setAllowExpression(true).build();
+
     private AgentSubsystemDefinition() {
         super(AgentSubsystemExtension.SUBSYSTEM_PATH, AgentSubsystemExtension.getResourceDescriptionResolver(null),
             AgentSubsystemAdd.INSTANCE, AgentSubsystemRemove.INSTANCE);
@@ -141,6 +145,12 @@ public class AgentSubsystemDefinition extends SimpleResourceDefinition {
             AgentSubsystemStatus.INSTANCE,
             new DefaultOperationDescriptionProvider(AgentSubsystemExtension.AGENT_STATUS_OP, AgentSubsystemExtension
                 .getResourceDescriptionResolver(null), ModelType.STRING), false, OperationEntry.EntryType.PUBLIC);
+
+        rr.registerOperationHandler(AgentSubsystemExtension.AGENT_EXECUTE_PROMPT_CMD_OP,
+            AgentSubsystemExecutePromptCommand.INSTANCE,
+            new DefaultOperationDescriptionProvider(AgentSubsystemExtension.AGENT_EXECUTE_PROMPT_CMD_OP,
+                AgentSubsystemExtension.getResourceDescriptionResolver(null), ModelType.STRING,
+                EXECUTE_PROMPT_COMMAND_PARAM_COMMAND), false, OperationEntry.EntryType.PUBLIC);
 
         return;
     }

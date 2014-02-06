@@ -67,6 +67,7 @@ public class AgentSubsystemExtension implements Extension {
     protected static final String AGENT_RESTART_OP = "restart";
     protected static final String AGENT_STOP_OP = "stop";
     protected static final String AGENT_STATUS_OP = "status";
+    protected static final String AGENT_EXECUTE_PROMPT_CMD_OP = "execute-prompt-command";
 
     protected static final String ATTRIB_AGENT_NAME = AgentConfigurationConstants.NAME;
     protected static final String ATTRIB_DISABLE_NATIVE = AgentConfigurationConstants.DISABLE_NATIVE_SYSTEM;

@@ -1,9 +1,11 @@
 package org.rhq.embeddedagent.extension;
 
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.jboss.as.network.SocketBinding;
@@ -20,6 +22,7 @@ import org.jboss.msc.value.InjectedValue;
 
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.AgentPrintWriter;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
 public class AgentService implements Service<AgentService> {
@@ -216,6 +219,27 @@ public class AgentService implements Service<AgentService> {
             }
         }
         theAgent.set(null);
+    }
+
+    protected String executePromptCommand(String command) throws Exception {
+        AgentMain agent = theAgent.get();
+        if (agent == null) {
+            throw new IllegalStateException("Embedded agent is not available");
+        }
+
+        CharArrayWriter listener = new CharArrayWriter();
+        AgentPrintWriter apw = agent.getOut();
+        try {
+            apw.addListener(listener);
+            agent.executePromptCommand(command);
+        } catch (Exception e) {
+            throw new ExecutionException(listener.toString(), e); // the message is the output, cause is the thrown exception
+        } finally {
+            apw.removeListener(listener);
+        }
+
+        String output = listener.toString();
+        return output;
     }
 
     /**

@@ -218,16 +218,21 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
             Assert.assertTrue(expectedAttributes.contains(attrib), "missing attrib: " + attrib);
         }
 
-        // check the operations
+        // check the operations (there are many other operations that AS adds to our resource, but we only want to check for ours)
+        List<String> expectedOperations = Arrays.asList( //
+            AgentSubsystemExtension.AGENT_EXECUTE_PROMPT_CMD_OP, //
+            AgentSubsystemExtension.AGENT_RESTART_OP, //
+            AgentSubsystemExtension.AGENT_STOP_OP, //
+            AgentSubsystemExtension.AGENT_STATUS_OP);
         Assert.assertTrue(content.get("operations").isDefined());
         List<Property> operations = content.get("operations").asPropertyList();
         List<String> operationNames = new ArrayList<String>();
         for (Property op : operations) {
             operationNames.add(op.getName());
         }
-        Assert.assertTrue(operationNames.contains(AgentSubsystemExtension.AGENT_RESTART_OP));
-        Assert.assertTrue(operationNames.contains(AgentSubsystemExtension.AGENT_STOP_OP));
-        Assert.assertTrue(operationNames.contains(AgentSubsystemExtension.AGENT_STATUS_OP));
+        for (String expectedOperation : expectedOperations) {
+            Assert.assertTrue(operationNames.contains(expectedOperation), "Missing: " + expectedOperation);
+        }
     }
 
     public void testExecuteOperations() throws Exception {

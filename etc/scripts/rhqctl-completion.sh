@@ -9,7 +9,7 @@ _rhqctl() {
 
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="console install start status stop upgrade"
+    opts="console install start status stop restart upgrade"
     agentServerStorage="--agent --server --storage"
     serverStorage="--server --storage"
     dataMigratorSubopts="none estimate print-command do-it"
@@ -29,7 +29,7 @@ _rhqctl() {
 
     first="${COMP_WORDS[1]}"
 
-    if [[ "x${first}" == "xstart" ]] || [[ "x${first}" == "xstop" ]] || [[ "x${first}" == "xstatus" ]] ; then
+    if [[ "x${first}" == "xstart" ]] || [[ "x${first}" == "xstop" ]] || [[ "x${first}" == "xstatus" ]] || [[ "x${first}" == "xrestart" ]]; then
         COMPREPLY=( $(compgen -W "${agentServerStorage}" -- ${cur}) )
         return 0
     elif  [[ "x${first}" == "xconsole" ]] ; then

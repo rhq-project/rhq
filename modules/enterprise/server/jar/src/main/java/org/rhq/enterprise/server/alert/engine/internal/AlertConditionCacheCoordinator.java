@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.alert.engine.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +51,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * reported by an agent, and thus can be perfectly segmented on an agent-by-agent basis.  On the other hand,
  * the {@link GlobalConditionCache} will maintain {@link AbstractCacheElement}s for data that can either be
  * agent-side or server-side initiated.
- * 
+ *
  * This manager forms a centralized interface through which to interact with the children caches.
- * 
+ *
  * @author Joseph Marques
  */
 public final class AlertConditionCacheCoordinator {
@@ -60,6 +61,25 @@ public final class AlertConditionCacheCoordinator {
     private static final Log log = LogFactory.getLog(AlertConditionCacheCoordinator.class);
 
     private static final AlertConditionCacheCoordinator instance = new AlertConditionCacheCoordinator();
+
+    /**
+     * When processing EventReport, we may hit an event that triggers problem alert and event that triggers recovery alert within the same report. Firing alert 
+     * is asynchronous task, so if processing events too fast, problem alert is fired after we process recovery event, so we miss recovery alert at all.
+     * To workaround that, we slow down event processing in case we hit any event that triggers alert. When such event exists, we sleep given amount of milis 
+     * to wait for alert to get fired. There is no performance impact on processing events without alert fired, and this delay is set to 0 by default.
+     * Recommended value is from 500 to 1500milis, 500 was tested as reliable enough for low server load cases.
+     */
+    private static final long ALERTED_EVENT_PROCESSING_DELAY;
+
+    static {
+        long alertedEventProcessingDelay = 0L;
+        try {
+            alertedEventProcessingDelay = Long.parseLong(System.getProperty("rhq.server.alerted.event.process.delay", "0"));
+        } catch (Throwable t) {
+            //
+        }
+        ALERTED_EVENT_PROCESSING_DELAY = alertedEventProcessingDelay;
+    }
 
     public enum Cache {
         MeasurementDataCache(Type.Agent), //
@@ -70,7 +90,7 @@ public final class AlertConditionCacheCoordinator {
         EventsCache(Type.Agent), //
         ResourceConfigurationCache(Type.Global), //
         DriftCache(Type.Agent), //
-        AvailabilityDurationCache(Type.Global); //        
+        AvailabilityDurationCache(Type.Global); //
 
         public enum Type {
             Global, //
@@ -284,20 +304,32 @@ public final class AlertConditionCacheCoordinator {
             return new AlertConditionCacheStats();
         }
 
-        AlertConditionCacheStats stats = null;
-        AgentConditionCache agentCache = null;
-        agentReadWriteLock.readLock().lock();
-        try {
-            agentCache = agentCaches.get(agentId);
-        } catch (Throwable t) {
-            log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
-        } finally {
-            agentReadWriteLock.readLock().unlock();
-        }
-        if (agentCache != null) {
-            stats = agentCache.checkConditions(source, events);
-        } else {
-            stats = new AlertConditionCacheStats();
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        List<Event> unprocessedEvents = new ArrayList(Arrays.asList(events)); // need a List that supports iterator remove
+        while (!unprocessedEvents.isEmpty()) {
+            AgentConditionCache agentCache = null;
+            agentReadWriteLock.readLock().lock();
+            try {
+                agentCache = agentCaches.get(agentId);
+            } catch (Throwable t) {
+                log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
+            } finally {
+                agentReadWriteLock.readLock().unlock();
+            }
+            if (agentCache != null) {
+                stats.add(agentCache.checkConditions(source, unprocessedEvents));
+                if (!unprocessedEvents.isEmpty()) {
+                    // delay for a brief time to allow for the matched conditions to potentially fire an alert and
+                    // activate recovery alerts, in case the remaining events match the pending recovery conditions
+                    try {
+                        Thread.sleep(ALERTED_EVENT_PROCESSING_DELAY);
+                    } catch (InterruptedException e) {
+                        // just continue as a best effort
+                    }
+                }
+            } else {
+                break;
+            }
         }
         return stats;
     }

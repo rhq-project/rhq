@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -107,9 +108,9 @@ class AgentConditionCache extends AbstractConditionCache {
 
     /**
      * This method is used to do the initial loading from the database for a particular agent. In the high availability
-     * infrastructure each server instance in the cloud will only be responsible for monitoring a select number of 
+     * infrastructure each server instance in the cloud will only be responsible for monitoring a select number of
      * agents at any given point in time. When an agent makes a connection to this server instance, the caches for that
-     * agent will be loaded at that time. 
+     * agent will be loaded at that time.
      *
      * @return the number of conditions that re/loaded
      */
@@ -219,8 +220,8 @@ class AgentConditionCache extends AbstractConditionCache {
             Double threshold = alertCondition.getThreshold();
             String optionStatus = alertCondition.getOption();
 
-            /* 
-             * yes, calculatedValue may be null, but that's OK because the match 
+            /*
+             * yes, calculatedValue may be null, but that's OK because the match
              * method for MeasurementBaselineCacheElement handles nulls just fine
              */
             Double calculatedValue = getCalculatedBaselineValue(alertConditionId, baselineComposite, optionStatus,
@@ -270,7 +271,7 @@ class AgentConditionCache extends AbstractConditionCache {
             }
 
             try {
-                /* 
+                /*
                  * don't forget special defensive handling to allow for null trait calculation;
                  * this might happen if a newly committed resource has some alert template applied to
                  * it for some trait that it has not yet gotten from the agent
@@ -500,24 +501,42 @@ class AgentConditionCache extends AbstractConditionCache {
         };
     }
 
-    public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
-        if ((events == null) || (events.length == 0)) {
-            return new AlertConditionCacheStats();
+    /**
+     * This operates differently from the other {{checkConditions()}} methods.  Because it's possible that one
+     * batch of events may contain both an event triggering a problem event and also an event triggering its
+     * recovery alert, we return after a matched condition to allow for the caller to check remaining
+     * events only after a cache refresh has been performed.
+     *
+     * @param stats not null. the stats object to update
+     * @param source
+     * @param events
+     * @return the number of eventsProcessed until a match was found or all events were processed.
+     */
+    public AlertConditionCacheStats checkConditions(EventSource source, List<Event> events) {
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        if ((events == null) || events.isEmpty()) {
+            return stats;
         }
 
-        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        int initialSize = events.size();
         try {
             Resource resource = source.getResource();
             List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
 
-            for (Event event : events) {
+            for (Iterator<Event> i = events.iterator(); i.hasNext();) {
+                Event event = i.next();
+                i.remove();
+                int matched = stats.matched;
                 processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp(), stats, event.getDetail());
+                if (matched < stats.matched) {
+                    break;
+                }
             }
 
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementEventProcessingTime(stats.getAge());
             if (log.isDebugEnabled()) {
-                log.debug("Check Events[size=" + events.length + "] - " + stats);
+                log.debug("Check Events[size=" + (initialSize - events.size()) + "] - " + stats);
             }
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
@@ -576,7 +595,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 + "]: threshold was null");
         }
 
-        // auto-unboxing of threshold is safe here 
+        // auto-unboxing of threshold is safe here
         Double baselineValue = 0.0;
 
         if (optionStatus == null) {

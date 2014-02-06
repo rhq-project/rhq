@@ -20,6 +20,9 @@
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -32,9 +35,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 /**
  * Test stuff around naming subsystem
@@ -53,8 +53,6 @@ public class NamingTest extends AbstractJBossAS7PluginTest {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-        Thread.sleep(20*1000L); // delay so that PC gets a chance to scan for resources
     }
 
     @Test(priority = 11)

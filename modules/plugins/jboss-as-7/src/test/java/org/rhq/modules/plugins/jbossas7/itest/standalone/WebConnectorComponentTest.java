@@ -57,16 +57,13 @@ public class WebConnectorComponentTest extends AbstractJBossAS7PluginTest {
 
     @Test(groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void firstDiscovery() throws Exception {
+    public void testDiscovery() throws Exception {
         Resource platform = pluginContainer.getInventoryManager().getPlatform();
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-        setMaxDiscoveryDepthOverride(10);
-    }
 
-    @Test(groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void secondDiscovery() throws Exception {
+        waitForAsyncDiscoveryToStabilize(platform);
+
         Set<Resource> webConnectorResources = getWebConnectorResources();
         assertTrue(webConnectorResources != null && !webConnectorResources.isEmpty(), "Found no resources of type ["
             + RESOURCE_TYPE_NAME + "]");
@@ -80,7 +77,7 @@ public class WebConnectorComponentTest extends AbstractJBossAS7PluginTest {
         return pluginContainer.getInventoryManager().getResourcesWithType(resourceType);
     }
 
-    @Test(dependsOnMethods = { "secondDiscovery" })
+    @Test(dependsOnMethods = { "testDiscovery" })
     public void testGetMaxConnectionMetricHasPositiveValue() throws Exception {
         Set<Resource> webConnectorResources = getWebConnectorResources();
         for (Resource webConnectorResource : webConnectorResources) {
@@ -90,7 +87,7 @@ public class WebConnectorComponentTest extends AbstractJBossAS7PluginTest {
             ComponentUtil.getComponent(webConnectorResource.getId(), MeasurementFacet.class, FacetLockType.READ,
                 SECONDS.toMillis(30), true, false, true).getValues(report, requests);
             Set<MeasurementDataNumeric> numericMetrics = report.getNumericData();
-            assertEquals(numericMetrics, 1);
+            assertEquals(numericMetrics.size(), 1);
             MeasurementData measurementData = numericMetrics.iterator().next();
             assertEquals(measurementData.getName(), MAX_CONNECTIONS_METRIC_NAME);
             assertTrue(measurementData instanceof MeasurementDataNumeric);

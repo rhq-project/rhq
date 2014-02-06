@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -94,11 +93,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     protected String getExpectedStartScriptFileName() {
         return (File.separatorChar == '/') ? "domain.sh" : "domain.bat";
-    }
-
-    @AfterSuite
-    protected void killServerProcesses() {
-        super.killServerProcesses();
     }
 
     @Override

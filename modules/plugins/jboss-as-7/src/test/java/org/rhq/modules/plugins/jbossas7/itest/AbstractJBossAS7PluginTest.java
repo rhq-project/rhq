@@ -32,7 +32,6 @@ import org.rhq.core.domain.util.ResourceFilter;
 import org.rhq.core.domain.util.ResourceUtility;
 import org.rhq.core.domain.util.TypeAndKeyResourceFilter;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
@@ -155,11 +154,28 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
         return serverResource;
     }
 
-    private void restartResourceComponent(Resource resource) throws PluginContainerException {
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-        inventoryManager.deactivateResource(resource);
-        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
-        inventoryManager.activateResource(resource, serverContainer, true);
-    }
+    // Not current used.
+    // TODO: If needed they may need to be modified to recursively start the ancestors first, because you can't
+    //       start a resource whose parent is not started.
+    //
+    //    protected void restartResourceComponent(Resource resource) throws PluginContainerException {
+    //        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+    //        inventoryManager.deactivateResource(resource);
+    //        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
+    //        inventoryManager.activateResource(resource, serverContainer, true);
+    //    }
+    //
+    //    /**
+    //     * Use to ensure a resourceComponent is started. After discovery it may take unacceptably long for
+    //     * the resource to activate. If already active this call is a no-op.
+    //     *
+    //     * @param resource
+    //     * @throws PluginContainerException
+    //     */
+    //    protected void startResourceComponent(Resource resource) throws PluginContainerException {
+    //        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+    //        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
+    //        inventoryManager.activateResource(resource, serverContainer, true);
+    //    }
 
 }

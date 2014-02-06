@@ -54,14 +54,10 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        Thread.sleep(20 * 1000L);
-
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
         Resource server = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
             DomainServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
-
-        Thread.sleep(80 * 1000L);
     }
 
 

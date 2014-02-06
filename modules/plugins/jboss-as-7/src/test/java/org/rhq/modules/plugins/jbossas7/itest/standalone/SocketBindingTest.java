@@ -19,6 +19,9 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +43,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 /**
  * Test stuff around socket bindings.
  * This could actually also run for domain mode
@@ -62,8 +62,6 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-        Thread.sleep(20*1000L); // delay so that PC gets a chance to scan for resources
     }
 
     @Test(priority = 11)

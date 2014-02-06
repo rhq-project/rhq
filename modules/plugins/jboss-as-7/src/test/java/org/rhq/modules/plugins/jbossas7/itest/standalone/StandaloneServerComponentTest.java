@@ -25,7 +25,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -169,11 +168,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
             "-Djboss.socket.binding.port-offset=" + getPortOffset()
         };
         return Arrays.asList(args);
-    }
-
-    @AfterSuite
-    protected void killServerProcesses() {
-        super.killServerProcesses();
     }
 
 }

@@ -227,12 +227,13 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * test, requiring full discovery of an AS-7 server (for example), it can reach the target depth well before
      * the entire tree is discovered and populated.
      * </p>
-     * This is equivalent to {{waitForAsyncDiscoveryToStabilize(root, 5000L, 5)}}.
+     * This is equivalent to {{waitForAsyncDiscoveryToStabilize(root, 5000L, 8)}}. As such it will wait
+     * for at least 40s.
      *
      * @throws Exception
      */
     protected void waitForAsyncDiscoveryToStabilize(Resource root) throws Exception {
-        waitForAsyncDiscoveryToStabilize(root, 5000L, 5);
+        waitForAsyncDiscoveryToStabilize(root, 5000L, 8);
     }
 
     /**

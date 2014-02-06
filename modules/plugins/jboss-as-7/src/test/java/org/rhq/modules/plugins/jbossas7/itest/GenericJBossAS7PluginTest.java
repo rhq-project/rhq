@@ -48,7 +48,6 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
 
     // ******************************* METRICS ******************************* //
     @Test(priority = 2)
-    @RunDiscovery
     public void testAllMetricsHaveNonNullValues() throws Exception {
         Map<ResourceType, String[]> excludedMetricNamesByType = new HashMap<ResourceType, String[]>();
         // It's normal for the "startTime" trait to be null for a Managed Server that is down/disabled.

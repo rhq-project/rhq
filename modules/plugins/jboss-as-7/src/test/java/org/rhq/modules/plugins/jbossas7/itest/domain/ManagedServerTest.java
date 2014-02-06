@@ -50,12 +50,8 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
    public void runDiscovery() throws Exception {
        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
 
-       Thread.sleep(10*1000L); // delay so that PC gets a chance to scan for resources
-
        assertNotNull(platform);
        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-       Thread.sleep(20*1000L); // delay so that PC gets a chance to scan for resources
    }
 
    @Test(priority = 1021, enabled = false)

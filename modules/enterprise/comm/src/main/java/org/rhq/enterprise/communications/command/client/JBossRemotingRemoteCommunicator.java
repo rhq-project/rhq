@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.communications.command.client;
 
@@ -506,7 +506,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * @throws Throwable if a low-level, unhandled exception occurred
      */
     private CommandResponse rawSend(Command command) throws Throwable {
-        Object ret_response = null;
+        Object ret_response;
 
         try {
             try {
@@ -526,6 +526,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                     ret_response = getRemotingClient().invoke(command, null);
                     OutgoingCommandTrace.finish(command, ret_response);
                 }
+                throw rmie;
             }
         } catch (Throwable t) {
             OutgoingCommandTrace.finish(command, t);

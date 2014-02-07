@@ -73,7 +73,7 @@ public class MetricsPerfTests extends MetricsTest {
 
     private final int NUM_SCHEDULES = 1000;
 
-    private RateLimiter permits;
+    private double requestLimit;
 
     @BeforeClass
     public void setupClass() throws Exception {
@@ -84,18 +84,18 @@ public class MetricsPerfTests extends MetricsTest {
         metricsServer.setConfiguration(configuration);
         metricsServer.setDAO(dao);
         metricsServer.setDateTimeService(dateTimeService);
-        permits = storageSession.getPermits();
+        requestLimit = storageSession.getRequestLimit();
     }
 
     private void resetRateLimits() {
-        storageSession.setPermits(permits);
+        storageSession.setRequestLimit(requestLimit);
     }
 
     @Test
     public void insertRawData() throws Exception {
         Random random = new Random();
         DateTime currentHour = hour(3);
-        storageSession.setPermits(RateLimiter.create(10000));
+        storageSession.setRequestLimit(10000);
         metricsServer.setCurrentHour(currentHour);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
         for (int i = 0; i < NUM_SCHEDULES; ++i) {

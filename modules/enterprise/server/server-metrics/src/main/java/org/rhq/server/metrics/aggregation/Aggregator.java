@@ -34,7 +34,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
- * This class provides the main interface for metric data aggregation.
+ * This class is the driver for metrics aggregation.
  *
  * @author John Sanda
  */
@@ -61,8 +61,6 @@ public class Aggregator {
 
     private Set<AggregateNumericMetric> oneHourData;
 
-    private int maxParallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "5"));
-
     public Aggregator(ListeningExecutorService aggregationTasks, MetricsDAO dao, MetricsConfiguration configuration,
         DateTimeService dtService, DateTime startTime, int batchSize) {
         this.dao = dao;
@@ -73,6 +71,8 @@ public class Aggregator {
 
         DateTime sixHourTimeSlice = get6HourTimeSlice();
         DateTime twentyFourHourTimeSlice = get24HourTimeSlice();
+
+        int maxParallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "5"));
 
         state = new AggregationState()
             .setDao(dao)

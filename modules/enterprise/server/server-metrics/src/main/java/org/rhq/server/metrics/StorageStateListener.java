@@ -19,4 +19,6 @@ public interface StorageStateListener {
 
     void onStorageClusterUp();
 
+    void onClientTimeout(NoHostAvailableException e);
+
 }

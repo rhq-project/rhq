@@ -19,6 +19,9 @@ import org.rhq.server.metrics.SignalingCountDownLatch;
 import org.rhq.server.metrics.StorageResultSetFuture;
 
 /**
+ * Schedules {@link BatchAggregator aggregation tasks} for a batch of measurement schedules. An instance of this class
+ * is invoked when index entries arrive.
+ *
  * @author John Sanda
  */
 abstract class BatchAggregationScheduler implements FutureCallback<ResultSet> {

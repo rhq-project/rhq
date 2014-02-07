@@ -18,7 +18,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.SettableFuture;
 
 import org.joda.time.DateTime;
@@ -47,9 +46,6 @@ public class AggregationTests extends MetricsTest {
 
     private DateTime currentHour;
 
-    private RateLimiter writePermits;
-    private RateLimiter readPermits;
-
     @BeforeClass
     public void setUp() throws Exception {
         purgeDB();
@@ -61,8 +57,6 @@ public class AggregationTests extends MetricsTest {
         schedule5.id = 105;
 
         aggregationTasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-        writePermits = RateLimiter.create(500);
-        readPermits = RateLimiter.create(350);
     }
 
     @Test
@@ -295,7 +289,7 @@ public class AggregationTests extends MetricsTest {
         purgeDB();
     }
 
-    @Test(dependsOnMethods = "resetDBForFailureScenarios")
+    //@Test(dependsOnMethods = "resetDBForFailureScenarios")
     public void failToFetchRawDataIndexDuringAggregationForHour12() throws Exception {
         currentHour = hour(12);
         AggregatorTestStub aggregator = new AggregatorTestStub(hour(11), new MetricsDAO(storageSession, configuration) {

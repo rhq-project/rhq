@@ -25,6 +25,7 @@
 
 package org.rhq.enterprise.server.storage;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -60,6 +61,7 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.core.CoreServer;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
@@ -86,6 +88,9 @@ public class StorageClientManagerBean {
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    private CoreServer coreServer;
 
     @javax.annotation.Resource
     private TimerService timerService;
@@ -156,7 +161,7 @@ public class StorageClientManagerBean {
             Session wrappedSession = createSession();
             session = new StorageSession(wrappedSession);
 
-            storageClusterMonitor = new StorageClusterMonitor();
+            storageClusterMonitor = new StorageClusterMonitor(getServerPropsFile(), session);
             session.addStorageStateListener(storageClusterMonitor);
 
             metricsConfiguration = new MetricsConfiguration();
@@ -308,6 +313,12 @@ public class StorageClientManagerBean {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean isClusterAvailable() {
         return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
+    }
+
+    private File getServerPropsFile() {
+        File installDir = coreServer.getInstallDir();
+        File binDir = new File(installDir, "bin");
+        return new File(binDir, "rhq-server.properties");
     }
 
     private Session createSession() {

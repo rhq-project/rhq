@@ -81,7 +81,8 @@ public class MetricsServer {
     private AtomicLong totalAggregationTime = new AtomicLong();
 
     private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
-        Executors.newFixedThreadPool(5, new StorageClientThreadFactory()));
+        Executors.newFixedThreadPool(Math.min(Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "5")),
+            Runtime.getRuntime().availableProcessors()), new StorageClientThreadFactory()));
 
     private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "25"));
 
@@ -111,6 +112,7 @@ public class MetricsServer {
         if (log.isDebugEnabled() && useAsyncAggregation) {
             log.debug("Async aggregation is enabled");
         }
+
         determineMostRecentRawDataSinceLastShutdown();
     }
 
@@ -336,7 +338,7 @@ public class MetricsServer {
         } finally {
             stopwatch.stop();
             if (log.isDebugEnabled()) {
-                log.debug("Finished calculatig group summary aggregate for [scheduleIds: " + scheduleIds +
+                log.debug("Finished calculating group summary aggregate for [scheduleIds: " + scheduleIds +
                     ", beginTime: " + beginTime + ", endTime: " + endTime + "] in " +
                     stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
@@ -452,7 +454,7 @@ public class MetricsServer {
      * for subsequently computing baselines.
      */
     public Iterable<AggregateNumericMetric> calculateAggregates() {
-        long start = System.currentTimeMillis();
+        Stopwatch stopwatch = new Stopwatch().start();
         try {
             DateTime theHour = currentHour();
 
@@ -475,7 +477,9 @@ public class MetricsServer {
                 return calculateAggregates(theHour.getMillis());
             }
         } finally {
-            log.info("Finished metrics aggregation in " + (System.currentTimeMillis() - start) + " ms");
+            stopwatch.stop();
+            totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            log.info("Finished metrics aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
@@ -499,7 +503,6 @@ public class MetricsServer {
 
         List<AggregateNumericMetric> newOneHourAggregates = null;
 
-        Stopwatch stopwatch = new Stopwatch().start();
         List<AggregateNumericMetric> updatedSchedules = aggregateRawData(lastHour);
         newOneHourAggregates = updatedSchedules;
         if (!updatedSchedules.isEmpty()) {
@@ -520,9 +523,6 @@ public class MetricsServer {
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR, twentyFourHourTimeSlice);
         }
-        stopwatch.stop();
-        totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset();
 
         return newOneHourAggregates;
     }

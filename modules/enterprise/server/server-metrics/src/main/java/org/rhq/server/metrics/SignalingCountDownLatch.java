@@ -26,6 +26,7 @@ public class SignalingCountDownLatch {
 
     public void abort(String msg) {
         aborted = true;
+        this.msg = msg;
         latch.countDown();
     }
 

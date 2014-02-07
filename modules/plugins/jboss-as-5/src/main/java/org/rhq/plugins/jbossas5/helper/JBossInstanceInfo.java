@@ -1,29 +1,23 @@
 /*
-* Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
-package org.rhq.plugins.jbossas5.helper;
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
+package org.rhq.plugins.jbossas5.helper;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -35,6 +29,9 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,11 +47,11 @@ import org.rhq.plugins.jbossas5.util.JBossConfigurationUtility;
  * @author Ian Springer
  */
 public class JBossInstanceInfo {
+    private static final Log LOG = LogFactory.getLog(JBossInstanceInfo.class);
+
     private static final String JBOSS_MAIN_CLASS_NAME = "org.jboss.Main";
 
     private static final String ANY_ADDRESS = "0.0.0.0";
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     private final ProcessInfo processInfo;
     private final Properties sysProps = new Properties();
@@ -69,7 +66,9 @@ public class JBossInstanceInfo {
      *                   determined
      */
     public JBossInstanceInfo(ProcessInfo processInfo) throws Exception {
-        log.debug("Parsing JBossAS command line " + Arrays.asList(processInfo.getCommandLine()) + "...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Parsing JBossAS command line " + Arrays.asList(processInfo.getCommandLine()) + "...");
+        }
         this.processInfo = processInfo;
         int i;
         String[] args = this.processInfo.getCommandLine();
@@ -86,7 +85,7 @@ public class JBossInstanceInfo {
         processJvmArgs(jvmArgs);
         String[] jbossArgs = new String[args.length - jvmArgs.length];
         System.arraycopy(args, i + 1, jbossArgs, 0, jbossArgs.length);
-        processJBossArgs(processInfo.getCurrentWorkingDirectory(), jbossArgs);
+        processJBossArgs(processInfo.priorSnaphot().getCurrentWorkingDirectory(), jbossArgs);
         finalizeSysProps();
 
         printSysProps(args);
@@ -106,7 +105,7 @@ public class JBossInstanceInfo {
             String arg = args[i];
             if (arg.equals("-cp") || arg.equals("-classpath")) {
                 if (i == args.length - 1) {
-                    log.error("'" + arg + "' option has no value.");
+                    LOG.error("'" + arg + "' option has no value.");
                     continue;
                 }
                 this.classPath = args[i + 1].split(File.pathSeparator);
@@ -159,7 +158,7 @@ public class JBossInstanceInfo {
 
                 // cwd can be null if native support (i.e. SIGAR) is not able to determine it.
                 if (!new File(arg).isAbsolute() && currentWorkingDir == null) {
-                    log.error("Could not determine current working directory. Failed to parse relative path argument to --properties option: "
+                    LOG.error("Could not determine current working directory. Failed to parse relative path argument to --properties option: "
                         + options.getOptarg());
                     break;
                 }
@@ -169,7 +168,7 @@ public class JBossInstanceInfo {
                     File workingDir = new File(currentWorkingDir);
                     url = JBossConfigurationUtility.makeURL(arg, workingDir);
                 } catch (Exception e) {
-                    log.error("Failed to parse argument to --properties option: " + options.getOptarg() + ": " + e);
+                    LOG.error("Failed to parse argument to --properties option: " + options.getOptarg() + ": " + e);
                     break;
                 }
                 Properties props = new Properties();
@@ -178,14 +177,14 @@ public class JBossInstanceInfo {
                     inputStream = new BufferedInputStream(url.openConnection().getInputStream());
                     props.load(inputStream);
                 } catch (IOException e) {
-                    log.error("Could not read properties from file: " + arg, e);
+                    LOG.error("Could not read properties from file: " + arg, e);
                     break;
                 } finally {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
                         } catch (IOException e) {
-                            log.error("Failed to close properties file: " + arg, e);
+                            LOG.error("Failed to close properties file: " + arg, e);
                             // not fatal - continue processing...
                         }
                     }
@@ -225,14 +224,16 @@ public class JBossInstanceInfo {
      * @throws Exception If there is no way to obtain that directory.
      */
     private File getHomeDir() throws Exception {
-
-        File runJar = null;
-        File binDir = null;
-        File homeDir = null;
+        String currentWorkingDirectory = null;
+        if (processInfo != null) {
+            this.processInfo.priorSnaphot().getCurrentWorkingDirectory();
+        }
+        File runJar;
+        File binDir;
+        File homeDir;
         // method 1: should work 99% of the time.
-        if (this.processInfo != null && this.processInfo.getExecutable() != null
-            && this.processInfo.getExecutable().getCwd() != null) {
-            homeDir = new File(this.processInfo.getExecutable().getCwd()).getParentFile();
+        if (currentWorkingDirectory != null) {
+            homeDir = new File(currentWorkingDirectory).getParentFile();
             binDir = new File(homeDir, "bin");
             runJar = new File(binDir, "run.jar");
             if (runJar.exists()) {
@@ -243,8 +244,8 @@ public class JBossInstanceInfo {
         for (String pathElement : this.classPath) {
             if (pathElement.endsWith("run.jar")) {
                 runJar = new File(pathElement);
-                if (!runJar.isAbsolute() && !runJar.exists()) {
-                    runJar = new File(this.processInfo.getExecutable().getCwd(), runJar.getPath());
+                if (!runJar.isAbsolute() && !runJar.exists() && currentWorkingDirectory != null) {
+                    runJar = new File(currentWorkingDirectory, runJar.getPath());
                 }
                 if (!runJar.exists()) {
                     break;
@@ -318,7 +319,7 @@ public class JBossInstanceInfo {
     }
 
     private void printSysProps(String[] commandLine) {
-        if (log.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
             printSysProp(JBossProperties.HOME_DIR);
             printSysProp(JBossProperties.SERVER_HOME_DIR);
             printSysProp(JBossProperties.SERVER_NAME);
@@ -328,8 +329,9 @@ public class JBossInstanceInfo {
 
     private void printSysProp(String name) {
         String value = this.sysProps.getProperty(name);
-        log.debug(name + "=" + ((value != null) ? "\"" + value + "\"" : null));
-        log.info(name + "=" + ((value != null) ? "\"" + value + "\"" : null));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(name + "=" + ((value != null) ? "\"" + value + "\"" : null));
+        }
     }
 
     /**

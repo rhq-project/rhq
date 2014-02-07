@@ -24,10 +24,14 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -203,6 +207,21 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             }
             report.setResourceName(resourceName);
             report.setStatus(CreateResourceStatus.SUCCESS);
+
+            if (targetTypeName.equals("ServerGroup")) {
+                PropertyList sysProperties = rc.getList("*2");
+                if (sysProperties !=null && !sysProperties.getList().isEmpty()) {
+                    // because AS7 does not allow us to pass system properties while creating server-group we must do it now
+                    ConfigurationUpdateReport rep = new ConfigurationUpdateReport(rc);
+                    ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
+                    ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, getASConnection(), targetAddress);
+                    delegate.updateResourceConfiguration(rep);
+                    if (ConfigurationUpdateStatus.FAILURE.equals(rep.getStatus())) {
+                        report.setStatus(CreateResourceStatus.FAILURE);
+                        report.setErrorMessage("Failed to additionally configure server group: "+rep.getErrorMessage());
+                    }
+                }
+            }
         } else {
             report.setErrorMessage(res.getFailureDescription());
             report.setStatus(CreateResourceStatus.FAILURE);

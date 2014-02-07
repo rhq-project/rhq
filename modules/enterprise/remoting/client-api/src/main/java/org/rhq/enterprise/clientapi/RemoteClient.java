@@ -491,6 +491,9 @@ public class RemoteClient extends AbstractRhqFacade {
 
         try {
             clientVersionString = getClass().getPackage().getImplementationVersion();
+            if (clientVersionString == null) {
+                clientVersionString = " undefined ";
+            }
             serverVersionString = this.serverInfo.getVersion();
             ComparableVersion clientVersion = new ComparableVersion(clientVersionString);
             ComparableVersion serverVersion = new ComparableVersion(serverVersionString);

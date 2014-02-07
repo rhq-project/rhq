@@ -1,5 +1,14 @@
 package org.rhq.server.metrics;
 
+import static org.rhq.server.metrics.StorageClientConstant.REQUEST_LIMIT;
+import static org.rhq.server.metrics.StorageClientConstant.REQUEST_LIMIT_MIN;
+import static org.rhq.server.metrics.StorageClientConstant.REQUEST_TIMEOUT_DAMPENING;
+import static org.rhq.server.metrics.StorageClientConstant.REQUEST_TIMEOUT_DELTA;
+import static org.rhq.server.metrics.StorageClientConstant.REQUEST_TOPOLOGY_CHANGE_DELTA;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,31 +40,27 @@ public class StorageSession implements Host.StateListener {
 
     private boolean isClusterAvailable = false;
 
-    private int minRequestLimit = Integer.parseInt(System.getProperty("rhq.storage.request-limit.min", "1000"));
+    private double minRequestLimit = Double.parseDouble(System.getProperty(REQUEST_LIMIT_MIN.property(), "5000"));
 
     private RateLimiter permits = RateLimiter.create(Double.parseDouble(
-        System.getProperty("rhq.storage.request-limit", "10000")), 3, TimeUnit.MINUTES);
+        System.getProperty(REQUEST_LIMIT.property(), "30000")), 3, TimeUnit.MINUTES);
 
-    private int requestLimitDelta;
+    private double timeoutDelta = Double.parseDouble(System.getProperty(REQUEST_TIMEOUT_DELTA.property(), "0.2"));
 
     private long permitsLastChanged = System.currentTimeMillis();
 
-    private long permitsChangeWindow = 1000 * 10;
+    private long timeoutDampening = Long.parseLong(System.getProperty(REQUEST_TIMEOUT_DAMPENING.property(), "30000"));
+
+    private double topologyDelta = Double.parseDouble(System.getProperty(REQUEST_TOPOLOGY_CHANGE_DELTA.property(),
+        "30000"));
 
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
-
-        if (System.getProperty("rhq.storage.request-limit.delta") != null) {
-            requestLimitDelta = Integer.parseInt(System.getProperty("rhq.storage.request-limit.delta"));
-        } else {
-            requestLimitDelta = (int) (permits.getRate() * 0.2);
-        }
     }
 
     public void registerNewSession(Session newWrappedSession) {
         Session oldWrappedSession = this.wrappedSession;
-
 
         this.wrappedSession = newWrappedSession;
         this.wrappedSession.getCluster().register(this);
@@ -71,20 +76,36 @@ public class StorageSession implements Host.StateListener {
         oldWrappedSession.shutdown();
     }
 
-    RateLimiter getPermits() {
-        return permits;
+    public double getRequestLimit() {
+        return new BigDecimal(permits.getRate(), new MathContext(2, RoundingMode.HALF_UP)).doubleValue();
     }
 
-    void setPermits(RateLimiter permits) {
-        this.permits = permits;
+    public void setRequestLimit(double requestLimit) {
+        permits.setRate(requestLimit);
     }
 
-    int getRequestLimitDelta() {
-        return requestLimitDelta;
+    public double getTimeoutDelta() {
+        return timeoutDelta;
     }
 
-    void setRequestLimitDelta(int requestLimitDelta) {
-        this.requestLimitDelta = requestLimitDelta;
+    public void setTimeoutDelta(double timeoutDelta) {
+        this.timeoutDelta = timeoutDelta;
+    }
+
+    public double getMinRequestLimit() {
+        return minRequestLimit;
+    }
+
+    public void setMinRequestLimit(int minRequestLimit) {
+        this.minRequestLimit = minRequestLimit;
+    }
+
+    public long getTimeoutDampening() {
+        return timeoutDampening;
+    }
+
+    public void setTimeoutDampening(long timeoutDampening) {
+        this.timeoutDampening = timeoutDampening;
     }
 
     public void addStorageStateListener(StorageStateListener listener) {
@@ -152,8 +173,9 @@ public class StorageSession implements Host.StateListener {
 
     private void addOrUp(Host host, String msg) {
         log.info(host + msg);
+        increaseRequestThroughput();
         if (!isClusterAvailable) {
-            log.info("Storage cluster is up");
+            log.debug("Storage cluster is up");
         }
         for (StorageStateListener listener : listeners) {
             if (!isClusterAvailable) {
@@ -168,7 +190,7 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onDown(Host host) {
-        log.info(host + " is down");
+        decreaseRequestThroughput(-topologyDelta);
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeDown(host.getAddress());
         }
@@ -176,7 +198,8 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onRemove(Host host) {
-        log.info(host + " has been removed");
+        log.debug(host + " has been removed.");
+        decreaseRequestThroughput(-topologyDelta);
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeRemoved(host.getAddress());
         }
@@ -185,27 +208,44 @@ public class StorageSession implements Host.StateListener {
     void handleNoHostAvailable(NoHostAvailableException e) {
         log.warn("Encountered " + NoHostAvailableException.class.getSimpleName() + " due to following error(s): " +
             e.getErrors());
-        boolean isClientTimeout = false;
-        for (InetAddress address : e.getErrors().keySet()) {
-            String error = e.getErrors().get(address);
-            if (error != null && error.contains("Timeout during read")) {
-                if (System.currentTimeMillis() - permitsLastChanged > permitsChangeWindow) {
-                    int newRate = (int) permits.getRate() - requestLimitDelta;
-                    if (newRate < minRequestLimit) {
-                        newRate = minRequestLimit;
-                    }
-                    log.warn("The request timed out. Decreasing request throughput to " + newRate);
-                    permits.setRate(newRate);
-                    permitsLastChanged = System.currentTimeMillis();
-                    requestLimitDelta = requestLimitDelta * 2;
-                }
-                isClientTimeout = true;
-                break;
+        if (isClientTimeout(e)) {
+            if (System.currentTimeMillis() - permitsLastChanged > timeoutDampening) {
+                decreaseRequestThroughput((int) (getRequestLimit() * timeoutDelta));
             }
-        }
-        if (!isClientTimeout) {
+        } else {
             fireClusterDownEvent(e);
         }
+    }
+
+    private void increaseRequestThroughput() {
+        changeRequestThroughput(topologyDelta);
+    }
+
+    private void decreaseRequestThroughput(double amount) {
+        changeRequestThroughput(amount);
+    }
+
+    private void changeRequestThroughput(double delta) {
+        double oldRate = permits.getRate();
+        double newRate = oldRate + delta;
+        if (delta < 0 && newRate < minRequestLimit) {
+            newRate = minRequestLimit;
+        }
+        permits.setRate(newRate);
+        permitsLastChanged = System.currentTimeMillis();
+
+        log.info("Changing request throughput from " + oldRate + " request/sec to " + newRate + " requests/sec");
+    }
+
+    private boolean isClientTimeout(NoHostAvailableException e) {
+        for (InetAddress address : e.getErrors().keySet()) {
+            String error = e.getErrors().get(address);
+            if (error != null && (error.contains("Timeout during read") ||
+                error.contains("Timeout while trying to acquire available connection"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void fireClusterDownEvent(NoHostAvailableException e) {

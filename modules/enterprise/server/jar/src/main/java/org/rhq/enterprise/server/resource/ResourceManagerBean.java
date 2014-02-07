@@ -362,6 +362,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 }
             }
 
+            // we don't need these attached objects during the potentially long update that follows
+            entityManager.detach(resource);
+            if (null != doomedAgent) {
+                entityManager.detach(doomedAgent);
+            }
+
             AgentClient agentClient = null;
             try {
                 // The test code does not always generate agents for the resources. Catch and log any problem but continue
@@ -437,6 +443,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     + " resources, but actually uninventoried " + resourcesDeleted);
             }
 
+            // flush to make sure the db is successfully updated with changes before we make more slsb calls and
+            // before we notify the agent
+            entityManager.flush();
+
             // still need to tell the agent about the removed resources so it stops avail reports
             // but not if this is a synthetic agent that was created in the REST-api
             // See org.rhq.enterprise.server.rest.ResourceHandlerBean.createPlatformInternal()
@@ -452,10 +462,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 }
             }
 
-            // now remove the doomed agent. Call flush() to force out any problems with agent removal
-            // so that we can catch them and report a better exception.
+            // now remove the doomed agent.
             if (doomedAgent != null) {
                 agentManager.deleteAgent(doomedAgent);
+                // flush out any issues deleting the agent so we can catch and provide a useful error message
                 entityManager.flush();
             }
 
@@ -467,7 +477,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // are currently being merged into the platform, and associated with the doomed agent.  In this case
                 // the user must wait until the merge is complete.  Make sure the caller knows about this possibility.
                 String msg = "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.";
-                throw new IllegalStateException(msg, (isDebugEnabled ? e : null));
+                if (isDebugEnabled) {
+                    throw new IllegalStateException(msg, e);
+                } else {
+                    msg += (" Cause:" + e.getMessage());
+                    throw new IllegalStateException(msg);
+                }
             }
 
             throw e;

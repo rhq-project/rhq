@@ -66,15 +66,15 @@ public final class AlertConditionCacheCoordinator {
      * When processing EventReport, we may hit an event that triggers problem alert and event that triggers recovery alert within the same report. Firing alert 
      * is asynchronous task, so if processing events too fast, problem alert is fired after we process recovery event, so we miss recovery alert at all.
      * To workaround that, we slow down event processing in case we hit any event that triggers alert. When such event exists, we sleep given amount of milis 
-     * to wait for alert to get fired. There is no performance impact on processing events without alert fired, and this delay is set to 0 by default.
+     * to wait for alert to get fired. There is no performance impact on processing events without alert fired, and this delay is set to 500 by default.
      * Recommended value is from 500 to 1500milis, 500 was tested as reliable enough for low server load cases.
      */
     private static final long ALERTED_EVENT_PROCESSING_DELAY;
 
     static {
-        long alertedEventProcessingDelay = 0L;
+        long alertedEventProcessingDelay = 500L;
         try {
-            alertedEventProcessingDelay = Long.parseLong(System.getProperty("rhq.server.alerted.event.process.delay", "0"));
+            alertedEventProcessingDelay = Long.parseLong(System.getProperty("rhq.server.alerted.event.process.delay", "500"));
         } catch (Throwable t) {
             //
         }

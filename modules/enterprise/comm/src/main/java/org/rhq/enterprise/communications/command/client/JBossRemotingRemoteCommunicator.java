@@ -522,11 +522,13 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             } catch (java.rmi.MarshalException rmie) {
                 // Due to JBREM-1245 we may fail due to SSL being shutdown and we need to retry.
                 if (rmie.getCause() != null && rmie.getCause() instanceof javax.net.ssl.SSLException
+                    && rmie.getCause().getMessage() != null
                     && rmie.getCause().getMessage().startsWith("Connection has been shutdown")) { //$NON-NLS-1$
                     ret_response = getRemotingClient().invoke(command, null);
                     OutgoingCommandTrace.finish(command, ret_response);
+                } else {
+                    throw rmie;
                 }
-                throw rmie;
             }
         } catch (Throwable t) {
             OutgoingCommandTrace.finish(command, t);

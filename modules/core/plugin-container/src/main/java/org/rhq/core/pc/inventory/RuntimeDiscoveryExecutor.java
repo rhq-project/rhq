@@ -22,6 +22,7 @@ package org.rhq.core.pc.inventory;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -284,13 +285,21 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
                 // get rid of any child resources of this type that were not yet committed and are now gone
                 removeStaleResources(parent, childResourceType, mergedResources);
-
             }
 
             // now, recursively perform discovery on all of the parent's children, which includes the newly
             // merged children as well as previously existing children.
-            for (Resource childResource : parent.getChildResources()) {
-                discoverForResource(childResource, report, parentReported);
+            try {
+                for (Resource childResource : parent.getChildResources()) {
+                    discoverForResource(childResource, report, parentReported);
+                }
+            } catch (ConcurrentModificationException e) {
+                // We've seen at times that while discovery is running the resource hierarchy may actually
+                // be updated (uninventory, manual add, etc).  That can invalidate this iterator.  If the
+                // rug gets pulled out from under the iterator, just stop discovery for this parent, as it is
+                // actively being updated. This is a rare occurrence.
+                log.warn("Stopping discovery for resource [" + parent.getName()
+                    + "] because its children set is currently being updated.");
             }
 
         } catch (Throwable t) {

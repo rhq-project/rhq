@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import static org.rhq.core.util.StringUtil.arrayToString;
 import static org.rhq.core.util.StringUtil.isNotBlank;
 
@@ -471,17 +469,18 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     @Override
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+        ResourceUpgradeReport report = new ResourceUpgradeReport();
+        boolean upgraded = false;
+
         String currentResourceKey = inventoriedResource.getResourceKey();
         Configuration pluginConfiguration = inventoriedResource.getPluginConfiguration();
         ServerPluginConfiguration serverPluginConfiguration = new ServerPluginConfiguration(pluginConfiguration);
 
-        ResourceUpgradeReport report = new ResourceUpgradeReport();
-        Boolean upgraded = FALSE;
-
-        if (!currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX)
-            && !currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX)) {
-            // Resource key in wrong format 
-            upgraded = TRUE;
+        boolean hasLocalResourcePrefix = currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX);
+        boolean hasRemoteResourcePrefix = currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX);
+        if (!hasLocalResourcePrefix && !hasRemoteResourcePrefix) {
+            // Resource key in wrong format
+            upgraded = true;
             if (new File(currentResourceKey).isDirectory()) {
                 // Old key format for a local resource (key is base dir)
                 report.setNewResourceKey(createKeyForLocalResource(serverPluginConfiguration));
@@ -489,31 +488,50 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 // Old key format for a remote (manually added) resource (key is base dir)
                 report.setNewResourceKey(createKeyForRemoteResource(currentResourceKey));
             } else {
-                upgraded = FALSE;
+                upgraded = false;
                 log.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
+            }
+        } else if (hasLocalResourcePrefix) {
+            String configFilePath = currentResourceKey.substring(LOCAL_RESOURCE_KEY_PREFIX.length() + 1);
+            File configFile = new File(configFilePath);
+            try {
+                String configFileCanonicalPath = configFile.getCanonicalPath();
+                if (!configFileCanonicalPath.equals(configFilePath)) {
+                    upgraded = true;
+                    report.setNewResourceKey(LOCAL_RESOURCE_KEY_PREFIX + configFileCanonicalPath);
+                }
+            } catch (IOException e) {
+                log.warn("Unexpected IOException while converting host config file path to its canonical form", e);
             }
         }
 
         if (pluginConfiguration.getSimpleValue("expectedRuntimeProductName") == null) {
-            upgraded = TRUE;
+            upgraded = true;
             pluginConfiguration.setSimpleValue("expectedRuntimeProductName",
                 serverPluginConfiguration.getProductType().PRODUCT_NAME);
             report.setNewPluginConfiguration(pluginConfiguration);
         }
 
-        if (upgraded == TRUE) {
+        if (upgraded) {
             return report;
         }
         return null;
     }
 
     private String createKeyForRemoteResource(String hostPort) {
-        return REMOTE_RESOURCE_KEY_PREFIX + hostPort; 
+        return REMOTE_RESOURCE_KEY_PREFIX + hostPort;
     }
 
     private String createKeyForLocalResource(ServerPluginConfiguration serverPluginConfiguration) {
-        return LOCAL_RESOURCE_KEY_PREFIX
-            + serverPluginConfiguration.getHostConfigFile().getAbsolutePath();
+        // Canonicalize the config path, so it's consistent no matter how it's entered.
+        // This prevents two servers with different forms of the same config path, but
+        // that are actually the same server, from ending up in inventory.
+        try {
+            return LOCAL_RESOURCE_KEY_PREFIX + serverPluginConfiguration.getHostConfigFile().getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException(
+                "Unexpected IOException while converting host config file path to its canonical form", e);
+        }
     }
 
     private <T>T getServerAttribute(ASConnection connection, String attributeName) {

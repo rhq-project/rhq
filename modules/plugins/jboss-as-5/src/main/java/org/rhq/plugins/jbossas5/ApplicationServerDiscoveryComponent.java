@@ -1,25 +1,22 @@
 /*
-* Jopr Management Platform
-* Copyright (C) 2005-2011 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.plugins.jbossas5;
 
 import java.io.BufferedReader;
@@ -54,6 +51,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -62,8 +60,9 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.pluginapi.util.CommandLineOption;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
 import org.rhq.core.pluginapi.util.ServerStartScriptDiscoveryUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
@@ -89,7 +88,10 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  */
 @SuppressWarnings({ "UnusedDeclaration" })
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
-    ManualAddFacet {
+    ManualAddFacet, ResourceUpgradeFacet {
+
+    private static final Log LOG = LogFactory.getLog(ApplicationServerDiscoveryComponent.class);
+
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
     private static final String JBOSS_NAMING_SERVICE_XML = "deploy" + File.separator + "naming-service.xml";
     private static final String ANY_ADDRESS = "0.0.0.0";
@@ -157,10 +159,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         }
     }
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) {
-        log.trace("Discovering JBoss AS 5.x and 6.x Resources...");
+        LOG.trace("Discovering JBoss AS 5.x and 6.x Resources...");
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
         DiscoveredResourceDetails inProcessJBossAS = discoverInProcessJBossAS(discoveryContext);
         if (inProcessJBossAS != null) {
@@ -170,7 +170,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // Otherwise, scan the process table for external AS instances.
             resources.addAll(discoverExternalJBossAsProcesses(discoveryContext));
         }
-        log.trace("Discovered " + resources.size() + " JBossAS 5.x and 6.x Resources.");
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Discovered " + resources.size() + " JBossAS 5.x and 6.x Resources.");
+        }
         return resources;
     }
 
@@ -205,7 +207,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             if (isReadable(clientJarUrl)) {
                 clientJarUrls.add(clientJarUrl);
             } else {
-                log.warn("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
+                LOG.warn("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
                     + " may not be required for some app server versions).");
             }
         }
@@ -219,7 +221,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             try {
                 inputStream.close();
             } catch (IOException e) {
-                log.error("Failed to close input stream for URL [" + url + "].", e);
+                LOG.error("Failed to close input stream for URL [" + url + "].", e);
             }
             return true;
         } catch (IOException e) {
@@ -260,14 +262,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
-            if (log.isDebugEnabled())
-                log.debug("Discovered JBoss AS process: " + processInfo);
+            if (LOG.isDebugEnabled())
+                LOG.debug("Discovered JBoss AS process: " + processInfo);
 
             JBossInstanceInfo jbossInstanceInfo;
             try {
                 jbossInstanceInfo = new JBossInstanceInfo(processInfo);
             } catch (Exception e) {
-                log.error("Failed to process JBoss AS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
+                LOG.error("Failed to process JBoss AS command line: " + Arrays.asList(processInfo.getCommandLine()), e);
                 continue;
             }
 
@@ -286,12 +288,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // a directory).
             try {
                 if (!configDir.getCanonicalFile().isDirectory()) {
-                    log.warn("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
+                    LOG.warn("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
                         + configDir + "' does not exist or is not a directory.");
                     continue;
                 }
             } catch (IOException e) {
-                log.error("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
+                LOG.error("Skipping discovery for JBoss AS process " + processInfo + ", because configuration dir '"
                     + configDir + "' could not be canonicalized.", e);
                 continue;
             }
@@ -328,8 +330,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             }
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
-            if (javaHome == null && log.isDebugEnabled()) {
-                log.warn("Unable to determine the JAVA_HOME environment variable for the JBoss AS process - "
+            if (javaHome == null && LOG.isDebugEnabled()) {
+                LOG.warn("Unable to determine the JAVA_HOME environment variable for the JBoss AS process - "
                     + " the Agent is probably running as a user that does not have access to the AS process's "
                     + " environment.");
             }
@@ -350,7 +352,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         try {
             return new InProcessJBossASDiscovery().discoverInProcessJBossAS(discoveryContext);
         } catch (Throwable t) {
-            log.debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.", t);
+            LOG.debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.", t);
             return null;
         }
     }
@@ -365,8 +367,13 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // Canonicalize the config path, so it's consistent no matter how it's entered.
         // This prevents two servers with different forms of the same config path, but
         // that are actually the same server, from ending up in inventory.
-        // JON: fix for JBNADM-2634 - do not resolve symlinks (ips, 12/18/07)
-        String key = FileUtils.getCanonicalPath(absoluteConfigPath.getPath());
+        String key;
+        try {
+            key = absoluteConfigPath.getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException(
+                "Unexpected IOException while converting config file path to its canonical form", e);
+        }
 
         String bindAddress = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.BIND_ADDRESS)
             .getStringValue();
@@ -431,7 +438,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 exists = startScriptAbsolute.exists();
             }
             if (!exists) {
-                log.warn("Discovered startScriptFile ["
+                LOG.warn("Discovered startScriptFile ["
                     + startScript
                     + "] but failed to find it on disk. The start script may not be correct. The command line used for discovery is ["
                     + commandLine + "]");
@@ -466,7 +473,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                     }
                 } catch (UnknownHostException e) {
                     //this should not happen?
-                    log.warn("Unknown hostname passed in as the binding address for JBoss AS server discovery: "
+                    LOG.warn("Unknown hostname passed in as the binding address for JBoss AS server discovery: "
                         + bindingAddress);
                 }
             }
@@ -495,7 +502,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                     .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
                 logEventSources.add(serverLogEventSource);
             } catch (IOException e) {
-                log.warn("Unable to setup RHQ Server log file monitoring.", e);
+                LOG.warn("Unable to setup RHQ Server log file monitoring.", e);
             }
         }
     }
@@ -517,8 +524,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                     br = new BufferedReader(new FileReader(jnpServiceUrlFile));
                     String jnpUrl = br.readLine();
                     if (jnpUrl != null) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Read JNP URL from jnp-service.url file: " + jnpUrl);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Read JNP URL from jnp-service.url file: " + jnpUrl);
                         }
                         return jnpUrl;
                     }
@@ -536,7 +543,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             }
         }
 
-        log.warn("Failed to read JNP URL from: " + possibleJnpServiceUrlFiles);
+        LOG.warn("Failed to read JNP URL from: " + possibleJnpServiceUrlFiles);
 
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
@@ -545,7 +552,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         Integer jnpPort = (jnpConfig.getJnpPort() != null) ? jnpConfig.getJnpPort() : null;
 
         if (jnpAddress == null || jnpPort == null) {
-            log.warn("Failed to discover JNP URL for JBoss instance with configuration directory [" + configDir + "].");
+            LOG.warn("Failed to discover JNP URL for JBoss instance with configuration directory [" + configDir + "].");
             return null;
         }
 
@@ -592,8 +599,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // The product is supported if the version is greater than or equal to the minimum version.
             supported = (version.compareTo(minimumVersion) >= 0);
             if (!supported) {
-                log.debug(productType + " version " + version + " is not supported by this plugin (minimum " + productType
-                    + " version is " + minimumVersion + ") - skipping...");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(productType + " version " + version + " is not supported by this plugin (minimum "
+                        + productType + " version is " + minimumVersion + ") - skipping...");
+                }
             }
         } else {
             supported = true;
@@ -613,5 +622,28 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         // BZ 903402 - get the real absolute path - under most conditions, it's the same thing, but if on windows
         //             the drive letter might not have been specified - this makes sure the drive letter is specified.
         return configDir.getAbsoluteFile();
+    }
+
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+        ResourceUpgradeReport report = new ResourceUpgradeReport();
+        boolean upgraded = false;
+
+        String configDirPath = inventoriedResource.getResourceKey();
+        File configDir = new File(configDirPath);
+        try {
+            String configDirCanonicalPath = configDir.getCanonicalPath();
+            if (!configDirCanonicalPath.equals(configDirPath)) {
+                upgraded = true;
+                report.setNewResourceKey(configDirCanonicalPath);
+            }
+        } catch (IOException e) {
+            LOG.warn("Unexpected IOException while converting host config file path to its canonical form", e);
+        }
+
+        if (upgraded) {
+            return report;
+        }
+        return null;
     }
 }

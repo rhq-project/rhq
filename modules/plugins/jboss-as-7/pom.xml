@@ -654,15 +654,28 @@
                   <excludes>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</exclude>
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</exclude>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</exclude>                    
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</exclude>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</exclude>
                   </excludes>
                 </configuration>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-              </execution>   
+              </execution>
+              <execution>
+                <id>SocketBindingTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
               <execution>
                 <id>DomainServerComponentTest</id>              
                 <configuration>

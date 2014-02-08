@@ -646,42 +646,31 @@
               <!-- Some test classes are sensitive to test interaction issues, use different executions to run them independently.
                    For each test class run independently, make sure it is excluded in the "everything-else" execution below. -->
               <execution>
+                <id>SecurityModuleOptionsTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>                   
+              <execution>
                 <id>everything-else</id>
                 <configuration>
                   <includes>         
                     <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
                   </includes>
                   <excludes>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/AfterSuiteTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</exclude>                    
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</exclude>
                   </excludes>
-                </configuration>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>SocketBindingTest</id>
-                <configuration>
-                  <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
-                  </includes>
-                </configuration>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>DomainServerComponentTest</id>              
-                <configuration>
-                  <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>                
-                  </includes>
                 </configuration>
                 <goals>
                   <goal>integration-test</goal>
@@ -713,10 +702,10 @@
                 </goals>
               </execution>
               <execution>
-                <id>SecurityModuleOptionsTest</id>
+                <id>SocketBindingTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -724,6 +713,31 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+              <execution>
+                <id>DomainServerComponentTest</id>              
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>              
+              <execution>
+                <id>AfterSuiteTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/AfterSuiteTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              
             </executions>
           </plugin>
 

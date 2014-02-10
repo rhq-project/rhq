@@ -57,6 +57,7 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_COMPUTE_TIME, query = "" //
         + "DELETE MeasurementBaseline bl " //
         + " WHERE bl.computeTime < :timestamp "),
+    @NamedQuery(name = MeasurementBaseline.QUERY_BY_SCHEDULE_IDS, query = "select baseline from MeasurementBaseline baseline where baseline.schedule.id IN (:scheduleIds)"),
     @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementBaseline bl WHERE bl.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_MEASUREMENT_BLINE_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_BLINE_ID_SEQ")
 @SuppressWarnings("unused")
@@ -69,6 +70,7 @@ public class MeasurementBaseline implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementBaseline.deleteByResources";
     public static final String QUERY_CALC_FIRST_AUTOBASELINE = "MeasurementBaseline.calcFirstAutoBaseline";
     public static final String QUERY_DELETE_EXISTING_AUTOBASELINES = "MeasurementBaseline.deleteExistingAutoBaseline";
+    public static final String QUERY_BY_SCHEDULE_IDS = "MeasurementBaseline.queryByScheduleIds";
 
     private static final long serialVersionUID = 1L;
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_MEASUREMENT_BLINE_ID_SEQ")

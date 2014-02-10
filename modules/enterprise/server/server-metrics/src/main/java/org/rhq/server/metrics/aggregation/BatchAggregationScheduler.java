@@ -49,7 +49,6 @@ abstract class BatchAggregationScheduler implements FutureCallback<ResultSet> {
         try {
             for (Row row : rows) {
                 state.getPermits().acquire();
-                getRemainingSchedules().incrementAndGet();
                 queryFutures.add(findMetricData(row.getInt(1)));
                 if (queryFutures.size() == state.getBatchSize()) {
                     state.getAggregationTasks().submit(new BatchAggregator(createBatchAggregationState(queryFutures,

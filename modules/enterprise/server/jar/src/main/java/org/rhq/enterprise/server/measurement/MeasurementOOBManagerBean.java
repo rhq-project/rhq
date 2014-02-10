@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -71,6 +72,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
+    private static final int BATCH_SIZE = 500;
     private final Log log = LogFactory.getLog(MeasurementOOBManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -199,13 +201,44 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         log.info("Computing OOBs");
         int count = 0;
         long startTime = System.currentTimeMillis();
+
         try {
-            for (AggregateNumericMetric metric : metrics) {
-                try {
-                    count += oobManager.calculateOOB(metric);
-                } catch (Exception e) {
-                    log.error("An error occurred while calculating OOBs for " + metric, e);
-                    throw new RuntimeException(e);
+            Iterator<AggregateNumericMetric> iterator = metrics.iterator();
+            while (iterator.hasNext()) {
+
+                List<Integer> scheduleIds = new ArrayList<Integer>(BATCH_SIZE);
+                List<AggregateNumericMetric> metricList = new ArrayList<AggregateNumericMetric>(BATCH_SIZE);
+
+                int i = 0;
+                do {
+                    AggregateNumericMetric aggregate = iterator.next();
+                    scheduleIds.add(aggregate.getScheduleId());
+                    metricList.add(aggregate);
+                    i++;
+                } while (i < BATCH_SIZE && iterator.hasNext());
+
+                Query q  = entityManager.createNamedQuery(MeasurementBaseline.QUERY_BY_SCHEDULE_IDS);
+                q.setParameter("scheduleIds",scheduleIds);
+                List<MeasurementBaseline> tmpList = q.getResultList();
+
+                // put the result in a HashMap to speed up query later
+                Map<Integer,MeasurementBaseline> baselineMap = new HashMap<Integer, MeasurementBaseline>(tmpList.size());
+                for (MeasurementBaseline baseline : tmpList) {
+                    baselineMap.put(baseline.getScheduleId(),baseline);
+                }
+
+                for (AggregateNumericMetric metric : metricList) {
+                    MeasurementBaseline baseline = baselineMap.get(metric.getScheduleId());
+                    if (baseline==null)
+                        continue;
+
+                    try {
+                        count += oobManager.calculateOOB(metric,baseline);
+                    } catch (Exception e) {
+                        log.error("An error occurred while calculating OOBs for " + metric, e);
+                        throw new RuntimeException(e);
+                    }
+
                 }
             }
         } finally {
@@ -218,15 +251,11 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public int calculateOOB(AggregateNumericMetric metric) {
-        List<MeasurementBaseline> baselines = entityManager.createQuery(
-            "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
-            .setParameter("scheduleId", metric.getScheduleId())
-            .getResultList();
-        if (baselines.isEmpty()) {
+    public int calculateOOB(AggregateNumericMetric metric,MeasurementBaseline baseline) {
+        if (baseline==null) {
             return 0;
         }
-        MeasurementBaseline baseline = baselines.get(0);
+
         Long upperDelta = null;
         Long lowerDelta = null;
 

@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.util.List;
+import java.util.Map;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -66,7 +70,7 @@ public interface MeasurementOOBManagerLocal {
      *               be generated
      * @return 1 if an OOB is generated, 0 otherwise
      */
-    int calculateOOB(AggregateNumericMetric metric);
+    int calculateOOB(AggregateNumericMetric metric, MeasurementBaseline baseline);
 
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.

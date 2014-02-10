@@ -20,6 +20,8 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -111,26 +113,22 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         AvailabilityType availabilityType;
         try {
             readAttribute("launch-type");
-            availabilityType = AvailabilityType.UP;
+            availabilityType = UP;
         } catch (Exception e) {
-            availabilityType = AvailabilityType.DOWN;
-        }
-
-        try {
-            if ((availabilityType == AvailabilityType.UP) && (previousAvailabilityType != AvailabilityType.UP)) {
-                validateServerAttributes();
-                if (log.isDebugEnabled()) {
-                    log.debug(getResourceDescription() + " has just come UP.");
-                }
+            if (log.isDebugEnabled()) {
+                log.debug(getResourceDescription() + ": exception while checking availability", e);
             }
-        } finally {
-            previousAvailabilityType = availabilityType;
+            availabilityType = DOWN;
         }
-
-        if (availabilityType == AvailabilityType.DOWN) {
+        if (availabilityType == DOWN) {
             releaseVersion = null;
+        } else if (previousAvailabilityType != UP) {
+            validateServerAttributes();
+            if (log.isDebugEnabled()) {
+                log.debug(getResourceDescription() + " has just come UP.");
+            }
         }
-
+        previousAvailabilityType = availabilityType;
         return availabilityType;
     }
 

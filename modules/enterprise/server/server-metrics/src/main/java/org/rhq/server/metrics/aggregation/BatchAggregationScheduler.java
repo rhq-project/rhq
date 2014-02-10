@@ -39,11 +39,16 @@ abstract class BatchAggregationScheduler implements FutureCallback<ResultSet> {
         Stopwatch stopwatch = new Stopwatch().start();
         Stopwatch batchStopwatch = new Stopwatch().start();
         List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(state.getBatchSize());
-        int numSchedules = 0;
+
+        // Calling indexResultSet.all() is somewhat inefficient as it requires copying all of the rows into a new
+        // List. We need the size up front though in order to set remainingSchedules in the statement below. I
+        // opened https://datastax-oss.atlassian.net/browse/JAVA-260 to provide a better way of getting the result
+        // set count.
+        List<Row> rows = indexResultSet.all();
+        getRemainingSchedules().getAndSet(rows.size());
         try {
-            for (Row row : indexResultSet) {
+            for (Row row : rows) {
                 state.getPermits().acquire();
-                ++numSchedules;
                 getRemainingSchedules().incrementAndGet();
                 queryFutures.add(findMetricData(row.getInt(1)));
                 if (queryFutures.size() == state.getBatchSize()) {
@@ -57,12 +62,12 @@ abstract class BatchAggregationScheduler implements FutureCallback<ResultSet> {
                 state.getAggregationTasks().submit(new BatchAggregator(createBatchAggregationState(queryFutures,
                     batchStopwatch)));
             }
-            if (numSchedules == 0) {
+            if (rows.isEmpty()) {
                 getAggregationDoneSignal().countDown();
             }
             stopwatch.stop();
             if (log.isDebugEnabled()) {
-                log.debug("Finished scheduling " + getAggregationType() + " aggregation tasks for " + numSchedules +
+                log.debug("Finished scheduling " + getAggregationType() + " aggregation tasks for " + rows.size() +
                     " schedules in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         } catch (InterruptedException e) {

@@ -78,7 +78,7 @@ public class BundleGroup implements Serializable {
     @ManyToMany
     private Set<Bundle> bundles;
 
-    @ManyToMany(mappedBy = "bundleGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToMany(mappedBy = "bundleGroups", fetch = FetchType.LAZY)
     private Set<Role> roles;
 
     public BundleGroup() {

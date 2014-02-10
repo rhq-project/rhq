@@ -76,7 +76,7 @@ public class StorageClusterMonitor implements StorageStateListener {
         updateRequestLimit();
     }
 
-    private void updateRequestLimit() {
+    public void updateRequestLimit() {
         persistStorageProperty(REQUEST_LIMIT, Double.toString(session.getRequestLimit()));
     }
 

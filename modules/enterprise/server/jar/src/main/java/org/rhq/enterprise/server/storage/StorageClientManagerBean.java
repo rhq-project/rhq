@@ -162,6 +162,7 @@ public class StorageClientManagerBean {
             session = new StorageSession(wrappedSession);
 
             storageClusterMonitor = new StorageClusterMonitor(getServerPropsFile(), session);
+            storageClusterMonitor.updateRequestLimit();
             session.addStorageStateListener(storageClusterMonitor);
 
             metricsConfiguration = new MetricsConfiguration();

@@ -57,6 +57,7 @@ public class StorageSession implements Host.StateListener {
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
         this.wrappedSession.getCluster().register(this);
+        calculateRequestLimit();
     }
 
     public void registerNewSession(Session newWrappedSession) {
@@ -74,6 +75,16 @@ public class StorageSession implements Host.StateListener {
             // nothing
         }
         oldWrappedSession.shutdown();
+    }
+
+    private void calculateRequestLimit() {
+        double rate = 0.0;
+        for (Host host : wrappedSession.getCluster().getMetadata().getAllHosts()) {
+            if (host.isUp()) {
+                rate += topologyDelta;
+            }
+        }
+        permits.setRate(rate);
     }
 
     public double getRequestLimit() {
@@ -226,7 +237,7 @@ public class StorageSession implements Host.StateListener {
     }
 
     private void changeRequestThroughput(double delta) {
-        double oldRate = permits.getRate();
+        double oldRate = getRequestLimit();
         double newRate = oldRate + delta;
         if (delta < 0 && newRate < minRequestLimit) {
             newRate = minRequestLimit;

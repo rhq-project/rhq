@@ -148,6 +148,9 @@ debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PAT
 if [ -f "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
    debug_wrapper_msg "Loading environment script: ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh"
    . "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" $*
+   # add umask so generated content is not world readable
+   umask $RHQ_AGENT_UMASK
+
 fi
 
 # -------------------------------

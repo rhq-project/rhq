@@ -218,6 +218,8 @@ debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
 # Ensure the agent uses our custom JavaPreferences implementation
 # ----------------------------------------------------------------------
 _JAVA_PREFERENCES_FACTORY_OPT="\"-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory\""
+# add umask so user preferences are not world readable
+umask $RHQ_AGENT_UMASK
 
 # ----------------------------------------------------------------------
 # Prepare the command line arguments passed to the RHQ Agent

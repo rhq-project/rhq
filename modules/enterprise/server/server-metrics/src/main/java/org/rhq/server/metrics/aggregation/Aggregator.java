@@ -72,7 +72,7 @@ public class Aggregator {
         DateTime sixHourTimeSlice = get6HourTimeSlice();
         DateTime twentyFourHourTimeSlice = get24HourTimeSlice();
 
-        int maxParallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "5"));
+        int maxParallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "4"));
 
         state = new AggregationState()
             .setDao(dao)

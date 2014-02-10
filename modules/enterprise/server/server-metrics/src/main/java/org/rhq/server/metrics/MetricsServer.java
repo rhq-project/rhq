@@ -84,7 +84,7 @@ public class MetricsServer {
         Executors.newFixedThreadPool(Math.min(Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "5")),
             Runtime.getRuntime().availableProcessors()), new StorageClientThreadFactory()));
 
-    private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "25"));
+    private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "10"));
 
     private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 

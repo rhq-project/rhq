@@ -130,8 +130,10 @@ if [ -f "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
    debug_wrapper_msg "Loading environment script: ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh"
    . "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" $*
    # add umask so generated content is not world readable
-   umask $RHQ_AGENT_UMASK
-
+   [ -z "${RHQ_AGENT_UMASK}" ] && RHQ_AGENT_UMASK=007
+   umask ${RHQ_AGENT_UMASK} >/dev/null || {
+      echo >&2 "RHQ_AGENT_UMASK contains an invalid umask value of [${RHQ_AGENT_UMASK}]"
+   }
 fi
 
 # -------------------------------

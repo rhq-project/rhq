@@ -72,7 +72,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartSingleValueLabel()(),
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHours()(),
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHoursMinutes()(),
-                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()()
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isSummaryGraph()()
                 );
 
 
@@ -787,7 +788,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        //console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
+                        console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
 
                         determineScale();
                         createHeader(chartContext.chartTitle);

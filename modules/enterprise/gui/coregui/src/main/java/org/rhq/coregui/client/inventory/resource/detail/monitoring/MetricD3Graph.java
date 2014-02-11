@@ -188,7 +188,8 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
     }
 
     public String getFullChartId() {
-        return "rChart-" + graph.getMetricGraphData().getChartId();
+        String graphMarkerPrefix = graph.getMetricGraphData().isSummaryGraph() ? "sChart-" : "rChart-";
+        return graphMarkerPrefix + graph.getMetricGraphData().getChartId();
 
     }
 

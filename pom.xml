@@ -808,7 +808,7 @@
          <artifactId>liquibase-core</artifactId>
          <version>${liquibase-core.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>org.jetbrains</groupId>
          <artifactId>annotations</artifactId>
@@ -988,7 +988,7 @@
         <artifactId>jackson-mapper-asl</artifactId>
         <version>${jackson-mapper-asl.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
@@ -1036,7 +1036,7 @@
          <artifactId>snakeyaml</artifactId>
          <version>${cassandra.snakeyaml.version}</version>
       </dependency>
-      
+
      <dependency>
         <groupId>net.sf.trove4j</groupId>
         <artifactId>trove4j</artifactId>
@@ -2357,6 +2357,9 @@
         <developer>
             <name>Charles Crouch</name>
             <timezone>-6</timezone>
+            <roles>
+                 <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Jason Dobies</name>
@@ -2455,6 +2458,10 @@
         <developer>
             <name>Mike Thompson</name>
             <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <name>Libor Zoubek</name>
+            <timezone>+1</timezone>
         </developer>
     </developers>
 

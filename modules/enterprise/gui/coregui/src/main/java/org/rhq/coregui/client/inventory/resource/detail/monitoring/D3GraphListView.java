@@ -347,7 +347,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private void buildSingleGraph(PageList<MeasurementOOBComposite> measurementOOBCompositeList,
         MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
 
-        MetricGraphData metricGraphData = MetricGraphData.createForResourceSummary(resource.getId(), resource.getName(),
+        MetricGraphData metricGraphData = MetricGraphData.createForResource(resource.getId(), resource.getName(),
             measurementDefinition, data, measurementOOBCompositeList);
         StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
         graph.setMetricGraphData(metricGraphData);

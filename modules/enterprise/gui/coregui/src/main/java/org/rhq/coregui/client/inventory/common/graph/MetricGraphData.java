@@ -73,7 +73,6 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
     private boolean isPortalGraph;
-    private boolean isSummaryGraph;
     private boolean hideLegend;
 
 
@@ -103,45 +102,21 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     private MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef,
-        List<MeasurementDataNumericHighLowComposite> metricData,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList, boolean summaryGraph) {
+        List<MeasurementDataNumericHighLowComposite> metrics,
+        PageList<MeasurementOOBComposite> measurementOOBCompositeList ) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(measurementDef.getId());
         this.definition = measurementDef;
-        this.metricData = metricData;
+        this.metricData = metrics;
         this.measurementOOBCompositeList = measurementOOBCompositeList;
         this.isPortalGraph = false;
-        this.isSummaryGraph = summaryGraph;
-        calcMinMaxAvg(metricData);
     }
 
-    public static MetricGraphData createForResource(int resourceId, String resourceName,
-        MeasurementDefinition measurementDef, List<MeasurementDataNumericHighLowComposite> metrics,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
-        return new MetricGraphData(resourceId, resourceName, measurementDef, metrics, measurementOOBCompositeList, false);
-    }
-    public static MetricGraphData createForResourceSummary(int resourceId, String resourceName,
-        MeasurementDefinition measurementDef, List<MeasurementDataNumericHighLowComposite> metrics,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
-        return new MetricGraphData(resourceId, resourceName, measurementDef, metrics, measurementOOBCompositeList, true);
-    }
-
-    private void calcMinMaxAvg(List<MeasurementDataNumericHighLowComposite> metricData) {
-        int averageCount = 0;
-        for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            if (!Double.isNaN(measurement.getLowValue())) {
-                min = Math.min(min, measurement.getLowValue());
-            }
-            if (!Double.isNaN(measurement.getHighValue())) {
-                max = Math.max(max, measurement.getHighValue());
-            }
-            if (!Double.isNaN(measurement.getValue())) {
-                average = average + measurement.getValue();
-                averageCount++;
-            }
-        }
-        average = average / averageCount;
+    public static MetricGraphData createForResource(int resourceId, String resourceName, MeasurementDefinition measurementDef,
+                                                    List<MeasurementDataNumericHighLowComposite> metrics,
+                                                    PageList<MeasurementOOBComposite> measurementOOBCompositeList ){
+        return new MetricGraphData(resourceId, resourceName,measurementDef, metrics, measurementOOBCompositeList);
     }
 
     public int getEntityId() {
@@ -428,10 +403,6 @@ public class MetricGraphData implements JsonMetricProducer {
         }
         return false;
 
-    }
-
-    public boolean isSummaryGraph() {
-        return isSummaryGraph;
     }
 
     private void calculateOOB() {

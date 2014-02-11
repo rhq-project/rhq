@@ -37,9 +37,10 @@
  * @param chartAverage
  * @param chartMin
  * @param chartMax
+ * @param isSummaryGraph
  * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend, chartAverage, chartMin, chartMax) {
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend, chartAverage, chartMin, chartMax, isSummaryGraph) {
             "use strict";
             if (!(this instanceof ChartContext)) {
                 throw new Error("ChartContext function cannot be called as a function.");
@@ -66,12 +67,17 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
             this.chartHoverTimeFormat = chartHoverTimeFormat;
             this.chartHoverDateFormat = chartHoverDateFormat;
             this.isPortalGraph = isPortalGraph;
+            this.isSummaryGraph = isSummaryGraph;
             this.portalId = portalId;
-            if (isPortalGraph) {
-                this.chartHandle = "rChart-" + chartId + "-" + portalId;
-            }
-            else {
-                this.chartHandle = "rChart-" + chartId;
+            if(isSummaryGraph){
+                this.chartHandle = "sChart-" + chartId;
+            }else{
+                if (isPortalGraph) {
+                    this.chartHandle = "rChart-" + chartId + "-" + portalId;
+                }
+                else {
+                    this.chartHandle = "rChart-" + chartId;
+                }
             }
             this.chartSelection = this.chartHandle + " svg";
             this.buttonBarDateTimeFormat = buttonBarDateTimeFormat;

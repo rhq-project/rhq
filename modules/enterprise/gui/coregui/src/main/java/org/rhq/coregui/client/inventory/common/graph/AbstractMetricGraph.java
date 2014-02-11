@@ -174,8 +174,13 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     public String getChartTitle() {
         return metricGraphData != null ? metricGraphData.getChartTitle() : "";
     }
+
     public boolean isPortalGraph(){
         return metricGraphData.isPortalGraph();
+    }
+
+    public boolean isSummaryGraph(){
+        return metricGraphData.isSummaryGraph();
     }
 
 

@@ -25,6 +25,9 @@
 
 package org.rhq.enterprise.server.storage;
 
+import static org.rhq.server.metrics.StorageClientConstant.DATA_CENTER;
+import static org.rhq.server.metrics.StorageClientConstant.LOAD_BALANCING;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +50,9 @@ import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoggingRetryPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 
@@ -365,7 +370,7 @@ public class StorageClientManagerBean {
 
         cluster = new ClusterBuilder().addContactPoints(hostNames.toArray(new String[hostNames.size()]))
             .withCredentialsObfuscated(this.cachedStorageUsername, this.cachedStoragePassword).withPort(port)
-            .withLoadBalancingPolicy(new RoundRobinPolicy())
+            .withLoadBalancingPolicy(getLoadBalancingPolicy())
             .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE)).withCompression(
                 ProtocolOptions.Compression.NONE).build();
 
@@ -380,6 +385,26 @@ public class StorageClientManagerBean {
             System.getProperty("rhq.storage.client.max-remote-connections", "24")));
 
         return cluster.connect(RHQ_KEYSPACE);
+    }
+
+    private LoadBalancingPolicy getLoadBalancingPolicy() {
+        String policy = System.getProperty(LOAD_BALANCING.property());
+        if (policy == null || policy.equals("RoundRobin")) {
+            return new RoundRobinPolicy();
+        }
+        if (policy.equals("DCAwareRoundRobin")) {
+            String dataCenter = System.getProperty(DATA_CENTER.property());
+            if (dataCenter == null) {
+                log.warn(policy + " was specified for " + LOAD_BALANCING + " but " + DATA_CENTER + " is undefined." +
+                    "Reverting to RoundRobin load balancing policy.");
+                return new RoundRobinPolicy();
+            } else {
+                return new DCAwareRoundRobinPolicy(dataCenter);
+            }
+        }
+        log.warn(policy + " is not a supported load balancing policy. Reverting to RoundRobin load balancing policy.");
+
+        return new RoundRobinPolicy();
     }
 
     private void initMetricsServer() {

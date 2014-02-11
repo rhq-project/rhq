@@ -13,7 +13,11 @@ public enum StorageClientConstant {
 
     REQUEST_TIMEOUT_DAMPENING("rhq.storage.request.timeout-dampening"),
 
-    REQUEST_TOPOLOGY_CHANGE_DELTA("rhq.storage.request.limit.topology-delta");
+    REQUEST_TOPOLOGY_CHANGE_DELTA("rhq.storage.request.limit.topology-delta"),
+
+    LOAD_BALANCING("rhq.storage.client.load-balancing"),
+
+    DATA_CENTER("rhq.storage.dc");
 
     private String property;
 
@@ -25,4 +29,9 @@ public enum StorageClientConstant {
         return property;
     }
 
+
+    @Override
+    public String toString() {
+        return property;
+    }
 }

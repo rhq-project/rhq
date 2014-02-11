@@ -492,7 +492,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 log.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
             }
         } else if (hasLocalResourcePrefix) {
-            String configFilePath = currentResourceKey.substring(LOCAL_RESOURCE_KEY_PREFIX.length() + 1);
+            String configFilePath = currentResourceKey.substring(LOCAL_RESOURCE_KEY_PREFIX.length());
             File configFile = new File(configFilePath);
             try {
                 String configFileCanonicalPath = configFile.getCanonicalPath();

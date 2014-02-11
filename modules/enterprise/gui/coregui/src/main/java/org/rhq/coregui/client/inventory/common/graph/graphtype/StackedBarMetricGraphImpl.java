@@ -40,6 +40,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
+        "use strict";
         //console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
@@ -72,7 +73,11 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartSingleValueLabel()(),
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHours()(),
                         global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHoursMinutes()(),
-                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()()
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartAverage()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartMin()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartMax()(),
+                        global.@org.rhq.coregui.client.inventory.common.graph.AbstractMetricGraph::isSummaryGraph()()
                 );
 
 
@@ -241,12 +246,11 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
 
-            function createMinAvgPeakSidePanel(minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
+            function createMinAvgPeakSidePanel(minLabel, minValue, avgLabel, avgValue, highLabel, highValue ) {
                 var xLabel = 772,
                         xValue = 820,
                         yBase = 100,
-                        yInc = 25,
-                        decimalPlaces = 0;
+                        yInc = 25;
 
                 // title/header
                 chart.append("g").append("rect")
@@ -272,7 +276,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("class", "highText")
                             .attr("x", xValue)
                             .attr("y", yBase)
-                            .text(highValue.toFixed(decimalPlaces) + " " + uom);
+                            .text(highValue);
                 }
 
 
@@ -288,7 +292,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("class", "avgText")
                             .attr("x", xValue)
                             .attr("y", yBase + yInc)
-                            .text(avgValue.toFixed(decimalPlaces) + " " + uom);
+                            .text(avgValue);
                 }
 
                 // min
@@ -303,7 +307,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("class", "minText")
                             .attr("x", xValue)
                             .attr("y", yBase + 2 * yInc)
-                            .text(minValue.toFixed(decimalPlaces) + " " + uom);
+                            .text(minValue);
                 }
 
             }
@@ -784,7 +788,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             return {
                 // Public API
                 draw: function (chartContext) {
-                    "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
                         //console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);

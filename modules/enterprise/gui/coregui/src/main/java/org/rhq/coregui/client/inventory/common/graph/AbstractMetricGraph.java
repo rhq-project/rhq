@@ -160,7 +160,7 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
     public String getButtonBarDateTimeFormat(){
-       return MSG.common_buttonbar_datetime_format_moment_js();
+        return MSG.common_buttonbar_datetime_format_moment_js();
     }
 
     public int getChartHeight() {
@@ -174,8 +174,13 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     public String getChartTitle() {
         return metricGraphData != null ? metricGraphData.getChartTitle() : "";
     }
+
     public boolean isPortalGraph(){
         return metricGraphData.isPortalGraph();
+    }
+
+    public boolean isSummaryGraph(){
+        return metricGraphData.isSummaryGraph();
     }
 
 
@@ -205,6 +210,18 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
 
     public boolean isHideLegend(){
         return metricGraphData.isHideLegend();
+    }
+
+    public String getChartAverage(){
+        return  metricGraphData.getChartAverage();
+    }
+
+    public String getChartMin(){
+        return  metricGraphData.getChartMin();
+    }
+
+    public String getChartMax(){
+        return  metricGraphData.getChartMax();
     }
 
     public void setGraphListView(AbstractD3GraphListView graphListView) {
@@ -273,6 +290,6 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
     public void redrawGraphs(){
-       graphListView.refreshData();
+        graphListView.refreshData();
     }
 }

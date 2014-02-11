@@ -257,7 +257,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         // ensure the entire EAP inventory is discovered before continuing, we need deep resources in inventory
-        waitForAsyncDiscoveryToStabilize(platform);
+        // waitForAsyncDiscoveryToStabilize(platform);
     }
 
     /** This test method exercises a number of things:
@@ -480,9 +480,9 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
         InventoryManager im = pluginContainer.getInventoryManager();
         Resource platform = im.getPlatform();
-        Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
-        Resource bindings = getResourceByTypeAndKey(server, RESOURCE_TYPE, RESOURCE_KEY);
+        Resource bindings = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
         return bindings;
     }
 
@@ -500,7 +500,8 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             if (platform != null)
                 System.out.println("*** Found        Platform [" + platform.getResourceKey() + "]");
             //host controller
-            Resource hostController = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
+            Resource hostController = waitForResourceByTypeAndKey(platform, platform,
+                DomainServerComponentTest.RESOURCE_TYPE,
                 DomainServerComponentTest.RESOURCE_KEY);
             if (hostController != null)
                 System.out.println("*** Found Host Controller [" + hostController.getResourceKey() + "]");
@@ -508,7 +509,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             //profile=full-ha
             ResourceType profileType = new ResourceType("Profile", PLUGIN_NAME, ResourceCategory.SERVICE, null);
             String key = PROFILE;
-            Resource profile = getResourceByTypeAndKey(hostController, profileType, key);
+            Resource profile = waitForResourceByTypeAndKey(platform, hostController, profileType, key);
             if (profile != null)
                 System.out.println("*** Found         Profile [" + platform.getResourceKey() + "]");
 
@@ -516,7 +517,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             ResourceType securityType = new ResourceType("Security (Profile)", PLUGIN_NAME, ResourceCategory.SERVICE,
                 null);
             key += "," + SECURITY_RESOURCE_KEY;
-            Resource security = getResourceByTypeAndKey(profile, securityType, key);
+            Resource security = waitForResourceByTypeAndKey(platform, profile, securityType, key);
             if (security != null)
                 System.out.println("*** Found        Security [" + security.getResourceKey() + "]");
 
@@ -525,7 +526,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 ResourceCategory.SERVICE, null);
             key += "," + securityDomainId;
             testSecurityDomainKey = key;
-            testSecurityDomain = getResourceByTypeAndKey(security, domainType, key);
+            testSecurityDomain = waitForResourceByTypeAndKey(platform, security, domainType, key);
             if (testSecurityDomain != null)
                 System.out.println("*** Found          Domain [" + testSecurityDomain.getResourceKey() + "]");
         }
@@ -566,7 +567,11 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 + "," + moduleAttribute;
         }
 
-        moduleOptionResource = getResourceByTypeAndKey(testSecurityDomain, moduleOptionType, moduleOptionTypeKey);
+        InventoryManager im = pluginContainer.getInventoryManager();
+        Resource platform = im.getPlatform();
+
+        moduleOptionResource = waitForResourceByTypeAndKey(platform, testSecurityDomain, moduleOptionType,
+            moduleOptionTypeKey);
         if (moduleOptionResource != null)
             System.out.println("*** Found ModuleOption [" + moduleOptionResource.getResourceKey() + "]");
 
@@ -610,18 +615,23 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             moduleAttribute = "mapping=classic";
             moduleOptionsDescriptor = "Module Options (Mapping - Profile)";
         }
+
+        InventoryManager im = pluginContainer.getInventoryManager();
+        Resource platform = im.getPlatform();
+
         //Build the right Module Option Type. Ex. ACL Modules (Profile), etc.
         ResourceType modulesType = new ResourceType(descriptorName, PLUGIN_NAME, ResourceCategory.SERVICE, null);
         //Ex. profile=full-ha,subsystem=security,security-domain=testDomain2,acl=classic,acl-modules:0
         String sharedRoot = "profile=full-ha,subsystem=security,security-domain=testDomain2";
         String moduleOptionTypeKey = sharedRoot += "," + moduleAttribute + "," + optionAttributeType + ":0";
         //Ex. Module Options Type children [ACL Modules (Profile),etc.]
-        Resource modulesInstance = getResourceByTypeAndKey(parent, modulesType, moduleOptionTypeKey);
+        Resource modulesInstance = waitForResourceByTypeAndKey(platform, parent, modulesType, moduleOptionTypeKey);
 
         //Module Options
         ResourceType moduleOptionsType = new ResourceType(moduleOptionsDescriptor, PLUGIN_NAME,
             ResourceCategory.SERVICE, null);
-        moduleOptionsResource = getResourceByTypeAndKey(modulesInstance, moduleOptionsType, moduleOptionTypeKey
+        moduleOptionsResource = waitForResourceByTypeAndKey(platform, modulesInstance, moduleOptionsType,
+            moduleOptionTypeKey
             + ",module-options");
 
         return moduleOptionsResource;
@@ -631,8 +641,11 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         Resource resource = null;
         if (((parentResource != null) & (pluginDescriptorTypeName != null) & (resourceKey != null))
             & (((!pluginDescriptorTypeName.isEmpty()) & (!resourceKey.isEmpty())))) {
+            InventoryManager im = pluginContainer.getInventoryManager();
+            Resource platform = im.getPlatform();
+
             ResourceType resourceType = buildResourceType(pluginDescriptorTypeName);
-            resource = getResourceByTypeAndKey(parentResource, resourceType, resourceKey);
+            resource = waitForResourceByTypeAndKey(platform, parentResource, resourceType, resourceKey);
         }
         return resource;
     }

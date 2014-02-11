@@ -67,14 +67,14 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
         Resource platform = inventoryManager.getPlatform();
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
 
-        Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
 
         for (ResourceData resourceData : testResourceData) {
             ResourceType resourceType = new ResourceType(resourceData.resourceTypeName, PLUGIN_NAME,
                 ResourceCategory.SERVICE, null);
-            Resource subsystem = getResourceByTypeAndKey(server, resourceType, resourceData.resourceKey);
+            Resource subsystem = waitForResourceByTypeAndKey(platform, server, resourceType, resourceData.resourceKey);
 
             Assert.assertNotNull(subsystem);
 

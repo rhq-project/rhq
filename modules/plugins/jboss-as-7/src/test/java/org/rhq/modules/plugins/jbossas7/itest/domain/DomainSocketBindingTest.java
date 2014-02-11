@@ -187,9 +187,6 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         assert response.getErrorMessage()==null: "Property removal resulted in this error: " + response.getErrorMessage();
     }
 
-
-
-
     @NotNull
     private Configuration loadConfig() throws PluginContainerException {
         Configuration config = pluginContainer.getConfigurationManager().loadResourceConfiguration(getResource().getId());
@@ -203,9 +200,10 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
         InventoryManager im = pluginContainer.getInventoryManager();
         Resource platform = im.getPlatform();
         assert platform != null : "Did not find a platform";
-        Resource server = getResourceByTypeAndKey(platform,DomainServerComponentTest.RESOURCE_TYPE,DomainServerComponentTest.RESOURCE_KEY);
+        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
+            DomainServerComponentTest.RESOURCE_KEY);
         assert server != null : "Did not find the domain server";
-        Resource bindings = getResourceByTypeAndKey(server,RESOURCE_TYPE,RESOURCE_KEY);
+        Resource bindings = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
         assert bindings != null : "Did not find " + RESOURCE_KEY;
         return bindings;
     }

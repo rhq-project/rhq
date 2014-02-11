@@ -266,7 +266,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         log.info("waitForAsyncDiscoveryToStabilize: ResourceCount Stable at=" + endResCount);
     }
 
-    private int getResCount(Resource resource) {
+    static protected int getResCount(Resource resource) {
         int size = 1;
         Set<Resource> children = resource.getChildResources();
         if (null != children && !children.isEmpty()) {

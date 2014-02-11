@@ -79,7 +79,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
     protected Resource getServerResource() {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        return getResourceByTypeAndKey(platform, getServerResourceType(), getServerResourceKey());
+        return waitForResourceByTypeAndKey(platform, platform, getServerResourceType(), getServerResourceKey());
     }
 
     public void testAutoDiscovery() throws Exception {

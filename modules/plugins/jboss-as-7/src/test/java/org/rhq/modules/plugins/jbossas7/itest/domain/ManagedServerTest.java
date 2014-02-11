@@ -94,9 +94,10 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
        InventoryManager im = pluginContainer.getInventoryManager();
        Resource platform = im.getPlatform();
        assert platform != null : "Did not find a platform";
-       Resource server = getResourceByTypeAndKey(platform,DomainServerComponentTest.RESOURCE_TYPE,DomainServerComponentTest.RESOURCE_KEY);
+        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
+            DomainServerComponentTest.RESOURCE_KEY);
        assert server != null : "Did not find the domain server";
-       Resource mServer = getResourceByTypeAndKey(server,RESOURCE_TYPE,RESOURCE_KEY);
+        Resource mServer = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
        assert mServer != null : "Did not find " + RESOURCE_KEY;
        return mServer;
    }

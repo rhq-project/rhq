@@ -227,8 +227,9 @@ public class SocketBindingTest extends AbstractJBossAS7PluginTest {
 
         InventoryManager im = pluginContainer.getInventoryManager();
         Resource platform = im.getPlatform();
-        Resource server = getResourceByTypeAndKey(platform,StandaloneServerComponentTest.RESOURCE_TYPE,StandaloneServerComponentTest.RESOURCE_KEY);
-        Resource bindings = getResourceByTypeAndKey(server,RESOURCE_TYPE,RESOURCE_KEY);
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource bindings = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
         return bindings;
     }
 

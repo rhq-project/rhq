@@ -55,7 +55,7 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
-        Resource server = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
             DomainServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
     }
@@ -111,7 +111,7 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("HornetQ (Profile)");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
             DomainServerComponentTest.RESOURCE_KEY);
 
         int errorCount = loadUpdateConfigChildResources(server, ignoredResources);
@@ -140,7 +140,7 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredOperations.add("restart-servers");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
             DomainServerComponentTest.RESOURCE_KEY);
 
         executeNoArgOperations(server, ignoredSubsystems, ignoredOperations);

@@ -55,7 +55,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
-        Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
         inventoryManager.activateResource(server, platformContainer, false);
     }
@@ -78,7 +78,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         ignoredOperations.add("subsystem:activate");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
 
         executeNoArgOperations(server, ignoredSubsystems, ignoredOperations);
@@ -118,7 +118,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         ignoredResources.add("HornetQ (Profile)");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
 
         int errorCount = loadUpdateConfigChildResources(server, ignoredResources);

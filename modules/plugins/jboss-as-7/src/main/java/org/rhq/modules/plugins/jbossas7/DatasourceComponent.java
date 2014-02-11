@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -128,33 +128,38 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         if (resourceReport.getStatus() != CreateResourceStatus.SUCCESS)
             return resourceReport;
 
-        // outer create resource did not cater for the xa properties, so lets add them now
+        // outer create resource did not cater for the connection or xa properties, so lets add them now
+        String connPropAttributeNameOnAS7, connPropPluginConfigPropertyName, keyName;
         if (createResourceReport.getResourceType().getName().toLowerCase().contains("xa")) {
-            PropertyList listPropertyWrapper = createResourceReport.getResourceConfiguration().getList("*2");
-            List<Property> listProperty = listPropertyWrapper.getList();
-
-            String baseAddress = resourceReport.getResourceKey();
-
-            CompositeOperation cop = new CompositeOperation();
-            for (Property p : listProperty) {
-                PropertyMap map = (PropertyMap) p;
-                String key = map.getSimpleValue("key", null);
-                String value = map.getSimpleValue("value", null);
-                if (key == null || value == null)
-                    continue;
-
-                Address propertyAddress = new Address(baseAddress);
-                propertyAddress.add("xa-datasource-properties", key);
-                Operation op = new Operation("add", propertyAddress);
-                op.addAdditionalProperty("value", value);
-                cop.addStep(op);
-
+            connPropAttributeNameOnAS7 = "xa-datasource-properties";
+            connPropPluginConfigPropertyName = "*2";
+            keyName = "key";
+        } else {
+            connPropAttributeNameOnAS7 = "connection-properties";
+            connPropPluginConfigPropertyName = "*1";
+            keyName = "pname";
+        }
+        PropertyList listPropertyWrapper = createResourceReport.getResourceConfiguration().getList(
+            connPropPluginConfigPropertyName);
+        CompositeOperation cop = new CompositeOperation();
+        for (Property p : listPropertyWrapper.getList()) {
+            PropertyMap map = (PropertyMap) p;
+            String key = map.getSimpleValue(keyName, null);
+            String value = map.getSimpleValue("value", null);
+            if (key == null || value == null) {
+                continue;
             }
-
+            Address propertyAddress = new Address(resourceReport.getResourceKey());
+            propertyAddress.add(connPropAttributeNameOnAS7, key);
+            Operation op = new Operation("add", propertyAddress);
+            op.addAdditionalProperty("value", value);
+            cop.addStep(op);
+        }
+        if (cop.numberOfSteps() > 0) {
             Result res = getASConnection().execute(cop);
             if (!res.isSuccess()) {
-                resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
-                    + res.getFailureDescription());
+                resourceReport.setErrorMessage("Datasource was added, but setting " + connPropAttributeNameOnAS7
+                    + " failed: " + res.getFailureDescription());
                 resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                 return resourceReport;
             }

@@ -51,5 +51,6 @@
 
         <!-- other dependencies we need -->
         <module name="org.jboss.as.network"/>
+        <module name="org.jboss.as.jmx"/>
     </dependencies>
 </module>

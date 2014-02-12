@@ -194,7 +194,13 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             @Override
             public void run() {
                 metricsTableListGrid.expandOpenedRows();
-                BrowserUtility.graphSparkLines();
+                new Timer() {
+                    @Override
+                    public void run() {
+                        BrowserUtility.graphSparkLines();
+                    }
+                    // we need to add a little extra time for these to get built
+                }.schedule(350);
             }
         }.schedule(150);
 
@@ -325,6 +331,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                     if (null != metricsTableView && null != expandedRows
                         && metricsTableView.expandedRows.contains(metricDefinitionId)) {
                         expandRecord(listGridRecord);
+                        BrowserUtility.graphSparkLines();
                     }
                 }
             }

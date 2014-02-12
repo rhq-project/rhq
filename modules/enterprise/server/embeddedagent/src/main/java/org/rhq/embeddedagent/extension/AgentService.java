@@ -2,6 +2,7 @@ package org.rhq.embeddedagent.extension;
 
 import java.io.CharArrayWriter;
 import java.io.File;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -146,6 +147,12 @@ public class AgentService implements Service<AgentService> {
             SocketBinding agentListenerBindingValue = agentListenerBinding.getValue();
             String agentBindAddress = agentListenerBindingValue.getAddress().getHostAddress();
             String agentBindPort = String.valueOf(agentListenerBindingValue.getAbsolutePort());
+
+            // just pick one if we weren't given one - we can't bind "to all"
+            if (agentBindAddress.equals("0.0.0.0") || agentBindAddress.equals("::/128")) {
+                agentBindAddress = InetAddress.getLocalHost().getCanonicalHostName();
+            }
+
             configOverrides.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, agentBindAddress);
             configOverrides.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, agentBindPort);
 

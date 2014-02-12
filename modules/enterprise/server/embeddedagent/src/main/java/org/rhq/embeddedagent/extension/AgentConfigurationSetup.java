@@ -167,7 +167,13 @@ public class AgentConfigurationSetup {
     }
 
     private void reloadAgentConfiguration() throws Exception {
-        getPreferencesNode().clear();
+        // resetting the schema number to 0 forces prepareConfigurationPreferences
+        // to clear prefs, reload cofig file, but it keeps the security token if we have one.
+        Preferences prefNode = getPreferencesNode();
+        prefNode.putInt(AgentConfigurationConstants.CONFIG_SCHEMA_VERSION, 0);
+        prefNode.flush();
+
+        // because of the above, this loads in the config file, wiping any existing prefs away (except token)
         prepareConfigurationPreferences();
     }
 

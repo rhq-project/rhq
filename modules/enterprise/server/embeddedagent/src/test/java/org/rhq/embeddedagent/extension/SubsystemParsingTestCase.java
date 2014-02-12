@@ -64,7 +64,7 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         PathElement element = addr.getElement(0);
         Assert.assertEquals(element.getKey(), SUBSYSTEM);
         Assert.assertEquals(element.getValue(), AgentSubsystemExtension.SUBSYSTEM_NAME);
-        Assert.assertEquals(addSubsystem.get(AgentSubsystemExtension.AGENT_ENABLED).asBoolean(), true);
+        Assert.assertEquals(addSubsystem.get(AgentSubsystemExtension.AGENT_ENABLED).resolve().asBoolean(), true);
         List<Property> plugins = addSubsystem.get(AgentSubsystemExtension.PLUGINS_ELEMENT).asPropertyList();
         Assert.assertEquals(plugins.size(), 2);
         Assert.assertEquals(plugins.get(0).getName(), "platform"); // platform plugin is first in the xml
@@ -87,8 +87,9 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         Assert.assertTrue(model.get(SUBSYSTEM).hasDefined(AgentSubsystemExtension.SUBSYSTEM_NAME));
         Assert.assertTrue(model.get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME).hasDefined(
             AgentSubsystemExtension.AGENT_ENABLED));
-        Assert.assertTrue(model.get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME,
-            AgentSubsystemExtension.AGENT_ENABLED).asBoolean());
+        Assert.assertTrue(model
+            .get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME, AgentSubsystemExtension.AGENT_ENABLED).resolve()
+            .asBoolean());
         Assert.assertTrue(model.get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME).hasDefined(
             AgentSubsystemExtension.PLUGINS_ELEMENT));
 
@@ -268,8 +269,9 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         Assert.assertTrue(model.get(SUBSYSTEM).hasDefined(AgentSubsystemExtension.SUBSYSTEM_NAME));
         Assert.assertTrue(model.get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME).hasDefined(
             AgentSubsystemExtension.AGENT_ENABLED));
-        Assert.assertTrue(model.get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME,
-            AgentSubsystemExtension.AGENT_ENABLED).asBoolean());
+        Assert.assertTrue(model
+            .get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME, AgentSubsystemExtension.AGENT_ENABLED).resolve()
+            .asBoolean());
         Assert.assertTrue(model.get(SUBSYSTEM, AgentSubsystemExtension.SUBSYSTEM_NAME).hasDefined(
             AgentSubsystemExtension.PLUGINS_ELEMENT));
 
@@ -292,10 +294,10 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         // Use read-attribute instead of reading the whole model to get an attribute value
         ModelNode readOp = new ModelNode();
         readOp.get(OP).set(READ_ATTRIBUTE_OPERATION);
-        readOp.get(OP_ADDR).set(agentSubsystemPath.toModelNode());
+        readOp.get(OP_ADDR).set(agentSubsystemPath.toModelNode().resolve());
         readOp.get(NAME).set(AgentSubsystemExtension.AGENT_ENABLED);
         result = services.executeOperation(readOp);
-        Assert.assertTrue(checkResultAndGetContents(result).asBoolean());
+        Assert.assertTrue(checkResultAndGetContents(result).resolve().asBoolean());
 
         readOp.get(NAME).set(AgentSubsystemExtension.PLUGINS_ELEMENT);
         result = services.executeOperation(readOp);
@@ -313,7 +315,7 @@ public class SubsystemParsingTestCase extends SubsystemBaseParsingTestCase {
         // execute status
         ModelNode statusOp = new ModelNode();
         statusOp.get(OP).set(AgentSubsystemExtension.AGENT_STATUS_OP);
-        statusOp.get(OP_ADDR).set(agentSubsystemPath.toModelNode());
+        statusOp.get(OP_ADDR).set(agentSubsystemPath.toModelNode().resolve());
         result = services.executeOperation(statusOp);
         Assert.assertTrue(checkResultAndGetContents(result).asBoolean());
         */

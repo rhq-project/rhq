@@ -122,7 +122,7 @@ public class AgentSubsystemExtension implements Extension {
             opAdd.get(OP_ADDR).set(PathAddress.pathAddress(SUBSYSTEM_PATH).toModelNode());
             String agentEnabledValue = reader.getAttributeValue(null, AGENT_ENABLED);
             if (agentEnabledValue != null) {
-                opAdd.get(AGENT_ENABLED).set(agentEnabledValue);
+                opAdd.get(AGENT_ENABLED).setExpression(agentEnabledValue);
             }
 
             // Read the children elements
@@ -145,41 +145,41 @@ public class AgentSubsystemExtension implements Extension {
                 } else if (elementName.equals(SERVER_ENDPOINT_ELEMENT)) {
                     String val = reader.getAttributeValue(null, SERVER_ENDPOINT_ADDRESS_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_SERVER_BIND_ADDRESS).set(val);
+                        opAdd.get(ATTRIB_SERVER_BIND_ADDRESS).setExpression(val);
                     }
                     val = reader.getAttributeValue(null, SERVER_ENDPOINT_PORT_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_SERVER_BIND_PORT).set(val);
+                        opAdd.get(ATTRIB_SERVER_BIND_PORT).setExpression(val);
                     }
                     val = reader.getAttributeValue(null, SERVER_ENDPOINT_TRANSPORT_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_SERVER_TRANSPORT).set(val);
+                        opAdd.get(ATTRIB_SERVER_TRANSPORT).setExpression(val);
                     }
                     val = reader.getAttributeValue(null, SERVER_ENDPOINT_TRANSPORT_PARAMS_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_SERVER_TRANSPORT_PARAMS).set(val);
+                        opAdd.get(ATTRIB_SERVER_TRANSPORT_PARAMS).setExpression(val);
                     }
                     ParseUtils.requireNoContent(reader);
                 } else if (elementName.equals(AGENT_ENDPOINT_ELEMENT)) {
                     String val = reader.getAttributeValue(null, AGENT_ENDPOINT_SOCKET_BINDING_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_SOCKET_BINDING).set(val);
+                        opAdd.get(ATTRIB_SOCKET_BINDING).set(val); // we don't support expression here, must be the actual name
                     }
                     val = reader.getAttributeValue(null, AGENT_ENDPOINT_TRANSPORT_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_AGENT_TRANSPORT).set(val);
+                        opAdd.get(ATTRIB_AGENT_TRANSPORT).setExpression(val);
                     }
                     val = reader.getAttributeValue(null, AGENT_ENDPOINT_TRANSPORT_PARAMS_XML);
                     if (val != null) {
-                        opAdd.get(ATTRIB_AGENT_TRANSPORT_PARAMS).set(val);
+                        opAdd.get(ATTRIB_AGENT_TRANSPORT_PARAMS).setExpression(val);
                     }
                     ParseUtils.requireNoContent(reader);
                 } else if (elementName.equals(ATTRIB_AGENT_NAME)) {
-                    opAdd.get(ATTRIB_AGENT_NAME).set(reader.getElementText());
+                    opAdd.get(ATTRIB_AGENT_NAME).setExpression(reader.getElementText());
                 } else if (elementName.equals(ATTRIB_DISABLE_NATIVE)) {
-                    opAdd.get(ATTRIB_DISABLE_NATIVE).set(reader.getElementText());
+                    opAdd.get(ATTRIB_DISABLE_NATIVE).setExpression(reader.getElementText());
                 } else if (elementName.equals(ATTRIB_SERVER_ALIAS)) {
-                    opAdd.get(ATTRIB_SERVER_ALIAS).set(reader.getElementText());
+                    opAdd.get(ATTRIB_SERVER_ALIAS).setExpression(reader.getElementText());
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
                 }

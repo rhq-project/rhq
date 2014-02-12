@@ -103,6 +103,10 @@
                                 <replaceregexp file="${agent.config.xml}"
                                                match='&lt;entry key="rhq.agent.agent-update.enabled" value="true" /&gt;'
                                                replace='&lt;entry key="rhq.agent.agent-update.enabled" value="false" /&gt;' />
+                                <!-- we don't want our embedded agent trying to shutdown the VM, even if memory is low, so turn off health checks -->
+                                <replaceregexp file="${agent.config.xml}"
+                                               match='&lt;entry key="rhq.agent.vm-health-check.interval-msecs" value="\d+" /&gt;'
+                                               replace='&lt;entry key="rhq.agent.vm-health-check.interval-msecs" value="0" /&gt;' />
                                 <!-- because we don't want log4j writing files in places we don't want, don't use file appenders. -->
                                 <!-- our WildFly/EAP subsystem extension will turn this back on at runtime after log4j is properly configured. -->
                                 <replaceregexp file="${agent.config.dir}/log4j.xml" flags="g"

@@ -89,9 +89,7 @@ public class AgentConfigurationSetup {
         overrides.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, dataDir.getAbsolutePath());
 
         // Some defaults are fine for standalone agents, but not for embedded agents.
-        // We don't want to affect the VM the embedded agent is in, so don't do VM health check, which could attempt to shutdown the VM.
-        // Nor should it take sysprops that might be set in the VM - must configure the overrides via this subsystem's config.
-        overrides.put(AgentConfigurationConstants.VM_HEALTH_CHECK_INTERVAL_MSECS, "0");
+        // Don't take sysprops that might be set in the VM - must configure the overrides via this subsystem's config.
         overrides.put(AgentConfigurationConstants.DO_NOT_OVERRIDE_PREFS_WITH_SYSPROPS, "true");
         overrides.put(ServiceContainerConfigurationConstants.MBEANSERVER_NAME, "rhqembeddedagent");
 

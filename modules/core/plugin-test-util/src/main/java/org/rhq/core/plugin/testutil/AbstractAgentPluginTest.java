@@ -191,7 +191,63 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         // TODO: Do this more intelligently so we don't sleep longer than needed.
         Thread.sleep(10000);
     }
+    /**
+     * Note - this is stronger than {@link #waitForAsyncDiscoveries()} but can be slower. It waits until the
+     * discovered tree size stabilizes, which may take longer than hitting a target tree depth.
+     * Tree depth may be sufficient for many simple test hierarchies but for a large scale integration
+     * test, requiring full discovery of an AS-7 server (for example), it can reach the target depth well before
+     * the entire tree is discovered and populated.
+     * </p>
+     * This is equivalent to {{waitForAsyncDiscoveryToStabilize(root, 5000L, 8)}}. As such it will wait
+     * for at least 40s.
+     *
+     * @throws Exception
+     */
+    protected void waitForAsyncDiscoveryToStabilize(Resource root) throws Exception {
+        waitForAsyncDiscoveryToStabilize(root, 5000L, 8);
+    }
 
+    /**
+     * @param root
+     * @param checkInterval how long between checks of the tree size
+     * @param stableCount how many checks must be the same before we're convinced we're stable
+     * @throws Exception
+     */
+    protected void waitForAsyncDiscoveryToStabilize(Resource root, long checkInterval, int stableCount)
+        throws Exception {
+        int startResCount = 0;
+        int endResCount = getResCount(root);
+        int numStableChecks = 0;
+        log.info("waitForAsyncDiscoveryToStabilize: ResourceCount Start=" + endResCount);
+        do {
+            startResCount = endResCount;
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+                //
+            }
+            endResCount = getResCount(root);
+
+            if (startResCount == endResCount) {
+                ++numStableChecks;
+            } else {
+                numStableChecks = 0;
+            }
+        } while (startResCount < endResCount || numStableChecks < stableCount);
+        log.info("waitForAsyncDiscoveryToStabilize: ResourceCount Stable at=" + endResCount);
+    }
+
+    static protected int getResCount(Resource resource) {
+        int size = 1;
+        Set<Resource> children = resource.getChildResources();
+        if (null != children && !children.isEmpty()) {
+            HashSet<Resource> safeChildren = new HashSet<Resource>(children);
+            for (Resource r : safeChildren) {
+                size += getResCount(r);
+            }
+        }
+        return size;
+    }
     /**
      * Get availability for a Resource synchronously, with a 5 second timeout.
      *

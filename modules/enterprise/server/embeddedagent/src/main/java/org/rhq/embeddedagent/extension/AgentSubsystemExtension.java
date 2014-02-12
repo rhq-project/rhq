@@ -239,8 +239,7 @@ public class AgentSubsystemExtension implements Extension {
 
             // <subsystem>
             context.startSubsystemElement(AgentSubsystemExtension.NAMESPACE, false);
-            writer.writeAttribute(AGENT_ENABLED,
-                String.valueOf(node.get(AGENT_ENABLED).asBoolean(AGENT_ENABLED_DEFAULT)));
+            writer.writeAttribute(AGENT_ENABLED, node.get(AGENT_ENABLED).asString());
 
             // our config elements
             writeElement(writer, node, ATTRIB_AGENT_NAME);

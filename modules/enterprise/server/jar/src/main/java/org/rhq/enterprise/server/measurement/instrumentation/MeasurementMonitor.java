@@ -258,6 +258,36 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
         this.purgedMeasurementTraits.set(delta);
     }
 
+    @Override
+    public int getAggregationBatchSize() {
+        return storageClientManager.getMetricsServer().getAggregationBatchSize();
+    }
+
+    @Override
+    public void setAggregationBatchSize(int size) {
+        storageClientManager.setAggregationBatchSize(size);
+    }
+
+    @Override
+    public int getAggregationParallelism() {
+        return storageClientManager.getAggregationParallelism();
+    }
+
+    @Override
+    public void setAggregationParallelism(int parallelism) {
+        storageClientManager.setAggregationParallelism(parallelism);
+    }
+
+    @Override
+    public int getAggregationWorkers() {
+        return storageClientManager.getAggregationWorkers();
+    }
+
+    @Override
+    public void setAggregationWorkers(int numWorkers) {
+        storageClientManager.setAggregationWorkers(numWorkers);
+    }
+
     @PostConstruct
     private void init() {
         JMXUtil.registerMBean(this, OBJECT_NAME);

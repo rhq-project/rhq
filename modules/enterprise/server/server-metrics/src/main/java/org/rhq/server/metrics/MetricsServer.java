@@ -80,11 +80,14 @@ public class MetricsServer {
 
     private AtomicLong totalAggregationTime = new AtomicLong();
 
-    private ListeningExecutorService aggregationWorkers = MoreExecutors.listeningDecorator(
-        Executors.newFixedThreadPool(Math.min(Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "5")),
-            Runtime.getRuntime().availableProcessors()), new StorageClientThreadFactory()));
+    private int numAggregationWorkers = Math.min(Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers",
+        "5")), Runtime.getRuntime().availableProcessors());
+
+    private ListeningExecutorService aggregationWorkers;
 
     private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "10"));
+
+    private int parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "4"));
 
     private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 
@@ -100,8 +103,24 @@ public class MetricsServer {
         this.dateTimeService = dateTimeService;
     }
 
+    public int getAggregationBatchSize() {
+        return aggregationBatchSize;
+    }
+
     public void setAggregationBatchSize(int batchSize) {
         aggregationBatchSize = batchSize;
+    }
+
+    public int getAggregationParallelism() {
+        return parallelism;
+    }
+
+    public void setAggregationParallelism(int parallelism) {
+        this.parallelism = parallelism;
+    }
+
+    public int getNumAggregationWorkers() {
+        return numAggregationWorkers;
     }
 
     public void setUseAsyncAggregation(boolean useAsyncAggregation) {
@@ -112,7 +131,8 @@ public class MetricsServer {
         if (log.isDebugEnabled() && useAsyncAggregation) {
             log.debug("Async aggregation is enabled");
         }
-
+        aggregationWorkers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numAggregationWorkers,
+            new StorageClientThreadFactory()));
         determineMostRecentRawDataSinceLastShutdown();
     }
 
@@ -462,13 +482,13 @@ public class MetricsServer {
                 if (pastAggregationMissed) {
                     DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                     new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
-                        aggregationBatchSize).run();
+                        aggregationBatchSize, parallelism).run();
                     pastAggregationMissed = false;
                 }
 
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
                 return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                    aggregationBatchSize).run();
+                    aggregationBatchSize, parallelism).run();
             } else {
                 if (pastAggregationMissed) {
                     calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());

@@ -1,10 +1,10 @@
 package org.rhq.server.metrics;
 
-import static org.rhq.server.metrics.StorageClientConstant.REQUEST_LIMIT;
-import static org.rhq.server.metrics.StorageClientConstant.REQUEST_LIMIT_MIN;
-import static org.rhq.server.metrics.StorageClientConstant.REQUEST_TIMEOUT_DAMPENING;
-import static org.rhq.server.metrics.StorageClientConstant.REQUEST_TIMEOUT_DELTA;
-import static org.rhq.server.metrics.StorageClientConstant.REQUEST_TOPOLOGY_CHANGE_DELTA;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT_MIN;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DAMPENING;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DELTA;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TOPOLOGY_CHANGE_DELTA;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -40,19 +40,18 @@ public class StorageSession implements Host.StateListener {
 
     private boolean isClusterAvailable = false;
 
-    private double minRequestLimit = Double.parseDouble(System.getProperty(REQUEST_LIMIT_MIN.property(), "5000"));
+    private double minRequestLimit = Double.parseDouble(System.getProperty(REQUEST_LIMIT_MIN, "5000"));
 
     private RateLimiter permits = RateLimiter.create(Double.parseDouble(
-        System.getProperty(REQUEST_LIMIT.property(), "30000")), 3, TimeUnit.MINUTES);
+        System.getProperty(REQUEST_LIMIT, "30000")), 3, TimeUnit.MINUTES);
 
-    private double timeoutDelta = Double.parseDouble(System.getProperty(REQUEST_TIMEOUT_DELTA.property(), "0.2"));
+    private double timeoutDelta = Double.parseDouble(System.getProperty(REQUEST_TIMEOUT_DELTA, "0.2"));
 
     private long permitsLastChanged = System.currentTimeMillis();
 
-    private long timeoutDampening = Long.parseLong(System.getProperty(REQUEST_TIMEOUT_DAMPENING.property(), "30000"));
+    private long timeoutDampening = Long.parseLong(System.getProperty(REQUEST_TIMEOUT_DAMPENING, "30000"));
 
-    private double topologyDelta = Double.parseDouble(System.getProperty(REQUEST_TOPOLOGY_CHANGE_DELTA.property(),
-        "30000"));
+    private double topologyDelta = Double.parseDouble(System.getProperty(REQUEST_TOPOLOGY_CHANGE_DELTA, "30000"));
 
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
@@ -233,6 +232,9 @@ public class StorageSession implements Host.StateListener {
     }
 
     private void decreaseRequestThroughput(double amount) {
+        if (amount > 0) {
+            amount = amount * -1;
+        }
         changeRequestThroughput(amount);
     }
 

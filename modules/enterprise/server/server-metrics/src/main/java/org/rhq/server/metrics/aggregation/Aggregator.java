@@ -62,7 +62,7 @@ public class Aggregator {
     private Set<AggregateNumericMetric> oneHourData;
 
     public Aggregator(ListeningExecutorService aggregationTasks, MetricsDAO dao, MetricsConfiguration configuration,
-        DateTimeService dtService, DateTime startTime, int batchSize) {
+        DateTimeService dtService, DateTime startTime, int batchSize, int parallelism) {
         this.dao = dao;
         this.configuration = configuration;
         this.dtService = dtService;
@@ -72,14 +72,12 @@ public class Aggregator {
         DateTime sixHourTimeSlice = get6HourTimeSlice();
         DateTime twentyFourHourTimeSlice = get24HourTimeSlice();
 
-        int maxParallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "4"));
-
         state = new AggregationState()
             .setDao(dao)
             .setStartTime(startTime)
             .setBatchSize(batchSize)
             .setAggregationTasks(aggregationTasks)
-            .setPermits(new Semaphore(maxParallelism * batchSize, true))
+            .setPermits(new Semaphore(parallelism * batchSize, true))
             .setRawAggregationDone(new SignalingCountDownLatch(new CountDownLatch(1)))
             .setOneHourAggregationDone(new SignalingCountDownLatch(new CountDownLatch(1)))
             .setSixHourAggregationDone(new SignalingCountDownLatch(new CountDownLatch(1)))

@@ -901,6 +901,29 @@ rhq.storage.request.limit.timeout-dampening=30000
 # parsed as a double.
 rhq.storage.request.limit.min=5000
 
+##############################################################################
+# Metrics aggregation settings
+#
+# Note that if you commit the RHQ Server into inventory, these settings can be
+# managed through the resource configuration of the Measurement Subsystem.
+# Changes made through the Measurement Subsystem resource are applied
+# dynamically at runtime whereas directly editing these properties requires a
+# a server restart for changes to take effect.
+##############################################################################
+
+# Specifies the number of schedules for which data will be fetched per thread.
+# A higher value can improve aggregation performance at the cost of greater
+# memory utilization.
+rhq.metrics.aggregation.batch-size=10
+
+# Specifies the number of batches that can be processed in parallel. A higher
+# value can improve aggregation performance at the cost of greater memory
+# utilization.
+rhq.metrics.aggregation.parallelism=4
+
+# The number of threads to use during aggregation. It defaults to
+# ceiling(5, num_cores).
+rhq.metrics.aggregation.workers=5
 </echo>
 
         <echo file="${rhq.bin.dir}/rhq-storage.properties">#################### RHQ Storage Configuration Properties ####################

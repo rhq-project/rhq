@@ -25,10 +25,11 @@
 
 package org.rhq.enterprise.server.storage;
 
-import static org.rhq.server.metrics.StorageClientConstant.DATA_CENTER;
-import static org.rhq.server.metrics.StorageClientConstant.LOAD_BALANCING;
+import static org.rhq.server.metrics.StorageClientConstants.DATA_CENTER;
+import static org.rhq.server.metrics.StorageClientConstants.LOAD_BALANCING;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -64,12 +65,15 @@ import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.CoreServer;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
+import org.rhq.server.metrics.MetricsConstants;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.StorageSession;
@@ -166,7 +170,7 @@ public class StorageClientManagerBean {
             Session wrappedSession = createSession();
             session = new StorageSession(wrappedSession);
 
-            storageClusterMonitor = new StorageClusterMonitor(getServerPropsFile(), session);
+            storageClusterMonitor = new StorageClusterMonitor(session);
             storageClusterMonitor.updateRequestLimit();
             session.addStorageStateListener(storageClusterMonitor);
 
@@ -321,6 +325,50 @@ public class StorageClientManagerBean {
         return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getAggregationBatchSize() {
+        return metricsServer.getAggregationBatchSize();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setAggregationBatchSize(int batchSize) {
+        metricsServer.setAggregationBatchSize(batchSize);
+        persistStorageProperty(MetricsConstants.AGGREGATION_BATCH_SIZE, Integer.toString(batchSize));
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getAggregationParallelism() {
+        return metricsServer.getAggregationParallelism();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setAggregationParallelism(int parallelism) {
+        metricsServer.setAggregationParallelism(parallelism);
+        persistStorageProperty(MetricsConstants.AGGREGATION_PARALLELISM, Integer.toString(parallelism));
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int getAggregationWorkers() {
+        return metricsServer.getNumAggregationWorkers();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setAggregationWorkers(int numWorkers) {
+        persistStorageProperty(MetricsConstants.AGGREGATION_WORKERS, Integer.toString(numWorkers));
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void persistStorageProperty(String key, String value) {
+        PropertiesFileUpdate updater = new PropertiesFileUpdate(getServerPropsFile().getAbsolutePath());
+        try {
+            updater.update(key, value);
+        } catch (IOException e) {
+            // TODO should we propagate the exception?
+            log.warn("Failed to persist property " + key + " due to unexpected I/O error",
+                ThrowableUtil.getRootCause(e));
+        }
+    }
+
     private File getServerPropsFile() {
         File installDir = coreServer.getInstallDir();
         File binDir = new File(installDir, "bin");
@@ -388,12 +436,12 @@ public class StorageClientManagerBean {
     }
 
     private LoadBalancingPolicy getLoadBalancingPolicy() {
-        String policy = System.getProperty(LOAD_BALANCING.property());
+        String policy = System.getProperty(LOAD_BALANCING);
         if (policy == null || policy.equals("RoundRobin")) {
             return new RoundRobinPolicy();
         }
         if (policy.equals("DCAwareRoundRobin")) {
-            String dataCenter = System.getProperty(DATA_CENTER.property());
+            String dataCenter = System.getProperty(DATA_CENTER);
             if (dataCenter == null) {
                 log.warn(policy + " was specified for " + LOAD_BALANCING + " but " + DATA_CENTER + " is undefined." +
                     "Reverting to RoundRobin load balancing policy.");

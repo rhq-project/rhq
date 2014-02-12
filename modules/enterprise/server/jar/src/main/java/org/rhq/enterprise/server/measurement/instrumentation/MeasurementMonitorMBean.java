@@ -94,4 +94,16 @@ public interface MeasurementMonitorMBean {
     long getPurgedMeasurementTraits();
 
     void setPurgedMeasurementTraits(long delta);
+
+    int getAggregationBatchSize();
+
+    void setAggregationBatchSize(int size);
+
+    int getAggregationParallelism();
+
+    void setAggregationParallelism(int parallelism);
+
+    int getAggregationWorkers();
+
+    void setAggregationWorkers(int numWorkers);
 }

@@ -351,6 +351,24 @@
         category="utilization"
         description="Number of traits purged by the last purge job" />
 
+      <resource-configuration>
+        <c:group name="Aggregation">
+          <c:description>Settings for tuning performance of metrics aggregation that runs hourly.</c:description>
+          <c:simple-property name="AggregationBatchSize" displayName="Batch Size" type="integer" required="false"
+                             description="Specifies the number of schedules for which data will be fetched per thread.
+                             Defaults to 10. Changing this value takes effect immediately and persists across
+                             restarts."/>
+          <c:simple-property name="AggregationParallelism" displayName="Parallelism" type="integer" required="false"
+                             description="Specifies the number of batches that can be processed in parallel. Defaults to
+                             4. A higher value can improve aggregation performance at the expense of higher heap
+                             utilization (during aggregation). Changing this value takes effect immediately and persists
+                             across restarts."/>
+          <c:simple-property name="AggregationWorkers" displayName="Workers" type="integer" required="false"
+                             description="The number of threads to use during aggregation. It defaults to
+                             ceiling(5, num_cores). Changing this value only takes effect after a server restart."/>
+        </c:group>
+      </resource-configuration>
+
     </service>
 
     <service

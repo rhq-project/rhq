@@ -62,7 +62,7 @@ public class KickstartDiscoveryComponent implements ResourceDiscoveryComponent {
         pe.setCheckExecutableExists(true);
         pe.setArguments(Arrays.asList("-qa", packageName));
         ProcessExecutionResults pr = sysinfo.executeProcess(pe);
-        if (pr.getExitCode() == 0) {
+        if (pr!=null && pr.getExitCode()!=null && pr.getExitCode() == 0) {
             String output = pr.getCapturedOutput();
             exists = output.contains(packageName);
         }

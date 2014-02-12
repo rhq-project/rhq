@@ -790,7 +790,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 draw: function (chartContext) {
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
+                        //console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
 
                         determineScale();
                         createHeader(chartContext.chartTitle);

@@ -275,7 +275,7 @@
                                             if (project.getProperty('storage-schema')) {
                                                 self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
                                                 username = project.getProperty('rhq.storage.username') ?: "rhqadmin"
-                                                password = project.getProperty('rhq.storage.password') ?: "rhqadmin"
+                                                password = project.getProperty('rhq.storage.password') ?: "1eeb2f255e832171df8592078de921bc"
 
                                                 nodes = project.getProperty('rhq.strorage.nodes') ?: "127.0.0.1"
                                                 cqlPort = project.getProperty('rhq.storage.cql-port') ?: "9142"

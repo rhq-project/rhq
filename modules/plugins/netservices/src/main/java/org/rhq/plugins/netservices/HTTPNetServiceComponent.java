@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.plugins.netservices;
@@ -88,22 +88,18 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
 
     private static final Log LOG = LogFactory.getLog(HTTPNetServiceComponent.class);
 
-    private ResourceContext resourceContext;
-
     private Configuration pluginConfig;
 
     private HTTPNetServiceComponentConfiguration componentConfig;
 
     @Override
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        this.resourceContext = resourceContext;
         pluginConfig = resourceContext.getPluginConfiguration();
         componentConfig = createComponentConfiguration(pluginConfig);
     }
 
     @Override
     public void stop() {
-        resourceContext = null;
         pluginConfig = null;
         componentConfig = null;
     }
@@ -209,7 +205,9 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
             return success;
 
         } catch (Exception e) {
-            LOG.error(e);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace(e);
+            }
         } finally {
             method.abort();
             client.getConnectionManager().shutdown();

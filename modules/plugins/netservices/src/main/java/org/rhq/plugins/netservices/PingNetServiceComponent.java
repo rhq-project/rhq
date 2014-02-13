@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.plugins.netservices;
@@ -91,8 +91,8 @@ public class PingNetServiceComponent implements ResourceComponent, MeasurementFa
         try {
             return address.isReachable(PING_TIMEOUT) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn(address.getHostAddress() + " not reachable", e);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace(address.getHostAddress() + " not reachable", e);
             }
             return AvailabilityType.DOWN;
         }

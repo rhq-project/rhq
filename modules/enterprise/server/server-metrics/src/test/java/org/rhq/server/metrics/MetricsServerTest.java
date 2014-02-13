@@ -137,6 +137,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         dao = new MetricsDAO(storageSession, configuration);
         metricsServer.setDAO(dao);
+        metricsServer.init();
 
         purgeDB();
     }

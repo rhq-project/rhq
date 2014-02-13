@@ -278,7 +278,7 @@
                                                 password = project.getProperty('rhq.storage.password') ?: "1eeb2f255e832171df8592078de921bc"
 
                                                 nodes = project.getProperty('rhq.strorage.nodes') ?: "127.0.0.1"
-                                                cqlPort = project.getProperty('rhq.storage.cql-port') ?: "9142"
+                                                cqlPort = (project.getProperty('rhq.storage.cql-port') ?: "9142") as Integer
 
                                                 schemaManager = new SchemaManager(username, password, nodes.split(","), cqlPort)
 

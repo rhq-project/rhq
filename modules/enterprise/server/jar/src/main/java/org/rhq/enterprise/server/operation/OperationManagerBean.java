@@ -278,12 +278,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
         jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
 
-        // Now actually schedule it.
-        Date next = scheduler.scheduleJob(jobDetail, trigger);
-        ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
-
-        LOG.debug("Scheduled Resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
-
         // Create an IN_PROGRESS item
         ResourceOperationHistory history;
         history = new ResourceOperationHistory(uniqueJobId, jobGroupName, subject.getName(), opDef,
@@ -291,6 +285,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             parameters == null ? null : parameters.deepCopy(false), schedule.getResource(), null);
 
         updateOperationHistory(subject, history);
+
+        // Now actually schedule it.
+        Date next = scheduler.scheduleJob(jobDetail, trigger);
+        ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Scheduled Resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
+        }
 
         return newSchedule;
     }

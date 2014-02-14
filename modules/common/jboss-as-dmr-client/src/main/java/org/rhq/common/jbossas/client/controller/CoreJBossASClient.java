@@ -52,7 +52,7 @@ public class CoreJBossASClient extends JBossASClient {
      * Allows the caller to turn on or off complete access for the app server's admin console.
      *
      * @param enableFlag true if the admin console enabled and visible; false if you want to prohibit all access to the admin console
-     * @throws Exception 
+     * @throws Exception
      */
     public void setEnableAdminConsole(boolean enableFlag) throws Exception {
         // /core-service=management/management-interface=http-interface/:write-attribute(name=console-enabled,value=false)
@@ -319,8 +319,20 @@ public class CoreJBossASClient extends JBossASClient {
      * @throws Exception
      */
     public void addSubsystem(String name) throws Exception {
+        addSubsystem(name, null);
+    }
+
+    /**
+     * Adds a new subsystem (along with some optional settings for that subsystem) to the core system
+     * If settings is null, the subsystem will be created with no additional settings associated with it.
+     *
+     * @param name the name of the new subsystem
+     * @param settings a node with some additional settings used to initialize the subsystem
+     * @throws Exception
+     */
+    public void addSubsystem(String name, ModelNode settings) throws Exception {
         // /subsystem=<name>:add()
-        final ModelNode request = createRequest(ADD, Address.root().add(SUBSYSTEM, name));
+        final ModelNode request = createRequest(ADD, Address.root().add(SUBSYSTEM, name), settings);
         final ModelNode response = execute(request);
         if (!isSuccess(response)) {
             throw new FailureException(response, "Failed to add new subsystem [" + name + "]");

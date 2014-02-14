@@ -78,7 +78,7 @@ public class JBossASClient {
     /**
      * Convienence method that allows you to create request that reads a single attribute
      * value to a resource.
-     * 
+     *
      * @param attributeName the name of the attribute whose value is to be read
      * @param address identifies the resource
      * @return the request
@@ -106,7 +106,7 @@ public class JBossASClient {
     /**
      * Convienence method that allows you to create request that writes a single attribute's
      * string value to a resource.
-     * 
+     *
      * @param attributeName the name of the attribute whose value is to be written
      * @param attributeValue the attribute value that is to be written
      * @param address identifies the resource
@@ -121,13 +121,26 @@ public class JBossASClient {
 
     /**
      * Convienence method that builds a partial operation request node.
-     * 
+     *
      * @param operation the operation to be requested
      * @param address identifies the target resource
      * @return the partial operation request node - caller should fill this in further to complete the node
      */
     public static ModelNode createRequest(String operation, Address address) {
-        final ModelNode request = new ModelNode();
+        return createRequest(operation, address, null);
+    }
+
+    /**
+     * Convienence method that builds a partial operation request node, with additional
+     * node properties supplied by the given node.
+     *
+     * @param operation the operation to be requested
+     * @param address identifies the target resource
+     * @param extra provides additional properties to add to the returned request node.
+     * @return the partial operation request node - caller can fill this in further to complete the node
+     */
+    public static ModelNode createRequest(String operation, Address address, ModelNode extra) {
+        final ModelNode request = (extra != null) ? extra.clone() : new ModelNode();
         request.get(OPERATION).set(operation);
         request.get(ADDRESS).set(address.getAddressNode());
         return request;
@@ -135,9 +148,9 @@ public class JBossASClient {
 
     /**
      * Creates a batch of operations that can be atomically invoked.
-     * 
+     *
      * @param steps the different operation steps of the batch
-     * 
+     *
      * @return the batch operation node
      */
     public static ModelNode createBatchRequest(ModelNode... steps) {
@@ -156,7 +169,7 @@ public class JBossASClient {
     /**
      * If the given node has a result list, that list will be returned
      * with the values as Strings. Otherwise, an empty list is returned.
-     * 
+     *
      * @param operationResult the node to examine
      * @return the result list as Strings if there is a list, empty otherwise
      */
@@ -181,7 +194,7 @@ public class JBossASClient {
     /**
      * If the given node has results, those results are returned in a ModelNode.
      * Otherwise, an empty node is returned.
-     * 
+     *
      * @param operationResult the node to examine
      * @return the results as a ModelNode
      */
@@ -195,7 +208,7 @@ public class JBossASClient {
 
     /**
      * Returns <code>true</code> if the operation was a success; <code>false</code> otherwise.
-     * 
+     *
      * @param operationResult the operation result to test
      * @return the success or failure flag of the result
      */
@@ -211,7 +224,7 @@ public class JBossASClient {
      * If the operation result was a failure, this returns the failure description if there is one.
      * A generic failure message will be returned if the operation was a failure but has no failure
      * description. A <code>null</code> is returned if the operation was a success.
-     * 
+     *
      * @param operationResult the operation whose failure description is to be returned
      * @return the failure description of <code>null</code> if the operation was a success
      */
@@ -260,7 +273,7 @@ public class JBossASClient {
 
     /**
      * Convienence method that executes the request.
-     * 
+     *
      * @param request
      * @return results
      * @throws Exception
@@ -324,11 +337,11 @@ public class JBossASClient {
     /**
      * Convienence method that allows you to obtain a single attribute's string value from
      * a resource.
-     * 
+     *
      * @param attributeName the attribute whose value is to be returned
      * @param address identifies the resource
      * @return the attribute value
-     * 
+     *
      * @throws Exception if failed to obtain the attribute value
      */
     public String getStringAttribute(String attributeName, Address address) throws Exception {
@@ -343,7 +356,7 @@ public class JBossASClient {
      * @param attributeName the attribute whose value is to be returned
      * @param address identifies the resource
      * @return the attribute value
-     * 
+     *
      * @throws Exception if failed to obtain the attribute value
      */
     public String getStringAttribute(boolean runtime, String attributeName, Address address) throws Exception {

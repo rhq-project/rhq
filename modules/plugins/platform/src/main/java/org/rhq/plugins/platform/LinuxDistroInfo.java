@@ -44,6 +44,7 @@ public class LinuxDistroInfo {
     private static final File REDHAT_RELEASE_FILE = new File("/etc/redhat-release");
     private static final File REDHAT_VERSION_FILE = new File("/etc/redhat-version"); // rare
     private static final File DEBIAN_VERSION_FILE = new File("/etc/debian_version");
+    private static final File OS_RELEASE_FILE = new File("/etc/os-release");
 
     private static final String DISTRIB_ID_VARIABLE = "DISTRIB_ID";
     private static final String DISTRIB_RELEASE_VARIABLE = "DISTRIB_RELEASE";
@@ -133,6 +134,25 @@ public class LinuxDistroInfo {
             }
 
             codename = releaseInfo.getProperty(DISTRIB_CODENAME_VARIABLE);
+        }
+
+        if (this.name == null || this.version == null) {
+            // Try the new os-release file, which seems to be the new over all
+            // way to do this going forward.
+            // See http://www.freedesktop.org/software/systemd/man/os-release.html
+            // Actually at one point in the future this should be the default.
+            if (OS_RELEASE_FILE.exists()) {
+                Properties releaseInfo = readMultiVariableReleaseFile(OS_RELEASE_FILE);
+                String name = releaseInfo.getProperty("NAME");
+                if (name!=null) {
+                    this.name = name;
+                }
+                String version = releaseInfo.getProperty("VERSION");
+                if (version!=null) {
+                    this.version = version;
+                }
+            }
+
         }
 
         if (this.name == null) {

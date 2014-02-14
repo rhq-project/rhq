@@ -92,9 +92,10 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
-    public void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException {
+    public void deleteOperationHistories(int[] operationHistoryIds, boolean deleteEvenIfInProgress)
+        throws RuntimeException {
         try {
-            operationManager.deleteOperationHistory(getSessionSubject(), operationHistoryId, deleteEvenIfInProgress);
+            operationManager.deleteOperationHistories(getSessionSubject(), operationHistoryIds, deleteEvenIfInProgress);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -109,12 +110,12 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             throw getExceptionToThrowToClient(t);
         }
     }
-    
+
     public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout, String cronString) throws RuntimeException {
         try {
-            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperationUsingCron(getSessionSubject(),
-                resourceId, operationName, cronString, timeout, parameters, description);
+            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperationUsingCron(
+                getSessionSubject(), resourceId, operationName, cronString, timeout, parameters, description);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -176,7 +177,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     }
 
     /** Find recently completed operations, disambiguate them and return that list.
-     * 
+     *
      */
     public PageList<ResourceOperationLastCompletedComposite> findRecentCompletedOperations(int resourceId,
         PageControl pageControl) throws RuntimeException {

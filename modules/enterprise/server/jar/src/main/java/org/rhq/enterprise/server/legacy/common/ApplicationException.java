@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,25 +18,37 @@
  */
 package org.rhq.enterprise.server.legacy.common;
 
-import java.io.Serializable;
 
 /**
- * @deprecated
+ * Indicates a general server-side application exception. Exception details should be provided in the message.
+ * <p/>
+ * Declare this an {@link javax.ejb.ApplicationException} because we don't want these to be wrapped or to rollback an ongoing
+ * transaction.
  */
-@Deprecated
-public class ApplicationException extends Exception implements Serializable {
+@javax.ejb.ApplicationException(rollback = false, inherited = true)
+public class ApplicationException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    // Default no-arg constructor required by JAXB
     public ApplicationException() {
-        super();
     }
 
-    public ApplicationException(String s) {
-        super(s);
+    public ApplicationException(String message) {
+        super(message);
     }
 
+    /**
+     * Discouraged unless you really want to include a long, often useless trace.
+     * @param t
+     */
     public ApplicationException(Throwable t) {
         super(t);
     }
 
+    /**
+     * Discouraged unless you really want to include a long, often useless trace.
+     * @param t
+     */
     public ApplicationException(String s, Throwable t) {
         super(s, t);
     }

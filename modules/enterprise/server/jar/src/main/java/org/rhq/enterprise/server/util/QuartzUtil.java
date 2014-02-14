@@ -45,26 +45,4 @@ public class QuartzUtil {
 
         return trigger;
     }
-
-    /**
-     * Creates a trigger that will repeat indefinitely starting at the specified time, firing at a specified
-     * interval.
-     *
-     * @param jobDetail the job details
-     * @param startTimeMillis the time in epoch milliseconds at which to first start the trigger. If <= 0, it starts
-     *                        immediately
-     * @param periodMillis the repetition interval
-     * @return the trigger to use
-     */
-    public static Trigger getRepeatingTrigger(JobDetail jobDetail, long startTimeMillis, long periodMillis) {
-        Date fireOn = new Date(startTimeMillis <= 0 ? System.currentTimeMillis() : startTimeMillis);
-
-        Trigger trigger = new SimpleTrigger(jobDetail.getName(), jobDetail.getGroup(),
-            fireOn, null, SimpleTrigger.REPEAT_INDEFINITELY, periodMillis);
-
-        trigger.setJobName(jobDetail.getName());
-        trigger.setJobGroup(jobDetail.getGroup());
-
-        return trigger;
-    }
 }

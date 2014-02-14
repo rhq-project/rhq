@@ -1320,6 +1320,34 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private BundleDeployment scheduleBundleDeploymentImpl(Subject subject, int bundleDeploymentId,
         boolean isCleanDeployment, boolean isRevert, Integer revertedDeploymentReplacedDeployment) throws Exception {
 
+        // This work must be committed before we schedule the status check job, so do it in a new trans
+        BundleDeployment newDeployment = bundleManager.scheduleBundleDeploymentInNewTransaction(subject,
+            bundleDeploymentId, isCleanDeployment, isRevert, revertedDeploymentReplacedDeployment);
+
+        // schedule the bundle deployment completion check. Due to timing issues, we cannot determine
+        // the overall completion status of the bundle deployment while receiving the individual resource
+        // deployment statuses. This needs to be done out of band by a quartz job.
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=1003679 for details.
+        try {
+            // Just set to trigger the first time. The job will set another trigger if necessary. We
+            // saw in some cases the future triggers stacking up.  Whether it was a real problem or not
+            // I'm not sure, but this avoids the potential issue.
+            JobDetail jobDetail = BundleDeploymentStatusCheckJob.getJobDetail(bundleDeploymentId);
+            Trigger trigger = QuartzUtil.getFireOnceImmediateTrigger(jobDetail);
+            quartzScheduler.scheduleJob(jobDetail, trigger);
+
+        } catch (Exception e) {
+            log.error("Failed to schedule bundle deployment status check job for deployment:" + newDeployment, e);
+        }
+
+        return newDeployment;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public BundleDeployment scheduleBundleDeploymentInNewTransaction(Subject subject, int bundleDeploymentId,
+        boolean isCleanDeployment, boolean isRevert, Integer revertedDeploymentReplacedDeployment) throws Exception {
+
         BundleDeployment newDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
         if (null == newDeployment) {
             throw new IllegalArgumentException("Invalid bundleDeploymentId: " + bundleDeploymentId);
@@ -1344,18 +1372,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 log.error("Failed to complete scheduling of bundle deployment to [" + groupMember
                     + "]. Other bundle deployments to other resources may have been scheduled. ", t);
             }
-        }
-
-        // schedule the bundle deployment completion check. Due to timing issues, we cannot determine
-        // the overall completion status of the bundle deployment while receiving the individual resource
-        // deployment statuses. This needs to be done out of band by a quartz job.
-        // See https://bugzilla.redhat.com/show_bug.cgi?id=1003679 for details.
-        try {
-            JobDetail jobDetail = BundleDeploymentStatusCheckJob.getJobDetail(bundleDeploymentId);
-            Trigger trigger = QuartzUtil.getRepeatingTrigger(jobDetail, 0, 10000);
-            quartzScheduler.scheduleJob(jobDetail, trigger);
-        } catch (Exception e) {
-            log.error("Failed to schedule bundle deployment status check job for deployment:" + newDeployment, e);
         }
 
         // make sure the new deployment is set as the live deployment and properly replaces the
@@ -1423,8 +1439,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
                 if (!response.isSuccess()) {
                     // Handle Schedule Failures. This may include deployment failures for immediate deployment request
-                    bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
-                        BundleDeploymentStatus.FAILURE);
+                    bundleManager.setBundleResourceDeploymentStatusInNewTransaction(subject,
+                        resourceDeployment.getId(), BundleDeploymentStatus.FAILURE);
                     history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT,
                         deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
                         response.getErrorMessage(), null);
@@ -1439,12 +1455,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                         + "] may be down: " + t, null);
                 bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subject, resourceDeployment.getId(),
                     failureHistory);
-                bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
+                bundleManager.setBundleResourceDeploymentStatusInNewTransaction(subject, resourceDeployment.getId(),
                     BundleDeploymentStatus.FAILURE);
             }
 
         } else {
-            bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
+            bundleManager.setBundleResourceDeploymentStatusInNewTransaction(subject, resourceDeployment.getId(),
                 BundleDeploymentStatus.FAILURE);
             BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                 AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
@@ -1535,9 +1551,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return resourceDeployment;
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @Override
-    public BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
-        BundleDeploymentStatus status) throws Exception {
+    public BundleResourceDeployment setBundleResourceDeploymentStatusInNewTransaction(Subject subject,
+        int resourceDeploymentId, BundleDeploymentStatus status) throws Exception {
 
         // set the status of the individual resource deployment
         BundleResourceDeployment resourceDeployment = entityManager.find(BundleResourceDeployment.class,
@@ -1553,9 +1570,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    public BundleDeploymentStatus determineOverallBundleDeploymentStatus(int bundleDeploymentId) {
-        // update the status on the overall deployment
+    public BundleDeploymentStatus determineBundleDeploymentStatus(int bundleDeploymentId) {
         BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
+
+        if (deployment.getStatus().isTerminal()) {
+            return deployment.getStatus();
+        }
 
         List<BundleResourceDeployment> deployments = deployment.getResourceDeployments();
         boolean someInProgress = false;

@@ -87,6 +87,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
 
     private EntityContext context;
     private boolean hasWriteAccess;
+    private boolean showNewDefinitionButton = true;
 
     static {
         AlertPriority[] priorityValues = AlertPriority.values();
@@ -247,7 +248,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
                 }
             });
         }
-        if (!context.isSubsystemView()) {
+        if (!context.isSubsystemView() && showNewDefinitionButton) {
             addTableAction(MSG.common_button_new() + " " + MSG.common_title_definition(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     // todo: this.permissions.isAlert()
@@ -355,5 +356,9 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     @Override
     public ViewName getViewName() {
         return SUBSYSTEM_VIEW_ID;
+    }
+    
+    public void setShowNewDefinitionButton(boolean showNewDefinitionButton) {
+        this.showNewDefinitionButton = showNewDefinitionButton;
     }
 }

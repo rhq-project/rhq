@@ -423,14 +423,17 @@ public class ResourceGroupDetailView extends
         }
     }
 
-    private void updateAlertsTab(GroupCategory groupCategory) {
+    private void updateAlertsTab(final GroupCategory groupCategory) {
         // alerts tab is always visible, even for mixed groups
         if (updateTab(this.alertsTab, true, true)) {
             // alert history is always available
             updateSubTab(this.alertsTab, this.alertHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return GroupAlertHistoryView.get(groupComposite);
+                    // hide the "new definition" button for mixed groups
+                    GroupAlertHistoryView canvas = GroupAlertHistoryView.get(groupComposite);
+                    canvas.setShowNewDefinitionButton(groupCategory == GroupCategory.COMPATIBLE);
+                    return canvas;
                 }
             });
             // but alert definitions can only be created on compatible groups

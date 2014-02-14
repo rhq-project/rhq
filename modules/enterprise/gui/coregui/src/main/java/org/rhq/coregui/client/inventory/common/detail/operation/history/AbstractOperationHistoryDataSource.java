@@ -73,7 +73,8 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
         final T operationHistoryToRemove = copyValues(recordToRemove);
         Boolean forceValue = request.getAttributeAsBoolean(RequestAttribute.FORCE);
         boolean force = ((forceValue != null) && forceValue);
-        operationService.deleteOperationHistory(operationHistoryToRemove.getId(), force, new AsyncCallback<Void>() {
+        operationService.deleteOperationHistories(new int[] { operationHistoryToRemove.getId() }, force,
+            new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
                 sendSuccessResponse(request, response, operationHistoryToRemove, new Message("success"));
             }

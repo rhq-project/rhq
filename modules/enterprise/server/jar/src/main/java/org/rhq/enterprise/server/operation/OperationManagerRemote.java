@@ -35,6 +35,7 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
+import org.rhq.enterprise.server.legacy.common.ApplicationException;
 
 /**
  * Public Operation Manager remote.
@@ -90,6 +91,19 @@ public interface OperationManagerRemote {
      *            to pass in <code>true</code>
      */
     void deleteOperationHistory(Subject subject, int operationHistoryId, boolean purgeInProgress);
+
+    /**
+     * Same as {@link #deleteOperationHistory(Subject, int, boolean)} but applied to all supplied historyIds.
+     * Supports partial success.
+     *
+     * @param subject
+     * @param historyIds
+     * @param deleteEvenIfInProgress
+     * @Throws {@link ApplicationException} Thrown if any history records fail to delete. Message indicates
+     * partial success and gives detail on each failure.
+     */
+    void deleteOperationHistories(Subject subject, int[] historyIds, boolean deleteEvenIfInProgress)
+        throws ApplicationException;
 
     /**
      * Schedules an operation for execution on the given resource.
@@ -189,8 +203,7 @@ public interface OperationManagerRemote {
      */
     GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
         boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
-        int repeatCount, int timeout, String description)//
-        throws ScheduleException;
+        int repeatCount, int timeout, String description) throws ScheduleException;
 
     /**
      * Schedules an operation for execution on members of the given group using the cron expression.

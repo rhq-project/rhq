@@ -22,7 +22,6 @@ package org.rhq.coregui.client.operation;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -38,11 +37,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
-import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.form.EnumSelectItem;
 import org.rhq.coregui.client.components.table.TableAction;
@@ -59,7 +56,7 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
  * Group operation history is (currently) handled separately as the view is comprised of group operation history
- * entities, not [resource] operation history entities. 
+ * entities, not [resource] operation history entities.
  (
  * @author Jay Shaughnessy
  */
@@ -246,7 +243,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Operations", "Schedules/0"));
-                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not 
+                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not
                     // -> using the relative URL hack
                     String oldurl = History.getToken();
                     String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
@@ -258,46 +255,33 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     protected void deleteSelectedRecords(DSRequest requestProperties) {
+        disableAllFooterControls(); // wait for this to complete before we allow more...
+
         final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
-        Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
-        boolean force = ((forceValue != null) && forceValue);
-        final List<Integer> successIds = new ArrayList<Integer>();
-        final List<Integer> failureIds = new ArrayList<Integer>();
+        final Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
+        final boolean force = ((forceValue != null) && forceValue);
+        final int[] idsToBeDeleted = new int[numberOfRecordsToBeDeleted];
+        int i = 0;
         for (ListGridRecord record : recordsToBeDeleted) {
-            final ResourceOperationHistory operationHistoryToRemove = new OperationHistoryDataSource()
-                .copyValues(record);
-            GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
-                new AsyncCallback<Void>() {
-                    public void onSuccess(Void result) {
-                        successIds.add(operationHistoryToRemove.getId());
-                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_operationHistoryList_deleteFailure(operationHistoryToRemove.toString()), caught);
-                        failureIds.add(operationHistoryToRemove.getId());
-                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
-                    }
-                });
+            idsToBeDeleted[i++] = record.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
         }
-    }
-
-    private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
-        if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
-            if (successIds.size() == numberOfRecordsToBeDeleted) {
-                CoreGUI.getMessageCenter()
-                    .notify(
+        GWTServiceLookup.getOperationService().deleteOperationHistories(idsToBeDeleted, force,
+            new AsyncCallback<Void>() {
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_operationHistoryList_deleteSuccess(String
                             .valueOf(numberOfRecordsToBeDeleted))));
-            } else {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_operationHistoryList_deletePartialSuccess(String.valueOf(successIds.size()),
-                        failureIds.toString())));
-            }
-            refresh();
-        }
+                    refresh();
+                    refreshTableInfo(); //enable proper buttons
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_operationHistoryList_deleteFailure(), caught);
+                    refresh();
+                    refreshTableInfo(); // enable proper buttons
+                }
+            });
     }
 
     public EntityContext getContext() {

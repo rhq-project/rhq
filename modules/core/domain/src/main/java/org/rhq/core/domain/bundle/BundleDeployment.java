@@ -91,7 +91,6 @@ public class BundleDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "BundleDeployment.findAll";
-    public static final String QUERY_FIND = "BundleDeployment.updateForVersionRemove";
     public static final String QUERY_UPDATE_FOR_DESTINATION_REMOVE = "BundleDeployment.updateForDestinationRemove";
     public static final String QUERY_UPDATE_FOR_VERSION_REMOVE = "BundleDeployment.updateForVersionRemove";
     public static final String QUERY_UPDATE_FOR_DEPLOYMENT_REMOVE = "BundleDeployment.updateForDeploymentRemove";

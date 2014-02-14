@@ -34,7 +34,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -369,6 +371,13 @@ public class Deployer {
         boolean reportNewRootFilesAsNew =
             this.deploymentData.getDeploymentProps().getDestinationCompliance() == DestinationComplianceMode.full;
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
+
+        // we need fill original files with directory entries
+        // because we're handling directories as well
+        // but we don't store them in file-hascodes.dat file (and even if we started storing them now
+        // we cannot expect them being there from previous bundle deployments)
+        putDirectoryEntries(original);
+
         ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(),
             this.deploymentData.getIgnoreRegex(), reportNewRootFilesAsNew);
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
@@ -376,6 +385,9 @@ public class Deployer {
         if (current.getUnknownContent() != null) {
             throw new Exception("Failed to properly rescan the current deployment: " + current.getUnknownContent());
         }
+
+        // lets fill new files map with directory entries
+        putDirectoryEntries(newFiles);
 
         if (diff != null) {
             diff.addIgnoredFiles(current.getIgnored());
@@ -407,9 +419,9 @@ public class Deployer {
         //
         // do nothing (do not backup the current file and do not copy the new file to disk) if:
         // * the original file is not the same as the current file (current.getChanges()) but is the same as the new file
-        Set<String> currentFilesToBackup = new HashSet<String>(current.getAdditions().keySet());
+        NavigableSet<String> currentFilesToBackup = new TreeSet<String>(current.getAdditions().keySet());
         Map<String, String> currentFilesToLeaveAlone = new HashMap<String, String>();
-        Set<String> currentFilesToDelete;
+        NavigableSet<String> currentFilesToDelete;
 
         for (Map.Entry<String, String> changed : current.getChanges().entrySet()) {
             String changedFilePath = changed.getKey();
@@ -467,7 +479,7 @@ public class Deployer {
 
         // now remove all the new files from the current map - what's left are files that exist that are not in the new deployment
         // thus, those files left in current are those that need to be deleted from disk
-        currentFilesToDelete = current.keySet(); // the set is backed by the map, changes to it affect the map
+        currentFilesToDelete = new TreeSet<String>(current.keySet()); // the set is backed by the map, changes to it affect the map
         currentFilesToDelete.removeAll(newFiles.keySet());
         currentFilesToDelete.removeAll(current.getDeletions().keySet()); // these are already deleted, no sense trying to delete them again
 
@@ -487,7 +499,10 @@ public class Deployer {
             DeploymentProperties props = this.deploymentData.getDeploymentProps(); // changed from: deploymentsMetadata.getCurrentDeploymentProperties
             int backupDeploymentId = props.getDeploymentId();
             debug("Backing up files as part of update deployment. dryRun=", dryRun);
-            for (String fileToBackupPath : currentFilesToBackup) {
+            // currentFilesToBackup is ordered, so we go backwards in order to delete/backup
+            // files laying deeper in folders first ..then folders
+            for (Iterator<String> it = currentFilesToBackup.descendingIterator(); it.hasNext();) {
+                String fileToBackupPath = it.next();
                 boolean toBeDeleted = currentFilesToDelete.remove(fileToBackupPath);
                 backupFile(diff, backupDeploymentId, fileToBackupPath, dryRun, toBeDeleted);
             }
@@ -496,7 +511,10 @@ public class Deployer {
         // 2. delete the obsolete files
         if (!currentFilesToDelete.isEmpty()) {
             debug("Deleting obsolete files as part of update deployment. dryRun=", dryRun);
-            for (String fileToDeletePath : currentFilesToDelete) {
+            // currentFilesToDelete is ordered, so we go backwards in order to delete
+            // files laying deeper in folders first ..then folders
+            for (Iterator<String> it = currentFilesToDelete.descendingIterator(); it.hasNext();) {
+                String fileToDeletePath = it.next();
                 File doomedFile = new File(fileToDeletePath);
                 if (!doomedFile.isAbsolute()) {
                     doomedFile = new File(this.deploymentData.getDestinationDir(), fileToDeletePath);
@@ -533,6 +551,26 @@ public class Deployer {
 
         debug("Update deployment finished. dryRun=", dryRun);
         return newFileHashCodeMap;
+    }
+
+    /**
+     * adds directory entries to FilehashcodeMap. Whenever there is a file laying in a directory, this directory (and it's parents)
+     * will be added to map as items
+     * @param original
+     */
+    private void putDirectoryEntries(FileHashcodeMap map) {
+        Map<String,String> missingDirs = new HashMap<String,String>();
+        for (Iterator<String> it = map.keySet().iterator(); it.hasNext();) {
+            File keyFile = new File(it.next());
+            if (!keyFile.isAbsolute()) {
+                File parent = null;
+                while ((parent = keyFile.getParentFile()) != null) {
+                    missingDirs.put(parent.getPath(), FileHashcodeMap.DIRECTORY_HASHCODE);
+                    keyFile = parent;
+                }
+            }
+        }
+        map.putAll(missingDirs);
     }
 
     private Set<File> findManagedSubdirectories() throws Exception {
@@ -673,7 +711,12 @@ public class Deployer {
                 if (movedSuccessfully) {
                     deleted = true;
                 } else {
-                    FileUtil.copyFile(fileToBackup, bakFile);
+                    if (fileToBackup.isDirectory()) {
+                        bakFile.mkdir();
+                    }
+                    else {
+                        FileUtil.copyFile(fileToBackup, bakFile);
+                    }
                     deleted = fileToBackup.delete();
                     if (deleted == false) {
                         // TODO: what should we do? is it a major failure if we can't remove files here?                
@@ -685,7 +728,12 @@ public class Deployer {
                     }
                 }
             } else {
-                FileUtil.copyFile(fileToBackup, bakFile);
+                if (fileToBackup.isDirectory()) {
+                    bakFile.mkdir();
+                }
+                else {
+                    FileUtil.copyFile(fileToBackup, bakFile);
+                }
             }
         } else {
             deleted = removeFileToBackup; // this is a dry run, pretend we deleted it if we were asked to

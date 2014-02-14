@@ -85,6 +85,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -116,6 +117,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleManagerLocal bundleManager;
     private ResourceManagerLocal resourceManager;
+    private SubjectManagerLocal subjectManager;
     private static final boolean ENABLED = true;
     private static final boolean DISABLED = false;
 
@@ -135,7 +137,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
         resourceManager = LookupUtil.getResourceManager();
-        overlord = LookupUtil.getSubjectManager().getOverlord();
+        subjectManager = LookupUtil.getSubjectManager();
+        overlord = subjectManager.getOverlord();
         this.ps.startMasterPluginContainer();
 
         // try and clean up any junk that may be lying around from a failed run
@@ -518,6 +521,76 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         bCriteria.addFilterId(b1.getId());
         PageList<Bundle> bResults = bundleManager.findBundlesByCriteria(overlord, bCriteria);
         assert bResults.size() == 0;
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testDeleteBundleDeployment() throws Exception {
+        Bundle b1 = createBundle("one");
+        assertNotNull("Instance of newly created bundle should not be null", b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
+        assertNotNull("Instance of newly created bundle version should not be null", bv1);
+
+        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        assertNotNull("Instance of newly created resource group should not be null", platformResourceGroup);
+        BundleDestination dest1 = createDestination(b1, "one", "/test", platformResourceGroup);
+        assertNotNull("Instance of newly created bundle destination should not be null", dest1);
+
+        BundleDeployment deployment1 = createDeployment("one", bv1, dest1,
+            Configuration.builder().addSimple("bundletest.property", "bundletest.property value").build());
+        assertNotNull("Instance of newly created bundle deployment should not be null", deployment1);
+        getTransactionManager().begin();
+        deployment1.setStatus(BundleDeploymentStatus.SUCCESS);
+        em.merge(deployment1);
+        getTransactionManager().commit();
+
+        BundleDeployment deployment2 = createDeployment("two", bv1, dest1,
+            Configuration.builder().addSimple("bundletest.property", "bundletest.property value").build());
+        assertNotNull("Instance of newly created bundle deployment should not be null", deployment2);
+        getTransactionManager().begin();
+        deployment2.setStatus(BundleDeploymentStatus.SUCCESS);
+        deployment2.setReplacedBundleDeploymentId(deployment1.getId());
+        em.merge(deployment2);
+        getTransactionManager().commit();
+
+        BundleDeployment deployment3 = createDeployment("three", bv1, dest1,
+            Configuration.builder().addSimple("bundletest.property", "bundletest.property value").build());
+        assertNotNull("Instance of newly created bundle deployment should not be null", deployment3);
+        getTransactionManager().begin();
+        deployment3.setStatus(BundleDeploymentStatus.SUCCESS);
+        deployment3.setReplacedBundleDeploymentId(deployment2.getId());
+        em.merge(deployment3);
+        getTransactionManager().commit();
+
+        BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
+        criteria.addFilterBundleId(b1.getId());
+        List<BundleDeployment> deployments = bundleManager.findBundleDeploymentsByCriteria(
+            subjectManager.getOverlord(), criteria);
+        assertNotNull("List of bundle deployments should not be null", deployments);
+        assertEquals(3, deployments.size());
+
+        // delete the middle bundle deployment
+        bundleManager.deleteBundleDeployment(subjectManager.getOverlord(), deployment2.getId());
+        deployments = bundleManager.findBundleDeploymentsByCriteria(subjectManager.getOverlord(), criteria);
+        assertNotNull("List of bundle deployments should not be null", deployments);
+        assertEquals(2, deployments.size());
+        assertTrue("When the middle chain was removed the links should be modified correctly. "
+            + "Assume A -> B -> C deployment structure, remove B, this should result in A -> C",
+            deployments.get(0).getReplacedBundleDeploymentId() == null ? deployments.get(1)
+                .getReplacedBundleDeploymentId() == deployments.get(0).getId() : deployments.get(0)
+                .getReplacedBundleDeploymentId() == deployments.get(1).getId());
+
+        bundleManager.deleteBundleDeployment(subjectManager.getOverlord(), deployment1.getId());
+        deployments = bundleManager.findBundleDeploymentsByCriteria(subjectManager.getOverlord(), criteria);
+        assertNotNull("List of bundle deployments should not be null", deployments);
+        assertEquals("1 bundle deployment should be found, 2 were deleted.", 1, deployments.size());
+        assertEquals(
+            "replacedBundleDeploymentId should be set to null, because all the previous deployments were deleted.",
+            deployments.get(0).getReplacedBundleDeploymentId(), null);
+
+        bundleManager.deleteBundleDeployment(subjectManager.getOverlord(), deployment3.getId());
+        deployments = bundleManager.findBundleDeploymentsByCriteria(subjectManager.getOverlord(), criteria);
+        assertNotNull("List of bundle deployments should not be null", deployments);
+        assertEquals("No bundle deployments should be found, all were deleted.", 0, deployments.size());
     }
 
     @Test(enabled = TESTS_ENABLED)

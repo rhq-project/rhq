@@ -1978,6 +1978,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             || BundleDeploymentStatus.SUCCESS == doomed.getStatus()
             || BundleDeploymentStatus.FAILURE == doomed.getStatus()
             || BundleDeploymentStatus.MIXED == doomed.getStatus()) {
+            // change the pointer like in the linked list (ie. when removing B from A -> B -> C, it should result
+            // in following situation: A -> C)
+            Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_DEPLOYMENT_REMOVE);
+            q.setParameter("bundleId", doomed.getId());
+            q.executeUpdate();
+            entityManager.flush();
+
             entityManager.remove(doomed);
         } else {
             throw new IllegalArgumentException("Can not delete deployment with status [" + doomed.getStatus() + "]");

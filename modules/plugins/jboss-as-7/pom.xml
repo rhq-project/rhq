@@ -656,6 +656,18 @@
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
+              </execution>
+              <execution>
+                <id>DatasourceTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
               </execution>                   
               <execution>
                 <id>everything-else</id>
@@ -665,6 +677,7 @@
                   </includes>
                   <excludes>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/AfterSuiteTest.java</exclude>
+                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceTest.java</exclude>                    
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</exclude>
                     <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</exclude>                    
@@ -724,7 +737,7 @@
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-              </execution>              
+              </execution>
               <execution>
                 <id>AfterSuiteTest</id>
                 <configuration>

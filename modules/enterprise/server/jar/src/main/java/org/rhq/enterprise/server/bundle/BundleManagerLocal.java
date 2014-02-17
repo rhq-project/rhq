@@ -102,7 +102,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * @param bundleName name of the bundle to use (if not found, it will be created)
      * @param bundleDescription optional long description of the bundle
      * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
-     * @param bundleGroupIds the bundle groups for the new bundle (if it is created) for which this will be the first version. null to leave unassigned. 
+     * @param bundleGroupIds the bundle groups for the new bundle (if it is created) for which this will be the first version. null to leave unassigned.
      * @param bundleVersionName name of the bundle version
      * @param bundleVersionDescription optional long description of the bundle version
      * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
@@ -159,12 +159,12 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * slsb method needs to both create a deployment and schedules it prior to returning to an external caller.
      * </p>
      * This method performs NO AUTHZ!
-     * </p> 
+     * </p>
      */
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
         int bundleDestinationId, String name, String description, Configuration configuration) throws Exception;
 
-    /** 
+    /**
      * Used by GUI
      * </p>
      * Required Permissions: Either:
@@ -172,10 +172,10 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * </p>
-     *  
+     *
      * @param subject
      * @param bundleVersionId
-     * @return Map, filename to foundInBundleVersion 
+     * @return Map, filename to foundInBundleVersion
      * @throws Exception
      */
     HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;
@@ -187,7 +187,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * </pre>
-     * 
+     *
      * @param subject
      * @param bundleDestinationId required
      * @param bundleVersionId required for progressive deployment, -1 for revert
@@ -203,7 +203,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * affect the persistence context.
      * </p>
      * This method performs NO AUTHZ!
-     * </p> 
+     * </p>
      *
      * @throws Exception
      */
@@ -240,19 +240,19 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception;
 
     /**
-     * Internal use only. Called internally to set deployment status. Typically to a completion status when deployment 
-     * ends.
+     * Internal use only. Called internally to set deployment status. Typically to a completion status when deployment
+     * ends.  Exists for transaction boundary reasons only.
      * </p>
      * This method performs NO AUTHZ!
-     * </p> 
+     * </p>
      *
      * @param subject
      * @param resourceDeploymentId id of the resource deployment appending the history record
      * @param status
      * @return the updated {@link BundleResourceDeployment}
      */
-    BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
-        BundleDeploymentStatus status) throws Exception;
+    BundleResourceDeployment setBundleResourceDeploymentStatusInNewTransaction(Subject subject,
+        int resourceDeploymentId, BundleDeploymentStatus status) throws Exception;
 
     /**
      * Internal use only
@@ -262,7 +262,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * a transactional context, as opposed to the main purge method.
      * </p>
      * This method performs NO AUTHZ!
-     * </p> 
+     * </p>
      *
      * @param subject
      * @param bundleDeployment
@@ -275,7 +275,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     /**
      * Like {@link #createBundleVersionViaFile(Subject, File)} with one additional feature.
      * This method exists solely to support the GUI's wizard workflow which always first tries to create a bundle
-     * version for an existing bundle, because it does not know whether this is an initial bundle version (only 
+     * version for an existing bundle, because it does not know whether this is an initial bundle version (only
      * the server can figure that out after it cracks open the bundle distribution, parses the recipe, and
      * looks for the bundle).  If this is an initialBundleVersion this method does two things. First, it stores the
      * distribution file as a temp file, this is done to avoid having to upload the file a second time. Second, it
@@ -287,7 +287,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     /**
      * Like {@link #createBundleVersionViaURL(Subject, String, String, String)}  with one additional feature.
      * This method exists solely to support the GUI's wizard workflow which always first tries to create a bundle
-     * version for an existing bundle, because it does not know whether this is an initial bundle version (only 
+     * version for an existing bundle, because it does not know whether this is an initial bundle version (only
      * the server can figure that out after it cracks open the bundle distribution, parses the recipe, and
      * looks for the bundle).  If this is an initialBundleVersion this method does two things. First, it stores the
      * distribution file as a temp file, this is done to avoid having to upload the file a second time. Second, it
@@ -299,14 +299,14 @@ public interface BundleManagerLocal extends BundleManagerRemote {
 
     /**
      * This method exists solely to support the GUI's wizard workflow which always first tries to create a bundle
-     * version for an existing bundle, because it does not know whether this is an initial bundle version (only 
+     * version for an existing bundle, because it does not know whether this is an initial bundle version (only
      * the server can figure that out after it cracks open the bundle distribution, parses the recipe, and
      * looks for the bundle).  It works in conjunction with {@link #createOrStoreBundleVersionViaFile(Subject, File)} or
      * {@link #createOrStoreBundleVersionViaURL(Subject, String, String, String)}.
      * <p/>
      * This method will use the supplied token to access the distribution file. It assumes this is a new bundle and
      * is responsible for creating the bundle as well as the bundle version. The caller can indicate which bundle
-     * groups the new bundle should be assigned to. If bundleGroupId is null, then the new bundle will not be 
+     * groups the new bundle should be assigned to. If bundleGroupId is null, then the new bundle will not be
      * associated with any bundle group - this is only allowed if the caller has the permission Global.VIEW_BUNDLES.
      * <pre>
      * Required Permissions: Either:
@@ -317,7 +317,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * @param subject user that must have proper permissions
      * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
      * length to leave unassigned.
-     * @param token the token used to identify the distribution file stashed as a temp file. 
+     * @param token the token used to identify the distribution file stashed as a temp file.
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did.
      */
@@ -329,10 +329,10 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * includes a <code>Map<BundleGroup,Boolean></code> indicating the assignable BundleGroups and which are
      * currently assigned.   It also indicates whether the bundle can be left unassigned.  When querying for
      * new bundles the bundleId should be set to 0.
-     * 
+     *
      * @param subject, the calling subject
-     * @param assigningSubject, the subject relevant to the bundle group assignment 
-     * @param bundleId, the bundle relevant to the bundle group assignment, or 0 for a new bundle 
+     * @param assigningSubject, the subject relevant to the bundle group assignment
+     * @param bundleId, the bundle relevant to the bundle group assignment, or 0 for a new bundle
      * @return
      * @throws Exception
      */
@@ -348,5 +348,15 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      *
      * @since 4.10
      */
-    BundleDeploymentStatus determineOverallBundleDeploymentStatus(int bundleDeploymentId);
+    BundleDeploymentStatus determineBundleDeploymentStatus(int bundleDeploymentId);
+
+    /**
+     * Internal use only. Exists for transaction boundary reasons only.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p>
+     */
+    BundleDeployment scheduleBundleDeploymentInNewTransaction(Subject subject, int bundleDeploymentId,
+        boolean isCleanDeployment, boolean isRevert, Integer revertedDeploymentReplacedDeployment) throws Exception;
+
 }

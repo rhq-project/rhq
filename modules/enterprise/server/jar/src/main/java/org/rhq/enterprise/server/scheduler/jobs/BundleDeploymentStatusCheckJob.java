@@ -25,6 +25,7 @@ import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.BundleDeployment;
@@ -32,7 +33,9 @@ import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
  * @author Lukas Krejci
@@ -64,18 +67,33 @@ public class BundleDeploymentStatusCheckJob implements Job {
 
         Subject overlord = subjectManager.getOverlord();
 
-        PageList<BundleDeployment> deployments = bundleManager.findBundleDeploymentsByCriteria(overlord, getCriteriaFromContext(context));
+        PageList<BundleDeployment> deployments = bundleManager.findBundleDeploymentsByCriteria(overlord,
+            getCriteriaFromContext(context));
 
         if (deployments.size() > 0) {
             BundleDeployment bundleDeployment = deployments.get(0);
+            SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+            JobDetail jobDetail = context.getJobDetail();
 
-            if (bundleManager.determineOverallBundleDeploymentStatus(bundleDeployment.getId()).isTerminal()) {
+            if (bundleManager.determineBundleDeploymentStatus(bundleDeployment.getId()).isTerminal()) {
+                // delete this job, we've assigned a final status
                 try {
-                    context.getScheduler()
-                        .deleteJob(context.getJobDetail().getName(), context.getJobDetail().getGroup());
+                    scheduler.deleteJob(jobDetail.getName(), jobDetail.getGroup());
                 } catch (SchedulerException e) {
-                    throw new JobExecutionException("Could not cancel the bundle deployment completion check job for "
+                    throw new JobExecutionException("Could not delete the bundle deployment completion check job for "
                         + bundleDeployment + ".", e);
+                }
+            } else {
+                // try again in 10s
+                try {
+                    Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000L);
+                    // just need a trigger name unique for this job
+                    trigger.setName(String.valueOf(System.currentTimeMillis()));
+                    scheduler.scheduleJob(trigger);
+                } catch (SchedulerException e) {
+                    throw new JobExecutionException(
+                        "Could not schedule the bundle deployment completion check job for " + bundleDeployment + ".",
+                        e);
                 }
             }
         }

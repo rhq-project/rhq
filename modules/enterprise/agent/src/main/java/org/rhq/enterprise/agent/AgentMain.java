@@ -20,6 +20,8 @@
 package org.rhq.enterprise.agent;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -62,8 +64,6 @@ import javax.management.ObjectName;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -714,8 +714,12 @@ public class AgentMain {
                         TimeUnit.MILLISECONDS);
 
                     // prepare our shutdown hook
-                    m_shutdownHook = new AgentShutdownHook(this);
-                    Runtime.getRuntime().addShutdownHook(m_shutdownHook);
+                    if (!m_configuration.doNotInstallShutdownHook()) {
+                        m_shutdownHook = new AgentShutdownHook(this);
+                        Runtime.getRuntime().addShutdownHook(m_shutdownHook);
+                    } else {
+                        LOG.info(AgentI18NResourceKeys.NOT_INSTALLING_SHUTDOWN_HOOK);
+                    }
 
                     // start the thread that tries to keep the agent pointed to its primary server
                     m_primaryServerSwitchoverThread = new PrimaryServerSwitchoverThread(this);

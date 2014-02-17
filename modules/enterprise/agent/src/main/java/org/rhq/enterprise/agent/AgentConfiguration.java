@@ -1371,6 +1371,20 @@ public class AgentConfiguration {
     }
 
     /**
+     * The default (<code>false</code>) is that the agent will install a shutdown hook so it can detect
+     * a VM shutdown request and be able to properly shut itself down.
+     * However, if this returns <code>true</code>, it is assumed the agent itself is embedded in a container
+     * and that container will ensure that it tells the agent to shut itself down at the proper time.
+     *
+     * @return the shutdown hook install flag, if <code>true</code> is returned, this will tell the agent it
+     *         should not install its own shutdown hook.
+     */
+    public boolean doNotInstallShutdownHook() {
+        boolean flag = m_preferences.getBoolean(AgentConfigurationConstants.DO_NOT_INSTALL_SHUTDOWN_HOOK, false);
+        return flag;
+    }
+
+    /**
      * @see java.lang.Object#toString()
      */
     @Override

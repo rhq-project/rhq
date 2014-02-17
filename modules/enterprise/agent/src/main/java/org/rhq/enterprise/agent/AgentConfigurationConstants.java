@@ -531,6 +531,13 @@ public interface AgentConfigurationConstants {
     String DO_NOT_OVERRIDE_PREFS_WITH_SYSPROPS = PROPERTY_NAME_PREFIX + "do-not-override-prefs-with-sysprops";
 
     /**
+     * Flag, if set to <code>true</code>, will tell the agent to not install the shutdown hook. This is used
+     * mainly when the agent is embedded in another container and will take care of properly shutting down the
+     * agent when the VM is shutdown.
+     */
+    String DO_NOT_INSTALL_SHUTDOWN_HOOK = PROPERTY_NAME_PREFIX + "do-not-install-shutdown-hook";
+
+    /**
      * The location where the plugins can be found.
      */
     String PLUGINS_DIRECTORY = PROPERTY_NAME_PREFIX + "plugins.directory";

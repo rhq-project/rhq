@@ -1626,6 +1626,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Agent is not starting the plugin container at startup, as per its configuration")
     String NOT_STARTING_PLUGIN_CONTAINER_AT_STARTUP = "AgentMain.not-starting-pc-at-startup";
 
+    @I18NMessage("Agent is not installing its shutdown hook, as per its configuration")
+    String NOT_INSTALLING_SHUTDOWN_HOOK = "AgentMain.not-installing-shutdown-hook";
+
     @I18NMessage("Agent is not notifying the server that it is shutting down, as per its configuration")
     String TOLD_TO_NOT_NOTIFY_SERVER_OF_SHUTDOWN = "AgentMain.told-to-not-notify-server-of-shutdown";
 

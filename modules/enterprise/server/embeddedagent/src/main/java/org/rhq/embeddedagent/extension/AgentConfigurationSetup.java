@@ -92,6 +92,7 @@ public class AgentConfigurationSetup {
         // Don't take sysprops that might be set in the VM - must configure the overrides via this subsystem's config.
         overrides.put(AgentConfigurationConstants.DO_NOT_OVERRIDE_PREFS_WITH_SYSPROPS, "true");
         overrides.put(ServiceContainerConfigurationConstants.MBEANSERVER_NAME, "rhqembeddedagent");
+        overrides.put(AgentConfigurationConstants.DO_NOT_INSTALL_SHUTDOWN_HOOK, "true");
 
         return overrides;
     }

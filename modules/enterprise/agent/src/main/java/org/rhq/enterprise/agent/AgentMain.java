@@ -53,6 +53,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.prefs.BackingStoreException;
@@ -319,12 +320,12 @@ public class AgentMain {
      * itself with the server. This is an array because the array itself will be used for its lock to synchronize access
      * to the thread.
      */
-    private Thread[] m_registrationThread = new Thread[1];
+    private final AtomicReference<Thread> m_registrationThread = new AtomicReference<Thread>();
 
     /**
      * Will be non-<code>null</code> if this agent has successfully registered with the server.
      */
-    private AgentRegistrationResults m_registration;
+    private volatile AgentRegistrationResults m_registration;
 
     /**
      * This is the management MBean responsible for managing and monitoring this agent. This is the object the agent
@@ -345,7 +346,7 @@ public class AgentMain {
      * allowing one failover attempt to happen at any one time regardless of the number of
      * concurrent messages/failovers requested.
      */
-    private long[] m_lastFailoverTime = new long[] { 0L };
+    private final long[] m_lastFailoverTime = new long[] { 0L };
 
     /**
      * Thread used to try to maintain connectivity to the primary server as much as possible.
@@ -355,7 +356,7 @@ public class AgentMain {
     /**
      * Object that remembers when the last connect agent message was sent and to which server.
      */
-    private LastSentConnectAgent m_lastSentConnectAgent = new LastSentConnectAgent();
+    private final LastSentConnectAgent m_lastSentConnectAgent = new LastSentConnectAgent();
 
     /**
      * This is the number of milliseconds this agent clock differs from its server's clock.
@@ -448,6 +449,10 @@ public class AgentMain {
                 agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
                 anse.printStackTrace(agent.getOut());
                 retries = MAX_RETRIES; // this is unrecoverable, we need this main thread to exit *now*
+            } catch (AgentRegistrationException e) {
+                LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
+                e.printStackTrace(agent.getOut());
+                retries = MAX_RETRIES;
             } catch (Exception e) {
                 LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
 
@@ -689,8 +694,11 @@ public class AgentMain {
                     BootstrapLatchCommandListener latch = new BootstrapLatchCommandListener();
                     startCommServices(latch); // note that we start the comm services before we start the plugin container
                     startManagementServices(); // we start our metric collectors before plugin container so the agent plugin can work
-                    prepareStartupWorkRequiringServer();
+                    boolean mustRegister = prepareStartupWorkRequiringServer();
                     waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
+                    if (mustRegister && !isRegistered()) {
+                        throw new AgentRegistrationException(MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
+                    }
 
                     if (!m_configuration.doNotStartPluginContainerAtStartup()) {
                         // block indefinitely - we cannot continue until we are registered, we have plugins and the PC starts
@@ -1560,24 +1568,18 @@ public class AgentMain {
             }
         };
 
-        // another paraniod synchronization - just in case multiple threads attempt to concurrently register
+        // just in case multiple threads attempt to concurrently register
         // this agent, this assures that only one registration thread is running - any old thread that
         // may still be running will be interrupted (which will eventually cause it to die).  Its
         // OK if more than one registration command is sent via the task, that is concurrent-safe.
         // This just ensures that only one registration thread continues to run.
 
-        Thread thread;
-
-        synchronized (m_registrationThread) {
-            thread = m_registrationThread[0];
-            if (thread != null) {
-                thread.interrupt(); // make sure the old thread eventually dies
-            }
-
-            thread = new Thread(task, "RHQ Agent Registration Thread");
-            thread.setDaemon(true);
-            m_registrationThread[0] = thread;
-            thread.start();
+        Thread thread = new Thread(task, "RHQ Agent Registration Thread");
+        thread.setDaemon(true);
+        thread.start();
+        Thread old = m_registrationThread.getAndSet(thread);
+        if (old != null) {
+            old.interrupt();
         }
 
         if (wait > 0L) {

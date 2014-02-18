@@ -125,8 +125,9 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         final CreateResourceReport resourceReport = super.createResource(createResourceReport);
 
         // No success -> no point in continuing
-        if (resourceReport.getStatus() != CreateResourceStatus.SUCCESS)
+        if (resourceReport.getStatus() != CreateResourceStatus.SUCCESS) {
             return resourceReport;
+        }
 
         // outer create resource did not cater for the connection or xa properties, so lets add them now
         String connPropAttributeNameOnAS7, connPropPluginConfigPropertyName, keyName;
@@ -141,27 +142,30 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         }
         PropertyList listPropertyWrapper = createResourceReport.getResourceConfiguration().getList(
             connPropPluginConfigPropertyName);
-        CompositeOperation cop = new CompositeOperation();
-        for (Property p : listPropertyWrapper.getList()) {
-            PropertyMap map = (PropertyMap) p;
-            String key = map.getSimpleValue(keyName, null);
-            String value = map.getSimpleValue("value", null);
-            if (key == null || value == null) {
-                continue;
+        // if no conn or xa props supplied in the create resource request, skip and continue
+        if (null != listPropertyWrapper) {
+            CompositeOperation cop = new CompositeOperation();
+            for (Property p : listPropertyWrapper.getList()) {
+                PropertyMap map = (PropertyMap) p;
+                String key = map.getSimpleValue(keyName, null);
+                String value = map.getSimpleValue("value", null);
+                if (key == null || value == null) {
+                    continue;
+                }
+                Address propertyAddress = new Address(resourceReport.getResourceKey());
+                propertyAddress.add(connPropAttributeNameOnAS7, key);
+                Operation op = new Operation("add", propertyAddress);
+                op.addAdditionalProperty("value", value);
+                cop.addStep(op);
             }
-            Address propertyAddress = new Address(resourceReport.getResourceKey());
-            propertyAddress.add(connPropAttributeNameOnAS7, key);
-            Operation op = new Operation("add", propertyAddress);
-            op.addAdditionalProperty("value", value);
-            cop.addStep(op);
-        }
-        if (cop.numberOfSteps() > 0) {
-            Result res = getASConnection().execute(cop);
-            if (!res.isSuccess()) {
-                resourceReport.setErrorMessage("Datasource was added, but setting " + connPropAttributeNameOnAS7
-                    + " failed: " + res.getFailureDescription());
-                resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
-                return resourceReport;
+            if (cop.numberOfSteps() > 0) {
+                Result res = getASConnection().execute(cop);
+                if (!res.isSuccess()) {
+                    resourceReport.setErrorMessage("Datasource was added, but setting " + connPropAttributeNameOnAS7
+                        + " failed: " + res.getFailureDescription());
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                    return resourceReport;
+                }
             }
         }
 

@@ -41,6 +41,7 @@ import javax.persistence.Table;
         + "LEFT JOIN sched.baseline bal " //
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE o.id = sched.id " //
+        + "      AND res.inventoryStatus = 'COMMITTED' " //
         + "      AND sched.definition = def " //
         + "      AND sched.resource = res " //
         + "      AND bal.schedule = sched " //
@@ -60,6 +61,7 @@ import javax.persistence.Table;
         + "LEFT JOIN sched.baseline bal " //
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE o.id = sched.id " //
+        + "      AND res.inventoryStatus = 'COMMITTED' " //
         + "      AND sched.definition = def " //
         + "      AND sched.resource = res " //
         + "      AND bal.schedule = sched " //
@@ -73,6 +75,7 @@ import javax.persistence.Table;
         + "LEFT JOIN sched.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE o.id = sched.id " //
+        + "      AND res.inventoryStatus = 'COMMITTED' " //
         + "      AND sched.definition = def " //
         + "      AND sched.resource = res " //
         + "      AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " //
@@ -150,9 +153,9 @@ public class MeasurementOOB {
      * (Jan 16, 2009) - The new OOB system uses a threshold to determine whether a metric is a "problem" or not.
      *                  The current threshold is a static value - 0.1 - and does not change based on any characteristic
      *                  of the metric data collected.  Dynamic metrics, however, can have either naturally narrow or
-     *                  naturally wide baseline ranges; this makes the static threshold of 0.1 either too sensitive 
+     *                  naturally wide baseline ranges; this makes the static threshold of 0.1 either too sensitive
      *                  or not sensitive enough, respectively.  The next improvement to the baseline system probably
-     *                  needs to use a sliding scale for this threshold, to more accurately characterize "problem" 
+     *                  needs to use a sliding scale for this threshold, to more accurately characterize "problem"
      *                  metrics across varying magnitudes of metric baseline deltas.
      */
     public static final String INSERT_QUERY = "" //
@@ -202,7 +205,7 @@ public class MeasurementOOB {
         + "      WHEN NOT MATCHED THEN INSERT ( oob_.schedule_id, oob_.time_stamp, oob_.oob_factor ) \n"
         + "                            VALUES ( tmp_.schedule_id, tmp_.time_stamp, tmp_.oob_factor )";
 
-    /* 
+    /*
      * H2 syntax doesn't support the more complex SET...FROM...WHERE like Postgres, and although it does support
      * MERGE it doesn't support the WHEN [NOT] MATCHED syntax; so we'll just delete any and all OOBs that have become
      * obsolete, and follow that up with a call to INSERT_NEW_ONES, which should give us the same effect as row updates

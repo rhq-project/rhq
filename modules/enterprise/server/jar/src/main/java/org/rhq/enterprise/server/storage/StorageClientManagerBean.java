@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.storage;
@@ -34,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.Resource;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
@@ -84,24 +79,19 @@ import org.rhq.server.metrics.StorageSession;
 @Singleton
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StorageClientManagerBean {
-
-    private final Log log = LogFactory.getLog(StorageClientManagerBean.class);
+    private static final Log LOG = LogFactory.getLog(StorageClientManagerBean.class);
 
     private static final String RHQ_KEYSPACE = "rhq";
 
     @EJB
     private SubjectManagerLocal subjectManager;
-
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
-
     @EJB
     private SystemManagerLocal systemManager;
-
     @EJB
     private CoreServer coreServer;
-
-    @javax.annotation.Resource
+    @Resource
     private TimerService timerService;
 
     private Cluster cluster;
@@ -115,16 +105,17 @@ public class StorageClientManagerBean {
     private String cachedStorageUsername;
     private String cachedStoragePassword;
 
-
     public void scheduleStorageSessionMaintenance() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
         for (Timer existingTimer : timers) {
-            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            }
             try {
                 existingTimer.cancel();
             } catch (Exception e) {
-                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+                LOG.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
             }
         }
 
@@ -146,9 +137,9 @@ public class StorageClientManagerBean {
         } else {
             boolean refreshResult = this.refreshCredentialsAndSession();
             if (!refreshResult) {
-                log.error("Storage session credentials not succesfully refreshed!");
+                LOG.error("Storage session credentials not succesfully refreshed!");
             } else {
-                log.debug("Storage session credentials refreshed.");
+                LOG.debug("Storage session credentials refreshed.");
             }
         }
     }
@@ -158,13 +149,11 @@ public class StorageClientManagerBean {
      */
     public synchronized boolean init() {
         if (initialized) {
-            if (log.isDebugEnabled()) {
-                log.debug("Storage client subsystem is already initialized. Skipping initialization.");
-            }
+            LOG.debug("Storage client subsystem is already initialized. Skipping initialization.");
             return initialized;
         }
 
-        log.info("Initializing storage client subsystem");
+        LOG.info("Initializing storage client subsystem");
 
         try {
             Session wrappedSession = createSession();
@@ -180,14 +169,14 @@ public class StorageClientManagerBean {
             initMetricsServer();
 
             initialized = true;
-            log.info("Storage client subsystem is now initialized");
+            LOG.info("Storage client subsystem is now initialized");
         } catch (NoHostAvailableException e) {
             initialized = false;
             if (cluster != null) {
                 cluster.shutdown();
             }
 
-            log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
+            LOG.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                 + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                 + " as soon as possible.", e);
         } catch (Throwable t) {
@@ -196,7 +185,7 @@ public class StorageClientManagerBean {
                 cluster.shutdown();
             }
 
-            log.warn("Storage client subsystem wasn't initialized. The RHQ server will be set to MAINTENANCE mode. Please verify "
+            LOG.warn("Storage client subsystem wasn't initialized. The RHQ server will be set to MAINTENANCE mode. Please verify "
                     + " that the storage cluster is operational.", t);
         }
 
@@ -216,9 +205,7 @@ public class StorageClientManagerBean {
      */
     public synchronized boolean refreshCredentialsAndSession() {
         if (!initialized) {
-            if (log.isDebugEnabled()) {
-                log.debug("Storage client subsystem not initialized. Skipping session refresh.");
-            }
+            LOG.debug("Storage client subsystem not initialized. Skipping session refresh.");
             return false;
         }
 
@@ -237,7 +224,7 @@ public class StorageClientManagerBean {
                     cluster.shutdown();
                 }
 
-                log.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
+                LOG.warn("Storage client subsystem wasn't initialized because it wasn't possible to connect to the"
                     + " storage cluster. The RHQ server is set to MAINTENANCE mode. Please start the storage cluster"
                     + " as soon as possible.", e);
                 return false;
@@ -278,7 +265,7 @@ public class StorageClientManagerBean {
     }
 
     public synchronized void shutdown() {
-        log.info("Shutting down storage client subsystem");
+        LOG.info("Shutting down storage client subsystem");
 
         if (metricsServer != null) {
             metricsServer.shutdown();
@@ -292,7 +279,7 @@ public class StorageClientManagerBean {
                 cluster.shutdown();
             }
         } catch (Exception e) {
-            log.error("Failed to shutdown the cluster connection manager for the storage cluster.", e);
+            LOG.error("Failed to shutdown the cluster connection manager for the storage cluster.", e);
         }
 
         cluster = null;
@@ -359,12 +346,16 @@ public class StorageClientManagerBean {
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void persistStorageProperty(String key, String value) {
+        if (Boolean.getBoolean("running.itests-2")) {
+            // When running itests-2, there is no server props file, so avoid logging a confusing exception
+            return;
+        }
         PropertiesFileUpdate updater = new PropertiesFileUpdate(getServerPropsFile().getAbsolutePath());
         try {
             updater.update(key, value);
         } catch (IOException e) {
             // TODO should we propagate the exception?
-            log.warn("Failed to persist property " + key + " due to unexpected I/O error",
+            LOG.warn("Failed to persist property " + key + " due to unexpected I/O error",
                 ThrowableUtil.getRootCause(e));
         }
     }
@@ -407,9 +398,7 @@ public class StorageClientManagerBean {
 
         checkSchemaCompability(this.cachedStorageUsername, this.cachedStoragePassword, storageNodes);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Initializing session to connect to storage node cluster");
-        }
+        LOG.debug("Initializing session to connect to storage node cluster");
         List<String> hostNames = new ArrayList<String>();
         for (StorageNode storageNode : storageNodes) {
             hostNames.add(storageNode.getAddress());
@@ -443,21 +432,21 @@ public class StorageClientManagerBean {
         if (policy.equals("DCAwareRoundRobin")) {
             String dataCenter = System.getProperty(DATA_CENTER);
             if (dataCenter == null) {
-                log.warn(policy + " was specified for " + LOAD_BALANCING + " but " + DATA_CENTER + " is undefined." +
+                LOG.warn(policy + " was specified for " + LOAD_BALANCING + " but " + DATA_CENTER + " is undefined." +
                     "Reverting to RoundRobin load balancing policy.");
                 return new RoundRobinPolicy();
             } else {
                 return new DCAwareRoundRobinPolicy(dataCenter);
             }
         }
-        log.warn(policy + " is not a supported load balancing policy. Reverting to RoundRobin load balancing policy.");
+        LOG.warn(policy + " is not a supported load balancing policy. Reverting to RoundRobin load balancing policy.");
 
         return new RoundRobinPolicy();
     }
 
     private void initMetricsServer() {
-        if (log.isDebugEnabled()) {
-            log.debug("Initializing " + MetricsServer.class.getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initializing " + MetricsServer.class.getName());
         }
         metricsServer = new MetricsServer();
         metricsServer.setDAO(metricsDAO);

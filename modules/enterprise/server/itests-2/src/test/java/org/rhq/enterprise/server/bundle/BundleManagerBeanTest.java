@@ -1729,7 +1729,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         addRolePermissions(role, Permission.VIEW_BUNDLES);
 
         // should fetch the single unassigned bundle due to global view in one of the assigned roles
-        bundleCriteria.addFilterBundleGroupIds(null);
+        bundleCriteria.addFilterBundleGroupIds((Integer[]) null);
         bundles = bundleManager.findBundlesByCriteria(subject, bundleCriteria);
         assertNotNull(bundles);
         assertEquals("Should be able to see unassigned bundle", 1, bundles.size());

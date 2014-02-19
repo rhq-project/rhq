@@ -582,11 +582,18 @@ public class MetricsServer {
                 dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
                 dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
             }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Finished computing and inserting " + oneHourMetrics.size() + " aggregates into table ["
+                    + MetricsTable.ONE_HOUR + "]");
+            }
+
             return oneHourMetrics;
         } finally {
             long end = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
-                log.info("Finished computing aggregates for table [" + MetricsTable.RAW + "]" + (end - start) + " ms");
+                log.info("Finished computing aggregates for table [" + MetricsTable.RAW
+                    + "]" + (end - start) + " ms");
             }
         }
     }
@@ -675,11 +682,18 @@ public class MetricsServer {
                 default:  // 24 hour
                     insertTwentyFourHourAggregates(toMetrics);
             }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Finished computing and inserting " + toMetrics.size() + " aggregates into table [" + toTable
+                    + "] ");
+            }
+
             return toMetrics;
         } finally {
             long end = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
-                log.info("Finished computing aggregates for table [" + fromTable + "] " + (end - start) + " ms");
+                log.info("Finished computing aggregates for table [" + fromTable + "] "
+                    + (end - start) + " ms");
             }
         }
     }

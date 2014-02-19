@@ -38,6 +38,8 @@ import org.joda.time.Seconds;
 
 import org.rhq.metrics.simulator.MinutesDateTimeService;
 import org.rhq.metrics.simulator.SecondsDateTimeService;
+import org.rhq.metrics.simulator.SimulatedDateTimeService;
+import org.rhq.metrics.simulator.plan.SimulationPlan.SimulationType;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 
@@ -77,10 +79,16 @@ public class SimulationPlanner {
         default:  // HOURS
             simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 30000L));
             simulation.setAggregationInterval(3600000L);
+            simulation.setMetricsServerConfiguration(new MetricsConfiguration());
             simulation.setMetricsReportInterval(getInt(root.get("metricsReportInterval"), 1200));
             simulation.setSimulationRate(1000);
-            simulation.setMetricsServerConfiguration(new MetricsConfiguration());
             dateTimeService = new DateTimeService();
+        }
+
+        simulation.setSimulationType(SimulationPlan.SimulationType.fromText(getString(root.get("simulationType"),
+            "threaded")));
+        if (SimulationType.SEQUENTIAL.equals(simulation.getSimulationType())) {
+            dateTimeService = new SimulatedDateTimeService();
         }
 
         dateTimeService.setConfiguration(simulation.getMetricsServerConfiguration());
@@ -110,8 +118,6 @@ public class SimulationPlanner {
             "sync")));
         simulation.setAggregationEnabled(getBoolean(root.get("aggregationEnabled"), true));
 
-        simulation.setSimulationType(SimulationPlan.SimulationType.fromText(getString(root.get("simulationType"),
-            "threaded")));
 
         return simulation;
     }

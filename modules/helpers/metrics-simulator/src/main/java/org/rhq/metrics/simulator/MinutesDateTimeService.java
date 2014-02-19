@@ -3,12 +3,10 @@ package org.rhq.metrics.simulator;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
-import org.rhq.server.metrics.DateTimeService;
-
 /**
  * @author John Sanda
  */
-public class MinutesDateTimeService extends DateTimeService {
+public class MinutesDateTimeService extends SimulatedDateTimeService {
 
     @Override
     public DateTime getTimeSlice(DateTime dt, Duration duration) {

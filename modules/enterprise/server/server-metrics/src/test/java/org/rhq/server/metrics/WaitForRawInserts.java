@@ -3,6 +3,7 @@ package org.rhq.server.metrics;
 import static org.testng.Assert.fail;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Throwables;
 
@@ -43,7 +44,7 @@ class WaitForRawInserts implements RawDataInsertedCallback {
     }
 
     public void await(String errorMsg) throws InterruptedException {
-        latch.await();
+        latch.await(5, TimeUnit.SECONDS);
         if (throwable != null) {
             fail(errorMsg, Throwables.getRootCause(throwable));
         }

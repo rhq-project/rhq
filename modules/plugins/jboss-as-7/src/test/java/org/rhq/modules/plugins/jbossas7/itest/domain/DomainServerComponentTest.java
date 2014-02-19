@@ -91,6 +91,11 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.testShutdownAndStartOperations();
     }
 
+    @Test(priority = 1005, enabled = true)
+    public void testExecuteCliOperations() throws Exception {
+        super.testExecuteCliOperations();
+    }
+
     protected String getExpectedStartScriptFileName() {
         return (File.separatorChar == '/') ? "domain.sh" : "domain.bat";
     }

@@ -39,6 +39,8 @@ public class ServerPluginConfiguration {
         public static final String HOSTNAME = "hostname";
         public static final String PORT = "port";
         public static final String SECURE = "secure";
+        public static final String NATIVE_HOST = "nativeHost";
+        public static final String NATIVE_PORT = "nativePort";
         public static final String USER = "user";
         public static final String PASSWORD = "password";
         public static final String MANAGEMENT_CONNECTION_TIMEOUT = "managementConnectionTimeout";
@@ -92,6 +94,24 @@ public class ServerPluginConfiguration {
 
     public void setSecure(boolean secure) {
         this.pluginConfig.setSimpleValue(Property.SECURE, String.valueOf(secure));
+    }
+
+    public Integer getNativePort() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.NATIVE_PORT);
+        return (stringValue != null) ? Integer.valueOf(stringValue) : null;
+    }
+
+    public void setNativeHost(String host) {
+        this.pluginConfig.setSimpleValue(Property.NATIVE_HOST, host);
+    }
+
+    public String getNativeHost() {
+        return this.pluginConfig.getSimpleValue(Property.NATIVE_HOST);
+
+    }
+
+    public void setNativePort(int port) {
+        this.pluginConfig.setSimpleValue(Property.NATIVE_PORT, String.valueOf(port));
     }
 
     public String getUser() {

@@ -62,6 +62,8 @@
             for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
           </c:description>
         </c:simple-property>
+        <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>
+        <c:simple-property name="nativePort" type="integer" required="true" default="9999" description="Native management API port" />
     </c:group>
 '>
 
@@ -993,6 +995,28 @@
             description="The execution times of individual methods on a bean. Note that you need to enable statistics at server level in the ejb3 subsystem" displayName="Method Execution Time"
             units="milliseconds" destinationType="Method Name"/>
 '>
+	<!ENTITY executeCliOperations '
+	<operation name="executeCommands" description="Executes command via jboss-cli" displayName="Execute CLI commands" timeout="60">
+		<parameters>
+			<c:simple-property name="commands" type="longString" required="true" description="Commands to be executed" />
+			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
+			<c:simple-property name="triggerDiscovery" type="boolean" default="false" defaultValue="false" description="Trigger discovery scan for child resources asynchronously on successfull script finish." />
+		</parameters>
+		<results>
+        	<c:simple-property name="operationResult"/>
+      	</results>
+	</operation>
+	<operation name="executeScript" description="Executes script via jboss-cli" displayName="Execute CLI script" timeout="60">
+		<parameters>
+			<c:simple-property name="file" type="string" displayName="Script file" required="true" description="JBoss CLI script file. Relative path based on AS Home Directory can be used." />
+			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
+			<c:simple-property name="triggerDiscovery" type="boolean" default="false" defaultValue="false" description="Trigger discovery scan for child resources asynchronously on successfull script finish." />
+		</parameters>
+		<results>
+        	<c:simple-property name="operationResult"/>
+      	</results>
+	</operation>
+'>
     ]>
 <plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
@@ -1060,6 +1084,7 @@
         <c:simple-property name="operationResult"/>
       </results>
     </operation>
+    &executeCliOperations;
 
     <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
             displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"
@@ -1381,7 +1406,7 @@
         <c:simple-property name="operationResult"/>
       </results>
     </operation>
-
+    &executeCliOperations;
 
     <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
             displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"

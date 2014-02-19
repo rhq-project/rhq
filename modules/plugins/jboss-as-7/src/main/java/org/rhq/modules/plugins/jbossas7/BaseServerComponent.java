@@ -374,6 +374,86 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         return operationResult;
     }
+    /**
+     * runs jboss-cli executable and returns its output
+     * @param parameters input configuration (either commands or file sipmle-property is expected)
+     * @return the result of the operation
+     * @throws InterruptedException
+     */
+    protected OperationResult runCliCommand(Configuration parameters) throws InterruptedException {
+        OperationResult result = new OperationResult();
+        if (isManuallyAddedServer(result, "Executing jboss-cli")) {
+            return result;
+        }
+
+        File homeDir = serverPluginConfig.getHomeDir();
+        File startScriptFile = new File(new File(homeDir, "bin"), getMode().getCliScriptFileName());
+
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(null,
+            startScriptFile);
+
+        List<String> arguments = processExecution.getArguments();
+        if (arguments == null) {
+            arguments = new ArrayList<String>();
+            processExecution.setArguments(arguments);
+        }
+        String commandArg;
+        String command = parameters.getSimpleValue("commands");
+        if (command!=null) {
+            commandArg = "--commands="+command;
+        } else {
+            File script = new File(parameters.getSimpleValue("file"));
+            if (!script.isAbsolute()) {
+                script = new File(homeDir,parameters.getSimpleValue("file"));
+            }
+            commandArg="--file="+script.getAbsolutePath();
+        }
+        arguments.add("-c");
+        arguments.add(commandArg);
+        arguments.add("--user="+serverPluginConfig.getUser());
+        arguments.add("--password="+serverPluginConfig.getPassword());
+        arguments.add("--controller="+serverPluginConfig.getNativeHost()+":"+serverPluginConfig.getNativePort());
+
+        Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
+        for (String envVarName : startScriptEnv.keySet()) {
+            String envVarValue = startScriptEnv.get(envVarName);
+            envVarValue = replacePropertyPatterns(envVarValue);
+            startScriptEnv.put(envVarName, envVarValue);
+        }
+        processExecution.setEnvironmentVariables(startScriptEnv);
+
+        // When running on Windows 9x, standalone.bat and domain.bat need the cwd to be the AS bin dir in order to find
+        // standalone.bat.conf and domain.bat.conf respectively.
+        processExecution.setWorkingDirectory(startScriptFile.getParent());
+        processExecution.setCaptureOutput(true);
+        processExecution.setWaitForCompletion(60 * 1000L);
+
+        if (log.isDebugEnabled()) {
+            log.debug("About to execute the following process: [" + processExecution + "]");
+        }
+        SystemInfo systemInfo = context.getSystemInformation();
+        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
+        logExecutionResults(results);
+        if (results.getError() != null) {
+            result.setErrorMessage(results.getError().getMessage());
+        } else if (results.getExitCode() != null && results.getExitCode() != 0) {
+            result.setErrorMessage("jboss-cli execution failed with error code " + results.getExitCode() + ":\n"
+                + results.getCapturedOutput());
+        } else {
+               result.setSimpleResult(results.getCapturedOutput());
+        }
+        if (result.getErrorMessage() == null) {
+            PropertySimple avail = parameters.getSimple("triggerAvailability");
+            if (avail !=null && avail.getBooleanValue()) {
+                context.getAvailabilityContext().requestAvailabilityCheck();
+            }
+            PropertySimple disc = parameters.getSimple("triggerDiscovery");
+            if (disc != null && disc.getBooleanValue()) {
+                context.getInventoryContext().requestDeferredChildResourcesDiscovery();
+            }
+        }
+        return result;
+    }
 
     public boolean isManuallyAddedServer() {
         if (pluginConfiguration.get("manuallyAdded") != null) {

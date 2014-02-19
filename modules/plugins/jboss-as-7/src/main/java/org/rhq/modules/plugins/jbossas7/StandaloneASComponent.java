@@ -157,6 +157,8 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             return restartServer(parameters);
         } else if (name.equals("installRhqUser")) {
             return installManagementUser(parameters, pluginConfiguration);
+        } else if (name.equals("executeCommands") || name.equals("executeScript")) {
+            return runCliCommand(parameters);
         }
 
         // reload, shutdown go to the remote server

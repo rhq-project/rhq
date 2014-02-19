@@ -24,6 +24,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -234,6 +235,41 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         }
         assertEquals(releaseVersion, expectedReleaseVersion, "Unexpected value for trait ["
             + RELEASE_VERSION_TRAIT_NAME + "].");
+    }
+
+    public void testExecuteCliOperations() throws Exception {
+        // First make sure the server is up.
+        AvailabilityType avail = getAvailability(getServerResource());
+        assertEquals(avail, AvailabilityType.UP);
+        Configuration c = new Configuration();
+        c.put(new PropertySimple("commands", "ls"));
+        invokeOperationAndAssertSuccess(getServerResource(), "executeCommands", c);
+        File script = null;
+        try {
+            c = new Configuration();
+            script = File.createTempFile("test", "script");
+            writeFile("ls",script);
+            c.put(new PropertySimple("file",script.getAbsolutePath()));
+            invokeOperationAndAssertSuccess(getServerResource(), "executeScript", c);
+        }
+        finally {
+            script.delete();
+        }
+    }
+
+    private File writeFile(String content, File fileToOverwrite) throws Exception {
+        FileOutputStream out = null;
+
+        try {
+            fileToOverwrite.getParentFile().mkdirs();
+            out = new FileOutputStream(fileToOverwrite);
+            out.write(content.getBytes());
+            return fileToOverwrite;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
     }
 
     public void testShutdownAndStartOperations() throws Exception {

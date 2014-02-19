@@ -120,6 +120,10 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         avail = getAvailability(getServerResource());
         assertEquals(avail, UP);
     }
+    @Test(priority = 6, enabled = true)
+    public void testExecuteCliOperations() throws Exception {
+        super.testExecuteCliOperations();
+    }
 
     @Test(priority = 7, enabled = true)
     public void testSystemPropertiesSettings() throws Exception {

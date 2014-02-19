@@ -77,6 +77,9 @@ public enum AS7Mode {
     public String getStartScriptFileName() {
         return startScriptBaseName + '.' + SCRIPT_EXTENSION;
     }
+    public String getCliScriptFileName() {
+        return "jboss-cli" + '.' + SCRIPT_EXTENSION;
+    }
 
     public CommandLineOption getHostConfigFileNameOption() {
         return hostConfigFileNameOption;

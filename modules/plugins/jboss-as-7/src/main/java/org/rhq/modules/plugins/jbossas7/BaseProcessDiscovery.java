@@ -204,6 +204,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
         serverPluginConfig.setSecure(managementHostPort.isSecure);
+        HostPort nativeHostPort = hostConfig.getNativeHostPort(commandLine, getMode());
+        serverPluginConfig.setNativeHost(nativeHostPort.host);
+        serverPluginConfig.setNativePort(nativeHostPort.port);
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         String apiVersion = hostConfig.getDomainApiVersion();
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);

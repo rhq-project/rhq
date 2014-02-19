@@ -52,7 +52,7 @@ import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 
 /**
  * If you want to manipulate or report on the {@link Server} instance that
@@ -85,7 +85,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     private TopologyManagerLocal topologyManager;
 
     @EJB
-    private StorageClientManagerBean storageClientManager;
+    private StorageClientManager storageClientManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;

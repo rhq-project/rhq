@@ -24,7 +24,7 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
     private SystemManagerLocal systemManager;
 
     @EJB
-    private StorageClientManagerBean storageClienManager;
+    private StorageClientManager storageClienManager;
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)

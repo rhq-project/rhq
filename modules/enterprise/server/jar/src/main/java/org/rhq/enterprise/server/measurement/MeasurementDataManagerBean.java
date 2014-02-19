@@ -101,7 +101,7 @@ import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.ResourceHandlerBean;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.MetricsServer;
@@ -164,7 +164,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     @EJB
-    private StorageClientManagerBean storageClientManager;
+    private StorageClientManager storageClientManager;
 
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;

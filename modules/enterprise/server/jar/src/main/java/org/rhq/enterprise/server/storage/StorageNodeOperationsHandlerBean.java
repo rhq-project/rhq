@@ -71,7 +71,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     private StorageClusterSettingsManagerLocal storageClusterSettingsManager;
 
     @EJB
-    private StorageClientManagerBean storageClientManager;
+    private StorageClientManager storageClientManager;
 
     @EJB
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;

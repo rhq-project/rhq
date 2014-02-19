@@ -81,7 +81,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
@@ -128,7 +128,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     MetricHandlerBean metricHandlerBean;
 
     @EJB
-    private StorageClientManagerBean sessionManager;
+    private StorageClientManager sessionManager;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager em;

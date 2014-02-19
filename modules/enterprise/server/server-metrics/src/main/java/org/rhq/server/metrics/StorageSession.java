@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
@@ -52,6 +53,10 @@ public class StorageSession implements Host.StateListener {
     private long timeoutDampening = Long.parseLong(System.getProperty(REQUEST_TIMEOUT_DAMPENING, "30000"));
 
     private double topologyDelta = Double.parseDouble(System.getProperty(REQUEST_TOPOLOGY_CHANGE_DELTA, "30000"));
+
+    private long timeouts;
+
+    private AtomicLong totalRequests = new AtomicLong();
 
     public StorageSession(Session wrappedSession) {
         this.wrappedSession = wrappedSession;
@@ -106,8 +111,16 @@ public class StorageSession implements Host.StateListener {
         return minRequestLimit;
     }
 
-    public void setMinRequestLimit(int minRequestLimit) {
+    public void setMinRequestLimit(double minRequestLimit) {
         this.minRequestLimit = minRequestLimit;
+    }
+
+    public double getTopologyDelta() {
+        return topologyDelta;
+    }
+
+    public void setTopologyDelta(double delta) {
+        topologyDelta = delta;
     }
 
     public long getTimeoutDampening() {
@@ -122,8 +135,13 @@ public class StorageSession implements Host.StateListener {
         listeners.add(listener);
     }
 
+    public long getTimeouts() {
+        return timeouts;
+    }
+
     public ResultSet execute(String query) {
         try {
+            totalRequests.incrementAndGet();
             permits.acquire();
             return wrappedSession.execute(query);
         } catch (NoHostAvailableException e) {
@@ -134,6 +152,7 @@ public class StorageSession implements Host.StateListener {
 
     public ResultSet execute(Query query) {
         try {
+            totalRequests.incrementAndGet();
             permits.acquire();
             return wrappedSession.execute(query);
         } catch (NoHostAvailableException e) {
@@ -143,18 +162,21 @@ public class StorageSession implements Host.StateListener {
     }
 
     public StorageResultSetFuture executeAsync(String query) {
+        totalRequests.incrementAndGet();
         permits.acquire();
         ResultSetFuture future = wrappedSession.executeAsync(query);
         return new StorageResultSetFuture(future, this);
     }
 
     public StorageResultSetFuture executeAsync(Query query) {
+        totalRequests.incrementAndGet();
         permits.acquire();
         ResultSetFuture future = wrappedSession.executeAsync(query);
         return new StorageResultSetFuture(future, this);
     }
 
     public PreparedStatement prepare(String query) {
+        totalRequests.incrementAndGet();
         permits.acquire();
         return wrappedSession.prepare(query);
     }
@@ -219,6 +241,7 @@ public class StorageSession implements Host.StateListener {
         log.warn("Encountered " + NoHostAvailableException.class.getSimpleName() + " due to following error(s): " +
             e.getErrors());
         if (isClientTimeout(e)) {
+            ++timeouts;
             if (System.currentTimeMillis() - permitsLastChanged > timeoutDampening) {
                 decreaseRequestThroughput((int) (getRequestLimit() * timeoutDelta));
             }

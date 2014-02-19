@@ -45,7 +45,7 @@ import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
@@ -107,7 +107,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
-            StorageClientManagerBean storageClientManager = LookupUtil.getStorageClientManager();
+            StorageClientManager storageClientManager = LookupUtil.getStorageClientManager();
             MetricsServer metricsServer = storageClientManager.getMetricsServer();
             return metricsServer.calculateAggregates();
         } catch (Exception e) {

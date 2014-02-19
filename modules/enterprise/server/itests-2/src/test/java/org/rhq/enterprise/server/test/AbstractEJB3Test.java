@@ -89,7 +89,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.storage.FakeStorageClusterSettingsManagerBean;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.MatchResult;
@@ -118,7 +118,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     protected InitialContext initialContext;
 
     @EJB
-    private StorageClientManagerBean storageClientManager;
+    private StorageClientManager storageClientManager;
 
     // We originally (in 4.2.3 days) ran these tests as "unit" tests in the server/jar module using
     // the embedded container.  With Arquillian it makes sense to actually deploy an EAR because

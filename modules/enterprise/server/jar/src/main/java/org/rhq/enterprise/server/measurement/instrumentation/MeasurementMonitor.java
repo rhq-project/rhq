@@ -35,10 +35,9 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
 import org.rhq.core.util.ObjectNameFactory;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.server.metrics.MetricsServer;
 
 /**
  * @author Greg Hinkle
@@ -52,7 +51,7 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
     private static final ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=MeasurementMonitor");
 
     @EJB
-    private StorageClientManagerBean storageClientManager;
+    private StorageClientManager storageClientManager;
 
     private AtomicLong measurementInsertTime = new AtomicLong();
 

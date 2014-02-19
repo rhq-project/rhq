@@ -21,6 +21,11 @@ package org.rhq.enterprise.server.storage;
 
 import static org.rhq.server.metrics.StorageClientConstants.DATA_CENTER;
 import static org.rhq.server.metrics.StorageClientConstants.LOAD_BALANCING;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_LIMIT_MIN;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DAMPENING;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TIMEOUT_DELTA;
+import static org.rhq.server.metrics.StorageClientConstants.REQUEST_TOPOLOGY_CHANGE_DELTA;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +37,7 @@ import javax.annotation.Resource;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
+import javax.ejb.LocalBean;
 import javax.ejb.Singleton;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
@@ -39,6 +45,7 @@ import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.management.ObjectName;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.HostDistance;
@@ -60,12 +67,14 @@ import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.CoreServer;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsConstants;
@@ -77,9 +86,13 @@ import org.rhq.server.metrics.StorageSession;
  * @author John Sanda
  */
 @Singleton
+@LocalBean
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
-public class StorageClientManagerBean {
-    private static final Log LOG = LogFactory.getLog(StorageClientManagerBean.class);
+public class StorageClientManager implements StorageClientManagerMBean{
+
+    private static final ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=StorageClientManager");
+
+    private static final Log LOG = LogFactory.getLog(StorageClientManager.class);
 
     private static final String RHQ_KEYSPACE = "rhq";
 
@@ -167,6 +180,8 @@ public class StorageClientManagerBean {
             metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
             initMetricsServer();
+            JMXUtil.registerMBean(this, OBJECT_NAME);
+            initialized = true;
 
             initialized = true;
             LOG.info("Storage client subsystem is now initialized");
@@ -284,6 +299,7 @@ public class StorageClientManagerBean {
 
         cluster = null;
         session = null;
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
         initialized = false;
     }
 
@@ -342,6 +358,83 @@ public class StorageClientManagerBean {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void setAggregationWorkers(int numWorkers) {
         persistStorageProperty(MetricsConstants.AGGREGATION_WORKERS, Integer.toString(numWorkers));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public double getRequestLimit() {
+        return session.getRequestLimit();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRequestLimit(double requestLimit) {
+        session.setRequestLimit(requestLimit);
+        persistStorageProperty(REQUEST_LIMIT, Double.toString(requestLimit));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public double getMinRequestLimit() {
+        return session.getMinRequestLimit();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setMinRequestLimit(double minRequestLimit) {
+        session.setMinRequestLimit(minRequestLimit);
+        persistStorageProperty(REQUEST_LIMIT_MIN, Double.toString(minRequestLimit));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public double getRequestLimitTopologyDelta() {
+        return session.getTopologyDelta();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRequestLimitTopologyDelta(double delta) {
+        session.setTopologyDelta(delta);
+        persistStorageProperty(REQUEST_TOPOLOGY_CHANGE_DELTA, Double.toString(delta));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public double getRequestTimeoutDelta() {
+        return session.getTimeoutDelta();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRequestTimeoutDelta(double requestTimeoutDelta) {
+        session.setTimeoutDelta(requestTimeoutDelta);
+        persistStorageProperty(REQUEST_TIMEOUT_DELTA, Double.toString(requestTimeoutDelta));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public long getRequestTimeoutDampening() {
+        return session.getTimeoutDampening();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setRequestTimeoutDampening(long requestTimeoutDampening) {
+        session.setTimeoutDampening(requestTimeoutDampening);
+        persistStorageProperty(REQUEST_TIMEOUT_DAMPENING, Long.toString(requestTimeoutDampening));
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public long getRequestTimeouts() {
+        return session.getTimeouts();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public long getTotalRequests() {
+        return session.getTimeouts();
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

@@ -55,7 +55,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.server.metrics.MetricsBaselineCalculator;
 
@@ -93,7 +93,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    private StorageClientManagerBean sessionManager;
+    private StorageClientManager sessionManager;
 
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;

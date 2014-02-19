@@ -47,7 +47,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.MetricsDAO;
@@ -71,7 +71,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private Subject overlord;
 
     @Inject
-    private StorageClientManagerBean storageClientManager;
+    private StorageClientManager storageClientManager;
 
     private MetricsDAO metricsDAO;
 

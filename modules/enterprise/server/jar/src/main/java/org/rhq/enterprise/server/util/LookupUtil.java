@@ -186,7 +186,7 @@ import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.search.SavedSearchManagerBean;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerBean;
@@ -390,12 +390,12 @@ public final class LookupUtil {
         return lookupLocal(GroupDefinitionExpressionBuilderManagerBean.class);
     }
 
-    public static StorageClientManagerBean getStorageClientManager() {
+    public static StorageClientManager getStorageClientManager() {
         try {
-            return (StorageClientManagerBean) new InitialContext().lookup(
-                "java:global/rhq/rhq-server/" + StorageClientManagerBean.class.getSimpleName());
+            return (StorageClientManager) new InitialContext().lookup(
+                "java:global/rhq/rhq-server/" + StorageClientManager.class.getSimpleName());
         } catch (NamingException e) {
-            String msg = "Unable to access " + StorageClientManagerBean.class + " due to JNDI error. You may " +
+            String msg = "Unable to access " + StorageClientManager.class + " due to JNDI error. You may " +
                 "need to restart the server so that the storage client subsystem can be reinitialized.";
             throw new RuntimeException(msg, e);
         }

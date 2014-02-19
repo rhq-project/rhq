@@ -28,7 +28,6 @@ public class StorageClusterMonitor implements StorageStateListener {
         this.session = session;
     }
 
-
     public boolean isClusterAvailable() {
         return isClusterAvailable;
     }
@@ -70,7 +69,7 @@ public class StorageClusterMonitor implements StorageStateListener {
     }
 
     public void updateRequestLimit() {
-        StorageClientManagerBean storageClientManager = LookupUtil.getStorageClientManager();
+        StorageClientManager storageClientManager = LookupUtil.getStorageClientManager();
         storageClientManager.persistStorageProperty(REQUEST_LIMIT, Double.toString(session.getRequestLimit()));
     }
 

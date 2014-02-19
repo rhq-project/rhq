@@ -108,7 +108,7 @@ public class Simulator implements ShutdownManager {
         Random random = new Random();
         long timestamp = plan.getDateTimeService().nowInMillis();
         long endOfSimulation = timestamp + 24L * 60 * 60 * 1000 * plan.getSimulationTime();
-        long numberOfMetrics = plan.getBatchSize() * plan.getNumMeasurementCollectors();
+        int numberOfMetrics = plan.getBatchSize() * plan.getNumMeasurementCollectors();
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(plan.getBatchSize());
 

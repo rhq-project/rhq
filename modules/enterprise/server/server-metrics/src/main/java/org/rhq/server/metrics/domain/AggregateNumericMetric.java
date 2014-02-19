@@ -24,10 +24,12 @@
 
 package org.rhq.server.metrics.domain;
 
+import java.util.Map;
+
 /**
  * @author John Sanda
  */
-public class AggregateNumericMetric {
+public class AggregateNumericMetric implements NumericMetric {
 
     private int scheduleId;
 
@@ -54,6 +56,14 @@ public class AggregateNumericMetric {
         this.min = min;
         this.max = max;
         this.timestamp = timestamp;
+    }
+
+    public AggregateNumericMetric(int scheduleId, long timestamp, Map<Integer, Double> values) {
+        this.scheduleId = scheduleId;
+        this.timestamp = timestamp;
+        min = values.get(AggregateType.MIN.ordinal());
+        avg = values.get(AggregateType.AVG.ordinal());
+        max = values.get(AggregateType.MAX.ordinal());
     }
 
     public int getScheduleId() {

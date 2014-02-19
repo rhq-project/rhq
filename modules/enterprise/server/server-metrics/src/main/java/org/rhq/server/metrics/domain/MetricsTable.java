@@ -31,6 +31,7 @@ import org.joda.time.Duration;
 public enum MetricsTable {
 
     INDEX("metrics_index", -1),
+    METRICS_CACHE("metrics_cache", -1),
     RAW("raw_metrics", Duration.standardDays(7).toStandardSeconds().getSeconds()),
     ONE_HOUR("one_hour_metrics", Duration.standardDays(14).toStandardSeconds().getSeconds()),
     SIX_HOUR("six_hour_metrics", Duration.standardDays(31).toStandardSeconds().getSeconds()),

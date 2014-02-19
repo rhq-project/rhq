@@ -18,4 +18,16 @@
   <step>
     ALTER TABLE rhq.metrics_index WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
+
+  <step>
+    CREATE TABLE rhq.metrics_cache (
+      bucket varchar,
+      time_slice timestamp,
+      start_schedule_id int,
+      schedule_id int,
+      time timestamp,
+      value map&lt;int, double&gt;,
+      PRIMARY KEY ((bucket, time_slice, start_schedule_id), schedule_id, time)
+    ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
 </updatePlan>

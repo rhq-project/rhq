@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -91,6 +92,8 @@ public class MetricsServer {
 
     private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 
+    private int cacheBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.cache.batch-size", "100"));
+
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
     }
@@ -127,13 +130,13 @@ public class MetricsServer {
         this.useAsyncAggregation = useAsyncAggregation;
     }
 
-    public void init() {
+    public void init(int minScheduleId, int maxScheduleId) {
         if (log.isDebugEnabled() && useAsyncAggregation) {
             log.debug("Async aggregation is enabled");
         }
         aggregationWorkers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numAggregationWorkers,
             new StorageClientThreadFactory()));
-        determineMostRecentRawDataSinceLastShutdown();
+        determineMostRecentRawDataSinceLastShutdown(minScheduleId, maxScheduleId);
     }
 
     /**
@@ -143,15 +146,17 @@ public class MetricsServer {
      * retention period though since anything older than that will automatically get
      * purged.
      */
-    private void determineMostRecentRawDataSinceLastShutdown() {
+    private void determineMostRecentRawDataSinceLastShutdown(int minScheduleId, int maxScheduleId) {
         DateTime previousHour = currentHour().minus(configuration.getRawTimeSliceDuration());
         DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());
+        int startScheduleId = calculateStartScheduleId(maxScheduleId);
 
-        ResultSet resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
+        ResultSet resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
         Row row = resultSet.one();
-        while (row == null && previousHour.compareTo(oldestRawTime) > 0) {
+        while (row == null && previousHour.compareTo(oldestRawTime) > 0 && startScheduleId >= minScheduleId) {
             previousHour = previousHour.minus(configuration.getRawTimeSliceDuration());
-            resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
+            startScheduleId = startScheduleId - cacheBatchSize;
+            resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
             row = resultSet.one();
         }
 
@@ -441,8 +446,10 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
-        StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
-            timeSlice);
+        int startScheduleId = calculateStartScheduleId(rawData.getScheduleId());
+        StorageResultSetFuture resultSetFuture = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice,
+            startScheduleId, rawData.getScheduleId(), rawData.getTimestamp(),
+            ImmutableMap.of(AggregateType.VALUE.ordinal(), rawData.getValue()));
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(ResultSet rows) {
@@ -458,11 +465,15 @@ public class MetricsServer {
 
             @Override
             public void onFailure(Throwable throwable) {
-                log.error("An error occurred while trying to update " + MetricsTable.INDEX + " for raw data " +
+                log.error("An error occurred while trying to update " + MetricsTable.METRICS_CACHE + " for raw data " +
                     rawData);
                 callback.onFailure(throwable);
             }
         }, aggregationWorkers);
+    }
+
+    private int calculateStartScheduleId(int scheduleId) {
+        return (scheduleId / cacheBatchSize) * cacheBatchSize;
     }
 
     /**
@@ -473,7 +484,7 @@ public class MetricsServer {
      * one hour aggregates. The one hour aggregates are returned because they are needed
      * for subsequently computing baselines.
      */
-    public Iterable<AggregateNumericMetric> calculateAggregates() {
+    public Iterable<AggregateNumericMetric> calculateAggregates(int minScheduleId, int maxScheduleId) {
         Stopwatch stopwatch = new Stopwatch().start();
         try {
             DateTime theHour = currentHour();
@@ -482,13 +493,13 @@ public class MetricsServer {
                 if (pastAggregationMissed) {
                     DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                     new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
-                        aggregationBatchSize, parallelism).run();
+                        aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
                     pastAggregationMissed = false;
                 }
 
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
                 return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                    aggregationBatchSize, parallelism).run();
+                    aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
             } else {
                 if (pastAggregationMissed) {
                     calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());

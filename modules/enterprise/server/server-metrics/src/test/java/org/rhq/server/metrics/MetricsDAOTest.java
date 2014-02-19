@@ -29,19 +29,18 @@ import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
 import org.apache.commons.logging.Log;
@@ -53,11 +52,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.server.metrics.aggregation.AggregateCacheMapper;
+import org.rhq.server.metrics.aggregation.RawCacheMapper;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.MetricsIndexEntry;
-import org.rhq.server.metrics.domain.MetricsIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
@@ -78,6 +77,10 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     private final long HOUR = 60 * MINUTE;
 
     private MetricsDAO dao;
+
+    private AggregateCacheMapper aggregateCacheMapper = new AggregateCacheMapper();
+
+    private RawCacheMapper rawCacheMapper = new RawCacheMapper();
 
     @BeforeClass
     public void initDAO() throws Exception {
@@ -318,79 +321,97 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test(enabled = ENABLED)
-    public void updateSixHourMetricsIndex() throws Exception {
-        int scheduleId1 = 1;
-        int scheduleId2= 2;
+    public void updateSixHourCache() throws Exception {
+        int startScheduleId = 100;
+        int scheduleId1 = 101;
+        int scheduleId2= 102;
 
         WaitForWrite waitForWrite = new WaitForWrite(2);
 
-        StorageResultSetFuture resultSetFuture1 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId1,
-            hour0().getMillis());
-        StorageResultSetFuture resultSetFuture2 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId2,
-            hour0().getMillis());
+        StorageResultSetFuture resultSetFuture1 = dao.updateMetricsCache(MetricsTable.TWENTY_FOUR_HOUR,
+            hour0().getMillis(), startScheduleId, scheduleId1, hour0().getMillis(), ImmutableMap.of(
+            AggregateType.MIN.ordinal(), 3.14,
+            AggregateType.AVG.ordinal(), 3.14,
+            AggregateType.MAX.ordinal(), 3.14));
+        StorageResultSetFuture resultSetFuture2 = dao.updateMetricsCache(MetricsTable.TWENTY_FOUR_HOUR,
+            hour0().getMillis(), startScheduleId, scheduleId2, hour0().getMillis(), ImmutableMap.of(
+            AggregateType.MIN.ordinal(), 3.14,
+            AggregateType.AVG.ordinal(), 3.14,
+            AggregateType.MAX.ordinal(), 3.14));
 
         Futures.addCallback(resultSetFuture1, waitForWrite);
         Futures.addCallback(resultSetFuture2, waitForWrite);
 
         waitForWrite.await("Failed to update metrics index");
 
-        List<MetricsIndexEntry> expected = asList(
-            new MetricsIndexEntry(MetricsTable.TWENTY_FOUR_HOUR, hour0(), scheduleId1),
-            new MetricsIndexEntry(MetricsTable.TWENTY_FOUR_HOUR, hour0(), scheduleId2)
+        List<AggregateNumericMetric> expected = asList(
+            new AggregateNumericMetric(scheduleId1, 3.14, 3.14, 3.14, hour0().getMillis()),
+            new AggregateNumericMetric(scheduleId2, 3.14, 3.14, 3.14, hour0().getMillis())
         );
 
-        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR,
-            hour0().getMillis()));
+        StorageResultSetFuture indexFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
+            hour0().getMillis(), startScheduleId);
+        ResultSet resultSet = indexFuture.get();
+        List<Row> rows = resultSet.all();
 
+        assertEquals(rows.size(), expected.size(), "Expected to get back two rows from index query");
+
+        List<AggregateNumericMetric> actual = asList(aggregateCacheMapper.map(rows.get(0)),
+            aggregateCacheMapper.map(rows.get(1)));
         assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
     }
 
     @Test(enabled = ENABLED)
-    public void updateAndFindOneHourIndexEntries() {
-        DateTime hour0 = hour0();
-        int scheduleId1 = 1;
-        int scheduleId2 = 2;
+    public void insertAndGetCacheEntries() throws Exception {
+        int startScheduleId = 100;
+        int scheduleId1 = 101;
+        int scheduleId2 = 102;
+        long timeSlice = hour0().plusHours(7).getMillis();
+        long timestamp1 = hour0().plusHours(7).plusMinutes(3).getMillis();
+        long timestamp2 = hour0().plusHours(7).plusMinutes(5).getMillis();
 
-        Map<Integer, Long> updates = new HashMap<Integer, Long>();
-        updates.put(scheduleId1, hour0.getMillis());
-        updates.put(scheduleId2, hour0.getMillis());
+        WaitForWrite waitForWrite = new WaitForWrite(2);
+        StorageResultSetFuture insertFuture1 = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice, startScheduleId,
+            scheduleId1, timestamp1, ImmutableMap.of(AggregateType.VALUE.ordinal(), 2.14));
+        StorageResultSetFuture insertFuture2 = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice, startScheduleId,
+            scheduleId2, timestamp2, ImmutableMap.of(AggregateType.VALUE.ordinal(), 1.01));
+        Futures.addCallback(insertFuture1, waitForWrite);
+        Futures.addCallback(insertFuture2, waitForWrite);
+        waitForWrite.await("Failed to update raw index");
 
-        dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
-        final List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId1),
-            new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId2));
+        List<RawNumericMetric> expected = asList(new RawNumericMetric(scheduleId1, timestamp1, 2.14),
+            new RawNumericMetric(scheduleId2, timestamp2, 1.01));
+        StorageResultSetFuture queryFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR, timeSlice,
+            startScheduleId);
+        ResultSet resultSet = queryFuture.get();
+        List<Row> rows = resultSet.all();
 
-        StorageResultSetFuture future = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR, hour0.getMillis());
-        Futures.addCallback(future, new FutureCallback<ResultSet>() {
-            @Override
-            public void onSuccess(ResultSet result) {
-                MetricsIndexEntryMapper mapper = new MetricsIndexEntryMapper(MetricsTable.ONE_HOUR);
-                List<MetricsIndexEntry> actual = mapper.mapAll(result);
+        assertEquals(rows.size(), expected.size(), "Expected to get back two rows from raw index query");
 
-                assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
-            }
+        List<RawNumericMetric> actual = asList(rawCacheMapper.map(rows.get(0)), rawCacheMapper.map(rows.get(1)));
 
-            @Override
-            public void onFailure(Throwable t) {
-                fail("Failed to retrieve one hour index entries", t);
-            }
-        });
+        assertEquals(actual, expected, "The raw index entries do not match");
     }
 
+
     @Test(enabled = ENABLED)
-    public void purge1HourMetricsIndex() {
-        int scheduleId1 = 1;
-        int scheduleId2 = 2;
-        Map<Integer, Long> updates = new HashMap<Integer, Long>();
-        updates.put(scheduleId1, hour0().getMillis());
-        updates.put(scheduleId2, hour0().getMillis());
+    public void deleteRawCacheEntries() {
+        int startScheduleId = 100;
+        int scheduleId1 = 101;
+        int scheduleId2 = 102;
+        DateTime timeSlice = hour0().plusHours(2);
 
-        dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
-        dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, hour0().getMillis());
+        dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId, scheduleId1,
+            timeSlice.plusMinutes(2).getMillis(), ImmutableMap.of(AggregateType.VALUE.ordinal(), 3.14)).get();
+        dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId, scheduleId2,
+            timeSlice.plusMinutes(4).getMillis(), ImmutableMap.of(AggregateType.VALUE.ordinal(), 3.14)).get();
 
-        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR,
-            hour0().getMillis()));
-        assertEquals(index.size(), 0, "Expected index for " + MetricsTable.ONE_HOUR + " to be empty but found " +
-            index);
+        dao.deleteCacheEntries(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId).get();
+
+        ResultSet resultSet = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR,
+            timeSlice.getMillis(), startScheduleId).get();
+
+        assertTrue(resultSet.isExhausted(), "Expected an empty result set");
     }
 
     @Test(enabled = ENABLED)

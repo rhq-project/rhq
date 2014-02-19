@@ -68,7 +68,7 @@ public class MeasurementAggregator implements Runnable {
                 long start = System.currentTimeMillis();
                 try {
                     log.info("Starting metrics aggregation");
-                    metricsServer.calculateAggregates();
+                    metricsServer.calculateAggregates(0, numSchedules);
                 } catch (Exception e) {
                     log.error("An error occurred while trying to perform aggregation", e);
                     log.error("Requesting simulation shutdown...");

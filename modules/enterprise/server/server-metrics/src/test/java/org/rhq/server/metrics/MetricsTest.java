@@ -59,7 +59,7 @@ public class MetricsTest extends CassandraIntegrationTest {
         session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
         session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
         session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
-        session.execute("TRUNCATE " + MetricsTable.INDEX);
+        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
     }
 
     protected void assert1HourDataEquals(int scheduleId, AggregateNumericMetric... expected) {

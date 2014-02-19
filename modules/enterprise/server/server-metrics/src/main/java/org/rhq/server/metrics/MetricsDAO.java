@@ -66,7 +66,7 @@ public class MetricsDAO {
 
     private PreparedStatement insertRawData;
     private PreparedStatement rawMetricsQuery;
-    private PreparedStatement updateMetricsIndex;
+    private PreparedStatement insertCacheEntry;
     private PreparedStatement insertOneHourData;
     private PreparedStatement insertSixHourData;
     private PreparedStatement insertTwentyFourHourData;
@@ -75,9 +75,9 @@ public class MetricsDAO {
     private PreparedStatement findOneHourMetricsByDateRange;
     private PreparedStatement findSixHourMetricsByDateRange;
     private PreparedStatement findTwentyFourHourMetricsByDateRange;
-    private PreparedStatement findIndexEntries;
-    private PreparedStatement findTimeSliceForIndex;
-    private PreparedStatement deleteIndexEntries;
+    private PreparedStatement findCacheEntries;
+    private PreparedStatement findCacheTimeSlice;
+    private PreparedStatement deleteCacheEntries;
 
     public MetricsDAO(StorageSession session, MetricsConfiguration configuration) {
         this.storageSession = session;
@@ -113,8 +113,8 @@ public class MetricsDAO {
         insertTwentyFourHourData = storageSession.prepare("INSERT INTO " + MetricsTable.TWENTY_FOUR_HOUR + "(schedule_id, " +
             "time, type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getTwentyFourHourTTL());
 
-        updateMetricsIndex = storageSession.prepare("INSERT INTO " + MetricsTable.INDEX + " (bucket, time, schedule_id) " +
-            "VALUES (?, ?, ?)");
+        insertCacheEntry = storageSession.prepare("INSERT INTO " + MetricsTable.METRICS_CACHE +
+            " (bucket, time_slice, start_schedule_id, schedule_id, time, value) VALUES (?, ?, ?, ?, ?, ?)");
 
         findLatestRawMetric = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? ORDER BY time DESC LIMIT 1");
@@ -131,13 +131,14 @@ public class MetricsDAO {
         findTwentyFourHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM " +
             MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
-        findIndexEntries = storageSession.prepare("SELECT time, schedule_id FROM " + MetricsTable.INDEX +
-            " WHERE bucket = ? AND time = ?");
+        findCacheEntries = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.METRICS_CACHE +
+            " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
-        findTimeSliceForIndex = storageSession.prepare("SELECT time FROM " + MetricsTable.INDEX +
-            " WHERE bucket = ? AND time = ?");
+        findCacheTimeSlice = storageSession.prepare("SELECT time_slice FROM " + MetricsTable.METRICS_CACHE +
+            " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
-        deleteIndexEntries = storageSession.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
+        deleteCacheEntries = storageSession.prepare("DELETE FROM " + MetricsTable.METRICS_CACHE +
+            " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
         long endTime = System.currentTimeMillis();
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
@@ -279,40 +280,58 @@ public class MetricsDAO {
     }
 
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {
-        BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
+        BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timestamp));
         return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), storageSession);
     }
 
     public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
-        BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
+        BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timestamp));
         return storageSession.executeAsync(statement);
     }
 
-    public ResultSet setFindTimeSliceForIndex(MetricsTable table, long timestamp) {
-        BoundStatement statement = findTimeSliceForIndex.bind(table.toString(), new Date(timestamp));
+    public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timeSlice,
+        int startScheduleId) {
+        BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timeSlice), startScheduleId);
+        return storageSession.executeAsync(statement);
+    }
+
+    public ResultSet findCacheTimeSlice(MetricsTable table, long timestamp, int startScheduleId) {
+        BoundStatement statement = findCacheTimeSlice.bind(table.toString(), new Date(timestamp), startScheduleId);
         return storageSession.execute(statement);
     }
 
     public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
             for (Integer scheduleId : updates.keySet()) {
-                BoundStatement statement = updateMetricsIndex.bind(table.getTableName(),
+                BoundStatement statement = insertCacheEntry.bind(table.getTableName(),
                     new Date(updates.get(scheduleId)), scheduleId);
                 storageSession.execute(statement);
             }
     }
 
     public StorageResultSetFuture updateMetricsIndex(MetricsTable table, int scheduleId, long timestamp) {
-        BoundStatement statement = updateMetricsIndex.bind(table.getTableName(), new Date(timestamp), scheduleId);
+        return null;
+    }
+
+    public StorageResultSetFuture updateMetricsCache(MetricsTable table, long timeSlice, int startScheduleId,
+        int scheduleId, long timestamp, Map<Integer, Double> values) {
+        BoundStatement statement = insertCacheEntry.bind(table.getTableName(), new Date(timeSlice), startScheduleId,
+            scheduleId, new Date(timestamp), values);
         return storageSession.executeAsync(statement);
     }
 
     public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {
-        BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
+        BoundStatement statement = deleteCacheEntries.bind(table.getTableName(), new Date(timestamp));
         storageSession.execute(statement);
     }
 
     public StorageResultSetFuture deleteMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
-        BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
+        BoundStatement statement = deleteCacheEntries.bind(table.getTableName(), new Date(timestamp));
+        return storageSession.executeAsync(statement);
+    }
+
+    public StorageResultSetFuture deleteCacheEntries(MetricsTable table, long timestamp,
+        int startScheduleId) {
+        BoundStatement statement = deleteCacheEntries.bind(table.getTableName(), new Date(timestamp), startScheduleId);
         return storageSession.executeAsync(statement);
     }
 }

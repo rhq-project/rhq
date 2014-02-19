@@ -406,10 +406,8 @@ public class AgentMain {
         reconfigureJavaLogging();
 
         AgentMain agent = null;
-        int retries = 0;
-        final int MAX_RETRIES = 5;
 
-        while (retries++ < MAX_RETRIES) {
+        while (true) {
             try {
                 agent = new AgentMain(args);
 
@@ -441,43 +439,40 @@ public class AgentMain {
                 } else {
                     agent.inputLoop();
                 }
-                retries = MAX_RETRIES; // no need to retry...we're good to go
+                break;
             } catch (HelpException he) {
-                retries = MAX_RETRIES; // do nothing but exit the thread
+                break; // do nothing but exit the thread
             } catch (AgentNotSupportedException anse) {
                 LOG.fatal(anse, AgentI18NResourceKeys.AGENT_START_FAILURE);
                 agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
                 anse.printStackTrace(agent.getOut());
-                retries = MAX_RETRIES; // this is unrecoverable, we need this main thread to exit *now*
+                break; // this is unrecoverable, we need this main thread to exit *now*
             } catch (AgentRegistrationException e) {
                 LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
                 e.printStackTrace(agent.getOut());
-                retries = MAX_RETRIES;
+                break;
             } catch (Exception e) {
-                LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
 
-                if (agent != null) {
-                    agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
-                    e.printStackTrace(agent.getOut());
-                    if (retries < MAX_RETRIES) {
-                        LOG.error(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE);
-                        agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE));
-                        try {
-                            Thread.sleep(60000L);
-                        } catch (InterruptedException e1) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }
-                } else {
+                if (agent == null) {
+                    LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
                     System.err.println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
                     e.printStackTrace(System.err);
-                    retries = MAX_RETRIES; // agent could not even be instantiated, this is unrecoverable, just exit
+                    break; // agent could not even be instantiated, this is unrecoverable, just exit
                 }
 
-                agent = null;
+                LOG.error(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
+                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                e.printStackTrace(agent.getOut());
+                LOG.error(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE);
+                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE));
+                try {
+                    Thread.sleep(60000L);
+                } catch (InterruptedException e1) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
-        return;
     }
 
     private void checkTempDir() {

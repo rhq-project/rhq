@@ -1,7 +1,10 @@
-package org.rhq.server.metrics.aggregation;
+package org.rhq.server.metrics;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 import org.rhq.server.metrics.domain.AggregateType;
@@ -10,10 +13,19 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 /**
  * @author John Sanda
  */
-class RawCacheMapper implements CacheMapper<RawNumericMetric> {
+public class RawCacheMapper implements CacheMapper<RawNumericMetric> {
 
     public RawNumericMetric map(Row row) {
         return new RawNumericMetric(getScheduleId(row), getTimestamp(row), getValue(row));
+    }
+
+    @Override
+    public List<RawNumericMetric> map(ResultSet resultSet) {
+        List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+        for (Row row : resultSet) {
+            metrics.add(map(row));
+        }
+        return metrics;
     }
 
     private int getScheduleId(Row row) {

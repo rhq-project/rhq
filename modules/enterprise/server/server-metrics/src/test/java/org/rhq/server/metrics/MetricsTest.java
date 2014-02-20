@@ -10,14 +10,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.datastax.driver.core.ResultSet;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeClass;
 
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.MetricsIndexEntry;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.NumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * @author John Sanda
@@ -26,9 +32,13 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     private static final double TEST_PRECISION = Math.pow(10, -9);
 
+    public static final int PARTITION_SIZE = 5;
+
     protected MetricsDAO dao;
     protected MetricsConfiguration configuration = new MetricsConfiguration();
     protected DateTimeService dateTimeService;
+    private RawCacheMapper rawCacheMapper = new RawCacheMapper();
+    private AggregateCacheMapper aggregateCacheMapper = new AggregateCacheMapper();
 
     @BeforeClass
     public void initClass() throws Exception {
@@ -97,13 +107,6 @@ public class MetricsTest extends CassandraIntegrationTest {
             " does not match expected values", expected, actual, TEST_PRECISION);
     }
 
-    protected void assertMetricsIndexEquals(MetricsTable table, long timeSlice, List<MetricsIndexEntry> expected,
-        String msg) {
-        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice));
-        assertCollectionMatchesNoOrder(msg + ": " + table + " index does not match expected values.",
-            expected, actual);
-    }
-
     protected void assert6HourDataEmpty(int scheduleId) {
         assertMetricDataEmpty(scheduleId, MetricsTable.SIX_HOUR);
     }
@@ -118,21 +121,103 @@ public class MetricsTest extends CassandraIntegrationTest {
             " but found " + metrics);
     }
 
-    protected void assert1HourMetricsIndexEmpty(DateTime timeSlice) {
-        assertMetricsIndexEmpty(MetricsTable.ONE_HOUR, timeSlice);
+    protected WaitForWrite insertRawData(DateTime timeSlice, MeasurementDataNumeric... data) {
+        WaitForWrite waitForRawInserts = new WaitForWrite(data.length * 2);
+        StorageResultSetFuture future;
+        for (MeasurementDataNumeric raw : data) {
+            future = dao.insertRawData(raw);
+            Futures.addCallback(future, waitForRawInserts);
+            future = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(),
+                startScheduleId(raw.getScheduleId()), raw.getScheduleId(), raw.getTimestamp(), ImmutableMap.of(
+                AggregateType.VALUE.ordinal(), raw.getValue()));
+            Futures.addCallback(future, waitForRawInserts);
+        }
+        return waitForRawInserts;
     }
 
-    protected void assert6HourMetricsIndexEmpty(DateTime timeSlice) {
-        assertMetricsIndexEmpty(MetricsTable.SIX_HOUR, timeSlice);
+    protected WaitForWrite insert1HourData(DateTime timeSlice, AggregateNumericMetric... data) {
+        WaitForWrite waitForWrites = new WaitForWrite(data.length * 4);
+        StorageResultSetFuture future;
+        for (AggregateNumericMetric metric : data) {
+            future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
+                metric.getMin());
+            Futures.addCallback(future, waitForWrites);
+            future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
+                metric.getMax());
+            Futures.addCallback(future, waitForWrites);
+            future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
+                metric.getAvg());
+            Futures.addCallback(future, waitForWrites);
+            future = dao.updateMetricsCache(MetricsTable.SIX_HOUR, timeSlice.getMillis(), startScheduleId(
+                metric.getScheduleId()), metric.getScheduleId(), metric.getTimestamp(), ImmutableMap.of(
+                AggregateType.MIN.ordinal(), metric.getMin(),
+                AggregateType.MAX.ordinal(), metric.getMax(),
+                AggregateType.AVG.ordinal(), metric.getAvg()
+            ));
+        }
+        return waitForWrites;
     }
 
-    protected void assert24HourMetricsIndexEmpty(DateTime timeSlice) {
-        assertMetricsIndexEmpty(MetricsTable.TWENTY_FOUR_HOUR, timeSlice);
+    protected int startScheduleId(int scheduleId) {
+        return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
     }
 
-    private void assertMetricsIndexEmpty(MetricsTable table, DateTime timeSlice) {
-        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice.getMillis()));
-        assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
+    protected void assert1HourCacheEquals(DateTime timeSlice, int startScheduleId,
+        List<RawNumericMetric> expected) {
+        assertCacheEquals(MetricsTable.ONE_HOUR, timeSlice, startScheduleId, expected, rawCacheMapper);
     }
+
+    protected void assert6HourCacheEquals(DateTime timeSlice, int startScheduleId,
+        List<AggregateNumericMetric> expected) {
+        assertCacheEquals(MetricsTable.SIX_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
+    }
+
+    protected void assert24HourCacheEquals(DateTime timeSlice, int startScheduleId,
+        List<AggregateNumericMetric> expected) {
+        assertCacheEquals(MetricsTable.TWENTY_FOUR_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
+    }
+
+    private <T extends NumericMetric> void assertCacheEquals(MetricsTable table, DateTime timeSlice,
+        int startScheduleId, List<T> expected, CacheMapper<T> cacheMapper) {
+        ResultSet resultSet = dao.findMetricsIndexEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
+        List<T> actual = cacheMapper.map(resultSet);
+
+        assertEquals(actual, expected, "The " + table + " cache is wrong");
+    }
+
+    protected void assert1HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
+        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.ONE_HOUR);
+    }
+
+    protected void assert6HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
+        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.SIX_HOUR);
+    }
+
+    protected void assert24HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
+        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.TWENTY_FOUR_HOUR);
+    }
+
+    protected void assertAggregateCacheEmpty(DateTime timeSlice, int startScheduleId, MetricsTable table) {
+        ResultSet resultSet = dao.findMetricsIndexEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
+        List<AggregateNumericMetric> metrics = aggregateCacheMapper.map(resultSet);
+        assertEquals(metrics.size(), 0, "Expected the " + table + " cache to be empty but found " + metrics);
+    }
+
+//    protected void assert1HourMetricsIndexEmpty(DateTime timeSlice) {
+//        assertMetricsIndexEmpty(MetricsTable.ONE_HOUR, timeSlice);
+//    }
+//
+//    protected void assert6HourMetricsIndexEmpty(DateTime timeSlice) {
+//        assertMetricsIndexEmpty(MetricsTable.SIX_HOUR, timeSlice);
+//    }
+//
+//    protected void assert24HourMetricsIndexEmpty(DateTime timeSlice) {
+//        assertMetricsIndexEmpty(MetricsTable.TWENTY_FOUR_HOUR, timeSlice);
+//    }
+//
+//    private void assertMetricsIndexEmpty(MetricsTable table, DateTime timeSlice) {
+//        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice.getMillis()));
+//        assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
+//    }
 
 }

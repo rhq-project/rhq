@@ -130,6 +130,10 @@ public class MetricsServer {
         this.useAsyncAggregation = useAsyncAggregation;
     }
 
+    public void setCacheBatchSize(int size) {
+        cacheBatchSize = size;
+    }
+
     public void init(int minScheduleId, int maxScheduleId) {
         if (log.isDebugEnabled() && useAsyncAggregation) {
             log.debug("Async aggregation is enabled");
@@ -148,16 +152,19 @@ public class MetricsServer {
      */
     private void determineMostRecentRawDataSinceLastShutdown(int minScheduleId, int maxScheduleId) {
         DateTime previousHour = currentHour().minus(configuration.getRawTimeSliceDuration());
-        DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());
+        DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());  // e.g., 7 days ago
         int startScheduleId = calculateStartScheduleId(maxScheduleId);
 
         ResultSet resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
         Row row = resultSet.one();
-        while (row == null && previousHour.compareTo(oldestRawTime) > 0 && startScheduleId >= minScheduleId) {
+        while (row == null && previousHour.compareTo(oldestRawTime) > 0) {
+            while (row == null && startScheduleId >= minScheduleId) {
+                startScheduleId = startScheduleId - cacheBatchSize;
+                resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
+                row = resultSet.one();
+            }
             previousHour = previousHour.minus(configuration.getRawTimeSliceDuration());
-            startScheduleId = startScheduleId - cacheBatchSize;
-            resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
-            row = resultSet.one();
+            startScheduleId = calculateStartScheduleId(maxScheduleId);
         }
 
         if (row == null) {

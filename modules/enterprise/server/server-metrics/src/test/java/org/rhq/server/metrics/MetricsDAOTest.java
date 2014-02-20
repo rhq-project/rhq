@@ -52,8 +52,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.server.metrics.aggregation.AggregateCacheMapper;
-import org.rhq.server.metrics.aggregation.RawCacheMapper;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;

@@ -1,4 +1,4 @@
-package org.rhq.server.metrics.aggregation;
+package org.rhq.server.metrics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 /**
  * @author John Sanda
  */
-class AggregateCacheMapper implements CacheMapper<AggregateNumericMetric> {
+public class AggregateCacheMapper implements CacheMapper<AggregateNumericMetric> {
 
     public AggregateNumericMetric map(Row row) {
         return new AggregateNumericMetric(getScheduleId(row), getTimestamp(row), getValues(row));

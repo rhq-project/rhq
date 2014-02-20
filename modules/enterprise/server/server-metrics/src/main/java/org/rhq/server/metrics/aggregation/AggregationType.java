@@ -1,5 +1,8 @@
 package org.rhq.server.metrics.aggregation;
 
+import org.rhq.server.metrics.AggregateCacheMapper;
+import org.rhq.server.metrics.CacheMapper;
+import org.rhq.server.metrics.RawCacheMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 /**

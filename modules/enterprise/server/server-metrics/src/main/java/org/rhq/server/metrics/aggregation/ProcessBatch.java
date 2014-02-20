@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
+import org.rhq.server.metrics.CacheMapper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.NumericMetric;

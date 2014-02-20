@@ -102,6 +102,7 @@ public class WWWUtils {
         HttpURLConnection connection;
         try {
             connection = (HttpURLConnection) httpURL.openConnection();
+            connection.setInstanceFollowRedirects(false);
         } catch (IOException e) {
             String errorMessage = "Failed to open URLConnection for [" + httpURL + "].";
             LOG.error(errorMessage, e);

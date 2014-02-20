@@ -12,7 +12,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 /**
  * @author John Sanda
  */
-public class AggregateCacheMapper implements CacheMapper<AggregateNumericMetric> {
+class AggregateCacheMapper implements CacheMapper<AggregateNumericMetric> {
 
     public AggregateNumericMetric map(Row row) {
         return new AggregateNumericMetric(getScheduleId(row), getTimestamp(row), getValues(row));

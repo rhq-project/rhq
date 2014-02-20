@@ -32,7 +32,6 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
-import org.rhq.server.metrics.TaskTracker;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
@@ -119,14 +118,17 @@ public class AggregationManager {
     public Set<AggregateNumericMetric> run() {
         log.info("Starting aggregation for time slice " + startTime);
         Stopwatch stopwatch = new Stopwatch().start();
+        int numRaw = 0;
+        int num1Hour = 0;
+        int num6Hour = 0;
         try {
             final int startScheduleId = calculateStartScheduleId(minScheduleId);
-            createRawAggregator(startScheduleId).execute();
+            numRaw = createRawAggregator(startScheduleId).execute();
             if (is6HourTimeSliceFinished()) {
-                create1HourAggregator(startScheduleId).execute();
+                num1Hour = create1HourAggregator(startScheduleId).execute();
             }
             if (is24HourTimeSliceFinished()) {
-                create6HourAggregator(startScheduleId).execute();
+                num6Hour = create6HourAggregator(startScheduleId).execute();
             }
 
             return oneHourData;
@@ -139,7 +141,8 @@ public class AggregationManager {
             return Collections.emptySet();
         } finally {
             stopwatch.stop();
-            log.info("Finished aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.info("Finished aggregation of {\"raw schedules\": " + numRaw + ", \"1 hour schedules\": " + num1Hour +
+                ", \"6 hour schedules\": " + num6Hour + "} in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
@@ -166,7 +169,6 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setComputeMetric(compute1HourMetric);
         aggregator.setDao(dao);
-        aggregator.setTaskTracker(new TaskTracker());
         aggregator.setMaxScheduleId(maxScheduleId);
         aggregator.setPermits(permits);
         aggregator.setStartScheduleId(startScheduleId);
@@ -198,7 +200,6 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setComputeMetric(compute6HourMetric);
         aggregator.setDao(dao);
-        aggregator.setTaskTracker(new TaskTracker());
         aggregator.setMaxScheduleId(maxScheduleId);
         aggregator.setPermits(permits);
         aggregator.setStartScheduleId(startScheduleId);
@@ -229,7 +230,6 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setComputeMetric(compute24HourMetric);
         aggregator.setDao(dao);
-        aggregator.setTaskTracker(new TaskTracker());
         aggregator.setMaxScheduleId(maxScheduleId);
         aggregator.setPermits(permits);
         aggregator.setStartScheduleId(startScheduleId);

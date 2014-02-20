@@ -1,21 +1,23 @@
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.aggregation;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.rhq.server.metrics.AbortedException;
 
 /**
  * @author John Sanda
  */
 public class TaskTracker {
 
-    private int remainingTasks;
+    private volatile int remainingTasks;
 
-    private boolean schedulingFinished;
+    private volatile boolean schedulingFinished;
 
     private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final Object monitor = new Object();
 
-    private boolean aborted;
+    private volatile boolean aborted;
 
     private String errorMessage;
 

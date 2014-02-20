@@ -17,7 +17,6 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
-import org.rhq.server.metrics.TaskTracker;
 
 /**
  * @author John Sanda
@@ -44,7 +43,7 @@ class Aggregator {
 
     private MetricsDAO dao;
 
-    private TaskTracker taskTracker;
+    private TaskTracker taskTracker = new TaskTracker();
 
     void setComputeMetric(ComputeMetric computeMetric) {
         this.computeMetric = computeMetric;
@@ -82,11 +81,7 @@ class Aggregator {
         this.dao = dao;
     }
 
-    void setTaskTracker(TaskTracker taskTracker) {
-        this.taskTracker = taskTracker;
-    }
-
-    public void execute() throws InterruptedException, AbortedException {
+    public int execute() throws InterruptedException, AbortedException {
         Stopwatch stopwatch = new Stopwatch().start();
         AtomicInteger numSchedules = new AtomicInteger();
         try {
@@ -103,6 +98,8 @@ class Aggregator {
             }
             taskTracker.finishedSchedulingTasks();
             taskTracker.waitForTasksToFinish();
+
+            return numSchedules.get();
         } finally {
             stopwatch.stop();
             if (LOG.isDebugEnabled()) {
@@ -117,7 +114,12 @@ class Aggregator {
             @Override
             public void onSuccess(BatchResult result) {
                 updateRemainingBatches();
-                int delta = result.getInsertResultSets().size() / 4;
+                int delta;
+                if (aggregationType == AggregationType.SIX_HOUR) {
+                    delta = result.getInsertResultSets().size() / 3;
+                } else {
+                    delta = result.getInsertResultSets().size() / 4;
+                }
                 numSchedules.getAndAdd(delta);
                 stopwatch.stop();
                 if (LOG.isDebugEnabled()) {

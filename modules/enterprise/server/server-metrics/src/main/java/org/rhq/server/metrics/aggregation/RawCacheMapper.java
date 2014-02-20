@@ -10,7 +10,7 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 /**
  * @author John Sanda
  */
-public class RawCacheMapper implements CacheMapper<RawNumericMetric> {
+class RawCacheMapper implements CacheMapper<RawNumericMetric> {
 
     public RawNumericMetric map(Row row) {
         return new RawNumericMetric(getScheduleId(row), getTimestamp(row), getValue(row));

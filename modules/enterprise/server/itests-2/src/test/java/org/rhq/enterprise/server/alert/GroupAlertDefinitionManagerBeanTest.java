@@ -24,8 +24,8 @@ import java.util.List;
 
 import javax.persistence.TypedQuery;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.AlertCondition;
@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
  */
 @Test(groups = "alert")
 public class GroupAlertDefinitionManagerBeanTest extends AbstractEJB3Test {
-    private static final Logger LOG = LoggerFactory.getLogger(GroupAlertDefinitionManagerBeanTest.class);
+    private static final Log LOG = LogFactory.getLog(GroupAlertDefinitionManagerBeanTest.class);
     public static final int NUMBER_OF_RESOURCES_TO_CREATE = 3753;
 
     final private String prefix = this.getClass().getSimpleName() + "_";

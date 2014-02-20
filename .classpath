@@ -328,7 +328,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.2.Final/jboss-servlet-api_3.0_spec-1.0.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/msc/jboss-msc/1.0.2.GA/jboss-msc-1.0.2.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-dmr/1.1.1.Final/jboss-dmr-1.1.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.2.0.Alpha1-redhat-4/jboss-as-naming-7.2.0.Alpha1-redhat-4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.2.0.Alpha1-redhat-4/jboss-as-naming-7.2.0.Alpha1-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-naming/7.2.0.Alpha1-redhat-4/jboss-as-naming-7.2.0.Alpha1-redhat-4-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.2.0.Alpha1-redhat-4/jboss-as-server-7.2.0.Alpha1-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-server/7.2.0.Alpha1-redhat-4/jboss-as-server-7.2.0.Alpha1-redhat-4-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ee/7.2.0.Alpha1-redhat-4/jboss-as-ee-7.2.0.Alpha1-redhat-4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-ejb3/7.2.0.Alpha1-redhat-4/jboss-as-ejb3-7.2.0.Alpha1-redhat-4.jar" sourcepath="/M2_REPO/org/jboss/as/jboss-as-ejb3/7.2.0.Alpha1-redhat-4/jboss-as-ejb3-7.2.0.Alpha1-redhat-4-sources.jar"/>

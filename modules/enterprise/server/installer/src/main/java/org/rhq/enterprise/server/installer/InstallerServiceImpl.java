@@ -43,6 +43,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.dmr.ModelNode;
 
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
@@ -50,7 +51,9 @@ import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
+import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
+import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -72,7 +75,12 @@ public class InstallerServiceImpl implements InstallerService {
     private static final String EAR_NAME = "rhq.ear";
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";
 
-    private static final String UNSET = "UNSET";
+    private static final String EMBEDDED_AGENT_EXTENSION_NAME = "org.rhq.embeddedagent";
+    private static final String EMBEDDED_AGENT_SUBSYSTEM_NAME = "embeddedagent";
+    private static final String EMBEDDED_AGENT_SOCKET_BINDING = "embeddedagent";
+    private static final String EMBEDDED_AGENT_SOCKET_BINDING_PORT_SYSPROP = "rhq.server.embedded-agent.port";
+    private static final int EMBEDDED_AGENT_SOCKET_BINDING_DEFAULT_PORT = 16163;
+    private static final String EMBEDDED_AGENT_PLUGINS_DEFAULT = "Platforms,JBossAS7,RHQServer,JMX,Cassandra,RHQStorage";
 
     private final Log log = LogFactory.getLog(InstallerServiceImpl.class);
     private final InstallerConfiguration installerConfiguration;
@@ -320,8 +328,12 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = createModelControllerClient();
 
-            // ensure the server info is up to date and stored in the DB
+            // ensure the default socket bindings/ports are configured
             ServerInstallUtil.setSocketBindings(mcc, serverProperties);
+
+            // add a new socket binding for the embeddeded agent
+            new SocketBindingJBossASClient(mcc).addStandardSocketBinding(EMBEDDED_AGENT_SOCKET_BINDING,
+                EMBEDDED_AGENT_SOCKET_BINDING_PORT_SYSPROP, EMBEDDED_AGENT_SOCKET_BINDING_DEFAULT_PORT);
 
             // Make sure our deployment scanner is configured as we need it
             ServerInstallUtil.configureDeploymentScanner(mcc);
@@ -351,6 +363,9 @@ public class InstallerServiceImpl implements InstallerService {
         // deploy the main EAR app startup module extension
         deployAppExtension();
 
+        // deploy the embedded agent extension
+        deployEmbeddedAgentExtension();
+
         // some of the changes we made require the app server container to reload before we can deploy the app
         reloadConfiguration();
 
@@ -359,6 +374,9 @@ public class InstallerServiceImpl implements InstallerService {
 
         // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
         deployAppSubsystem();
+
+        // deploy the embedded agent subsystem
+        deployEmbeddedAgentSubsystem();
 
         // write a file marker so that rhqctl can easily determine that the server has been
         // installed.
@@ -1189,6 +1207,110 @@ public class InstallerServiceImpl implements InstallerService {
             } else {
                 log("RHQ EAR subsystem is already deployed");
             }
+        } finally {
+            MCCHelper.safeClose(mcc);
+        }
+    }
+
+    private void deployEmbeddedAgentExtension() throws Exception {
+        ModelControllerClient mcc = null;
+        try {
+            mcc = createModelControllerClient();
+            CoreJBossASClient client = new CoreJBossASClient(mcc);
+            boolean isDeployed = client.isExtension(EMBEDDED_AGENT_EXTENSION_NAME);
+            if (!isDeployed) {
+                log("Installing RHQ Embedded Agent extension");
+                client.addExtension(EMBEDDED_AGENT_EXTENSION_NAME);
+            } else {
+                log("RHQ Embedded Agent extension is already deployed");
+            }
+        } finally {
+            MCCHelper.safeClose(mcc);
+        }
+    }
+
+    private void deployEmbeddedAgentSubsystem() throws Exception {
+        ModelControllerClient mcc = null;
+        try {
+            mcc = createModelControllerClient();
+            CoreJBossASClient client = new CoreJBossASClient(mcc);
+            boolean isDeployed = client.isSubsystem(EMBEDDED_AGENT_SUBSYSTEM_NAME);
+            if (!isDeployed) {
+                // if user overrode jboss.bind.address for the RHQ server comm bind address, use it instead.
+                String serverBindAddr = System.getProperty("rhq.communications.connector.bind-address");
+                if (serverBindAddr == null || serverBindAddr.trim().length() == 0) {
+                    serverBindAddr = "${jboss.bind.address:127.0.0.1}";
+                } else {
+                    serverBindAddr = "${rhq.communications.connector.bind-address:127.0.0.1}";
+                }
+
+                // Figure out where the user wants to define the server comm bind port and use it.
+                // This won't help if the user changes their default transport in the future; if they do,
+                // they will have to change the embedded agent config manually themselves.
+                String serverBindPort = System.getProperty("rhq.communications.connector.bind-port");
+                if (serverBindPort == null || serverBindPort.trim().length() == 0) {
+                    String serverTransport = System.getProperty("rhq.communications.connector.transport", "servlet");
+                    if (serverTransport.contains("ssl") || serverTransport.equals("https")) {
+                        serverBindPort = "${rhq.server.socket.binding.port.https:7443}";
+                    } else {
+                        serverBindPort = "${rhq.server.socket.binding.port.http:7080}";
+                    }
+                } else {
+                    serverBindPort = "${rhq.communications.connector.bind-port:7080}";
+                }
+
+                ModelNode settings = new ModelNode();
+
+                // define the primary server's endpoint that the agent will talk to
+                JBossASClient.setPossibleExpression(settings, "enabled", "${rhq.server.embedded-agent.enabled:false}");
+                JBossASClient.setPossibleExpression(settings, "rhq.agent.server.bind-address", serverBindAddr);
+                JBossASClient.setPossibleExpression(settings, "rhq.agent.server.bind-port", serverBindPort);
+                JBossASClient.setPossibleExpression(settings, "rhq.agent.server.transport",
+                    "${rhq.communications.connector.transport:servlet}");
+                JBossASClient
+                    .setPossibleExpression(settings, "rhq.agent.server.transport-params",
+                        "${rhq.communications.connector.transport-params:/jboss-remoting-servlet-invoker/ServerInvokerServlet}");
+
+                // define the agent's endpoint that the servers will talk to
+                settings.get("socket-binding").set(EMBEDDED_AGENT_SOCKET_BINDING); // this doesn't support expressions
+                JBossASClient.setPossibleExpression(settings, "rhq.communications.connector.transport", "socket");
+                JBossASClient.setPossibleExpression(settings, "rhq.communications.connector.transport-params",
+                    "1&maxPoolSize=303&clientMaxPoolSize=304&socketTimeout=60000&enableTcpNoDelay=true&backlog=201");
+
+                // tell the agent if it should disable the native layer (aka sigar)
+                JBossASClient.setPossibleExpression(settings, "rhq.agent.disable-native-system",
+                    "${rhq.server.embedded-agent.disable-native:false}");
+
+                // define some extra configuration
+                // * don't notify the server that we are shutting down, since the server is also going down at the same time
+                //   and can't do anything about it anyway!
+                // * Wait for the server to start - we can wait a long time since we know the server will be up any minute now
+                //   so its not like we are going to be hanging for hours - the server should be up in no more than a few minutes
+                ModelNode extraConfig = settings.get("extra-configuration").setEmptyList();
+                extraConfig.add("rhq.agent.do-not-notify-server-of-shutdown", Boolean.TRUE.toString());
+                extraConfig.add("rhq.agent.wait-for-server-at-startup-msecs", String.valueOf(10 * 60 * 1000));
+
+                // define what plugins we want the agent to use
+                ModelNode pluginsNode = settings.get("plugins").setEmptyList();
+                pluginsNode.add("Platforms", true); // always need this one
+
+                String pluginsStr = System.getProperty("rhq.autoinstall.embedded-agent.plugins",
+                    EMBEDDED_AGENT_PLUGINS_DEFAULT);
+                String[] pluginsArr = pluginsStr.split(",");
+                for (String pluginName : pluginsArr) {
+                    pluginName = pluginName.trim();
+                    if (!pluginName.equals("Platforms")) {
+                        pluginsNode.add(pluginName, true);
+                    }
+                }
+
+                log("Installing RHQ Embedded Agent subsystem");
+                client.addSubsystem(EMBEDDED_AGENT_SUBSYSTEM_NAME, settings);
+            } else {
+                log("RHQ Embedded Agent subsystem is already deployed");
+            }
+        } catch (Exception e) {
+            log("Failed to deploy the embedded agent. It will not be able to manage this server.", e);
         } finally {
             MCCHelper.safeClose(mcc);
         }

@@ -187,7 +187,8 @@ public class Upgrade extends AbstractInstall {
             }
 
             // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
-            final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
+            final File serverPropsFile = getServerPropertiesFile();
+            final FileReverter serverPropFileReverter = new FileReverter(serverPropsFile);
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
                 public void performUndoWork() throws Exception {
                     try {
@@ -198,23 +199,30 @@ public class Upgrade extends AbstractInstall {
                 }
             });
 
-            // now upgrade everything
+            // now upgrade everything (skip agent upgrade if embedded agent is enabled)
             rValue = Math.max(rValue, upgradeStorage(commandLine));
             rValue = Math.max(rValue, upgradeServer(commandLine));
-            rValue = Math.max(rValue, upgradeAgent(commandLine));
 
-            File agentDir;
+            final Properties serverProps = new PropertiesFileUpdate(serverPropsFile).loadExistingProperties();
+            final String embeddedAgentProp = serverProps.getProperty("rhq.server.embedded-agent.enabled");
+            if (!Boolean.parseBoolean(embeddedAgentProp)) {
+                rValue = Math.max(rValue, upgradeAgent(commandLine));
 
-            if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
-                agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
+                File agentDir;
+
+                if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
+                    agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
+                } else {
+                    agentDir = getAgentBasedir();
+                }
+
+                updateWindowsAgentService(agentDir);
+
+                if (start) {
+                    rValue = Math.max(rValue, startAgent(agentDir));
+                }
             } else {
-                agentDir = getAgentBasedir();
-            }
-
-            updateWindowsAgentService(agentDir);
-
-            if (start) {
-                rValue = Math.max(rValue, startAgent(agentDir));
+                log.info("The embedded agent is enabled in the server configuration - a standalone agent will not be installed or upgraded");
             }
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);

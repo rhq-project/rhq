@@ -233,6 +233,10 @@
         <unzip src="${settings.localRepository}/org/rhq/rhq-server-control/${project.version}/rhq-server-control-${project.version}.zip"
                dest="${jboss.modules.dir}"/>
 
+        <echo>Adding Embedded Agent module to ${jboss.modules.dir}...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/embeddedagent/${project.version}/embeddedagent-${project.version}.zip"
+               dest="${jboss.modules.dir}"/>
+
         <echo>Updating module descriptor for sun.jdk to work around https://issues.jboss.org/browse/AS7-2138</echo>
         <copy file="src/main/bin-resources/jbossas/modules/system/layers/base/sun/jdk/main/module.xml"
               tofile="${jboss.home}/modules/system/layers/base/sun/jdk/main/module.xml"
@@ -820,6 +824,12 @@ rhq.sync.endpoint-address=false
 # not be edited.
 rhq.server.management.password=
 
+#############################################################################
+# Embedded Agent settings
+#############################################################################
+rhq.server.embedded-agent.enabled=false
+rhq.server.embedded-agent.port=16163
+rhq.server.embedded-agent.disable-native=false
 
 #############################################################################
 # Storage cluster configuration settings

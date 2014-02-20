@@ -27,10 +27,12 @@ package org.rhq.server.control.command;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
@@ -113,7 +115,8 @@ public class Install extends AbstractInstall {
             }
 
             // If any failures occur, we know we need to reset rhq-server.properties.
-            final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
+            final File serverPropsFile = getServerPropertiesFile();
+            final FileReverter serverPropFileReverter = new FileReverter(serverPropsFile);
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
                 public void performUndoWork() throws Exception {
                     try {
@@ -173,28 +176,37 @@ public class Install extends AbstractInstall {
             }
 
             if (installAgent) {
-                if (isAgentInstalled()) {
-                    log.info("The RHQ agent is already installed in [" + getAgentBasedir()
-                        + "]. It will not be installed.");
+                final Properties serverProps = new PropertiesFileUpdate(serverPropsFile).loadExistingProperties();
+                final String embeddedAgentProp = serverProps.getProperty("rhq.server.embedded-agent.enabled");
+                if (!Boolean.parseBoolean(embeddedAgentProp)) {
+                    if (isAgentInstalled()) {
+                        log.info("The RHQ agent is already installed in [" + getAgentBasedir()
+                            + "]. It will not be installed.");
 
-                    if (isWindows()) {
-                        try {
-                            log.info("Ensuring the RHQ Agent Windows service exists. Ignore any CreateService failure.");
-                            rValue = Math.max(rValue, installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, false));
-                        } catch (Exception e) {
-                            // Ignore, service may already exist or be running, wrapper script returns 1
-                            log.debug("Failed to stop agent service", e);
+                        if (isWindows()) {
+                            try {
+                                log.info("Ensuring the RHQ Agent Windows service exists. Ignore any CreateService failure.");
+                                rValue = Math.max(
+                                    rValue,
+                                    installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper",
+                                        false, false));
+                            } catch (Exception e) {
+                                // Ignore, service may already exist or be running, wrapper script returns 1
+                                log.debug("Failed to stop agent service", e);
+                            }
+                        }
+                    } else {
+                        File agentBasedir = getAgentBasedir();
+                        installAgent(agentBasedir, commandLine);
+
+                        rValue = Math.max(rValue, updateWindowsAgentService(agentBasedir));
+
+                        if (start) {
+                            rValue = Math.max(rValue, startAgent(agentBasedir));
                         }
                     }
                 } else {
-                    File agentBasedir = getAgentBasedir();
-                    installAgent(agentBasedir, commandLine);
-
-                    rValue = Math.max(rValue, updateWindowsAgentService(agentBasedir));
-
-                    if (start) {
-                        rValue = Math.max(rValue, startAgent(agentBasedir));
-                    }
+                    log.info("The embedded agent has been enabled in the server configuration, so the standalone agent will not be installed");
                 }
             }
 

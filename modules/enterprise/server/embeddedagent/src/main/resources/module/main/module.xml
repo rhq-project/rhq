@@ -52,5 +52,13 @@
         <!-- other dependencies we need -->
         <module name="org.jboss.as.network"/>
         <module name="org.jboss.as.jmx"/>
+
+        <!-- workaround wildfly bug WFLY-794 so we can monitor external JMX servers like RHQ's storage nodes -->
+        <module name="sun.jdk" optional="true"/>
+        <system>
+            <paths>
+                <path name="com/sun/jndi/url/rmi" />
+            </paths>
+        </system>
     </dependencies>
 </module>

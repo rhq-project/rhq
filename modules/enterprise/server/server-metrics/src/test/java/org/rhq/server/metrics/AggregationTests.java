@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.aggregation.AggregateCacheMapper;
-import org.rhq.server.metrics.aggregation.Aggregator;
+import org.rhq.server.metrics.aggregation.AggregationManager;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
@@ -87,7 +87,7 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour16")
     public void runAggregationForHour16() throws Exception {
         currentHour = hour(17);
-        AggregatorTestStub aggregator = new AggregatorTestStub(hour(16));
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(16));
 
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
@@ -126,7 +126,7 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour17")
     public void runAggregationForHour17() throws Exception {
         currentHour = hour(18);
-        AggregatorTestStub aggregator = new AggregatorTestStub(hour(17));
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(17));
 
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
@@ -177,7 +177,7 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour18")
     public void runAggregationForHour18() throws Exception {
         currentHour = hour(19);
-        AggregatorTestStub aggregator = new AggregatorTestStub(hour(18));
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(18));
 
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
@@ -220,7 +220,7 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour23")
     public void runAggregationForHour24() throws Exception {
         currentHour = hour(24);
-        AggregatorTestStub aggregator = new AggregatorTestStub(hour(23));
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(23));
 
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
@@ -286,7 +286,7 @@ public class AggregationTests extends MetricsTest {
     //@Test(dependsOnMethods = "resetDBForFailureScenarios")
 //    public void failToFetchRawDataIndexDuringAggregationForHour12() throws Exception {
 //        currentHour = hour(12);
-//        AggregatorTestStub aggregator = new AggregatorTestStub(hour(11), new MetricsDAO(storageSession, configuration) {
+//        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(11), new MetricsDAO(storageSession, configuration) {
 //            @Override
 //            public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
 //                if (table == MetricsTable.ONE_HOUR) {
@@ -461,14 +461,14 @@ public class AggregationTests extends MetricsTest {
             "The 24 hour index is wrong");
     }
 
-    private class AggregatorTestStub extends Aggregator {
+    private class AggregationManagerTestStub extends AggregationManager {
 
-        public AggregatorTestStub(DateTime startTime) {
+        public AggregationManagerTestStub(DateTime startTime) {
             super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, MIN_SCHEDULE_ID,
                 MAX_SCHEDULE_ID, CACHE_BATCH_SIZE);
         }
 
-        public AggregatorTestStub(DateTime startTime, MetricsDAO dao) {
+        public AggregationManagerTestStub(DateTime startTime, MetricsDAO dao) {
             super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, MIN_SCHEDULE_ID,
                 MAX_SCHEDULE_ID, CACHE_BATCH_SIZE);
         }

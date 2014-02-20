@@ -22,9 +22,9 @@ import org.rhq.server.metrics.TaskTracker;
 /**
  * @author John Sanda
  */
-class Aggregator2 {
+class Aggregator {
 
-    private static final Log LOG = LogFactory.getLog(Aggregator2.class);
+    private static final Log LOG = LogFactory.getLog(Aggregator.class);
 
     private ComputeMetric computeMetric;
 
@@ -118,11 +118,10 @@ class Aggregator2 {
             public void onSuccess(BatchResult result) {
                 updateRemainingBatches();
                 int delta = result.getInsertResultSets().size() / 4;
-                int count = numSchedules.getAndAdd(delta);
-                count += delta;
+                numSchedules.getAndAdd(delta);
                 stopwatch.stop();
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Finished batch of " + aggregationType + " for " + count + " schedules with starting " +
+                    LOG.debug("Finished batch of " + aggregationType + " for " + delta + " schedules with starting " +
                         "schedule id " + result.getStartScheduleId() + " in " +
                         stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
                 }

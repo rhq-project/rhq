@@ -55,7 +55,7 @@ import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.server.metrics.aggregation.Aggregator;
+import org.rhq.server.metrics.aggregation.AggregationManager;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
@@ -492,13 +492,13 @@ public class MetricsServer {
             if (useAsyncAggregation) {
                 if (pastAggregationMissed) {
                     DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
-                    new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
+                    new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
                         aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
                     pastAggregationMissed = false;
                 }
 
                 DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
-                return new Aggregator(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+                return new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
                     aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
             } else {
                 if (pastAggregationMissed) {

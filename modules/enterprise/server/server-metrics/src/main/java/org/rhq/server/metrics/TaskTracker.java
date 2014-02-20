@@ -5,7 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author John Sanda
  */
-public class SchedulingSynchronizer {
+public class TaskTracker {
 
     private int remainingTasks;
 
@@ -64,9 +64,14 @@ public class SchedulingSynchronizer {
             if (remainingTasks == 0) {
                 return;
             }
-            synchronized (monitor) {
-                monitor.wait();
-            }
+        } finally {
+            lock.readLock().unlock();
+        }
+        synchronized (monitor) {
+            monitor.wait();
+        }
+        try {
+            lock.readLock().lock();
             if (aborted) {
                 throw new AbortedException(errorMessage);
             }

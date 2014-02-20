@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
+import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.NumericMetric;
 
@@ -27,7 +28,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
 
     private final Log log = LogFactory.getLog(ProcessBatch.class);
 
-    private AggregationState state;
+    private MetricsDAO dao;
 
     private ComputeMetric computeMetric;
 
@@ -39,9 +40,9 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
 
     private int batchSize;
 
-    public ProcessBatch(AggregationState state, ComputeMetric computeMetric, int startScheduleId,
+    public ProcessBatch(MetricsDAO dao, ComputeMetric computeMetric, int startScheduleId,
         DateTime timeSlice, AggregationType aggregationType, int batchSize) {
-        this.state = state;
+        this.dao = dao;
         this.computeMetric = computeMetric;
         this.startScheduleId = startScheduleId;
         this.timeSlice = timeSlice;
@@ -95,7 +96,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
             return Futures.transform(insertsFuture, new AsyncFunction<List<ResultSet>, BatchResult>() {
                 @Override
                 public ListenableFuture<BatchResult> apply(final List<ResultSet> resultSets) {
-                    StorageResultSetFuture deleteFuture = state.getDao().deleteCacheEntries(
+                    StorageResultSetFuture deleteFuture = dao.deleteCacheEntries(
                         aggregationType.getCacheTable(), timeSlice.getMillis(), startScheduleId);
                     return Futures.transform(deleteFuture, new Function<ResultSet, BatchResult>() {
                         @Override

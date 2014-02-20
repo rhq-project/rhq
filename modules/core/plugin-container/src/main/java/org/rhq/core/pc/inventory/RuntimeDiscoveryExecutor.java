@@ -111,8 +111,10 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             }
 
             // TODO: This is always zero for embedded because we don't populate the report.
-            log.info("Scanned platform and " + report.getAddedRoots().size() + " server(s) and discovered "
-                + (report.getResourceCount() - report.getAddedRoots().size()) + " new descendant Resource(s).");
+            int numAddedRoots = report.getAddedRoots().size();
+            int numNewDescendants = (report.getResourceCount() - numAddedRoots);
+            log.info("Scanned " + target + " and " + numAddedRoots + " server(s) and discovered " + numNewDescendants
+                + " new descendant Resource(s).");
 
             // TODO GH: This is principally valuable only until we work out the last of the data transfer situations.
             if (log.isTraceEnabled()) {
@@ -123,7 +125,13 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                     + baos.size() + " bytes");
             }
 
-            this.inventoryManager.handleReport(report);
+            // If no child resources were discovered then don't send the empty report. This avoids some
+            // major overhead in that each each report sent triggers a full inventory sync.
+            if (numNewDescendants > 0) {
+                this.inventoryManager.handleReport(report);
+            } else {
+                log.info("Not sending inventory report because no new descendent resources were discovered.");
+            }
         } catch (Exception e) {
             log.warn("Exception caught while executing runtime discovery scan rooted at [" + target + "].", e);
             report.addError(new ExceptionPackage(Severity.Warning, e));

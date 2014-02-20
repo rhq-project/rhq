@@ -39,6 +39,7 @@ import org.rhq.core.util.Base64;
 import org.rhq.core.util.ByteUtil;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
+import org.rhq.modules.plugins.jbossas7.helper.PluginContainerProperties;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -66,7 +67,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
     @Override
     public AvailabilityType getAvailability() {
         Operation op = new ReadAttribute(getAddress(), "enabled");
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, PluginContainerProperties.getAvailabilityFacetTimeoutSeconds());
         if (!res.isSuccess())
             return AvailabilityType.DOWN;
 
@@ -266,7 +267,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             // No content -> check for server group
             if (path.startsWith(("server-group="))) {
                 // Server group has no content of its own - use the domain deployment
-                String name = (String) path.substring(path.lastIndexOf("=") + 1);
+                String name = path.substring(path.lastIndexOf("=") + 1);
                 op = new ReadResource(new Address("deployment", name));
                 result = getASConnection().execute(op);
                 if (result.isSuccess()) {

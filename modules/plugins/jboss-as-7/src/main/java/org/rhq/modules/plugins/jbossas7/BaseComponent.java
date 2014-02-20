@@ -468,6 +468,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         } catch (Exception e) {
             uploadConnection.cancelUpload();
             report.setStatus(CreateResourceStatus.FAILURE);
+            getLog().debug("Failed to pull package from server", e);
             report.setErrorMessage("An error occured while the agent was uploading the content for ["
                 + details.getKey() + "]");
             return report;

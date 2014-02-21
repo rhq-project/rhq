@@ -386,6 +386,11 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
         super.onInit();
         getListGrid().setEmptyMessage(MSG.view_portlet_results_empty());
     }
+    
+    @Override
+    protected boolean showNewScheduleButton() {
+        return false; //hide the "new schedule" button for group portlets
+    }
 }
 
 /** Provide implementation of GroupOperationHistoryDataSource that dynamically

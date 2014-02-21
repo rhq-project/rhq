@@ -34,6 +34,7 @@ public class RecentAlertsPortlet extends AbstractRecentAlertsPortlet {
 
     public RecentAlertsPortlet() {
         super(EntityContext.forSubsystemView());
+        setShowNewDefinitionButton(false); //disable the "new definition" button
     }
 
     public static final class Factory implements PortletViewFactory {

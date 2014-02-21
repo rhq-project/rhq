@@ -19,6 +19,7 @@
 package org.rhq.coregui.client.dashboard.portlets.groups;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.coregui.client.dashboard.Portlet;
 import org.rhq.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.coregui.client.dashboard.portlets.recent.alerts.AbstractRecentAlertsPortlet;
@@ -42,6 +43,7 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
         super(context);
         this.groupId = context.getGroupId();
         this.isAutogroup = context.isAutoGroup();
+        setShowNewDefinitionButton(false); //hide the "new schedule" button for group portlets
     }
 
     public int getResourceId() {

@@ -80,6 +80,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     }
 
     protected abstract boolean hasControlPermission();
+    protected abstract boolean showNewScheduleButton();
 
     @Override
     protected void configureTable() {
@@ -165,17 +166,19 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 }
             });
 
-        addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return hasControlPermission();
-            }
+        if (showNewScheduleButton()) {
+            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return hasControlPermission();
+                }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                String oldurl = History.getToken();
-                String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
-                CoreGUI.goToView(newUrl);
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    String oldurl = History.getToken();
+                    String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
+                    CoreGUI.goToView(newUrl);
+                }
+            });
+        }
         super.configureTable();
     }
 

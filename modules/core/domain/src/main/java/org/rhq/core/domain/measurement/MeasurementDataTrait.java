@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.measurement;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -100,7 +99,6 @@ public class MeasurementDataTrait extends MeasurementData {
 
     private static final long serialVersionUID = 1L;
 
-    @Column(length = 255)
     private String value;
 
     /**

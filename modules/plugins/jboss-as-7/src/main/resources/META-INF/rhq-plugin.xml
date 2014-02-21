@@ -8890,6 +8890,7 @@
 
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
     <plugin-configuration>
       <c:simple-property name="path" default="subdeployment" readOnly="true"/>

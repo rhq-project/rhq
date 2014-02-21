@@ -23,6 +23,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LoginView;
 import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.util.Log;
 
@@ -99,6 +100,8 @@ public class TrackingRequestCallback implements RequestCallback {
             // let them know the server is now unreachable. 
             if (UserSessionManager.isLoggedIn()) {
                 CoreGUI.getErrorHandler().handleError(CoreGUI.getMessages().view_core_serverUnreachable());
+            } else {
+                new LoginView().showLoginDialog();
             }
             break;
 
@@ -107,6 +110,8 @@ public class TrackingRequestCallback implements RequestCallback {
             // process the failure only if the user still logged in
             if (UserSessionManager.isLoggedIn()) {
                 callback.onResponseReceived(request, response);
+            } else {
+                new LoginView().showLoginDialog();
             }
         }
     }

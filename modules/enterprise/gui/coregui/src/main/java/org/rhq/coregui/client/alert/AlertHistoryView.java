@@ -260,8 +260,24 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
                     // the above doesn't work because EntityContext doesn't know if it is autogroup or not 
                     // -> using the relative URL hack
                     String oldurl = History.getToken();
-                    String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Definitions/0";
-                    CoreGUI.goToView(newUrl);
+                    String lastChunk = oldurl.substring(oldurl.lastIndexOf("/") + 1);
+                    if ("Activity".equals(lastChunk)) {
+                        oldurl = oldurl.substring(0, oldurl.lastIndexOf("/"));
+                        oldurl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Alerts";
+                    } else if ("History".equals(lastChunk)) {
+                        oldurl = oldurl.substring(0, oldurl.lastIndexOf("/"));
+                    } else {
+                        try {
+                            Integer.parseInt(lastChunk);
+                            oldurl += "/Alerts";
+                        } catch (NumberFormatException nfe) {
+                            // do nothing
+                        }
+                    }
+                    if ("Alerts".equals(oldurl.substring(oldurl.lastIndexOf("/") + 1))) {
+                        String newUrl = oldurl + "/Definitions/0";
+                        CoreGUI.goToView(newUrl);
+                    }
                 }
             });
         }

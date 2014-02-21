@@ -101,4 +101,9 @@ public class GroupMemberResourceOperationHistoryListView extends
             throw new IllegalArgumentException(msg);
         }
     }
+
+    @Override
+    protected boolean showNewScheduleButton() {
+        return false;
+    }
 }

@@ -49,4 +49,9 @@ public class GroupOperationHistoryListView extends AbstractOperationHistoryListV
         return new GroupOperationHistoryDetailsView(this.groupComposite);
     }
 
+    @Override
+    protected boolean showNewScheduleButton() {
+        return true;
+    }
+
 }

@@ -77,6 +77,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     EntityContext context;
     boolean hasControlPermission;
     OperationHistoryDataSource dataSource;
+    private boolean showNewScheduleButton = true;
 
     static {
         OperationRequestStatus[] statusValues = OperationRequestStatus.values();
@@ -235,7 +236,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                 }
             });
 
-        if (!context.isSubsystemView()) {
+        if (!context.isSubsystemView() && showNewScheduleButton) {
             addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     return hasControlPermission();
@@ -245,9 +246,26 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                     // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Operations", "Schedules/0"));
                     // the above doesn't work because EntityContext doesn't know if it is autogroup or not
                     // -> using the relative URL hack
-                    String oldurl = History.getToken();
-                    String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
-                    CoreGUI.goToView(newUrl);
+                    String url = History.getToken();
+                    String lastChunk = url.substring(url.lastIndexOf("/") + 1);
+                    if ("Activity".equals(lastChunk)) {
+                        url = url.substring(0, url.lastIndexOf("/"));
+                        url = url.substring(0, url.lastIndexOf("/")) + "/Operations";
+                    } else if ("History".equals(lastChunk)) {
+                        url = url.substring(0, url.lastIndexOf("/"));
+                    } else {
+                        try {
+                            Integer.parseInt(lastChunk);
+                            url += "/Operations";
+                        } catch (NumberFormatException nfe) {
+                            // do nothing
+                        }
+                    }
+                    if ("Operations".equals(url.substring(url.lastIndexOf("/") + 1))) {
+                        url += "/Schedules/0";
+                        CoreGUI.goToView(url);
+                    }
+                
                 }
             });
         }
@@ -301,5 +319,9 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     @Override
     public ViewName getViewName() {
         return SUBSYSTEM_VIEW_ID;
+    }
+    
+    public void setShowNewScheduleButton(boolean showNewScheduleButton) {
+        this.showNewScheduleButton = showNewScheduleButton;
     }
 }

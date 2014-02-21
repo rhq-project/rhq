@@ -35,6 +35,7 @@ public class OperationHistoryPortlet extends AbstractOperationHistoryPortlet {
 
     public OperationHistoryPortlet() {
         super(EntityContext.forSubsystemView());
+        setShowNewScheduleButton(false);// disable the "new schedule" button
     }
 
     public static final class Factory implements PortletViewFactory {

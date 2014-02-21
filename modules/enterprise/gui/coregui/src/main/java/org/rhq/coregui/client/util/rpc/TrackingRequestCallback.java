@@ -88,7 +88,7 @@ public class TrackingRequestCallback implements RequestCallback {
         switch (statusCode) {
         case STATUS_CODE_OK:
             if (response != null && response.getText() != null && response.getText().isEmpty()
-                && !LoginView.isLoginShowing()) { // this happen when the RHQ server was restarted
+                && !LoginView.isLoginShowing()) { // this happens when the RHQ server was restarted
                 new LoginView().showLoginDialog();
                 break;
             }
@@ -105,6 +105,8 @@ public class TrackingRequestCallback implements RequestCallback {
             // let them know the server is now unreachable. 
             if (UserSessionManager.isLoggedIn()) {
                 CoreGUI.getErrorHandler().handleError(CoreGUI.getMessages().view_core_serverUnreachable());
+            } else {
+                new LoginView().showLoginDialog();
             }
             break;
 
@@ -113,6 +115,8 @@ public class TrackingRequestCallback implements RequestCallback {
             // process the failure only if the user still logged in
             if (UserSessionManager.isLoggedIn()) {
                 callback.onResponseReceived(request, response);
+            } else {
+                new LoginView().showLoginDialog();
             }
         }
     }

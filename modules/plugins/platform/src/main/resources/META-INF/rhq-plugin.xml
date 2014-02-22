@@ -40,15 +40,15 @@
       </bundle-target>
 '>
  <!ENTITY driftConfig '
-      <drift-definition name="Template-File System" 
+      <drift-definition name="Template-File System"
                         description="Monitor the file system for drift. Definitions should set a more specific base directory as the file system root is not recommended.">
           <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/</value-name>
           </basedir>
-      </drift-definition>      
+      </drift-definition>
 '>
- <!ENTITY metrics '      
+ <!ENTITY metrics '
       <metric displayName="Hostname"
               property="Trait.hostname"
               description="Name that this platform is known as"
@@ -74,7 +74,7 @@
               dataType="trait"
               displayType="summary" />
 '>
- <!ENTITY nativeMetrics '      
+ <!ENTITY nativeMetrics '
       <metric displayName="Free Memory"
               property="Native.MemoryInfo.free"
               displayType="summary"
@@ -88,7 +88,7 @@
               defaultOn="true"
               units="bytes"
               description="The actual total free system memory (includes unallocated memory as well as available buffer and cache memory)"/>
-              
+
       <metric displayName="Used Memory"
               property="Native.MemoryInfo.used"
               displayType="summary"
@@ -102,25 +102,25 @@
               defaultOn="true"
               units="bytes"
               description="The actual total used system memory (includes buffer and cache memory)"/>
-              
+
       <metric displayName="Total Memory"
               property="Native.MemoryInfo.total"
               units="bytes"
               description="The total system memory"/>
-              
+
       <metric displayName="Free Swap Space"
               property="Native.SwapInfo.free"
               defaultOn="true"
               units="bytes"
               description="The total free system swap"/>
-              
+
       <metric displayName="Used Swap Space"
               property="Native.SwapInfo.used"
               defaultOn="true"
               displayType="summary"
               units="bytes"
               description="The total used system swap"/>
-              
+
       <metric displayName="Total Swap Space"
               property="Native.SwapInfo.total"
               units="bytes"
@@ -128,25 +128,25 @@
 '>
 
  <!ENTITY platformCpu '
-      <metric displayName="Idle" 
-               property="CpuPerc.idle" 
-               units="percentage" 
+      <metric displayName="Idle"
+               property="CpuPerc.idle"
+               units="percentage"
                description="Idle percentage of all CPUs"/>
-      <metric displayName="System Load" 
-               property="CpuPerc.sys" 
+      <metric displayName="System Load"
+               property="CpuPerc.sys"
                defaultOn="true"
-               displayType="summary" 
-               units="percentage" 
+               displayType="summary"
+               units="percentage"
                description="Percentage of all CPUs running in system mode"/>
-      <metric displayName="User Load" 
-               property="CpuPerc.user" 
+      <metric displayName="User Load"
+               property="CpuPerc.user"
                defaultOn="true"
-               displayType="summary" 
-               units="percentage" 
+               displayType="summary"
+               units="percentage"
                description="Percentage of all CPUs running in user mode"/>
-      <metric displayName="Wait Load" 
-               property="CpuPerc.wait" 
-               units="percentage" 
+      <metric displayName="Wait Load"
+               property="CpuPerc.wait"
+               units="percentage"
                description="Percentage of all CPUs waiting on I/O"/>
 '>
 
@@ -664,6 +664,35 @@
 
     </service>
 
+    <service name="Directory" class="DirectoryComponent" discovery="DirectoryDiscoveryComponent" supportsManualAdd="true"
+        description="Monitor a generic directory. This can be heavy for a directory with many sub-directories, so monitoring / is not allowed."
+        >
+      <runs-inside>
+          <parent-resource-type name="Linux" plugin="Platforms"/>
+          <parent-resource-type name="Solaris" plugin="Platforms"/>
+          <parent-resource-type name="HP-UX" plugin="Platforms"/>
+          <parent-resource-type name="AIX" plugin="Platforms"/>
+          <parent-resource-type name="FreeBSD" plugin="Platforms"/>
+          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+      </runs-inside>
+
+      <plugin-configuration>
+        <c:simple-property name="path" type="string" description="Directory to monitor. / is not allowed." required="true" readOnly="true"/>
+      </plugin-configuration>
+
+      <metric property="usage" description="Disk usage of this directory"
+              displayName="Directory usage" units="bytes" measurementType="dynamic"
+              defaultInterval="180000" defaultOn="true"
+          />
+      <metric property="files" description="Number of files in the directory"
+              displayName="Number of files"
+              measurementType="dynamic"/>
+
+      <metric property="total" description="Number of items in the directory (files, subdirs, symlinks)"
+              displayName="Number of items"
+              measurementType="dynamic"/>
+
+    </service>
     <help>
         <![CDATA[
          <p>This plugin handles interaction with the operating system and is the base on which other plugins run. It is

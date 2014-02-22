@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 
+import org.hyperic.sigar.DirUsage;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.NetConnection;
 import org.hyperic.sigar.Swap;
@@ -289,6 +290,11 @@ public class JavaSystemInfo implements SystemInfo {
      */
     public FileSystemInfo getFileSystem(String directory) {
         throw getUnsupportedException("Cannot get file system information");
+    }
+
+    @Override
+    public DirUsage getDirectoryUsage(String path) {
+        throw getUnsupportedException("Cannot get directory information yet");
     }
 
     public NetworkAdapterStats getNetworkAdapterStats(String interfaceName) {

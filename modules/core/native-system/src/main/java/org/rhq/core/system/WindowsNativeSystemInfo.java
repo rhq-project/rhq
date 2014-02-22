@@ -1,6 +1,6 @@
  /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2014 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,8 @@ package org.rhq.core.system;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.hyperic.sigar.DirUsage;
 import org.hyperic.sigar.win32.RegistryKey;
 import org.hyperic.sigar.win32.Service;
 import org.hyperic.sigar.win32.ServiceConfig;
@@ -77,6 +79,11 @@ public class WindowsNativeSystemInfo extends NativeSystemInfo {
         }
 
         return services;
+    }
+
+    @Override
+    public DirUsage getDirectoryUsage(String path) {
+        throw new UnsupportedOperationException("Dir Usage not yet supported.");
     }
 
     /**

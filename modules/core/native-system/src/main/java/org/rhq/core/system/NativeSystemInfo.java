@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.DirUsage;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.FileSystemMap;
 import org.hyperic.sigar.Mem;
@@ -340,8 +341,20 @@ public class NativeSystemInfo implements SystemInfo {
         return fileSystem;
     }
 
+    @Override
+    public DirUsage getDirectoryUsage(String path) {
+        DirUsage dirUsage = null;
+        try {
+            dirUsage = sigar.getDirUsage(path);
+        } catch (SigarException e) {
+            log.warn("Can not get directory usage for [" + path + "] cause: " + e.getMessage());
+            return null;
+        }
+        return dirUsage;
+    }
+
     public String getSystemArchitecture() {
-        OperatingSystem op = OperatingSystem.getInstance();        
+        OperatingSystem op = OperatingSystem.getInstance();
         return op.getArch();
     }
 

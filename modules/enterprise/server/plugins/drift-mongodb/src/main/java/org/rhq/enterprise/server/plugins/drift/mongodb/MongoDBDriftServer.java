@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2011 Red Hat, Inc.
+ * Copyright (C) 2011-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -97,7 +97,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     private Morphia morphia;
 
     private Datastore ds;
-    
+
     private ChangeSetDAO changeSetDAO;
 
     private FileDAO fileDAO;
@@ -261,7 +261,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
         return summary;
     }
-    
+
     protected DriftAgentService getDriftAgentService(int resourceId) {
         AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
         return agent.getDriftAgentService();
@@ -284,7 +284,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     public void saveChangeSetFiles(final Subject subject, final File changeSetFilesZip) throws Exception {
         String zipFileName = changeSetFilesZip.getName();
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-        File dir = new File(tmpDir, zipFileName.substring(0, zipFileName.indexOf(".")));
+        File dir = FileUtil.createTempDirectory(zipFileName.substring(0, zipFileName.indexOf(".")),null,tmpDir);
         dir.mkdir();
 
         ZipUtil.unzipFile(changeSetFilesZip, dir);
@@ -301,7 +301,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         Mapper mapper = new Mapper();
         List<MongoDBChangeSet> changeSets = changeSetDAO.findByChangeSetCritiera(criteria);
         PageList<DriftChangeSetDTO> results = new PageList<DriftChangeSetDTO>();
-        
+
         for (MongoDBChangeSet changeSet : changeSets) {
             DriftChangeSetDTO changeSetDTO = mapper.toDTO(changeSet);
             if (criteria.isFetchDrifts()) {
@@ -315,7 +315,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
             }
             results.add(changeSetDTO);
         }
-        
+
         return results;
     }
 
@@ -442,7 +442,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         newChangeSet.setDriftHandlingMode(changeSet.getDriftHandlingMode());
         newChangeSet.setCategory(changeSet.getCategory());
         newChangeSet.setDriftDefinitionId(changeSet.getDriftDefinitionId());
-        
+
         if (!isTemplateChangeSet(changeSet)) {
             DriftDefinition driftDef = getDriftDef(subject, changeSet.getDriftDefinitionId());
             if (driftDef == null) {
@@ -452,7 +452,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
             }
             newChangeSet.setDriftDefinitionName(driftDef.getName());
         }
-        
+
         for (Drift drift : changeSet.getDrifts()) {
             MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
             entry.setPath(drift.getPath());
@@ -501,7 +501,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         }
         return StreamUtil.slurp(file.getInputStream());
     }
-    
+
     protected DriftDefinition getDriftDef(Subject subject, int id) {
         DriftManagerLocal driftMgr = LookupUtil.getDriftManager();
         return driftMgr.getDriftDefinition(subject, id);

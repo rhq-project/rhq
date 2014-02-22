@@ -1,22 +1,16 @@
 package org.rhq.modules.plugins.openshift;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.modules.plugins.jbossas7.BaseServerComponent;
 import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
-import org.rhq.modules.plugins.jbossas7.StandaloneASDiscovery;
 
 /**
  * Discovery class
@@ -35,7 +29,7 @@ public class OpenshiftDiscovery implements ResourceDiscoveryComponent<Standalone
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         /**
-         * TODO : do your discovery here
+         * Discover the resource by checking for existence of /var/lib/openshift directory.
          * A discovered resource must have a unique key, that must
          * stay the same when the resource is discovered the next
          * time
@@ -43,9 +37,13 @@ public class OpenshiftDiscovery implements ResourceDiscoveryComponent<Standalone
 
         ResourceComponent parent = discoveryContext.getParentResourceComponent();
         StandaloneASComponent parentComponent = (StandaloneASComponent) parent;
-        String home = parentComponent.getServerPluginConfiguration().getHomeDir().getAbsolutePath();
+        File homeDir = parentComponent.getServerPluginConfiguration().getHomeDir();
+        if (homeDir==null || !homeDir.exists()) {
+            return Collections.EMPTY_SET;
+        }
+        String home = homeDir.getAbsolutePath();
 
-        log.info("Home is " + home);
+        log.debug("Home is " + home);
 
         //  only discover if the home path contains /var/lib/openshift
         if (home.contains("/var/lib/openshift")) {

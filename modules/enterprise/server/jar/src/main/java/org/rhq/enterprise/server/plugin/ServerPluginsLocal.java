@@ -1,3 +1,26 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.enterprise.server.plugin;
 
 import java.io.File;
@@ -94,7 +117,7 @@ public interface ServerPluginsLocal {
      * Given a plugin ID, this will return a timestamp (in epoch millis)
      * that indicates the last time when the plugin's configuration changed.
      * This looks at both plugin configuration and schedule job configuration.
-     * 
+     *
      * @param pluginId
      * @return time when the plugin's configuration was last updated; will be 0
      *         if the plugin has no configuration to change.
@@ -188,10 +211,10 @@ public interface ServerPluginsLocal {
     /**
      * Registers the given plugin to the database. This ensures the database is up-to-date with the
      * new plugin details.
-     * 
+     *
      * If the master plugin container is up, it will attempt to restart the plugin so the new
      * changes are picked up.
-     * 
+     *
      * @param subject the user that needs to have permissions to add a plugin to the system
      * @param plugin the plugin definition
      * @param pluginFile the actual plugin file itself
@@ -248,7 +271,7 @@ public interface ServerPluginsLocal {
      *
      * @param pluginKey
      * @return the plugin configuration definition
-     * @throws Exception 
+     * @throws Exception
      */
     ConfigurationDefinition getServerPluginConfigurationDefinition(PluginKey pluginKey) throws Exception;
 
@@ -257,14 +280,14 @@ public interface ServerPluginsLocal {
      *
      * @param pluginKey
      * @return the scheduled jobs definition
-     * @throws Exception 
+     * @throws Exception
      */
     ConfigurationDefinition getServerPluginScheduledJobsDefinition(PluginKey pluginKey) throws Exception;
 
     /**
      * Returns the metadata for all control operations for the given plugin.
      * If there are no control operations, an empty list is returned.
-     * 
+     *
      * @param pluginKey
      * @return list of control definitions that are defined for the given plugin
      * @throws Exception if failed to determine a plugin's control definitions
@@ -274,17 +297,28 @@ public interface ServerPluginsLocal {
     /**
      * Invokes a control operation on a given plugin and returns the results. This method blocks until
      * the plugin component completes the invocation.
-     * 
+     *
      * @param subject user making the request, must have the proper permissions
      * @param pluginKey identifies the plugin whose control operation is to be invoked
      * @param controlName identifies the name of the control operation to invoke
      * @param params parameters to pass to the control operation; may be <code>null</code>
      * @return the results of the invocation
-     * 
+     *
      * @throws if failed to obtain the plugin component and invoke the control. This usually means an
      *         abnormal error occurred - if the control operation merely failed to do what it needed to do,
      *         the error will be reported in the returned results, not as a thrown exception.
      */
     ControlResults invokeServerPluginControl(Subject subject, PluginKey pluginKey, String controlName,
         Configuration params) throws Exception;
+
+    /**
+     * Return all the server plugins that match a certain type string.
+     * This type is defined in the XML schema of the plugin descriptor.
+     * Example for alert sender plugins:
+     * "org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType"
+     * from rhq-serverplugin-alert.xsd.
+     * @param type Name of the type
+     * @return List of server plugins matching that type.
+     */
+    List<ServerPlugin> getEnabledServerPluginsByType(String type);
 }

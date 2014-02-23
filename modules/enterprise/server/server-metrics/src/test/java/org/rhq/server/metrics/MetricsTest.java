@@ -154,6 +154,31 @@ public class MetricsTest extends CassandraIntegrationTest {
                 AggregateType.MAX.ordinal(), metric.getMax(),
                 AggregateType.AVG.ordinal(), metric.getAvg()
             ));
+            Futures.addCallback(future, waitForWrites);
+        }
+        return waitForWrites;
+    }
+
+    protected WaitForWrite insert6HourData(DateTime timeSlice, AggregateNumericMetric... data) {
+        WaitForWrite waitForWrites = new WaitForWrite(data.length * 4);
+        StorageResultSetFuture future;
+        for (AggregateNumericMetric metric : data) {
+            future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
+                metric.getMin());
+            Futures.addCallback(future, waitForWrites);
+            future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
+                metric.getMax());
+            Futures.addCallback(future, waitForWrites);
+            future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
+                metric.getAvg());
+            Futures.addCallback(future, waitForWrites);
+            future = dao.updateMetricsCache(MetricsTable.TWENTY_FOUR_HOUR, timeSlice.getMillis(), startScheduleId(
+                metric.getScheduleId()), metric.getScheduleId(), metric.getTimestamp(), ImmutableMap.of(
+                AggregateType.MIN.ordinal(), metric.getMin(),
+                AggregateType.MAX.ordinal(), metric.getMax(),
+                AggregateType.AVG.ordinal(), metric.getAvg()
+            ));
+            Futures.addCallback(future, waitForWrites);
         }
         return waitForWrites;
     }

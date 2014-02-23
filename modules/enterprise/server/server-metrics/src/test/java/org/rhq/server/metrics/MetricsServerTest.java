@@ -693,7 +693,6 @@ public class MetricsServerTest extends MetricsTest {
         double avg = divide(1.1 + 1.2 + 2.1 + 2.2 + 3.1 + 3.2 + 4.1 + 4.2 + 5.1 + 5.2 + 6.1 + 6.2, 12);
         AggregateNumericMetric expected = new AggregateNumericMetric(0, avg, 1.1, 6.2, beginTime.getMillis());
 
-//        assertEquals(actual, expected, "Failed to get group summary aggregate for raw data.");
         assertPropertiesMatch("Failed to get group summary aggregate for raw data.", expected, actual,
             TEST_PRECISION);
     }
@@ -903,63 +902,6 @@ public class MetricsServerTest extends MetricsTest {
                 " should be >= " + timestamp + " but it is " + metric.getColumnMetadata().getWriteTime());
         }
     }
-
-//    private void assertMetricsIndexEquals(MetricsTable table, long timeSlice, List<MetricsIndexEntry> expected,
-//        String msg) {
-//        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice));
-//        assertCollectionMatchesNoOrder(msg + ": " + table + " index does not match expected values.",
-//            expected, actual);
-//    }
-//
-//    private void assert1HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-//        assertMetricDataEquals(MetricsTable.ONE_HOUR, scheduleId, expected);
-//    }
-//
-//    private void assert6HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-//        assertMetricDataEquals(MetricsTable.SIX_HOUR, scheduleId, expected);
-//    }
-//
-//    private void assert24HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {
-//        assertMetricDataEquals(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, expected);
-//    }
-
-//    private void assertMetricDataEquals(MetricsTable columnFamily, int scheduleId,
-//        List<AggregateNumericMetric> expected) {
-//        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
-//        assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + columnFamily +
-//            " does not match expected values", expected, actual, TEST_PRECISION);
-//    }
-//
-//    private void assert6HourDataEmpty(int scheduleId) {
-//        assertMetricDataEmpty(scheduleId, MetricsTable.SIX_HOUR);
-//    }
-//
-//    private void assert24HourDataEmpty(int scheduleId) {
-//        assertMetricDataEmpty(scheduleId, MetricsTable.TWENTY_FOUR_HOUR);
-//    }
-
-//    private void assertMetricDataEmpty(int scheduleId, MetricsTable columnFamily) {
-//        List<AggregateNumericMetric> metrics = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
-//        assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
-//            " but found " + metrics);
-//    }
-
-//    private void assert1HourMetricsIndexEmpty(int scheduleId, long timeSlice) {
-//        assertMetricsIndexEmpty(scheduleId, MetricsTable.ONE_HOUR, timeSlice);
-//    }
-//
-//    private void assert6HourMetricsIndexEmpty(int scheduleId, long timeSlice) {
-//        assertMetricsIndexEmpty(scheduleId, MetricsTable.SIX_HOUR, timeSlice);
-//    }
-//
-//    private void assert24HourMetricsIndexEmpty(int scheduleId, long timeSlice) {
-//        assertMetricsIndexEmpty(scheduleId, MetricsTable.TWENTY_FOUR_HOUR, timeSlice);
-//    }
-//
-//    private void assertMetricsIndexEmpty(int scheduleId, MetricsTable table, long timeSlice) {
-//        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice));
-//        assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
-//    }
 
     private Iterable<RawNumericMetric> findRawMetricsWithMetadata(int scheduleId, long startTime, long endTime) {
         String cql =

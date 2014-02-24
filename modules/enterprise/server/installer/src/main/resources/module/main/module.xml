@@ -10,7 +10,7 @@
         <resource-root path="rhq-core-dbutils-${project.version}.jar"/>
         <resource-root path="rhq-core-util-${project.version}.jar"/>
         <resource-root path="rhq-enterprise-comm-${project.version}.jar"/>
-        <resource-root path="rhq-jboss-as-dmr-client-${project.version}.jar"/>
+        <resource-root path="rhq-jboss-as-dmr-client-${rhq-jboss-as-dmr-client.version}.jar"/>
         <resource-root path="ant-${ant.version}.jar"/>
         <resource-root path="ant-launcher-${ant.version}.jar"/>
         <resource-root path="i18nlog-${i18nlog.version}.jar"/>

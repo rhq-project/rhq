@@ -72,17 +72,21 @@ check_status_of_pid ()
 # ----------------------------------------------------------------------
 # Function that colors _STATUS if terminal supports it
 # ----------------------------------------------------------------------
+# helper functions
+red () { sed "/$1/s//`printf "\033[31m$2$1\033[0m"`/"; }
+green () { sed "/$1/s//`printf "\033[32m$2$1\033[0m"`/"; }
 
 add_colors () {
     # find out if terminal support colors
     _COLORS_NUM=$(tput colors 2> /dev/null)
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
         _COLOR=true
-        _GREEN=$(tput setaf 2)
-        _RED=$(tput setaf 1)
-        _RESET_FORMATTING=$(tput sgr0)
-        _STATUS=${_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
-        _STATUS=${_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
+        (sh --version | grep bash) 1> /dev/null 2>&1
+        _IS_BASH=$?
+        _UP_SYMBOL=`[ $_IS_BASH = 0 ] && echo ✔`
+        _DOWN_SYMBOL=`[ $_IS_BASH = 0 ] && echo ✘`
+        _STATUS=`echo "${_STATUS}" | green running "${_UP_SYMBOL}"`
+        _STATUS=`echo "${_STATUS}" | red down "${_DOWN_SYMBOL}"`
     fi
 }
 

@@ -178,23 +178,27 @@ check_status ()
 # Function that colors _SERVER_STATUS and _JVM_STATUS if terminal
 # supports colors
 # ----------------------------------------------------------------------
+# helper functions
+red () { sed "/$1/s//`printf "\033[31m$2$1\033[0m"`/"; }
+green () { sed "/$1/s//`printf "\033[32m$2$1\033[0m"`/"; }
+orange () { sed "/$1/s//`printf "\033[33m$1\033[0m"`/"; }
 
 add_colors () {
     # find out if terminal support colors
     _COLORS_NUM=$(tput colors 2> /dev/null)
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
-        _GREEN=$(tput setaf 2)
-        _RED=$(tput setaf 1)
-        _ORANGE=$(tput setaf 172)
-        _RESET_FORMATTING=$(tput sgr0)
-        _SERVER_STATUS=${_SERVER_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
-        _SERVER_STATUS=${_SERVER_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
-        _SERVER_STATUS=${_SERVER_STATUS/starting/${_ORANGE}starting${_RESET_FORMATTING}}
-        _SERVER_STATUS=${_SERVER_STATUS/killing.../${_ORANGE}killing...${_RESET_FORMATTING}}
-        _JVM_STATUS=${_JVM_STATUS/running/${_GREEN}✔ running${_RESET_FORMATTING}}
-        _JVM_STATUS=${_JVM_STATUS/down/${_RED}✘ down${_RESET_FORMATTING}}
-        _JVM_STATUS=${_JVM_STATUS/starting/${_ORANGE}starting${_RESET_FORMATTING}}
-        _JVM_STATUS=${_JVM_STATUS/killing.../${_ORANGE}killing...${_RESET_FORMATTING}}
+        (sh --version | grep bash) 1> /dev/null 2>&1
+        _IS_BASH=$?
+        _UP_SYMBOL=`[ $_IS_BASH = 0 ] && echo ✔`
+        _DOWN_SYMBOL=`[ $_IS_BASH = 0 ] && echo ✘`
+        _SERVER_STATUS=`echo "${_SERVER_STATUS}" | green running "${_UP_SYMBOL}"`
+        _SERVER_STATUS=`echo "${_SERVER_STATUS}" | red down "${_DOWN_SYMBOL}"`
+        _SERVER_STATUS=`echo "${_SERVER_STATUS}" | orange starting`
+        _SERVER_STATUS=`echo "${_SERVER_STATUS}" | orange killing...`
+        _JVM_STATUS=`echo "${_JVM_STATUS}" | green running "${_UP_SYMBOL}"`
+        _JVM_STATUS=`echo "${_JVM_STATUS}" | red down "${_DOWN_SYMBOL}"`
+        _JVM_STATUS=`echo "${_JVM_STATUS}" | orange starting`
+        _JVM_STATUS=`echo "${_JVM_STATUS}" | orange killing...`
     fi
 }
 

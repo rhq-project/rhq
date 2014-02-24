@@ -81,13 +81,13 @@ public class MetricsServer {
     private AtomicLong totalAggregationTime = new AtomicLong();
 
     private int numAggregationWorkers = Math.min(Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers",
-        "5")), Runtime.getRuntime().availableProcessors());
+        "4")), Runtime.getRuntime().availableProcessors());
 
     private ListeningExecutorService aggregationWorkers;
 
-    private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "10"));
+    private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "5"));
 
-    private int parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "4"));
+    private int parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "3"));
 
     private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 

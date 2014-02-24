@@ -924,16 +924,16 @@ rhq.storage.request.limit.min=5000
 # Specifies the number of schedules for which data will be fetched per thread.
 # A higher value can improve aggregation performance at the cost of greater
 # memory utilization.
-rhq.metrics.aggregation.batch-size=10
+rhq.metrics.aggregation.batch-size=5
 
 # Specifies the number of batches that can be processed in parallel. A higher
 # value can improve aggregation performance at the cost of greater memory
 # utilization.
-rhq.metrics.aggregation.parallelism=4
+rhq.metrics.aggregation.parallelism=3
 
 # The number of threads to use during aggregation. It defaults to
 # ceiling(5, num_cores).
-rhq.metrics.aggregation.workers=5
+rhq.metrics.aggregation.workers=4
 </echo>
 
         <echo file="${rhq.bin.dir}/rhq-storage.properties">#################### RHQ Storage Configuration Properties ####################

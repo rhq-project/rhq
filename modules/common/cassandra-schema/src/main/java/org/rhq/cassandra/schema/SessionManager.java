@@ -28,7 +28,7 @@ public class SessionManager {
 
     public void initSession(String username, String password, int cqlPort, String... nodes) {
         if (session == null) {
-            log.info("Initializing session for [username: " + username + ", cqlPort: " + cqlPort + ", nodes: " +
+            log.debug("Initializing session for [username: " + username + ", cqlPort: " + cqlPort + ", nodes: " +
                 Arrays.toString(nodes) + "]");
             cluster = new ClusterBuilder().addContactPoints(nodes).withCredentialsObfuscated(username, password)
                 .withPort(cqlPort).withCompression(ProtocolOptions.Compression.NONE).build();
@@ -37,7 +37,7 @@ public class SessionManager {
     }
 
     public void shutdownCluster() {
-        log.info("Shutting down cluster");
+        log.debug("Shutting down storage cluster");
         if (cluster != null) {
             cluster.shutdown();
             cluster = null;

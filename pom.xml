@@ -279,6 +279,13 @@
     <!-- a default value for the child modules indicating that the module is not
          part of our public API and is therefore not API-checked. -->
     <rhq.internal>true</rhq.internal>
+
+    <jacoco.version>0.6.0.201210061924</jacoco.version>
+    <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
+
+    <!-- RHQ patching mechanism -->
+    <rhq-jboss-as-dmr-client.version>4.9.0.JON320GA-redhat-1</rhq-jboss-as-dmr-client.version>
+
   </properties>
 
 
@@ -1060,6 +1067,21 @@
         <artifactId>trove4j</artifactId>
         <version>3.0.3</version>
      </dependency>
+
+      <!-- BZ 987652 : explicitly set jboss-ejb-client version as used by EAP 6.1.1.GA -->
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-ejb-client</artifactId>
+         <version>${jboss.ejb.client.version}</version>
+      </dependency>
+
+      <!-- RHQ specific versioning for components -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-jboss-as-dmr-client</artifactId>
+         <version>${rhq-jboss-as-dmr-client.version}</version>
+      </dependency>
+
   </dependencies>
 
   </dependencyManagement>

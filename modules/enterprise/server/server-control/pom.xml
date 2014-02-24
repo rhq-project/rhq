@@ -41,7 +41,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-jboss-as-dmr-client</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-jboss-as-dmr-client.version}</version>
     </dependency>
 
     <dependency>

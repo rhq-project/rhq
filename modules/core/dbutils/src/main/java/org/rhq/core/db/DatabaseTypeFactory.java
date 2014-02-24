@@ -170,6 +170,8 @@ public class DatabaseTypeFactory {
                     database_type_class = Oracle10DatabaseType.class;
                 } else if (db_version.startsWith("oracle database 11g")) {
                     database_type_class = Oracle11DatabaseType.class;
+                } else if (db_version.startsWith("oracle database 12c")) {
+                    database_type_class = Oracle12DatabaseType.class;
                 }
             } else if (db_name.indexOf("h2") != -1) {
                 if (db_version.startsWith("1.1")) {

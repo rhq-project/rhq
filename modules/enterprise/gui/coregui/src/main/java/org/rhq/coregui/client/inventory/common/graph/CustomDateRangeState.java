@@ -56,6 +56,10 @@ public class CustomDateRangeState {
         }
         return INSTANCE;
     }
+    
+    public static void invalidateInstance() {
+        INSTANCE = null;
+    }
 
     public boolean isCustomDateRangeActive() {
         return isCustomDateRangeActive;

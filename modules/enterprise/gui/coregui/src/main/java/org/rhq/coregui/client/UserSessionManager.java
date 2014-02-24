@@ -36,6 +36,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.coregui.client.inventory.common.graph.CustomDateRangeState;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.preferences.UserPreferences;
 
@@ -457,6 +458,9 @@ public class UserSessionManager {
                     //Update the portal war WebUser now that we've updated subject+session
                     scheduleWebUserUpdate(loggedInSubject);
                 }
+                
+                // invalidate the CustomDateRangeState instance
+                CustomDateRangeState.invalidateInstance();
 
                 CoreGUI.get().init();
             }

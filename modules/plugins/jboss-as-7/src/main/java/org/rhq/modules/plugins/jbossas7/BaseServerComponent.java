@@ -81,7 +81,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private static final String SEPARATOR = "\n-----------------------\n";
 
     final Log log = LogFactory.getLog(BaseServerComponent.class);
-
+    private static final long MAX_PROCESS_WAIT_TIME = 3600000L;
     private ASConnection connection;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
@@ -426,7 +426,21 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         // standalone.bat.conf and domain.bat.conf respectively.
         processExecution.setWorkingDirectory(startScriptFile.getParent());
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(60 * 1000L);
+        processExecution.setWaitForCompletion(MAX_PROCESS_WAIT_TIME);
+        processExecution.setKillOnTimeout(false);
+
+        PropertySimple waitTimeProp = parameters.getSimple("waitTime");
+        if (waitTimeProp != null && waitTimeProp.getLongValue() != null) {
+            long waitTime = waitTimeProp.getLongValue() * 1000L;
+            if (waitTime <= 0) {
+                result.setErrorMessage("waitTime parameter must be positive number");
+                return result;
+            }
+            processExecution.setWaitForCompletion(waitTime);
+        }
+        if (Boolean.parseBoolean(parameters.getSimpleValue("killOnTimeout", "false"))) {
+            processExecution.setKillOnTimeout(true);
+        }
 
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
@@ -436,10 +450,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logExecutionResults(results);
         if (results.getError() != null) {
             result.setErrorMessage(results.getError().getMessage());
-        } else if (results.getExitCode() != null && results.getExitCode() != 0) {
+        } else if (results.getExitCode() == null) {
+            result.setErrorMessage("jboss-cli execution timed out, captured output:\n"+results.getCapturedOutput());
+            return result;
+        }
+        else if (results.getExitCode() != null && results.getExitCode() != 0) {
             result.setErrorMessage("jboss-cli execution failed with error code " + results.getExitCode() + ":\n"
                 + results.getCapturedOutput());
-        } else {
+        }
+        else {
                result.setSimpleResult(results.getCapturedOutput());
         }
         if (result.getErrorMessage() == null) {

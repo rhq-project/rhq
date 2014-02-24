@@ -1001,6 +1001,8 @@
 			<c:simple-property name="commands" type="longString" required="true" description="Commands to be executed" />
 			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
 			<c:simple-property name="triggerDiscovery" type="boolean" default="false" defaultValue="false" description="Trigger discovery scan for child resources asynchronously on successfull script finish." />
+			<c:simple-property name="waitTime" required="false" type="long" description="The number of seconds to wait for the process to end. If specified, must be positive number. Default is one hour." />
+			<c:simple-property name="killOnTimeout" required="false" type="boolean" defaultValue="false" description="If true, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is false." />
 		</parameters>
 		<results>
         	<c:simple-property name="operationResult"/>
@@ -1011,6 +1013,8 @@
 			<c:simple-property name="file" type="string" displayName="Script file" required="true" description="JBoss CLI script file. Relative path based on AS Home Directory can be used." />
 			<c:simple-property name="triggerAvailability" type="boolean" default="false" defaultValue="false" description="Trigger availability scan asynchronously on successfull script finish." />
 			<c:simple-property name="triggerDiscovery" type="boolean" default="false" defaultValue="false" description="Trigger discovery scan for child resources asynchronously on successfull script finish." />
+			<c:simple-property name="waitTime" required="false" type="long" description="The number of seconds to wait for the process to end. If specified, must be positive number. Default is one hour." />
+			<c:simple-property name="killOnTimeout" required="false" type="boolean" defaultValue="false" description="If true, the script will be forcibly terminated if the wait time expires before the script finishes. In other words, the script process will be killed if it times out. Default is false." />
 		</parameters>
 		<results>
         	<c:simple-property name="operationResult"/>

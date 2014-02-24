@@ -134,13 +134,23 @@ public class MetricsServer {
         cacheBatchSize = size;
     }
 
+    public void init() {
+        init(-1, -1, false);
+    }
+
     public void init(int minScheduleId, int maxScheduleId) {
+        init(minScheduleId, maxScheduleId, true);
+    }
+
+    private void init(int minScheduleId, int maxScheduleId, boolean schedulesExist) {
         if (log.isDebugEnabled() && useAsyncAggregation) {
             log.debug("Async aggregation is enabled");
         }
         aggregationWorkers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numAggregationWorkers,
             new StorageClientThreadFactory()));
-        determineMostRecentRawDataSinceLastShutdown(minScheduleId, maxScheduleId);
+        if (schedulesExist) {
+            determineMostRecentRawDataSinceLastShutdown(minScheduleId, maxScheduleId);
+        }
     }
 
     /**

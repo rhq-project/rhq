@@ -178,6 +178,18 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return ms;
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public int[] getMinAndMaxScheduleIds() {
+        Object[] result = (Object[]) entityManager.createNamedQuery(MeasurementSchedule.FIND_MIN_MAX_IDS)
+            .getSingleResult();
+        // the results could be null after the initial install before any schedules have been created
+        if (result[0] == null || result[1] == null) {
+            return  null;
+        }
+        return new int[] {(Integer) result[0], (Integer) result[1]};
+    }
+
     /**
      * Return a list of MeasurementSchedules for the given ids
      *

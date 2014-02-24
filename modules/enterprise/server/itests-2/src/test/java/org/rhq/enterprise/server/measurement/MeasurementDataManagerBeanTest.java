@@ -521,7 +521,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
             session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
             session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.INDEX);
+            session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("An error occurred while purging metrics tables", e);
         }

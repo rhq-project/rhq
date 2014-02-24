@@ -301,4 +301,10 @@ public interface MeasurementScheduleManagerLocal extends MeasurementScheduleMana
      * @param scheduleSubQuery the subquery indicating which schedules changed
      */
     void notifyAgentsOfScheduleUpdates(EntityContext entityContext, String scheduleSubQuery);
+
+    /**
+     * @return The smallest and largest schedule ids. The first element in the array contains the smallest and the
+     * second element contains the largest. This method may return null if no schedules exist.
+     */
+    int[] getMinAndMaxScheduleIds();
 }

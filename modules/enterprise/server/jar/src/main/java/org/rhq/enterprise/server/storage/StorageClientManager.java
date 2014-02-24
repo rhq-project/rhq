@@ -73,6 +73,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.CoreServer;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.server.metrics.DateTimeService;
@@ -104,7 +105,11 @@ public class StorageClientManager implements StorageClientManagerMBean{
     private SystemManagerLocal systemManager;
     @EJB
     private CoreServer coreServer;
-    @Resource
+
+    @EJB
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
+
+    @javax.annotation.Resource
     private TimerService timerService;
 
     private Cluster cluster;

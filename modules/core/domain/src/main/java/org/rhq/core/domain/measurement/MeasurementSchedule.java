@@ -111,7 +111,9 @@ import org.rhq.core.domain.resource.Resource;
         + "   SET ms.enabled = false"), //
     @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "" //
         + "DELETE MeasurementSchedule ms " //
-        + " WHERE ms.resource.id IN ( :resourceIds )") })
+        + " WHERE ms.resource.id IN ( :resourceIds )"),
+    @NamedQuery(name = MeasurementSchedule.FIND_MIN_MAX_IDS, query = "" //
+        + "SELECT MIN(id), MAX(id) FROM MeasurementSchedule")})
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_MEASUREMENT_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
@@ -148,6 +150,7 @@ public class MeasurementSchedule implements Serializable {
     public static final String FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID = "MeasurementSchedule.FIND_ENABLED_BY_ResourceIds_AND_RESOURCE_TYPE";
     public static final String DELETE_BY_RESOURCES = "MeasurementSchedule.deleteByResources";
     public static final String FIND_ALL_FOR_DEFINITIONS = "MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS";
+    public static final String FIND_MIN_MAX_IDS = "MeasurementSchedule.FIND_MIN_MAX_IDS";
 
     public static final String FIND_BY_IDS = "MeasurementSchedule.findByIds";
 

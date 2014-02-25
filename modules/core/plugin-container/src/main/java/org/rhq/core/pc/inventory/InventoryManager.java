@@ -19,6 +19,9 @@
 
 package org.rhq.core.pc.inventory;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -44,9 +47,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -235,9 +235,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Constructs a new instance.
      * Call {@link #initialize()} once constructed.
      */
-    public InventoryManager(PluginContainerConfiguration configuration,
-            AgentServiceStreamRemoter streamRemoter, PluginManager pluginManager,
-            EventManager eventManager) {
+    public InventoryManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        PluginManager pluginManager, EventManager eventManager) {
         super(DiscoveryAgentService.class, streamRemoter);
         this.configuration = configuration;
         if (pluginManager == null)
@@ -960,8 +959,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             mergeResourceResponse = discoveryServerService.addResource(resource, ownerSubjectId);
 
             // Sync our local resource up with the one now in server inventory. Treat this like a newlyCommittedResource
+            // - set mtime (same as ctime for a new resource) to ensure this does not get picked up in an inventory sync
+            //   pass, we know we're currently in sync with the server.
             resource.setId(mergeResourceResponse.getResourceId());
-            resource.setMtime(0); // this will indicate that this resource is "dirty" and needs to be synced/merged later
+            resource.setMtime(mergeResourceResponse.getMtime());
             Set newResources = new LinkedHashSet<Resource>();
             newResources.add(resource);
             postProcessNewlyCommittedResources(newResources);

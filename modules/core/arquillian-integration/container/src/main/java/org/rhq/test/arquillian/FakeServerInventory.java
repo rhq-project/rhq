@@ -217,7 +217,7 @@ public class FakeServerInventory {
 
                 r = fakePersist(r, InventoryStatus.COMMITTED, new HashSet<String>());
 
-                return new MergeResourceResponse(r.getId(), exists);
+                return new MergeResourceResponse(r.getId(), (exists ? r.getMtime() : r.getCtime()), exists);
             }
         };
     }

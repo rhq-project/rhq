@@ -941,7 +941,7 @@ public class StandaloneContainer {
 
         @Override
         public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {
-            return new MergeResourceResponse(manualAddResourceCounter++,false);
+            return new MergeResourceResponse(manualAddResourceCounter++, System.currentTimeMillis(), false);
         }
 
         @Override

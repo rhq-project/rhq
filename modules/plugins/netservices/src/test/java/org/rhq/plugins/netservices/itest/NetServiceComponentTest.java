@@ -100,14 +100,15 @@ public abstract class NetServiceComponentTest {
         containerConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
         containerConfig.setPluginDirectory(pluginDir);
         containerConfig.setInsideAgent(false);
-        // netservices plugin has resources which can only be manually added so we have to mock server integration. 
+        // netservices plugin has resources which can only be manually added so we have to mock server integration.
         DiscoveryServerService discoveryServerService = Mockito.mock(DiscoveryServerService.class);
         when(discoveryServerService.addResource(any(Resource.class), anyInt())).thenAnswer(
             new Answer<MergeResourceResponse>() {
 
                 @Override
                 public MergeResourceResponse answer(InvocationOnMock invocation) throws Throwable {
-                    return new MergeResourceResponse(resourceIdGenerator.decrementAndGet(), false);
+                    return new MergeResourceResponse(resourceIdGenerator.decrementAndGet(), System.currentTimeMillis(),
+                        false);
                 }
             });
         ServerServices serverServices = new ServerServices();

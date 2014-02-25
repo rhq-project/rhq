@@ -243,15 +243,6 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-    public Resource getPlatformForResource(int resourceId) throws RuntimeException {
-        try {
-            return SerialUtility.prepare(resourceManager.getRootResourceForResource(resourceId),
-                "ResourceService.getPlatformForResource");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
     public List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems)
         throws RuntimeException {
         try {

@@ -65,6 +65,8 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -334,14 +336,42 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Collection<ResourceSyncInfo> getResourceSyncInfo(int resourceId) {
         // [PERF] this is an expensive query that can return a large collection.  But it's faster than the old way of
         // letting hibernate grab the whole hierarchy via eager fetch of children...
-        Query q = entityManager.createNamedQuery(ResourceSyncInfo.QUERY_TOP_LEVEL_SERVER);
-        q.setParameter("resourceId", resourceId);
+        Query query = null;
+        Collection<ResourceSyncInfo> result = null;
+        boolean isNative = true;
 
-        Collection<ResourceSyncInfo> result = q.getResultList();
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            query = entityManager.createNativeQuery(ResourceSyncInfo.QUERY_NATIVE_QUERY_TOP_LEVEL_SERVER_ORACLE);
+
+        } else if (DatabaseTypeFactory.isPostgres(dbType)) {
+            query = entityManager.createNativeQuery(ResourceSyncInfo.QUERY_NATIVE_QUERY_TOP_LEVEL_SERVER_POSTGRES);
+
+        } else {
+            isNative = false;
+            query = entityManager.createNamedQuery(ResourceSyncInfo.QUERY_TOP_LEVEL_SERVER);
+        }
+
+        query.setParameter("resourceId", resourceId);
+
+        if ( isNative ) {
+            List<Object[]> rows = query.getResultList();
+            result = new ArrayList<ResourceSyncInfo>(rows.size());
+            for ( Object[] row : rows ) {
+                int id = dbType.getInteger(row[0]);
+                String uuid = (String)row[1];
+                long mtime = dbType.getLong(row[2]);
+                InventoryStatus status = InventoryStatus.valueOf((String)row[3]);
+                result.add(new ResourceSyncInfo(id, uuid, mtime, status));
+            }
+        } else {
+            result = query.getResultList();
+        }
 
         return result;
     }
@@ -634,7 +664,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Resource existingResource = findExistingResource(resource, null);
         if (existingResource != null) {
-            mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), true);
+            mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), existingResource.getMtime(),
+                true);
         } else {
             Subject creator = this.subjectManager.getSubjectById(creatorSubjectId);
             try {
@@ -658,7 +689,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 throw new IllegalStateException(e);
             }
 
-            mergeResourceResponse = new MergeResourceResponse(resource.getId(), false);
+            mergeResourceResponse = new MergeResourceResponse(resource.getId(), resource.getCtime(), false);
         }
 
         return mergeResourceResponse;

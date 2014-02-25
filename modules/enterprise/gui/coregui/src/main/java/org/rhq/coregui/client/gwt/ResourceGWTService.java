@@ -89,8 +89,6 @@ public interface ResourceGWTService extends RemoteService {
 
     List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException;
 
-    Resource getPlatformForResource(int resourceId) throws RuntimeException;
-
     PageList<Resource> getQueuedPlatforms(ArrayList<InventoryStatus> statuses, PageControl pc)
         throws RuntimeException;
 

@@ -71,6 +71,26 @@ public class ResourceSyncInfo implements Serializable {
      * the top level server. note that we support up to 6 levels below platform but we are starting one level down) */
     public static final String QUERY_TOP_LEVEL_SERVER = "ResourceSyncInfo.topLevelServer";
 
+    // Native Queries not supported by HQL
+    public static final String QUERY_NATIVE_QUERY_TOP_LEVEL_SERVER_ORACLE = "" //
+        + "           SELECT r.id, r.uuid, r.mtime, r.inventory_status " //
+        + "             FROM rhq_resource r " //
+        + "       START WITH r.id = :resourceId " //
+        + " CONNECT BY PRIOR r.id = r.parent_resource_id ";
+    public static final String QUERY_NATIVE_QUERY_TOP_LEVEL_SERVER_POSTGRES = "" //
+        + " WITH RECURSIVE childResource AS " //
+        + " (   SELECT r.id, r.uuid, r.mtime, r.inventory_status " //
+        + "       FROM rhq_resource AS r " //
+        + "      WHERE r.id = :resourceId " // non-recursive term
+        + "  UNION ALL " //
+        + "     SELECT r.id, r.uuid, r.mtime, r.inventory_status " // recursive term
+        + "       FROM rhq_resource AS r " //
+        + "       JOIN childResource AS cr " //
+        + "         ON (r.parent_resource_id = cr.id) " //
+        + " ) " //
+        + " SELECT id, uuid, mtime, inventory_status " //
+        + "   FROM childResource ";
+
     /**
      * Server-assigned id
      */
@@ -140,7 +160,7 @@ public class ResourceSyncInfo implements Serializable {
         return true;
     }
 
-    protected ResourceSyncInfo(int id, String uuid, long mtime, InventoryStatus istatus) {
+    public ResourceSyncInfo(int id, String uuid, long mtime, InventoryStatus istatus) {
         this.id = id;
         this.uuid = uuid;
         this.mtime = mtime;

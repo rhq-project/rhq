@@ -388,9 +388,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // set agent references null
             // foobar the resourceKeys
             // update the inventory status to UNINVENTORY
-            Query toBeDeletedQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
-            toBeDeletedQuery.setParameter("resourceId", resourceId);
-            List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
+            List<Integer> toBeDeletedResourceIds = getDescendents(resourceId);
 
             int i = 0;
             if (isDebugEnabled) {
@@ -490,15 +488,71 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    private List<Integer> getDescendents(int resourceId) {
+        List<Integer> result = null;
+        Query query = null;
+
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            query = entityManager.createNativeQuery(Resource.QUERY_NATIVE_FIND_DESCENDANTS_ORACLE);
+
+        } else if (DatabaseTypeFactory.isPostgres(dbType)) {
+            query = entityManager.createNativeQuery(Resource.QUERY_NATIVE_FIND_DESCENDANTS_POSTGRES);
+
+        } else {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
+        }
+
+        query.setParameter("resourceId", resourceId);
+
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            List<?> rl = query.getResultList();
+            result = new ArrayList<Integer>(rl.size());
+            for (Object id : rl) {
+                result.add(dbType.getInteger(id));
+            }
+        } else {
+            // native Integer support
+            result = query.getResultList();
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
     public List<Integer> getResourceDescendantsByTypeAndName(Subject user, int resourceId, Integer resourceTypeId,
         String name) {
-        Query descendantQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME);
-        descendantQuery.setParameter("resourceId", resourceId);
-        descendantQuery.setParameter("resourceTypeId", resourceTypeId);
+
+        List<Integer> result = null;
+        Query query = null;
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            query = entityManager.createNativeQuery(Resource.QUERY_NATIVE_FIND_DESCENDANTS_BY_TYPE_AND_NAME_ORACLE);
+
+        } else if (DatabaseTypeFactory.isPostgres(dbType)) {
+            query = entityManager.createNativeQuery(Resource.QUERY_NATIVE_FIND_DESCENDANTS_BY_TYPE_AND_NAME_POSTGRES);
+
+        } else {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME);
+        }
+
+        query.setParameter("resourceId", resourceId);
+        query.setParameter("resourceTypeId", ((null != resourceTypeId) ? resourceTypeId : 0));
         name = QueryUtility.formatSearchParameter(name);
-        descendantQuery.setParameter("name", name);
-        List<Integer> descendants = descendantQuery.getResultList();
-        return descendants;
+        query.setParameter("resourceName", ((null != name) ? name : "$$$null$$$"));
+
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            List<?> rl = query.getResultList();
+            result = new ArrayList<Integer>(rl.size());
+            for (Object id : rl) {
+                result.add(dbType.getInteger(id));
+            }
+        } else {
+            // native Integer support
+            result = query.getResultList();
+        }
+        return result;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1120,12 +1174,37 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return sb.toString();
     }
 
+    // Used by Portal WAR only
+    @Deprecated
     @NotNull
     public Resource getRootResourceForResource(int resourceId) {
-        Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE);
-        q.setParameter("resourceId", resourceId);
+        Query query = null;
+        Resource result = null;
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
-        return (Resource) q.getSingleResult();
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            query = entityManager.createNativeQuery(Resource.QUERY_NATIVE_FIND_RESOURCE_PLATFORM_ORACLE);
+
+        } else if (DatabaseTypeFactory.isPostgres(dbType)) {
+            query = entityManager.createNativeQuery(Resource.QUERY_NATIVE_FIND_RESOURCE_PLATFORM_POSTGRES);
+
+        } else {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE);
+        }
+
+        query.setParameter("resourceId", resourceId);
+
+        Integer platformId;
+        if (DatabaseTypeFactory.isOracle(dbType)) {
+            platformId = dbType.getInteger(query.getSingleResult());
+
+        } else {
+            // native Integer support
+            platformId = (Integer)query.getSingleResult();
+        }
+
+        result = entityManager.find(Resource.class, platformId);
+        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -2879,14 +2958,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private List<Integer> getFamily(Resource resource) {
+        List<Integer> result = getDescendents(resource.getId());
 
-        // note - this query is good only to 6 levels deep
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
-        query.setParameter("resourceId", resource.getId());
-
-        List<Integer> resourceIds = query.getResultList();
-
-        return resourceIds;
+        return result;
     }
 
     @Override

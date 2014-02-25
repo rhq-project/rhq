@@ -64,14 +64,26 @@ public abstract class OracleDatabaseType extends DatabaseType {
 
     /* (non-Javadoc)
      * @see org.rhq.core.db.DatabaseType#getInteger(java.lang.Object)
-     * 
+     *
      * Oracle stores integer fields as Numbers and returns a BigDecimal.  It is assumed <code>number</code> is actually
-     * an integer value, otherwise precision will be lost in this conversion. 
+     * an integer value, otherwise precision will be lost in this conversion.
      */
     @Override
     public Integer getInteger(Object number) {
         BigDecimal intField = (BigDecimal) number;
         return intField.intValue();
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.db.DatabaseType#getLong(java.lang.Object)
+     *
+     * Oracle stores long fields as Numbers and returns a BigDecimal.  It is assumed <code>number</code> is actually
+     * a long value, otherwise precision will be lost in this conversion.
+     */
+    @Override
+    public Long getLong(Object number) {
+        BigDecimal longField = (BigDecimal) number;
+        return longField.longValue();
     }
 
     /**

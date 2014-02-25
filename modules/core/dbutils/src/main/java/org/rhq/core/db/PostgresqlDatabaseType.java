@@ -18,6 +18,7 @@
  */
 package org.rhq.core.db;
 
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,10 +43,12 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
      *
      * @see DatabaseType#getVendor()
      */
+    @Override
     public String getVendor() {
         return VENDOR_NAME;
     }
 
+    @Override
     public String getHibernateDialect() {
         return "org.hibernate.dialect.PostgreSQLDialect";
     }
@@ -53,6 +56,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
     /**
      * @see DatabaseType#isTableNotFoundException(SQLException)
      */
+    @Override
     public boolean isTableNotFoundException(SQLException e) {
         return (e.getSQLState().toUpperCase().equals("42P01"));
     }
@@ -63,6 +67,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
      *
      * @see DatabaseType#getSequenceValue(Connection, String, String)
      */
+    @Override
     public int getSequenceValue(Connection conn, String table, String key) throws SQLException {
         String query = "SELECT currval('" + table + "_" + key + "_seq')";
         PreparedStatement selectPS = null;
@@ -86,6 +91,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
     /**
      * @see DatabaseType#getNextSequenceValue(Connection, String, String)
      */
+    @Override
     public int getNextSequenceValue(Connection conn, String table, String key) throws SQLException {
         String query = "SELECT nextval('" + table + "_" + key + "_seq'::text)";
 
@@ -110,6 +116,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
     /**
      * @see DatabaseType#alterColumn(Connection, String, String, String, String, String, Boolean, Boolean)
      */
+    @Override
     public void alterColumn(Connection conn, String table, String column, String generic_column_type,
         String default_value, String precision, Boolean nullable, Boolean reindex) throws SQLException {
         String db_column_type = null;
@@ -150,6 +157,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
     /**
      * @see DatabaseType#reindexTable(Connection, String)
      */
+    @Override
     public void reindexTable(Connection conn, String table) throws SQLException {
         executeSql(conn, "REINDEX TABLE " + table);
     }
@@ -162,13 +170,26 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
      * Note 1: The default behavior may change in a future version of postgres given that
      * the standard_conforming_strings setting may change from 'off' to 'on' out of the box.
      * Note 2: Also related, http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674 for more.
-     * 
+     *
      * @see DatabaseType#getEscapeCharacter()
      */
+    @Override
     public String getEscapeCharacter() {
         String result = System.getProperty("rhq.server.database.escape-character");
 
         return (null == result) ? "\\\\" : result;
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.db.DatabaseType#getLong(java.lang.Object)
+     *
+     * Postgres stores long fields as BigInteger and returns a BigInteger.  It is assumed <code>number</code> is actually
+     * a long value, otherwise precision will be lost in this conversion.
+     */
+    @Override
+    public Long getLong(Object number) {
+        BigInteger longField = (BigInteger) number;
+        return longField.longValue();
     }
 
 }

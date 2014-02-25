@@ -217,6 +217,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             // we'll get persistence exceptions when we try to merge OR persist the platform.
             long rootStart = System.currentTimeMillis();
             if (!initResourceTypes(root, allTypes)) {
+                LOG.error("Reported resource [" + root + "] has an unknown type [" + root.getResourceType()
+                    + "]. The Agent [" + knownAgent + "] most likely has a plugin named '" + root.getResourceType().getPlugin()
+                    + "' installed that is not installed on the Server. Resource will be ignored...");
                 continue;
             }
 
@@ -1269,9 +1272,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
 
             if (null == resourceType) {
-                LOG.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
-                    + "]. The Agent most likely has a plugin named '" + plugin
-                    + "' installed that is not installed on the Server. Resource will be ignored...");
                 return false;
             } else {
                 loadedTypeMap.put(key.toString(), resourceType);

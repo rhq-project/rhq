@@ -33,7 +33,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <!-- I'm not sure this is still necessary due to hibernate now being provided scope in domain (jshaughn -->
             <exclusions>
                 <exclusion>
@@ -278,7 +278,7 @@
            <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-domain.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
            </dependency>

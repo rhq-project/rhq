@@ -6,7 +6,7 @@
 
     <resources>
         <resource-root path="${project.build.finalName}.jar"/>
-        <resource-root path="rhq-core-domain-${project.version}.jar"/>
+        <resource-root path="rhq-core-domain-${rhq-core-domain.version}.jar"/>
         <resource-root path="rhq-core-dbutils-${project.version}.jar"/>
         <resource-root path="rhq-core-util-${project.version}.jar"/>
         <resource-root path="rhq-enterprise-comm-${project.version}.jar"/>

@@ -133,6 +133,7 @@
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
                            <property name="rhq.bundle-additional-script-languages" value="${rhq.bundle-additional-script-languages}"/>
+                           <property name="rhq-core-domain.version" value="${rhq-core-domain.version}" />
                         </ant>
                      </target>
                   </configuration>

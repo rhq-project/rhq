@@ -298,13 +298,13 @@
     <rhq-cassandra-util.version>${project.version}</rhq-cassandra-util.version>
     <rhq-common-drift.version>${project.version}</rhq-common-drift.version>
     <rhq-filetemplate-bundle-common.version>${project.version}</rhq-filetemplate-bundle-common.version>
-    <rhq-jboss-as-dmr-client.version>${project.version}</rhq-jboss-as-dmr-client.version>
+    <rhq-jboss-as-dmr-client.version>${project.version}-redhat-1</rhq-jboss-as-dmr-client.version>
     <rhq-jboss-as-common.version>${project.version}</rhq-jboss-as-common.version>
     <rhq-common-parent.version>${project.version}</rhq-common-parent.version>
     <rhq-core-client-api.version>${project.version}</rhq-core-client-api.version>
     <rhq-core-comm-api.version>${project.version}</rhq-core-comm-api.version>
     <rhq-core-dbutils.version>${project.version}</rhq-core-dbutils.version>
-    <rhq-core-domain.version>${project.version}</rhq-core-domain.version>
+    <rhq-core-domain.version>${project.version}-redhat-1</rhq-core-domain.version>
     <rhq-core-gui.version>${project.version}</rhq-core-gui.version>
     <rhq-core-native-system.version>${project.version}</rhq-core-native-system.version>
     <rhq-core-plugin-api.version>${project.version}</rhq-core-plugin-api.version>

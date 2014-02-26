@@ -24,7 +24,6 @@
 package org.rhq.augeas.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -216,12 +215,13 @@ public class Glob {
     }
 
     public static String rootPortion(String path) {
-        // On Windows, make sure we have the correct case and slash direction for comparison.
+        // On Windows, make sure we have the correct drive letter format and slash direction for comparison.
         if (File.separator.equals("\\")) {
             try {
-                path = new File(path).getCanonicalPath();
-            } catch (IOException e) {
-                // should never happen but just leave path as-is
+                File f = new File(path);
+                path = f.isAbsolute() ? f.getCanonicalPath() : f.getPath();
+            } catch (Exception e) {
+                // should not happen but just leave path as-is
             }
         }
         File[] roots = File.listRoots();
@@ -233,7 +233,7 @@ public class Glob {
             }
         } else {
             log.warn("Could not determine file system roots. This is strange.");
-           }
+        }
 
         return "";
     }

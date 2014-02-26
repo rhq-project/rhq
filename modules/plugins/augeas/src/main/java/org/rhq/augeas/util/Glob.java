@@ -24,18 +24,20 @@
 package org.rhq.augeas.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
  * A helper class for easy work with glob patterns.
- * 
+ *
  * @author Lukas Krejci
  */
 public class Glob {
@@ -43,22 +45,22 @@ public class Glob {
     private static final Log log = LogFactory.getLog(Glob.class);
 
     public static final Comparator<File> ALPHABETICAL_COMPARATOR = new Comparator<File>() {
-        
+
         public int compare(File o1, File o2) {
             String path1 = o1.getAbsolutePath();
             String path2 = o2.getAbsolutePath();
-            
+
             return path1.compareTo(path2);
         }
     };
-    
+
     private Glob() {
-        
+
     }
-    
+
     /**
      * Checks whether the provided string is a wildcard glob pattern.
-     * 
+     *
      * @param globPattern
      * @return
      */
@@ -68,13 +70,13 @@ public class Glob {
         }
         return false;
     }
-    
+
     /**
      * Checks if the file matches the glob pattern with given path as a root of the filesystem.
-     * 
+     *
      * If the glob pattern denotes an absolute path, it is understood to be under the supplied
      * fs root.
-     * 
+     *
      * @param rootPath
      * @param globPattern
      * @param file
@@ -83,32 +85,32 @@ public class Glob {
     public static boolean matches(File rootPath, String globPattern, File file) {
         String rootPortion = rootPortion(globPattern);
         globPattern = globPattern.substring(rootPortion.length());
-        
+
         globPattern = new File(rootPath, globPattern).getAbsolutePath();
-        
+
         return new GlobFilter(globPattern).accept(file);
     }
-    
+
     /**
      * This is an overloaded version of the {@link #match(File, String, Comparator)} method
      * that passes <code>null</code> as the comparator to use.
-     * 
-     * @see #match(File, String, Comparator) 
+     *
+     * @see #match(File, String, Comparator)
      */
     public static List<File> match(File parentPath, String globPattern) {
         return match(parentPath, globPattern, null);
     }
-    
+
     /**
      * Returns a fixed size list of matches.
-     * 
+     *
      * The parent path specifies the "root" from which the glob pattern applies.
      * The glob pattern can span several directories with wildcards present only
      * on the lowest level.
      * The glob pattern is always relative to the specified parent path, even if it denotes
      * an absolute path. In that case, the leading root path is chopped off and the rest is
      * appended to the parent path.
-     * 
+     *
      * @param parentPath the parent path to start the pattern search
      * @param globPattern the glob pattern to match against
      * @param resultComparator the comparator using which to sort the results or null if no sorting is necessary
@@ -124,7 +126,7 @@ public class Glob {
 
         String rootPortion = rootPortion(globPattern);
         globPattern = globPattern.substring(rootPortion.length());
-        
+
         //now search for the first special character in the patterns
         int specialCharIdx = globPattern.length();
         for(char specialChar : GlobFilter.WILDCARD_CHARS) {
@@ -133,12 +135,12 @@ public class Glob {
                 specialCharIdx = idx;
             }
         }
-        
+
         if (specialCharIdx > 0) {
             //now search for the first path separator preceding the special char
             int globParentIdx = globPattern.lastIndexOf(File.separatorChar, specialCharIdx);
             if (globParentIdx > 0) {
-                //move the parent path down to the nearest parent of the wildcard part of the 
+                //move the parent path down to the nearest parent of the wildcard part of the
                 //glob pattern
                 parentPath = new File(parentPath, globPattern.substring(0, globParentIdx));
                 globPattern = createGlobPattern(parentPath.getAbsolutePath(), globPattern.substring(globParentIdx));
@@ -146,7 +148,7 @@ public class Glob {
                 globPattern = createGlobPattern(parentPath.getAbsolutePath(),globPattern);
             }
         } else {
-            globPattern = createGlobPattern(parentPath.getAbsolutePath(),globPattern);            
+            globPattern = createGlobPattern(parentPath.getAbsolutePath(),globPattern);
         }
 
         globPattern = new File(globPattern).getAbsolutePath();
@@ -155,46 +157,46 @@ public class Glob {
             log.debug("Could list files in " + parentPath);
             return Collections.emptyList();
         }
-        
+
         if (resultComparator != null) {
             Arrays.sort(files, resultComparator);
         }
-        
+
         return Arrays.asList(files);
     }
-    
+
     private static String createGlobPattern(String parent,String pattern){
         if (!parent.endsWith(File.separator))
             parent = parent + File.separatorChar;
          return parent+pattern;
     }
-    
+
     /**
      * This is an overloaded version of the {@link #matchAll(File, List, Comparator)} method
      * that passes <code>null</code> as the comparator to use.
-     * 
-     * @see #matchAll(File, List, Comparator) 
+     *
+     * @see #matchAll(File, List, Comparator)
      */
     public static List<File> matchAll(File parentPath, List<String> globPatterns) {
         return matchAll(parentPath, globPatterns, null);
     }
-    
+
     public static List<File> matchAll(File parentPath, List<String> globPatterns, Comparator<? super File> resultComparator) {
         ArrayList<File> matches = new ArrayList<File>();
         for(String p : globPatterns) {
             matches.addAll(match(parentPath, p, null));
         }
-        
+
         if (resultComparator != null) {
             Collections.sort(matches, resultComparator);
         }
-        
+
         return matches;
     }
-    
+
     public static void exclude(List<File> matches, String globPattern) {
         GlobFilter filter = new GlobFilter(globPattern);
-        
+
         Iterator<File> it = matches.iterator();
         while (it.hasNext()) {
             if (filter.accept(it.next())) {
@@ -202,18 +204,26 @@ public class Glob {
             }
         }
     }
-    
+
     public static void excludeAll(List<File> matches, String... globPattern) {
         excludeAll(matches, Arrays.asList(globPattern));
-    }    
-    
-    public static void excludeAll(List<File> matches, List<String> globPatterns) {    
+    }
+
+    public static void excludeAll(List<File> matches, List<String> globPatterns) {
         for(String p : globPatterns) {
             exclude(matches, p);
         }
     }
 
     public static String rootPortion(String path) {
+        // On Windows, make sure we have the correct case and slash direction for comparison.
+        if (File.separator.equals("\\")) {
+            try {
+                path = new File(path).getCanonicalPath();
+            } catch (IOException e) {
+                // should never happen but just leave path as-is
+            }
+        }
         File[] roots = File.listRoots();
         if (roots != null) {
             for (File root : roots) {
@@ -223,8 +233,8 @@ public class Glob {
             }
         } else {
             log.warn("Could not determine file system roots. This is strange.");
-           }      
-        
+           }
+
         return "";
     }
 }

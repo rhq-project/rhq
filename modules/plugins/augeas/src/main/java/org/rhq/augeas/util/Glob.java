@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -214,6 +215,15 @@ public class Glob {
     }
 
     public static String rootPortion(String path) {
+        // On Windows, make sure we have the correct drive letter format and slash direction for comparison.
+        if (File.separator.equals("\\")) {
+            try {
+                File f = new File(path);
+                path = f.isAbsolute() ? f.getCanonicalPath() : f.getPath();
+            } catch (Exception e) {
+                // should not happen but just leave path as-is
+            }
+        }
         File[] roots = File.listRoots();
         if (roots != null) {
             for (File root : roots) {
@@ -223,8 +233,8 @@ public class Glob {
             }
         } else {
             log.warn("Could not determine file system roots. This is strange.");
-           }      
-        
+        }
+
         return "";
     }
 }

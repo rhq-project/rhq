@@ -24,7 +24,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
-      <version>${rhq.version}</version>
+      <version>${rhq-core-domain.version}</version>
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 

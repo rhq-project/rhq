@@ -29,7 +29,7 @@
        <dependency>
            <groupId>org.rhq</groupId>
            <artifactId>rhq-core-domain</artifactId>
-           <version>${project.version}</version>
+           <version>${rhq-core-domain.version}</version>
            <scope>test</scope>
        </dependency>
 

@@ -41,6 +41,8 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
 
     private int batchSize;
 
+    private BatchFailureListener failureListener = new BatchFailureListener();
+
     public ProcessBatch(MetricsDAO dao, ComputeMetric computeMetric, int startScheduleId,
         DateTime timeSlice, AggregationType aggregationType, int batchSize) {
         this.dao = dao;
@@ -57,7 +59,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
         if (log.isDebugEnabled()) {
             log.debug("Aggregating batch of " + aggregationType + " with starting schedule id " + startScheduleId);
         }
-        List<StorageResultSetFuture> insertFutures = new ArrayList<StorageResultSetFuture>(batchSize * 4);
+        List<ListenableFuture<ResultSet>> insertFutures = new ArrayList<ListenableFuture<ResultSet>>(batchSize * 4);
         try {
             if (resultSet.isExhausted()) {
                 return Futures.immediateFuture(new BatchResult(timeSlice, startScheduleId));
@@ -81,8 +83,8 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
                     }
                     mean.add(currentMetric.getAvg());
                 } else {
-                    insertFutures.addAll(computeMetric.execute(startScheduleId, currentMetric.getScheduleId(), min, max,
-                        mean));
+                    insertFutures.addAll(wrapWithFailureListener(computeMetric.execute(startScheduleId,
+                        currentMetric.getScheduleId(), min, max, mean)));
 
                     currentMetric = nextMetric;
                     min = currentMetric.getMin();
@@ -91,12 +93,16 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
                     mean.add(currentMetric.getAvg());
                 }
             }
-            insertFutures.addAll(computeMetric.execute(startScheduleId, currentMetric.getScheduleId(), min, max, mean));
+            insertFutures.addAll(wrapWithFailureListener(computeMetric.execute(startScheduleId,
+                currentMetric.getScheduleId(), min, max, mean)));
             ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(insertFutures);
 
             return Futures.transform(insertsFuture, new AsyncFunction<List<ResultSet>, BatchResult>() {
                 @Override
-                public ListenableFuture<BatchResult> apply(final List<ResultSet> resultSets) {
+                public ListenableFuture<BatchResult> apply(final List<ResultSet> resultSets) throws Exception {
+                    if (!failureListener.getErrors().isEmpty()) {
+                        throw new BatchException(startScheduleId, failureListener.getErrors());
+                    }
                     StorageResultSetFuture deleteFuture = dao.deleteCacheEntries(
                         aggregationType.getCacheTable(), timeSlice.getMillis(), startScheduleId);
                     return Futures.transform(deleteFuture, new Function<ResultSet, BatchResult>() {
@@ -115,6 +121,14 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
                     stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         }
+    }
+
+    private List<ListenableFuture<ResultSet>> wrapWithFailureListener(List<StorageResultSetFuture> futures) {
+        List<ListenableFuture<ResultSet>> wrappedFutures = new ArrayList<ListenableFuture<ResultSet>>(futures.size());
+        for (StorageResultSetFuture future : futures) {
+            wrappedFutures.add(Futures.withFallback(future, failureListener));
+        }
+        return wrappedFutures;
     }
 
 }

@@ -26,6 +26,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.aggregation.AggregationManager;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * @author John Sanda
@@ -271,6 +272,30 @@ public class AggregationTests extends MetricsTest {
         purgeDB();
     }
 
+    @Test(dependsOnMethods = "resetDBForFailureScenarios")
+    public void doNotDeleteCachePartitionOnBatchFailure() throws Exception {
+        currentHour = hour(5);
+        DateTime time = hour(4).plusMinutes(20);
+        insertRawData(hour(4), new MeasurementDataNumeric(time.getMillis(), schedule1.id, 3.0))
+            .await("Failed to insert raw data");
+
+        TestDAO testDAO = new TestDAO() {
+            @Override
+            public StorageResultSetFuture insertOneHourDataAsync(int scheduleId, long timestamp, AggregateType type,
+                double value) {
+                StorageResultSetFuture future = super.insertOneHourDataAsync(scheduleId, timestamp, type, value);
+                future.setException(new Exception("An unexpected error occurred while inserting 1 hour data"));
+                return future;
+            }
+        };
+
+        AggregationManagerTestStub aggregationManager = new AggregationManagerTestStub(hour(4), testDAO);
+        aggregationManager.run();
+
+        assert1HourCacheEquals(hour(4), startScheduleId(schedule1.id), asList(new RawNumericMetric(schedule1.id,
+            time.getMillis(), 3.0)));
+    }
+
     //@Test(dependsOnMethods = "resetDBForFailureScenarios")
 //    public void failToFetchRawDataIndexDuringAggregationForHour12() throws Exception {
 //        currentHour = hour(12);
@@ -399,6 +424,13 @@ public class AggregationTests extends MetricsTest {
         Map<DateTime, AggregateNumericMetric> oneHourData = new HashMap<DateTime, AggregateNumericMetric>();
         Map<DateTime, AggregateNumericMetric> sixHourData = new HashMap<DateTime, AggregateNumericMetric>();
         Map<DateTime, AggregateNumericMetric> twentyFourHourData = new HashMap<DateTime, AggregateNumericMetric>();
+    }
+
+    private class TestDAO extends MetricsDAO {
+
+        public TestDAO() {
+            super(storageSession, configuration);
+        }
     }
 
     private class FailedStorageResultSetFuture extends StorageResultSetFuture implements ListenableFuture<ResultSet> {

@@ -4,7 +4,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,6 +46,13 @@ class Aggregator {
     private MetricsDAO dao;
 
     private TaskTracker taskTracker = new TaskTracker();
+
+    private AsyncFunction<BatchResult, ResultSet> deleteCachePartition = new AsyncFunction<BatchResult, ResultSet>() {
+        @Override
+        public ListenableFuture<ResultSet> apply(BatchResult batchResult) throws Exception {
+            return dao.deleteCacheEntries(aggregationType.getCacheTable(), startTime.getMillis(), startScheduleId);
+        }
+    };
 
     void setComputeMetric(ComputeMetric computeMetric) {
         this.computeMetric = computeMetric;
@@ -131,7 +140,20 @@ class Aggregator {
 
             @Override
             public void onFailure(Throwable t) {
-                LOG.warn("There was an unexpected error while processing a batch of " + aggregationType);
+                if (t instanceof BatchException) {
+                    BatchException exception = (BatchException) t;
+                    LOG.warn("There were errors while processing a batch of " + aggregationType + " with starting " +
+                        "schedule id " + startScheduleId + ": " + exception.getErrorMessages());
+                    if (LOG.isDebugEnabled()) {
+                        for (Throwable error : exception.getRootCauses()) {
+                            LOG.debug("Root cause for batch error", error);
+                        }
+                    }
+                } else {
+                    LOG.warn("There was an unexpected error while processing a batch of " + aggregationType +
+                        " with starting schedule id " + startScheduleId, t);
+                }
+                // TODO add some configurable strategy to determine whether or not to abort
                 updateRemainingBatches();
             }
         };

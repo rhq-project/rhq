@@ -81,6 +81,11 @@ public interface AgentManagementMBean {
      * Identifies the filesize of a plugin.
      */
     String PLUGIN_INFO_SIZE = "size";
+    
+    /**
+     * Identifies whether the plugin is currently being used by the agent
+     */
+    String PLUGIN_INFO_ENABLED = "enabled";
 
     /**
      * Identifies the MD5 of a plugin.

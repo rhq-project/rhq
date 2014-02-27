@@ -168,7 +168,10 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             PluginUpdate updater = getPluginUpdateObject();
             plugins = updater.getCurrentPluginFiles();
-
+            PluginContainerConfiguration pcConfig = m_agent.getConfiguration().getPluginContainerConfiguration();
+            List<String> enabledPlugins = pcConfig.getEnabledPlugins();
+            List<String> disabledPlugins = pcConfig.getDisabledPlugins();
+            
             PropertyList list = new PropertyList("plugins".intern());
             info.getComplexResults().put(list);
 
@@ -192,6 +195,11 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                     map.put(new PropertySimple(PLUGIN_INFO_PATH, plugin.getAbsoluteFile()));
                     map.put(new PropertySimple(PLUGIN_INFO_TIMESTAMP, new Date(plugin.lastModified())));
                     map.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
+                    // plugin is either whitelisted or the white list is empty
+                    boolean isEnabled = enabledPlugins.isEmpty() || enabledPlugins.contains(pluginName);
+                    // ..and is not on the black list
+                    isEnabled &= !disabledPlugins.contains(pluginName);
+                    map.put(new PropertySimple(PLUGIN_INFO_ENABLED, isEnabled));
 
                     try {
                         map.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));

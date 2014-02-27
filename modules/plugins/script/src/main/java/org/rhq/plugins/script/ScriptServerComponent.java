@@ -442,7 +442,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
         boolean availExecuteCheck = false;
         String availArgs = null;
         String availExitCodeRegex = null;
-        String availOutputRegex = null;
+        Pattern availOutputRegex = null;
 
         // determine how we are to consider the CLI available by looking at the plugin configuration
         try {
@@ -471,7 +471,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
             }
 
             if (availOutputRegexProp != null && availOutputRegexProp.getStringValue() != null) {
-                availOutputRegex = availOutputRegexProp.getStringValue();
+                availOutputRegex = Pattern.compile(availOutputRegexProp.getStringValue());
             }
         } catch (Exception e) {
             throw new InvalidPluginConfigurationException("Cannot get avail plugin config. Cause: " + e);
@@ -526,7 +526,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                     output = output.trim();
                 }
 
-                boolean outputMatches = output.matches(availOutputRegex);
+                boolean outputMatches = availOutputRegex.matcher(output).find();
                 if (!outputMatches) {
                     if (log.isDebugEnabled()) {
                         logDebug("CLI output [" + truncateString(output) + "] did not match regex [" + availOutputRegex

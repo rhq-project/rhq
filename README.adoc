@@ -1,0 +1,32 @@
+:title: RHQ Project
+:homepage: http://jboss.org/rhq/
+
+= RHQ Project
+
+RHQ Project (short 'RHQ') is a Framework and tool for systems management and monitoring.
+As such it allows to gather metrics from so called _managed resources_,
+alert on values of the metrics or state change and other conditions. RHQ is also
+able to provision new content onto managed resources, run operations on them etc.
+
+The list of supported managed resources is not hard coded, but provided by
+https://github.com/rhq-project/rhq/tree/master/modules/plugins[(agent) plugins].
+
+
+== Wiki and issue tracker
+
+The https://docs.jboss.org/author/display/RHQ/Home[RHQ wiki] contains information about running RHQ as well
+as a lot of design documentation.
+
+Issues for RHQ are currently tracked in https://bugzilla.redhat.com/browse.cgi?product=RHQ%20Project[Bugzilla]
+
+== Contributing
+
+IMPORTANT: To contribute please make sure you have signed the Fedora CLA as
+explained https://docs.jboss.org/author/display/RHQ/Contributions#Contributions-TheContributorLicenseAgreement%28CLA%29[on this wiki] page.
+
+If you want to contribute to the source repository, please fork it into your own repository and
+send pull-requests afterwards. Each Pull-Request should be "backed" by an entry in Bugzilla. Please
+add the Bugzilla issue number to the Pull-Request.
+
+TIP: Create a branch per pull-request, so that rebasing the mainline from `origin/master is easier afterwards,
+as it will not contain your changes of the pull-request.

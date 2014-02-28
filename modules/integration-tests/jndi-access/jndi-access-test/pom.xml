@@ -74,7 +74,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-server.version}</version>
             <scope>test</scope>
         </dependency>
 

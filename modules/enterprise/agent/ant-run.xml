@@ -58,7 +58,7 @@ Ant Script that provides ways to package the Agent.
          <include name="org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.jar" />
          <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
          <include name="org/rhq/rhq-core-comm-api/${project.version}/rhq-core-comm-api-${project.version}.jar" />
-         <include name="org/rhq/rhq-core-native-system/${project.version}/rhq-core-native-system-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-native-system/${rhq-core-native-system.version}/rhq-core-native-system-${rhq-core-native-system.version}.jar" />
          <include name="org/rhq/rhq-core-domain/${rhq-core-domain.version}/rhq-core-domain-${rhq-core-domain.version}.jar" />
          <include name="org/rhq/rhq-core-plugin-api/${project.version}/rhq-core-plugin-api-${project.version}.jar" />
          <include name="org/rhq/rhq-core-plugin-container/${project.version}/rhq-core-plugin-container-${project.version}.jar" />

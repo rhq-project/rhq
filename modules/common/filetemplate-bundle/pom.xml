@@ -31,7 +31,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-native-system</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-native-system.version}</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>

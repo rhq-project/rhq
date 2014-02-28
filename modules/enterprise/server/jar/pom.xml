@@ -11,6 +11,7 @@
   </parent>
 
   <artifactId>rhq-enterprise-server</artifactId>
+  <version>4.9.0.JON320GA-redhat-1</version>
   <packaging>ejb</packaging>
 
   <name>RHQ Enterprise Server JAR</name>
@@ -44,13 +45,13 @@
   <dependency>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-enterprise-comm</artifactId>
-    <version>${project.version}</version>
+    <version>${project.parent.version}</version>
   </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
@@ -63,7 +64,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-cassandra-schema</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.hyperic</groupId>
@@ -91,7 +92,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.hyperic</groupId>
@@ -103,13 +104,13 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-dbutils</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>ant</groupId>
@@ -121,19 +122,19 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>safe-invoker</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-common-drift</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-server-metrics</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.hyperic</groupId>
@@ -149,7 +150,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-cassandra-util</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.datastax.cassandra</groupId>
@@ -205,7 +206,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>test-utils</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -493,7 +494,7 @@
     <dependency>
       <groupId>org.rhq.helpers</groupId>
       <artifactId>rest-docs-generator</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -576,9 +577,9 @@
                 </tstamp>
 
                 <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
-                  Product-Version=${project.version}
+                  Product-Version=${project.parent.version}
                   Module-Name=${project.name}
-                  Module-Version=${project.version}
+                  Module-Version=${project.parent.version}
                   Build-Number=${buildNumber}
                   Build-Date=${build.time}
                   Build-Jdk-Vendor=${java.vendor}
@@ -896,7 +897,7 @@
 
                     <mkdir dir="${javadoc.outputDirectory}/remote-api"/>
                     <javadoc destdir="${javadoc.outputDirectory}/remote-api" author="false" version="true"
-                      windowtitle="RHQ ${project.version} Remote API" noindex="false">
+                      windowtitle="RHQ ${project.parent.version} Remote API" noindex="false">
                       <classpath>
                         <pathelement path="${maven.compile.classpath}"/>
                       </classpath>
@@ -933,7 +934,7 @@
       <dependency>
         <groupId>org.rhq.helpers</groupId>
         <artifactId>rest-docs-generator</artifactId>
-        <version>${project.version}</version>
+        <version>${project.parent.version}</version>
       </dependency>
 
       <!-- We need this, as otherwise processing fails completely with a class not found exception -->

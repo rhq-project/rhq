@@ -59,7 +59,7 @@
     <product.urlDomain>jboss.org</product.urlDomain>
     <product.salesEmail>rhq-users@lists.fedorahosted.org</product.salesEmail>
     <product.supportEmail>rhq-users@lists.fedorahosted.org</product.supportEmail>
-    <product.version>${project.version}</product.version>
+    <product.version>${rhq.pom.version}</product.version>
     <product.helpDocRoot>https://docs.jboss.org/author/display/RHQ/User+Documentation</product.helpDocRoot>
     <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 
@@ -284,151 +284,152 @@
     <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
 
     <!-- Add RHQ version properties to support update versioning -->
-    <rhq-code-coverage.version>${project.version}</rhq-code-coverage.version>
-    <rhq-cli-tests.version>${project.version}</rhq-cli-tests.version>
-    <rhq-ant-bundle-common.version>${project.version}</rhq-ant-bundle-common.version>
-    <rhq-cassandra-auth.version>${project.version}</rhq-cassandra-auth.version>
-    <rhq-cassandra-ccm-arquillian.version>${project.version}</rhq-cassandra-ccm-arquillian.version>
-    <rhq-cassandra-ccm-core.version>${project.version}</rhq-cassandra-ccm-core.version>
-    <rhq-cassandra-ccm-maven-plugin.version>${project.version}</rhq-cassandra-ccm-maven-plugin.version>
-    <rhq-cassandra-ccm-testng.version>${project.version}</rhq-cassandra-ccm-testng.version>
-    <rhq-cassandra-ccm.version>${project.version}</rhq-cassandra-ccm.version>
-    <rhq-cassandra-installer.version>${project.version}</rhq-cassandra-installer.version>
-    <rhq-cassandra-schema.version>${project.version}</rhq-cassandra-schema.version>
-    <rhq-cassandra-util.version>${project.version}</rhq-cassandra-util.version>
-    <rhq-common-drift.version>${project.version}</rhq-common-drift.version>
-    <rhq-filetemplate-bundle-common.version>${project.version}</rhq-filetemplate-bundle-common.version>
-    <rhq-jboss-as-dmr-client.version>${project.version}-redhat-1</rhq-jboss-as-dmr-client.version>
-    <rhq-jboss-as-common.version>${project.version}</rhq-jboss-as-common.version>
-    <rhq-common-parent.version>${project.version}</rhq-common-parent.version>
-    <rhq-core-client-api.version>${project.version}</rhq-core-client-api.version>
-    <rhq-core-comm-api.version>${project.version}</rhq-core-comm-api.version>
-    <rhq-core-dbutils.version>${project.version}</rhq-core-dbutils.version>
-    <rhq-core-domain.version>${project.version}-redhat-1</rhq-core-domain.version>
-    <rhq-core-gui.version>${project.version}</rhq-core-gui.version>
-    <rhq-core-native-system.version>${project.version}</rhq-core-native-system.version>
-    <rhq-core-plugin-api.version>${project.version}</rhq-core-plugin-api.version>
-    <rhq-core-plugin-container.version>${project.version}</rhq-core-plugin-container.version>
-    <rhq-plugin-validator.version>${project.version}</rhq-plugin-validator.version>
-    <rhq-core-plugindoc.version>${project.version}</rhq-core-plugindoc.version>
-    <rhq-core-parent.version>${project.version}</rhq-core-parent.version>
-    <rhq-core-util.version>${project.version}</rhq-core-util.version>
-    <rhq-enterprise-agent.version>${project.version}</rhq-enterprise-agent.version>
-    <rhq-enterprise-agentupdate.version>${project.version}</rhq-enterprise-agentupdate.version>
-    <rhq-script-bindings.version>${project.version}</rhq-script-bindings.version>
-    <rhq-enterprise-comm.version>${project.version}</rhq-enterprise-comm.version>
-    <rhq-agentupdate-war.version>${project.version}</rhq-agentupdate-war.version>
-    <rhq-content_http.version>${project.version}</rhq-content_http.version>
-    <rhq-coregui.version>${project.version}</rhq-coregui.version>
-    <rhq-downloads-war.version>${project.version}</rhq-downloads-war.version>
-    <rhq-enterprise-gui-parent.version>${project.version}</rhq-enterprise-gui-parent.version>
-    <rhq-portal.version>${project.version}</rhq-portal.version>
-    <rhq-remote-client-war.version>${project.version}</rhq-remote-client-war.version>
-    <rhq-remoting-war.version>${project.version}</rhq-remoting-war.version>
-    <rhq-rest-examples.version>${project.version}</rhq-rest-examples.version>
-    <rhq-rest.version>${project.version}</rhq-rest.version>
-    <rhq-enterprise-parent.version>${project.version}</rhq-enterprise-parent.version>
-    <rhq-remoting-cli.version>${project.version}</rhq-remoting-cli.version>
-    <rhq-remoting-client-api.version>${project.version}</rhq-remoting-client-api.version>
-    <remote-client-deps.version>${project.version}</remote-client-deps.version>
-    <rhq-remoting-parent.version>${project.version}</rhq-remoting-parent.version>
-    <rhq-scripting-api.version>${project.version}</rhq-scripting-api.version>
-    <rhq-scripting-javascript.version>${project.version}</rhq-scripting-javascript.version>
-    <rhq-scripting-parent.version>${project.version}</rhq-scripting-parent.version>
-    <rhq-scripting-python.version>${project.version}</rhq-scripting-python.version>
-    <rhq-enterprise-server-appserver.version>${project.version}</rhq-enterprise-server-appserver.version>
-    <rhq-server-client-api.version>${project.version}</rhq-server-client-api.version>
-    <rhq-data-migration.version>${project.version}</rhq-data-migration.version>
-    <rhq-enterprise-server-ear.version>${project.version}</rhq-enterprise-server-ear.version>
-    <rhq-installer-util.version>${project.version}</rhq-installer-util.version>
-    <rhq-server-itests-2.version>${project.version}</rhq-server-itests-2.version>
-    <rhq-enterprise-server.version>${project.version}</rhq-enterprise-server.version>
-    <alert-cli.version>${project.version}</alert-cli.version>
-    <alert-email.version>${project.version}</alert-email.version>
-    <alert-irc.version>${project.version}</alert-irc.version>
-    <alert-log4j.version>${project.version}</alert-log4j.version>
-    <alert-microblog.version>${project.version}</alert-microblog.version>
-    <alert-mobicents.version>${project.version}</alert-mobicents.version>
-    <alert-operations.version>${project.version}</alert-operations.version>
-    <alert-roles.version>${project.version}</alert-roles.version>
-    <alert-snmp.version>${project.version}</alert-snmp.version>
-    <alert-subject.version>${project.version}</alert-subject.version>
-    <serverplugin-alertdef-rhq.version>${project.version}</serverplugin-alertdef-rhq.version>
-    <rhq-serverplugin-ant-bundle.version>${project.version}</rhq-serverplugin-ant-bundle.version>
-    <rhq-serverplugin-cobbler.version>${project.version}</rhq-serverplugin-cobbler.version>
-    <rhq-serverplugin-disk.version>${project.version}</rhq-serverplugin-disk.version>
-    <rhq-serverplugin-drift.version>${project.version}</rhq-serverplugin-drift.version>
-    <rhq-serverplugin-filetemplate-bundle.version>${project.version}</rhq-serverplugin-filetemplate-bundle.version>
-    <rhq-serverplugin-jboss-software.version>${project.version}</rhq-serverplugin-jboss-software.version>
-    <packagetype-cli.version>${project.version}</packagetype-cli.version>
-    <rhq-enterprise-server-plugins-parent.version>${project.version}</rhq-enterprise-server-plugins-parent.version>
-    <rhq-serverplugin-url.version>${project.version}</rhq-serverplugin-url.version>
-    <validate-all-serverplugins.version>${project.version}</validate-all-serverplugins.version>
-    <rhq-serverplugin-yum.version>${project.version}</rhq-serverplugin-yum.version>
-    <rhq-enterprise-server-parent.version>${project.version}</rhq-enterprise-server-parent.version>
-    <safe-invoker.version>${project.version}</safe-invoker.version>
-    <rhq-server-control.version>${project.version}</rhq-server-control.version>
-    <rhq-server-metrics.version>${project.version}</rhq-server-metrics.version>
-    <server-startup.version>${project.version}</server-startup.version>
-    <rhq-enterprise-server-xml-schemas.version>${project.version}</rhq-enterprise-server-xml-schemas.version>
-    <bundleGen.version>${project.version}</bundleGen.version>
-    <jeeGen.version>${project.version}</jeeGen.version>
-    <rhq-metrics-simulator.version>${project.version}</rhq-metrics-simulator.version>
-    <perftest-support.version>${project.version}</perftest-support.version>
-    <rhq-helpers.version>${project.version}</rhq-helpers.version>
-    <rest-docs-generator.version>${project.version}</rest-docs-generator.version>
-    <rhq-rtfilter-subsystem.version>${project.version}</rhq-rtfilter-subsystem.version>
-    <rhq-aliases-plugin.version>${project.version}</rhq-aliases-plugin.version>
-    <rhq-ant-bundle-plugin.version>${project.version}</rhq-ant-bundle-plugin.version>
-    <rhq-apache-plugin.version>${project.version}</rhq-apache-plugin.version>
-    <rhq-augeas-plugin.version>${project.version}</rhq-augeas-plugin.version>
-    <rhq-byteman-plugin.version>${project.version}</rhq-byteman-plugin.version>
-    <rhq-cassandra-plugin.version>${project.version}</rhq-cassandra-plugin.version>
-    <rhq-cobbler-plugin.version>${project.version}</rhq-cobbler-plugin.version>
-    <rhq-cron-plugin.version>${project.version}</rhq-cron-plugin.version>
-    <rhq-database-plugin.version>${project.version}</rhq-database-plugin.version>
-    <rhq-filetemplate-bundle-plugin.version>${project.version}</rhq-filetemplate-bundle-plugin.version>
-    <rhq-grub-plugin.version>${project.version}</rhq-grub-plugin.version>
-    <hadoop-plugin.version>${project.version}</hadoop-plugin.version>
-    <jopr-hibernate-plugin.version>${project.version}</jopr-hibernate-plugin.version>
-    <rhq-hosts-plugin.version>${project.version}</rhq-hosts-plugin.version>
-    <rhq-hudson-plugin.version>${project.version}</rhq-hudson-plugin.version>
-    <rhq-iis-plugin.version>${project.version}</rhq-iis-plugin.version>
-    <rhq-irc-plugin.version>${project.version}</rhq-irc-plugin.version>
-    <jopr-jboss-as-5-plugin.version>${project.version}</jopr-jboss-as-5-plugin.version>
-    <rhq-jboss-as-7-plugin.version>${project.version}</rhq-jboss-as-7-plugin.version>
-    <jopr-jboss-as-plugin.version>${project.version}</jopr-jboss-as-plugin.version>
-    <jopr-jboss-cache-v3-plugin.version>${project.version}</jopr-jboss-cache-v3-plugin.version>
-    <jopr-jboss-cache-plugin.version>${project.version}</jopr-jboss-cache-plugin.version>
-    <rhq-jmx-plugin.version>${project.version}</rhq-jmx-plugin.version>
-    <rhq-kickstart-plugin.version>${project.version}</rhq-kickstart-plugin.version>
-    <modcluster-plugin.version>${project.version}</modcluster-plugin.version>
-    <rhq-mysql-plugin.version>${project.version}</rhq-mysql-plugin.version>
-    <rhq-netservices-plugin.version>${project.version}</rhq-netservices-plugin.version>
-    <rhq-no-op-plugin.version>${project.version}</rhq-no-op-plugin.version>
-    <rhq-oracle-plugin.version>${project.version}</rhq-oracle-plugin.version>
-    <pattern-plugin.version>${project.version}</pattern-plugin.version>
-    <rhq-perftest-plugin.version>${project.version}</rhq-perftest-plugin.version>
-    <rhq-platform-plugin.version>${project.version}</rhq-platform-plugin.version>
-    <rhq-plugins-parent.version>${project.version}</rhq-plugins-parent.version>
-    <rhq-postfix-plugin.version>${project.version}</rhq-postfix-plugin.version>
-    <rhq-postgres-plugin.version>${project.version}</rhq-postgres-plugin.version>
-    <rhq-agent-plugin.version>${project.version}</rhq-agent-plugin.version>
-    <rhq-rhqserver-plugin.version>${project.version}</rhq-rhqserver-plugin.version>
-    <rhq-rhqstorage-plugin.version>${project.version}</rhq-rhqstorage-plugin.version>
-    <rhq-samba-plugin.version>${project.version}</rhq-samba-plugin.version>
-    <rhq-script-plugin.version>${project.version}</rhq-script-plugin.version>
-    <rhq-script2-plugin.version>${project.version}</rhq-script2-plugin.version>
-    <rhq-snmptrapd-plugin.version>${project.version}</rhq-snmptrapd-plugin.version>
-    <rhq-sonarqube-plugin.version>${project.version}</rhq-sonarqube-plugin.version>
-    <rhq-sshd-plugin.version>${project.version}</rhq-sshd-plugin.version>
-    <rhq-sudoers-plugin.version>${project.version}</rhq-sudoers-plugin.version>
-    <jopr-tomcat-plugin.version>${project.version}</jopr-tomcat-plugin.version>
-    <rhq-twitter-plugin.version>${project.version}</rhq-twitter-plugin.version>
-    <validate-all-plugins.version>${project.version}</validate-all-plugins.version>
-    <rhq-virt-plugin.version>${project.version}</rhq-virt-plugin.version>
-    <test-utils.version>${project.version}</test-utils.version>
-    <rhq-modules-parent.version>${project.version}</rhq-modules-parent.version>
+    <rhq.pom.version>4.9.0.JON320GA</rhq.pom.version>
+    <rhq-code-coverage.version>${rhq.pom.version}</rhq-code-coverage.version>
+    <rhq-cli-tests.version>${rhq.pom.version}</rhq-cli-tests.version>
+    <rhq-ant-bundle-common.version>${rhq.pom.version}</rhq-ant-bundle-common.version>
+    <rhq-cassandra-auth.version>${rhq.pom.version}</rhq-cassandra-auth.version>
+    <rhq-cassandra-ccm-arquillian.version>${rhq.pom.version}</rhq-cassandra-ccm-arquillian.version>
+    <rhq-cassandra-ccm-core.version>${rhq.pom.version}</rhq-cassandra-ccm-core.version>
+    <rhq-cassandra-ccm-maven-plugin.version>${rhq.pom.version}</rhq-cassandra-ccm-maven-plugin.version>
+    <rhq-cassandra-ccm-testng.version>${rhq.pom.version}</rhq-cassandra-ccm-testng.version>
+    <rhq-cassandra-ccm.version>${rhq.pom.version}</rhq-cassandra-ccm.version>
+    <rhq-cassandra-installer.version>${rhq.pom.version}</rhq-cassandra-installer.version>
+    <rhq-cassandra-schema.version>${rhq.pom.version}</rhq-cassandra-schema.version>
+    <rhq-cassandra-util.version>${rhq.pom.version}</rhq-cassandra-util.version>
+    <rhq-common-drift.version>${rhq.pom.version}</rhq-common-drift.version>
+    <rhq-filetemplate-bundle-common.version>${rhq.pom.version}</rhq-filetemplate-bundle-common.version>
+    <rhq-jboss-as-dmr-client.version>${rhq.pom.version}-redhat-1</rhq-jboss-as-dmr-client.version>
+    <rhq-jboss-as-common.version>${rhq.pom.version}</rhq-jboss-as-common.version>
+    <rhq-common-parent.version>${rhq.pom.version}</rhq-common-parent.version>
+    <rhq-core-client-api.version>${rhq.pom.version}</rhq-core-client-api.version>
+    <rhq-core-comm-api.version>${rhq.pom.version}</rhq-core-comm-api.version>
+    <rhq-core-dbutils.version>${rhq.pom.version}</rhq-core-dbutils.version>
+    <rhq-core-domain.version>${rhq.pom.version}-redhat-1</rhq-core-domain.version>
+    <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
+    <rhq-core-native-system.version>${rhq.pom.version}-redhat-1</rhq-core-native-system.version>
+    <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>
+    <rhq-core-plugin-container.version>${rhq.pom.version}</rhq-core-plugin-container.version>
+    <rhq-plugin-validator.version>${rhq.pom.version}</rhq-plugin-validator.version>
+    <rhq-core-plugindoc.version>${rhq.pom.version}</rhq-core-plugindoc.version>
+    <rhq-core-parent.version>${rhq.pom.version}</rhq-core-parent.version>
+    <rhq-core-util.version>${rhq.pom.version}</rhq-core-util.version>
+    <rhq-enterprise-agent.version>${rhq.pom.version}</rhq-enterprise-agent.version>
+    <rhq-enterprise-agentupdate.version>${rhq.pom.version}</rhq-enterprise-agentupdate.version>
+    <rhq-script-bindings.version>${rhq.pom.version}</rhq-script-bindings.version>
+    <rhq-enterprise-comm.version>${rhq.pom.version}</rhq-enterprise-comm.version>
+    <rhq-agentupdate-war.version>${rhq.pom.version}</rhq-agentupdate-war.version>
+    <rhq-content_http.version>${rhq.pom.version}</rhq-content_http.version>
+    <rhq-coregui.version>${rhq.pom.version}</rhq-coregui.version>
+    <rhq-downloads-war.version>${rhq.pom.version}</rhq-downloads-war.version>
+    <rhq-enterprise-gui-parent.version>${rhq.pom.version}</rhq-enterprise-gui-parent.version>
+    <rhq-portal.version>${rhq.pom.version}</rhq-portal.version>
+    <rhq-remote-client-war.version>${rhq.pom.version}</rhq-remote-client-war.version>
+    <rhq-remoting-war.version>${rhq.pom.version}</rhq-remoting-war.version>
+    <rhq-rest-examples.version>${rhq.pom.version}</rhq-rest-examples.version>
+    <rhq-rest.version>${rhq.pom.version}</rhq-rest.version>
+    <rhq-enterprise-parent.version>${rhq.pom.version}</rhq-enterprise-parent.version>
+    <rhq-remoting-cli.version>${rhq.pom.version}</rhq-remoting-cli.version>
+    <rhq-remoting-client-api.version>${rhq.pom.version}</rhq-remoting-client-api.version>
+    <remote-client-deps.version>${rhq.pom.version}</remote-client-deps.version>
+    <rhq-remoting-parent.version>${rhq.pom.version}</rhq-remoting-parent.version>
+    <rhq-scripting-api.version>${rhq.pom.version}</rhq-scripting-api.version>
+    <rhq-scripting-javascript.version>${rhq.pom.version}</rhq-scripting-javascript.version>
+    <rhq-scripting-parent.version>${rhq.pom.version}</rhq-scripting-parent.version>
+    <rhq-scripting-python.version>${rhq.pom.version}</rhq-scripting-python.version>
+    <rhq-enterprise-server-appserver.version>${rhq.pom.version}</rhq-enterprise-server-appserver.version>
+    <rhq-server-client-api.version>${rhq.pom.version}</rhq-server-client-api.version>
+    <rhq-data-migration.version>${rhq.pom.version}</rhq-data-migration.version>
+    <rhq-enterprise-server-ear.version>${rhq.pom.version}</rhq-enterprise-server-ear.version>
+    <rhq-installer-util.version>${rhq.pom.version}</rhq-installer-util.version>
+    <rhq-server-itests-2.version>${rhq.pom.version}</rhq-server-itests-2.version>
+    <rhq-enterprise-server.version>${rhq.pom.version}-redhat-1</rhq-enterprise-server.version>
+    <alert-cli.version>${rhq.pom.version}</alert-cli.version>
+    <alert-email.version>${rhq.pom.version}</alert-email.version>
+    <alert-irc.version>${rhq.pom.version}</alert-irc.version>
+    <alert-log4j.version>${rhq.pom.version}</alert-log4j.version>
+    <alert-microblog.version>${rhq.pom.version}</alert-microblog.version>
+    <alert-mobicents.version>${rhq.pom.version}</alert-mobicents.version>
+    <alert-operations.version>${rhq.pom.version}</alert-operations.version>
+    <alert-roles.version>${rhq.pom.version}</alert-roles.version>
+    <alert-snmp.version>${rhq.pom.version}</alert-snmp.version>
+    <alert-subject.version>${rhq.pom.version}</alert-subject.version>
+    <serverplugin-alertdef-rhq.version>${rhq.pom.version}</serverplugin-alertdef-rhq.version>
+    <rhq-serverplugin-ant-bundle.version>${rhq.pom.version}</rhq-serverplugin-ant-bundle.version>
+    <rhq-serverplugin-cobbler.version>${rhq.pom.version}</rhq-serverplugin-cobbler.version>
+    <rhq-serverplugin-disk.version>${rhq.pom.version}</rhq-serverplugin-disk.version>
+    <rhq-serverplugin-drift.version>${rhq.pom.version}</rhq-serverplugin-drift.version>
+    <rhq-serverplugin-filetemplate-bundle.version>${rhq.pom.version}</rhq-serverplugin-filetemplate-bundle.version>
+    <rhq-serverplugin-jboss-software.version>${rhq.pom.version}</rhq-serverplugin-jboss-software.version>
+    <packagetype-cli.version>${rhq.pom.version}</packagetype-cli.version>
+    <rhq-enterprise-server-plugins-parent.version>${rhq.pom.version}</rhq-enterprise-server-plugins-parent.version>
+    <rhq-serverplugin-url.version>${rhq.pom.version}</rhq-serverplugin-url.version>
+    <validate-all-serverplugins.version>${rhq.pom.version}</validate-all-serverplugins.version>
+    <rhq-serverplugin-yum.version>${rhq.pom.version}</rhq-serverplugin-yum.version>
+    <rhq-enterprise-server-parent.version>${rhq.pom.version}</rhq-enterprise-server-parent.version>
+    <safe-invoker.version>${rhq.pom.version}</safe-invoker.version>
+    <rhq-server-control.version>${rhq.pom.version}</rhq-server-control.version>
+    <rhq-server-metrics.version>${rhq.pom.version}</rhq-server-metrics.version>
+    <server-startup.version>${rhq.pom.version}</server-startup.version>
+    <rhq-enterprise-server-xml-schemas.version>${rhq.pom.version}</rhq-enterprise-server-xml-schemas.version>
+    <bundleGen.version>${rhq.pom.version}</bundleGen.version>
+    <jeeGen.version>${rhq.pom.version}</jeeGen.version>
+    <rhq-metrics-simulator.version>${rhq.pom.version}</rhq-metrics-simulator.version>
+    <perftest-support.version>${rhq.pom.version}</perftest-support.version>
+    <rhq-helpers.version>${rhq.pom.version}</rhq-helpers.version>
+    <rest-docs-generator.version>${rhq.pom.version}</rest-docs-generator.version>
+    <rhq-rtfilter-subsystem.version>${rhq.pom.version}</rhq-rtfilter-subsystem.version>
+    <rhq-aliases-plugin.version>${rhq.pom.version}</rhq-aliases-plugin.version>
+    <rhq-ant-bundle-plugin.version>${rhq.pom.version}</rhq-ant-bundle-plugin.version>
+    <rhq-apache-plugin.version>${rhq.pom.version}</rhq-apache-plugin.version>
+    <rhq-augeas-plugin.version>${rhq.pom.version}</rhq-augeas-plugin.version>
+    <rhq-byteman-plugin.version>${rhq.pom.version}</rhq-byteman-plugin.version>
+    <rhq-cassandra-plugin.version>${rhq.pom.version}</rhq-cassandra-plugin.version>
+    <rhq-cobbler-plugin.version>${rhq.pom.version}</rhq-cobbler-plugin.version>
+    <rhq-cron-plugin.version>${rhq.pom.version}</rhq-cron-plugin.version>
+    <rhq-database-plugin.version>${rhq.pom.version}</rhq-database-plugin.version>
+    <rhq-filetemplate-bundle-plugin.version>${rhq.pom.version}</rhq-filetemplate-bundle-plugin.version>
+    <rhq-grub-plugin.version>${rhq.pom.version}</rhq-grub-plugin.version>
+    <hadoop-plugin.version>${rhq.pom.version}</hadoop-plugin.version>
+    <jopr-hibernate-plugin.version>${rhq.pom.version}</jopr-hibernate-plugin.version>
+    <rhq-hosts-plugin.version>${rhq.pom.version}</rhq-hosts-plugin.version>
+    <rhq-hudson-plugin.version>${rhq.pom.version}</rhq-hudson-plugin.version>
+    <rhq-iis-plugin.version>${rhq.pom.version}</rhq-iis-plugin.version>
+    <rhq-irc-plugin.version>${rhq.pom.version}</rhq-irc-plugin.version>
+    <jopr-jboss-as-5-plugin.version>${rhq.pom.version}</jopr-jboss-as-5-plugin.version>
+    <rhq-jboss-as-7-plugin.version>${rhq.pom.version}</rhq-jboss-as-7-plugin.version>
+    <jopr-jboss-as-plugin.version>${rhq.pom.version}</jopr-jboss-as-plugin.version>
+    <jopr-jboss-cache-v3-plugin.version>${rhq.pom.version}</jopr-jboss-cache-v3-plugin.version>
+    <jopr-jboss-cache-plugin.version>${rhq.pom.version}</jopr-jboss-cache-plugin.version>
+    <rhq-jmx-plugin.version>${rhq.pom.version}</rhq-jmx-plugin.version>
+    <rhq-kickstart-plugin.version>${rhq.pom.version}</rhq-kickstart-plugin.version>
+    <modcluster-plugin.version>${rhq.pom.version}</modcluster-plugin.version>
+    <rhq-mysql-plugin.version>${rhq.pom.version}</rhq-mysql-plugin.version>
+    <rhq-netservices-plugin.version>${rhq.pom.version}</rhq-netservices-plugin.version>
+    <rhq-no-op-plugin.version>${rhq.pom.version}</rhq-no-op-plugin.version>
+    <rhq-oracle-plugin.version>${rhq.pom.version}</rhq-oracle-plugin.version>
+    <pattern-plugin.version>${rhq.pom.version}</pattern-plugin.version>
+    <rhq-perftest-plugin.version>${rhq.pom.version}</rhq-perftest-plugin.version>
+    <rhq-platform-plugin.version>${rhq.pom.version}</rhq-platform-plugin.version>
+    <rhq-plugins-parent.version>${rhq.pom.version}</rhq-plugins-parent.version>
+    <rhq-postfix-plugin.version>${rhq.pom.version}</rhq-postfix-plugin.version>
+    <rhq-postgres-plugin.version>${rhq.pom.version}</rhq-postgres-plugin.version>
+    <rhq-agent-plugin.version>${rhq.pom.version}</rhq-agent-plugin.version>
+    <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
+    <rhq-rhqstorage-plugin.version>${rhq.pom.version}</rhq-rhqstorage-plugin.version>
+    <rhq-samba-plugin.version>${rhq.pom.version}</rhq-samba-plugin.version>
+    <rhq-script-plugin.version>${rhq.pom.version}</rhq-script-plugin.version>
+    <rhq-script2-plugin.version>${rhq.pom.version}</rhq-script2-plugin.version>
+    <rhq-snmptrapd-plugin.version>${rhq.pom.version}</rhq-snmptrapd-plugin.version>
+    <rhq-sonarqube-plugin.version>${rhq.pom.version}</rhq-sonarqube-plugin.version>
+    <rhq-sshd-plugin.version>${rhq.pom.version}</rhq-sshd-plugin.version>
+    <rhq-sudoers-plugin.version>${rhq.pom.version}</rhq-sudoers-plugin.version>
+    <jopr-tomcat-plugin.version>${rhq.pom.version}</jopr-tomcat-plugin.version>
+    <rhq-twitter-plugin.version>${rhq.pom.version}</rhq-twitter-plugin.version>
+    <validate-all-plugins.version>${rhq.pom.version}</validate-all-plugins.version>
+    <rhq-virt-plugin.version>${rhq.pom.version}</rhq-virt-plugin.version>
+    <test-utils.version>${rhq.pom.version}</test-utils.version>
+    <rhq-modules-parent.version>${rhq.pom.version}</rhq-modules-parent.version>
 
   </properties>
 
@@ -2447,7 +2448,7 @@
                   <reportSet>
                     <id>agent-plugin</id>
                     <configuration>
-                      <doctitle>RHQ ${project.version} Agent Plugin API</doctitle>
+                      <doctitle>RHQ ${rhq.pom.version} Agent Plugin API</doctitle>
                       <destDir>agentPlugin-apidocs</destDir>
                       <subpackages>org.rhq.core.domain:org.rhq.core.util:org.rhq.core.system:org.rhq.core.pluginapi</subpackages>
                     </configuration>
@@ -2459,8 +2460,8 @@
                   <reportSet>
                     <id>remote</id>
                     <configuration>
-                      <doctitle>RHQ ${project.version} Remote API</doctitle>
-                      <windowtitle>RHQ ${project.version} Remote API</windowtitle>
+                      <doctitle>RHQ ${rhq.pom.version} Remote API</doctitle>
+                      <windowtitle>RHQ ${rhq.pom.version} Remote API</windowtitle>
                       <destDir>remote-apidocs</destDir>
                       <subpackages>org.rhq.core.domain:org.rhq.enterprise.server:org.rhq.enterprise.client</subpackages>
                       <links>

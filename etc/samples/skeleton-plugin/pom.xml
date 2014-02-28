@@ -38,7 +38,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-native-system</artifactId>
-         <version>${rhq.version}</version>
+         <version>${rhq-core-native-system.version}</version>
          <scope>provided</scope> <!-- provided by the agent/plugin-container -->
       </dependency>
 

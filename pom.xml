@@ -285,6 +285,8 @@
     <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
 
     <!-- Add RHQ version properties to support update versioning -->
+    <!-- spinder: 2-28-14. The following rhq.pom.version value needs to be explicitly set or causes numerous 
+         recursive maven version issues. See http://stackoverflow.com/questions/3684664/maven-property-substitution-not-done-for-project-version-tag-of-pom for more. http://jira.codehaus.org/browse/MNG-624  -->
     <rhq.pom.version>4.9.0.JON320GA</rhq.pom.version>
     <rhq-code-coverage.version>${rhq.pom.version}</rhq-code-coverage.version>
     <rhq-cli-tests.version>${rhq.pom.version}</rhq-cli-tests.version>

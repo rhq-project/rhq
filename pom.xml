@@ -1240,9 +1240,7 @@
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>exec-maven-plugin</artifactId>
-           <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
-                      upgrade to that version. -->
-           <version>1.2.1</version>
+           <version>1.2.1.jbossorg-3</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>

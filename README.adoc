@@ -28,5 +28,6 @@ If you want to contribute to the source repository, please fork it into your own
 send pull-requests afterwards. Each Pull-Request should be "backed" by an entry in Bugzilla. Please
 add the Bugzilla issue number to the Pull-Request.
 
+
 TIP: Create a branch per pull-request, so that rebasing the mainline from `origin/master is easier afterwards,
 as it will not contain your changes of the pull-request.

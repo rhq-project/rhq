@@ -241,7 +241,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         StorageNode node = from.getStorageNode();
         if (node != null) {
             record.setAttribute(FIELD_ID.propertyName(), node.getId());
-            record.setAttribute(FIELD_ADDRESS.propertyName(), node.getAddress());
+            record.setAttribute(FIELD_ADDRESS.propertyName(), from.getHostname());
             record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
             record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
             record.setAttribute(FIELD_STATUS.propertyName(), node.getStatus());

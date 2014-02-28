@@ -465,6 +465,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 log.warn(e.getMessage());
                 return Futures.successfulAsList(Lists.newArrayList(Futures.immediateFuture(result)));
             }
+            try {
+                final String host = InetAddress.getByName(node.getAddress()).getCanonicalHostName();
+                if (!node.getAddress().equals(host)) {
+                    result.setHostname(host+" ("+node.getAddress()+")");
+                }
+            } catch (UnknownHostException e) {
+            }
             MetricsServer metricsServer = storageClientManager.getMetricsServer();
             Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 

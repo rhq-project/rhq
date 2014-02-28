@@ -61,7 +61,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-server.version}</version>
             <type>ejb-client</type>
             <exclusions>
                 <exclusion>

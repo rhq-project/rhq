@@ -1,7 +1,7 @@
 :title: RHQ Project
 :homepage: http://jboss.org/rhq/
 
-= RHQ Project
+== RHQ Project
 
 RHQ Project (short 'RHQ') is a Framework and tool for systems management and monitoring.
 As such it allows to gather metrics from so called _managed resources_,

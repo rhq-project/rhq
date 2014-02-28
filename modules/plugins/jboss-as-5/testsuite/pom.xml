@@ -68,7 +68,7 @@
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-native-system</artifactId>
-            <version>${rhq.version}</version>
+            <version>${rhq-core-native-system.version}</version>
         </dependency>
 
         <dependency>

@@ -50,7 +50,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-native-system</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-native-system.version}</version>
          <scope>test</scope>
       </dependency>
 

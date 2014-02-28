@@ -20,7 +20,7 @@ Ant Script that builds a test jar to run SIGAR bug replication code.
       <include name="org/testng/testng/5.1/testng-5.1-jdk15.jar" />
       <include name="commons-logging/commons-logging/1.1/commons-logging-1.1.jar" />
       <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
-      <include name="org/rhq/rhq-core-native-system/${project.version}/rhq-core-native-system-${project.version}.jar" />
+      <include name="org/rhq/rhq-core-native-system/${rhq-core-native-system.version}/rhq-core-native-system-${rhq-core-native-system.version}.jar" />
    </fileset>
       
    <fileset dir="${settings.localRepository}" id="native.fileset">

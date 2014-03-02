@@ -56,7 +56,7 @@ Ant Script that provides ways to package the Agent.
          <include name="jboss/jboss-serialization/${jboss-serialization.version}/jboss-serialization-${jboss-serialization.version}.jar" />
          <include name="org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" />
          <include name="org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.jar" />
-         <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-util/${rhq-core-util.version}/rhq-core-util-${rhq-core-util.version}.jar" />
          <include name="org/rhq/rhq-core-comm-api/${project.version}/rhq-core-comm-api-${project.version}.jar" />
          <include name="org/rhq/rhq-core-native-system/${rhq-core-native-system.version}/rhq-core-native-system-${rhq-core-native-system.version}.jar" />
          <include name="org/rhq/rhq-core-domain/${rhq-core-domain.version}/rhq-core-domain-${rhq-core-domain.version}.jar" />

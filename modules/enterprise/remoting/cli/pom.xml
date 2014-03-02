@@ -135,6 +135,7 @@
                            <property name="rhq.bundle-additional-script-languages" value="${rhq.bundle-additional-script-languages}"/>
                            <property name="rhq-core-domain.version" value="${rhq-core-domain.version}" />
                            <property name="rhq-enterprise-server.version" value="${rhq-enterprise-server.version}" />
+                           <property name="rhq-core-util.version" value="${rhq-core-util.version}" />
                         </ant>
                      </target>
                   </configuration>

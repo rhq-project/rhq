@@ -57,7 +57,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-core-util</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-util.version}</version>
          <exclusions>
             <exclusion>
               <groupId>jdom</groupId>

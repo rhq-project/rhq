@@ -24,7 +24,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-util</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-util.version}</version>
       </dependency>
 
       <dependency>

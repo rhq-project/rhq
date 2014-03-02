@@ -34,7 +34,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-util</artifactId>
-         <version>${project.parent.version}</version>
+         <version>${rhq-core-util.version}</version>
       </dependency>
 
       <!-- provided by AS7 -->

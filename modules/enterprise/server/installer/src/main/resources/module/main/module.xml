@@ -8,7 +8,7 @@
         <resource-root path="${project.build.finalName}.jar"/>
         <resource-root path="rhq-core-domain-${rhq-core-domain.version}.jar"/>
         <resource-root path="rhq-core-dbutils-${project.version}.jar"/>
-        <resource-root path="rhq-core-util-${project.version}.jar"/>
+        <resource-root path="rhq-core-util-${rhq-core-util.version}.jar"/>
         <resource-root path="rhq-enterprise-comm-${project.version}.jar"/>
         <resource-root path="rhq-jboss-as-dmr-client-${rhq-jboss-as-dmr-client.version}.jar"/>
         <resource-root path="ant-${ant.version}.jar"/>

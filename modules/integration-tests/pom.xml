@@ -26,7 +26,7 @@
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-plugin-api.version}</version>
             <scope>provided</scope>
         </dependency>
 

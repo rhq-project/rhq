@@ -310,7 +310,7 @@
     <rhq-core-domain.version>${rhq.pom.version}-redhat-1</rhq-core-domain.version>
     <rhq-core-gui.version>${rhq.pom.version}</rhq-core-gui.version>
     <rhq-core-native-system.version>${rhq.pom.version}-redhat-1</rhq-core-native-system.version>
-    <rhq-core-plugin-api.version>${rhq.pom.version}</rhq-core-plugin-api.version>
+    <rhq-core-plugin-api.version>${rhq.pom.version}-redhat-1</rhq-core-plugin-api.version>
     <rhq-core-plugin-container.version>${rhq.pom.version}</rhq-core-plugin-container.version>
     <rhq-plugin-validator.version>${rhq.pom.version}</rhq-plugin-validator.version>
     <rhq-core-plugindoc.version>${rhq.pom.version}</rhq-core-plugindoc.version>

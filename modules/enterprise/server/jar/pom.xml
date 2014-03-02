@@ -92,7 +92,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${project.parent.version}</version>
+      <version>${rhq-core-plugin-api.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.hyperic</groupId>

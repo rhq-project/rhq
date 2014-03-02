@@ -26,7 +26,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-plugin-api</artifactId>
-         <version>${rhq.version}</version>
+         <version>${rhq-core-plugin-api.version}</version>
          <scope>provided</scope> <!-- provided by the agent/plugin-container -->
       </dependency>
 

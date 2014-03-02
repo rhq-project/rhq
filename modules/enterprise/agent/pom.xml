@@ -45,7 +45,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-plugin-api.version}</version>
     </dependency>
 
     <dependency>

@@ -56,7 +56,7 @@
         <dependency>
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${rhq.version}</version>
+            <version>${rhq-core-plugin-api.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.sun.xml.bind</groupId>

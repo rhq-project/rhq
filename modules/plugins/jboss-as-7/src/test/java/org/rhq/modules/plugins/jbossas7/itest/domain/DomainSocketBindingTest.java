@@ -19,9 +19,6 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +32,11 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
+import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**
@@ -56,15 +52,18 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
     private static final String PORT_EXPR = "port:expr";
     private static final String MULTICAST_PORT_EXPR = "multicast-port:expr";
 
-    @Test(priority = 1010,groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void runDiscovery() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+    private Resource platform;
+    private Resource serverResource;
+    private Resource bindings;
 
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+    @Test(priority = 10)
+    @RunDiscovery
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
+        bindings = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
     }
-
 
     @Test(priority = 1011)
     public void loadBindings() throws Exception {
@@ -197,14 +196,6 @@ public class DomainSocketBindingTest extends AbstractJBossAS7PluginTest {
 
     private Resource getResource() {
 
-        InventoryManager im = pluginContainer.getInventoryManager();
-        Resource platform = im.getPlatform();
-        assert platform != null : "Did not find a platform";
-        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-            DomainServerComponentTest.RESOURCE_KEY);
-        assert server != null : "Did not find the domain server";
-        Resource bindings = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
-        assert bindings != null : "Did not find " + RESOURCE_KEY;
         return bindings;
     }
 

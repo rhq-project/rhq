@@ -24,6 +24,7 @@ import java.util.List;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
@@ -54,6 +55,12 @@ public class AfterSuiteTest extends AbstractServerComponentTest {
     private boolean killStandalone;
 
     @Override
+    protected Resource getServerResource() {
+        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+        return waitForResourceByTypeAndKey(platform, platform, getServerResourceType(), getServerResourceKey());
+    }
+
+    @Override
     protected ResourceType getServerResourceType() {
         return killStandalone ? STANDALONE_RESOURCE_TYPE : DOMAIN_RESOURCE_TYPE;
     }
@@ -81,7 +88,6 @@ public class AfterSuiteTest extends AbstractServerComponentTest {
         // TODO Auto-generated method stub
         return null;
     }
-
 
     @Override
     protected String getExpectedStartScriptFileName() {

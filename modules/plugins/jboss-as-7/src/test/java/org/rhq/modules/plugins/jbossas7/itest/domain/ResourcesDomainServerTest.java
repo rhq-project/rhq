@@ -19,9 +19,6 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,10 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -45,19 +39,15 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
     private Log log = LogFactory.getLog(this.getClass());
 
-    @Test(priority = 1030, groups = "discovery")
+    private Resource platform;
+    private Resource server;
+
+    @Test(priority = 10, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void discoverPlatform() throws Exception {
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-
-        Resource platform = inventoryManager.getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-        ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
-        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
             DomainServerComponentTest.RESOURCE_KEY);
-        inventoryManager.activateResource(server, platformContainer, false);
     }
 
 
@@ -110,10 +100,6 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("Cluster Connection (Profile)");
         ignoredResources.add("HornetQ (Profile)");
 
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-            DomainServerComponentTest.RESOURCE_KEY);
-
         int errorCount = loadUpdateConfigChildResources(server, ignoredResources);
         Assert.assertEquals(errorCount, 0);
     }
@@ -138,10 +124,6 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredOperations.add("shutdown");
         ignoredOperations.add("stop-servers");
         ignoredOperations.add("restart-servers");
-
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-            DomainServerComponentTest.RESOURCE_KEY);
 
         executeNoArgOperations(server, ignoredSubsystems, ignoredOperations);
     }

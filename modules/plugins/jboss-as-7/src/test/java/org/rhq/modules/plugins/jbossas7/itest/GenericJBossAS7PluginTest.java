@@ -39,11 +39,12 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
 
     // ****************************** LIFECYCLE ****************************** //
-    // TODO: Re-enable this once the issue with Resources not getting auto-imported has been fixed.
-    @Test(priority = 1, enabled = false)
+    @Test(priority = 1)
     @RunDiscovery
     public void testAllResourceComponentsStarted() throws Exception {
-        assertAllResourceComponentsStarted();
+        validateDiscovery();
+        // TODO (jshaughn) see if I can get this working...
+        //assertAllResourceComponentsStarted();
     }
 
     // ******************************* METRICS ******************************* //

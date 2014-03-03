@@ -18,9 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,13 +33,10 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.configuration.ConfigurationManager;
-import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -51,25 +45,20 @@ public class TemplatedResourcesTest extends AbstractJBossAS7PluginTest {
 
     private Log log = LogFactory.getLog(this.getClass());
 
+    private Resource platform;
+    private Resource server;
+
     @Test(priority = 10, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void discoverPlatform() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
     }
 
     @Test(priority = 11)
     public void loadUpdateTemplatedResourceConfiguration() throws Exception {
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
         ConfigurationManager configurationManager = this.pluginContainer.getConfigurationManager();
-
-        Resource platform = inventoryManager.getPlatform();
-        ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
-
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
-        inventoryManager.activateResource(server, platformContainer, false);
 
         for (ResourceData resourceData : testResourceData) {
             ResourceType resourceType = new ResourceType(resourceData.resourceTypeName, PLUGIN_NAME,

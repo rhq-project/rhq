@@ -19,9 +19,6 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,10 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -45,19 +39,15 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
     private Log log = LogFactory.getLog(this.getClass());
 
+    private Resource platform;
+    private Resource server;
+
     @Test(priority = 10, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void discoverPlatform() throws Exception {
-        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-
-        Resource platform = inventoryManager.getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-        ResourceContainer platformContainer = inventoryManager.getResourceContainer(platform);
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
-        inventoryManager.activateResource(server, platformContainer, false);
     }
 
     @Test(priority = 11)
@@ -76,10 +66,6 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         ignoredOperations.add("enable");
         //ignored because the Osgi subsystem not configured out of box
         ignoredOperations.add("subsystem:activate");
-
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
 
         executeNoArgOperations(server, ignoredSubsystems, ignoredOperations);
     }
@@ -117,9 +103,6 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         ignoredResources.add("HornetQ");
         ignoredResources.add("HornetQ (Profile)");
 
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
 
         int errorCount = loadUpdateConfigChildResources(server, ignoredResources);
         Assert.assertEquals(errorCount, 0);

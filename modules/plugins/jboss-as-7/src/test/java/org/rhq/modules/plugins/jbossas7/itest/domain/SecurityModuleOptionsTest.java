@@ -150,19 +150,12 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         }
     }
 
-    /* This first discovery is only so that we can leverage existing code to install the management user needed
-     * in next test.
-     */
-    @Test(priority = 1040, groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void firstDiscovery() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+    // only need servers to create the management users necessary to load the module options
+    @Test(priority = -10000)
+    @RunDiscovery(discoverServers = true, discoverServices = false)
+    public void initialDiscoveryTest() throws Exception {
 
-        //now install mgmt users.
-        System.out.println("------ * Duplicating discovery for SecurityModule testing....");
-        installManagementUsers();
+        validateDiscovery(true);
     }
 
     /** This method mass loads all the supported Module Option Types(Excluding authentication=jaspi, cannot co-exist with
@@ -176,6 +169,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
      */
     @Test(priority = 1041)
     public void loadStandardModuleOptionTypes() throws Exception {
+
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -252,12 +246,14 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     @Test(priority = 1042, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void secondDiscovery() throws Exception {
+        validateDiscovery();
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         assertNotNull(platform);
         assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
-        // ensure the entire EAP inventory is discovered before continuing, we need deep resources in inventory
-        // waitForAsyncDiscoveryToStabilize(platform);
+        waitForAsyncDiscoveryToStabilize(platform);
+        // We don't call waitForAsyncDiscoveryToStabilize(platform) here because we use
+        // waitForResourceByTypeAndKey as needed in the relevant tests.
     }
 
     /** This test method exercises a number of things:
@@ -501,8 +497,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
                 System.out.println("*** Found        Platform [" + platform.getResourceKey() + "]");
             //host controller
             Resource hostController = waitForResourceByTypeAndKey(platform, platform,
-                DomainServerComponentTest.RESOURCE_TYPE,
-                DomainServerComponentTest.RESOURCE_KEY);
+                DomainServerComponentTest.RESOURCE_TYPE, DomainServerComponentTest.RESOURCE_KEY);
             if (hostController != null)
                 System.out.println("*** Found Host Controller [" + hostController.getResourceKey() + "]");
 
@@ -631,8 +626,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         ResourceType moduleOptionsType = new ResourceType(moduleOptionsDescriptor, PLUGIN_NAME,
             ResourceCategory.SERVICE, null);
         moduleOptionsResource = waitForResourceByTypeAndKey(platform, modulesInstance, moduleOptionsType,
-            moduleOptionTypeKey
-            + ",module-options");
+            moduleOptionTypeKey + ",module-options");
 
         return moduleOptionsResource;
     }

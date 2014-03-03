@@ -58,11 +58,7 @@ public class WebConnectorComponentTest extends AbstractJBossAS7PluginTest {
     @Test(groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void testDiscovery() throws Exception {
-        Resource platform = pluginContainer.getInventoryManager().getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-        waitForAsyncDiscoveryToStabilize(platform);
+        validateDiscovery();
 
         Set<Resource> webConnectorResources = getWebConnectorResources();
         assertTrue(webConnectorResources != null && !webConnectorResources.isEmpty(), "Found no resources of type ["

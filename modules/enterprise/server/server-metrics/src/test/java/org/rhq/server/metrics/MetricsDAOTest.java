@@ -326,12 +326,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         WaitForWrite waitForWrite = new WaitForWrite(2);
 
-        StorageResultSetFuture resultSetFuture1 = dao.updateMetricsCache(MetricsTable.TWENTY_FOUR_HOUR,
+        StorageResultSetFuture resultSetFuture1 = dao.updateMetricsCache(MetricsTable.SIX_HOUR,
             hour0().getMillis(), startScheduleId, scheduleId1, hour0().getMillis(), ImmutableMap.of(
             AggregateType.MIN.ordinal(), 3.14,
             AggregateType.AVG.ordinal(), 3.14,
             AggregateType.MAX.ordinal(), 3.14));
-        StorageResultSetFuture resultSetFuture2 = dao.updateMetricsCache(MetricsTable.TWENTY_FOUR_HOUR,
+        StorageResultSetFuture resultSetFuture2 = dao.updateMetricsCache(MetricsTable.SIX_HOUR,
             hour0().getMillis(), startScheduleId, scheduleId2, hour0().getMillis(), ImmutableMap.of(
             AggregateType.MIN.ordinal(), 3.14,
             AggregateType.AVG.ordinal(), 3.14,
@@ -347,7 +347,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId2, 3.14, 3.14, 3.14, hour0().getMillis())
         );
 
-        StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
+        StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(MetricsTable.SIX_HOUR,
             hour0().getMillis(), startScheduleId);
         ResultSet resultSet = cacheFuture.get();
         List<Row> rows = resultSet.all();
@@ -360,7 +360,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test(enabled = ENABLED)
-    public void insertAndGetCacheEntries() throws Exception {
+    public void insertAndGetRawCacheEntries() throws Exception {
         int startScheduleId = 100;
         int scheduleId1 = 101;
         int scheduleId2 = 102;
@@ -369,9 +369,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         long timestamp2 = hour0().plusHours(7).plusMinutes(5).getMillis();
 
         WaitForWrite waitForWrite = new WaitForWrite(2);
-        StorageResultSetFuture insertFuture1 = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice, startScheduleId,
+        StorageResultSetFuture insertFuture1 = dao.updateMetricsCache(MetricsTable.RAW, timeSlice, startScheduleId,
             scheduleId1, timestamp1, ImmutableMap.of(AggregateType.VALUE.ordinal(), 2.14));
-        StorageResultSetFuture insertFuture2 = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice, startScheduleId,
+        StorageResultSetFuture insertFuture2 = dao.updateMetricsCache(MetricsTable.RAW, timeSlice, startScheduleId,
             scheduleId2, timestamp2, ImmutableMap.of(AggregateType.VALUE.ordinal(), 1.01));
         Futures.addCallback(insertFuture1, waitForWrite);
         Futures.addCallback(insertFuture2, waitForWrite);
@@ -379,7 +379,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         List<RawNumericMetric> expected = asList(new RawNumericMetric(scheduleId1, timestamp1, 2.14),
             new RawNumericMetric(scheduleId2, timestamp2, 1.01));
-        StorageResultSetFuture queryFuture = dao.findCacheEntriesAsync(MetricsTable.ONE_HOUR, timeSlice,
+        StorageResultSetFuture queryFuture = dao.findCacheEntriesAsync(MetricsTable.RAW, timeSlice,
             startScheduleId);
         ResultSet resultSet = queryFuture.get();
         List<Row> rows = resultSet.all();
@@ -399,14 +399,14 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int scheduleId2 = 102;
         DateTime timeSlice = hour0().plusHours(2);
 
-        dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId, scheduleId1,
+        dao.updateMetricsCache(MetricsTable.RAW, timeSlice.getMillis(), startScheduleId, scheduleId1,
             timeSlice.plusMinutes(2).getMillis(), ImmutableMap.of(AggregateType.VALUE.ordinal(), 3.14)).get();
-        dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId, scheduleId2,
+        dao.updateMetricsCache(MetricsTable.RAW, timeSlice.getMillis(), startScheduleId, scheduleId2,
             timeSlice.plusMinutes(4).getMillis(), ImmutableMap.of(AggregateType.VALUE.ordinal(), 3.14)).get();
 
-        dao.deleteCacheEntries(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId).get();
+        dao.deleteCacheEntries(MetricsTable.RAW, timeSlice.getMillis(), startScheduleId).get();
 
-        ResultSet resultSet = dao.findCacheEntriesAsync(MetricsTable.ONE_HOUR,
+        ResultSet resultSet = dao.findCacheEntriesAsync(MetricsTable.RAW,
             timeSlice.getMillis(), startScheduleId).get();
 
         assertTrue(resultSet.isExhausted(), "Expected an empty result set");

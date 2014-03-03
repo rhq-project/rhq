@@ -149,12 +149,12 @@ public class MetricsServer {
         DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());  // e.g., 7 days ago
         int startScheduleId = calculateStartScheduleId(maxScheduleId);
 
-        ResultSet resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
+        ResultSet resultSet = dao.findCacheTimeSlice(MetricsTable.RAW, previousHour.getMillis(), startScheduleId);
         Row row = resultSet.one();
         while (row == null && previousHour.compareTo(oldestRawTime) > 0) {
             while (row == null && startScheduleId >= minScheduleId) {
                 startScheduleId = startScheduleId - cacheBatchSize;
-                resultSet = dao.findCacheTimeSlice(MetricsTable.ONE_HOUR, previousHour.getMillis(), startScheduleId);
+                resultSet = dao.findCacheTimeSlice(MetricsTable.RAW, previousHour.getMillis(), startScheduleId);
                 row = resultSet.one();
             }
             previousHour = previousHour.minus(configuration.getRawTimeSliceDuration());
@@ -415,7 +415,7 @@ public class MetricsServer {
                 Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
                     @Override
                     public void onSuccess(ResultSet rows) {
-                        updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
+                        updateMetricsCache(data, dataSet.size(), remainingInserts, startTime, callback);
                     }
 
                     @Override
@@ -437,13 +437,13 @@ public class MetricsServer {
         }
     }
 
-    void updateMetricsIndex(final MeasurementDataNumeric rawData, final int total,
+    void updateMetricsCache(final MeasurementDataNumeric rawData, final int total,
         final AtomicInteger remainingInserts, final long startTime, final RawDataInsertedCallback callback) {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
         int startScheduleId = calculateStartScheduleId(rawData.getScheduleId());
-        StorageResultSetFuture resultSetFuture = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice,
+        StorageResultSetFuture resultSetFuture = dao.updateMetricsCache(MetricsTable.RAW, timeSlice,
             startScheduleId, rawData.getScheduleId(), rawData.getTimestamp(),
             ImmutableMap.of(AggregateType.VALUE.ordinal(), rawData.getValue()));
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {

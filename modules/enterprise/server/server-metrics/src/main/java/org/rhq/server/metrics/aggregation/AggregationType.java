@@ -10,11 +10,11 @@ import org.rhq.server.metrics.domain.MetricsTable;
  */
 public enum AggregationType {
 
-    RAW("raw data", MetricsTable.ONE_HOUR, new RawCacheMapper()),
+    RAW("raw data", MetricsTable.RAW, new RawCacheMapper()),
 
-    ONE_HOUR("one hour data", MetricsTable.SIX_HOUR, new AggregateCacheMapper()),
+    ONE_HOUR("one hour data", MetricsTable.ONE_HOUR, new AggregateCacheMapper()),
 
-    SIX_HOUR("six hour data", MetricsTable.TWENTY_FOUR_HOUR, new AggregateCacheMapper());
+    SIX_HOUR("six hour data", MetricsTable.SIX_HOUR, new AggregateCacheMapper());
 
     private String type;
 

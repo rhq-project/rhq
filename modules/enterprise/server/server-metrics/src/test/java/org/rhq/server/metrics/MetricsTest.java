@@ -127,7 +127,7 @@ public class MetricsTest extends CassandraIntegrationTest {
         for (MeasurementDataNumeric raw : data) {
             future = dao.insertRawData(raw);
             Futures.addCallback(future, waitForRawInserts);
-            future = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(),
+            future = dao.updateMetricsCache(MetricsTable.RAW, timeSlice.getMillis(),
                 startScheduleId(raw.getScheduleId()), raw.getScheduleId(), raw.getTimestamp(), ImmutableMap.of(
                 AggregateType.VALUE.ordinal(), raw.getValue()));
             Futures.addCallback(future, waitForRawInserts);
@@ -148,7 +148,7 @@ public class MetricsTest extends CassandraIntegrationTest {
             future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
                 metric.getAvg());
             Futures.addCallback(future, waitForWrites);
-            future = dao.updateMetricsCache(MetricsTable.SIX_HOUR, timeSlice.getMillis(), startScheduleId(
+            future = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId(
                 metric.getScheduleId()), metric.getScheduleId(), metric.getTimestamp(), ImmutableMap.of(
                 AggregateType.MIN.ordinal(), metric.getMin(),
                 AggregateType.MAX.ordinal(), metric.getMax(),
@@ -172,7 +172,7 @@ public class MetricsTest extends CassandraIntegrationTest {
             future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
                 metric.getAvg());
             Futures.addCallback(future, waitForWrites);
-            future = dao.updateMetricsCache(MetricsTable.TWENTY_FOUR_HOUR, timeSlice.getMillis(), startScheduleId(
+            future = dao.updateMetricsCache(MetricsTable.SIX_HOUR, timeSlice.getMillis(), startScheduleId(
                 metric.getScheduleId()), metric.getScheduleId(), metric.getTimestamp(), ImmutableMap.of(
                 AggregateType.MIN.ordinal(), metric.getMin(),
                 AggregateType.MAX.ordinal(), metric.getMax(),
@@ -187,19 +187,19 @@ public class MetricsTest extends CassandraIntegrationTest {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
     }
 
-    protected void assert1HourCacheEquals(DateTime timeSlice, int startScheduleId,
+    protected void assertRawHourCacheEquals(DateTime timeSlice, int startScheduleId,
         List<RawNumericMetric> expected) {
-        assertCacheEquals(MetricsTable.ONE_HOUR, timeSlice, startScheduleId, expected, rawCacheMapper);
+        assertCacheEquals(MetricsTable.RAW, timeSlice, startScheduleId, expected, rawCacheMapper);
+    }
+
+    protected void assert1HourCacheEquals(DateTime timeSlice, int startScheduleId,
+        List<AggregateNumericMetric> expected) {
+        assertCacheEquals(MetricsTable.ONE_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
     }
 
     protected void assert6HourCacheEquals(DateTime timeSlice, int startScheduleId,
         List<AggregateNumericMetric> expected) {
         assertCacheEquals(MetricsTable.SIX_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
-    }
-
-    protected void assert24HourCacheEquals(DateTime timeSlice, int startScheduleId,
-        List<AggregateNumericMetric> expected) {
-        assertCacheEquals(MetricsTable.TWENTY_FOUR_HOUR, timeSlice, startScheduleId, expected, aggregateCacheMapper);
     }
 
     private <T extends NumericMetric> void assertCacheEquals(MetricsTable table, DateTime timeSlice,
@@ -210,16 +210,16 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "The " + table + " cache is wrong");
     }
 
+    protected void assertRawHourCacheEmpty(DateTime timeSlice, int startScheduleId) {
+        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.RAW);
+    }
+
     protected void assert1HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
         assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.ONE_HOUR);
     }
 
     protected void assert6HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
         assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.SIX_HOUR);
-    }
-
-    protected void assert24HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
-        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.TWENTY_FOUR_HOUR);
     }
 
     protected void assertAggregateCacheEmpty(DateTime timeSlice, int startScheduleId, MetricsTable table) {

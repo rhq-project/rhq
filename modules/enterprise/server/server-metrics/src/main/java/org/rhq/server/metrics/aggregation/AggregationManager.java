@@ -4,8 +4,8 @@ import static java.util.Arrays.asList;
 import static org.rhq.server.metrics.domain.AggregateType.AVG;
 import static org.rhq.server.metrics.domain.AggregateType.MAX;
 import static org.rhq.server.metrics.domain.AggregateType.MIN;
+import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
 import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.TWENTY_FOUR_HOUR;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -157,7 +157,7 @@ public class AggregationManager {
                     dao.insertOneHourDataAsync(scheduleId, startTime.getMillis(), AVG, mean.getArithmeticMean()),
                     dao.insertOneHourDataAsync(scheduleId, startTime.getMillis(), MAX, max),
                     dao.insertOneHourDataAsync(scheduleId, startTime.getMillis(), MIN, min),
-                    dao.updateMetricsCache(SIX_HOUR, get6HourTimeSlice().getMillis(), startScheduleId,
+                    dao.updateMetricsCache(ONE_HOUR, get6HourTimeSlice().getMillis(), startScheduleId,
                         scheduleId, startTime.getMillis(), map(min, max,  mean.getArithmeticMean()))
                 );
             }
@@ -187,7 +187,7 @@ public class AggregationManager {
                         mean.getArithmeticMean()),
                     dao.insertSixHourDataAsync(scheduleId, get6HourTimeSlice().getMillis(), MAX, max),
                     dao.insertSixHourDataAsync(scheduleId, get6HourTimeSlice().getMillis(), MIN, min),
-                    dao.updateMetricsCache(TWENTY_FOUR_HOUR, get24HourTimeSlice().getMillis(),
+                    dao.updateMetricsCache(SIX_HOUR, get24HourTimeSlice().getMillis(),
                         startScheduleId, scheduleId, get6HourTimeSlice().getMillis(), map(min, max,
                         mean.getArithmeticMean()))
                 );

@@ -94,12 +94,12 @@ public class AggregationTests extends MetricsTest {
         assert1HourDataEquals(schedule1.id, schedule1.oneHourData.get(hour(16)));
         assert1HourDataEquals(schedule2.id, schedule2.oneHourData.get(hour(16)));
         assert1HourDataEquals(schedule3.id, schedule3.oneHourData.get(hour(16)));
-        assert6HourCacheEquals(hour(12), startScheduleId(schedule1.id), expected);
+        assert1HourCacheEquals(hour(12), startScheduleId(schedule1.id), expected);
         assert6HourDataEmpty(schedule1.id);
         assert6HourDataEmpty(schedule2.id);
         assert6HourDataEmpty(schedule3.id);
-        assert24HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
-        assert1HourCacheEmpty(hour(16), startScheduleId(schedule1.id));
+        assert6HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
+        assertRawHourCacheEmpty(hour(16), startScheduleId(schedule1.id));
     }
 
     @Test(dependsOnMethods = "runAggregationForHour16")
@@ -146,9 +146,9 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEmpty(schedule1.id);
         assert24HourDataEmpty(schedule2.id);
         assert24HourDataEmpty(schedule3.id);
-        assert1HourCacheEmpty(hour(17), startScheduleId(schedule1.id));
-        assert6HourCacheEmpty(hour(12), startScheduleId(schedule1.id));
-        assert24HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(schedule1.sixHourData.get(hour(12)),
+        assertRawHourCacheEmpty(hour(17), startScheduleId(schedule1.id));
+        assert1HourCacheEmpty(hour(12), startScheduleId(schedule1.id));
+        assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(schedule1.sixHourData.get(hour(12)),
             schedule2.sixHourData.get(hour(12)), schedule3.sixHourData.get(hour(12))
         ));
     }
@@ -189,13 +189,13 @@ public class AggregationTests extends MetricsTest {
         assert6HourDataEquals(schedule1.id, schedule1.sixHourData.get(hour(12)));
         assert6HourDataEquals(schedule2.id, schedule2.sixHourData.get(hour(12)));
         assert6HourDataEquals(schedule3.id, schedule3.sixHourData.get(hour(12)));
-        assert6HourCacheEquals(hour(18), startScheduleId(schedule1.id), expected);
+        assert1HourCacheEquals(hour(18), startScheduleId(schedule1.id), expected);
         assert24HourDataEmpty(schedule1.id);
         assert24HourDataEmpty(schedule2.id);
         assert24HourDataEmpty(schedule3.id);
-        assert24HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(schedule1.sixHourData.get(hour(12)),
+        assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(schedule1.sixHourData.get(hour(12)),
             schedule2.sixHourData.get(hour(12)), schedule3.sixHourData.get(hour(12))));
-        assert1HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
+        assertRawHourCacheEmpty(hour(18), startScheduleId(schedule1.id));
     }
 
     @Test(dependsOnMethods = "runAggregationForHour18")
@@ -262,9 +262,9 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEquals(schedule1.id, schedule1.twentyFourHourData.get(hour(0)));
         assert24HourDataEquals(schedule2.id, schedule2.twentyFourHourData.get(hour(0)));
         assert24HourDataEquals(schedule3.id, schedule3.twentyFourHourData.get(hour(0)));
-        assert1HourCacheEmpty(hour(23), startScheduleId(schedule1.id));
-        assert6HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
-        assert24HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
+        assertRawHourCacheEmpty(hour(23), startScheduleId(schedule1.id));
+        assert1HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
+        assert6HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
     }
 
     @Test(dependsOnMethods = "runAggregationForHour24")
@@ -292,7 +292,7 @@ public class AggregationTests extends MetricsTest {
         AggregationManagerTestStub aggregationManager = new AggregationManagerTestStub(hour(4), testDAO);
         aggregationManager.run();
 
-        assert1HourCacheEquals(hour(4), startScheduleId(schedule1.id), asList(new RawNumericMetric(schedule1.id,
+        assertRawHourCacheEquals(hour(4), startScheduleId(schedule1.id), asList(new RawNumericMetric(schedule1.id,
             time.getMillis(), 3.0)));
     }
 

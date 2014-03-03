@@ -44,4 +44,17 @@ public class GwtMonitorUtils {
 
         return formattedValues;
     }
+
+    /**
+     * Single value version of formatSimpleMetrics for convenience.
+     * @param value
+     * @param md
+     * @return formatted string value
+     */
+    public static String formatSimpleMetric(double value, MeasurementDefinition md) {
+        double[] dArray = new double[1];
+        dArray[0] = value;
+        return  formatSimpleMetrics( dArray, md) [0];
+
+    }
 }

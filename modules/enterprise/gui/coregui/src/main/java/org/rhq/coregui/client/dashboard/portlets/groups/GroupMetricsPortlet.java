@@ -395,7 +395,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
             setIsModal(true);
             setShowModalMask(true);
             setWidth(950);
-            setHeight(420);
+            setHeight(550);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();

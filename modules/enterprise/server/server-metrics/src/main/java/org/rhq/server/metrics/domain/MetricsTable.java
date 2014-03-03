@@ -31,11 +31,29 @@ import org.joda.time.Duration;
 public enum MetricsTable {
 
     METRICS_CACHE("metrics_cache", -1),
+    METRICS_CACHE_INDEX("metrics_cache_index", -1),
     RAW("raw_metrics", Duration.standardDays(7).toStandardSeconds().getSeconds()),
     ONE_HOUR("one_hour_metrics", Duration.standardDays(14).toStandardSeconds().getSeconds()),
     SIX_HOUR("six_hour_metrics", Duration.standardDays(31).toStandardSeconds().getSeconds()),
     TWENTY_FOUR_HOUR("twenty_four_hour_metrics", Duration.standardDays(365).toStandardSeconds().getSeconds());
 
+    public static MetricsTable fromString(String table) {
+        if (table.equals(METRICS_CACHE.tableName)) {
+            return METRICS_CACHE;
+        } else if (table.equals(METRICS_CACHE_INDEX.tableName)) {
+            return METRICS_CACHE_INDEX;
+        } else if (table.equals(RAW.tableName)) {
+            return RAW;
+        } else if (table.equals(ONE_HOUR.tableName)) {
+            return ONE_HOUR;
+        } else if (table.equals(SIX_HOUR.tableName)) {
+            return SIX_HOUR;
+        } else if (table.equals(TWENTY_FOUR_HOUR.tableName)) {
+            return TWENTY_FOUR_HOUR;
+        } else {
+            throw new IllegalArgumentException(table + " is not a recognized table name");
+        }
+    }
 
     private final String tableName;
     private final int ttl;

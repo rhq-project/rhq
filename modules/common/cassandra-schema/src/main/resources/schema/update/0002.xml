@@ -30,4 +30,16 @@
       PRIMARY KEY ((bucket, time_slice, start_schedule_id), schedule_id, time)
     ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
+
+  <step>
+    CREATE TABLE rhq.metrics_cache_index (
+      bucket varchar,
+      time_slice timestamp,
+      partition int,
+      start_schedule_id int,
+      time timestamp,
+      schedule_ids set&lt;int&gt;,
+      PRIMARY KEY ((bucket, time_slice, partition), start_schedule_id, time)
+    ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
+  </step>
 </updatePlan>

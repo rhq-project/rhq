@@ -51,7 +51,7 @@
       <copy file="${settings.localRepository}/i18nlog/i18nlog/${i18nlog.version}/i18nlog-${i18nlog.version}.jar" tofile="${lib.home}/i18nlog-${i18nlog.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jline/jline/${jline.version}/jline-${jline.version}.jar" tofile="${lib.home}/jline-${jline.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" tofile="${lib.home}/log4j-${log4j.version}.jar" verbose="true" />
-      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-client-api/${project.version}/rhq-remoting-client-api-${project.version}.jar" todir="${lib.home}" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-client-api/${rhq-remoting-client-api.version}/rhq-remoting-client-api-${rhq-remoting-client-api.version}.jar" todir="${lib.home}" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-domain/${rhq-core-domain.version}/rhq-core-domain-${rhq-core-domain.version}.jar" tofile="${lib.home}/rhq-core-domain-${rhq-core-domain.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-util/${rhq-core-util.version}/rhq-core-util-${rhq-core-util.version}.jar" tofile="${lib.home}/rhq-core-util-${rhq-core-util.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${rhq-enterprise-server.version}/rhq-enterprise-server-${rhq-enterprise-server.version}-client.jar" tofile="${lib.home}/rhq-enterprise-server-${rhq-enterprise-server.version}-client.jar" verbose="true" />

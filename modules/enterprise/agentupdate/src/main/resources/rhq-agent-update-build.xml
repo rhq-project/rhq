@@ -163,6 +163,32 @@
                         newdir="${_update.tmp.dir}/rhq-agent/bin/wrapper"
                         filename="rhq-agent-wrapper.conf" keep="new" backupextension=".custom" failonerror="false" />
 
+      <!-- Copy any other custom scripts that the user might have placed in the bin directory -->
+      <echo>Copy custom scripts that may have existed in the agent bin directory</echo>
+      <copy todir="${_update.tmp.dir}/rhq-agent/bin">
+         <fileset dir="${rhq.agent.update.update-agent-dir}/bin">
+            <exclude name="rhq-agent-env.sh"/>
+            <exclude name="rhq-agent-env.bat"/>
+            <exclude name="rhq-agent-wrapper.sh"/>
+            <exclude name="rhq-agent-wrapper.bat"/>
+            <include name="*.sh"/>
+            <include name="*.bat"/>
+         </fileset>
+      </copy>
+
+      <!-- Note that because ANT copy doesn't provide a mechanism to keep file permissions,
+           we'll assume the custom bin scripts need to have their +x set on the new copies.
+           We will rely on the user running the update to provide the appropriate UMASK,
+           which allows the user to control if its going to be u+x, ug+x or ugo+x. -->
+      <echo>Ensure any custom scripts that were copied retain execute permissions</echo>
+      <chmod perm="+x">
+         <fileset dir="${_update.tmp.dir}/rhq-agent/bin">
+            <exclude name="rhq-agent-env.sh"/>
+            <exclude name="rhq-agent-wrapper.sh"/>
+            <include name="*.sh"/>
+         </fileset>
+      </chmod>
+
       <!-- copy over the agent-configuration and log4j xml files, but rename them so they do not take effect -->
       <echo>Copy agent configuration file - use the new copy and backup the old copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"

@@ -29,11 +29,7 @@ import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
-import org.rhq.core.domain.measurement.DisplayType;
-import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.*;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -109,5 +105,15 @@ public interface MeasurementDataGWTService extends RemoteService {
         boolean updateExistingSchedules) throws RuntimeException;
 
     PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria) throws RuntimeException;
+
+    MeasurementBaseline getBaselineForResourceAndSchedule(int resourceId, int definitionId)  throws RuntimeException;
+
+    void setUserBaselineMax(int resourceId, int definitionId, Double maxBaseline)  throws RuntimeException;
+
+    void setUserBaselineMin(int resourceId, int definitionId, Double minBaseline)  throws RuntimeException;
+
+    void setUserBaselineMean(int resourceId, int definitionId, Double meanBaseline)  throws RuntimeException;
+
+    MeasurementBaseline calcBaselineForDateRange(Integer measurementScheduleId, long startDate, long endDate) throws RuntimeException;
 
 }

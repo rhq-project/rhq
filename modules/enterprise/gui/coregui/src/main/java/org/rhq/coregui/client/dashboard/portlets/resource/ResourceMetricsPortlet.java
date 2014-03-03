@@ -22,21 +22,27 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FloatItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.*;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.*;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.coregui.client.dashboard.Portlet;
 import org.rhq.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
@@ -47,6 +53,7 @@ import org.rhq.coregui.client.inventory.resource.detail.monitoring.D3GraphListVi
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.async.CountDownLatch;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * This portlet allows the end user to customize the metric display
@@ -62,9 +69,11 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
     private int resourceId = -1;
 
+
     public ResourceMetricsPortlet(int resourceId) {
         super(EntityContext.forResource(-1));
         this.resourceId = resourceId;
+
     }
 
     private volatile Resource resource = null;
@@ -82,13 +91,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
         }
     }
 
-    @Override
-    protected void showPopupWithChart(String title, MeasurementDefinition md) {
-        ChartViewWindow window = new ChartViewWindow(title, "", refreshablePortlet);
-        D3GraphListView graphView = D3GraphListView.createSingleGraph(resource, md.getId(), true);
-        window.addItem(graphView);
-        window.show();
-    }
+
 
     @Override
     protected DynamicForm getEmptyDataForm() {
@@ -166,4 +169,13 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                 }
             });
     }
+
+
+    @Override
+    protected void showPopupWithChart(final String title, final MeasurementDefinition md){
+
+        MetricsChartWindow metricsChartWindow1 = new MetricsChartWindow();
+        metricsChartWindow1.showPopupChart(title, resource, md, refreshablePortlet);
+    }
+
 }

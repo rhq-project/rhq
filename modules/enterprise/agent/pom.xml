@@ -176,6 +176,8 @@ Build-Number=${buildNumber}
                    <property name="augeas.zip.version" value="${augeas.zip.version}" />
                    <property name="log4j.version" value="${log4j.version}" />
                    <property name="rhq-core-native-system.version" value="${rhq-core-native-system.version}" />
+                   <property name="rhq-core-domain.version" value="${rhq-core-domain.version}" />
+                   <property name="rhq-core-plugin-api.version" value="${rhq-core-plugin-api.version}" />
                    <property name="rhq-core-util.version" value="${rhq-core-util.version}" />
                 </ant>
               </target>

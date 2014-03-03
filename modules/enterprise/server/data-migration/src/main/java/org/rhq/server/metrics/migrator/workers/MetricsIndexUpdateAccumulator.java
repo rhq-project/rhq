@@ -76,8 +76,7 @@ public class MetricsIndexUpdateAccumulator extends AbstractMigrationWorker {
             this.sliceDuration = configuration.getTimeSliceDuration(table);
             this.timeLimit = this.getLastAggregationTime(table) - this.sliceDuration.getMillis();
             this.updateMetricsIndex = config.getSession().prepare(
-                "INSERT INTO " + MetricsTable.INDEX.getTableName()
-                + " (bucket, time, schedule_id) VALUES (?, ?, ?)");
+                "INSERT INTO metrics_index (bucket, time, schedule_id) VALUES (?, ?, ?)");
             this.validAccumulatorTable = true;
         } else {
             this.timeLimit = Integer.MAX_VALUE;

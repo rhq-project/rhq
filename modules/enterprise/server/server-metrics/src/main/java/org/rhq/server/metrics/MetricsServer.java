@@ -26,12 +26,8 @@
 package org.rhq.server.metrics;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,15 +46,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeComparator;
-import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.server.metrics.aggregation.AggregationManager;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
@@ -89,8 +82,6 @@ public class MetricsServer {
     private int aggregationBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.batch-size", "5"));
 
     private int parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "3"));
-
-    private boolean useAsyncAggregation = Boolean.valueOf(System.getProperty("rhq.metrics.aggregation.async", "true"));
 
     private int cacheBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.cache.batch-size", "100"));
 
@@ -126,10 +117,6 @@ public class MetricsServer {
         return numAggregationWorkers;
     }
 
-    public void setUseAsyncAggregation(boolean useAsyncAggregation) {
-        this.useAsyncAggregation = useAsyncAggregation;
-    }
-
     public void setCacheBatchSize(int size) {
         cacheBatchSize = size;
     }
@@ -143,9 +130,6 @@ public class MetricsServer {
     }
 
     private void init(int minScheduleId, int maxScheduleId, boolean schedulesExist) {
-        if (log.isDebugEnabled() && useAsyncAggregation) {
-            log.debug("Async aggregation is enabled");
-        }
         aggregationWorkers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numAggregationWorkers,
             new StorageClientThreadFactory()));
         if (schedulesExist) {
@@ -192,11 +176,6 @@ public class MetricsServer {
                     "next time the aggregation job runs.");
             }
         }
-    }
-
-    private boolean hasTimeSliceEnded(DateTime startTime, Duration duration) {
-        DateTime endTime = startTime.plus(duration);
-        return DateTimeComparator.getInstance().compare(currentHour(), endTime) >= 0;
     }
 
     protected DateTime currentHour() {
@@ -505,124 +484,20 @@ public class MetricsServer {
         Stopwatch stopwatch = new Stopwatch().start();
         try {
             DateTime theHour = currentHour();
-
-            if (useAsyncAggregation) {
-                if (pastAggregationMissed) {
-                    DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
-                    new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
-                        aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
-                    pastAggregationMissed = false;
-                }
-
-                DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
-                return new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+            if (pastAggregationMissed) {
+                DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
+                new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
                     aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
-            } else {
-                if (pastAggregationMissed) {
-                    calculateAggregates(roundDownToHour(mostRecentRawDataPriorToStartup).plusHours(1).getMillis());
-                    pastAggregationMissed = false;
-                }
-                return calculateAggregates(theHour.getMillis());
+                pastAggregationMissed = false;
             }
+            DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
+
+            return new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
+                aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
         } finally {
             stopwatch.stop();
             totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));
             log.info("Finished metrics aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-        }
-    }
-
-    private List<AggregateNumericMetric> calculateAggregates(long startTime) {
-        DateTime dt = new DateTime(startTime);
-        DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
-        DateTime lastHour = currentHour.minus(configuration.getRawTimeSliceDuration());
-
-        if (log.isDebugEnabled()) {
-            log.debug("Starting aggregation for time slice " + lastHour);
-        }
-
-        long sixHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
-            configuration.getOneHourTimeSliceDuration()).getMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("six hour time slice = " + new Date(sixHourTimeSlice));
-        }
-
-        long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
-            configuration.getSixHourTimeSliceDuration()).getMillis();
-
-        List<AggregateNumericMetric> newOneHourAggregates = null;
-
-        List<AggregateNumericMetric> updatedSchedules = aggregateRawData(lastHour);
-        newOneHourAggregates = updatedSchedules;
-        if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, lastHour.getMillis());
-            updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
-        }
-
-        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, sixHourTimeSlice,
-            configuration.getOneHourTimeSliceDuration());
-        if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR, sixHourTimeSlice);
-            updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules,
-                configuration.getSixHourTimeSliceDuration());
-        }
-
-        updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
-            twentyFourHourTimeSlice, configuration.getSixHourTimeSliceDuration());
-        if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR, twentyFourHourTimeSlice);
-        }
-
-        return newOneHourAggregates;
-    }
-
-    private void updateMetricsIndex(MetricsTable bucket, Iterable<AggregateNumericMetric> metrics, Duration duration) {
-        Map<Integer, Long> updates = new TreeMap<Integer, Long>();
-        for (AggregateNumericMetric metric : metrics) {
-            updates.put(metric.getScheduleId(),
-                dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()), duration).getMillis());
-        }
-        dao.updateMetricsIndex(bucket, updates);
-    }
-
-    private List<AggregateNumericMetric> aggregateRawData(DateTime theHour) {
-        long start = System.currentTimeMillis();
-        try {
-            if (log.isDebugEnabled()) {
-                log.debug("Preparing to aggregate raw data. Time slice start time is [" + theHour +
-                    "] and the end time is [" + theHour.plus(configuration.getRawTimeSliceDuration()) + "]");
-            }
-            Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR,
-                theHour.getMillis());
-            List<AggregateNumericMetric> oneHourMetrics = new ArrayList<AggregateNumericMetric>();
-
-            for (MetricsIndexEntry indexEntry : indexEntries) {
-                DateTime startTime = indexEntry.getTime();
-                DateTime endTime = startTime.plus(configuration.getRawTimeSliceDuration());
-                Iterable<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(),
-                    startTime.getMillis(), endTime.getMillis());
-                AggregateNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
-                aggregatedRaw.setScheduleId(indexEntry.getScheduleId());
-                oneHourMetrics.add(aggregatedRaw);
-            }
-
-            for (AggregateNumericMetric metric : oneHourMetrics) {
-                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-            }
-
-            if (log.isDebugEnabled()) {
-                log.debug("Finished computing and inserting " + oneHourMetrics.size() + " aggregates into table ["
-                    + MetricsTable.ONE_HOUR + "]");
-            }
-
-            return oneHourMetrics;
-        } finally {
-            long end = System.currentTimeMillis();
-            if (log.isInfoEnabled()) {
-                log.info("Finished computing aggregates for table [" + MetricsTable.RAW
-                    + "]" + (end - start) + " ms");
-            }
         }
     }
 
@@ -651,106 +526,6 @@ public class MetricsServer {
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
         return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
-    }
-
-    private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromTable,
-        MetricsTable toTable, long timeSlice, Duration nextDuration) {
-
-        long start = System.currentTimeMillis();
-        try {
-            DateTime startTime = new DateTime(timeSlice);
-            DateTime endTime = startTime.plus(nextDuration);
-            DateTime currentHour = currentHour();
-
-            if (log.isDebugEnabled()) {
-                log.debug("Preparing to compute aggregates for data in " + fromTable + " table");
-                log.debug("Time slice start time is [" + startTime + "] and the end time is [" + endTime +  "].");
-            }
-
-            DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
-            if (dateTimeComparator.compare(currentHour, endTime) < 0) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Skipping aggregation for " + fromTable + " since the time slice has not yet completed");
-                }
-                return Collections.emptyList();
-            }
-
-            Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toTable, timeSlice);
-            List<AggregateNumericMetric> toMetrics = new ArrayList<AggregateNumericMetric>();
-
-
-            for (MetricsIndexEntry indexEntry : indexEntries) {
-                Iterable<AggregateNumericMetric> metrics = null;
-                switch (fromTable) {
-                    case ONE_HOUR:
-                        metrics = dao.findOneHourMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                            endTime.getMillis());
-                        break;
-                    case SIX_HOUR:
-                        metrics = dao.findSixHourMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                            endTime.getMillis());
-                        break;
-                    default:  // 24 hour
-                        metrics = dao.findTwentyFourHourMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                            endTime.getMillis());
-                        break;
-                }
-                AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
-                aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
-                toMetrics.add(aggregatedMetric);
-            }
-
-            switch (toTable) {
-                case ONE_HOUR:
-                    insertOneHourAggregates(toMetrics);
-                    break;
-                case SIX_HOUR:
-                    insertSixHourAggregates(toMetrics);
-                    break;
-                default:  // 24 hour
-                    insertTwentyFourHourAggregates(toMetrics);
-            }
-
-            if (log.isDebugEnabled()) {
-                log.debug("Finished computing and inserting " + toMetrics.size() + " aggregates into table [" + toTable
-                    + "] ");
-            }
-
-            return toMetrics;
-        } finally {
-            long end = System.currentTimeMillis();
-            if (log.isInfoEnabled()) {
-                log.info("Finished computing aggregates for table [" + fromTable + "] "
-                    + (end - start) + " ms");
-            }
-        }
-    }
-
-    private void insertOneHourAggregates(List<AggregateNumericMetric> metrics) {
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-    }
-
-    private void insertSixHourAggregates(List<AggregateNumericMetric> metrics) {
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
-        }
-    }
-
-    private void insertTwentyFourHourAggregates(List<AggregateNumericMetric> metrics) {
-        for (AggregateNumericMetric metric : metrics) {
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
-            dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
-        }
     }
 
     private AggregateNumericMetric calculateAggregate(Iterable<AggregateNumericMetric> metrics, long timestamp) {

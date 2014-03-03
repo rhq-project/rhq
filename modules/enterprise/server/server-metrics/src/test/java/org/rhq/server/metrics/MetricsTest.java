@@ -204,7 +204,7 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     private <T extends NumericMetric> void assertCacheEquals(MetricsTable table, DateTime timeSlice,
         int startScheduleId, List<T> expected, CacheMapper<T> cacheMapper) {
-        ResultSet resultSet = dao.findMetricsIndexEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
+        ResultSet resultSet = dao.findCacheEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
         List<T> actual = cacheMapper.map(resultSet);
 
         assertEquals(actual, expected, "The " + table + " cache is wrong");
@@ -223,26 +223,9 @@ public class MetricsTest extends CassandraIntegrationTest {
     }
 
     protected void assertAggregateCacheEmpty(DateTime timeSlice, int startScheduleId, MetricsTable table) {
-        ResultSet resultSet = dao.findMetricsIndexEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
+        ResultSet resultSet = dao.findCacheEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
         List<AggregateNumericMetric> metrics = aggregateCacheMapper.map(resultSet);
         assertEquals(metrics.size(), 0, "Expected the " + table + " cache to be empty but found " + metrics);
     }
-
-//    protected void assert1HourMetricsIndexEmpty(DateTime timeSlice) {
-//        assertMetricsIndexEmpty(MetricsTable.ONE_HOUR, timeSlice);
-//    }
-//
-//    protected void assert6HourMetricsIndexEmpty(DateTime timeSlice) {
-//        assertMetricsIndexEmpty(MetricsTable.SIX_HOUR, timeSlice);
-//    }
-//
-//    protected void assert24HourMetricsIndexEmpty(DateTime timeSlice) {
-//        assertMetricsIndexEmpty(MetricsTable.TWENTY_FOUR_HOUR, timeSlice);
-//    }
-//
-//    private void assertMetricsIndexEmpty(MetricsTable table, DateTime timeSlice) {
-//        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(table, timeSlice.getMillis()));
-//        assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
-//    }
 
 }

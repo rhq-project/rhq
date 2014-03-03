@@ -45,8 +45,6 @@ import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetricMapper;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.ListPagedResult;
-import org.rhq.server.metrics.domain.MetricsIndexEntry;
-import org.rhq.server.metrics.domain.MetricsIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
@@ -279,17 +277,7 @@ public class MetricsDAO {
             new AggregateNumericMetricMapper(), storageSession);
     }
 
-    public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {
-        BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timestamp));
-        return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), storageSession);
-    }
-
-    public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
-        BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timestamp));
-        return storageSession.executeAsync(statement);
-    }
-
-    public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timeSlice,
+    public StorageResultSetFuture findCacheEntriesAsync(MetricsTable table, long timeSlice,
         int startScheduleId) {
         BoundStatement statement = findCacheEntries.bind(table.toString(), new Date(timeSlice), startScheduleId);
         return storageSession.executeAsync(statement);
@@ -300,32 +288,10 @@ public class MetricsDAO {
         return storageSession.execute(statement);
     }
 
-    public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
-            for (Integer scheduleId : updates.keySet()) {
-                BoundStatement statement = insertCacheEntry.bind(table.getTableName(),
-                    new Date(updates.get(scheduleId)), scheduleId);
-                storageSession.execute(statement);
-            }
-    }
-
-    public StorageResultSetFuture updateMetricsIndex(MetricsTable table, int scheduleId, long timestamp) {
-        return null;
-    }
-
     public StorageResultSetFuture updateMetricsCache(MetricsTable table, long timeSlice, int startScheduleId,
         int scheduleId, long timestamp, Map<Integer, Double> values) {
         BoundStatement statement = insertCacheEntry.bind(table.getTableName(), new Date(timeSlice), startScheduleId,
             scheduleId, new Date(timestamp), values);
-        return storageSession.executeAsync(statement);
-    }
-
-    public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {
-        BoundStatement statement = deleteCacheEntries.bind(table.getTableName(), new Date(timestamp));
-        storageSession.execute(statement);
-    }
-
-    public StorageResultSetFuture deleteMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
-        BoundStatement statement = deleteCacheEntries.bind(table.getTableName(), new Date(timestamp));
         return storageSession.executeAsync(statement);
     }
 

@@ -176,7 +176,6 @@ public class MetricsPerfTests extends MetricsTest {
         DateTime currentHour = hour(4);
         metricsServer.setCurrentHour(currentHour);
         metricsServer.setAggregationBatchSize(250);
-        metricsServer.setUseAsyncAggregation(false);
         metricsServer.setDateTimeService(new DateTimeServiceStub(hour(4), start));
         Collection<AggregateNumericMetric> oneHourData =
             (Collection<AggregateNumericMetric>) metricsServer.calculateAggregates(0, NUM_SCHEDULES);

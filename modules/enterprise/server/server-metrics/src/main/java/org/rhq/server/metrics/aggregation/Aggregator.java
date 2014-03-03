@@ -97,7 +97,7 @@ class Aggregator {
             for (int i = startScheduleId; i <= maxScheduleId; i += cacheBatchSize) {
                 Stopwatch batchStopwatch = new Stopwatch().start();
                 permits.acquire();
-                StorageResultSetFuture queryFuture = dao.findMetricsIndexEntriesAsync(aggregationType.getCacheTable(),
+                StorageResultSetFuture queryFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                     startTime.getMillis(), i);
                 taskTracker.addTask();
                 ListenableFuture<BatchResult> batchResultFuture = Futures.transform(queryFuture,

@@ -340,23 +340,23 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         Futures.addCallback(resultSetFuture1, waitForWrite);
         Futures.addCallback(resultSetFuture2, waitForWrite);
 
-        waitForWrite.await("Failed to update metrics index");
+        waitForWrite.await("Failed to update metrics cache");
 
         List<AggregateNumericMetric> expected = asList(
             new AggregateNumericMetric(scheduleId1, 3.14, 3.14, 3.14, hour0().getMillis()),
             new AggregateNumericMetric(scheduleId2, 3.14, 3.14, 3.14, hour0().getMillis())
         );
 
-        StorageResultSetFuture indexFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
+        StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(MetricsTable.TWENTY_FOUR_HOUR,
             hour0().getMillis(), startScheduleId);
-        ResultSet resultSet = indexFuture.get();
+        ResultSet resultSet = cacheFuture.get();
         List<Row> rows = resultSet.all();
 
-        assertEquals(rows.size(), expected.size(), "Expected to get back two rows from index query");
+        assertEquals(rows.size(), expected.size(), "Expected to get back two rows from cache query");
 
         List<AggregateNumericMetric> actual = asList(aggregateCacheMapper.map(rows.get(0)),
             aggregateCacheMapper.map(rows.get(1)));
-        assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
+        assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics cache entries");
     }
 
     @Test(enabled = ENABLED)
@@ -375,20 +375,20 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             scheduleId2, timestamp2, ImmutableMap.of(AggregateType.VALUE.ordinal(), 1.01));
         Futures.addCallback(insertFuture1, waitForWrite);
         Futures.addCallback(insertFuture2, waitForWrite);
-        waitForWrite.await("Failed to update raw index");
+        waitForWrite.await("Failed to update raw cache");
 
         List<RawNumericMetric> expected = asList(new RawNumericMetric(scheduleId1, timestamp1, 2.14),
             new RawNumericMetric(scheduleId2, timestamp2, 1.01));
-        StorageResultSetFuture queryFuture = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR, timeSlice,
+        StorageResultSetFuture queryFuture = dao.findCacheEntriesAsync(MetricsTable.ONE_HOUR, timeSlice,
             startScheduleId);
         ResultSet resultSet = queryFuture.get();
         List<Row> rows = resultSet.all();
 
-        assertEquals(rows.size(), expected.size(), "Expected to get back two rows from raw index query");
+        assertEquals(rows.size(), expected.size(), "Expected to get back two rows from raw cache query");
 
         List<RawNumericMetric> actual = asList(rawCacheMapper.map(rows.get(0)), rawCacheMapper.map(rows.get(1)));
 
-        assertEquals(actual, expected, "The raw index entries do not match");
+        assertEquals(actual, expected, "The raw cache entries do not match");
     }
 
 
@@ -406,7 +406,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         dao.deleteCacheEntries(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId).get();
 
-        ResultSet resultSet = dao.findMetricsIndexEntriesAsync(MetricsTable.ONE_HOUR,
+        ResultSet resultSet = dao.findCacheEntriesAsync(MetricsTable.ONE_HOUR,
             timeSlice.getMillis(), startScheduleId).get();
 
         assertTrue(resultSet.isExhausted(), "Expected an empty result set");

@@ -506,8 +506,8 @@ print_release_information()
    echo
    print_centered "Release Info"
    echo "Version: $RELEASE_VERSION"
-   echo "Branch URL: http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
-   echo "Tag URL: http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=shortlog;h=refs/tags/$RELEASE_TAG"
+   echo "Branch URL: https://github.com/rhq-project/rhq/commits/$RELEASE_BRANCH"
+   echo "Tag URL: https://github.com/rhq-project/rhq/commits/$RELEASE_TAG"
    print_centered "="
 }
 

@@ -77,9 +77,6 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected int installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
         throws Exception {
-//        Executor executor = new DefaultExecutor();
-//        executor.setWorkingDirectory(workingDir);
-//        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
         int rValue = RHQControl.EXIT_CODE_OK;

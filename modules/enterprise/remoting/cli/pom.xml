@@ -22,7 +22,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-remoting-client-api.version}</version>
       </dependency>
       
       <dependency>
@@ -136,6 +136,7 @@
                            <property name="rhq-core-domain.version" value="${rhq-core-domain.version}" />
                            <property name="rhq-enterprise-server.version" value="${rhq-enterprise-server.version}" />
                            <property name="rhq-core-util.version" value="${rhq-core-util.version}" />
+                           <property name="rhq-remoting-client-api.version" value="${rhq-remoting-client-api.version}" />
                         </ant>
                      </target>
                   </configuration>

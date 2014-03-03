@@ -332,7 +332,7 @@
     <rhq-rest.version>${rhq.pom.version}</rhq-rest.version>
     <rhq-enterprise-parent.version>${rhq.pom.version}</rhq-enterprise-parent.version>
     <rhq-remoting-cli.version>${rhq.pom.version}</rhq-remoting-cli.version>
-    <rhq-remoting-client-api.version>${rhq.pom.version}</rhq-remoting-client-api.version>
+    <rhq-remoting-client-api.version>${rhq.pom.version}-redhat-1</rhq-remoting-client-api.version>
     <remote-client-deps.version>${rhq.pom.version}</remote-client-deps.version>
     <rhq-remoting-parent.version>${rhq.pom.version}</rhq-remoting-parent.version>
     <rhq-scripting-api.version>${rhq.pom.version}</rhq-scripting-api.version>

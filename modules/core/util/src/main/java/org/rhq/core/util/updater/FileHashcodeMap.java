@@ -310,9 +310,16 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         path = convertPath(path);
 
         // if this path is one the caller wants us to ignore, then return immediately
-        if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
-            ignored.add(path);
-            return;
+        if (ignoreRegex != null) {
+            String matchPath = path;
+            // directory wouldn't match pattern unless i has trailing slash
+            if (fileOrDir.isDirectory()) {
+                matchPath = convertPath(path+File.separator);
+            }
+            if (ignoreRegex.matcher(matchPath).matches()) {
+                ignored.add(path);
+                return;
+            }
         }
 
         if (fileOrDir.isDirectory()) {

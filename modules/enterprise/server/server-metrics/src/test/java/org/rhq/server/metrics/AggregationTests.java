@@ -292,7 +292,7 @@ public class AggregationTests extends MetricsTest {
         AggregationManagerTestStub aggregationManager = new AggregationManagerTestStub(hour(4), testDAO);
         aggregationManager.run();
 
-        assertRawHourCacheEquals(hour(4), startScheduleId(schedule1.id), asList(new RawNumericMetric(schedule1.id,
+        assertRawCacheEquals(hour(4), startScheduleId(schedule1.id), asList(new RawNumericMetric(schedule1.id,
             time.getMillis(), 3.0)));
     }
 

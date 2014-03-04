@@ -26,6 +26,7 @@
 package org.rhq.server.metrics;
 
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ import org.rhq.server.metrics.domain.SimplePagedResult;
 public class MetricsDAO {
 
     private final Log log = LogFactory.getLog(MetricsDAO.class);
+
+    private static final Set<Integer> EMPTY_SCHEDULE_IDS = Collections.emptySet();
 
     private StorageSession storageSession;
 
@@ -142,8 +145,10 @@ public class MetricsDAO {
         deleteCacheEntries = storageSession.prepare("DELETE FROM " + MetricsTable.METRICS_CACHE +
             " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
-        updateCacheIndex = storageSession.prepare("INSERT INTO " + MetricsTable.METRICS_CACHE_INDEX +
-            " (bucket, time_slice, partition, start_schedule_id, time, schedule_ids) VALUES (?, ?, ?, ?, ?, ?)");
+        updateCacheIndex = storageSession.prepare(
+            "UPDATE " + MetricsTable.METRICS_CACHE_INDEX + " " +
+            "SET schedule_ids = schedule_ids + ? " +
+            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND start_schedule_id = ? AND time = ?");
 
         findCacheIndexEntries = storageSession.prepare("SELECT bucket, time_slice, partition, start_schedule_id, " +
             "time, schedule_ids FROM " + MetricsTable.METRICS_CACHE_INDEX +
@@ -317,13 +322,13 @@ public class MetricsDAO {
 
     public StorageResultSetFuture updateCacheIndex(MetricsTable table, long timeSlice, int partition,
         int startScheduleId, long time) {
-        return updateCacheIndex(table, timeSlice, partition, startScheduleId, time, null);
+        return updateCacheIndex(table, timeSlice, partition, startScheduleId, time, EMPTY_SCHEDULE_IDS);
     }
 
     public StorageResultSetFuture updateCacheIndex(MetricsTable table, long timeSlice, int partition,
         int startScheduleId, long time, Set<Integer> scheduleIds) {
-        BoundStatement statement = updateCacheIndex.bind(table.getTableName(), new Date(timeSlice), partition,
-            startScheduleId, new Date(time), scheduleIds);
+        BoundStatement statement = updateCacheIndex.bind(scheduleIds, table.getTableName(), new Date(timeSlice),
+            partition, startScheduleId, new Date(time));
         return storageSession.executeAsync(statement);
     }
 

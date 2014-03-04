@@ -1,5 +1,9 @@
 package org.rhq.server.metrics.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 /**
@@ -17,6 +21,14 @@ public class CacheIndexEntryMapper {
         indexEntry.setScheduleIds(row.getSet(5, Integer.class));
 
         return indexEntry;
+    }
+
+    public List<CacheIndexEntry> map(ResultSet resultSet) {
+        List<CacheIndexEntry> entries = new ArrayList<CacheIndexEntry>();
+        for (Row row : resultSet) {
+            entries.add(map(row));
+        }
+        return entries;
     }
 
 }

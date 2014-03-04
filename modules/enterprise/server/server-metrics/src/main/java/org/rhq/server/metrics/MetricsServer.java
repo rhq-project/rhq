@@ -37,6 +37,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -49,6 +50,7 @@ import org.joda.time.DateTime;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.server.metrics.aggregation.AggregationManager;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
@@ -400,7 +402,63 @@ public class MetricsServer {
 
     }
 
-    public void addNumericData(final Set<MeasurementDataNumeric> dataSet,
+    public void addNumericData(final Set<MeasurementDataNumeric> dataSet, final RawDataInsertedCallback callback) {
+        if (log.isDebugEnabled()) {
+            log.debug("Inserting " + dataSet.size() + " raw metrics");
+        }
+        final Stopwatch stopwatch = new Stopwatch().start();
+        final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
+        final long insertTimeSlice = dateTimeService.getTimeSlice(dateTimeService.now(),
+            configuration.getRawTimeSliceDuration()).getMillis();
+
+        for (final MeasurementDataNumeric data : dataSet) {
+            long collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
+                configuration.getRawTimeSliceDuration()).getMillis();
+            int startScheduleId = calculateStartScheduleId(data.getScheduleId());
+            int partition = 0;
+
+            StorageResultSetFuture rawFuture = dao.insertRawData(data);
+            StorageResultSetFuture cacheFuture = dao.updateMetricsCache(MetricsTable.RAW, collectionTimeSlice, startScheduleId,
+                data.getScheduleId(), data.getTimestamp(), ImmutableMap.of(AggregateType.VALUE.ordinal(),
+                data.getValue()));
+            StorageResultSetFuture indexFuture;
+            if (collectionTimeSlice < insertTimeSlice) {
+                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId,
+                    collectionTimeSlice, ImmutableSet.of(data.getScheduleId()));
+            } else {
+                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId,
+                    collectionTimeSlice);
+            }
+            ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, cacheFuture,
+                indexFuture);
+            Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
+                @Override
+                public void onSuccess(List<ResultSet> result) {
+                    callback.onSuccess(data);
+                    if (remainingInserts.decrementAndGet() == 0) {
+                        stopwatch.stop();
+                        if (log.isDebugEnabled()) {
+                            log.debug("Finished inserting " + dataSet.size() + " raw metrics in " +
+                                stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                        }
+                        callback.onFinish();
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                    if (log.isDebugEnabled()) {
+                        log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
+                    } else {
+                        log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t));
+                    }
+                }
+            }, aggregationWorkers);
+        }
+    }
+
+    public void addNumericDataXXX(final Set<MeasurementDataNumeric> dataSet,
         final RawDataInsertedCallback callback) {
         try {
             if (log.isDebugEnabled()) {

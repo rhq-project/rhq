@@ -2,13 +2,16 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.ImmutableMap;
@@ -21,9 +24,12 @@ import org.testng.annotations.BeforeClass;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.CacheIndexEntry;
+import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
 /**
  * @author John Sanda
@@ -39,6 +45,8 @@ public class MetricsTest extends CassandraIntegrationTest {
     protected DateTimeService dateTimeService;
     private RawCacheMapper rawCacheMapper = new RawCacheMapper();
     private AggregateCacheMapper aggregateCacheMapper = new AggregateCacheMapper();
+    private CacheIndexEntryMapper cacheIndexEntryMapper = new CacheIndexEntryMapper();
+    private RawNumericMetricMapper rawMapper = new RawNumericMetricMapper();
 
     @BeforeClass
     public void initClass() throws Exception {
@@ -70,6 +78,16 @@ public class MetricsTest extends CassandraIntegrationTest {
         session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
         session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
         session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE);
+        session.execute("TRUNCATE " + MetricsTable.METRICS_CACHE_INDEX);
+    }
+
+    protected void assertRawDataEquals(int scheduleId, DateTime startTime, DateTime endTime,
+        List<RawNumericMetric> expected) {
+        ResultSet resultSet = dao.findRawMetricsAsync(scheduleId, startTime.getMillis(), endTime.getMillis()).get();
+        List<RawNumericMetric> actual = rawMapper.mapAll(resultSet);
+
+        assertEquals(actual, expected, "The raw metrics do not match the expected value");
+
     }
 
     protected void assert1HourDataEquals(int scheduleId, AggregateNumericMetric... expected) {
@@ -187,7 +205,7 @@ public class MetricsTest extends CassandraIntegrationTest {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
     }
 
-    protected void assertRawHourCacheEquals(DateTime timeSlice, int startScheduleId,
+    protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId,
         List<RawNumericMetric> expected) {
         assertCacheEquals(MetricsTable.RAW, timeSlice, startScheduleId, expected, rawCacheMapper);
     }
@@ -210,6 +228,15 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "The " + table + " cache is wrong");
     }
 
+    private void assertCacheIndexEntriesEqual(List<CacheIndexEntry> actual, List<CacheIndexEntry> expected,
+        MetricsTable bucket) {
+        assertEquals(actual.size(), expected.size(), "The number of " + bucket + " cache index entries is wrong");
+        for (int i = 0; i < expected.size(); ++i) {
+            assertPropertiesMatch(expected.get(i), actual.get(i), "The " + bucket + " cache index entry does not " +
+                "match the expected value");
+        }
+    }
+
     protected void assertRawHourCacheEmpty(DateTime timeSlice, int startScheduleId) {
         assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.RAW);
     }
@@ -226,6 +253,44 @@ public class MetricsTest extends CassandraIntegrationTest {
         ResultSet resultSet = dao.findCacheEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
         List<AggregateNumericMetric> metrics = aggregateCacheMapper.map(resultSet);
         assertEquals(metrics.size(), 0, "Expected the " + table + " cache to be empty but found " + metrics);
+    }
+
+    protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, List<CacheIndexEntry> expected) {
+        ResultSet resultSet = dao.findCacheIndexEntries(MetricsTable.RAW, insertTimeSlice.getMillis(), partition).get();
+        List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
+
+        assertCacheIndexEntriesEqual(actual, expected, MetricsTable.RAW);
+    }
+
+    protected CacheIndexEntry newRawCacheIndexEntry(DateTime insertTimeSlice, int partition, int startScheduleId,
+        DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId, collectionTimeSlice);
+    }
+
+    protected CacheIndexEntry newRawCacheIndexEntry(DateTime insertTimeSlice, int partition, int startScheduleId,
+        DateTime collectionTimeSlice, Set<Integer> scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId, collectionTimeSlice,
+            scheduleIds);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime insertTimeSlice, int partition,
+        int startScheduleId, DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(table, insertTimeSlice, partition, startScheduleId, collectionTimeSlice,
+            Collections.EMPTY_SET);
+    }
+
+    protected CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime insertTimeSlice, int partition,
+        int startScheduleId, DateTime collectionTimeSlice, Set<Integer> scheduleIds) {
+        CacheIndexEntry entry = new CacheIndexEntry();
+        entry.setBucket(table);
+        entry.setInsertTimeSlice(insertTimeSlice.getMillis());
+        entry.setPartition(partition);
+        entry.setStartScheduleId(startScheduleId);
+        entry.setCollectionTimeSlice(collectionTimeSlice.getMillis());
+        entry.setScheduleIds(scheduleIds);
+
+        return entry;
     }
 
 }

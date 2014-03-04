@@ -86,6 +86,11 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertRawDataEquals(scheduleId, startTime, endTime, asList(expected));
     }
 
+    protected void assertRawDataEmpty(int scheduleId, DateTime startTime, DateTime endTime) {
+        List<RawNumericMetric> emptyRaws = Collections.emptyList();
+        assertRawDataEquals(scheduleId, startTime, endTime, emptyRaws);
+    }
+
     protected void assertRawDataEquals(int scheduleId, DateTime startTime, DateTime endTime,
         List<RawNumericMetric> expected) {
         ResultSet resultSet = dao.findRawMetricsAsync(scheduleId, startTime.getMillis(), endTime.getMillis()).get();
@@ -210,6 +215,11 @@ public class MetricsTest extends CassandraIntegrationTest {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
     }
 
+    protected void assertRawCacheEmpty(DateTime timeSlice, int startScheduleId) {
+        List<RawNumericMetric> emptyRaws = Collections.emptyList();
+        assertRawCacheEquals(timeSlice, startScheduleId, emptyRaws);
+    }
+
     protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId, RawNumericMetric... expected) {
         assertRawCacheEquals(timeSlice, startScheduleId, asList(expected));
     }
@@ -262,6 +272,11 @@ public class MetricsTest extends CassandraIntegrationTest {
         ResultSet resultSet = dao.findCacheEntriesAsync(table, timeSlice.getMillis(), startScheduleId).get();
         List<AggregateNumericMetric> metrics = aggregateCacheMapper.map(resultSet);
         assertEquals(metrics.size(), 0, "Expected the " + table + " cache to be empty but found " + metrics);
+    }
+
+    protected void assertRawCacheIndexEmpty(DateTime insertTimeSlice, int partition) {
+        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
+        assertRawCacheIndexEquals(insertTimeSlice, partition, emptyEntries);
     }
 
     protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, List<CacheIndexEntry> expected) {

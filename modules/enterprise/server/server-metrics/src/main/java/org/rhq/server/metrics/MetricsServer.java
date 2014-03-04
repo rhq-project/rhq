@@ -47,6 +47,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeComparator;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -412,10 +413,16 @@ public class MetricsServer {
             configuration.getRawTimeSliceDuration()).getMillis();
         // TODO add support for splitting cache index partition
         final int partition = 0;
+        DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 
         for (final MeasurementDataNumeric data : dataSet) {
             long collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
                 configuration.getRawTimeSliceDuration()).getMillis();
+            // TODO make the age cap configurable
+            if (dateTimeComparator.compare(collectionTimeSlice, dateTimeService.now().minusHours(24)) < 0) {
+                callback.onSuccess(data);
+                continue;
+            }
             int startScheduleId = calculateStartScheduleId(data.getScheduleId());
 
             StorageResultSetFuture rawFuture = dao.insertRawData(data);

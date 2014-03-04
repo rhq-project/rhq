@@ -262,6 +262,23 @@ public class MetricsServerTest extends MetricsTest {
     }
 
     @Test(enabled = ENABLED)
+    public void doNotInsertDataThatIsTooOld() throws Exception {
+        int scheduleId = 123;
+        int partition = 0;
+        Set<MeasurementDataNumeric> data = ImmutableSet.of(new MeasurementDataNumeric(
+            hour(5).minusHours(25).getMillis(), scheduleId, 3.14));
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
+        setNow(hour(5).plusMinutes(2));
+        metricsServer.addNumericData(data, waitForRawInserts);
+        waitForRawInserts.await("Failed to insert raw data");
+
+        assertRawDataEmpty(scheduleId, hour(5).minusHours(25), hour(5).minusHours(24));
+        assertRawCacheEmpty(hour(5).minusHours(25), startScheduleId(scheduleId));
+        assertRawCacheIndexEmpty(hour(5), partition);
+    }
+
+    @Test(enabled = ENABLED)
     public void calculateAggregatesForOneScheduleWhenDBIsEmpty() throws Exception {
         int scheduleId = 123;
 

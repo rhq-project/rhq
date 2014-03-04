@@ -825,9 +825,6 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
-              
-              <!-- The only real test in here has been disabled since 2012. It should be enabld or
-                   the test class should be removed.
               <execution>
                 <id>ManagedServerTest</id>
                 <configuration>
@@ -840,7 +837,6 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
-              -->
               
               <execution>
                 <id>nonpc</id>

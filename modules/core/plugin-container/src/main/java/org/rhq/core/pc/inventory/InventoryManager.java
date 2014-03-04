@@ -19,8 +19,7 @@
 
 package org.rhq.core.pc.inventory;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
+import static org.rhq.core.util.StringUtil.isNotBlank;
 
 import java.io.File;
 import java.net.URL;
@@ -47,6 +46,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -2043,10 +2045,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // because we're not actually STARTED
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
 
-                String message = "Failed to start component for resource " + resource + ".";
-                if (t.getCause() != null) {
-                    message += " Cause: " + t.getCause().getMessage();
+                StringBuilder messageBuilder = new StringBuilder("Failed to start component for ").append(resource);
+                if (isNotBlank(t.getMessage())) {
+                    messageBuilder.append(" - ").append(t.getMessage());
                 }
+                if (t.getCause() != null) {
+                    messageBuilder.append(" - Cause: ").append(t.getClass().getName());
+                    if (isNotBlank(t.getCause().getMessage())) {
+                        messageBuilder.append(": ").append(t.getCause().getMessage());
+                    }
+                }
+                String message = messageBuilder.toString();
 
                 if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
                     if (log.isDebugEnabled()) {

@@ -19,13 +19,11 @@
 package org.rhq.modules.plugins.jbossas7.itest;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
 
@@ -41,10 +38,8 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -52,9 +47,7 @@ import org.rhq.core.domain.util.MeasurementDefinitionFilter;
 import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
-import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.modules.plugins.jbossas7.itest.domain.ManagedServerTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -291,81 +284,6 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
             + resource + ".");
 
         return value;
-    }
-
-    @Nullable
-    protected String collectTrait(Resource resource, String traitName) throws Exception {
-        System.out.println("=== Collecting trait [" + traitName + "] for " + resource + "...");
-        MeasurementReport report = collectMetric(resource, traitName);
-
-        String value;
-        if (report.getTraitData().isEmpty()) {
-            assertEquals(
-                report.getNumericData().size(),
-                0,
-                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
-                    + " is defined as a trait, but the plugin returned one or more numeric metrics!: "
-                    + report.getNumericData());
-            assertEquals(
-                report.getCallTimeData().size(),
-                0,
-                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
-                    + " is defined as a trait, but the plugin returned one or more call-time metrics!: "
-                    + report.getCallTimeData());
-            value = null;
-        } else {
-            assertEquals(report.getTraitData().size(), 1,
-                "Requested a single trait, but plugin returned more than one datum: " + report.getTraitData());
-            MeasurementDataTrait datum = report.getTraitData().iterator().next();
-            assertEquals(datum.getName(), traitName,
-                "Trait [" + traitName + "] for Resource type " + resource.getResourceType()
-                    + " was requested, but the plugin returned a trait with name [" + datum.getName() + "] and value ["
-                    + datum.getValue() + "]!");
-            value = datum.getValue();
-        }
-        System.out.println("====== Collected trait [" + traitName + "] with value of [" + value + "] for " + resource
-            + ".");
-
-        return value;
-    }
-
-    /**
-     * Collect a metric for a Resource synchronously, with a 7 second timeout.
-     *
-     * @param resource the Resource
-     * @param metricName the name of the metric
-     *
-     * @return the report containing the collected data
-     */
-    @NotNull
-    private MeasurementReport collectMetric(Resource resource, String metricName) throws Exception {
-        ResourceType resourceType = resource.getResourceType();
-        MeasurementDefinition measurementDefinition = ResourceTypeUtility.getMeasurementDefinition(resourceType,
-            metricName);
-        assertNotNull(measurementDefinition, "No metric named [" + metricName + "] is defined for ResourceType {"
-            + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
-
-        ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
-        long timeoutMillis = 5000;
-        if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            throw new IllegalStateException("Resource component for " + resource + " has not yet been started.");
-        }
-        MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
-            FacetLockType.READ, timeoutMillis, false, false, false);
-        MeasurementReport report = new MeasurementReport();
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
-            measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
-        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
-        requests.add(request);
-        try {
-            measurementFacet.getValues(report, requests);
-        } catch (Exception e) {
-            System.out.println("====== Error occurred during collection of metric [" + metricName + "] on " + resource
-                + ": " + e);
-            throw new RuntimeException("Error occurred during collection of metric [" + metricName + "] on " + resource
-                + ": " + e);
-        }
-        return report;
     }
 
     // **************************** RESOURCE CONFIG ************************** //

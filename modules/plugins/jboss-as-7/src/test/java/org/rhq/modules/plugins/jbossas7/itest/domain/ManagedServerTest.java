@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,11 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.testng.Assert.assertEquals;
 
 import org.testng.annotations.Test;
@@ -56,25 +59,22 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
         managedServer = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
     }
 
-    @Test(priority = 1021, enabled = false)
+    @Test(priority = 1021)
     public void testRestart() throws Exception {
 
         Resource resource = getResource();
-        // No parameter -> AS7 api call does not block
-        invokeOperationAndAssertSuccess(resource, "restart", null);
-        waitForServerToBeUpAgain(resource);
 
-        // Now test explicit parameters
         Configuration configuration = new Configuration();
+        configuration.put(new PropertySimple("blocking", "true"));
+        configuration.put(new PropertySimple("operationTimeout", "120"));
 
         // API is supposed to block until managed server is up
-        configuration.put(new PropertySimple("blocking", true));
         invokeOperationAndAssertSuccess(resource, "restart", configuration);
         waitForServerToBeUpAgain(resource);
 
         // API call does not block
-        configuration.put(new PropertySimple("blocking", false));
-        invokeOperationAndAssertSuccess(resource, "restart", null);
+        configuration.put(new PropertySimple("blocking", "false"));
+        invokeOperationAndAssertSuccess(resource, "restart", configuration);
 
         waitForServerToBeUpAgain(resource);
 
@@ -82,13 +82,14 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
 
     private void waitForServerToBeUpAgain(Resource resource) throws InterruptedException, PluginContainerException {
         int count = 0;
+        long pause_seconds = 1;
         do {
-            Thread.sleep(5000L); // We need to wait a little as this is non-blocking
+            Thread.sleep(SECONDS.toMillis(pause_seconds));
             count++;
-        } while (getAvailability(resource) != AvailabilityType.UP && count < 10);
+        } while (getAvailability(resource) != UP && SECONDS.toMinutes(pause_seconds * count) < 5);
 
         AvailabilityType avail = getAvailability(getResource());
-        assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, UP);
     }
 
     private Resource getResource() {

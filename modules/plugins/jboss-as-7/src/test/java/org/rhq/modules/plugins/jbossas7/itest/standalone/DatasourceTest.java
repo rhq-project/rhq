@@ -58,7 +58,7 @@ public class DatasourceTest extends AbstractJBossAS7PluginTest {
     private ResourceType datasourceResourceType;
     private Resource datasourceTestResource;
 
-    // only need servers to create the management users necessary ti load the module options
+    // only need servers to create the management users necessary to load the module options
     @Test(priority = -10000)
     @RunDiscovery(discoverServers = true, discoverServices = false)
     public void initialDiscoveryTest() throws Exception {

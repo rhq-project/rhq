@@ -647,16 +647,30 @@
                    explicit execution decls. Even executing independently, they do all use and affect a single test EAP
                    server, so it is possible that one test class can affect another downstream by manipulating the EAP
                    server. Test execution order:
-                   1) The startup/shutdown tests are sensitive to the effects the other test classes have on the EAP test server:
+                   1) GenericJbossAS7PluginTest, it doesn't alter anything in the EAP instance, so let it go first
+                   2) The startup/shutdown tests are sensitive to the effects the other test classes have on the EAP test server:
                       - DomainServerComponentTests
                       - StandaloneServerComponentTests
-                   2) The standalone tests in no particular order.
-                   3) The domain tests in no particular order.  
-                   4) GenericJbossAS7PluginTest, just seems to be best after the other tests
-                   5) AfterSuiteTest, always run at the end to ensure we kill any leftover processes                 
+                   3) The standalone tests in no particular order.
+                   4) The domain tests in no particular order.  
+                   5) The nonpc tests, together, which seems to be OK
+                   6) AfterSuiteTest, always run at the end to ensure we kill any leftover processes                 
               -->
               <execution>
-                <id>DomainServerComponentTests</id>
+                <id>GenericJbossAS7PluginTest</id>              
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/GenericJBossAS7PluginTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              
+              <execution>
+                <id>DomainServerComponentTests</id>              
                 <configuration>
                   <includes>
                     <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>
@@ -811,6 +825,9 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+              
+              <!-- The only real test in here has been disabled since 2012. It should be enabld or
+                   the test class should be removed.
               <execution>
                 <id>ManagedServerTest</id>
                 <configuration>
@@ -823,11 +840,13 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+              -->
+              
               <execution>
-                <id>GenericJbossAS7PluginTest</id>
+                <id>nonpc</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/GenericJBossAS7PluginTest.java</include>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/nonpc/**Test.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -848,6 +867,7 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+
             </executions>
           </plugin>
 

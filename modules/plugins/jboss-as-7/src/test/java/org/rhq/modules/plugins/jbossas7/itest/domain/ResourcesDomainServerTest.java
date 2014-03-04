@@ -22,8 +22,6 @@ package org.rhq.modules.plugins.jbossas7.itest.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -37,8 +35,6 @@ import org.rhq.test.arquillian.RunDiscovery;
  */
 @Test(groups = { "integration", "pc", "domain" }, singleThreaded = true)
 public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
-    private Log log = LogFactory.getLog(this.getClass());
-
     private Resource platform;
     private Resource server;
 
@@ -48,8 +44,8 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         platform = validatePlatform();
         server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
             DomainServerComponentTest.RESOURCE_KEY);
+        waitForAsyncDiscoveryToStabilize(server);
     }
-
 
     @Test(priority = 1031)
     public void loadUpdateResourceConfiguration() throws Exception {
@@ -80,12 +76,6 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("Connection Factory (Profile)");
         ignoredResources.add("Pooled Connection Factory (Managed Server)");
         ignoredResources.add("Connection Factory (Managed Server)");
-
-        ignoredResources.add("DataSource (Profile)");
-        ignoredResources.add("DataSource (Managed)");
-
-        ignoredResources.add("Cluster Connection (Profile)");
-
         ignoredResources.add("Memory Pool");
         ignoredResources.add("Periodic Rotating File Handler");
         ignoredResources.add("Console Handler");

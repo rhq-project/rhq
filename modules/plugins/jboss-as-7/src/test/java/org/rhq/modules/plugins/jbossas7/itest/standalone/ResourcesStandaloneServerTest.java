@@ -22,8 +22,6 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -36,9 +34,7 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
-public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
-    private Log log = LogFactory.getLog(this.getClass());
-
+public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
     private Resource platform;
     private Resource server;
 
@@ -48,6 +44,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
         platform = validatePlatform();
         server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
             StandaloneServerComponentTest.RESOURCE_KEY);
+        waitForAsyncDiscoveryToStabilize(server);
     }
 
     @Test(priority = 11)

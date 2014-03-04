@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import com.google.gwt.i18n.client.DateTimeFormat;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 public class MeasurementUtility {
@@ -133,6 +134,20 @@ public class MeasurementUtility {
                 summary.getMetric(metricKeys[i]).setValueFmt(formattedValues[i]);
             }
         }
+    }
+
+    public  static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
+        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
+        MeasurementNumericValueAndUnits returnValue;
+
+        // adjust for percentage numbers
+        if (measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100, newValue.getUnits());
+        } else {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue(), newValue.getUnits());
+        }
+
+        return returnValue;
     }
 
 }

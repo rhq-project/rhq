@@ -395,16 +395,5 @@
         </profile>
 
     </profiles>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>codehaus-repo</id>
-      <url>https://nexus.codehaus.org/content/groups/public</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-
 </project>
 

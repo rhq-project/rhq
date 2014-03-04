@@ -77,7 +77,13 @@ import org.rhq.core.domain.tagging.Tag;
         + "   SET bd.replacedBundleDeploymentId = NULL " //        
         + " WHERE bd.replacedBundleDeploymentId IN " //        
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
-        + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
+        + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) "),
+    @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_DEPLOYMENT_REMOVE, query = "" //
+        + "UPDATE BundleDeployment bd " //
+        + "   SET bd.replacedBundleDeploymentId = ( SELECT innerbd.replacedBundleDeploymentId "
+        + "                                         FROM BundleDeployment innerbd "
+        + "                                         WHERE innerbd.id = :bundleId ) " //        
+        + " WHERE bd.replacedBundleDeploymentId = :bundleId ") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DEPLOYMENT")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -87,6 +93,7 @@ public class BundleDeployment implements Serializable {
     public static final String QUERY_FIND_ALL = "BundleDeployment.findAll";
     public static final String QUERY_UPDATE_FOR_DESTINATION_REMOVE = "BundleDeployment.updateForDestinationRemove";
     public static final String QUERY_UPDATE_FOR_VERSION_REMOVE = "BundleDeployment.updateForVersionRemove";
+    public static final String QUERY_UPDATE_FOR_DEPLOYMENT_REMOVE = "BundleDeployment.updateForDeploymentRemove";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")

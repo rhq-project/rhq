@@ -245,17 +245,23 @@ public class SimpleDeployerTest {
         // fill the deployDir with some unrelated content
         String unrelatedFileName1 = "unrelated.txt";
         String unrelatedFileName2 = "unrelateddir/unrelated.txt";
+        String unrelatedEmptyDir = "unrelateddir2";
         String inTheSubdirFileName1 = "subdir/extra.txt";
         File unrelated1 = writeFile("unrelated1", this.deployDir, unrelatedFileName1);
         File unrelated2 = writeFile("unrelated2", this.deployDir, unrelatedFileName2);
         File inTheSubdir1 = writeFile("inTheSubdir1", this.deployDir, inTheSubdirFileName1);
+        File unrelatedEmpty = new File(this.deployDir,unrelatedEmptyDir);
+        unrelatedEmpty.mkdir();
+
         assert unrelated1.exists();
         assert unrelated2.exists();
         assert inTheSubdir1.exists();
+        assert unrelatedEmpty.exists();
 
         // deploy initial content
         String origFileName1 = "original-file1.txt";
-        String origFileName2 = "subdir/original-file2.txt";
+        String origDirName = "subdir";
+        String origFileName2 = origDirName+"/original-file2.txt";
         this.originalZipFile = createZip(new String[] { "content1", "content2" }, this.tmpDir, "original.zip",
             new String[] { origFileName1, origFileName2 });
         this.originalZipFiles = new HashSet<File>(1);
@@ -273,6 +279,7 @@ public class SimpleDeployerTest {
             assert !unrelated2.getParentFile().isDirectory() : "the deployment should have removed an unrelated dir";
             assert !unrelated2.exists() : "the deployment should have removed unrelated file2";
             assert !inTheSubdir1.exists() : "the deployment should have removed the in-the-subdir file in the subdir";
+            assert !unrelatedEmpty.exists() : "the deplooyment should have removed unrelated empty dir";
 
             assert this.diff.getBackedUpFiles().size() == 3 : this.diff;
             assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName1)).exists() : this.diff;
@@ -304,12 +311,14 @@ public class SimpleDeployerTest {
         assert !this.diff.wasCleaned() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
 
+        unrelatedEmpty.mkdir();
         // deploy new content
         this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment");
         this.diff = new DeployDifferences();
         this.metadata = new DeploymentsMetadata(this.deployDir);
         String newFileName1 = "new-file1.txt";
-        String newFileName2 = "newsubdir/new-file2.txt";
+        String newDirName = "newsubdir";
+        String newFileName2 = newDirName+"/new-file2.txt";
         File newZipFile = createZip(new String[] { "newcontent1", "newcontent2" }, this.tmpDir, "new.zip",
             new String[] { newFileName1, newFileName2 });
         HashSet<File> newZipFiles = new HashSet<File>(1);
@@ -326,19 +335,30 @@ public class SimpleDeployerTest {
         if (manageRootDir) {
             assert !unrelated1.exists() : "the deployment did not remove unrelated file1";
             assert !unrelated2.exists() : "the deployment did not remove unrelated file1";
+            assert !unrelatedEmpty.exists() : "the deployment did not remove unrelated file2";
         } else {
             assert unrelated1.exists() : "the deployment removed unrelated file1 but we aren't managing the root dir";
             assert unrelated2.exists() : "the deployment removed unrelated file1 but we aren't managing the root dir";
+            assert unrelatedEmpty.exists() : "the deployment removed unrelated file2 but we aren't managing the root dir";
         }
 
-        assert this.diff.getAddedFiles().size() == 2 : this.diff;
+        assert this.diff.getAddedFiles().size() == 3 : this.diff;
         assert this.diff.getAddedFiles().contains(newFileName1) : this.diff;
+        assert this.diff.getAddedFiles().contains(newDirName) : this.diff;
         assert this.diff.getAddedFiles().contains(newFileName2) : this.diff;
-        assert this.diff.getDeletedFiles().size() == 2 : this.diff;
+        if (manageRootDir) {
+            assert this.diff.getDeletedFiles().size() == 4 : this.diff;
+            assert this.diff.getDeletedFiles().contains(unrelatedEmptyDir) : this.diff;
+            assert this.diff.getBackedUpFiles().containsKey(unrelatedEmptyDir) : this.diff;
+        }
+        else {
+            assert this.diff.getDeletedFiles().size() == 3 : this.diff;
+            assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
+        }
         assert this.diff.getDeletedFiles().contains(origFileName1) : this.diff;
+        assert this.diff.getDeletedFiles().contains(origDirName) : this.diff;
         assert this.diff.getDeletedFiles().contains(origFileName2) : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
-        assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getRestoredFiles().isEmpty() : this.diff;

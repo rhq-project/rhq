@@ -20,9 +20,9 @@
   </organization>
 
   <scm>
-    <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
-    <url>http://git.fedorahosted.org/git/rhq/rhq.git</url>
+    <connection>scm:git:ssh://github.com/rhq-project/rhq</connection>
+    <developerConnection>scm:git:ssh://github.com/rhq-project/rhq</developerConnection>
+    <url>https://github.com/rhq-project/rhq</url>
   </scm>
 
   <issueManagement>
@@ -1309,9 +1309,7 @@
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>exec-maven-plugin</artifactId>
-           <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
-                      upgrade to that version. -->
-           <version>1.2.1</version>
+           <version>1.2.1.jbossorg-3</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>

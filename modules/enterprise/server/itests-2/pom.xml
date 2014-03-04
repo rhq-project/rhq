@@ -15,11 +15,6 @@
   <name>RHQ Server JAR Integration Tests</name>
   <description>RHQ enterprise server JAR integration tests</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/itests-2/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/itests-2/</developerConnection>
-  </scm>
-
   <properties>
     <rhq.ant-bundle.serverplugin.path>${settings.localRepository}/org/rhq/rhq-serverplugin-ant-bundle/${project.version}/rhq-serverplugin-ant-bundle-${project.version}.jar</rhq.ant-bundle.serverplugin.path>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>

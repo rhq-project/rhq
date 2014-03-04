@@ -106,18 +106,6 @@
             <!-- TODO add your own maven repositories here (if needed) -->
         </repositories>
 
-        <pluginRepositories>
-            <pluginRepository>
-                <snapshots>
-                    <enabled>false</enabled>
-                </snapshots>
-                <id>jboss</id>
-                <name>JBoss Plugin Repository</name>
-                <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-            </pluginRepository>
-        </pluginRepositories>
-
-
         <dependencies>
             <dependency>
                 <groupId>commons-logging</groupId>

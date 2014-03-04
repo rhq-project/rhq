@@ -56,8 +56,8 @@ public class BundleServerServiceImpl implements BundleServerService {
     public void addDeploymentHistory(int bundleDeploymentId, BundleResourceDeploymentHistory history) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            bm.addBundleResourceDeploymentHistoryInNewTrans(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId,
-                history);
+            bm.addBundleResourceDeploymentHistoryInNewTrans(LookupUtil.getSubjectManager().getOverlord(),
+                bundleDeploymentId, history);
         } catch (Exception e) {
             log.error("Failed to add history to deployment id: " + bundleDeploymentId, e);
             throw new WrappedRemotingException(e);
@@ -115,8 +115,8 @@ public class BundleServerServiceImpl implements BundleServerService {
     public void setBundleDeploymentStatus(int bundleDeploymentId, BundleDeploymentStatus status) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            bm.setBundleResourceDeploymentStatus(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId,
-                status);
+            bm.setBundleResourceDeploymentStatusInNewTransaction(LookupUtil.getSubjectManager().getOverlord(),
+                bundleDeploymentId, status);
         } catch (Exception e) {
             log.error("Failed to set status for deployment id: " + bundleDeploymentId, e);
             throw new WrappedRemotingException(e);

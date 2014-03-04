@@ -157,6 +157,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         }
     }
 
+    @SuppressWarnings("unused")
     private void scheduleUnacknowledgedAlertsPollingJob(final ListGrid listGrid) {
         new Timer() {
             public void run() {

@@ -63,6 +63,7 @@
              dest="${rhq.agent.update.install-agent-dir}"/>
 
       <echo>chmod +x on executables under ${rhq.agent.update.install-agent-dir}/rhq-agent</echo>
+      <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/conf" perm="640" includes="agent-configuration.xml"/>
       <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/bin" perm="ug+rx" includes="*.sh"/>
       <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/lib" perm="ug+rx" includes="*.s0"/>
       <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/lib" perm="ug+rx" includes="*.sl"/>

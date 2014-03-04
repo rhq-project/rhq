@@ -49,6 +49,7 @@ public class FileHashcodeMap extends TreeMap<String, String> {
     public static final String UNKNOWN_DIR_HASHCODE = "?UNKNOWN_DIR_HASHCODE?";
     public static final String UNKNOWN_FILE_HASHCODE = "?UNKNOWN_FILE_HASHCODE?";
     public static final String DELETED_FILE_HASHCODE = "?DELETED_FILE_HASHCODE?";
+    public static final String DIRECTORY_HASHCODE ="?DIRECTORY?";
 
     private static final long serialVersionUID = 1L;
     private static final String COLUMN_SEPARATOR = "\t";
@@ -239,7 +240,11 @@ public class FileHashcodeMap extends TreeMap<String, String> {
             }
 
             if (originalFile.exists()) {
-                String currentHashcode = MessageDigestGenerator.getDigestString(originalFile);
+                String currentHashcode = FileHashcodeMap.DIRECTORY_HASHCODE;
+                if (!originalFile.isDirectory()) {
+                    currentHashcode = MessageDigestGenerator.getDigestString(originalFile);
+                }
+
                 current.put(originalFileString, currentHashcode);
 
                 // if file has been changed, mark it as such in our return map
@@ -305,9 +310,16 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         path = convertPath(path);
 
         // if this path is one the caller wants us to ignore, then return immediately
-        if (ignoreRegex != null && ignoreRegex.matcher(path).matches()) {
-            ignored.add(path);
-            return;
+        if (ignoreRegex != null) {
+            String matchPath = path;
+            // directory wouldn't match pattern unless i has trailing slash
+            if (fileOrDir.isDirectory()) {
+                matchPath = convertPath(path+File.separator);
+            }
+            if (ignoreRegex.matcher(matchPath).matches()) {
+                ignored.add(path);
+                return;
+            }
         }
 
         if (fileOrDir.isDirectory()) {
@@ -338,6 +350,14 @@ public class FileHashcodeMap extends TreeMap<String, String> {
                         }
                         relatedTopLevelFiles.add(topLevelName); // this is a file or dir at the top root dir                             
                     }
+                }
+            }
+            // we also care about directories and we're reporting them as newFiles
+            if (level > 0 && reportNewRootFilesAsNew) {
+             // if the file is not yet known to us, add it to the map of new files
+                if (!containsKey(path)) {
+                    // just insert directory with non-important hash value
+                    newFiles.put(path, DIRECTORY_HASHCODE);
                 }
             }
 

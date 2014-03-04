@@ -68,6 +68,12 @@ public interface AgentClient {
      */
     boolean ping(long timeoutMillis);
 
+    /**
+     * Makes the agent download the plugin updates from the server and make its plugin container use them.
+     * @since 4.11
+     */
+    void updatePlugins();
+
     // each agent subsystem has two getters for it below - one allows you to override the timeout, one uses the default timeout
 
     BundleAgentService getBundleAgentService();

@@ -28,16 +28,28 @@ import javax.ejb.EJBException;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
+import org.rhq.enterprise.server.test.TestAgentClient;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import junit.framework.Assert;
 
 /**
  * Unit tests for {@link PluginManagerBean}.
@@ -52,6 +64,10 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     private SubjectManagerLocal subjectMgr;
     private PluginManagerLocal pluginMgr;
+    private AgentManagerLocal agentMgr;
+    private TestServerCommunicationsService agentServiceContainer;
+    private boolean updatePluginsCalled;
+    private Agent agent;
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -59,8 +75,37 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
+        agentMgr = LookupUtil.getAgentManager();
+
+        TopologyManagerLocal topMgr = LookupUtil.getTopologyManager();
+        Server svr = topMgr.findServersByCriteria(subjectMgr.getOverlord(), new ServerCriteria()).get(0);
+
+        agent = new Agent();
+        agent.setAddress("kachny");
+        agent.setAgentToken("1234");
+        agent.setName("kachny");
+        agent.setPort(1234);
+        agent.setRemoteEndpoint("kachny");
+        agent.setServer(svr);
+        agentMgr.createAgent(agent);
 
         getPluginScannerService().startDeployment();
+
+        agentServiceContainer = prepareForTestAgents(new TestServerCommunicationsService() {
+            @Override
+            public AgentClient getKnownAgentClient(Agent agent) {
+                AgentClient ret = new TestAgentClient(agent, this) {
+                    @Override
+                    public void updatePlugins() {
+                        updatePluginsCalled = true;
+                    }
+                };
+
+                agentClients.put(agent, ret);
+
+                return ret;
+            }
+        });
     }
 
     @Override
@@ -68,6 +113,8 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
 
         unpreparePluginScannerService();
+
+        agentMgr.deleteAgent(agent);
 
         super.afterMethod();
     }
@@ -293,6 +340,14 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     @Test(priority = 10, alwaysRun = true, dependsOnMethods = { "pluginPurgeCheckShouldUseExactMatchesInQuery" })
     public void afterClassWorkTest() throws Exception {
         afterClassWork();
+    }
+
+    @Test
+    public void testScheduleUpdateOnAgents() throws Exception {
+        Subject overlord = subjectMgr.getOverlord();
+        pluginMgr.schedulePluginUpdateOnAgents(overlord, 0);
+        Thread.sleep(200); //wait just a bit so that the request can bubble through the scheduler
+        Assert.assertTrue(updatePluginsCalled);
     }
 
     private Plugin getPlugin(String name) {

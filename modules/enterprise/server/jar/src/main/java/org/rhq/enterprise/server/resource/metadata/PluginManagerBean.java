@@ -1,8 +1,10 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,6 +27,10 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDetail;
+import org.quartz.ObjectAlreadyExistsException;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 
 import org.jboss.ejb3.annotation.TransactionTimeout;
 
@@ -34,24 +40,38 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.PluginCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QuartzUtil;
 
 @Stateless
-public class PluginManagerBean implements PluginManagerLocal {
+public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemote {
 
     private final Log log = LogFactory.getLog(PluginManagerBean.class);
 
@@ -78,6 +98,15 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @EJB
     private SubjectManagerLocal subjectMgr;
+
+    @EJB
+    private ContentManagerLocal contentManager;
+
+    @EJB
+    private AgentManagerLocal agentManager;
+
+    @EJB
+    private SchedulerLocal scheduler;
 
     @Override
     public Plugin getPlugin(String name) {
@@ -547,6 +576,69 @@ public class PluginManagerBean implements PluginManagerLocal {
         }
 
         return typesUpdated;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void update(Subject subject) throws Exception {
+        PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
+        scanner.scanAndRegister();
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception {
+        JobDetail jobDetail = UpdatePluginsOnAgentsJob.getJobDetail();
+        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, delayInMilliseconds);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+        } catch (ObjectAlreadyExistsException e) {
+            //well, there already is a plugin update job scheduled, so let's just not add another one.
+            log.debug("A request to update plugins on agents seems to already be scheduled." +
+                " Ignoring the current request with the error message: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception {
+        File base = getPluginDropboxDirectory();
+
+        File targetFile = new File(base, pluginJarName);
+        FileOutputStream out = new FileOutputStream(targetFile);
+        ByteArrayInputStream in = new ByteArrayInputStream(pluginJarBytes);
+
+        StreamUtil.copy(in, out, true);
+        update(subject);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception {
+        File pluginJar = contentManager.getTemporaryContentFile(handle);
+        File base = getPluginDropboxDirectory();
+
+        FileUtil.copyFile(pluginJar, new File(base, pluginJarName));
+
+        update(subject);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<Plugin> findPluginsByCriteria(Subject subject, PluginCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        CriteriaQueryRunner<Plugin> queryRunner = new CriteriaQueryRunner<Plugin>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        deletePlugins(subject, pluginIds);
+        markPluginsForPurge(subject, pluginIds);
     }
 
     private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {

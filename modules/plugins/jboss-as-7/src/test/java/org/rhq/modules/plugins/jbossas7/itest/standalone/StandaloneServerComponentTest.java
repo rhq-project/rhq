@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
@@ -59,6 +60,9 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     private static final String RELOAD_OPERATION_NAME = "reload";
     private static final String RESTART_OPERATION_NAME = "restart";
 
+    private Resource platform;
+    private Resource standaloneServer;
+
     @Override
     protected ResourceType getServerResourceType() {
         return RESOURCE_TYPE;
@@ -67,6 +71,11 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     @Override
     protected String getServerResourceKey() {
         return RESOURCE_KEY;
+    }
+
+    @Override
+    protected Resource getServerResource() {
+        return standaloneServer;
     }
 
     @Override
@@ -79,10 +88,12 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         return "jboss.standalone.portOffset";
     }
 
-    @Test(priority = 1, groups = "discovery")
-    @RunDiscovery
-    public void testStandaloneServerDiscovery() throws Exception {
-        super.testAutoDiscovery();
+    @Test(priority = -10000)
+    @RunDiscovery(discoverServers = true, discoverServices = false)
+    public void initialDiscoveryTest() throws Exception {
+
+        platform = validatePlatform();
+        standaloneServer = waitForResourceByTypeAndKey(platform, platform, RESOURCE_TYPE, RESOURCE_KEY);
     }
 
     @Test(priority = 2)

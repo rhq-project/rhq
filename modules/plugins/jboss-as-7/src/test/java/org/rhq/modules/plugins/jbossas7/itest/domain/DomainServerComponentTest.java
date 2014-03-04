@@ -27,6 +27,7 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
@@ -48,6 +49,9 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         + new File(JBOSS_HOME, "domain" + File.separator + "configuration" + File.separator + "host.xml")
             .getAbsolutePath();
 
+    private Resource platform;
+    private Resource domainServer;
+
     @Override
     protected ResourceType getServerResourceType() {
         return RESOURCE_TYPE;
@@ -56,6 +60,11 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     @Override
     protected String getServerResourceKey() {
         return RESOURCE_KEY;
+    }
+
+    @Override
+    protected Resource getServerResource() {
+        return domainServer;
     }
 
     @Override
@@ -68,10 +77,12 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         return "jboss.domain.portOffset";
     }
 
-    @Test(priority = 1000, groups = "discovery")
-    @RunDiscovery
-    public void testDomainServerDiscovery() throws Exception {
-        super.testAutoDiscovery();
+    @Test(priority = -10000)
+    @RunDiscovery(discoverServers = true, discoverServices = false)
+    public void initialDiscoveryTest() throws Exception {
+
+        platform = validatePlatform();
+        domainServer = waitForResourceByTypeAndKey(platform, platform, RESOURCE_TYPE, RESOURCE_KEY);
     }
 
     @Test(priority = 1001)

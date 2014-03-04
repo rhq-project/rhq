@@ -277,13 +277,25 @@ public abstract class DatabaseType {
      * Get the Integer representation of the number type supplied by the db vendor for an integer field value.
      * The default implementation simply applies a cast to the passed in number and is appropriate for DB types
      * that support a native integer field type (like Postgres).  Other db types should override this method
-     * (like Oracle).  
-     * 
+     * (like Oracle).
+     *
      * @param number
      * @return
      */
     public Integer getInteger(Object number) {
         return (Integer) number;
+    }
+
+    /**
+     * Get the Long representation of the number type supplied by the db vendor for a long field value.
+     * The default implementation simply applies a cast to the passed in number and is appropriate for DB types
+     * that support a native long field type.  Other db types should override this method (like Oracle).
+     *
+     * @param number
+     * @return
+     */
+    public Long getLong(Object number) {
+        return (Long) number;
     }
 
     /**
@@ -310,7 +322,7 @@ public abstract class DatabaseType {
      * the implementation determined the information WITHOUT generating an SQLException (meaning the
      * transaction has not been invalidated. Otherwise, throws an exception which should be handled.
      *
-     * @throws IllegalStateException if the check generated an expected "table does not exist SQLException (note, the 
+     * @throws IllegalStateException if the check generated an expected "table does not exist SQLException (note, the
      * exception invalidates the transaction).
      * @throws Exception if the table check failed for a reason other than a "table does not exist" error.
      */
@@ -646,8 +658,8 @@ public abstract class DatabaseType {
      * Provides the value to be used for the ESCAPE character in string literals.  The SQL standard is a single
      * character, typically '\', but not every dbType conforms to the standard.  To override the db default set
      * the rhq.server.database.escape-character system property.
-     * 
-     * @return If set, the value of rhq.server.database.escape-character, otherwise the db default. 
+     *
+     * @return If set, the value of rhq.server.database.escape-character, otherwise the db default.
      */
     public String getEscapeCharacter() {
         String result = System.getProperty("rhq.server.database.escape-character");
@@ -658,7 +670,7 @@ public abstract class DatabaseType {
     /**
      * Most vendors support foreign keys to itself that in fact perform cascade delete. But some do not and
      * that currently affects our data model. (see rhq_config_property in content-schema.xml).
-     *  
+     *
      * @return true unless overriden to return false.
      */
     public boolean supportsSelfReferringCascade() {

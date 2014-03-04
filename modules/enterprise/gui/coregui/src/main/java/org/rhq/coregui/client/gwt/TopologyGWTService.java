@@ -235,4 +235,12 @@ public interface TopologyGWTService extends RemoteService {
      */
     void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException;
     
+    /**
+     * Returns the id of managed reource representing this agent instance
+     * 
+     * @param agentId an id of <code>Agent</code> instance
+     * @return id of the associated resource <code>null</code> if there is no associated resource
+     * @throws RuntimeException
+     */
+    Integer getResourceIdOfAgent(int agentId) throws RuntimeException;
 }

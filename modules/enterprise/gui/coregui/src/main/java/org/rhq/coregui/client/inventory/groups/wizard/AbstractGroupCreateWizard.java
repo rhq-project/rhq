@@ -75,21 +75,25 @@ public abstract class AbstractGroupCreateWizard extends AbstractWizard {
     }
 
     public boolean createGroup() {
+        return createGroup(createStep.getGroup(), memberStep.getSelectedResourceIds());
+    }
+
+    public boolean createGroup(final ResourceGroup newGroupToCreate, final int[] selectedGroupMembersResourceIds) {
 
         ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
-        groupService.createResourceGroup(createStep.getGroup(), memberStep.getSelectedResourceIds(),
+        groupService.createResourceGroup(newGroupToCreate, selectedGroupMembersResourceIds,
             new AsyncCallback<ResourceGroup>() {
                 public void onFailure(Throwable caught) {
                     String msg = caught.getMessage();
-                    CoreGUI.getErrorHandler().handleError(MSG.view_groupCreateWizard_createFailure(createStep.getGroup().getName(),msg), caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_groupCreateWizard_createFailure(newGroupToCreate.getName(), msg), caught);
                 }
 
                 public void onSuccess(ResourceGroup result) {
                     String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise(result.getName());
                     String detailedMessage = MSG.view_groupCreateWizard_createSuccessful_full(result.getGroupCategory()
-                        .name().toLowerCase(), result.getName(), String
-                        .valueOf(memberStep.getSelectedResourceIds().length));
+                        .name().toLowerCase(), result.getName(), String.valueOf(selectedGroupMembersResourceIds.length));
                     CoreGUI.getMessageCenter().notify(new Message(conciseMessage, detailedMessage));
                     groupCreateCallback(result);
                 }

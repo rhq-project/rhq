@@ -34,6 +34,8 @@ import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityVi
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
+import org.rhq.coregui.client.util.MeasurementUtility;
+
 
 /**
  * The data portion of the graphs making these methods accessible via JSNI to
@@ -377,11 +379,11 @@ public class MetricGraphData implements JsonMetricProducer {
 
                 if (!Double.isNaN(measurement.getValue())) {
 
-                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
+                    MeasurementNumericValueAndUnits newHigh = MeasurementUtility.normalizeUnitsAndValues(measurement.getHighValue(),
                         definition.getUnits());
-                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
+                    MeasurementNumericValueAndUnits newLow = MeasurementUtility.normalizeUnitsAndValues(measurement.getLowValue(),
                         definition.getUnits());
-                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(),
+                    MeasurementNumericValueAndUnits newAvg = MeasurementUtility.normalizeUnitsAndValues(measurement.getValue(),
                         definition.getUnits());
                     if (!gotAdjustedMeasurementUnits) {
                         adjustedMeasurementUnits = newAvg.getUnits();
@@ -479,20 +481,6 @@ public class MetricGraphData implements JsonMetricProducer {
         } else {
             lastOOB = null;
         }
-    }
-
-    private MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
-        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
-        MeasurementNumericValueAndUnits returnValue;
-
-        // adjust for percentage numbers
-        if (measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100, newValue.getUnits());
-        } else {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue(), newValue.getUnits());
-        }
-
-        return returnValue;
     }
 
     @Override

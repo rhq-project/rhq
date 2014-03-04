@@ -268,4 +268,13 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public Integer getResourceIdOfAgent(int agentId) throws RuntimeException {
+        try {
+            return topologyManager.getResourceIdOfAgent(getSessionSubject(), agentId);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

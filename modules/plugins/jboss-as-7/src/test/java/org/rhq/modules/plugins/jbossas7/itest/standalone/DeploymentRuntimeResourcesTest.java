@@ -24,7 +24,6 @@ import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.g
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getMissingMeasurements;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getTestDeploymentPackageDetails;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,11 +51,12 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
-import org.rhq.test.arquillian.DiscoveredResources;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -98,6 +98,9 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
         }
     }
 
+    private Resource standaloneServer;
+    private Resource deployment;
+
     protected void injectMocks(MockingServerServices serverServices) {
         Mockito.when(
             serverServices.getContentServerService().downloadPackageBitsGivenResource(Mockito.anyInt(),
@@ -120,12 +123,6 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
                 }
             });
     }
-
-    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "JBossAS7 Standalone Server")
-    private Set<Resource> standaloneResources;
-
-    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "Deployment")
-    private Set<Resource> deploymentResources;
 
     private long copyStreamAndReturnCount(OutputStream out) throws IOException {
         if (null == out) {
@@ -156,10 +153,14 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     @Test(priority = 10)
     @RunDiscovery
     public void testDeploy() throws Exception {
-        assertFalse(standaloneResources == null || standaloneResources.size() != 1,
-            "Exactly 1 AS7 standalone server resource should be present.");
+        Resource platform = validatePlatform();
+        standaloneServer = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
 
-        int serverResourceId = standaloneResources.iterator().next().getId();
+        //assertFalse(standaloneResources == null || standaloneResources.size() != 1,
+        //    "Exactly 1 AS7 standalone server resource should be present.");
+
+        int serverResourceId = standaloneServer.getId();
 
         ResourcePackageDetails packageDetails = getTestDeploymentPackageDetails(TestDeployments.JAVAEE6_TEST_APP);
 
@@ -180,10 +181,14 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
 
         assertEquals(response.getStatus(), CreateResourceStatus.SUCCESS,
             "The deployment failed with an error mesasge: " + response.getErrorMessage());
+
+        deployment = waitForResourceByTypeAndKey(platform, standaloneServer, new ResourceType("Deployment",
+            PLUGIN_NAME, ResourceCategory.SERVICE, null), "deployment=" + packageDetails.getName());
+        // these tests depend on the deployment children to be in inventory, make sure they are
+        waitForAsyncDiscoveryToStabilize(deployment, 5000L, 10);
     }
 
     @Test(priority = 12)
-    @RunDiscovery
     public void testRuntimeResources() throws Exception {
         ensureAllRuntimeServicesAreFound();
         for (RuntimeServiceType runtimeServiceType : RuntimeServiceType.values()) {
@@ -205,11 +210,10 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
                 }
             }
             foundAllRuntimeServices = !runtimeServiceMissing;
-            //Thread.sleep(SECONDS.toMillis(5));
+
         } while (!foundAllRuntimeServices
             && (System.currentTimeMillis() - start) < java.util.concurrent.TimeUnit.MINUTES.toMillis(10));
         Assert.assertTrue(foundAllRuntimeServices, "Could not find all runtime services");
-        //Thread.sleep(MINUTES.toMillis(5));
     }
 
     private boolean canGetMeasurementFacet(Set<Resource> resources) {
@@ -226,6 +230,10 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
             runtimeServiceType.getServiceTypeName());
         for (Resource resource : resources) {
             MeasurementFacet measurementFacet = getMeasurementFacet(resource);
+            // TODO (jshaughn) see why we get into this occasionally
+            System.out.println("--->>> " + resource + " MeasurementFacet=" + measurementFacet);
+            if (null == measurementFacet)
+                continue;
             MeasurementReport report = new MeasurementReport();
             Set<MeasurementScheduleRequest> measurementScheduleRequests = getMeasurementScheduleRequests(resource);
             measurementFacet.getValues(report, measurementScheduleRequests);
@@ -247,6 +255,7 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
             return resourceContainer.createResourceComponentProxy(MeasurementFacet.class, FacetLockType.READ,
                 SECONDS.toMillis(5), false, false, false);
         } catch (PluginContainerException e) {
+
             return null;
         }
     }
@@ -266,7 +275,6 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     }
 
     @Test(priority = 99)
-    @RunDiscovery
     public void testUndeploy() throws Exception {
         Resource deploymentResource = getDeploymentResource();
         DeleteResourceRequest request = new DeleteResourceRequest(0, deploymentResource.getId());
@@ -275,10 +283,7 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     }
 
     private Resource getDeploymentResource() {
-        assertFalse(deploymentResources == null || deploymentResources.size() != 1,
-            "Exactly 1 deployment resource should be present.");
-        return pluginContainer.getInventoryManager()
-            .getResourceContainer(deploymentResources.iterator().next().getId()).getResource();
+        return deployment;
     }
 
 }

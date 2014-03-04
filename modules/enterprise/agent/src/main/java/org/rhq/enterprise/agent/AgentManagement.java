@@ -22,6 +22,7 @@ import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +37,9 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -158,38 +162,57 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
 
     public OperationResult retrieveAllPluginInfo() {
         List<File> plugins;
-
+        OperationResult info = new OperationResult();
         ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             PluginUpdate updater = getPluginUpdateObject();
             plugins = updater.getCurrentPluginFiles();
+            PluginContainerConfiguration pcConfig = m_agent.getConfiguration().getPluginContainerConfiguration();
+            List<String> enabledPlugins = pcConfig.getEnabledPlugins();
+            List<String> disabledPlugins = pcConfig.getDisabledPlugins();
+            
+            PropertyList list = new PropertyList("plugins".intern());
+            info.getComplexResults().put(list);
+
+            if (plugins.size() > 0) {
+                for (File plugin : plugins) {
+                    String pluginName;
+                    String pluginDisplayName;
+                    try {
+                        URL url = plugin.toURI().toURL();
+                        PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+                        pluginName = descriptor.getName();
+                        pluginDisplayName = descriptor.getDisplayName();
+                    } catch (Exception t) {
+                        pluginName = "?cannot-parse-descriptor?".intern();
+                        pluginDisplayName = "?cannot-parse-descriptor?".intern();
+                    }
+
+                    PropertyMap map = new PropertyMap("plugin".intern());
+                    map.put(new PropertySimple(PLUGIN_INFO_NAME, pluginName));
+                    map.put(new PropertySimple(PLUGIN_INFO_DISPLAY_NAME, pluginDisplayName));
+                    map.put(new PropertySimple(PLUGIN_INFO_PATH, plugin.getAbsoluteFile()));
+                    map.put(new PropertySimple(PLUGIN_INFO_TIMESTAMP, new Date(plugin.lastModified())));
+                    map.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
+                    // plugin is either whitelisted or the white list is empty
+                    boolean isEnabled = enabledPlugins.isEmpty() || enabledPlugins.contains(pluginName);
+                    // ..and is not on the black list
+                    isEnabled &= !disabledPlugins.contains(pluginName);
+                    map.put(new PropertySimple(PLUGIN_INFO_ENABLED, isEnabled));
+
+                    try {
+                        map.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));
+                    } catch (IOException e) {
+                        map.put(new PropertySimple(PLUGIN_INFO_MD5, e.toString()));
+                    }
+
+                    list.add(map);
+                }
+            }
         } finally {
             Thread.currentThread().setContextClassLoader(originalCL);
         }
-
-        OperationResult info = new OperationResult();
-        PropertyList list = new PropertyList("plugins");
-        info.getComplexResults().put(list);
-
-        if (plugins.size() > 0) {
-            for (File plugin : plugins) {
-                PropertyMap map = new PropertyMap("plugin");
-                map.put(new PropertySimple(PLUGIN_INFO_NAME, plugin.getName()));
-                map.put(new PropertySimple(PLUGIN_INFO_PATH, plugin.getAbsoluteFile()));
-                map.put(new PropertySimple(PLUGIN_INFO_TIMESTAMP, new Date(plugin.lastModified())));
-                map.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
-
-                try {
-                    map.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));
-                } catch (IOException e) {
-                    map.put(new PropertySimple(PLUGIN_INFO_MD5, e.toString()));
-                }
-
-                list.add(map);
-            }
-        }
-
         return info;
     }
 
@@ -201,31 +224,41 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             PluginUpdate updater = getPluginUpdateObject();
             plugins = updater.getCurrentPluginFiles();
+
+            if (plugins.size() > 0) {
+                for (File plugin : plugins) {
+                    String pluginDisplayName;
+                    String pluginNameToReturn;
+                    try {
+                        URL url = plugin.toURI().toURL();
+                        PluginDescriptor pluginDescriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+                        pluginDisplayName = pluginDescriptor.getDisplayName();
+                        pluginNameToReturn = pluginDescriptor.getName();
+                    } catch (Exception t) {
+                        continue;
+                    }
+
+                    if (pluginNameToReturn.toLowerCase().equals(pluginName.toLowerCase())) {
+                        OperationResult opResults = new OperationResult();
+                        Configuration info = opResults.getComplexResults();
+                        info.put(new PropertySimple(PLUGIN_INFO_NAME, pluginNameToReturn));
+                        info.put(new PropertySimple(PLUGIN_INFO_DISPLAY_NAME, pluginDisplayName));
+                        info.put(new PropertySimple(PLUGIN_INFO_PATH, plugin.getAbsoluteFile()));
+                        info.put(new PropertySimple(PLUGIN_INFO_TIMESTAMP, new Date(plugin.lastModified())));
+                        info.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
+                        try {
+                            info.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));
+                        } catch (IOException e) {
+                            info.put(new PropertySimple(PLUGIN_INFO_MD5, e.toString()));
+                        }
+
+                        return opResults;
+                    }
+                }
+            }
         } finally {
             Thread.currentThread().setContextClassLoader(originalCL);
         }
-
-        if (plugins.size() > 0) {
-            for (File plugin : plugins) {
-                if (plugin.getName().equals(pluginName)) {
-                    OperationResult opResults = new OperationResult();
-                    Configuration info = opResults.getComplexResults();
-                    info.put(new PropertySimple(PLUGIN_INFO_NAME, plugin.getName()));
-                    info.put(new PropertySimple(PLUGIN_INFO_PATH, plugin.getAbsoluteFile()));
-                    info.put(new PropertySimple(PLUGIN_INFO_TIMESTAMP, new Date(plugin.lastModified())));
-                    info.put(new PropertySimple(PLUGIN_INFO_SIZE, plugin.length()));
-
-                    try {
-                        info.put(new PropertySimple(PLUGIN_INFO_MD5, MessageDigestGenerator.getDigestString(plugin)));
-                    } catch (IOException e) {
-                        info.put(new PropertySimple(PLUGIN_INFO_MD5, e.toString()));
-                    }
-
-                    return opResults;
-                }
-            }
-        }
-
         throw new IllegalArgumentException("There is no plugin named [" + pluginName + "]");
     }
 

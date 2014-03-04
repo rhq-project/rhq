@@ -2,6 +2,7 @@ package org.rhq.coregui.client.util.measurement;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.coregui.client.util.MeasurementConverterClient;
 
 /** An RPC gwt serializable implemenation of parts of MonitorUtils
  *  utility.
@@ -39,9 +40,22 @@ public class GwtMonitorUtils {
             units = MeasurementUnits.NONE.name();
         }
 
-        String[] formattedValues = GwtMeasurementConverter.formatToSignificantPrecision(summary, MeasurementUnits
-            .valueOf(units), true);
+        String[] formattedValues = MeasurementConverterClient.formatToSignificantPrecision(summary,
+            MeasurementUnits.valueOf(units), true);
 
         return formattedValues;
+    }
+
+    /**
+     * Single value version of formatSimpleMetrics for convenience.
+     * @param value
+     * @param md
+     * @return formatted string value
+     */
+    public static String formatSimpleMetric(double value, MeasurementDefinition md) {
+        double[] dArray = new double[1];
+        dArray[0] = value;
+        return  formatSimpleMetrics( dArray, md) [0];
+
     }
 }

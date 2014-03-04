@@ -22,6 +22,7 @@ package org.rhq.test.arquillian;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -217,7 +218,7 @@ public class FakeServerInventory {
 
                 r = fakePersist(r, InventoryStatus.COMMITTED, new HashSet<String>());
 
-                return new MergeResourceResponse(r.getId(), exists);
+                return new MergeResourceResponse(r.getId(), (exists ? r.getMtime() : r.getCtime()), exists);
             }
         };
     }
@@ -250,6 +251,18 @@ public class FakeServerInventory {
                 }
             }
         };
+    }
+
+    private void printPersistedResource(Resource r) {
+        String indent = "PERSISTED ";
+        Resource parent = r.getParentResource();
+        while (null != parent) {
+            indent += "..";
+            parent = parent.getParentResource();
+        }
+        ResourceType rt = r.getResourceType();
+        System.out.println(indent + r.getName() + ":" + r.getResourceKey() + ", type=["
+            + ((null == rt) ? "unknown" : (rt.getPlugin() + ":" + rt.getName())) + "] at " + (new Date()));
     }
 
     public synchronized Answer<Collection<ResourceSyncInfo>> getResourceSyncInfo() {
@@ -578,6 +591,7 @@ public class FakeServerInventory {
         if (!inProgressUUIds.add(agentSideResource.getUuid())) {
             return persisted;
         }
+        boolean added = false;
         if (persisted == null) {
             persisted = new Resource();
             if (agentSideResource.getId() != 0) {
@@ -597,6 +611,8 @@ public class FakeServerInventory {
             persisted.setResourceKey(agentSideResource.getResourceKey());
             persisted.setResourceType(agentSideResource.getResourceType());
             resourceStore.put(persisted.getUuid(), persisted);
+
+            added = true;
         }
 
         Resource parent = agentSideResource.getParentResource();
@@ -606,6 +622,10 @@ public class FakeServerInventory {
             parent.addChildResource(persisted);
         } else {
             persisted.setParentResource(parent);
+        }
+
+        if (added) {
+            printPersistedResource(persisted);
         }
 
         //persist the children
@@ -692,5 +712,9 @@ public class FakeServerInventory {
                 findResources(child, template, result, comparator);
             }
         }
+    }
+
+    public Resource getPlatform() {
+        return platform;
     }
 }

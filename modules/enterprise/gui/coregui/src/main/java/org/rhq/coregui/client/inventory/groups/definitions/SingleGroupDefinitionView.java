@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.inventory.groups.definitions;
 
 import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
@@ -105,6 +106,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
     private static final String TEMPLATE_JBOSSAS4_HOSTING_APP = MSG.view_dynagroup_template_jbossas4_hostingApp();
     private static final String TEMPLATE_JBOSSAS4_NONSECURED = MSG.view_dynagroup_template_jbossas4_nonsecured();
     private static final String TEMPLATE_DOWNED_RESOURCES = MSG.view_dynagroup_template_downedResources();
+    private static final String TEMPLATE_RHQ_AGENTS = MSG.view_dynagroup_template_rhq_agents();
 
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
@@ -474,6 +476,9 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                 "resource.type.name = JBossAS Server"));
         items.put(TEMPLATE_DOWNED_RESOURCES, //
             buildTemplate("resource.availability = DOWN"));
+        items.put(TEMPLATE_RHQ_AGENTS, //
+            buildTemplate("resource.type.plugin = RHQAgent", //
+                "resource.type.name = RHQ Agent"));
 
         return items;
     }

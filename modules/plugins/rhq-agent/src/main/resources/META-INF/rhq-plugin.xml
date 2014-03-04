@@ -93,11 +93,13 @@
          <results>
             <c:list-property name="plugins">
                <c:map-property name="plugin">
-                  <c:simple-property name="name" description="Name of the plugin" />
+                  <c:simple-property name="name" description="Short name of the plugin" />
+                  <c:simple-property name="displayName" description="Full name of the plugin" />
                   <c:simple-property name="path" description="Full path to the plugin as seen by the agent" />
                   <c:simple-property name="timestamp" description="Last time the plugin was updated" />
                   <c:simple-property name="size" description="Size of the plugin file" />
                   <c:simple-property name="md5" description="MD5 of the plugin file" />
+                  <c:simple-property name="enabled" type="boolean" description="Identifies whether the plugin is enabled on the agent" />
                </c:map-property>
             </c:list-property>
          </results>
@@ -110,7 +112,8 @@
             <c:simple-property name="pluginName" description="The name of the plugin whose info is to be retrieved"/>
          </parameters>
          <results>
-            <c:simple-property name="name" description="Name of the plugin" />
+            <c:simple-property name="name" description="Short name of the plugin" />
+            <c:simple-property name="displayName" description="Full name of the plugin" />
             <c:simple-property name="path" description="Full path to the plugin as seen by the agent" />
             <c:simple-property name="timestamp" description="Last time the plugin was updated" />
             <c:simple-property name="size" description="Size of the plugin file" />

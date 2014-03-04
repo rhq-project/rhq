@@ -163,4 +163,16 @@ public interface TopologyManagerLocal {
      * @return list of servers
      */
     PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria);
+    
+    
+    /**
+     * Returns the id of managed reource representing this agent instance
+     * 
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * 
+     * @param subject caller
+     * @param agentId an id of <code>Agent</code> instance
+     * @return id of the associated resource <code>null</code> if there is no associated resource
+     */
+    Integer getResourceIdOfAgent(Subject subject, int agentId);
 }

@@ -61,6 +61,11 @@ public interface AgentManagementMBean {
      * Identifies the name of a plugin.
      */
     String PLUGIN_INFO_NAME = "name";
+    
+    /**
+     * Identifies the display name of a plugin.
+     */
+    String PLUGIN_INFO_DISPLAY_NAME = "displayName";
 
     /**
      * Identifies the full path to a plugin.
@@ -76,6 +81,11 @@ public interface AgentManagementMBean {
      * Identifies the filesize of a plugin.
      */
     String PLUGIN_INFO_SIZE = "size";
+    
+    /**
+     * Identifies whether the plugin is currently being used by the agent
+     */
+    String PLUGIN_INFO_ENABLED = "enabled";
 
     /**
      * Identifies the MD5 of a plugin.

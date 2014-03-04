@@ -19,6 +19,8 @@
 
 package org.rhq.core.pc.inventory;
 
+import static org.rhq.core.util.StringUtil.isNotBlank;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -150,6 +152,8 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class InventoryManager extends AgentService implements ContainerService, DiscoveryAgentService {
+    private static final Log log = LogFactory.getLog(InventoryManager.class);
+
     private static final String INVENTORY_THREAD_POOL_NAME = "InventoryManager.discovery";
     private static final String AVAIL_THREAD_POOL_NAME = "InventoryManager.availability";
     private static final int AVAIL_THREAD_POOL_CORE_POOL_SIZE = 1;
@@ -169,8 +173,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
         SYNC_BATCH_SIZE = syncBatchSize;
     }
-
-    private static final Log log = LogFactory.getLog(InventoryManager.class);
 
     private final PluginContainerConfiguration configuration;
 
@@ -235,9 +237,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Constructs a new instance.
      * Call {@link #initialize()} once constructed.
      */
-    public InventoryManager(PluginContainerConfiguration configuration,
-            AgentServiceStreamRemoter streamRemoter, PluginManager pluginManager,
-            EventManager eventManager) {
+    public InventoryManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        PluginManager pluginManager, EventManager eventManager) {
         super(DiscoveryAgentService.class, streamRemoter);
         this.configuration = configuration;
         if (pluginManager == null)
@@ -378,7 +379,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             results = null;
         } catch (BlacklistedException be) {
             // Discovery did not run, because the ResourceType was blacklisted during a prior discovery scan.
-            log.debug(ThrowableUtil.getAllMessages(be));
+            if (log.isDebugEnabled()) {
+                log.debug(ThrowableUtil.getAllMessages(be));
+            }
             results = null;
         }
 
@@ -502,7 +505,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 + " milliseconds. This may be a plugin bug.", te);
             return null;
         } catch (BlacklistedException be) {
-            log.debug(ThrowableUtil.getAllMessages(be));
+            if (log.isDebugEnabled()) {
+                log.debug(ThrowableUtil.getAllMessages(be));
+            }
             return null;
         }
     }
@@ -960,8 +965,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             mergeResourceResponse = discoveryServerService.addResource(resource, ownerSubjectId);
 
             // Sync our local resource up with the one now in server inventory. Treat this like a newlyCommittedResource
+            // - set mtime (same as ctime for a new resource) to ensure this does not get picked up in an inventory sync
+            //   pass, we know we're currently in sync with the server.
             resource.setId(mergeResourceResponse.getResourceId());
-            resource.setMtime(0); // this will indicate that this resource is "dirty" and needs to be synced/merged later
+            resource.setMtime(mergeResourceResponse.getMtime());
             Set newResources = new LinkedHashSet<Resource>();
             newResources.add(resource);
             postProcessNewlyCommittedResources(newResources);
@@ -988,8 +995,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         catch (Throwable t) {
             if ((resource != null) && !resourceAlreadyExisted && (getResourceContainer(resource) != null)) {
                 // If the resource got added to inventory, roll it back (i.e. deactivate it, then remove it from inventory).
-                log.debug("Rolling back manual add of resource of type [" + resourceType.getName()
-                    + "] - removing resource with id [" + resource.getId() + "] from inventory...");
+                if (log.isDebugEnabled()) {
+                    log.debug("Rolling back manual add of resource of type [" + resourceType.getName()
+                        + "] - removing resource with id [" + resource.getId() + "] from inventory...");
+                }
                 deactivateResource(resource);
                 uninventoryResource(resource.getId());
             }
@@ -1017,10 +1026,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     static Resource createNewResource(DiscoveredResourceDetails details) {
-        // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
+        // Use a CopyOnWriteArraySet for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-        //        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
-        Resource resource = new Resource();
+        Set<Resource> childResources = new CopyOnWriteArraySet<Resource>();
+        Resource resource = new Resource(childResources);
 
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceKey(details.getResourceKey());
@@ -1038,10 +1047,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private Resource cloneResourceWithoutChildren(Resource resourceFromServer) {
-        // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
+        // Use a CopyOnWriteArraySet for childResources to allow the field to be concurrently accessed safely
         // (i.e. to avoid ConcurrentModificationExceptions).
-        //        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
-        Resource resource = new Resource();
+        Set<Resource> childResources = new CopyOnWriteArraySet<Resource>();
+        Resource resource = new Resource(childResources);
 
         resource.setId(resourceFromServer.getId());
         resource.setUuid(resourceFromServer.getUuid());
@@ -1437,7 +1446,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Resource resource = resourceContainer.getResource();
         RuntimeDiscoveryExecutor oneTimeExecutor = new RuntimeDiscoveryExecutor(this, configuration, resource);
 
-        log.debug("Scheduling child service scan for " + resource + " and waiting for it to complete...");
+        if (log.isDebugEnabled()) {
+            log.debug("Scheduling child service scan for " + resource + " and waiting for it to complete...");
+        }
         try {
             Future<InventoryReport> future = inventoryThreadPoolExecutor
                 .submit((Callable<InventoryReport>) oneTimeExecutor);
@@ -1819,7 +1830,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } catch (PluginContainerException e) {
             if (log.isTraceEnabled()) {
                 log.trace("Access to resource [" + resource + "] will fail due to missing classloader.", e);
-            } else {
+            } else if (log.isDebugEnabled()) {
                 log.debug("Access to resource [" + resource + "] will fail due to missing classloader - cause: " + e);
             }
             classLoader = null;
@@ -1914,8 +1925,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             parentResourceContainer = getResourceContainer(parentResource);
             if (parentResourceContainer == null) {
                 // The parent probably just got uninventoried - log a DEBUG message and abort.
-                log.debug(resource + " not being prepared for activation - container not found for parent "
-                    + parentResource + ".");
+                if (log.isDebugEnabled()) {
+                    log.debug(resource + " not being prepared for activation - container not found for parent "
+                        + parentResource + ".");
+                }
                 return false;
             }
         }
@@ -2032,10 +2045,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // because we're not actually STARTED
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
 
-                String message = "Failed to start component for resource " + resource + ".";
-                if (t.getCause() != null) {
-                    message += " Cause: " + t.getCause().getMessage();
+                StringBuilder messageBuilder = new StringBuilder("Failed to start component for ").append(resource);
+                if (isNotBlank(t.getMessage())) {
+                    messageBuilder.append(" - ").append(t.getMessage());
                 }
+                if (t.getCause() != null) {
+                    messageBuilder.append(" - Cause: ").append(t.getClass().getName());
+                    if (isNotBlank(t.getCause().getMessage())) {
+                        messageBuilder.append(": ").append(t.getCause().getMessage());
+                    }
+                }
+                String message = messageBuilder.toString();
 
                 if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
                     if (log.isDebugEnabled()) {
@@ -2395,7 +2415,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         allDiscoveredPlatforms.addAll(discoveredResources);
                     }
                 } catch (ResourceTypeNotEnabledException rtne) {
-                    log.debug("Skipping platform discovery - its type is disabled: " + platformType);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Skipping platform discovery - its type is disabled: " + platformType);
+                    }
                 } catch (Throwable e) {
                     log.error("Error in platform discovery", e);
                 }
@@ -2763,7 +2785,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Resource parentResource = parentContainer.getResource();
 
         long startTime = System.currentTimeMillis();
-        log.debug("Executing discovery for [" + resourceType.getName() + "] Resources...");
+        if (log.isDebugEnabled()) {
+            log.debug("Executing discovery for [" + resourceType.getName() + "] Resources...");
+        }
         Set<Resource> newResources;
         try {
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
@@ -3073,10 +3097,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         if (resource.getName() != null) {
             resource.setName(resource.getName().intern());
-        }
-
-        if (resource.getChildResources().isEmpty()) {
-            resource.setChildResources(Collections.EMPTY_SET);
         }
 
         Configuration pluginConfiguration = resource.getPluginConfiguration();

@@ -59,16 +59,16 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.MeasurementDefinitionFilter;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.DiscoveredResources;
 import org.rhq.test.arquillian.MockingServerServices;
-import org.rhq.test.arquillian.ResourceComponentInstances;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**
@@ -79,12 +79,7 @@ import org.rhq.test.arquillian.RunDiscovery;
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
-    @ResourceComponentInstances(plugin = PLUGIN_NAME, resourceType = "JBossAS7 Standalone Server")
-    private Set<StandaloneASComponent> standalones;
-
-    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "JBossAS7 Standalone Server")
-    private Set<Resource> standaloneResources;
-
+    private Resource platform;
     private Resource serverResource;
 
     @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "Deployment")
@@ -121,10 +116,10 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
     @Test(priority = 10)
     @RunDiscovery
-    public void assignServerResource() {
-        assert standalones != null && standalones.size() == 1 : "Exactly 1 AS7 standalone server component should be present.";
-        assert standaloneResources != null && standaloneResources.size() == 1 : "Exactly 1 AS7 standalone server resource should be present.";
-        serverResource = standaloneResources.iterator().next();
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
     }
 
     @Test(priority = 11)
@@ -146,8 +141,13 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         CreateResourceResponse response = pluginContainer.getResourceFactoryManager().executeCreateResourceImmediately(
             request);
 
-        assert response.getStatus() == CreateResourceStatus.SUCCESS : "The deoloyment failed with an error mesasge: "
+        assert response.getStatus() == CreateResourceStatus.SUCCESS : "The deployment failed with an error mesasge: "
             + response.getErrorMessage();
+
+        Resource deployment = waitForResourceByTypeAndKey(platform, serverResource, new ResourceType("Deployment",
+            PLUGIN_NAME, ResourceCategory.SERVICE, null), "deployment=" + packageDetails.getName());
+        // these tests may depend on the deployment children to be in inventory, make sure they are
+        waitForAsyncDiscoveryToStabilize(deployment, 5000L, 10);
     }
 
     @Test(priority = 12)

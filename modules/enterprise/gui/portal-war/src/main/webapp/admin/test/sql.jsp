@@ -99,8 +99,9 @@ private StringBuffer processSQL ( Connection conn, String sql, int index, int nu
                     throw e;
                 }
             }
-            
-            if ( LCsql.startsWith("select") || 
+
+            if ( LCsql.startsWith("select") ||
+                 LCsql.startsWith("with")   ||
                  LCsql.startsWith("values") ) {
                 try {
                     markTime = System.currentTimeMillis();

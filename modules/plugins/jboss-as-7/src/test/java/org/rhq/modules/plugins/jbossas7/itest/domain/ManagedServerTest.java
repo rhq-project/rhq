@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,12 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 import org.testng.annotations.Test;
 
@@ -27,11 +29,9 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
@@ -39,67 +39,61 @@ import org.rhq.test.arquillian.RunDiscovery;
  * Test dealing with managed servers
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
+@Test(groups = { "integration", "pc", "domain" }, singleThreaded = true)
 public class ManagedServerTest extends AbstractJBossAS7PluginTest {
 
-   public static final ResourceType RESOURCE_TYPE = new ResourceType("Managed Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
-   private static final String RESOURCE_KEY = "master/server-one";
+    public static final ResourceType RESOURCE_TYPE = new ResourceType("Managed Server", PLUGIN_NAME,
+        ResourceCategory.SERVER, null);
+    private static final String RESOURCE_KEY = "master/server-one";
 
-   @Test(priority = 1020, groups = "discovery", enabled = true)
-   @RunDiscovery(discoverServices = true, discoverServers = true)
-   public void runDiscovery() throws Exception {
-       Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
+    private Resource platform;
+    private Resource serverResource;
+    private Resource managedServer;
 
-       assertNotNull(platform);
-       assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-   }
+    @Test(priority = 10)
+    @RunDiscovery
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        serverResource = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
+            DomainServerComponentTest.RESOURCE_KEY);
+        managedServer = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
+    }
 
-   @Test(priority = 1021, enabled = false)
-   public void testRestart() throws Exception {
+    @Test(priority = 1021)
+    public void testRestart() throws Exception {
 
-      Resource resource = getResource();
-      // No parameter -> AS7 api call does not block
-      invokeOperationAndAssertSuccess(resource,"restart",null);
-      waitForServerToBeUpAgain(resource);
+        Resource resource = getResource();
 
-      // Now test explicit parameters
-      Configuration configuration = new Configuration();
+        Configuration configuration = new Configuration();
+        configuration.put(new PropertySimple("blocking", "true"));
+        configuration.put(new PropertySimple("operationTimeout", "120"));
 
-      // API is supposed to block until managed server is up
-      configuration.put(new PropertySimple("blocking", true));
-      invokeOperationAndAssertSuccess(resource, "restart", configuration);
-      waitForServerToBeUpAgain(resource);
+        // API is supposed to block until managed server is up
+        invokeOperationAndAssertSuccess(resource, "restart", configuration);
+        waitForServerToBeUpAgain(resource);
 
-      // API call does not block
-      configuration.put(new PropertySimple("blocking", false));
-      invokeOperationAndAssertSuccess(resource, "restart", null);
+        // API call does not block
+        configuration.put(new PropertySimple("blocking", "false"));
+        invokeOperationAndAssertSuccess(resource, "restart", configuration);
 
-      waitForServerToBeUpAgain(resource);
+        waitForServerToBeUpAgain(resource);
 
-   }
+    }
 
     private void waitForServerToBeUpAgain(Resource resource) throws InterruptedException, PluginContainerException {
         int count = 0;
+        long pause_seconds = 1;
         do {
-            Thread.sleep(5000L); // We need to wait a little as this is non-blocking
+            Thread.sleep(SECONDS.toMillis(pause_seconds));
             count++;
-        } while (getAvailability(resource) != AvailabilityType.UP && count < 10);
+        } while (getAvailability(resource) != UP && SECONDS.toMinutes(pause_seconds * count) < 5);
 
         AvailabilityType avail = getAvailability(getResource());
-        assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, UP);
     }
 
-   private Resource getResource() {
-
-       InventoryManager im = pluginContainer.getInventoryManager();
-       Resource platform = im.getPlatform();
-       assert platform != null : "Did not find a platform";
-        Resource server = waitForResourceByTypeAndKey(platform, platform, DomainServerComponentTest.RESOURCE_TYPE,
-            DomainServerComponentTest.RESOURCE_KEY);
-       assert server != null : "Did not find the domain server";
-        Resource mServer = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
-       assert mServer != null : "Did not find " + RESOURCE_KEY;
-       return mServer;
-   }
+    private Resource getResource() {
+        return managedServer;
+    }
 
 }

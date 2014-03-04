@@ -46,7 +46,7 @@ import org.rhq.plugins.apache.util.AugeasNodeSearch;
 /**
  * Component for configuring the &lt;Directory&gt; and underlying directives
  * inside Apache configuration.
- * 
+ *
  * @author Lukas Krejci
  */
 public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtualHostServiceComponent>,
@@ -71,8 +71,11 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        // BZ 858813 - treat Augeas disabled as configuration disabled and just return null, otherwise
+        // we spam the log.
         if (!isAugeasEnabled()) {
-            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            log.debug(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            return null;
         }
 
         AugeasComponent comp = getAugeas();
@@ -155,7 +158,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     /**
      * @deprecated do not use this unless you're absolutely sure you're passing in the right virtual host
      * node. If you're not sure, use {@link #getNode(AugeasTree)} instead.
-     * 
+     *
      * @param virtualHost
      * @return
      */
@@ -168,7 +171,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
     /**
      * Gets the node of the Directory this component is managing from the augeas tree.
-     * 
+     *
      * @param tree the augeas tree of the whole apache configuration
      */
     public AugeasNode getNode(AugeasTree tree) {

@@ -50,6 +50,7 @@ import org.rhq.test.arquillian.RunDiscovery;
 public class DatasourceTest extends AbstractJBossAS7PluginTest {
 
     private static final String DATASOURCES_SUBSYSTEM_RESOURCE_TYPE_NAME = "Datasources (Standalone)";
+    private static final String DATASOURCES_SUBSYSTEM_RESOURCE_KEY = "subsystem=datasources";
     private static final String DATASOURCE_RESOURCE_TYPE_NAME = "DataSource (Standalone)";
     private static final String DATASOURCE_TEST_DS = "DatasourceTestDS";
 
@@ -57,24 +58,17 @@ public class DatasourceTest extends AbstractJBossAS7PluginTest {
     private ResourceType datasourceResourceType;
     private Resource datasourceTestResource;
 
-    @Test(groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void testDiscovery() throws Exception {
-        Resource platform = pluginContainer.getInventoryManager().getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+    // only need servers to create the management users necessary ti load the module options
+    @Test(priority = -10000)
+    @RunDiscovery(discoverServers = true, discoverServices = false)
+    public void initialDiscoveryTest() throws Exception {
 
-        waitForAsyncDiscoveryToStabilize(platform);
-
-        Set<Resource> resources = pluginContainer.getInventoryManager().getResourcesWithType(
-            new ResourceType(DATASOURCES_SUBSYSTEM_RESOURCE_TYPE_NAME, getPluginName(), SERVICE, null));
-        assertTrue(resources != null && !resources.isEmpty(), "Found no resource of type ["
-            + DATASOURCES_SUBSYSTEM_RESOURCE_TYPE_NAME + "]");
-        assertEquals(resources.size(), 1, "Expected exactly one resource of type ["
-            + DATASOURCES_SUBSYSTEM_RESOURCE_TYPE_NAME + "]");
-        datasourceSubsystemResource = resources.iterator().next();
-        assertEquals(datasourceSubsystemResource.getInventoryStatus(), InventoryStatus.COMMITTED);
-
+        Resource platform = validatePlatform();
+        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
+        datasourceSubsystemResource = waitForResourceByTypeAndKey(platform, server, new ResourceType(
+            DATASOURCES_SUBSYSTEM_RESOURCE_TYPE_NAME, getPluginName(), SERVICE, null),
+            DATASOURCES_SUBSYSTEM_RESOURCE_KEY);
         for (ResourceType resourceType : datasourceSubsystemResource.getResourceType().getChildResourceTypes()) {
             if (DATASOURCE_RESOURCE_TYPE_NAME.equals(resourceType.getName())) {
                 datasourceResourceType = resourceType;
@@ -84,7 +78,7 @@ public class DatasourceTest extends AbstractJBossAS7PluginTest {
         assertNotNull(datasourceResourceType, "Could not find resource type: " + DATASOURCE_RESOURCE_TYPE_NAME);
     }
 
-    @Test(dependsOnMethods = { "testDiscovery" })
+    @Test(dependsOnMethods = { "initialDiscoveryTest" })
     public void testCreateDatasource() throws Exception {
         Configuration pluginConfig = new Configuration();
         pluginConfig.put(new PropertySimple("path", "data-source=" + DATASOURCE_TEST_DS));
@@ -112,8 +106,6 @@ public class DatasourceTest extends AbstractJBossAS7PluginTest {
         CreateResourceResponse createResourceResponse = pluginContainer.getResourceFactoryManager()
             .executeCreateResourceImmediately(createRequest);
         assertEquals(createResourceResponse.getStatus(), SUCCESS, createResourceResponse.getErrorMessage());
-
-        waitForAsyncDiscoveryToStabilize(datasourceSubsystemResource);
 
         Set<Resource> datasourceResources = pluginContainer.getInventoryManager().getResourcesWithType(
             datasourceResourceType);

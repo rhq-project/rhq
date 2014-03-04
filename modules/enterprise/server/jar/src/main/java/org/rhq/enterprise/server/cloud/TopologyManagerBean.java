@@ -26,6 +26,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -335,5 +336,20 @@ public class TopologyManagerBean implements TopologyManagerLocal {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Server> runner = new CriteriaQueryRunner<Server>(criteria, generator, entityManager);
         return runner.execute();
+    }
+
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public Integer getResourceIdOfAgent(Subject subject, int agentId) {
+        TypedQuery<Integer> query = entityManager.<Integer> createNamedQuery(
+            Agent.QUERY_FIND_AGENT_RESOURCE_ID_AGENT_ID, Integer.class);
+        query.setParameter("agentId", agentId);
+
+        try {
+            Integer resourceId = query.getSingleResult();
+            return resourceId;
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
 }

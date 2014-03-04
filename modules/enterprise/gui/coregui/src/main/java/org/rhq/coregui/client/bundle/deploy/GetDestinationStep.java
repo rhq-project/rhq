@@ -59,9 +59,9 @@ import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.coregui.client.util.FormUtility;
+import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
 import org.rhq.coregui.client.util.message.Message.Severity;
-import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -219,7 +219,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_9(), caught);
-                        // try anyway and potentially fail again from there 
+                        // try anyway and potentially fail again from there
                         createDestination();
                     }
                 });
@@ -230,7 +230,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         return false;
     }
 
-    // this will advance or decrement the step depending on creation success or failure 
+    // this will advance or decrement the step depending on creation success or failure
     private void createDestination() {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
@@ -264,7 +264,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         destBaseDirItem.clearValue();
         destBaseDirItem.setValueMap((String[]) null);
 
-        // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search) 
+        // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search)
         if (selectedGroupId != null) {
             bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
                 new AsyncCallback<ResourceTypeBundleConfiguration>() {
@@ -324,6 +324,12 @@ public class GetDestinationStep extends AbstractWizardStep {
                 SC.warn(MSG.view_bundle_deployWizard_createGroup_error_1());
                 return false;
             }
+
+            // BZ 1069793 - We must get these first, before the async call is made.
+            // Otherwise, the group wizard (and this data) will get destroyed before we have a change to get it.
+            final ResourceGroup group = createStep.getGroup();
+            final int[] selectedResourceIds = memberStep.getSelectedResourceIds();
+
             ResourceTypeRepository typeRepository = ResourceTypeRepository.Cache.getInstance();
             typeRepository.getResourceTypes(ids, EnumSet.of(MetadataType.bundleConfiguration),
                 new TypesLoadedCallback() {
@@ -334,7 +340,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                         } else if (typeSet.iterator().next().getResourceTypeBundleConfiguration() == null) {
                             SC.warn(MSG.view_bundle_deployWizard_createGroup_error_3());
                         } else {
-                            QuickGroupCreateWizard.super.createGroup();
+                            QuickGroupCreateWizard.super.createGroup(group, selectedResourceIds);
                         }
                     }
                 });

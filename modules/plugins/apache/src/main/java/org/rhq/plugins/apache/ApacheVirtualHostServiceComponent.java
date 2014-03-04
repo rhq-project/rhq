@@ -103,7 +103,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     private ConfigurationTimestamp lastConfigurationTimeStamp = new ConfigurationTimestamp();
     private int snmpWwwServiceIndex = -1;
-    
+
     private AvailabilityType lastKnownAvailability;
 
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
@@ -173,7 +173,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             try {
                 //we don't need the SNMP connection to figure out the index on which the SNMP
                 //module would report this vhost. So first, let's check if that index is valid
-                //(i.e. check that the vhost is actually still present in the apache configuration)                                
+                //(i.e. check that the vhost is actually still present in the apache configuration)
                 if (getWwwServiceIndex() < 1) {
                     return DOWN;
                 }
@@ -192,8 +192,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        // BZ 858813 - treat Augeas disabled as configuration disabled and just return null, otherwise
+        // we spam the log.
         if (!isAugeasEnabled()) {
-            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            LOG.debug(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            return null;
         }
 
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
@@ -354,14 +357,14 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 /*
                  * myNode will be parent node of the new Directory node.
                  * We need to create a new node for directory node which will contain child nodes.
-                 * To create a node we can call method from AugeasTree which will create a node. In this method is 
-                 * parameter sequence, if we will leave this parameter empty and there will be more nodes with 
+                 * To create a node we can call method from AugeasTree which will create a node. In this method is
+                 * parameter sequence, if we will leave this parameter empty and there will be more nodes with
                  * the same label, new node will be created but the method createNode will return node with index 0 resp 1.
                  * If that will happen we can not update the node anymore because we are updating wrong node.
                  * To avoid this situation we need to know what is the last sequence nr. of virtual host's child (directory) nodes.
                  * We can not just count child nodes with the same label because some of the child nodes
                  * could be stored in another file. So that in httpd configurationstructure they are child nodes of virtual host,
-                 *  but in augeas configuration structure they can be child nodes of node Include[];. 
+                 *  but in augeas configuration structure they can be child nodes of node Include[];.
                  */
 
                 for (AugeasNode n : directories) {
@@ -433,7 +436,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     /**
      * Returns a node corresponding to this component in the Augeas tree.
-     * 
+     *
      * @param tree
      * @return
      * @throws IllegalStateException if none or more than one nodes found
@@ -493,7 +496,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     /**
      * @see ApacheServerComponent#conditionalRestart()
-     * 
+     *
      * @throws Exception
      */
     public void conditionalRestart() throws Exception {
@@ -650,7 +653,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             //don't go through this configuration again even if we fail further below.. we'd fail again.
             lastConfigurationTimeStamp = currentTimestamp;
 
-            //configuration has changed. re-read the service index of this virtual host            
+            //configuration has changed. re-read the service index of this virtual host
             snmpWwwServiceIndex =
                 getWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey());
         }

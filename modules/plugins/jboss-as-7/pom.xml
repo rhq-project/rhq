@@ -387,7 +387,7 @@
       </activation>
 
       <properties>
-        <jboss7.home>${java.io.tmpdir}/jboss-as-${as7.version}</jboss7.home>
+        <jboss7.home>${basedir}/target/jboss-as-${as7.version}</jboss7.home>
 
         <jboss.standalone.bindAddress>127.0.0.1</jboss.standalone.bindAddress>
         <jboss.standalone.portOffset>40000</jboss.standalone.portOffset>
@@ -643,13 +643,35 @@
               </systemPropertyVariables>
             </configuration>
             <executions>
-              <!-- Some test classes are sensitive to test interaction issues, use different executions to run them independently.
-                   For each test class run independently, make sure it is excluded in the "everything-else" execution below. -->
+              <!-- AS7 tests have been sensitive to test interaction issues.  As such all tests have
+                   explicit execution decls. Even executing independently, they do all use and affect a single test EAP
+                   server, so it is possible that one test class can affect another downstream by manipulating the EAP
+                   server. Test execution order:
+                   1) The startup/shutdown tests are sensitive to the effects the other test classes have on the EAP test server:
+                      - DomainServerComponentTests
+                      - StandaloneServerComponentTests
+                   2) The standalone tests in no particular order.
+                   3) The domain tests in no particular order.  
+                   4) GenericJbossAS7PluginTest, just seems to be best after the other tests
+                   5) AfterSuiteTest, always run at the end to ensure we kill any leftover processes                 
+              -->
               <execution>
-                <id>SecurityModuleOptionsTest</id>
+                <id>DomainServerComponentTests</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>StandaloneServerComponentTests</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -668,29 +690,8 @@
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-              </execution>                   
-              <execution>
-                <id>everything-else</id>
-                <configuration>
-                  <includes>         
-                    <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
-                  </includes>
-                  <excludes>
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/AfterSuiteTest.java</exclude>
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DatasourceTest.java</exclude>                    
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentRuntimeResourcesTest.java</exclude>
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</exclude>
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</exclude>                    
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</exclude>
-                    <exclude>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</exclude>
-                  </excludes>
-                </configuration>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
               </execution>
-              <execution>              
+              <execution>
                 <id>DeploymentRuntimeResourcesTest</id>
                 <configuration>
                   <includes>
@@ -715,7 +716,7 @@
                 </goals>
               </execution>
               <execution>
-                <id>SocketBindingTest</id>
+                <id>SocketBindingTests</id>
                 <configuration>
                   <includes>
                     <include>org/rhq/modules/plugins/jbossas7/itest/standalone/SocketBindingTest.java</include>
@@ -727,10 +728,10 @@
                 </goals>
               </execution>
               <execution>
-                <id>DomainServerComponentTest</id>              
+                <id>NamingTest</id>
                 <configuration>
                   <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>                
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/NamingTest.java</include>
                   </includes>
                 </configuration>
                 <goals>
@@ -738,6 +739,103 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+              <execution>
+                <id>ResourcesStandaloneServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/ResourcesStandaloneServerTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>TemplatedResourcesTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/TemplatedResourcesTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>WebConnectorComponentTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/standalone/WebConnectorComponentTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>SecurityModuleOptionsTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>DomainSocketBindingTests</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainSocketBindingTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>ResourcesDomainServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ResourcesDomainServerTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>ManagedServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>GenericJbossAS7PluginTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/GenericJBossAS7PluginTest.java</include>
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+
               <execution>
                 <id>AfterSuiteTest</id>
                 <configuration>
@@ -750,7 +848,6 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
-              
             </executions>
           </plugin>
 

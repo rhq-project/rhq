@@ -37,6 +37,7 @@ public class StorageNodeLoadComposite implements Serializable {
     private long beginTime;
     private long endTime;
     private int unackAlerts;
+    private String hostname;
 
     private MeasurementAggregateWithUnits heapCommitted;
     private MeasurementAggregateWithUnits heapUsed;
@@ -59,6 +60,7 @@ public class StorageNodeLoadComposite implements Serializable {
         this.storageNode = storageNode;
         this.beginTime = beginTime;
         this.endTime = endTime;
+        this.hostname = storageNode.getAddress();
     }
 
     public StorageNode getStorageNode() {
@@ -91,6 +93,12 @@ public class StorageNodeLoadComposite implements Serializable {
 
     public void setUnackAlerts(int unackAlerts) {
         this.unackAlerts = unackAlerts;
+    }
+    public String getHostname() {
+        return hostname;
+    }
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
     }
 
     /**
@@ -231,6 +239,7 @@ public class StorageNodeLoadComposite implements Serializable {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
+        builder.append("hostname=").append(hostname).append(", ");
         builder.append("beginTime=").append(beginTime).append(", ");
         builder.append("beginTime=").append(beginTime).append(", ");
         builder.append("unackAlerts=").append(unackAlerts).append(", ");

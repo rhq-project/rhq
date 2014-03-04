@@ -34,16 +34,34 @@ public class MergeResourceResponse implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int resourceId;
-
+    private long mtime;
     private boolean resourceAlreadyExisted;
 
+    /**
+     * @deprecated use {@link #MergeResourceResponse(int, long, boolean)}
+     */
+    @Deprecated
     public MergeResourceResponse(int resourceId, boolean resourceAlreadyExisted) {
+        this(resourceId, 0L, resourceAlreadyExisted);
+    }
+
+    /**
+     * @param resourceId
+     * @param mtime for new resources, this is the ctime, for existing resources it is the mtime
+     * @param resourceAlreadyExisted
+     */
+    public MergeResourceResponse(int resourceId, long mtime, boolean resourceAlreadyExisted) {
         this.resourceId = resourceId;
+        this.mtime = mtime;
         this.resourceAlreadyExisted = resourceAlreadyExisted;
     }
 
     public int getResourceId() {
         return resourceId;
+    }
+
+    public long getMtime() {
+        return mtime;
     }
 
     public boolean resourceAlreadyExisted() {

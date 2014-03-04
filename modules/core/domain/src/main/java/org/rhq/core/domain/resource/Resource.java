@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
@@ -47,6 +48,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -698,8 +700,8 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_DESCENDANTS_BY_TYPE_AND_NAME, query = "" //
         + "SELECT r.id " //
         + "  FROM Resource r " //
-        + " WHERE ( r.resourceType.id = :resourceTypeId OR :resourceTypeId IS NULL ) " //
-        + "   AND ( UPPER(r.name) like :name OR :name IS NULL ) " //
+        + " WHERE ( r.resourceType.id = :resourceTypeId OR :resourceTypeId = 0 ) " //
+        + "   AND ( UPPER(r.name) like :resourceName OR :resourceName = '$$$null$$$' ) " //
         + "   AND ( r.id = :resourceId " //
         + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.id = :resourceId) "
         + "         OR r.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.id = :resourceId) "
@@ -903,6 +905,80 @@ public class Resource implements Comparable<Resource>, Serializable {
     public static final String QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE = "Resource.findResourceVersionDriftInCompliance";
     public static final String QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE = "Resource.findResourceVersionDriftOutOfCompliance";
 
+    // Native Queries not supported by HQL
+    public static final String QUERY_NATIVE_FIND_DESCENDANTS_ORACLE = "" //
+        + "           SELECT r.id " //
+        + "             FROM rhq_resource r " //
+        + "       START WITH r.id = :resourceId " //
+        + " CONNECT BY PRIOR r.id = r.parent_resource_id ";
+    public static final String QUERY_NATIVE_FIND_DESCENDANTS_POSTGRES = "" //
+        + " WITH RECURSIVE childResource AS " //
+        + " (   SELECT r.id " //
+        + "       FROM rhq_resource AS r " //
+        + "      WHERE r.id = :resourceId " // non-recursive term
+        + "  UNION ALL " //
+        + "     SELECT r.id " // recursive term
+        + "       FROM rhq_resource AS r " //
+        + "       JOIN childResource AS cr " //
+        + "         ON (r.parent_resource_id = cr.id) " //
+        + " ) " //
+        + " SELECT id " //
+        + "   FROM childResource ";
+
+    /**
+     *  Note, special parameter values to represent NULL, do not use NULL:<pre>
+     *    :resourceTypeId = 0
+     *    :resourceName   = "$$$null$$$"</pre>
+     */
+    public static final String QUERY_NATIVE_FIND_DESCENDANTS_BY_TYPE_AND_NAME_ORACLE = "" //
+        + "           SELECT r.id " //
+        + "             FROM rhq_resource r " //
+        + "            WHERE ( r.resource_type_id = :resourceTypeId OR :resourceTypeId = 0 ) " //
+        + "              AND ( UPPER(r.name) LIKE :resourceName OR :resourceName = '$$$null$$$' ) " //
+        + "       START WITH r.id = :resourceId " //
+        + " CONNECT BY PRIOR r.id = r.parent_resource_id ";
+    /**
+     *  Note, special parameter values to represent NULL, do not use NULL:<pre>
+     *    :resourceTypeId = 0
+     *    :resourceName   = "$$$null$$$"</pre>
+     */
+    public static final String QUERY_NATIVE_FIND_DESCENDANTS_BY_TYPE_AND_NAME_POSTGRES = "" //
+        + " WITH RECURSIVE childResource AS " //
+        + " (    SELECT r.id AS resourceId, r.name AS resourceName, r.resource_type_id AS resourceTypeId " //
+        + "        FROM rhq_resource AS r " //
+        + "       WHERE r.id = :resourceId " //
+        + "   UNION ALL " //
+        + "      SELECT r.id AS resourceId, r.name AS resourceName, r.resource_type_id AS resourceTypeId " //
+        + "        FROM rhq_resource AS r " //
+        + "        JOIN childResource AS cr " //
+        + "          ON (r.parent_resource_id = cr.resourceId) " //
+        + " ) " //
+        + " SELECT cr.resourceId " //
+        + "   FROM childResource AS cr " //
+        + "  WHERE ( cr.resourceTypeId = :resourceTypeId OR :resourceTypeId = 0 ) " //
+        + "    AND ( UPPER(cr.resourceName) LIKE :resourceName OR :resourceName = '$$$null$$$' ) ";
+
+    public static final String QUERY_NATIVE_FIND_RESOURCE_PLATFORM_ORACLE = "" //
+        + "           SELECT r.id " //
+        + "             FROM rhq_resource r " //
+        + "            WHERE r.parent_resource_id IS NULL " //
+        + "       START WITH r.id = :resourceId " //
+        + " CONNECT BY PRIOR r.parent_resource_id = r.id ";
+    public static final String QUERY_NATIVE_FIND_RESOURCE_PLATFORM_POSTGRES = "" //
+        + " WITH RECURSIVE parentResource AS " //
+        + " (       SELECT r.id AS resourceId, r.parent_resource_id AS parentResourceId " //
+        + "           FROM rhq_resource AS r " //
+        + "          WHERE r.id = :resourceId " //
+        + "          UNION " //
+        + "         SELECT r.id AS resourceId, r.parent_resource_id AS parentResourceId " //
+        + "           FROM rhq_resource AS r " //
+        + "           JOIN parentResource AS pr " //
+        + "             ON (r.id = pr.parentResourceId) " //
+        + "  ) " //
+        + "  SELECT pr.resourceId " //
+        + "    FROM parentResource AS pr " //
+        + "   WHERE ( pr.parentResourceId IS NULL ) ";
+
     private static final int UUID_LENGTH = 36;
 
     private static final long serialVersionUID = 1L;
@@ -1097,7 +1173,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private Set<DriftDefinition> driftDefinitions = null;
 
+    @Transient
+    private final boolean customChildResourcesCollection;
+
     public Resource() {
+        customChildResourcesCollection = false;
     }
 
     /**
@@ -1107,6 +1187,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      */
     public Resource(Set<Resource> childResources) {
         setChildResources(childResources);
+        customChildResourcesCollection = true;
     }
 
     /**
@@ -1372,7 +1453,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void addChildResource(Resource childResource) {
         childResource.setParentResource(this);
-        if (null == this.childResources || this.childResources.equals(Collections.EMPTY_SET)) {
+        if (null == this.childResources || this.childResources.equals(Collections.emptySet())) {
             this.childResources = new HashSet<Resource>(1);
         }
         this.childResources.add(childResource);
@@ -1388,7 +1469,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public boolean removeChildResource(Resource childResource) {
         boolean removed = this.childResources.remove(childResource);
-        if (this.childResources.isEmpty()) {
+        if (this.childResources.isEmpty() && !customChildResourcesCollection) {
             this.childResources = null;
         }
         return removed;
@@ -1879,6 +1960,13 @@ public class Resource implements Comparable<Resource>, Serializable {
     public void addDriftDefinition(DriftDefinition driftDefinition) {
         getDriftDefinitions().add(driftDefinition);
         driftDefinition.setResource(this);
+    }
+
+    /**
+     * @return true if the instance was created with a specific child resources collection, false otherwise
+     */
+    public boolean hasCustomChildResourcesCollection() {
+        return customChildResourcesCollection;
     }
 
     // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing Resources, or

@@ -277,7 +277,7 @@ public class TagEditorView extends EnhancedLayout {
                         //String tag = form.getValueAsString("tag");
                         String tag = tagInputItem.getEnteredValue();
                         if (tag != null) {
-                            Tag newTag = new Tag(tag);
+                            Tag newTag = new Tag(tag.trim());
                             tags.add(newTag);
                             TagEditorView.this.save();
                             TagInputDialog.this.hide();

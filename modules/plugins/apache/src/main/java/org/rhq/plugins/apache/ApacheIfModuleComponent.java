@@ -65,8 +65,11 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        // BZ 858813 - treat Augeas disabled as configuration disabled and just return null, otherwise
+        // we spam the log.
         if (!isAugeasEnabled()) {
-            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            log.debug(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            return null;
         }
 
         AugeasComponent comp = null;

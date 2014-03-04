@@ -20,18 +20,13 @@
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
@@ -47,12 +42,17 @@ public class NamingTest extends AbstractJBossAS7PluginTest {
     public static final ResourceType RESOURCE_TYPE = new ResourceType("Naming", PLUGIN_NAME, ResourceCategory.SERVICE, null);
     private static final String RESOURCE_KEY = "subsystem=naming";
 
-    @Test(priority = 10,groups = "discovery")
-    @RunDiscovery(discoverServices = true, discoverServers = true)
-    public void doSomeDiscovery() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+    private Resource platform;
+    private Resource serverResource;
+    private Resource naming;
+
+    @Test(priority = 10)
+    @RunDiscovery
+    public void initialDiscoveryTest() throws Exception {
+        platform = validatePlatform();
+        serverResource = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
+            StandaloneServerComponentTest.RESOURCE_KEY);
+        naming = waitForResourceByTypeAndKey(platform, serverResource, RESOURCE_TYPE, RESOURCE_KEY);
     }
 
     @Test(priority = 11)
@@ -74,13 +74,7 @@ public class NamingTest extends AbstractJBossAS7PluginTest {
 
 
     private Resource getResource() {
-
-        InventoryManager im = pluginContainer.getInventoryManager();
-        Resource platform = im.getPlatform();
-        Resource server = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
-        Resource bindings = waitForResourceByTypeAndKey(platform, server, RESOURCE_TYPE, RESOURCE_KEY);
-        return bindings;
+        return naming;
     }
 
 }

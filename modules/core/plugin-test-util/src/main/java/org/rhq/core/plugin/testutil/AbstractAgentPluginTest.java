@@ -75,10 +75,14 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.MeasurementDefinitionFilter;
+import org.rhq.core.domain.util.ResourceFilter;
 import org.rhq.core.domain.util.ResourceTypeUtility;
+import org.rhq.core.domain.util.ResourceUtility;
+import org.rhq.core.domain.util.TypeAndKeyResourceFilter;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.configuration.ConfigurationManager;
+import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
@@ -89,7 +93,6 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.maven.MavenArtifactNotFoundException;
 import org.rhq.core.util.maven.MavenArtifactProperties;
-import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
@@ -114,8 +117,6 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     protected PluginContainer pluginContainer;
 
     private FakeServerInventory serverInventory;
-
-    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
     @Deployment(name = "platform", order = 1)
     protected static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
@@ -174,9 +175,6 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         System.out.println("\n=== Resetting fake Server prior to running discovery scan...");
 
         this.serverInventory = new FakeServerInventory();
-        System.out.println("\n====== Waiting for discovery to complete...");
-        // TODO: Calculate the expected depth by recursively descending the types defined by the plugin.
-        this.discoveryCompleteChecker = serverInventory.createAsyncDiscoveryCompletionChecker(getTypeHierarchyDepth());
 
         try {
             this.serverServices.resetMocks();
@@ -193,61 +191,29 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         }
     }
 
-    protected abstract int getTypeHierarchyDepth();
-
     /**
-     * Note - this is still a bit weak.  Waiting for a discovery depth to be reached does not mean that discovery
-     * is actually complete.  For many simple test hierarchies it is sufficient, but for a large scale integration
-     * test, requiring full discovery of an AS-7 server (for example), it can reach the target depth well before
-     * the entire tree is discovered and populated. In cases where you want to better ensure complete discovery,
-     * try making a call to {@link #waitForAsyncDiscoveryToStabilize(Resource)}.
-     *
-     * @throws Exception
-     */
-    @AfterDiscovery
-    protected void waitForAsyncDiscoveries() throws Exception {
-        try {
-            System.out.println("\n====== Waiting for Discovery Depth [" + discoveryCompleteChecker.getExpectedDepth()
-                + "] to be Reached...");
-            discoveryCompleteChecker.waitForDiscoveryComplete(12000);
-            System.out.println("\n====== Discovery Depth Reached.");
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Discovery depth not reached within 12 seconds.");
-        }
-
-        // Wait a while longer to give all Resource components a chance to start.
-        // TODO: Do this more intelligently so we don't sleep longer than needed.
-        Thread.sleep(10000);
-    }
-
-    /**
-     * Note - this is stronger than {@link #waitForAsyncDiscoveries()} but can be slower. It waits until the
-     * discovered tree size stabilizes, which may take longer than hitting a target tree depth.
-     * Tree depth may be sufficient for many simple test hierarchies but for a large scale integration
-     * test, requiring full discovery of an AS-7 server (for example), it can reach the target depth well before
-     * the entire tree is discovered and populated.
+     * This waits until the discovered tree size stabilizes.
      * </p>
-     * This is equivalent to {{waitForAsyncDiscoveryToStabilize(root, 5000L, 8)}}. As such it will wait
-     * for at least 40s.
-     *
-     * @throws Exception
+     * This is equivalent to {{waitForAsyncDiscoveryToStabilize(root, 5000L, 7)}}. As such it will wait
+     * for at least 35s.
      */
-    protected void waitForAsyncDiscoveryToStabilize(Resource root) throws Exception {
-        waitForAsyncDiscoveryToStabilize(root, 5000L, 8);
+    protected void waitForAsyncDiscoveryToStabilize(Resource root) {
+        waitForAsyncDiscoveryToStabilize(root, 5000L, 7);
     }
 
     /**
+     * This waits until the discovered tree size stabilizes.
+     *
      * @param root
      * @param checkInterval how long between checks of the tree size
      * @param stableCount how many checks must be the same before we're convinced we're stable
-     * @throws Exception
      */
-    protected void waitForAsyncDiscoveryToStabilize(Resource root, long checkInterval, int stableCount)
-        throws Exception {
+    protected void waitForAsyncDiscoveryToStabilize(Resource root, long checkInterval, int stableCount) {
         int startResCount = 0;
         int endResCount = getResCount(root);
         int numStableChecks = 0;
-        log.info("waitForAsyncDiscoveryToStabilize: ResourceCount Start=" + endResCount);
+        log.info("waitForAsyncDiscoveryToStabilize under [" + root.getName() + ":" + root.getResourceKey()
+            + "] ResourceCount Start=" + endResCount);
         do {
             startResCount = endResCount;
             try {
@@ -263,7 +229,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 numStableChecks = 0;
             }
         } while (startResCount < endResCount || numStableChecks < stableCount);
-        log.info("waitForAsyncDiscoveryToStabilize: ResourceCount Stable at=" + endResCount);
+        log.info("waitForAsyncDiscoveryToStabilize: ResourceCount under [" + root.getName() + ":"
+            + root.getResourceKey() + "] Stable at=" + endResCount);
     }
 
     static protected int getResCount(Resource resource) {
@@ -276,6 +243,87 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             }
         }
         return size;
+    }
+
+    /**
+     * Convenience, same as calling {{waitForResourceByTypeAndKey(platform, parent, type, key, 600)}}.
+     * @see #waitForResourceByTypeAndKey(Resource, Resource, ResourceType, String, int)
+     */
+    protected Resource waitForResourceByTypeAndKey(Resource platform, Resource parent, final ResourceType type,
+        String key) {
+        return waitForResourceByTypeAndKey(platform, parent, type, key, 600);
+    }
+
+    /**
+     * A method that looks for a child resource, given the parent, and will wait for the resource to
+     * show up (and be committed) under the parent if it isn't there already - on the assumption that
+     * discovery is still taking place.  If the resource still does not show up after the timeout period, an assertion
+     * failure is generated.
+     *
+     * @param parent
+     * @param type
+     * @param key
+     * @param timeoutInSeconds minimum timeout is 10s.
+     * @return
+     */
+    protected Resource waitForResourceByTypeAndKey(Resource platform, Resource parent, final ResourceType type,
+        String key, int timeoutInSeconds) {
+        int maxTries = (timeoutInSeconds / 10) + 1;
+        // Discovery is not enough, it needs to be imported and started for test success
+        Resource result = getResourceByTypeAndKey(parent, type, key, true);
+
+        for (int numTries = 1; (null == result && numTries <= maxTries); ++numTries) {
+            try {
+                log.info("Waiting 10s for resource [" + key + "] to be discovered. Current Tree Size ["
+                    + getResCount(platform) + "] Number of tries remaining [" + (maxTries - numTries) + "]");
+                Thread.sleep(10000L);
+            } catch (InterruptedException e) {
+                // just keep trying
+            }
+            result = getResourceByTypeAndKey(parent, type, key, true);
+        }
+
+        assertNotNull(
+            result,
+            type.getName() + " Resource with key [" + key + "] not found in inventory - child "
+                + type.getCategory().getDisplayName() + "s that were discovered: "
+                + ResourceUtility.getChildResources(parent, new ResourceFilter() {
+                    public boolean accept(Resource resource) {
+                        return (resource.getResourceType().getCategory() == type.getCategory());
+                    }
+                }));
+
+        return result;
+    }
+
+    protected Resource getResourceByTypeAndKey(Resource parent, final ResourceType type, String key, boolean isCommitted) {
+        Set<Resource> childResources = ResourceUtility.getChildResources(parent,
+            new TypeAndKeyResourceFilter(type, key));
+        if (childResources.size() > 1) {
+            throw new IllegalStateException(parent + " has more than one child Resource with same type (" + type
+                + ") and key (" + key + ").");
+        }
+        Resource serverResource = (childResources.isEmpty()) ? null : childResources.iterator().next();
+
+        if (null == serverResource) {
+            return null;
+        }
+        if (isCommitted && (0 == serverResource.getId())) {
+            return null;
+        }
+
+        InventoryManager im = this.pluginContainer.getInventoryManager();
+        ResourceContainer container = im.getResourceContainer(serverResource);
+        if (null == container) {
+            return null;
+        }
+
+        try {
+            im.activateResource(serverResource, container, false);
+        } catch (Exception e) {
+            //
+        }
+        return serverResource;
     }
 
     /**

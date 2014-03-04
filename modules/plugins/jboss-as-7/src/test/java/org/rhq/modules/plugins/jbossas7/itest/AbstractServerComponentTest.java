@@ -20,7 +20,6 @@
 package org.rhq.modules.plugins.jbossas7.itest;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
@@ -36,7 +35,6 @@ import org.testng.Assert;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -44,7 +42,6 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.configuration.ListPropertySimpleWrapper;
 import org.rhq.core.pluginapi.configuration.MapPropertySimpleWrapper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
@@ -58,8 +55,6 @@ import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
  * @author Ian Springer
  */
 public abstract class AbstractServerComponentTest extends AbstractJBossAS7PluginTest {
-
-    public static final File JBOSS_HOME = new File(FileUtils.getCanonicalPath(System.getProperty("jboss7.home")));
 
     private static final Map<String, String> EAP6_VERSION_TO_AS7_VERSION_MAP = new HashMap<String, String>();
     static {
@@ -78,25 +73,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
     protected abstract String getServerResourceKey();
 
-    protected Resource getServerResource() {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        return waitForResourceByTypeAndKey(platform, platform, getServerResourceType(), getServerResourceKey());
-    }
-
-    public void testAutoDiscovery() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        assertNotNull(platform);
-        assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-
-        assertNotNull(getServerResource(), getServerResourceType() + " Resource with key [" + getServerResourceKey()
-            + "] was not discovered.");
-        System.out.println("\n===== Discovered: " + getServerResource());
-
-        validatePluginConfiguration(getServerResource().getPluginConfiguration());
-
-        AvailabilityType avail = getAvailability(getServerResource());
-        assertEquals(avail, AvailabilityType.UP);
-    }
+    protected abstract Resource getServerResource();
 
     public void testServerAttributeValidation() throws Exception {
         AvailabilityType avail = getAvailability(getServerResource());

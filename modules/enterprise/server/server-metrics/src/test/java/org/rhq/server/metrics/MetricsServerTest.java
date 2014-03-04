@@ -177,20 +177,22 @@ public class MetricsServerTest extends MetricsTest {
         assertRawCacheEquals(hour(4), startScheduleId(scheduleId), expected);
 
         int partition = 0;
-        assertRawCacheIndexEquals(hour(4), partition, asList(newRawCacheIndexEntry(hour(4), partition,
-            startScheduleId(scheduleId), hour(4))));
+        assertRawCacheIndexEquals(hour(4), partition, asList(newRawCacheIndexEntry(startScheduleId(scheduleId),
+            hour(4))));
     }
 
     @Test(enabled = ENABLED)
     public void insertRawDataForMultipleSchedules() throws Exception {
         int scheduleId1 = 123;
         int scheduleId2 = 147;
-        int scheduleId3 = 179;
+        int scheduleId3 = 176;
+        int scheduleId4 = 177;
         int partition = 0;
         Set<MeasurementDataNumeric> data = ImmutableSet.of(
             new MeasurementDataNumeric(hour(5).plusMinutes(2).getMillis(), scheduleId1, 3.14),
             new MeasurementDataNumeric(hour(5).plusMinutes(3).getMillis(), scheduleId2, 3.14),
-            new MeasurementDataNumeric(hour(5).plusMinutes(3).getMillis(), scheduleId3, 3.14)
+            new MeasurementDataNumeric(hour(5).plusMinutes(3).getMillis(), scheduleId3, 3.14),
+            new MeasurementDataNumeric(hour(5).plusMinutes(4).getMillis(), scheduleId4, 3.14)
         );
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
@@ -198,25 +200,24 @@ public class MetricsServerTest extends MetricsTest {
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
-        List<RawNumericMetric> expected1 = asList(new RawNumericMetric(scheduleId1, hour(5).plusMinutes(2).getMillis(),
-            3.14));
-        List<RawNumericMetric> expected2 = asList(new RawNumericMetric(scheduleId2, hour(5).plusMinutes(3).getMillis(),
-            3.14));
-        List<RawNumericMetric> expected3 = asList(new RawNumericMetric(scheduleId3, hour(5).plusMinutes(3).getMillis(),
-            3.14));
+        RawNumericMetric expected1 = new RawNumericMetric(scheduleId1, hour(5).plusMinutes(2).getMillis(), 3.14);
+        RawNumericMetric expected2 = new RawNumericMetric(scheduleId2, hour(5).plusMinutes(3).getMillis(), 3.14);
+        RawNumericMetric expected3 = new RawNumericMetric(scheduleId3, hour(5).plusMinutes(3).getMillis(), 3.14);
+        RawNumericMetric expected4 = new RawNumericMetric(scheduleId4, hour(5).plusMinutes(4).getMillis(), 3.14);
 
         assertRawDataEquals(scheduleId1, hour(5), hour(6), expected1);
         assertRawDataEquals(scheduleId2, hour(5), hour(6), expected2);
         assertRawDataEquals(scheduleId3, hour(5), hour(6), expected3);
+        assertRawDataEquals(scheduleId4, hour(5), hour(6), expected4);
 
         assertRawCacheEquals(hour(5), startScheduleId(scheduleId1), expected1);
         assertRawCacheEquals(hour(5), startScheduleId(scheduleId2), expected2);
-        assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3);
+        assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3, expected4);
 
         assertRawCacheIndexEquals(hour(5), partition, asList(
-            newRawCacheIndexEntry(hour(5), partition, startScheduleId(scheduleId1), hour(5)),
-            newRawCacheIndexEntry(hour(5), partition, startScheduleId(scheduleId2), hour(5)),
-            newRawCacheIndexEntry(hour(5), partition, startScheduleId(scheduleId3), hour(5))
+            newRawCacheIndexEntry(startScheduleId(scheduleId1), hour(5)),
+            newRawCacheIndexEntry(startScheduleId(scheduleId2), hour(5)),
+            newRawCacheIndexEntry(startScheduleId(scheduleId3), hour(5))
         ));
     }
 
@@ -239,14 +240,10 @@ public class MetricsServerTest extends MetricsTest {
         metricsServer.addNumericData(data, waitForRawInserts);
         waitForRawInserts.await("Failed to insert raw data");
 
-        List<RawNumericMetric> expected1 = asList(new RawNumericMetric(scheduleId1, hour(3).plusMinutes(39).getMillis(),
-            2.17));
-        List<RawNumericMetric> expected2 = asList(new RawNumericMetric(scheduleId2, hour(4).plusMinutes(51).getMillis(),
-            85.0));
-        List<RawNumericMetric> expected3 = asList(new RawNumericMetric(scheduleId3, hour(5).plusMinutes(11).getMillis(),
-            3.14));
-        List<RawNumericMetric> expected4 = asList(new RawNumericMetric(scheduleId4, hour(4).plusMinutes(51).getMillis(),
-            22.5));
+        RawNumericMetric expected1 = new RawNumericMetric(scheduleId1, hour(3).plusMinutes(39).getMillis(), 2.17);
+        RawNumericMetric expected2 = new RawNumericMetric(scheduleId2, hour(4).plusMinutes(51).getMillis(), 85.0);
+        RawNumericMetric expected3 = new RawNumericMetric(scheduleId3, hour(5).plusMinutes(11).getMillis(), 3.14);
+        RawNumericMetric expected4 = new RawNumericMetric(scheduleId4, hour(4).plusMinutes(51).getMillis(), 22.5);
 
         assertRawDataEquals(scheduleId1, hour(3), hour(4), expected1);
         assertRawDataEquals(scheduleId2, hour(4), hour(5), expected2);
@@ -254,14 +251,13 @@ public class MetricsServerTest extends MetricsTest {
         assertRawDataEquals(scheduleId4, hour(4), hour(5), expected4);
 
         assertRawCacheEquals(hour(3), startScheduleId(scheduleId1), expected1);
-        assertRawCacheEquals(hour(4), startScheduleId(scheduleId2), asList(expected2.get(0), expected4.get(0)));
+        assertRawCacheEquals(hour(4), startScheduleId(scheduleId2), expected2, expected4);
         assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3);
 
         assertRawCacheIndexEquals(hour(5), partition, asList(
-            newRawCacheIndexEntry(hour(5), partition, startScheduleId(scheduleId1), hour(3), ImmutableSet.of(scheduleId1)),
-            newRawCacheIndexEntry(hour(5), partition, startScheduleId(scheduleId2), hour(4),
-                ImmutableSet.of(scheduleId2, scheduleId4)),
-            newRawCacheIndexEntry(hour(5), partition, startScheduleId(scheduleId3), hour(5))
+            newRawCacheIndexEntry(startScheduleId(scheduleId1), hour(3), ImmutableSet.of(scheduleId1)),
+            newRawCacheIndexEntry(startScheduleId(scheduleId2), hour(4), ImmutableSet.of(scheduleId2, scheduleId4)),
+            newRawCacheIndexEntry(startScheduleId(scheduleId3), hour(5))
         ));
     }
 

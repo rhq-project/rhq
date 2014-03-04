@@ -410,12 +410,13 @@ public class MetricsServer {
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
         final long insertTimeSlice = dateTimeService.getTimeSlice(dateTimeService.now(),
             configuration.getRawTimeSliceDuration()).getMillis();
+        // TODO add support for splitting cache index partition
+        final int partition = 0;
 
         for (final MeasurementDataNumeric data : dataSet) {
             long collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
                 configuration.getRawTimeSliceDuration()).getMillis();
             int startScheduleId = calculateStartScheduleId(data.getScheduleId());
-            int partition = 0;
 
             StorageResultSetFuture rawFuture = dao.insertRawData(data);
             StorageResultSetFuture cacheFuture = dao.updateMetricsCache(MetricsTable.RAW, collectionTimeSlice, startScheduleId,
@@ -447,83 +448,15 @@ public class MetricsServer {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    callback.onFailure(t);
                     if (log.isDebugEnabled()) {
                         log.debug("An error occurred while inserting raw data", ThrowableUtil.getRootCause(t));
                     } else {
                         log.warn("An error occurred while inserting raw data: " + ThrowableUtil.getRootMessage(t));
                     }
+                    callback.onFailure(t);
                 }
             }, aggregationWorkers);
         }
-    }
-
-    public void addNumericDataXXX(final Set<MeasurementDataNumeric> dataSet,
-        final RawDataInsertedCallback callback) {
-        try {
-            if (log.isDebugEnabled()) {
-                log.debug("Inserting " + dataSet.size() + " raw metrics");
-            }
-
-            final long startTime = dateTimeService.now().getMillis();
-            final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-
-            for (final MeasurementDataNumeric data : dataSet) {
-                StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
-                Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
-                    @Override
-                    public void onSuccess(ResultSet rows) {
-                        updateMetricsCache(data, dataSet.size(), remainingInserts, startTime, callback);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        if (log.isDebugEnabled()) {
-                            log.error("An error occurred while inserting raw data " + data, throwable);
-                        } else {
-                            log.error(
-                                "An error occurred while inserting raw data " + data + ": " +
-                                    throwable.getClass().getName() + ": " + throwable.getMessage());
-                        }
-                        callback.onFailure(throwable);
-                    }
-                }, aggregationWorkers);
-            }
-        } catch (Exception e) {
-            log.error("An error occurred while inserting raw numeric data ", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    void updateMetricsCache(final MeasurementDataNumeric rawData, final int total,
-        final AtomicInteger remainingInserts, final long startTime, final RawDataInsertedCallback callback) {
-
-        long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
-            configuration.getRawTimeSliceDuration()).getMillis();
-        int startScheduleId = calculateStartScheduleId(rawData.getScheduleId());
-        StorageResultSetFuture resultSetFuture = dao.updateMetricsCache(MetricsTable.RAW, timeSlice,
-            startScheduleId, rawData.getScheduleId(), rawData.getTimestamp(),
-            ImmutableMap.of(AggregateType.VALUE.ordinal(), rawData.getValue()));
-        Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
-            @Override
-            public void onSuccess(ResultSet rows) {
-                callback.onSuccess(rawData);
-                if (remainingInserts.decrementAndGet() == 0) {
-                    long endTime = System.currentTimeMillis();
-                    if (log.isDebugEnabled()) {
-                        log.debug("Finished inserting " + total + " raw metrics in " + (endTime - startTime) + " ms");
-                    }
-                    callback.onFinish();
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                log.error("An error occurred while trying to update " + MetricsTable.METRICS_CACHE + " for raw data " +
-                    rawData);
-                callback.onFailure(throwable);
-            }
-        }, aggregationWorkers);
     }
 
     private int calculateStartScheduleId(int scheduleId) {

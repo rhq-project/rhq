@@ -82,6 +82,11 @@ public class MetricsTest extends CassandraIntegrationTest {
     }
 
     protected void assertRawDataEquals(int scheduleId, DateTime startTime, DateTime endTime,
+        RawNumericMetric... expected) {
+        assertRawDataEquals(scheduleId, startTime, endTime, asList(expected));
+    }
+
+    protected void assertRawDataEquals(int scheduleId, DateTime startTime, DateTime endTime,
         List<RawNumericMetric> expected) {
         ResultSet resultSet = dao.findRawMetricsAsync(scheduleId, startTime.getMillis(), endTime.getMillis()).get();
         List<RawNumericMetric> actual = rawMapper.mapAll(resultSet);
@@ -205,6 +210,10 @@ public class MetricsTest extends CassandraIntegrationTest {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
     }
 
+    protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId, RawNumericMetric... expected) {
+        assertRawCacheEquals(timeSlice, startScheduleId, asList(expected));
+    }
+
     protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId,
         List<RawNumericMetric> expected) {
         assertCacheEquals(MetricsTable.RAW, timeSlice, startScheduleId, expected, rawCacheMapper);
@@ -258,19 +267,20 @@ public class MetricsTest extends CassandraIntegrationTest {
     protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, List<CacheIndexEntry> expected) {
         ResultSet resultSet = dao.findCacheIndexEntries(MetricsTable.RAW, insertTimeSlice.getMillis(), partition).get();
         List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
-
+        for (CacheIndexEntry entry : expected) {
+            entry.setInsertTimeSlice(insertTimeSlice.getMillis());
+            entry.setPartition(partition);
+        }
         assertCacheIndexEntriesEqual(actual, expected, MetricsTable.RAW);
     }
 
-    protected CacheIndexEntry newRawCacheIndexEntry(DateTime insertTimeSlice, int partition, int startScheduleId,
-        DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId, collectionTimeSlice);
+    protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.RAW, null, 0, startScheduleId, collectionTimeSlice);
     }
 
-    protected CacheIndexEntry newRawCacheIndexEntry(DateTime insertTimeSlice, int partition, int startScheduleId,
-        DateTime collectionTimeSlice, Set<Integer> scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId, collectionTimeSlice,
-            scheduleIds);
+    protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice,
+        Set<Integer> scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.RAW, null, 0, startScheduleId, collectionTimeSlice, scheduleIds);
     }
 
     @SuppressWarnings("unchecked")
@@ -284,7 +294,9 @@ public class MetricsTest extends CassandraIntegrationTest {
         int startScheduleId, DateTime collectionTimeSlice, Set<Integer> scheduleIds) {
         CacheIndexEntry entry = new CacheIndexEntry();
         entry.setBucket(table);
-        entry.setInsertTimeSlice(insertTimeSlice.getMillis());
+        if (insertTimeSlice != null) {
+            entry.setInsertTimeSlice(insertTimeSlice.getMillis());
+        }
         entry.setPartition(partition);
         entry.setStartScheduleId(startScheduleId);
         entry.setCollectionTimeSlice(collectionTimeSlice.getMillis());

@@ -651,6 +651,7 @@
                    2) The startup/shutdown tests are sensitive to the effects the other test classes have on the EAP test server:
                       - DomainServerComponentTests
                       - StandaloneServerComponentTests
+                      - ManagedServerTest
                    3) The standalone tests in no particular order.
                    4) The domain tests in no particular order.  
                    5) The nonpc tests, together, which seems to be OK
@@ -693,6 +694,20 @@
                   <goal>verify</goal>
                 </goals>
               </execution>
+              <execution>
+                <id>ManagedServerTest</id>
+                <configuration>
+                  <includes>
+                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>                
+                  </includes>
+                </configuration>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+
+              
               <execution>
                 <id>DatasourceTest</id>
                 <configuration>
@@ -818,18 +833,6 @@
                 <configuration>
                   <includes>
                     <include>org/rhq/modules/plugins/jbossas7/itest/domain/ResourcesDomainServerTest.java</include>
-                  </includes>
-                </configuration>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>ManagedServerTest</id>
-                <configuration>
-                  <includes>
-                    <include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>                
                   </includes>
                 </configuration>
                 <goals>

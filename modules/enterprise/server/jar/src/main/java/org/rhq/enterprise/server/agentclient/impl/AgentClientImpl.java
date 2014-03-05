@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.agentclient.impl;
 
+import java.util.Date;
+
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
@@ -145,7 +149,13 @@ public class AgentClientImpl implements AgentClient {
             ClientRemotePojoFactory factory = sender.getClientRemotePojoFactory();
             factory.setTimeout(timeoutMillis);
             PingAgentService pinger = factory.getRemotePojo(PingAgentService.class);
-            pinger.ping();
+            long agentTime = pinger.ping();
+            long skew = Math.abs(System.currentTimeMillis() - agentTime);
+            if (skew > 5 * 60 * 1000L) {
+                LogFactory.getLog(this.getClass()).debug(
+                    "Agent [" + agent.getName() + "] either took a long time to process a ping (" + skew
+                        + "ms) or its clock is not synced: " + new Date(agentTime));
+            }
             return true;
         } catch (Exception e) {
             return false;

@@ -136,6 +136,36 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     }
 
+    public PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId, long beginTime,
+        long endTime, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("value.beginTime", PageOrdering.ASC);
+        MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
+        int resourceId = schedule.getResource().getId();
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to view call time data for measurementSchedule[id=" + scheduleId
+                + "] and resource[id=" + resourceId + "]");
+        }
+        String query = CallTimeDataValue.QUERY_FIND_RAW_FOR_RESOURCE;
+
+        Query queryWithOrderBy = PersistenceUtility.createQueryWithOrderBy(entityManager, query, pageControl);
+        Query queryCount = PersistenceUtility.createCountQuery(this.entityManager, query);
+
+        queryWithOrderBy.setParameter("scheduleId", scheduleId);
+        queryWithOrderBy.setParameter("beginTime", beginTime);
+        queryWithOrderBy.setParameter("endTime", endTime);
+
+        queryCount.setParameter("scheduleId", scheduleId);
+        queryCount.setParameter("beginTime", beginTime);
+        queryCount.setParameter("endTime", endTime);
+
+        @SuppressWarnings("unchecked")
+        List<CallTimeDataComposite> results = queryWithOrderBy.getResultList();
+        long count = (Long)queryCount.getSingleResult();
+
+        return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
+    }
+
     @SuppressWarnings("unchecked")
     public PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pageControl) {

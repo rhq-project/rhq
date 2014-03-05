@@ -258,6 +258,58 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             throw e;
         }
     }
+    @Test
+    public void testFindCallTimeDataRaw() throws Exception {
+        try {
+            beginTx();
+
+            setupResources(em);
+
+            em.flush();
+            long now = System.currentTimeMillis();
+
+            MeasurementScheduleRequest request1 = new MeasurementScheduleRequest(schedule1);
+            MeasurementScheduleRequest request2 = new MeasurementScheduleRequest(schedule2);
+
+            CallTimeData data1 = new CallTimeData(request1);
+            CallTimeData data2 = new CallTimeData(request2);
+            Date dNow = new Date();
+            dNow.setTime(now+10);
+            data1.addCallData("/foo", dNow, 100);
+            dNow.setTime(now);
+            data1.addCallData("/foo", new Date(), 200);
+            data2.addCallData("/bar", new Date(), 100);
+            data2.addCallData("/bar", new Date(), 200);
+
+            MeasurementReport report = new MeasurementReport();
+            report.addData(data1);
+            report.addData(data2);
+
+            commit();
+
+            measurementDataManager.mergeMeasurementReport(report);
+
+            // Do not remove this sleep -- the previous is is asynchronous
+            // and the sleep "guarantees" that data is actually hitting the db
+            Thread.sleep(10000);
+
+            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataRawForResource(overlord,
+                schedule1.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
+            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataRawForResource(overlord,
+                schedule2.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
+
+            assert list1 != null;
+            assert list2 != null;
+
+            assert list1.size() == 2 : "List 1 returned " + list1.size() + " entries, expected was 2";
+            assert list2.size() == 2 : "List 2 returned " + list2.size() + " entries, expected was 2";
+            assert list1.get(0).getTotal() == 200 : "CallTime items must be ordered by beginTime by default";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
     /**
      * Just set up two resources plus measurement definitions

@@ -90,6 +90,9 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("Memory Pool");
         ignoredResources.add("Periodic Rotating File Handler");
 
+        // Datasources need a complex workflow, cannot be tested like this
+        ignoredResources.add("DataSource (Standalone)");
+
         //created BZ 1059882 for failures related to:
         //  attribute discovery-group-name (mutually exclusive issue?)
         ignoredResources.add("Pooled Connection Factory");

@@ -19,6 +19,8 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static java.lang.Boolean.TRUE;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,10 +58,11 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         if (usageThresholdSupported == null) {
-            usageThresholdSupported = readAttributeAsBoolean(USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE);
+            usageThresholdSupported = readAttribute(getAddress(), USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE, Boolean.class);
         }
         if (collectionUsageThresholdSupported == null) {
-            collectionUsageThresholdSupported = readAttributeAsBoolean(COLLECTION_USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE);
+            collectionUsageThresholdSupported = readAttribute(getAddress(),
+                COLLECTION_USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE, Boolean.class);
         }
         Set<MeasurementScheduleRequest> filteredMetrics = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : metrics) {
@@ -69,7 +72,7 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
                 continue;
             }
             if (requestName.startsWith(USAGE_THRESHOLD_PREFIX)) {
-                if (usageThresholdSupported) {
+                if (usageThresholdSupported == TRUE) {
                     filteredMetrics.add(request);
                 }
                 continue;
@@ -79,7 +82,7 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
                 continue;
             }
             if (requestName.startsWith(COLLECTION_USAGE_THRESHOLD_PREFIX)) {
-                if (collectionUsageThresholdSupported) {
+                if (collectionUsageThresholdSupported == TRUE) {
                     filteredMetrics.add(request);
                 }
                 continue;
@@ -87,10 +90,5 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
             filteredMetrics.add(request);
         }
         super.getValues(report, filteredMetrics);
-    }
-
-    private Boolean readAttributeAsBoolean(String attributeName) throws Exception {
-        // Make sure we always return a non null value
-        return Boolean.valueOf(readAttribute(getAddress(), attributeName, String.class));
     }
 }

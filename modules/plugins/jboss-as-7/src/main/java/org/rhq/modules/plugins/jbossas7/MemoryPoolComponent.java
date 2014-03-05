@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,6 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
     @Override
     public void start(ResourceContext<BaseComponent<?>> context) throws Exception {
         super.start(context);
-        usageThresholdSupported = readAttribute(getAddress(), USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE, Boolean.class);
-        collectionUsageThresholdSupported = readAttribute(getAddress(), COLLECTION_USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE,
-            Boolean.class);
     }
 
     @Override
@@ -58,11 +55,17 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        if (usageThresholdSupported == null) {
+            usageThresholdSupported = readAttributeAsBoolean(USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE);
+        }
+        if (collectionUsageThresholdSupported == null) {
+            collectionUsageThresholdSupported = readAttributeAsBoolean(COLLECTION_USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE);
+        }
         Set<MeasurementScheduleRequest> filteredMetrics = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : metrics) {
             String requestName = request.getName();
             if (USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE.equals(requestName)) {
-                report.addData(new MeasurementDataTrait(request, usageThresholdSupported.toString()));
+                report.addData(new MeasurementDataTrait(request, String.valueOf(usageThresholdSupported)));
                 continue;
             }
             if (requestName.startsWith(USAGE_THRESHOLD_PREFIX)) {
@@ -72,7 +75,7 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
                 continue;
             }
             if (COLLECTION_USAGE_THRESHOLD_SUPPORTED_ATTRIBUTE.equals(requestName)) {
-                report.addData(new MeasurementDataTrait(request, collectionUsageThresholdSupported.toString()));
+                report.addData(new MeasurementDataTrait(request, String.valueOf(collectionUsageThresholdSupported)));
                 continue;
             }
             if (requestName.startsWith(COLLECTION_USAGE_THRESHOLD_PREFIX)) {
@@ -84,5 +87,10 @@ public class MemoryPoolComponent extends BaseComponent<BaseComponent<?>> {
             filteredMetrics.add(request);
         }
         super.getValues(report, filteredMetrics);
+    }
+
+    private Boolean readAttributeAsBoolean(String attributeName) throws Exception {
+        // Make sure we always return a non null value
+        return Boolean.valueOf(readAttribute(getAddress(), attributeName, String.class));
     }
 }

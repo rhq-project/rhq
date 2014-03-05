@@ -166,7 +166,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (LOG.isDebugEnabled()) {
             LOG.debug("Getting current plugin configuration for resource [" + resourceId + "]");
         }
-        
+
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new IllegalStateException("Cannot retrieve plugin config for unknown resource [" + resourceId + "]");
@@ -1009,6 +1009,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId,
@@ -1069,6 +1070,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
@@ -1132,6 +1134,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use criteria-based API
      */
+    @Deprecated
     @Override
     public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
@@ -1149,6 +1152,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use criteria-based API
      */
+    @Deprecated
     @Override
     public ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject subject, int configurationUpdateId) {
         ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
@@ -1714,8 +1718,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             // Getting live configuration is mostly for the UI's benefit - as such, do not hang
             // for a long time in the event the agent is down or can't be reached.  Let's make the UI
             // responsive even in the case of an agent down by pinging it quickly to verify the agent is up.
-            if (pingAgentFirst)
-                agentPingedSuccessfully = agentClient.ping(5000L);
+            if (pingAgentFirst) {
+                agentPingedSuccessfully = agentClient.pingService(5000L);
+            }
 
             if (!pingAgentFirst || agentPingedSuccessfully) {
                 liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId());
@@ -1955,6 +1960,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     public GroupPluginConfigurationUpdate getGroupPluginConfigurationById(int configurationUpdateId) {
         GroupPluginConfigurationUpdate update = entityManager.find(GroupPluginConfigurationUpdate.class,
@@ -1965,6 +1971,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationById(int configurationUpdateId) {
         GroupResourceConfigurationUpdate update = entityManager.find(GroupResourceConfigurationUpdate.class,
@@ -2014,6 +2021,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
@@ -2041,6 +2049,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public PageList<Integer> findResourceConfigurationUpdatesByParentId(int groupConfigurationUpdateId,
@@ -2159,6 +2168,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc) {
@@ -2181,6 +2191,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
      */
+    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject,
@@ -2569,7 +2580,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @Override
     public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
         int parentResourceId, ConfigurationDefinition def) {
-        
+
         Resource resource = null, baseResource = null;
         if (resourceId >= 0) {
             resource = resourceManager.getResource(subject, resourceId);
@@ -2700,12 +2711,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                             baseResource));
                     }
                 }
-                
+
                 for (Resource foundResource : foundResources) {
                     processPropertyOptionsSource(resource, baseResource, pds, tt, expression, filterPattern, foundResource);
                 }
             } else if (tt == PropertyOptionsSource.TargetType.GROUP) {
-                // spinder 2-15-13: commenting out this code below as we don't appear to be using any of it. Half done.                
+                // spinder 2-15-13: commenting out this code below as we don't appear to be using any of it. Half done.
                 //                // for groups we need to talk to the group manager
                 //                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
                 //                criteria.setSearchExpression(expression);

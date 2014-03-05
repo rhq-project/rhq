@@ -26,6 +26,7 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.ping.PingAgentService;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.server.ExternalizableStrategy;
@@ -94,7 +95,7 @@ public class AgentClientImpl implements AgentClient {
         this.sender = sender;
         this.clientRemotePojoFactory = sender.getClientRemotePojoFactory();
         this.sender.setSendCallbacks(new SendCallback[] { new AgentSendCallback(agent) });
-        // enforce the restriction (instituted in 1.1 due to multi-server HA concerns) 
+        // enforce the restriction (instituted in 1.1 due to multi-server HA concerns)
         // that no server->agent calls use guaranteedDelivery
         this.clientRemotePojoFactory.setDeliveryGuaranteed(ClientRemotePojoFactory.GuaranteedDelivery.DISABLED);
     }
@@ -131,6 +132,20 @@ public class AgentClientImpl implements AgentClient {
             factory.setTimeout(timeoutMillis);
             Ping pinger = factory.getRemotePojo(Ping.class);
             pinger.ping("", null);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean pingService(long timeoutMillis) {
+        try {
+            // create our own factory so we can customize the timeout
+            ClientRemotePojoFactory factory = sender.getClientRemotePojoFactory();
+            factory.setTimeout(timeoutMillis);
+            PingAgentService pinger = factory.getRemotePojo(PingAgentService.class);
+            pinger.ping();
             return true;
         } catch (Exception e) {
             return false;
@@ -233,7 +248,7 @@ public class AgentClientImpl implements AgentClient {
      * processing it's possible that the thread may have a different strategy set.  We serialize
      * differently for the different strategies, for Agent communication we use much more lightweight
      * serialization (for performance reasons).
-     *  
+     *
      * @author jshaughnessy
      */
     private static class AgentSendCallback implements SendCallback {

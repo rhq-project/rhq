@@ -690,7 +690,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
             //now ping
             AgentClient client = getAgentClient(agent);
-            pingResults = client.ping(5000L);
+            pingResults = client.pingService(5000L);
 
         } catch (NoResultException e) {
             if (LOG.isDebugEnabled()) {

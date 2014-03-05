@@ -789,7 +789,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 Agent nextAgent = agentManager.getAgentByID(nextAgentId);
                 AgentClient agentClient = agentManager.getAgentClient(nextAgent);
 
-                boolean couldPing = agentClient.ping(2000); // see if agent is up for sending
+                boolean couldPing = agentClient.pingService(2000); // see if agent is up for sending
                 if (couldPing) {
                     Set<ResourceMeasurementScheduleRequest> requestsToSend = new HashSet<ResourceMeasurementScheduleRequest>(
                         agentRequests.values());
@@ -973,7 +973,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequest) {
         try {
             AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(agent);
-            if (agentClient.ping(2000) == false) {
+            if (!agentClient.pingService(2000)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
                 }

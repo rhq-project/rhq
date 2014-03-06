@@ -269,41 +269,48 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             long now = System.currentTimeMillis();
 
             MeasurementScheduleRequest request1 = new MeasurementScheduleRequest(schedule1);
-            MeasurementScheduleRequest request2 = new MeasurementScheduleRequest(schedule2);
 
             CallTimeData data1 = new CallTimeData(request1);
-            CallTimeData data2 = new CallTimeData(request2);
+            CallTimeData data2 = new CallTimeData(request1);
             Date dNow = new Date();
-            dNow.setTime(now+10);
-            data1.addCallData("/foo", dNow, 100);
             dNow.setTime(now);
-            data1.addCallData("/foo", new Date(), 200);
-            data2.addCallData("/bar", new Date(), 100);
-            data2.addCallData("/bar", new Date(), 200);
 
-            MeasurementReport report = new MeasurementReport();
-            report.addData(data1);
-            report.addData(data2);
+            data1.addCallData("/1", dNow, 1);
+            data1.addCallData("/1", dNow, 1);
+
+            dNow.setTime(now + 1);
+            data2.addCallData("/1", dNow, 3);
+
+            dNow.setTime(now + 2);
+            data2.addCallData("/2a", dNow, 4);
+
+            dNow.setTime(now + 3);
+            data2.addCallData("/2b", dNow, 5);
 
             commit();
 
+            MeasurementReport report = new MeasurementReport();
+            report.addData(data1);
+            measurementDataManager.mergeMeasurementReport(report);
+
+            report = new MeasurementReport();
+            report.addData(data2);
             measurementDataManager.mergeMeasurementReport(report);
 
             // Do not remove this sleep -- the previous is is asynchronous
             // and the sleep "guarantees" that data is actually hitting the db
             Thread.sleep(10000);
 
-            PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataRawForResource(overlord,
+            PageList<CallTimeDataComposite> list = callTimeDataManager.findCallTimeDataRawForResource(overlord,
                 schedule1.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
-            PageList<CallTimeDataComposite> list2 = callTimeDataManager.findCallTimeDataRawForResource(overlord,
-                schedule2.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
 
-            assert list1 != null;
-            assert list2 != null;
+            assert list != null;
 
-            assert list1.size() == 2 : "List 1 returned " + list1.size() + " entries, expected was 2";
-            assert list2.size() == 2 : "List 2 returned " + list2.size() + " entries, expected was 2";
-            assert list1.get(0).getTotal() == 200 : "CallTime items must be ordered by beginTime by default";
+            assert list.size() == 4 : "List 1 returned " + list.size() + " entries, expected was 4";
+            assert list.get(0).getTotal() == 2 : "First value must be total = 2, but was "+list.get(0).getTotal();
+            assert list.get(1).getTotal() == 3 : "Second value must be total = 3, but was "+list.get(1).getTotal();
+            assert list.get(2).getTotal() == 4 : "Third value must be total = 4, but was "+list.get(2).getTotal();
+            assert list.get(3).getTotal() == 5 : "Fourth value must be total = 5, but was "+list.get(3).getTotal();
 
         } catch (Exception e) {
             e.printStackTrace();

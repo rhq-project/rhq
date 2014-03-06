@@ -154,6 +154,11 @@ public class Status extends ControlCommand {
         File agentBinDir = new File(getAgentBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "status");
-        return ExecutorAssist.execute(agentBinDir, commandLine);
+        int rValue = ExecutorAssist.execute(agentBinDir, commandLine);
+        if(!isWindows() && rValue > 1 && rValue != 3) {
+            // Return codes 0 and agent not running are accepted, but anything else above 0 isn't
+            throw new RHQControlException("rhq-agent-wrapper exited with return value " + rValue);
+        }
+        return rValue;
     }
 }

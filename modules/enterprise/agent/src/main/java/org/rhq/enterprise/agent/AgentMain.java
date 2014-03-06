@@ -690,10 +690,27 @@ public class AgentMain {
                     startCommServices(latch); // note that we start the comm services before we start the plugin container
                     startManagementServices(); // we start our metric collectors before plugin container so the agent plugin can work
                     boolean mustRegister = prepareStartupWorkRequiringServer();
-                    waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
-                    if (mustRegister && !isRegistered()) {
-                        throw new AgentRegistrationException(MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
-                    }
+                    boolean keepWaitingForServer;
+                    do {
+                        boolean aServerIsKnownToBeUp = waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
+                        boolean agentIsRegistered = isRegistered();
+                        if (!aServerIsKnownToBeUp) {
+                            // The wait timed out or failed to talk to server.
+                            // See if agent is registered. If registered, we can just continue the startup/initialization
+                            // and the agent will connect with the server later.
+                            // If agent is not registered, we need to keep waiting for the server because there is nothing the agent
+                            // can do - it probably doesn't even have plugins yet.
+                            // If thread has been interrupted, abort the loop.
+                            keepWaitingForServer = !agentIsRegistered && !Thread.currentThread().isInterrupted();
+                        } else if (mustRegister && !agentIsRegistered) {
+                            // If we got here, we know a server is up and the agent needs to be registered, but it isn't registered.
+                            // This usually means an unrecoverable registration error occurred, so abort.
+                            throw new AgentRegistrationException(
+                                MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
+                        } else {
+                            keepWaitingForServer = false;
+                        }
+                    } while (keepWaitingForServer);
 
                     if (!m_configuration.doNotStartPluginContainerAtStartup()) {
                         // block indefinitely - we cannot continue until we are registered, we have plugins and the PC starts

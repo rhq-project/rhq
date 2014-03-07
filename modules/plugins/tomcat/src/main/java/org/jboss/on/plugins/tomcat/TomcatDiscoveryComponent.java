@@ -540,6 +540,21 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
                 .exists()) {
                 if (isEWS(catalinaHome)) {
                     controlMethod = TomcatServerComponent.ControlMethod.RPM;
+                    String startscript = "/etc/init.d/tomcat";
+                    if (catalinaHome.contains("8.0")) {
+                        startscript = startscript.concat("8");
+                    }
+                    if (catalinaHome.contains("7.0")) {
+                        startscript = startscript.concat("7");
+                    }
+                    if (catalinaHome.contains("6.0")) {
+                        startscript = startscript.concat("6");
+                    }
+                    // Check that the file is excutable.
+                    if (new File(startscript).canExecute()) {
+                        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, startscript + " start"));
+                        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, startscript + " stop"));
+                    }
                 }
             }
 

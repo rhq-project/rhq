@@ -428,7 +428,7 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         return trait;
     }
 
-    private ConfigurationDefinition copyConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
+    static ConfigurationDefinition copyConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
         ConfigurationDefinition configDefCopy = new ConfigurationDefinition(configurationDefinition.getName(),
             configurationDefinition.getDescription());
         configDefCopy.setConfigurationFormat(configurationDefinition.getConfigurationFormat());

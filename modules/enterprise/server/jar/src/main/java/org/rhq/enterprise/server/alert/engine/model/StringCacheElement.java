@@ -35,7 +35,7 @@ public abstract class StringCacheElement extends AbstractCacheElement<String> {
     public StringCacheElement(AlertConditionOperator operator, String value, int conditionTriggerId) {
         super(operator, value, conditionTriggerId);
         if (operator.equals(AlertConditionOperator.REGEX)) {
-            /* 
+            /*
              * assume that the user meant to match characters before and after whatever pattern they used; this
              * makes the UI simpler to understand for those that only ever care about simple substring matching
              */
@@ -57,21 +57,19 @@ public abstract class StringCacheElement extends AbstractCacheElement<String> {
             return false;
         }
 
-        // changes requires a slightly
+        // changes operator requires a slightly different logic as alertConditionValue allows null
         if (alertConditionOperator == AlertConditionOperator.CHANGES) {
-            Boolean results = null;
+            boolean result;
 
-            if ((results == null) && (alertConditionValue.equals(providedValue) == false)) {
-                results = Boolean.TRUE;
-            }
-
-            if (results == null) {
-                results = Boolean.FALSE;
+            if (null == alertConditionValue) {
+                result = (null != providedValue);
+            } else {
+                result = !alertConditionValue.equals(providedValue);
             }
 
             alertConditionValue = providedValue;
 
-            return results;
+            return result;
         }
 
         int result = alertConditionValue.compareTo(providedValue);

@@ -259,6 +259,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/content-source-update-v2.xml");
         testClassesJar.addAsResource("test/metadata/noTypes.xml");
         testClassesJar.addAsResource("test/metadata/alerts/type-with-metric.xml");
+        testClassesJar.addAsResource("test/metadata/alerts/type-with-trait.xml");
         testClassesJar.addAsResource("test/metadata/configuration/addDeleteTemplate1.xml");
         testClassesJar.addAsResource("test/metadata/configuration/addDeleteTemplate2.xml");
         testClassesJar.addAsResource("test/metadata/configuration/addDeleteTemplate3.xml");

@@ -1145,7 +1145,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
 
             // since this method is usually called by the UI, we want to quickly determine if we can even talk to the agent
-            if (agent.ping(5000L)) {
+            if (agent.pingService(5000L)) {
                 results = agent.getOperationAgentService().cancelOperation(jobIdString);
 
                 InterruptedState interruptedState = results.getInterruptedState();

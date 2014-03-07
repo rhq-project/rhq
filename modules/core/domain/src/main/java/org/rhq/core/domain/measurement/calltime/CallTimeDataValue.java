@@ -63,6 +63,19 @@ import org.jetbrains.annotations.Nullable;
         + "AND value.beginTime >= :beginTime "
         + "AND value.endTime <= :endTime "
         + "GROUP BY key.callDestination "),
+    @NamedQuery(name = CallTimeDataValue.QUERY_FIND_RAW_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite("
+        + "key.callDestination, "
+        + "value.minimum, "
+        + "value.maximum, "
+        + "value.total, "
+        + "value.count, "
+        + "value.total / value.count) "
+        + "FROM CallTimeDataValue value "
+        + "WHERE key.schedule.id = :scheduleId "
+        + "AND value.count != 0 "
+        + "AND value.minimum != -1 "
+        + "AND value.beginTime >= :beginTime "
+        + "AND value.endTime <= :endTime "),
     @NamedQuery(name = CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataValue ctdv WHERE ctdv.key IN ( SELECT ctdk.id FROM CallTimeDataKey ctdk WHERE ctdk.schedule.resource.id IN ( :resourceIds ) )") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CALLTIME_DATA_VALUE_ID_SEQ", sequenceName = "RHQ_CALLTIME_DATA_VALUE_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_VALUE")
@@ -71,6 +84,7 @@ public class CallTimeDataValue implements Serializable {
 
     public static final String QUERY_FIND_COMPOSITES_FOR_RESOURCE = "CallTimeDataValue.findCompositesForResource";
     public static final String QUERY_DELETE_BY_RESOURCES = "CallTimeDataValue.deleteByResources";
+    public static final String QUERY_FIND_RAW_FOR_RESOURCE = "CallTimeDataValue.findRawForResource";
 
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_CALLTIME_DATA_VALUE_ID_SEQ")
     @Id

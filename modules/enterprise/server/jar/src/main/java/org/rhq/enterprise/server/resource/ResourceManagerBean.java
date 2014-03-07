@@ -453,7 +453,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 if (agentClient.getAgent() == null || agentClient.getAgent().getName() == null
                     || !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
                     try {
-                        agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
+                        if (agentClient.pingService(3000L)) {
+                            agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
+                        } else {
+                            log.warn(" Unable to inform agent [" + agentClient.getAgent().getName()
+                                + "] of inventory removal for resource [" + resourceId
+                                + "]. Agent can not be reached or is not accepting service requests.");
+                        }
                     } catch (Exception e) {
                         log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
                     }
@@ -1200,7 +1206,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         } else {
             // native Integer support
-            platformId = (Integer)query.getSingleResult();
+            platformId = (Integer) query.getSingleResult();
         }
 
         result = entityManager.find(Resource.class, platformId);
@@ -2571,7 +2577,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             AvailabilityReport report = null;
 
-            boolean agentPing = client.ping(5000L);
+            boolean agentPing = client.pingService(5000L);
             if (agentPing) {
                 // we can't serialize the resource due to the hibernate proxies (agent can't deserialize hibernate objs)
                 // but we know we only need the basics for the agent to collect availability, so create a bare resource object

@@ -198,6 +198,11 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
         //no-op
     }
 
+    @Override
+    public boolean pingService(long timeoutMillis) {
+        return true;
+    }
+
     // provide no-ops for all agent services
 
     @Override

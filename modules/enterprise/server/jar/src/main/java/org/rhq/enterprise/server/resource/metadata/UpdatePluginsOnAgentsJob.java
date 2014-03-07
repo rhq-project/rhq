@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.util.UUID;
+
 import org.quartz.Job;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
@@ -40,8 +42,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class UpdatePluginsOnAgentsJob implements Job {
 
     public static JobDetail getJobDetail() {
-        String id = UpdatePluginsOnAgentsJob.class.getName();
-        JobDetail jobDetail = new JobDetail(id, id, UpdatePluginsOnAgentsJob.class);
+        String groupId = UpdatePluginsOnAgentsJob.class.getName();
+        String name = UUID.randomUUID().toString();
+        JobDetail jobDetail = new JobDetail(name, groupId, UpdatePluginsOnAgentsJob.class);
         jobDetail.setVolatility(false);
         jobDetail.setDurability(false);
         jobDetail.setRequestsRecovery(false);
@@ -60,7 +63,6 @@ public class UpdatePluginsOnAgentsJob implements Job {
         PageList<Agent> agents = agentManager.findAgentsByCriteria(overlord, crit);
 
         for(Agent agent : agents) {
-            //TODO how to figure out if the agent is online? does it matter here?
             AgentClient client = agentManager.getAgentClient(agent);
             client.updatePlugins();
         }

@@ -39,9 +39,7 @@ public interface PluginManagerRemote {
 
     /**
      * Updates the plugins that might have been changed on the filesystem of the server.
-     * <p/>
-     * Note that this is done asynchronously and there is no good way of checking if and when the operation completed
-     * apart from watching the server log.
+     * This method will only return after the updates are complete.
      *
      * @param subject the authenticated user
      */
@@ -52,13 +50,37 @@ public interface PluginManagerRemote {
      * Be aware that in case there was a plugin update, the plugin containers of the agents will be restarted
      * and thus there will be a short period of time when the agent will not be collecting any metrics, etc.
      * <p/>
-     * Note that this is done asynchronously and there is no good way of checking if and when the operation completed
-     * apart from watching the server log.
+     * Note that by nature this is an asynchronous operation and the update is not finished by the time it returns.
+     * You can use the provided handle to periodically query the
+     * {@link #isPluginUpdateOnAgentsFinished(org.rhq.core.domain.auth.Subject, String)} method using the supplied
+     * handle.
      *
      * @param subject the authenticated user
      * @param delayInMilliseconds the number of milliseconds to wait before running the update on the agents
+     *
+     * @return returns a handle that can be used to retrieve info about the execution of the update
+     *
+     * @see #isPluginUpdateOnAgentsFinished(org.rhq.core.domain.auth.Subject, String)
      */
-    void schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception;
+    String schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception;
+
+    /**
+     * Use this method to check whether given scheduled plugin update on agents finished.
+     * <p/>
+     * This will return false until the update on all agents has truly finished.
+     * <p/>
+     * Note that the schedule only updates the agents that are live at the time it is executed. The agents that will
+     * come live later will only update their plugins once they start and only if they are configured to do so (which is
+     * the default behavior). It is currently not possible to find out what versions of plugins agents use if they are
+     * NOT auto-updating themselves.
+     *
+     * @param subject the authenticated user
+     * @param handle the handle of the schedule
+     * @return true if the scheduled plugin update finished on all live agents, false if it has not finished yet.
+     *
+     * @see #schedulePluginUpdateOnAgents(org.rhq.core.domain.auth.Subject, long)
+     */
+    boolean isPluginUpdateOnAgentsFinished(Subject subject, String handle);
 
     /**
      * Deploys a new agent plugin to RHQ asynchronously. Note that the

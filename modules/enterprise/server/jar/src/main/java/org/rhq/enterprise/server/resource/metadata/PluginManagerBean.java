@@ -580,6 +580,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void update(Subject subject) throws Exception {
         PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
         scanner.scanAndRegister();
@@ -587,20 +588,39 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception {
+    public String schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception {
         JobDetail jobDetail = UpdatePluginsOnAgentsJob.getJobDetail();
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, delayInMilliseconds);
         try {
             scheduler.scheduleJob(jobDetail, trigger);
+
+            return jobDetail.getName();
         } catch (ObjectAlreadyExistsException e) {
             //well, there already is a plugin update job scheduled, so let's just not add another one.
             log.debug("A request to update plugins on agents seems to already be scheduled." +
                 " Ignoring the current request with the error message: " + e.getMessage());
+            throw e;
         }
     }
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public boolean isPluginUpdateOnAgentsFinished(Subject subject, String handle) {
+        try {
+            return scheduler.getJobDetail(handle, UpdatePluginsOnAgentsJob.class.getName()) == null;
+        } catch (SchedulerException e) {
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to retrieve job details while checking for active plugin update schedule, code: " + e.getErrorCode(), e);
+            } else {
+                log.warn("Failed to retrieve job details while checking for active plugin update schedule, code: " + e.getErrorCode() + ", message: " + e.getMessage());
+            }
+
+            return false;
+        }
+    }
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception {
         File base = getPluginDropboxDirectory();
 
@@ -614,6 +634,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception {
         File pluginJar = contentManager.getTemporaryContentFile(handle);
         File base = getPluginDropboxDirectory();

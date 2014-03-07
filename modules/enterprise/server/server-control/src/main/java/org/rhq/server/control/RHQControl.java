@@ -89,7 +89,10 @@ public class RHQControl {
                 String commandName = findCommand(commands, args);
                 command = commands.get(commandName);
 
-                logWarningIfAgentRPMIsInstalled(command);
+                if (!isHelp(args)) {
+                    // don't wait for user to read the warning if this is just request for help
+                    logWarningIfAgentRPMIsInstalled(command);
+                }
 
                 validateInstallCommand(command, args);
 
@@ -305,6 +308,15 @@ public class RHQControl {
         }
 
         return commandNames.get(0);
+    }
+    
+    private boolean isHelp(String[] args) {
+        for (String arg : args) {
+            if (ControlCommand.HELP_OPTION.equals(arg)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String[] getCommandLine(String cmd, String[] args) {

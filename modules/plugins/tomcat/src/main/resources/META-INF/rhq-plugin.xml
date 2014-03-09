@@ -160,7 +160,7 @@
       <!--  This will pick up Tomcat processes, whether standalone or embedded. We narrow it down further by examining the command line -->
       <process-scan
          name="Tomcat"
-         query="process|basename|match=^java.*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
+         query="process|basename|match=^(jsvc.exec|java).*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
 
       <!--
          On windows EWS uses the tomcat5.exe, tomcat6.exe and tomcat7.exe executables for starting tomcat. Unlike the normal

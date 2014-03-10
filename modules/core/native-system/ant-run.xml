@@ -11,7 +11,7 @@ Ant Script that builds a test jar to run SIGAR bug replication code.
    <!-- in case it wasn't passed in, assume the default location -->
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="3.0.0-SNAPSHOT"/>
-   <property name="sigar.version" value="1.6.5.132-5"/>
+   <property name="sigar.version" value="1.6.5.132-6"/>
    <property name="log4j.version" value="1.2.16"/>
 
    <fileset dir="${settings.localRepository}" id="jar.fileset">

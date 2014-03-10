@@ -140,6 +140,8 @@ public class AgentManagerBean implements AgentManagerLocal {
     public void destroyAgentClient(Agent agent) {
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
         try {
+            // note, this destroys the KnownAgentClient on this HA node only.  It will leave other HA nodes "dirty", but
+            // that is OK as there is logic in place to handle dirty entries.
             bootstrap.destroyKnownAgentClient(agent);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("agent client destroyed for agent: " + agent);

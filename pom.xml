@@ -59,7 +59,7 @@
     <product.urlDomain>jboss.org</product.urlDomain>
     <product.salesEmail>rhq-users@lists.fedorahosted.org</product.salesEmail>
     <product.supportEmail>rhq-users@lists.fedorahosted.org</product.supportEmail>
-    <product.version>${rhq.pom.version}</product.version>
+    <product.version>${project.version}</product.version>
     <product.helpDocRoot>https://docs.jboss.org/author/display/RHQ/User+Documentation</product.helpDocRoot>
     <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 

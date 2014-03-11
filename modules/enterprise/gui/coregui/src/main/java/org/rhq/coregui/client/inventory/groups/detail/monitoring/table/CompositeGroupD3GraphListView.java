@@ -20,8 +20,10 @@ package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -65,6 +67,8 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer, AutoRefresh, Refreshable {
 
     static protected final Messages MSG = CoreGUI.getMessages();
+    // The d3 color palette onlys supports 20 colors so we limit to this
+    private static final int MAX_NUMBER_OF_LINES_IN_GRAPH = 20;
     // string labels
     private final String chartTitleMinLabel = MSG.chart_title_min_label();
     private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
@@ -79,6 +83,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private MeasurementDefinition definition;
     private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     private String adjustedMeasurementUnits;
+    private Set<Resource> childResources;
+
     /**
      * measurementForEachResource is a list of a list of single Measurement data for multiple resources.
      */
@@ -113,6 +119,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         criteria.addFilterVisible(!isAutoGroup);
         criteria.fetchExplicitResources(true);
 
+        childResources = new TreeSet<Resource>();
         measurementForEachResource.clear();
         groupService.findResourceGroupCompositesByCriteria(criteria,
                 new AsyncCallback<PageList<ResourceGroupComposite>>() {
@@ -128,11 +135,23 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                         }
 
                         final ResourceGroup parentGroup = result.get(0).getResourceGroup();
+
+                        //Limit the number of child lines in graph due to 20 colors being supported in d3 graph palette
+                        final Set<Resource> fullSetOfChildResources = parentGroup.getExplicitResources();
+                        int i = 0;
+                        for (Iterator<Resource> resourceIterator = fullSetOfChildResources.iterator(); resourceIterator.hasNext(); ) {
+                            Resource nextChildResource = resourceIterator.next();
+                            if(i >= MAX_NUMBER_OF_LINES_IN_GRAPH){
+                                break;
+                            }
+                            childResources.add(nextChildResource);
+                            i++;
+                        }
+
                         chartTitle = parentGroup.getName();
-                        Log.debug("group name: " + parentGroup.getName());
+                        Log.info("group name: " + parentGroup.getName() + ", size: " + parentGroup.getExplicitResources().size());
                         // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                        final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources()
-                                .size(), new Command() {
+                        final CountDownLatch countDownLatch = CountDownLatch.create(childResources.size(), new Command() {
                             @Override
                             /**
                              * Do this only after ALL of the metric queries for each resource
@@ -147,7 +166,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                             }
                         });
 
-                        final Set<Resource> childResources = parentGroup.getExplicitResources();
                         if (!childResources.isEmpty()) {
 
                             // resourceType will be the same for all autogroup children so get first
@@ -258,7 +276,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     }
 
     private void drawGraph() {
-        Log.debug("drawGraph in CompositeGroupD3GraphListView for: " + definition + " (" + definitionId+")");
+        Log.debug("drawGraph in CompositeGroupD3GraphListView for: " + definition + " (" + definitionId + ")");
 
         if (null != titleHLayout) {
             removeMembers();

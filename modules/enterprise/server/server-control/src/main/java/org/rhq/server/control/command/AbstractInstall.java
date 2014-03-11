@@ -403,7 +403,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             } else {
                 // For *nix, just start the server in the background
-            	commandLine = getCommandLine("rhq-server", "start");
+                commandLine = getCommandLine("rhq-server", "start");
                 rValue = Math.max(rValue, ExecutorAssist.execute(getBinDir(), commandLine, true));
             }
 

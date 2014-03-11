@@ -148,7 +148,7 @@ public class Start extends ControlCommand {
             commandLine = getCommandLine("rhq-storage", "start");
             rValue = ExecutorAssist.execute(getBinDir(), commandLine, env);
             if(rValue != RHQControl.EXIT_CODE_OK) {
-            	log.debug("Failed to start storage service, return value" + rValue);            		
+                log.debug("Failed to start storage service, return value" + rValue);                    
             }
         } else {
             File storageBinDir = new File(getStorageBasedir(), "bin");

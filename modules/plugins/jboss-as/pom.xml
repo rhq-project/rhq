@@ -205,7 +205,7 @@
                               <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                                     <include name="org/jboss/on/jopr-tomcat-plugin/${project.version}/jopr-tomcat-plugin-${project.version}.jar" />
                                     <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
                                  </fileset>

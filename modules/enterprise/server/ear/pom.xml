@@ -361,7 +361,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-platform-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-platform-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>
@@ -829,7 +829,7 @@
                                         <artifactItem>
                                             <groupId>${project.groupId}</groupId>
                                             <artifactId>rhq-script-plugin</artifactId>
-                                            <version>${project.version}</version>
+                                            <version>${rhq-script-plugin.version}</version>
                                         </artifactItem>
 
                                         <artifactItem>

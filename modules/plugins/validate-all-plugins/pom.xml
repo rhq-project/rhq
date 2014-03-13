@@ -51,7 +51,7 @@
                               <!--<pathelement location="../onewire/target/rhq-onewire-plugin-${project.version}.jar" />-->
                               <pathelement location="../oracle/target/rhq-oracle-plugin-${project.version}.jar" />
                               <pathelement location="../perftest/target/rhq-perftest-plugin-${project.version}.jar" />
-                              <pathelement location="../platform/target/rhq-platform-plugin-${project.version}.jar" />
+                              <pathelement location="../platform/target/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                               <pathelement location="../postgres/target/rhq-postgres-plugin-${project.version}.jar" />
                               <pathelement location="../rhq-agent/target/rhq-agent-plugin-${project.version}.jar" />
                               <pathelement location="../snmptrapd/target/rhq-snmptrapd-plugin-${project.version}.jar" />

@@ -169,7 +169,7 @@ public class PluginMetadataManager {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
         return (parser != null) ? parser.getComponentClass(resourceType) : null;
     }
-
+    
     /**
      * Transforms the pluginDescriptor into domain object form and stores into this object's type system.
      *
@@ -549,4 +549,5 @@ public class PluginMetadataManager {
             parser.cleanDescriptor();
         }
     }
+
 }

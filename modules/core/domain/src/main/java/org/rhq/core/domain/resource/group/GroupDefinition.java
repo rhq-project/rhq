@@ -83,7 +83,19 @@ import org.rhq.core.domain.util.StringUtils;
     @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL_RECALCULATING, query = "" //
         + "SELECT gd " //
         + "  FROM GroupDefinition AS gd " //
-        + " WHERE gd.recalculationInterval != 0 ") })
+        + " WHERE gd.recalculationInterval != 0 "),
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_BY_CANNED_EXPR_NAME, query = "" //
+        + "SELECT gd " //
+        + "  FROM GroupDefinition AS gd " //
+        + " WHERE gd.cannedExpression = :cannedExpression"),
+        @NamedQuery(name = GroupDefinition.QUERY_FIND_CREATED_FROM_CANNED_EXPR, query = "" //
+        + "SELECT gd " //
+        + "  FROM GroupDefinition AS gd " //
+        + " WHERE gd.cannedExpression IS NOT NULL"),
+        @NamedQuery(name = GroupDefinition.QUERY_FIND_LIKE_EXPR_NAME, query = "" //
+        + "SELECT gd " //
+        + "  FROM GroupDefinition AS gd " //
+        + " WHERE gd.cannedExpression LIKE :cannedExpression")})
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_GROUP_DEF_ID_SEQ", sequenceName = "RHQ_GROUP_DEF_ID_SEQ")
 @Table(name = "RHQ_GROUP_DEF")
 public class GroupDefinition implements Serializable {
@@ -97,6 +109,9 @@ public class GroupDefinition implements Serializable {
     public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_SIZE_ADMIN = "GroupDefinition.findManagedResourceGroupSize_admin";
     public static final String QUERY_FIND_IDS_FOR_RECALCULATION = "GroupDefinition.findIdsForRecalculation_admin";
     public static final String QUERY_FIND_ALL_RECALCULATING = "GroupDefinition.findAllRecalculating_admin";
+    public static final String QUERY_FIND_BY_CANNED_EXPR_NAME = "GroupDefinition.findByCannedExpessionName";
+    public static final String QUERY_FIND_CREATED_FROM_CANNED_EXPR = "GroupDefinition.findCreatedFromCannedExpression";
+    public static final String QUERY_FIND_LIKE_EXPR_NAME = "GroupDefinition.findLikeCannedExpressionName";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_GROUP_DEF_ID_SEQ")
@@ -126,6 +141,9 @@ public class GroupDefinition implements Serializable {
 
     @Column(name = "EXPRESSION")
     private String expression;
+
+    @Column(name = "CANNED_EXPRESSION")
+    private String cannedExpression;
 
     @OneToMany(mappedBy = "groupDefinition", cascade = { CascadeType.PERSIST })
     private Set<ResourceGroup> managedResourceGroups;
@@ -274,6 +292,13 @@ public class GroupDefinition implements Serializable {
 
     public void setManagedResourceGroups(Set<ResourceGroup> managedResourceGroups) {
         this.managedResourceGroups = managedResourceGroups;
+    }
+    public void setCannedExpression(String cannedExpression) {
+        this.cannedExpression = cannedExpression;
+    }
+
+    public String getCannedExpression() {
+        return cannedExpression;
     }
 
     @Override

@@ -7,6 +7,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
 
@@ -139,4 +140,5 @@ public interface PluginManagerLocal {
      * @return directory where the plugin dropbox is located
      */
     File getPluginDropboxDirectory();
+    List<CannedGroupExpression> getCannedGroupExpressions();
 }

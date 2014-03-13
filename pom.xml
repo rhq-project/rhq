@@ -413,7 +413,7 @@
     <rhq-oracle-plugin.version>${rhq.pom.version}</rhq-oracle-plugin.version>
     <pattern-plugin.version>${rhq.pom.version}</pattern-plugin.version>
     <rhq-perftest-plugin.version>${rhq.pom.version}</rhq-perftest-plugin.version>
-    <rhq-platform-plugin.version>${rhq.pom.version}</rhq-platform-plugin.version>
+    <rhq-platform-plugin.version>${rhq.pom.version}-redhat-1</rhq-platform-plugin.version>
     <rhq-plugins-parent.version>${rhq.pom.version}</rhq-plugins-parent.version>
     <rhq-postfix-plugin.version>${rhq.pom.version}</rhq-postfix-plugin.version>
     <rhq-postgres-plugin.version>${rhq.pom.version}</rhq-postgres-plugin.version>
@@ -421,7 +421,7 @@
     <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
     <rhq-rhqstorage-plugin.version>${rhq.pom.version}</rhq-rhqstorage-plugin.version>
     <rhq-samba-plugin.version>${rhq.pom.version}</rhq-samba-plugin.version>
-    <rhq-script-plugin.version>${rhq.pom.version}</rhq-script-plugin.version>
+    <rhq-script-plugin.version>${rhq.pom.version}-redhat-1</rhq-script-plugin.version>
     <rhq-script2-plugin.version>${rhq.pom.version}</rhq-script2-plugin.version>
     <rhq-snmptrapd-plugin.version>${rhq.pom.version}</rhq-snmptrapd-plugin.version>
     <rhq-sonarqube-plugin.version>${rhq.pom.version}</rhq-sonarqube-plugin.version>

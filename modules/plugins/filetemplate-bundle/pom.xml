@@ -93,7 +93,7 @@
                               <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

@@ -42,14 +42,14 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-plugin-container.version}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>test-utils</artifactId>
-         <version>${project.version}</version>
+         <version>${test-utils.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -109,7 +109,7 @@
         <dependency>
           <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-core-plugin-container</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-plugin-container.version}</version>
           <type>test-jar</type>
           <scope>test</scope>
         </dependency>

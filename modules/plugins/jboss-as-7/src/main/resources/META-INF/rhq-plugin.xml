@@ -928,6 +928,7 @@
         displayName="JBoss Application Server 7.x"
         description="provides monitoring and management of JBossAS 7.x and JBoss EAP/JDG 6.x"
         package="org.rhq.modules.plugins.jbossas7"
+        pluginLifecycleListener="PluginLifecycleListener"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 

@@ -130,6 +130,26 @@ public class ASConnection {
 
     private ObjectMapper mapper;
 
+    /*
+     * Called from {@link org.rhq.modules.plugins.jbossas7.PluginLifecycleListener} to shutdown the thread pool
+     * for cleaning out the stale connections.
+     * <p/>
+     * This is needed so that the thread(s) in the pool don't leak the current plugin class loader across the plugin
+     * container restarts. The plugin classloader is the threads' context class loader and the threads live until
+     * JVM exits (unless the thread pool is explicitly shut down). Because all the plugin classes are reloaded on
+     * plugin container restart, the thread pool is created anew, leaving the threads from the old thread pool running
+     * and still referencing the previous plugin class loader.
+     * <p/>
+     * This then leads to a wonderful sneaky memory leak leading to eventual OOMEs due to depleted perm gen (which
+     * has to keep references to all the classes from all the plugin container "runs").
+     * <p/>
+     * Therefore we need to make sure to shut down the thread pool explicitly when it is no longer needed (which is at
+     * the plugin container shutdown).
+     */
+    public static void shutdownConnectionCleaner() {
+        cleanerExecutor.shutdown();
+    }
+
     /**
      * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
      *

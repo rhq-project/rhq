@@ -79,8 +79,10 @@ public abstract class ControlCommand {
     private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
 
     protected void undo() {
-        Collections.reverse(undoTasks); // do the undo tasks in the reverse order in which they were added to the list
-        for (Runnable undoTask : undoTasks) {
+        // perform the undo on the snapshot of undoTasks, because of possible ConcurrentModificationException
+        List<Runnable> undoTasksCopy = new ArrayList<Runnable>(undoTasks);
+        Collections.reverse(undoTasksCopy); // do the undo tasks in the reverse order in which they were added to the list
+        for (Runnable undoTask : undoTasksCopy) {
             try {
                 undoTask.run();
             } catch (Throwable t) {

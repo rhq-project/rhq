@@ -20,12 +20,14 @@ package org.rhq.coregui.client.admin.storage;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ImageStyle;
@@ -71,6 +73,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     private final boolean allStorageNodes;
     private Map<Integer, Integer> resourceIdToStorageNodeIdMap;
     private Map<Integer, String> storageNodeIdToAddressMap;
+    private Date startDateAux;
+    private Date endDateAux;
 
     public StorageNodeAlertHistoryView(String tableTitle, Map<Integer, Integer> resourceIdToStorageNodeIdMap) {
         this(tableTitle, ArrayUtils.unwrapArray(resourceIdToStorageNodeIdMap.keySet().toArray(new Integer[] {})), null,
@@ -364,17 +368,42 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         addTableAction(MSG.view_adminTopology_storageNodes_groupAlerts(), null, items, new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                if (!(Boolean) actionValue) {
-                    getListGrid().ungroup();
-                    startDateFilter.show();
-                    endDateFilter.show();
-                } else {
-                    getListGrid().groupBy("name");
-                    startDateFilter.hide();
-                    endDateFilter.hide();
-                }
-                refreshTableInfo();
+                setGrouping((Boolean) actionValue);
             }
         });
+    }
+    
+    private void setGrouping(boolean grouping) {
+        if (grouping == getListGrid().isGrouped()) {
+            refreshTableInfo();
+            return;
+        }
+        
+        if (grouping) {
+            getListGrid().groupBy("name");
+            // save the values
+            startDateAux = startDateFilter.getValueAsDate();
+            endDateAux = endDateFilter.getValueAsDate();
+            // clear the values
+            startDateFilter.setValue((Date) null);
+            endDateFilter.setValue((Date) null);
+            startDateFilter.hide();
+            endDateFilter.hide();
+        } else {
+            getListGrid().ungroup();
+            startDateFilter.setValue(startDateAux);
+            endDateFilter.setValue(endDateAux);
+            startDateFilter.show();
+            endDateFilter.show();
+        }
+        // refresh the table manually, calling refresh() doesn't work here because the listgrid has set the 
+        // autoFetchData flag to true and invalidateCache() doesn't do the fetching as mentioned in the refresh()
+        // method. 
+        final ListGrid listGrid = getListGrid();
+        Criteria criteria = getCurrentCriteria();
+        listGrid.setCriteria(criteria);
+        listGrid.fetchData(criteria);
+        listGrid.markForRedraw();
+        refreshTableInfo();
     }
 }

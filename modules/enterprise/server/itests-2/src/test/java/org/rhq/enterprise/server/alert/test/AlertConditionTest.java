@@ -43,6 +43,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -387,6 +388,44 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return;
     }
 
+    @Test(enabled = ENABLED)
+    public void testBZ1058534_changeCondition() throws Exception {
+        // create our resource with alert definition
+        MeasurementDefinition metricDef = createResourceWithMetricSchedule("type-with-trait.xml", "TypeWithTrait");
+
+        AlertDefinition alertDef = createAlertDefinitionWithChangeFromNull(metricDef, resource.getId());
+
+        assert alertDef.getConditions().size() == 1 : "1 alertDef condition should exist";
+        AlertCondition condition = alertDef.getConditions().iterator().next();
+        int conditionId = condition.getId();
+
+        // re-load the resource so we get the measurement schedule
+        Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
+        MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
+
+        // simulate a measurement report coming from the agent - one values that changes value, so 1 alert is fired
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataTrait(getTimestamp(15), request, "Foo"));
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        dataManager.mergeMeasurementReport(report);
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(5000);
+
+        // make sure one alert was triggered (prior to the fix an NPE would occur while processing)
+        List<Alert> alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
+        Alert alert = alerts.get(0);
+
+        assert alert.getConditionLogs().size() == 1 : "1 condition log should exist";
+        AlertConditionLog conditionLog = alert.getConditionLogs().iterator().next();
+        Assert.assertEquals(conditionLog.getCondition().getId(), conditionId,
+            "original condition should have been associated with the alert");
+
+        return;
+    }
+
     public void testDampeningWorksAcrossConditionCacheReloads() throws Exception {
         MeasurementDefinition measDef = createResourceWithMetricSchedule();
 
@@ -602,6 +641,35 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return alertDefinition;
     }
 
+    private AlertDefinition createAlertDefinitionWithChangeFromNull(MeasurementDefinition metricDef, int resourceId) {
+        HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(1);
+        AlertCondition cond1 = new AlertCondition();
+        cond1.setCategory(AlertConditionCategory.TRAIT);
+        cond1.setName(metricDef.getDisplayName());
+        cond1.setMeasurementDefinition(metricDef);
+        conditions.add(cond1);
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("one trait change from null alert");
+        alertDefinition.setEnabled(true);
+        alertDefinition.setPriority(AlertPriority.HIGH);
+        alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
+        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setConditionExpression(BooleanExpression.ALL);
+        alertDefinition.setConditions(conditions);
+
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        alertDefinition = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition,
+            resourceId, true);
+        assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
+            + alertDefinition;
+
+        // now that we created an alert def, we have to reload the alert condition cache
+        reloadAllAlertConditionCaches();
+
+        return alertDefinition;
+    }
+
     private AlertDefinition createAlertDefinitionWithAvailChangeCondition(int resourceId,
         AlertConditionOperator condition) {
         HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(1);
@@ -710,8 +778,51 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
      * @throws Exception
      */
     private MeasurementDefinition createResourceWithMetricSchedule() throws Exception {
-        registerPlugin("type-with-metric.xml");
-        ResourceType resourceType = getResourceType("TypeWithMetrics");
+        return createResourceWithMetricSchedule("type-with-metric.xml", "TypeWithMetrics");
+    }
+
+    /**
+     * Creates a resource, stores it in the "resource" data field and returns the measurement definition
+     * that the schedule is for.
+     *
+     * @return measurement definition that was used to create the schedule for the new resource
+     * @throws Exception
+     */
+    private MeasurementDefinition createResourceWithMetricSchedule(String plugin, String typeName) throws Exception {
+        registerPlugin(plugin);
+        ResourceType resourceType = getResourceType(typeName);
+        assert resourceType != null : "failed to deploy resource type";
+        assert resourceType.getMetricDefinitions() != null : "failed to create metric defs";
+        assert resourceType.getMetricDefinitions().size() == 1 : "do not have the expected number of metric defs";
+
+        final MeasurementDefinition metricDef = resourceType.getMetricDefinitions().iterator().next();
+
+        resource = persistNewResource(resourceType.getName()); // will have UNKNOWN avail
+        assert resource != null && resource.getId() > 0 : "failed to create test resource";
+
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                MeasurementSchedule schedule = new MeasurementSchedule(metricDef, resource);
+                em.persist(schedule);
+            }
+        });
+
+        // create a server which attaches our agent to it - we need this for the alert subsystem to do its thing
+        createServerIdentity();
+        return metricDef;
+    }
+
+    /**
+     * Creates a resource, stores it in the "resource" data field and returns the measurement definition
+     * that the schedule is for.
+     *
+     * @return measurement definition that was used to create the schedule for the new resource
+     * @throws Exception
+     */
+    private MeasurementDefinition createResourceWithTraitSchedule() throws Exception {
+        registerPlugin("type-with-trait.xml");
+        ResourceType resourceType = getResourceType("TypeWithTrait");
         assert resourceType != null : "failed to deploy resource type";
         assert resourceType.getMetricDefinitions() != null : "failed to create metric defs";
         assert resourceType.getMetricDefinitions().size() == 1 : "do not have the expected number of metric defs";

@@ -37,10 +37,6 @@ import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
-
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileReverter;
@@ -50,6 +46,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * @author Jay Shaughnessy
@@ -174,10 +171,7 @@ public class Upgrade extends AbstractInstall {
             org.apache.commons.exec.CommandLine rhqctlStop = isRhq48OrLater(commandLine) ? getCommandLine(false,
                 "rhqctl", "stop") : getCommandLine("rhq-server", "stop");
 
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(fromBinDir);
-            executor.setStreamHandler(new PumpStreamHandler());
-            int exitValue = executor.execute(rhqctlStop);
+            int exitValue = ExecutorAssist.execute(fromBinDir, rhqctlStop);
             if (exitValue == 0) {
                 log.info("The old installation components have been stopped");
             } else {
@@ -261,11 +255,7 @@ public class Upgrade extends AbstractInstall {
                 commandLine.addArgument("--estimate-only");
             }
 
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(new File(getBaseDir(), "bin")); // data migrator script is not in bin/internal
-            executor.setStreamHandler(new PumpStreamHandler());
-
-            int exitValue = executor.execute(commandLine);
+            int exitValue = ExecutorAssist.execute(new File(getBaseDir(), "bin"), commandLine);
             log.info("The data migrator finished with exit value " + exitValue);
             rValue = exitValue;
         } catch (Exception e) {
@@ -301,13 +291,9 @@ public class Upgrade extends AbstractInstall {
 
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
-                Executor executor = new DefaultExecutor();
-                executor.setWorkingDirectory(getBinDir());
-                executor.setStreamHandler(new PumpStreamHandler());
 
-                int exitCode = executor.execute(commandLine);
-                log.info("The storage node upgrade has finished with an exit value of " + exitCode);
-                rValue = exitCode;
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
+                log.info("The storage node upgrade has finished with an exit value of " + rValue);
             } catch (IOException e) {
                 log.error("An error occurred while running the storage node upgrade: " + e.getMessage());
                 throw e;
@@ -350,7 +336,7 @@ public class Upgrade extends AbstractInstall {
         }
 
         // start the server, the invoke the installer and wait for the server to be completely installed
-        startRHQServerForInstallation();
+        rValue = Math.max(rValue, startRHQServerForInstallation());
         int installerStatusCode = runRHQServerInstaller();
         rValue = Math.max(rValue, installerStatusCode);
         if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
@@ -666,11 +652,7 @@ public class Upgrade extends AbstractInstall {
                 .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log")) //
                 .addArgument("--launch=false"); // we can't launch this copy - we still have to move it to the new location
 
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(getBaseDir());
-            executor.setStreamHandler(new PumpStreamHandler());
-
-            int exitValue = executor.execute(commandLine);
+            int exitValue = ExecutorAssist.execute(getBaseDir(), commandLine);
             log.info("The agent installer finished upgrading with exit value " + exitValue);
 
             // We need to now move the new, updated agent over to the new agent location.

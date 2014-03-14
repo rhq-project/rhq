@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.10.0-SNAPSHOT</version>
+  <version>4.11.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -190,7 +190,7 @@
 
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <servlet-api.version>2.4</servlet-api.version>
-    <sigar.version>1.6.5.132-5</sigar.version>
+    <sigar.version>1.6.5.132-6</sigar.version>
     <sigar.zip.version>1.6.5</sigar.zip.version>
     <swagger-annotations.version>1.2.3</swagger-annotations.version>
 
@@ -884,7 +884,7 @@
       <dependency>
         <groupId>commons-fileupload</groupId>
         <artifactId>commons-fileupload</artifactId>
-        <version>1.2</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>

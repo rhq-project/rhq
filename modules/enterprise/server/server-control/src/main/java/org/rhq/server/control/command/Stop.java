@@ -29,12 +29,9 @@ import java.io.File;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
-
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * @author John Sanda
@@ -125,23 +122,17 @@ public class Stop extends AbstractInstall {
     private int stopStorage() throws Exception {
         log.debug("Stopping RHQ storage node");
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
         int rValue;
 
         if (isWindows()) {
             commandLine = getCommandLine("rhq-storage", "stop");
-            try {
-                rValue = executor.execute(commandLine);
-                System.out.println("RHQ storage node has stopped");
-
-            } catch (Exception e) {
-                // Ignore, service may not exist or be running, script returns 1
-                log.debug("Failed to stop storage service", e);
-                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+            rValue = ExecutorAssist.execute(getBinDir(), commandLine);
+            if(rValue != RHQControl.EXIT_CODE_OK) {
+                log.debug("Failed to stop storage service, return code " + rValue);                
+            } else {
+                System.out.println("RHQ storage node has stopped");                
             }
         } else {
             if (isStorageRunning()) {
@@ -165,26 +156,20 @@ public class Stop extends AbstractInstall {
     private int stopRHQServer() throws Exception {
         log.debug("Stopping RHQ server");
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
         int rValue;
 
         if (isWindows()) {
-            try {
-                rValue = executor.execute(commandLine);
-            } catch (Exception e) {
-                // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop server service", e);
-                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+            rValue = ExecutorAssist.execute(getBinDir(), commandLine);
+            if(rValue != RHQControl.EXIT_CODE_OK) {
+                log.debug("Failed to stop server service");                    
             }
         } else {
             String pid = getServerPid();
 
             if (pid != null) {
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
             } else {
                 rValue = RHQControl.EXIT_CODE_OK;
             }
@@ -196,26 +181,20 @@ public class Stop extends AbstractInstall {
         log.debug("Stopping RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(agentBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
 
         int rValue;
 
         if (isWindows()) {
-            try {
-                rValue = executor.execute(commandLine);
-            } catch (Exception e) {
-                // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop agent service", e);
-                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+            rValue = ExecutorAssist.execute(agentBinDir, commandLine);
+            if(rValue != RHQControl.EXIT_CODE_OK) {
+                log.debug("Failed to stop agent service, return value" + rValue);                
             }
         } else {
             String pid = getAgentPid();
 
             if (pid != null) {
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(agentBinDir, commandLine);
             } else {
                 rValue = RHQControl.EXIT_CODE_OK;
             }

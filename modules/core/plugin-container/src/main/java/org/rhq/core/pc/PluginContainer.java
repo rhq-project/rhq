@@ -330,6 +330,7 @@ public class PluginContainer {
             inventoryManager,
             measurementManager,
             operationManager,
+            pingManager,
             resourceFactoryManager,
             supportManager };
     }

@@ -121,23 +121,16 @@ public class AgentPluginScanner {
      * deleted if the wrapping succeeds.
      * @param fileName Full path of the file to wrap.
      */
-    private void createPluginJarFromDescriptorFile(String fileName) throws Exception {
-        if (!fileName.endsWith("-rhq-plugin.xml")) {
-            log.warn("The passed file does not end in -rhq-plugin.xml, will not process it");
-            return;
-        }
-
-        log.info("Found a plugin-descriptor at [" + fileName + "], creating a jar from it to be deployed at the next scan");
+    private File createPluginJarFromDescriptorFile(String fileName) throws Exception {
         File descriptor = new File(fileName);
-        String name = descriptor.getName();
-        int pos = name.lastIndexOf(".xml");
-        name = name.substring(0,pos) + ".jar"; // TODO special name for those plugins?
+        String jarName  = "__from-jarless__-" + descriptor.getName() + ".jar";
+        log.info("Found a plugin-descriptor at [" + fileName + "], converting it to jar [" + jarName + "]");
         String parent = descriptor.getParent();
         JarOutputStream jos = null;
         FileInputStream fis = null;
-        boolean success = false;
+        File jarFile = new File(parent, jarName);
         try {
-            jos = new JarOutputStream(new FileOutputStream(new File(parent,name)));
+            jos = new JarOutputStream(new FileOutputStream(jarFile));
             JarEntry jarEntry = new JarEntry("META-INF");
             jos.putNextEntry(jarEntry);
             jarEntry = new JarEntry("META-INF/rhq-plugin.xml");
@@ -148,19 +141,28 @@ public class AgentPluginScanner {
                 jos.write(i);
             }
             jos.flush();
-            success = true;
         } catch (IOException e) {
             log.error("Failed creating the plugin jar from the descriptor: " + e.getMessage());
             throw e;
         }
         finally {
-            JDBCUtil.safeClose(jos);
-            JDBCUtil.safeClose(fis);
+            StreamUtil.safeClose(jos);
+            StreamUtil.safeClose(fis);
         }
-        if (success) {
-            boolean deleted = descriptor.delete();
-            log.info("Deleted the now obsolete plugin descriptor: " + deleted);
+
+        if (!jarFile.setLastModified(descriptor.lastModified())) {
+            log.info(
+                "Failed to sync the last modified times of the jar-less plugin and its generated jar file." +
+                    " This will force an MD5 check to determine changes");
         }
+
+        if (descriptor.delete()) {
+            log.info("Deleted the now obsolete plugin descriptor.");
+        } else {
+            log.warn("Failed to delete the obsolete plugin descriptor file.");
+        }
+
+        return jarFile;
     }
 
     void agentPluginScan() throws Exception {
@@ -230,11 +232,10 @@ public class AgentPluginScanner {
 
             if (pluginJar.getName().endsWith("-rhq-plugin.xml")) {
                 try {
-                    createPluginJarFromDescriptorFile(pluginJar.getAbsolutePath());
-                    continue;
+                    pluginJar = createPluginJarFromDescriptorFile(pluginJar.getAbsolutePath());
                 } catch (Exception e) {
                     log.warn("Converting jar-less plugin failed: " + e.getMessage());
-                    if (e.getCause()!=null) {
+                    if (e.getCause() != null) {
                         log.warn("   caused by " + e.getCause().getMessage());
                     }
                 }
@@ -260,7 +261,7 @@ public class AgentPluginScanner {
                 }
             } catch (Exception e) {
                 log.warn("Failed to scan agent plugin [" + pluginJar + "] found on filesystem. Skipping. Cause: " + e);
-                if (e.getCause()!=null) {
+                if (e.getCause() != null) {
                     log.warn("   caused by " + e.getCause().getMessage());
                 }
                 this.agentPluginsOnFilesystem.remove(pluginJar); // act like we never saw it

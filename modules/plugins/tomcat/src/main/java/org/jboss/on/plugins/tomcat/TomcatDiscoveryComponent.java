@@ -105,6 +105,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     /**
      * EWS RPM Install path substrings used to identify EWS tomcat version
      */
+    public static final String EWS_TOMCAT_8 = "tomcat8";
     public static final String EWS_TOMCAT_7 = "tomcat7";
     public static final String EWS_TOMCAT_6 = "tomcat6";
     public static final String EWS_TOMCAT_5 = "tomcat5";
@@ -203,7 +204,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
 
         resourceName = address + (port == null ? "" : ":" + port);
         String resourceKey = catalinaBase;
-        populatePluginConfiguration(pluginConfig, catalinaHome, catalinaBase, null);
+        populatePluginConfiguration(pluginConfig, catalinaHome, catalinaBase, null, isWindows(discoveryContext));
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
             resourceKey, resourceName, version, productDescription, pluginConfig, null);
@@ -278,7 +279,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         String resourceKey = catalinaBase;
 
         Configuration pluginConfiguration = new Configuration();
-        populatePluginConfiguration(pluginConfiguration, catalinaHome, catalinaBase, commandLine);
+        populatePluginConfiguration(pluginConfiguration, catalinaHome, catalinaBase, commandLine, isWindows(context));
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
             resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
@@ -381,7 +382,16 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             }
         });
 
+        if (tomcatInstallDirs == null) {
+            // the path doesn't exist. Probably a full path service catalinaHome\bin\Tomcatn.exe
+            if (ewsDir.isDirectory())
+                return ewsDir.getAbsolutePath();
+            else
+                return null;
+        }
+
         if (tomcatInstallDirs.length == 0) {
+            // directory empty or nothing found.
             return null;
         } else if (tomcatInstallDirs.length > 1) {
             LOG.warn("Could not unambiguously determine the tomcat installation dir for EWS executable " + exePath.getAbsolutePath() + ". The candidates are: " + Arrays.asList(tomcatInstallDirs));
@@ -509,7 +519,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     }
 
     private void populatePluginConfiguration(Configuration configuration, String catalinaHome, String catalinaBase,
-        String[] commandLine) {
+        String[] commandLine, boolean isWin) {
 
         if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH, null)) {
             configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_CATALINA_HOME_PATH, catalinaHome));
@@ -524,21 +534,57 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
 
         if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, null)) {
             String script = binPath + "startup" + scriptExtension;
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, script));
+            if (new File(script).canExecute())
+                configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, script));
         }
         if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, null)) {
             String script = binPath + "shutdown" + scriptExtension;
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, script));
+            if (new File(script).canExecute())
+              configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, script));
         }
         if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD, null)) {
             // if the specified startup script does not exist and the installation path looks indicative, assume an RPM install.
             TomcatServerComponent.ControlMethod controlMethod = TomcatServerComponent.ControlMethod.SCRIPT;
 
             // The script should exist unless this is an rpm install, which uses System V init.
-            if (!new File(configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, null))
-                .exists()) {
+            // Or a windows service.
+            if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, null)) {
                 if (isEWS(catalinaHome)) {
                     controlMethod = TomcatServerComponent.ControlMethod.RPM;
+                    String startscript = "/etc/init.d/tomcat";
+                    if (catalinaHome.contains("8.0")) {
+                        startscript = startscript.concat("8");
+                    }
+                    if (catalinaHome.contains("7.0")) {
+                        startscript = startscript.concat("7");
+                    }
+                    if (catalinaHome.contains("6.0")) {
+                        startscript = startscript.concat("6");
+                    }
+                    // Check that the file is excutable.
+                    if (new File(startscript).canExecute()) {
+                        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, startscript + " start"));
+                        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, startscript + " stop"));
+                    }
+                }
+                if (isWin) {
+                    controlMethod = TomcatServerComponent.ControlMethod.RPM;
+                    String startscript = "net start Tomcat";
+                    String stopscript = "net stop Tomcat";
+                    if (catalinaHome.contains("8.0")) {
+                        startscript = startscript.concat("8");
+                        stopscript =  stopscript.concat("8");
+                    }
+                    if (catalinaHome.contains("7.0")) {
+                        startscript = startscript.concat("7");
+                        stopscript =  stopscript.concat("7");
+                    }
+                    if (catalinaHome.contains("6.0")) {
+                        startscript = startscript.concat("6");
+                        stopscript =  stopscript.concat("6");
+                    }
+                    configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, stopscript));
+                    configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, startscript));
                 }
             }
 
@@ -571,17 +617,40 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     public static boolean isEWSTomcat5(String catalinaHome) {
         return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_5));
     }
-
     public static boolean isEWSTomcat6(String catalinaHome) {
         return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_6));
+    }
+    public static boolean isEWSTomcat7(String catalinaHome) {
+        return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_7));
+    }
+    public static boolean isEWSTomcat8(String catalinaHome) {
+        return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_8));
     }
 
     public static boolean isRPMTomcat5(String catalinaHome) {
         return catalinaHome.endsWith(EWS_TOMCAT_5);
     }
-    
     public static boolean isRPMTomcat6(String catalinaHome) {
         return catalinaHome.endsWith(EWS_TOMCAT_6);
+    }
+    public static boolean isRPMTomcat7(String catalinaHome) {
+        return catalinaHome.endsWith(EWS_TOMCAT_7);
+    }
+    public static boolean isRPMTomcat8(String catalinaHome) {
+        return catalinaHome.endsWith(EWS_TOMCAT_8);
+    }
+    
+    public static boolean isTomcat5(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_5) || catalinaHome.contains("5.0"));
+    }
+    public static boolean isTomcat6(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_6) || catalinaHome.contains("6.0"));
+    }
+    public static boolean isTomcat7(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_7) || catalinaHome.contains("7.0"));
+    }
+    public static boolean isTomcat8(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_8) || catalinaHome.contains("8.0"));
     }
     
     private void populateJMXConfiguration(Configuration configuration, String[] commandLine) {

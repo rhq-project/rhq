@@ -163,7 +163,7 @@ public class Install extends AbstractInstall {
                     }
                 } else {
                     startedServer = true;
-                    startRHQServerForInstallation();
+                    rValue = Math.max(rValue, startRHQServerForInstallation());
                     int installerStatusCode = runRHQServerInstaller();
                     rValue = Math.max(rValue, installerStatusCode);
                     if (installerStatusCode == RHQControl.EXIT_CODE_OK) {

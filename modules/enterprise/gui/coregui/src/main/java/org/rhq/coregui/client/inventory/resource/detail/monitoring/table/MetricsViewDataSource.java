@@ -21,9 +21,20 @@ package org.rhq.coregui.client.inventory.resource.detail.monitoring.table;
 
 import static org.rhq.core.domain.measurement.DataType.COMPLEX;
 import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.ALERT_COUNT;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.AVG_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.LIVE_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.MAX_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_DEF_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_LABEL;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_NAME;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_SCHEDULE_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_UNITS;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.MIN_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.RESOURCE_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.SPARKLINE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -63,7 +74,6 @@ import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.preferences.MeasurementUserPreferences;
-import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.*;
 
 /**
  * A simple data source to read in metric data summaries for a resource.
@@ -83,7 +93,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
     private Set<MeasurementData> liveMeasurementDataSet;
     private int[] definitionArrayIds;
-    private int[] scheduleIds;
+    private int[] enabledScheduleIds;
+    private int[] enabledScheduleDefinitionIds;
     private HashMap<Integer, MeasurementUnits> scheduleToMeasurementUnitMap = new HashMap<Integer, MeasurementUnits>();
     private final MeasurementUserPreferences measurementUserPrefs;
 
@@ -109,8 +120,8 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                     return "";
                 }
                 String contents = "<span id='sparkline_" + resource.getId() + "-"
-                        + record.getAttributeAsInt(METRIC_DEF_ID.getValue()) + "' class='dynamicsparkline' width='70' "
-                        + "values='" + record.getAttribute(SPARKLINE.getValue()) + "'></span>";
+                    + record.getAttributeAsInt(METRIC_DEF_ID.getValue()) + "' class='dynamicsparkline' width='70' "
+                    + "values='" + record.getAttribute(SPARKLINE.getValue()) + "'></span>";
                 return contents;
 
             }
@@ -251,46 +262,49 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resource.getId(),
-                DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
-            @Override
-            public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
-                scheduleIds = new int[measurementSchedules.size()];
-                int i = 0;
-                for (MeasurementSchedule measurementSchedule : measurementSchedules) {
-                    scheduleIds[i++] = measurementSchedule.getId();
+            DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
+                @Override
+                public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
+                    enabledScheduleIds = new int[measurementSchedules.size()];
+                    enabledScheduleDefinitionIds = new int[measurementSchedules.size()];
+                    int i = 0;
+                    for (MeasurementSchedule measurementSchedule : measurementSchedules) {
+                        enabledScheduleIds[i] = measurementSchedule.getId();
+                        enabledScheduleDefinitionIds[i++] = measurementSchedule.getDefinition().getId();
+                    }
+
+                    // This latch is the last thing that gets executed after we have executed the
+                    // 2 queries in Parallel
+                    final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
+
+                        @Override
+                        public void execute() {
+                            // we needed the ResourceMetrics query and Metric Display Summary
+                            // to finish before we can query the live metrics and populate the
+                            // result response
+                            queryLiveMetrics(request, response);
+
+                        }
+                    });
+
+                    queryResourceMetrics(resource, measurementUserPrefs.getMetricRangePreferences().begin,
+                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
+                    queryMetricDisplaySummaries(enabledScheduleIds,
+                        measurementUserPrefs.getMetricRangePreferences().begin,
+                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
                 }
 
-                // This latch is the last thing that gets executed after we have executed the
-                // 2 queries in Parallel
-                final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
-
-                    @Override
-                    public void execute() {
-                        // we needed the ResourceMetrics query and Metric Display Summary
-                        // to finish before we can query the live metrics and populate the
-                        // result response
-                        queryLiveMetrics(request, response);
-
-                    }
-                });
-
-                queryResourceMetrics(resource, measurementUserPrefs.getMetricRangePreferences().begin,
-                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-                queryMetricDisplaySummaries(scheduleIds, measurementUserPrefs.getMetricRangePreferences().begin,
-                        measurementUserPrefs.getMetricRangePreferences().end, countDownLatch);
-            }
-
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
-            }
-        });
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
+                }
+            });
     }
 
     private void queryLiveMetrics(final DSRequest request, final DSResponse response) {
 
         // actually go out and ask the agents for the data
-        GWTServiceLookup.getMeasurementDataService(60000).findLiveData(resource.getId(), definitionArrayIds,
+        GWTServiceLookup.getMeasurementDataService(60000).findLiveData(resource.getId(), enabledScheduleDefinitionIds,
             new AsyncCallback<Set<MeasurementData>>() {
                 @Override
                 public void onSuccess(Set<MeasurementData> result) {
@@ -391,7 +405,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.warn("Error retrieving recent metrics charting data for resource [" + resource.getId() + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     countDownLatch.countDown();
                 }
 

@@ -34,10 +34,10 @@ public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Dou
 
     @Override
     public boolean matches(Double providedValue, Object... extraParams) {
-        /* 
+        /*
          * allow null/NaN/infinite Numeric elements to be processed;
-         * 
-         * this will support baseline-based AlertConditions whose baselines haven't been calculated yet 
+         *
+         * this will support baseline-based AlertConditions whose baselines haven't been calculated yet
          */
         if (alertConditionValue == null || alertConditionValue.isNaN() || alertConditionValue.isInfinite()) {
             return false;
@@ -49,24 +49,22 @@ public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Dou
 
         if (alertConditionOperator == AlertConditionOperator.GREATER_THAN) {
             return (providedValue.compareTo(alertConditionValue) > 0);
+
         } else if (alertConditionOperator == AlertConditionOperator.LESS_THAN) {
             return (providedValue.compareTo(alertConditionValue) < 0);
+
         } else if (alertConditionOperator == AlertConditionOperator.EQUALS) {
             return (providedValue.compareTo(alertConditionValue) == 0);
+
         } else if (alertConditionOperator == AlertConditionOperator.CHANGES) {
-            Boolean results = null;
+            boolean result;
 
-            if ((results == null) && (alertConditionValue.compareTo(providedValue) != 0)) {
-                results = Boolean.TRUE;
-            }
-
-            if (results == null) {
-                results = Boolean.FALSE;
-            }
+            result = (alertConditionValue.compareTo(providedValue) != 0);
 
             alertConditionValue = providedValue;
 
-            return results;
+            return result;
+
         } else {
             throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName() + " does not yet support "
                 + alertConditionOperator);

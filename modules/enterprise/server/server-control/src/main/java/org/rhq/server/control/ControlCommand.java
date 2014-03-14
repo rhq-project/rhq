@@ -151,8 +151,13 @@ public abstract class ControlCommand {
         Options options = getOptions();
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine cmdLine = parser.parse(options, args);
+            CommandLineParser parser = new RHQPosixParser(true);
+            CommandLine cmdLine = parser.parse(options, args, true);
+            if (!cmdLine.getArgList().isEmpty()) {
+                // there were some unrecognized args
+                printUsage();
+                return RHQControl.EXIT_CODE_INVALID_ARGUMENT;
+            }
             rValue = exec(cmdLine);
 
             if (rhqctlConfig != null) {

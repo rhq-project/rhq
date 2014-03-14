@@ -20,6 +20,8 @@
 package org.rhq.core.pc.inventory;
 
 import static org.rhq.core.util.StringUtil.isNotBlank;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
 import java.net.URL;
@@ -46,9 +48,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -1366,8 +1365,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     modifiedResourceIds.size(), deletedResourceIds.size(), newlyCommittedResources.size()));
             }
 
-            mergeUnknownResources(unknownResourceSyncInfos);
-            mergeModifiedResources(modifiedResourceIds);
+            boolean hadSyncedResources = !syncedResources.isEmpty();
+            boolean hadUnknownResources = mergeUnknownResources(unknownResourceSyncInfos);
+            boolean hadModifiedResources = mergeModifiedResources(modifiedResourceIds);
             purgeIgnoredResources(ignoredResources);
 
             postProcessNewlyCommittedResources(newlyCommittedResources);
@@ -1379,7 +1379,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     (System.currentTimeMillis() - startTime)));
             }
 
-            result = !(syncedResources.isEmpty() && unknownResourceSyncInfos.isEmpty() && modifiedResourceIds.isEmpty());
+            result = hadSyncedResources || hadUnknownResources || hadModifiedResources;
 
         } catch (Throwable t) {
             log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + rootResourceId
@@ -3011,7 +3011,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     // If this unknown resource is to be ignored, then don't bother to do anything.
                     if (InventoryStatus.IGNORED != syncInfo.getInventoryStatus()) {
                         unknownResourceSyncInfos.add(syncInfo);
-                        log.info("Got unknown resource: " + syncInfo.getId());
                     } else {
                         log.info("Got an unknown but ignored resource - ignoring it: " + syncInfo.getId());
                     }
@@ -3137,55 +3136,69 @@ public class InventoryManager extends AgentService implements ContainerService, 
         config.resize();
     }
 
-    private void mergeModifiedResources(Set<Integer> modifiedResourceIds) {
-        if (modifiedResourceIds != null && !modifiedResourceIds.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug("Merging [" + modifiedResourceIds.size() + "] modified Resources into local inventory...");
-            }
-
-            Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService()
-                .getResources(modifiedResourceIds, false);
-            syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
-            syncDriftDefinitions(modifiedResources);
-            for (Resource modifiedResource : modifiedResources) {
-                compactResource(modifiedResource);
-                mergeResource(modifiedResource);
-            }
+    private boolean mergeModifiedResources(Set<Integer> modifiedResourceIds) {
+        if (null == modifiedResourceIds || modifiedResourceIds.isEmpty()) {
+            return false;
         }
-        return;
+
+        if (log.isDebugEnabled()) {
+            log.debug("Merging [" + modifiedResourceIds.size() + "] modified Resources into local inventory...");
+        }
+
+        Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService()
+            .getResources(modifiedResourceIds, false);
+
+        syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
+        syncDriftDefinitions(modifiedResources);
+        for (Resource modifiedResource : modifiedResources) {
+            compactResource(modifiedResource);
+            mergeResource(modifiedResource);
+        }
+
+        return true;
     }
 
-    private void mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
-        if (unknownResourceSyncInfos != null && !unknownResourceSyncInfos.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug("Merging [" + unknownResourceSyncInfos.size()
-                    + "] unknown resources and descendants into inventory...");
-            }
-
-            PluginMetadataManager pmm = this.pluginManager.getMetadataManager();
-
-            Set<Resource> unknownResources = getResourcesFromSyncInfos(unknownResourceSyncInfos);
-            Set<Integer> toBeIgnored = new HashSet<Integer>();
-
-            for (Resource unknownResource : unknownResources) {
-                ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
-                if (resourceType != null) {
-                    compactResource(unknownResource);
-                    mergeResource(unknownResource);
-                    syncSchedulesRecursively(unknownResource);
-                    syncDriftDefinitionsRecursively(unknownResource);
-                } else {
-                    toBeIgnored.add(unknownResource.getId());
-                    if (log.isDebugEnabled()) {
-                        log.debug("During an inventory sync, the server gave us resource [" + unknownResource
-                            + "] but its type is disabled in the agent; ignoring it");
-                    }
-                }
-            }
-
-            unknownResourceSyncInfos.removeAll(toBeIgnored);
+    private boolean mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
+        if (null == unknownResourceSyncInfos || unknownResourceSyncInfos.isEmpty()) {
+            return false;
         }
-        return;
+
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving unknown Resources for [" + unknownResourceSyncInfos.size()
+                + "] unknownResourceSyncInfos...");
+        }
+
+        boolean result = false;
+        PluginMetadataManager pmm = this.pluginManager.getMetadataManager();
+        Set<Resource> unknownResources = getResourcesFromSyncInfos(unknownResourceSyncInfos);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Merging [" + unknownResources.size() + "] unknown Resources (and descendents) into inventory...");
+        }
+
+        for (Resource unknownResource : unknownResources) {
+            ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
+            if (resourceType != null) {
+                log.info("Got unknown resource: " + unknownResource.getId());
+                result = true;
+                compactResource(unknownResource);
+                mergeResource(unknownResource);
+                syncSchedulesRecursively(unknownResource);
+                syncDriftDefinitionsRecursively(unknownResource);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("During an inventory sync, the server gave us Resource [" + unknownResource
+                        + "] but its type is disabled in the agent; skipping it...");
+                }
+                // report this so that the user knows to uninventory the dead resource
+                String msg = "This resource should be uninventoried.  The agent has disabled this resource's type.  The resource is no longer being managed.";
+                ResourceError resourceError = new ResourceError(unknownResource, ResourceErrorType.DISABLED_TYPE, msg,
+                    null, System.currentTimeMillis());
+                sendResourceErrorToServer(resourceError);
+            }
+        }
+
+        return result;
     }
 
     private Set<Resource> getResourcesFromSyncInfos(Set<ResourceSyncInfo> syncInfos) {

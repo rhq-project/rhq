@@ -37,9 +37,15 @@ public enum ResourceErrorType {
      * An exception was thrown by the Resource component's getAvailablity() method the last time it was called.
      */
     AVAILABILITY_CHECK,
-    
+
     /**
      * There was an attempt to upgrade the resource on the agent but it failed.
      */
-    UPGRADE
+    UPGRADE,
+
+    /**
+     * During resource sync the server reported a resource for which the agent does not recognize the type. This
+     * happens when the agent disables a plugin for which there is already server-side inventory.
+     */
+    DISABLED_TYPE
 }

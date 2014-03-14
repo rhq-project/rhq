@@ -218,7 +218,7 @@ public class Upgrade extends AbstractInstall {
                     Stop stopCommand = new Stop();
                     stopCommand.exec(new String[] { "stop", "--server" });
                     if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
-                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--storage" }));
+                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
                     }
                 }
             } catch (Throwable t) {

@@ -186,15 +186,11 @@ public class RHQControl {
     }
 
     private void validateInstallCommand(ControlCommand command, String[] args) {
-        if (!"install".equalsIgnoreCase(command.getName())) {
+        // just return if we're asking for help or if it is not an install command
+        if (!"install".equalsIgnoreCase(command.getName()) || isHelp(args)) {
             return;
         }
-
-        // just return if we're asking for help
         List<String> argsList = Arrays.asList(args);
-        if (argsList.contains("--help")) {
-            return;
-        }
 
         // don't perform validation for components not involved in the command
         boolean validateServer = argsList.contains("--server")

@@ -261,7 +261,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             agentClient.getDiscoveryAgentService().updatePluginConfiguration(resource.getId(), configuration);
             try {
-                agentClient.getDiscoveryAgentService().executeServiceScanDeferred();
+                agentClient.getDiscoveryAgentService().executeServiceScanDeferred(resource);
             } catch (Exception e) {
                 LOG.warn("Failed to execute service scan - cannot detect children of the newly connected resource ["
                         + resource + "]", e);

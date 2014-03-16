@@ -186,6 +186,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private final Agent agent;
 
     /**
+     * Child scanning process.
+     */
+    private volatile Future<?> serviceScan = null;
+
+    /**
      * Root platform resource, required to be root of entire inventory tree in this agent
      */
     private Resource platform;
@@ -724,13 +729,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     @Override
-    public void executeServiceScanDeferred() {
-        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
+    public boolean executeServiceScanDeferred() {
+        // Don't launch a scan if there is a scan still in progress.
+        if (serviceScan == null || serviceScan.isDone()) {
+            serviceScan = this.inventoryThreadPoolExecutor.schedule((Runnable) this.serviceScanExecutor,
+                configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
+            return true;
+        }
+
+        return false;
     }
 
+    @Override
     public void executeServiceScanDeferred(Resource resource) {
         RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration, resource);
-        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor);
+        inventoryThreadPoolExecutor.submit((Runnable) discoveryExecutor);
     }
 
     /**
@@ -810,16 +823,39 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    /**
+     * Same as calling {@link #requestAvailabilityCheck(Resource, boolean)} as:
+     * <p/>
+     *
+     * <code>requestAvailabilityCheck(resource, false);</code>
+     */
     public void requestAvailabilityCheck(Resource resource) {
+        requestAvailabilityCheck(resource, false);
+    }
+
+    /**
+     * Request an ASAP avail check for the provided resource. If recursive, do the same for the children.
+     *
+     * @param resource
+     * @param recursive
+     */
+    public void requestAvailabilityCheck(Resource resource, boolean recursive) {
         if (null == resource) {
             return;
         }
 
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (null != resourceContainer) {
-            // by setting the avail schedule time to now, this resource will have an avail check performed on
-            // the next availability scan.
-            resourceContainer.setAvailabilityScheduleTime(System.currentTimeMillis());
+            // set the avail schedule time to 1 to ensure the resource will have an avail check performed on
+            // the next availability scan.  (note, do not set to 0, that has special semantics that will actually
+            // push the avail check out one cycle.
+            resourceContainer.setAvailabilityScheduleTime(1L);
+        }
+
+        if (recursive && null != resource.getChildResources()) {
+            for (Resource child : resource.getChildResources()) {
+                requestAvailabilityCheck(child, true);
+            }
         }
     }
 
@@ -1292,7 +1328,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         // Wait a little to get other tasks room for breathing
                         Thread.sleep(800L);
                     } catch (InterruptedException e) {
-                        ;
+                        Thread.currentThread().interrupt();
                     }
                 }
             }
@@ -1302,29 +1338,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         log.info("Sync Complete: Platform [" + platformSyncInfo.getPlatform().getId() + "].");
 
-        // If we synced any Resources, one or more Resource components were probably started, request a
-        // full avail report to make sure their availabilities are determined on the next avail run (typically
-        // < 30s away). A full avail report will ensure an initial avail check is performed for a resource.
-        //
-        // Also kick off a service scan to scan those Resources for new child Resources. Kick both tasks off
-        // asynchronously.
+        // kick off a service scan to scan synced Resources for new child Resources.
         //
         // Do this only if we are finished with resource upgrade because no availability checks
         // or discoveries can happen during upgrade. This is to ensure maximum consistency of the
         // inventory with the server side as well as to disallow any other server-agent traffic during
         // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
-        // time the upgrade kicks in..
+        // time the upgrade kicks in.
         if (hadSyncedResources && !isResourceUpgradeActive()) {
-
             log.info("Sync changes detected, requesting full availability report and service discovery: Platform ["
                 + platformSyncInfo.getPlatform().getId() + "]");
 
-            // TODO: If someday this is undesirable for scalability reasons, we could probably instead call
-            // requestAvailabilityCheck on each unknown or modified resource.
-            requestFullAvailabilityReport();
-
-            this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor,
-                configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
+            executeServiceScanDeferred();
         }
     }
 
@@ -1365,9 +1390,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     modifiedResourceIds.size(), deletedResourceIds.size(), newlyCommittedResources.size()));
             }
 
-            boolean hadSyncedResources = !syncedResources.isEmpty();
-            boolean hadUnknownResources = mergeUnknownResources(unknownResourceSyncInfos);
-            boolean hadModifiedResources = mergeModifiedResources(modifiedResourceIds);
+            Set<Resource> unknownResources = mergeUnknownResources(unknownResourceSyncInfos);
+            Set<Resource> modifiedResources = mergeModifiedResources(modifiedResourceIds);
             purgeIgnoredResources(ignoredResources);
 
             postProcessNewlyCommittedResources(newlyCommittedResources);
@@ -1379,7 +1403,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     (System.currentTimeMillis() - startTime)));
             }
 
-            result = hadSyncedResources || hadUnknownResources || hadModifiedResources;
+            result = !syncedResources.isEmpty() || !unknownResources.isEmpty() || !modifiedResources.isEmpty();
+
+            // If we synced any Resources, one or more Resource components were probably started, request an
+            // availability check for each synced resource to ensure their availabilities are determined on the
+            // next avail run (typically < 30s away).
+            if (result && !isResourceUpgradeActive()) {
+                for (Resource r : syncedResources) {
+                    requestAvailabilityCheck(r);
+                }
+                for (Resource r : modifiedResources) {
+                    requestAvailabilityCheck(r);
+                }
+                for (Resource r : unknownResources) {
+                    requestAvailabilityCheck(r, true);
+                }
+            }
 
         } catch (Throwable t) {
             log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + rootResourceId
@@ -1419,7 +1458,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // now that we are registered, let's kick off an inventory report
                 // just to make sure the server has our initial inventory
-                inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor);
+                inventoryThreadPoolExecutor.submit((Runnable) this.serverScanExecutor);
             } catch (Exception e) {
                 log.error("Cannot re-register with the agent, something bad is happening", e);
             }
@@ -1484,7 +1523,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         //happens before any scanning infrastructure is established.
         if (!isResourceUpgradeActive() && scan) {
             log.info("Deleted resource #[" + resourceId + "] - this will trigger a server scan now");
-            inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor);
+            inventoryThreadPoolExecutor.submit((Runnable) this.serverScanExecutor);
         }
     }
 
@@ -3136,9 +3175,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         config.resize();
     }
 
-    private boolean mergeModifiedResources(Set<Integer> modifiedResourceIds) {
+    private Set<Resource> mergeModifiedResources(Set<Integer> modifiedResourceIds) {
         if (null == modifiedResourceIds || modifiedResourceIds.isEmpty()) {
-            return false;
+            return Collections.<Resource> emptySet();
         }
 
         if (log.isDebugEnabled()) {
@@ -3155,12 +3194,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             mergeResource(modifiedResource);
         }
 
-        return true;
+        return modifiedResources;
     }
 
-    private boolean mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
+    private Set<Resource> mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
         if (null == unknownResourceSyncInfos || unknownResourceSyncInfos.isEmpty()) {
-            return false;
+            return Collections.<Resource> emptySet();
         }
 
         if (log.isDebugEnabled()) {
@@ -3193,12 +3232,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // report this so that the user knows to uninventory the dead resource
                 String msg = "This resource should be uninventoried.  The agent has disabled this resource's type.  The resource is no longer being managed.";
                 ResourceError resourceError = new ResourceError(unknownResource, ResourceErrorType.DISABLED_TYPE, msg,
-                    null, System.currentTimeMillis());
+                    msg, System.currentTimeMillis());
                 sendResourceErrorToServer(resourceError);
             }
         }
 
-        return result;
+        return unknownResources;
     }
 
     private Set<Resource> getResourcesFromSyncInfos(Set<ResourceSyncInfo> syncInfos) {

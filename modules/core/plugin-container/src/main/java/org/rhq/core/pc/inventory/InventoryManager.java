@@ -730,14 +730,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     @Override
     public boolean executeServiceScanDeferred() {
-        // Don't launch a scan if there is a scan still in progress.
-        if (serviceScan == null || serviceScan.isDone()) {
-            serviceScan = this.inventoryThreadPoolExecutor.schedule((Runnable) this.serviceScanExecutor,
-                configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
-            return true;
+        // if there is a scan in progress, cancel it and start over.  No need to bog down the agent with multiple
+        // concurrent service scans.  The one in progress is now dated, because we likely have just added agent-side
+        // resources.
+        if ((null != serviceScan) && !serviceScan.isDone()) {
+            boolean isCanceled = serviceScan.cancel(true);
+            if (isCanceled) {
+                log.info("Canceled in-progress service scan in favor of starting new scan. Partial scan will still be processed.");
+            }
         }
+        serviceScan = this.inventoryThreadPoolExecutor.schedule((Runnable) this.serviceScanExecutor,
+            configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
 
-        return false;
+        return true;
     }
 
     @Override
@@ -1300,7 +1305,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         log.info("Sync Starting: Platform [" + platformSyncInfo.getPlatform().getId() + "]");
 
         log.info("Sync Starting: Platform Top level services [" + platformSyncInfo.getPlatform().getId() + "]");
-        hadSyncedResources = syncResources(platformResourceSyncInfo.getId(), syncInfos) || hadSyncedResources;
+        hadSyncedResources = syncResources(platformResourceSyncInfo.getId(), syncInfos);
         log.info("Sync Complete: Platform Top level services [" + platformSyncInfo.getPlatform().getId()
             + "] Local inventory changed: [" + hadSyncedResources + "]");
 
@@ -1317,9 +1322,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (null != syncInfos) {
                     addAllUuids(syncInfos, allServerSideUuids);
                     log.info("Sync Starting: Top Level Server  [" + topLevelServerId + "]");
-                    hadSyncedResources = syncResources(topLevelServerId, syncInfos) || hadSyncedResources;
+                    boolean serverHadSyncedResources = syncResources(topLevelServerId, syncInfos);
                     log.info("Sync Complete: Top Level Server  [" + topLevelServerId + "] Local inventory changed: ["
-                        + hadSyncedResources + "]");
+                        + serverHadSyncedResources + "]");
+                    hadSyncedResources = serverHadSyncedResources || hadSyncedResources;
 
                     syncInfos = null; // release to GC
 
@@ -1348,6 +1354,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (hadSyncedResources && !isResourceUpgradeActive()) {
             log.info("Sync changes detected, requesting full availability report and service discovery: Platform ["
                 + platformSyncInfo.getPlatform().getId() + "]");
+
+            // Additionally, request a full avail report.  This ensures each newly synced resource has its
+            // availability determined on the next avail run (typically < 30s away).  Note that this is not
+            // particularly inefficient.  A full report is different than a full scan.  Although each resource's
+            // latest avail will be in the report sent to the server, only new and eligible resources will have their
+            // avail checked.
+            requestFullAvailabilityReport();
 
             executeServiceScanDeferred();
         }
@@ -1404,21 +1417,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             result = !syncedResources.isEmpty() || !unknownResources.isEmpty() || !modifiedResources.isEmpty();
-
-            // If we synced any Resources, one or more Resource components were probably started, request an
-            // availability check for each synced resource to ensure their availabilities are determined on the
-            // next avail run (typically < 30s away).
-            if (result && !isResourceUpgradeActive()) {
-                for (Resource r : syncedResources) {
-                    requestAvailabilityCheck(r);
-                }
-                for (Resource r : modifiedResources) {
-                    requestAvailabilityCheck(r);
-                }
-                for (Resource r : unknownResources) {
-                    requestAvailabilityCheck(r, true);
-                }
-            }
 
         } catch (Throwable t) {
             log.warn("Failed to synchronize local inventory with Server inventory for Resource [" + rootResourceId

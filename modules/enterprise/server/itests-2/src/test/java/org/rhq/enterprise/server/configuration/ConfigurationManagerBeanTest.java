@@ -1188,7 +1188,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
 
         @Override
-        public void executeServiceScanDeferred(Resource resource) {
+        public void executeServiceScanDeferred(int resourceId) {
         }
 
         public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {

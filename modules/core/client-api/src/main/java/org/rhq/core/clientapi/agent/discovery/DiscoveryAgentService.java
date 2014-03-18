@@ -113,7 +113,7 @@ public interface DiscoveryAgentService {
      * This method asks that a service scan be performed, rooted at the specified Resource,
      * but it does not wait for the results of that scan.
      */
-    void executeServiceScanDeferred(Resource resource);
+    void executeServiceScanDeferred(int resourceId);
 
     /**
      * Checks the availability of all resources and returns a report on their availability statuses. This method blocks

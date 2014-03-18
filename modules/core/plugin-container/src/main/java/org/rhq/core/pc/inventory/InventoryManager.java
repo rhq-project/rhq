@@ -746,7 +746,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     @Override
-    public void executeServiceScanDeferred(Resource resource) {
+    public void executeServiceScanDeferred(int resourceId) {
+        Resource resource = getResourceContainer(resourceId).getResource();
         RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration, resource);
         inventoryThreadPoolExecutor.submit((Runnable) discoveryExecutor);
     }

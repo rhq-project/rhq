@@ -44,7 +44,7 @@ public class InventoryContextImpl implements InventoryContext {
      */
     @Override
     public void requestDeferredChildResourcesDiscovery() {
-        PluginContainer.getInstance().getInventoryManager().executeServiceScanDeferred(resource);
+        PluginContainer.getInstance().getInventoryManager().executeServiceScanDeferred(resource.getId());
     }
 
     /* (non-Javadoc)

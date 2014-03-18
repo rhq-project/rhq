@@ -212,7 +212,7 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         }
 
         @Override
-        public void executeServiceScanDeferred(Resource resource) {
+        public void executeServiceScanDeferred(int resourceId) {
         }
 
         @Override

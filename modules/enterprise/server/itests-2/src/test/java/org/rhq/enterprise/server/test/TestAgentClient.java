@@ -313,7 +313,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public void executeServiceScanDeferred(Resource resource) {
+    public void executeServiceScanDeferred(int resourceId) {
     }
 
     @Override

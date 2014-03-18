@@ -1,6 +1,6 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,10 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+
 package org.rhq.plugins.jbossas5;
+
+import static org.rhq.plugins.jbossas5.ApplicationServerShutdownMethod.JMX;
 
 import java.io.File;
 import java.util.List;
@@ -333,8 +336,7 @@ public class ApplicationServerOperationsDelegate {
         String errorMessage = null;
         String resultMessage = null;
         try {
-            resultMessage = ApplicationServerShutdownMethod.JMX.equals(shutdownMethod) ? shutdownViaJmx()
-                : shutdownViaScript();
+            resultMessage = JMX.equals(shutdownMethod) ? shutdownViaJmx() : shutdownViaScript();
         } catch (ExecutionFailedException e) {
             errorMessage = e.getMessage();
         }
@@ -482,19 +484,24 @@ public class ApplicationServerOperationsDelegate {
      */
     private OperationResult restart() {
         try {
-            shutDown();
+            OperationResult result = shutDown();
+            if (result.getErrorMessage() != null) {
+                return result;
+            }
         } catch (Exception e) {
             throw new RuntimeException("Shutdown may have failed: " + e);
         }
 
         try {
-            start();
+            OperationResult result = start();
+            if (result.getErrorMessage() != null) {
+                return result;
+            }
         } catch (Exception e) {
             throw new RuntimeException("Start following shutdown may have failed: " + e);
         }
 
         return new OperationResult("Server has been restarted.");
-
     }
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {

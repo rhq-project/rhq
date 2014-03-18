@@ -45,7 +45,7 @@ public class RHQPosixParser extends PosixParser {
     protected void processOption(final String arg, final ListIterator iter) throws ParseException {
         boolean hasOption = getOptions().hasOption(arg);
 
-        if (hasOption || ignoreUnrecognizedOption) {
+        if (!ignoreUnrecognizedOption && !hasOption) {
             throw new ParseException("Unknown option: " + arg);
         }
         super.processOption(arg, iter);

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -153,10 +154,11 @@ public abstract class ControlCommand {
         Options options = getOptions();
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
-            CommandLineParser parser = new RHQPosixParser(true);
+            CommandLineParser parser = new RHQPosixParser(false);
             CommandLine cmdLine = parser.parse(options, args, true);
             if (!cmdLine.getArgList().isEmpty()) {
                 // there were some unrecognized args
+                System.out.println("Unrecognized arguments: " + cmdLine.getArgList());
                 printUsage();
                 return RHQControl.EXIT_CODE_INVALID_ARGUMENT;
             }

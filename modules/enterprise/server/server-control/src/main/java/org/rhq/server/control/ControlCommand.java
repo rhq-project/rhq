@@ -60,6 +60,7 @@ public abstract class ControlCommand {
     public static final String SERVER_OPTION = "server";
     public static final String STORAGE_OPTION = "storage";
     public static final String AGENT_OPTION = "agent";
+    public static final String HELP_OPTION = "--help";
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
@@ -78,8 +79,10 @@ public abstract class ControlCommand {
     private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
 
     protected void undo() {
-        Collections.reverse(undoTasks); // do the undo tasks in the reverse order in which they were added to the list
-        for (Runnable undoTask : undoTasks) {
+        // perform the undo on the snapshot of undoTasks, because of possible ConcurrentModificationException
+        List<Runnable> undoTasksCopy = new ArrayList<Runnable>(undoTasks);
+        Collections.reverse(undoTasksCopy); // do the undo tasks in the reverse order in which they were added to the list
+        for (Runnable undoTask : undoTasksCopy) {
             try {
                 undoTask.run();
             } catch (Throwable t) {
@@ -150,8 +153,13 @@ public abstract class ControlCommand {
         Options options = getOptions();
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine cmdLine = parser.parse(options, args);
+            CommandLineParser parser = new RHQPosixParser(true);
+            CommandLine cmdLine = parser.parse(options, args, true);
+            if (!cmdLine.getArgList().isEmpty()) {
+                // there were some unrecognized args
+                printUsage();
+                return RHQControl.EXIT_CODE_INVALID_ARGUMENT;
+            }
             rValue = exec(cmdLine);
 
             if (rhqctlConfig != null) {

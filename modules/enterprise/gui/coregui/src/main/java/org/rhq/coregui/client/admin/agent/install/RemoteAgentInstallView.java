@@ -288,6 +288,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void installAgent() {
         disableButtons(true);
+        connectionForm.setValue("agentStatus", "Installing, this may take a few minutes...");
 
         // FOR TESTING WITHOUT DOING A REAL INSTALL - START
         //        AgentInstallInfo result = new AgentInstallInfo("mypath", "myown", "1.1", "localHOST", "serverHOST");
@@ -307,12 +308,14 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                 public void onFailure(Throwable caught) {
                     disableButtons(false);
                     CoreGUI.getErrorHandler().handleError(MSG.view_remoteAgentInstall_error_4(), caught);
+                    connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_error_4());
                 }
 
                 public void onSuccess(AgentInstallInfo result) {
                     disableButtons(false);
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_remoteAgentInstall_success(), Message.Severity.Info));
+                    connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_success());
 
                     for (Canvas child : agentInfoLayout.getChildren()) {
                         child.destroy();

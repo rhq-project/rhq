@@ -32,7 +32,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 
 /**
  * Installs, starts and stops remote agents via SSH.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -51,6 +51,11 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath) {
+        boolean agentAlreadyInstalled = agentInstallCheck(subject, remoteAccessInfo, parentPath);
+        if (agentAlreadyInstalled) {
+            throw new IllegalStateException("Agent appears to already be installed under: " + parentPath);
+        }
+
         SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
         try {
             return sshUtil.installAgent(parentPath);

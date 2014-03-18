@@ -131,7 +131,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
     private NavigationSection buildTopologySection() {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
-        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
+        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName()); // use this to hide experimental features from product
 
         NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
@@ -172,9 +172,8 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         // Arrays.asList returns a list with a fixed size, therefore there is the wrapping ArrayList
         List<NavigationItem> navigationItems = new ArrayList<NavigationItem>(Arrays.asList(serversItem,
             storageNodesItem, agentsItem, affinityGroupsItem, partitionEventsItem));
-        if (isRHQ) {
-            navigationItems.add(remoteAgentInstallItem);
-        }
+        navigationItems.add(remoteAgentInstallItem);
+
         NavigationSection topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID,
             navigationItems.toArray(new NavigationItem[] {}));
         return topologyRegion;

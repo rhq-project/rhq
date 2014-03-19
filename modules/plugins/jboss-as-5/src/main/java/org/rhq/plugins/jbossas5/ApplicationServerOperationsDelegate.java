@@ -23,10 +23,6 @@
 
 package org.rhq.plugins.jbossas5;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.rhq.core.util.StringUtil.isBlank;
-import static org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties.START_WAIT_MAX_PROP;
-import static org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties.STOP_WAIT_MAX_PROP;
 import static org.rhq.plugins.jbossas5.ApplicationServerShutdownMethod.JMX;
 
 import java.io.File;

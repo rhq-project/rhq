@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.util.file;
 
 import static java.util.Arrays.asList;
@@ -285,56 +282,107 @@ public class FileUtilTest {
     public void testGetPattern() {
         Pattern regex;
 
-        regex = assertPatternsRegex("(/basedir/(test1\\.txt))", new PathFilter("/basedir", "test1.txt"));
+        regex = assertPatternsRegex("(" + translateAbsoluteUnixPathToActualAsRegex("/basedir/(test1\\.txt)") + ")",
+            new PathFilter("/basedir", "test1.txt"));
 
-        assert regex.matcher("/basedir/test1.txt").matches();
-        assert !regex.matcher("/basedir/test2.txt").matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/basedir/test1.txt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/test2.txt")).matches();
 
-        regex = assertPatternsRegex("(/basedir/easy\\.txt)|(/basedir/test\\.txt)", new PathFilter("/basedir/easy.txt",
+        regex = assertPatternsRegex("(" + translateAbsoluteUnixPathToActualAsRegex("/basedir/easy\\.txt") + ")|(" +
+            translateAbsoluteUnixPathToActualAsRegex("/basedir/test\\.txt") + ")", new PathFilter("/basedir/easy.txt",
             null), new PathFilter("/basedir/test.txt", null));
 
-        assert regex.matcher("/basedir/easy.txt").matches();
-        assert regex.matcher("/basedir/test.txt").matches();
-        assert !regex.matcher("/basedir/easyXtxt").matches();
-        assert !regex.matcher("/basedir/testXtxt").matches();
-        assert !regex.matcher("/basedir/easy.txtX").matches();
-        assert !regex.matcher("/basedir/test.txtX").matches();
-        assert !regex.matcher("/basedirX/easy.txt").matches();
-        assert !regex.matcher("/basedirX/test.txt").matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/basedir/easy.txt")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/basedir/test.txt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/easyXtxt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/testXtxt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/easy.txtX")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/test.txtX")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedirX/easy.txt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedirX/test.txt")).matches();
         assert !regex.matcher("easy.txt").matches() : "missing basedir";
         assert !regex.matcher("test.txt").matches() : "missing basedir";
 
-        regex = assertPatternsRegex("(/basedir/([^/]*\\.txt))", new PathFilter("/basedir", "*.txt"));
+        regex = assertPatternsRegex("(" + translateAbsoluteUnixPathToActualAsRegex("/basedir/([^/]*\\.txt)") + ")",
+            new PathFilter("/basedir", "*.txt"));
 
-        assert regex.matcher("/basedir/foo.txt").matches();
-        assert regex.matcher("/basedir/file with spaces.txt").matches();
-        assert regex.matcher("/basedir/123.txt").matches();
-        assert !regex.matcher("/basedir/subdir/foo.txt").matches();
-        assert !regex.matcher("/basedir/foo.txt.swp").matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/basedir/foo.txt")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/basedir/file with spaces.txt")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/basedir/123.txt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/subdir/foo.txt")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/basedir/foo.txt.swp")).matches();
 
-        regex = assertPatternsRegex("(/var/lib/([^/]*\\.war))|(/var/lib/([^/]*\\.ear))", new PathFilter("/var/lib",
+        regex = assertPatternsRegex("(" + translateAbsoluteUnixPathToActualAsRegex("/var/lib/([^/]*\\.war)") + ")|(" +
+            translateAbsoluteUnixPathToActualAsRegex("/var/lib/([^/]*\\.ear)") + ")", new PathFilter("/var/lib",
             "*.war"), new PathFilter("/var/lib", "*.ear"));
 
-        assert regex.matcher("/var/lib/myapp.war").matches();
-        assert regex.matcher("/var/lib/myapp.ear").matches();
-        assert regex.matcher("/var/lib/my-app.war").matches();
-        assert !regex.matcher("/var/lib/myapp.War").matches();
-        assert !regex.matcher("/var/libs/myapp.war").matches();
-        assert !regex.matcher("myapp.ear").matches();
-        assert !regex.matcher("/var/lib/myapp.ear.rej").matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/var/lib/myapp.war")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/var/lib/myapp.ear")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/var/lib/my-app.war")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/var/lib/myapp.War")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/var/libs/myapp.war")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("myapp.ear")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/var/lib/myapp.ear.rej")).matches();
 
-        regex = assertPatternsRegex("(/conf/(server-.\\.conf))", new PathFilter("/conf", "server-?.conf"));
+        regex = assertPatternsRegex("(" + translateAbsoluteUnixPathToActualAsRegex("/conf/(server-.\\.conf)") + ")",
+            new PathFilter("/conf", "server-?.conf"));
 
-        assert regex.matcher("/conf/server-1.conf").matches();
-        assert regex.matcher("/conf/server-X.conf").matches();
-        assert !regex.matcher("/conf/subconf/server-1.conf").matches();
-        assert !regex.matcher("/conf/server.conf").matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/conf/server-1.conf")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/conf/server-X.conf")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/conf/subconf/server-1.conf")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/conf/server.conf")).matches();
 
-        regex = assertPatternsRegex("(/etc/(.*[^/]*\\.conf))", new PathFilter("/etc", "**/*.conf"));
+        regex = assertPatternsRegex("(" + translateAbsoluteUnixPathToActualAsRegex("/etc/(.*[^/]*\\.conf)") + ")",
+            new PathFilter("/etc", "**/*.conf"));
 
-        assert regex.matcher("/etc/yum.conf").matches();
-        assert regex.matcher("/etc/httpd/httpd.conf").matches();
-        assert !regex.matcher("/etc/foo.conf/foo").matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/etc/yum.conf")).matches();
+        assert regex.matcher(translateAbsoluteUnixPathToActual("/etc/httpd/httpd.conf")).matches();
+        assert !regex.matcher(translateAbsoluteUnixPathToActual("/etc/foo.conf/foo")).matches();
+    }
+
+    public void testNormalizePath() throws Exception {
+        if (File.separatorChar == '\\') {
+            //windows
+            checkNormalization("\\\\server\\share\\bar", "\\\\server\\share\\path\\..\\bar");
+            //we just consider the ".." the name of the share of the UNC path
+            checkNormalization("\\\\server\\..\\bar", "\\\\server\\..\\bar");
+            checkNormalization(null, "\\\\server\\share\\..\\bar");
+            checkNormalization("C:\\bar", "C:\\foo\\..\\bar");
+            checkNormalization(null, "C:\\..\\bar");
+
+            checkNormalization("\\foo", "/foo//");
+            checkNormalization("\\foo", "/foo/./");
+            checkNormalization("\\bar", "/foo/../bar");
+            checkNormalization("\\bar", "/foo/../bar/");
+            checkNormalization("\\baz", "/foo/../bar/../baz");
+            //we just consider the "." the name of the share of the UNC path
+            checkNormalization("\\\\foo\\.\\bar", "//foo//./bar");
+            checkNormalization(null, "/../");
+            checkNormalization(null, "../foo");
+            checkNormalization("foo", "foo/bar/..");
+            checkNormalization(null, "foo/../../bar");
+            checkNormalization("bar", "foo/../bar");
+        } else {
+            checkNormalization("/foo", "/foo//");
+            checkNormalization("/foo", "/foo/./");
+            checkNormalization("/bar", "/foo/../bar");
+            checkNormalization("/bar", "/foo/../bar/");
+            checkNormalization("/baz", "/foo/../bar/../baz");
+            checkNormalization("/foo/bar", "//foo//./bar");
+            checkNormalization(null, "/../");
+            checkNormalization(null, "../foo");
+            checkNormalization("foo", "foo/bar/..");
+            checkNormalization(null, "foo/../../bar");
+            checkNormalization("bar", "foo/../bar");
+            checkNormalization("~/bar", "~/foo/../bar/");
+        }
+    }
+
+    private void checkNormalization(String expectedResult, String path) {
+        File result = FileUtil.normalizePath(new File(path));
+        assert
+            expectedResult == null ? result == null : result != null && expectedResult.equals(result.getPath()) :
+            expectedResult + " failed. Should have been [" + expectedResult + "] but was [" + result + "]";
     }
 
     private Pattern assertPatternsRegex(String expectedPattern, PathFilter... filters) {
@@ -347,4 +395,23 @@ public class FileUtilTest {
         return regex;
     }
 
+    private static String translateAbsoluteUnixPathToActualAsRegex(String path) {
+        return translateAbsoluteUnixPathToActual(path, true);
+    }
+
+    private static String translateAbsoluteUnixPathToActual(String path) {
+        return translateAbsoluteUnixPathToActual(path, false);
+    }
+
+    private static String translateAbsoluteUnixPathToActual(String path, boolean asRegex) {
+        if (File.separatorChar == '\\') {
+            //get the current drive letter
+            //leave out the trailing "\" - we have an absolute unix path on input, so we "use" the "/" of it
+            String driveLetter = new File(".").getAbsoluteFile().toPath().getRoot().toString().substring(0, 2);
+
+            path = driveLetter + path.replace("/", asRegex? "\\\\" : "\\");
+        }
+
+        return path;
+    }
 }

@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -407,7 +408,12 @@ public class FileUtilTest {
         if (File.separatorChar == '\\') {
             //get the current drive letter
             //leave out the trailing "\" - we have an absolute unix path on input, so we "use" the "/" of it
-            String driveLetter = new File(".").getAbsoluteFile().toPath().getRoot().toString().substring(0, 2);
+            String driveLetter;
+            try {
+                driveLetter = new File(".").getCanonicalPath().substring(0, 2);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             path = driveLetter + path.replace("/", asRegex? "\\\\" : "\\");
         }

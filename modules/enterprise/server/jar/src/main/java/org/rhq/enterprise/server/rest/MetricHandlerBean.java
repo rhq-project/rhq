@@ -1058,6 +1058,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         return Response.created(uriInfo.getRequestUriBuilder().build()).build();
 
     }
+
     private class CallTimeDataStreamingOutput implements StreamingOutput {
         private final PageList<CallTimeDataComposite> callTimes;
         private final MediaType mediaType;
@@ -1077,6 +1078,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             pw.print("}");
             pw.flush();
         }
+
         private void htmlOutput(CallTimeDataComposite c, PrintWriter pw) {
             pw.print("<tr>");
             pw.print("<td>"); pw.print(c.getCallDestination());
@@ -1088,6 +1090,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             pw.print("</td></tr>\n");
             pw.flush();
         }
+
         private void xmlOutput(CallTimeDataComposite c, PrintWriter pw) {
             pw.print(" <callTime ");
             pw.print("callDestination=\""); pw.print(c.getCallDestination());
@@ -1099,6 +1102,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             pw.print("\" />\n");
             pw.flush();
         }
+
         @Override
         public void write(OutputStream os) throws IOException, WebApplicationException {
             PrintWriter pw = new PrintWriter(os);

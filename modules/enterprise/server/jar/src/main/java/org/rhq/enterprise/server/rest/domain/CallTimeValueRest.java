@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,25 +43,31 @@ public class CallTimeValueRest {
     public long getBeginTime() {
         return beginTime;
     }
+
     @ApiProperty("Destination URI of request")
     @XmlAttribute
     public String getCallDestination() {
         return callDestination;
     }
+
     @ApiProperty("Time in millis - duration of request")
     @XmlAttribute
     public long getDuration() {
         return duration;
     }
+
     public void setBeginTime(long beginTime) {
         this.beginTime = beginTime;
     }
+
     public void setCallDestination(String callDestination) {
         this.callDestination = callDestination;
     }
+
     public void setDuration(long duration) {
         this.duration = duration;
     }
+
     @Override
     public String toString() {
         return new StringBuilder("[callDestination="+callDestination)

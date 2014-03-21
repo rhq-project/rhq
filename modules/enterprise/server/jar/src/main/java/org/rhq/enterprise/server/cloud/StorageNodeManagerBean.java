@@ -226,7 +226,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings) {
         Configuration pluginConfig = resource.getPluginConfiguration();
 
@@ -247,6 +246,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     public void deployStorageNode(Subject subject, StorageNode storageNode) {
         StorageNodeCriteria c = new StorageNodeCriteria();
         c.addFilterId(storageNode.getId());
+        c.fetchResource(true);
         List<StorageNode> storageNodes = storageNodeManager.findStorageNodesByCriteria(subject, c);
         if (storageNodes.isEmpty()) {
             throw new RuntimeException("Storage node not found, can not undeploy " + storageNode);
@@ -273,7 +273,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             // We do not want to deploying a node that is in the process of being
             // undeployed. It is too hard to make sure we are in an inconsistent state.
-            // Instead finishe the undeployment and redeploy the storage node.
+            // Instead finish the undeployment and redeploy the storage node.
             throw new RuntimeException("Cannot deploy " + storageNode);
         }
     }
@@ -284,6 +284,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     public void undeployStorageNode(Subject subject, StorageNode storageNode) {
         StorageNodeCriteria c = new StorageNodeCriteria();
         c.addFilterId(storageNode.getId());
+        c.fetchResource(true);
         List<StorageNode> storageNodes = storageNodeManager.findStorageNodesByCriteria(subject, c);
         if (storageNodes.isEmpty()) {
             throw new RuntimeException("Storage node not found, can not undeploy " + storageNode);

@@ -133,6 +133,7 @@
       <groupId>com.smartgwt</groupId>
       <artifactId>smartgwt</artifactId>
       <version>${smartgwt.version}</version>
+      <scope>provided</scope>
     </dependency>
 
 

@@ -51,10 +51,10 @@ public class PluginCriteria extends Criteria {
     public PluginCriteria() {
         filterOverrides.put("resourceTypeIds",
             "id IN (SELECT p.id FROM Plugin p, ResourceType rt WHERE rt.plugin = p.name AND rt.id IN ( ? ))");
-        filterOverrides.put("installed", "(? = 1 AND status = 'INSTALLED') OR (? = 0 AND status <> 'INSTALLED')");
-        filterOverrides.put("deleted", "(? = 1 AND status = 'DELETED') OR (? = 0 AND status <> 'INSTALLED");
+        filterOverrides.put("installed", "id IN (SELECT p.id FROM Plugin p WHERE (? = 1 AND p.status = 'INSTALLED') OR (? = 0 AND p.status <> 'INSTALLED'))");
+        filterOverrides.put("deleted", "id IN (SELECT p.id FROM Plugin p WHERE (? = 1 AND p.status = 'DELETED') OR (? = 0 AND p.status <> 'DELETED'))");
         filterOverrides.put("markedForPurge",
-            "(? = 1 AND status = 'DELETED' AND ctime = -1) OR (? = 0 AND (status <> 'DELETED' OR ctime <> -1))");
+            "id IN (SELECT p.id FROM Plugin p WHERE (? = 1 AND p.status = 'DELETED' AND p.ctime = -1) OR (? = 0 AND (p.status <> 'DELETED' OR p.ctime <> -1)))");
 
     }
 

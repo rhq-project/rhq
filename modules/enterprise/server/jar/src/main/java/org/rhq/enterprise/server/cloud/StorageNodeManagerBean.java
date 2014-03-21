@@ -330,7 +330,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         try {
             if (!storageClientManager.isClusterAvailable()) {
                 return new StorageNodeLoadComposite(node, beginTime, endTime);
@@ -442,8 +442,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return result;
         } finally {
-            stopwatch.stop();
-            log.info("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved load metrics for " + node + " in ");
+            }
         }
     }
     
@@ -452,7 +453,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ListenableFuture<List<StorageNodeLoadComposite>> getLoadAsync(Subject subject, StorageNode node,
         long beginTime, long endTime) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         final StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
         try {
             if (!storageClientManager.isClusterAvailable()) {
@@ -529,8 +530,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return Futures.successfulAsList(compositeFutures);
         } finally {
-            stopwatch.stop();
-            log.debug("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved load metrics for " + node + " in ");
+            }
         }
     }
 
@@ -605,7 +607,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<StorageNodeLoadComposite> getStorageNodeComposites(Subject subject) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         List<StorageNode> nodes = getStorageNodes();
         final CountDownLatch latch = new CountDownLatch(nodes.size());
         final PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
@@ -656,8 +658,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             log.info("There was an interrupt while waiting for storage node load data.", e);
             return result;
         } finally {
-            stopwatch.stop();
-            log.debug("Retrieved storage node composites in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved storage node composites in ");
+            }
         }
     }
 
@@ -794,12 +797,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         try {
             return findStorageNodeAlerts(subject, false, storageNode);
         } finally {
-            stopwatch.stop();
-            log.info("Retrieved unacked alerts for " + storageNode + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved unacked alerts for " + storageNode + " in ");
+            }
         }
     }
 
@@ -851,7 +855,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     private Map<Integer, Integer> findUnackedAlertCounts(List<StorageNode> storageNodes) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         try {
             Map<Integer, StorageNode> resourceIdToStorageNodeMap = new TreeMap<Integer, StorageNode>();
             for (StorageNode storageNode : storageNodes) {
@@ -881,9 +885,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return storageNodeAlertCounts;
         } finally {
-            stopwatch.stop();
-            log.debug("Finished calculating storage node alert counts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                " ms");
+            stopwatchEnd(stopwatch, "Finished calculating storage node alert counts in ");
         }
     }
 
@@ -921,7 +923,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
     
     private Map<Integer, Integer> findResourcesWithAlertsToStorageNodeMap(StorageNode storageNode) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         List<StorageNode> initialStorageNodes = getStorageNodes();
         try {
             if (storageNode == null) {
@@ -956,9 +958,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return resourceIdsToStorageNodeMap;
         } finally {
-            stopwatch.stop();
-            log.debug("Found storage node resources with alert defs in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Found storage node resources with alert defs in ");
+            }
         }
     }
 
@@ -1234,6 +1236,20 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return successResultFound;
+    }
+    
+    private Stopwatch stopwatchStart() {
+        if (log.isDebugEnabled()) {
+            return new Stopwatch().start();
+        }
+        return null;
+    }
+
+    private void stopwatchEnd(Stopwatch stopwatch, String message) {
+        if (stopwatch != null && log.isDebugEnabled()) {
+            stopwatch.stop();
+            log.debug(message + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
     }
 
 }

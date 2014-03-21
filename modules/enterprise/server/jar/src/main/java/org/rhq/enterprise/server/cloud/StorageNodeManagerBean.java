@@ -199,7 +199,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             } else {
                 StorageClusterSettings clusterSettings = storageClusterSettingsManager
                     .getClusterSettings(subjectManager.getOverlord());
-                storageNode = createStorageNode(resource, clusterSettings);
+                storageNode = storageNodeManager.createStorageNode(resource, clusterSettings);
 
                 if (log.isInfoEnabled()) {
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");

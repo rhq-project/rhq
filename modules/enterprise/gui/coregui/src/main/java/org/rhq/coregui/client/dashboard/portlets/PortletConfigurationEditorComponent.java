@@ -24,6 +24,7 @@ import java.util.Map;
 
 import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
@@ -48,6 +49,7 @@ public class PortletConfigurationEditorComponent {
     public interface Constant {
         String ALERT_PRIORITY = "ALERT_PRIORITY";
         String ALERT_PRIORITY_DEFAULT = ""; // no filtering
+        String ALERT_NAME = "ALERT_NAME";
         String METRIC_RANGE_ENABLE = "METRIC_RANGE_ENABLE";
         String METRIC_RANGE_ENABLE_DEFAULT = String.valueOf(false); //disabled
         String METRIC_RANGE_BEGIN_END_FLAG = "METRIC_RANGE_BEGIN_END_FLAG";
@@ -74,6 +76,7 @@ public class PortletConfigurationEditorComponent {
     public static Map<String, String> CONFIG_PROPERTY_INITIALIZATION = new HashMap<String, String>();
     static {// Key, Default value
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT);
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_NAME, "");
         //result sort order, if empty initialize to "DESC"
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.RESULT_SORT_ORDER, Constant.RESULT_SORT_ORDER_DEFAULT);
         //result count, if empty initialize to 5
@@ -128,6 +131,16 @@ public class PortletConfigurationEditorComponent {
         return maximumResultsComboBox;
     }
 
+    public static TextItem getAlertNameEditor(Configuration portletConfig) {
+        final TextItem alertNameEditor = new TextItem(Constant.ALERT_NAME);
+        alertNameEditor.setTitle(MSG.common_title_name());
+        alertNameEditor.setWrapTitle(false);
+        alertNameEditor.setWidth(100);
+        String currentValue = portletConfig.getSimpleValue(Constant.ALERT_NAME, "");
+        alertNameEditor.setValue(currentValue);
+        return alertNameEditor;
+    }
+    
     /* Multiple select combobox for alert priorities to display on dashboard
      *
      * @return Populated selectItem instance.

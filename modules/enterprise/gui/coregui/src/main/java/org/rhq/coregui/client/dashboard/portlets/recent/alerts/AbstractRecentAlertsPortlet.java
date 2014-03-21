@@ -16,6 +16,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -170,6 +171,9 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
         // alert priority selector
+        final TextItem alertNameFilter = PortletConfigurationEditorComponent.getAlertNameEditor(portletConfig);
+        
+        // alert priority selector
         final SelectItem alertPrioritySelector = PortletConfigurationEditorComponent
             .getAlertPriorityEditor(portletConfig);
 
@@ -180,15 +184,20 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
-        filterForm.setItems(alertPrioritySelector, resultCountSelector);
+        filterForm.setItems(alertNameFilter, alertPrioritySelector, resultCountSelector);
 
         //submit handler
         customSettingsForm.addSubmitValuesHandler(new SubmitValuesHandler() {
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+                // alert name
+                String selectedValue = (null == alertNameFilter.getValue()) ? "" : alertNameFilter.getValue()
+                    .toString();
+                portletConfig.put(new PropertySimple(Constant.ALERT_NAME, selectedValue));
+                
                 // alert severity
-                String selectedValue = (null == alertPrioritySelector.getValue()) ? "" : alertPrioritySelector
+                selectedValue = (null == alertPrioritySelector.getValue()) ? "" : alertPrioritySelector
                     .getValue().toString();
                 if ((selectedValue.trim().isEmpty())
                     || (selectedValue.split(",").length == AlertPriority.values().length)) {
@@ -351,9 +360,13 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         @Override
         protected AlertCriteria getFetchCriteria(DSRequest request) {
             AlertCriteria criteria = new AlertCriteria();
+            
+            // name filter
+            String currentSetting = this.configuration.getSimpleValue(Constant.ALERT_NAME, "");
+            criteria.addFilterName(currentSetting);
 
             // result count
-            String currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,
+            currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,
                 Constant.RESULT_COUNT_DEFAULT);
 
             // We have to set a PageControl override here, or RPCDataSource will apply default paging based on the

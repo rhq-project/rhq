@@ -40,22 +40,18 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.PluginCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
@@ -621,7 +617,7 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception {
+    public List<Plugin> deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception {
         File base = getPluginDropboxDirectory();
 
         File targetFile = new File(base, pluginJarName);
@@ -629,19 +625,19 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
         ByteArrayInputStream in = new ByteArrayInputStream(pluginJarBytes);
 
         StreamUtil.copy(in, out, true);
-        update(subject);
+        return updateAndDetectChanges(subject);
     }
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception {
+    public List<Plugin> deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception {
         File pluginJar = contentManager.getTemporaryContentFile(handle);
         File base = getPluginDropboxDirectory();
 
         FileUtil.copyFile(pluginJar, new File(base, pluginJarName));
 
-        update(subject);
+        return updateAndDetectChanges(subject);
     }
 
     @Override
@@ -660,6 +656,20 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
     public void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         deletePlugins(subject, pluginIds);
         markPluginsForPurge(subject, pluginIds);
+    }
+
+    private List<Plugin> updateAndDetectChanges(Subject subject) throws Exception {
+        List<Plugin> before = getPlugins();
+
+        update(subject);
+
+        List<Plugin> after = getPlugins();
+
+        for (Plugin p : before) {
+            after.remove(p);
+        }
+
+        return after;
     }
 
     private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {

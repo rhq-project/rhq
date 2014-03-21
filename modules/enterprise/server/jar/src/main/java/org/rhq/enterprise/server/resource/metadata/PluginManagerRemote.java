@@ -89,9 +89,9 @@ public interface PluginManagerRemote {
      * <p/>
      * In another words, use this method with caution because it may require a large amount of memory.
      * <p/>
-     * Note that this is done asynchronously and there is no good way of checking if and when the operation completed
-     * apart from watching the server log.
-     *
+     * This method returns after the plugin is deployed. Because there might be other plugins pending to be deployed
+     * in the filesystem, this operation might result in more than just the single requested plugin being deployed.
+     * This is why this method returns a list instead of a single plugin corresponding to the provided jar..
      *
      * @param subject the authenticated user
      * @param pluginJarName the name of the jar file which should be used to store the plugin on the filesystem
@@ -99,13 +99,14 @@ public interface PluginManagerRemote {
      *
      * @throws Exception on error
      */
-    void deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception;
+    List<Plugin> deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception;
 
     /**
      * Deploys a new agent plugin to RHQ asynchronously using the content handle pointing to a previously uploaded file.
      * <p/>
-     * Note that the deployment is done asynchronously and there is no good way checking if and when the operation
-     * completed apart from watching the server log.
+     * This method returns after the plugin is deployed. Because there might be other plugins pending to be deployed
+     * in the filesystem, this operation might result in more than just the single requested plugin being deployed.
+     * This is why this method returns a list instead of a single plugin corresponding to the provided jar..
      *
      * @param subject the authenticated user
      * @param pluginJarName the name of the jar file which should be used to store the plugin on the filesystem
@@ -115,7 +116,7 @@ public interface PluginManagerRemote {
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
      */
-    void deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception;
+    List<Plugin> deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception;
 
     PageList<Plugin> findPluginsByCriteria(Subject subject, PluginCriteria criteria);
 

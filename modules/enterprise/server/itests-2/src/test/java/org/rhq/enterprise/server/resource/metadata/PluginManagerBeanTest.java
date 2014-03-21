@@ -23,6 +23,10 @@ import static java.util.Arrays.asList;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.ejb.EJBException;
 
@@ -67,6 +71,9 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     private AgentManagerLocal agentMgr;
     private TestServerCommunicationsService agentServiceContainer;
     private boolean updatePluginsCalled;
+    private CountDownLatch pluginUpdateProgressWaiter;
+    private CountDownLatch pluginUpdateFinishWaiter;
+
     private Agent agent;
 
     @Override
@@ -89,7 +96,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         agent.setServer(svr);
         agentMgr.createAgent(agent);
 
-        getPluginScannerService().startDeployment();
+        preparePluginScannerService().startDeployment();
+
+        prepareScheduler();
+
+        pluginUpdateProgressWaiter = new CountDownLatch(1);
+
+        updatePluginsCalled = false;
 
         agentServiceContainer = prepareForTestAgents(new TestServerCommunicationsService() {
             @Override
@@ -98,6 +111,20 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
                     @Override
                     public void updatePlugins() {
                         updatePluginsCalled = true;
+                        pluginUpdateProgressWaiter.countDown();
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            //ignored
+                        } finally {
+                            if (pluginUpdateFinishWaiter != null) {
+                                try {
+                                    pluginUpdateFinishWaiter.await();
+                                } catch (InterruptedException e) {
+                                    //ignored
+                                }
+                            }
+                        }
                     }
                 };
 
@@ -113,6 +140,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
 
         unpreparePluginScannerService();
+        unprepareScheduler();
 
         agentMgr.deleteAgent(agent);
 
@@ -346,8 +374,29 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     public void testScheduleUpdateOnAgents() throws Exception {
         Subject overlord = subjectMgr.getOverlord();
         pluginMgr.schedulePluginUpdateOnAgents(overlord, 0);
-        Thread.sleep(200); //wait just a bit so that the request can bubble through the scheduler
+        pluginUpdateProgressWaiter.await();
         Assert.assertTrue(updatePluginsCalled);
+    }
+
+    @Test
+    public void testUpdateNotDoneUntilAgentReturns() throws Exception {
+        pluginUpdateFinishWaiter = new CountDownLatch(1);
+
+        Subject overlord = subjectMgr.getOverlord();
+        String handle = pluginMgr.schedulePluginUpdateOnAgents(overlord, 0);
+
+        pluginUpdateProgressWaiter.await();
+
+        boolean finished = pluginMgr.isPluginUpdateOnAgentsFinished(subjectMgr.getOverlord(), handle);
+
+        Assert.assertEquals(false, finished);
+
+        pluginUpdateFinishWaiter.countDown();
+        Thread.sleep(5000); //wait just a bit so that the request can bubble from the fake agent to the database
+
+        finished = pluginMgr.isPluginUpdateOnAgentsFinished(subjectMgr.getOverlord(), handle);
+
+        Assert.assertEquals(true, finished);
     }
 
     private Plugin getPlugin(String name) {

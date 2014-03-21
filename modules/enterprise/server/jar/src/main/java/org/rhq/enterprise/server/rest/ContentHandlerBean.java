@@ -146,9 +146,8 @@ public class ContentHandlerBean extends AbstractRestBean {
             "specify a delay in milliseconds after which the plugin will be automatically pushed out to the agents." +
             "Note that a non-negative \"pushOutDelay\" only makes sense when the \"scan\" is set to true, otherwise" +
             "no update on the agents can occur because there will be no updated plugins on the server." +
-            "NOTE THAT CURRENTLY THERE IS NO SYNCHRONIZATION BETWEEN SCAN AND PUSH SO THERE IS NO GUARANTEE THAT " +
-            "THE PLUGIN IS ALREADY UPDATED WHEN THE AGENTS UPDATE THEMSELVES (BASED ON THE PUSH-OUT DELAY)." +
-            "The content identified by the handle is not removed.")
+            "The content identified by the handle is not removed. Note that this method is deprecated - use a PUT to /plugins.")
+    @Deprecated
     public Response provideAsPlugin(
         @ApiParam("Name of the handle retrieved from upload") @PathParam("handle") String handle,
         @ApiParam("Name of the plugin file") @QueryParam("name") String name,

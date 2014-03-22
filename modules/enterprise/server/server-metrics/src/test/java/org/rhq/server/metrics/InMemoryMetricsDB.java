@@ -26,6 +26,8 @@ public class InMemoryMetricsDB {
 
     private TreeBasedTable<Integer, DateTime, AggregateNumericMetric> sixHourData = TreeBasedTable.create();
 
+    private TreeBasedTable<Integer, DateTime, AggregateNumericMetric> twentyFourHourData = TreeBasedTable.create();
+
     public void putRawData(RawNumericMetric raw) {
         rawData.put(raw.getScheduleId(), new DateTime(raw.getTimestamp()), raw);
     }
@@ -49,9 +51,19 @@ public class InMemoryMetricsDB {
     }
 
     public List<AggregateNumericMetric> get6HourData(int... scheduleIds) {
+        return getAllDataForBucket(sixHourData, scheduleIds);
+    }
+
+    public List<AggregateNumericMetric> get24HourData(int... scheduleIds) {
+        return getAllDataForBucket(twentyFourHourData, scheduleIds);
+    }
+
+    private List<AggregateNumericMetric> getAllDataForBucket(
+        TreeBasedTable<Integer, DateTime, AggregateNumericMetric> table, int... scheduleIds) {
+
         List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>(scheduleIds.length);
         for (Integer scheduleId : scheduleIds) {
-            SortedMap<DateTime, AggregateNumericMetric> dataForSchedule = sixHourData.row(scheduleId);
+            SortedMap<DateTime, AggregateNumericMetric> dataForSchedule = table.row(scheduleId);
             metrics.addAll(dataForSchedule.values());
         }
         return metrics;
@@ -63,6 +75,10 @@ public class InMemoryMetricsDB {
 
     public void aggregate1HourData(DateTime startTime, DateTime endTime) {
         aggregateData(startTime, endTime, oneHourData, sixHourData);
+    }
+
+    public void aggregate6HourData(DateTime startTime, DateTime endTime) {
+        aggregateData(startTime, endTime, sixHourData, twentyFourHourData);
     }
 
     private void aggregateData(DateTime startTime, DateTime endTime,

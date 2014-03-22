@@ -14,12 +14,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
 import org.rhq.server.metrics.CacheMapper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
+import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
 
 /**
@@ -33,9 +33,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
 
     private ComputeMetric computeMetric;
 
-    private int startScheduleId;
-
-    private DateTime timeSlice;
+    private CacheIndexEntry cacheIndexEntry;
 
     private AggregationType aggregationType;
 
@@ -43,12 +41,11 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
 
     private BatchFailureListener failureListener = new BatchFailureListener();
 
-    public ProcessBatch(MetricsDAO dao, ComputeMetric computeMetric, int startScheduleId,
-        DateTime timeSlice, AggregationType aggregationType, int batchSize) {
+    public ProcessBatch(MetricsDAO dao, ComputeMetric computeMetric, CacheIndexEntry cacheIndexEntry,
+        AggregationType aggregationType, int batchSize) {
         this.dao = dao;
         this.computeMetric = computeMetric;
-        this.startScheduleId = startScheduleId;
-        this.timeSlice = timeSlice;
+        this.cacheIndexEntry = cacheIndexEntry;
         this.aggregationType = aggregationType;
         this.batchSize = batchSize;
     }
@@ -57,12 +54,13 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
     public ListenableFuture<BatchResult> apply(ResultSet resultSet) throws Exception {
         Stopwatch stopwatch = new Stopwatch().start();
         if (log.isDebugEnabled()) {
-            log.debug("Aggregating batch of " + aggregationType + " with starting schedule id " + startScheduleId);
+            log.debug("Aggregating batch of " + aggregationType + " with starting schedule id " +
+                cacheIndexEntry.getStartScheduleId());
         }
         List<ListenableFuture<ResultSet>> insertFutures = new ArrayList<ListenableFuture<ResultSet>>(batchSize * 4);
         try {
             if (resultSet.isExhausted()) {
-                return Futures.immediateFuture(new BatchResult(timeSlice, startScheduleId));
+                return Futures.immediateFuture(new BatchResult(cacheIndexEntry));
             }
 
             CacheMapper cacheMapper = aggregationType.getCacheMapper();
@@ -83,7 +81,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
                     }
                     mean.add(currentMetric.getAvg());
                 } else {
-                    insertFutures.addAll(wrapWithFailureListener(computeMetric.execute(startScheduleId,
+                    insertFutures.addAll(wrapWithFailureListener(computeMetric.execute(cacheIndexEntry.getStartScheduleId(),
                         currentMetric.getScheduleId(), min, max, mean)));
 
                     currentMetric = nextMetric;
@@ -93,7 +91,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
                     mean.add(currentMetric.getAvg());
                 }
             }
-            insertFutures.addAll(wrapWithFailureListener(computeMetric.execute(startScheduleId,
+            insertFutures.addAll(wrapWithFailureListener(computeMetric.execute(cacheIndexEntry.getStartScheduleId(),
                 currentMetric.getScheduleId(), min, max, mean)));
             ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(insertFutures);
 
@@ -101,14 +99,15 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
                 @Override
                 public ListenableFuture<BatchResult> apply(final List<ResultSet> resultSets) throws Exception {
                     if (!failureListener.getErrors().isEmpty()) {
-                        throw new BatchException(startScheduleId, failureListener.getErrors());
+                        throw new BatchException(cacheIndexEntry.getStartScheduleId(), failureListener.getErrors());
                     }
                     StorageResultSetFuture deleteFuture = dao.deleteCacheEntries(
-                        aggregationType.getCacheTable(), timeSlice.getMillis(), startScheduleId);
+                        aggregationType.getCacheTable(), cacheIndexEntry.getCollectionTimeSlice(),
+                        cacheIndexEntry.getStartScheduleId());
                     return Futures.transform(deleteFuture, new Function<ResultSet, BatchResult>() {
                         @Override
                         public BatchResult apply(ResultSet deleteFuture) {
-                            return new BatchResult(resultSets, timeSlice, startScheduleId, deleteFuture);
+                            return new BatchResult(resultSets, cacheIndexEntry, deleteFuture);
                         }
                     });
                 }
@@ -117,7 +116,7 @@ class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
             stopwatch.stop();
             if (log.isDebugEnabled()) {
                 log.debug("Finished aggregating batch of " + aggregationType + " for " + (insertFutures.size() / 4) +
-                    " schedules with starting schedule id " + startScheduleId + " in " +
+                    " schedules with starting schedule id " + cacheIndexEntry.getStartScheduleId() + " in " +
                     stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         }

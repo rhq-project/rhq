@@ -124,6 +124,10 @@ public class MetricsServer {
         cacheBatchSize = size;
     }
 
+    ListeningExecutorService getAggregationWorkers() {
+        return aggregationWorkers;
+    }
+
     public void init() {
         init(-1, -1, false);
     }

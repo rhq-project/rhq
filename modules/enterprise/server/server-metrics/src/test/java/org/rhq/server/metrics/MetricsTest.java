@@ -139,8 +139,20 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertMetricDataEmpty(scheduleId, MetricsTable.SIX_HOUR);
     }
 
+    protected void assert6HourDataEmpty(int... scheduleIds) {
+        for (Integer scheduleId : scheduleIds) {
+            assert6HourDataEmpty(scheduleId);
+        }
+    }
+
     protected void assert24HourDataEmpty(int scheduleId) {
         assertMetricDataEmpty(scheduleId, MetricsTable.TWENTY_FOUR_HOUR);
+    }
+
+    protected void assert24HourDataEmpty(int... scheduleIds) {
+        for (Integer scheduleId : scheduleIds) {
+            assert24HourDataEmpty(scheduleId);
+        }
     }
 
     private void assertMetricDataEmpty(int scheduleId, MetricsTable columnFamily) {
@@ -220,6 +232,13 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertRawCacheEquals(timeSlice, startScheduleId, emptyRaws);
     }
 
+    protected void assertRawCacheEmpty(DateTime timeSlice, int... startScheduleIds) {
+        List<RawNumericMetric> emptyRaws = Collections.emptyList();
+        for (Integer startScheduleId : startScheduleIds) {
+            assertRawCacheEquals(timeSlice, startScheduleId, emptyRaws);
+        }
+    }
+
     protected void assertRawCacheEquals(DateTime timeSlice, int startScheduleId, RawNumericMetric... expected) {
         assertRawCacheEquals(timeSlice, startScheduleId, asList(expected));
     }
@@ -256,12 +275,14 @@ public class MetricsTest extends CassandraIntegrationTest {
         }
     }
 
-    protected void assertRawHourCacheEmpty(DateTime timeSlice, int startScheduleId) {
-        assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.RAW);
-    }
-
     protected void assert1HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
         assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.ONE_HOUR);
+    }
+
+    protected void assert1HourCacheEmpty(DateTime timeSlice, int... startScheduleIds) {
+        for (Integer startScheduleId : startScheduleIds) {
+            assertAggregateCacheEmpty(timeSlice, startScheduleId, MetricsTable.ONE_HOUR);
+        }
     }
 
     protected void assert6HourCacheEmpty(DateTime timeSlice, int startScheduleId) {
@@ -280,13 +301,38 @@ public class MetricsTest extends CassandraIntegrationTest {
     }
 
     protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, List<CacheIndexEntry> expected) {
-        ResultSet resultSet = dao.findCacheIndexEntries(MetricsTable.RAW, insertTimeSlice.getMillis(), partition).get();
+        assertCacheIndexEquals(insertTimeSlice, MetricsTable.RAW, partition, expected);
+    }
+
+    protected void assert1HourCacheIndexEquals(DateTime insertTimeSlice, int partition,
+        List<CacheIndexEntry> expected) {
+        assertCacheIndexEquals(insertTimeSlice, MetricsTable.ONE_HOUR, partition, expected);
+    }
+
+    protected void assert6HourCacheIndexEquals(DateTime insertTimeSlice, int partition,
+        List<CacheIndexEntry> expected) {
+        assertCacheIndexEquals(insertTimeSlice, MetricsTable.SIX_HOUR, partition, expected);
+    }
+
+    protected void assert6HourCacheIndexEmpty(DateTime insertTimeSlice, int partition) {
+        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
+        assert6HourCacheIndexEquals(insertTimeSlice, partition, emptyEntries);
+    }
+
+    private void assertCacheIndexEquals(DateTime insertTimeSlice, MetricsTable table, int partition,
+        List<CacheIndexEntry> expected) {
+        ResultSet resultSet = dao.findCacheIndexEntries(table, insertTimeSlice.getMillis(), partition).get();
         List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
         for (CacheIndexEntry entry : expected) {
             entry.setInsertTimeSlice(insertTimeSlice.getMillis());
             entry.setPartition(partition);
         }
-        assertCacheIndexEntriesEqual(actual, expected, MetricsTable.RAW);
+        assertCacheIndexEntriesEqual(actual, expected, table);
+    }
+
+    protected void assert1HourCacheIndexEmpty(DateTime insertTimeSlice, int partition) {
+        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
+        assert1HourCacheIndexEquals(insertTimeSlice, partition, emptyEntries);
     }
 
     protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
@@ -296,6 +342,14 @@ public class MetricsTest extends CassandraIntegrationTest {
     protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice,
         Set<Integer> scheduleIds) {
         return newCacheIndexEntry(MetricsTable.RAW, null, 0, startScheduleId, collectionTimeSlice, scheduleIds);
+    }
+
+    protected CacheIndexEntry new1HourCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.ONE_HOUR, null, 0, startScheduleId, collectionTimeSlice);
+    }
+
+    protected CacheIndexEntry new6HourCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.SIX_HOUR, null, 0, startScheduleId, collectionTimeSlice);
     }
 
     @SuppressWarnings("unchecked")
@@ -320,4 +374,45 @@ public class MetricsTest extends CassandraIntegrationTest {
         return entry;
     }
 
+    static class MetricsServerStub extends MetricsServer {
+        private DateTime currentHour;
+
+        public void setCurrentHour(DateTime currentHour) {
+            this.currentHour = currentHour;
+        }
+
+        @Override
+        protected DateTime currentHour() {
+            if (currentHour == null) {
+                return super.currentHour();
+            }
+            return currentHour;
+        }
+
+    }
+
+    static class DateTimeServiceStub extends DateTimeService {
+
+        private DateTime now;
+
+        public void setNow(DateTime now) {
+            this.now = now;
+        }
+
+        @Override
+        public DateTime now() {
+            if (now == null) {
+                return super.now();
+            }
+            return now;
+        }
+
+        @Override
+        public long nowInMillis() {
+            if (now == null) {
+                return super.nowInMillis();
+            }
+            return now.getMillis();
+        }
+    }
 }

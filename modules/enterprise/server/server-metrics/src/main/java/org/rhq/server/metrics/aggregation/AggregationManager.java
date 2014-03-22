@@ -41,6 +41,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
  */
 public class AggregationManager {
 
+    public static final int INDEX_PARTITION = 0;
     private static final Comparator<AggregateNumericMetric> AGGREGATE_COMPARATOR = new Comparator<AggregateNumericMetric>() {
         @Override
         public int compare(AggregateNumericMetric left, AggregateNumericMetric right) {
@@ -123,12 +124,12 @@ public class AggregationManager {
         int num6Hour = 0;
         try {
             final int startScheduleId = calculateStartScheduleId(minScheduleId);
-            numRaw = createRawAggregator(startScheduleId).execute();
+            numRaw = createRawAggregator().execute();
             if (is6HourTimeSliceFinished()) {
-                num1Hour = create1HourAggregator(startScheduleId).execute();
+                num1Hour = create1HourAggregator().execute();
             }
             if (is24HourTimeSliceFinished()) {
-                num6Hour = create6HourAggregator(startScheduleId).execute();
+                num6Hour = create6HourAggregator().execute();
             }
 
             return oneHourData;
@@ -146,7 +147,7 @@ public class AggregationManager {
         }
     }
 
-    private Aggregator createRawAggregator(int startScheduleId) {
+    private Aggregator createRawAggregator() {
         ComputeMetric compute1HourMetric = new ComputeMetric() {
             @Override
             public List<StorageResultSetFuture> execute(int startScheduleId, int scheduleId, Double min, Double max,
@@ -158,7 +159,9 @@ public class AggregationManager {
                     dao.insertOneHourDataAsync(scheduleId, startTime.getMillis(), MAX, max),
                     dao.insertOneHourDataAsync(scheduleId, startTime.getMillis(), MIN, min),
                     dao.updateMetricsCache(ONE_HOUR, get6HourTimeSlice().getMillis(), startScheduleId,
-                        scheduleId, startTime.getMillis(), map(min, max,  mean.getArithmeticMean()))
+                        scheduleId, startTime.getMillis(), map(min, max,  mean.getArithmeticMean())),
+                    dao.updateCacheIndex(ONE_HOUR, get6HourTimeSlice().getMillis(), INDEX_PARTITION, startScheduleId,
+                        get6HourTimeSlice().getMillis())
                 );
             }
         };
@@ -169,15 +172,13 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setComputeMetric(compute1HourMetric);
         aggregator.setDao(dao);
-        aggregator.setMaxScheduleId(maxScheduleId);
         aggregator.setPermits(permits);
-        aggregator.setStartScheduleId(startScheduleId);
         aggregator.setStartTime(startTime);
 
         return aggregator;
     }
 
-    private Aggregator create1HourAggregator(int startScheduleId) {
+    private Aggregator create1HourAggregator() {
         ComputeMetric compute6HourMetric = new ComputeMetric() {
             @Override
             public List<StorageResultSetFuture> execute(int startScheduleId, int scheduleId, Double min,
@@ -189,7 +190,9 @@ public class AggregationManager {
                     dao.insertSixHourDataAsync(scheduleId, get6HourTimeSlice().getMillis(), MIN, min),
                     dao.updateMetricsCache(SIX_HOUR, get24HourTimeSlice().getMillis(),
                         startScheduleId, scheduleId, get6HourTimeSlice().getMillis(), map(min, max,
-                        mean.getArithmeticMean()))
+                        mean.getArithmeticMean())),
+                    dao.updateCacheIndex(SIX_HOUR, get24HourTimeSlice().getMillis(), INDEX_PARTITION, startScheduleId,
+                        get24HourTimeSlice().getMillis())
                 );
             }
         };
@@ -200,15 +203,13 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setComputeMetric(compute6HourMetric);
         aggregator.setDao(dao);
-        aggregator.setMaxScheduleId(maxScheduleId);
         aggregator.setPermits(permits);
-        aggregator.setStartScheduleId(startScheduleId);
         aggregator.setStartTime(get6HourTimeSlice());
 
         return aggregator;
     }
 
-    private Aggregator create6HourAggregator(int startScheduleId) {
+    private Aggregator create6HourAggregator() {
         ComputeMetric compute24HourMetric = new ComputeMetric() {
             @Override
             public List<StorageResultSetFuture> execute(int startScheduleId, int scheduleId, Double min,
@@ -230,9 +231,7 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setComputeMetric(compute24HourMetric);
         aggregator.setDao(dao);
-        aggregator.setMaxScheduleId(maxScheduleId);
         aggregator.setPermits(permits);
-        aggregator.setStartScheduleId(startScheduleId);
         aggregator.setStartTime(get24HourTimeSlice());
 
         return aggregator;

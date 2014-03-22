@@ -89,7 +89,6 @@ public class Simulator implements ShutdownManager {
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
         metricsServer.setAggregationBatchSize(plan.getAggregationBatchSize());
-        metricsServer.setUseAsyncAggregation(plan.getAggregationType() == SimulationPlan.AggregationType.ASYNC);
         metricsServer.setDateTimeService(plan.getDateTimeService());
     }
 

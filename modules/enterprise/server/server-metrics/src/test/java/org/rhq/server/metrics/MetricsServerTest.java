@@ -79,48 +79,6 @@ public class MetricsServerTest extends MetricsTest {
 
     private DateTimeServiceStub dateTimeService;
 
-    private static class MetricsServerStub extends MetricsServer {
-        private DateTime currentHour;
-
-        public void setCurrentHour(DateTime currentHour) {
-            this.currentHour = currentHour;
-        }
-
-        @Override
-        protected DateTime currentHour() {
-            if (currentHour == null) {
-                return super.currentHour();
-            }
-            return currentHour;
-        }
-
-    }
-
-    private static class DateTimeServiceStub extends DateTimeService {
-
-        private DateTime now;
-
-        public void setNow(DateTime now) {
-            this.now = now;
-        }
-
-        @Override
-        public DateTime now() {
-            if (now == null) {
-                return super.now();
-            }
-            return now;
-        }
-
-        @Override
-        public long nowInMillis() {
-            if (now == null) {
-                return super.nowInMillis();
-            }
-            return now.getMillis();
-        }
-    }
-
     @BeforeMethod
     public void initServer() throws Exception {
         metricsServer = new MetricsServerStub();
@@ -354,7 +312,7 @@ public class MetricsServerTest extends MetricsTest {
         assert6HourCacheEmpty(hour(0), startScheduleId(scheduleId));
 
         // verify that the 1 hour cache has been purged
-        assertRawHourCacheEmpty(hour8, startScheduleId(scheduleId));
+        assertRawCacheEmpty(hour8, startScheduleId(scheduleId));
     }
 
     @Test(enabled = ENABLED)

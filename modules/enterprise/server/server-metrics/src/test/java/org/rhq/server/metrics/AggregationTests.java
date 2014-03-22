@@ -9,13 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import com.datastax.driver.core.ResultSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
 import org.joda.time.DateTime;
@@ -49,156 +48,173 @@ public class AggregationTests extends MetricsTest {
 
     private final int BATCH_SIZE = 10;
 
+    private final int INDEX_PARTITION = 0;
+
+    private MetricsServerStub metricsServer;
+
+    private DateTimeServiceStub dateTimeService;
+
+    private InMemoryMetricsDB testdb;
+
     @BeforeClass
     public void setUp() throws Exception {
         purgeDB();
 
         schedule1.id = 100;
         schedule2.id = 101;
-        schedule3.id = 102;
+        schedule3.id = 131;
         schedule4.id = 104;
         schedule5.id = 105;
 
-        aggregationTasks = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        testdb = new InMemoryMetricsDB();
+        dateTimeService = new DateTimeServiceStub();
+        metricsServer = new MetricsServerStub();
+        metricsServer.setConfiguration(new MetricsConfiguration());
+        metricsServer.setDateTimeService(dateTimeService);
+        metricsServer.setDAO(dao);
+        metricsServer.setCacheBatchSize(PARTITION_SIZE);
+        metricsServer.init();
+
+        aggregationTasks = metricsServer.getAggregationWorkers();
     }
 
     @Test
     public void insertRawDataDuringHour16() throws Exception {
-        insertRawData(hour(16),
-            new MeasurementDataNumeric(hour(16).plusMinutes(20).getMillis(), schedule1.id, 3.0),
-            new MeasurementDataNumeric(hour(16).plusMinutes(40).getMillis(), schedule1.id, 5.0),
-            new MeasurementDataNumeric(hour(16).plusMinutes(15).getMillis(), schedule2.id, 0.0032),
-            new MeasurementDataNumeric(hour(16).plusMinutes(30).getMillis(), schedule2.id, 0.104),
-            new MeasurementDataNumeric(hour(16).plusMinutes(7).getMillis(), schedule3.id, 3.14)
-        ).await("Failed to insert raw data");
+        dateTimeService.setNow(hour(16).plusMinutes(41));
+        insertRawData(
+            newRawData(hour(16).plusMinutes(20), schedule1.id, 3.0),
+            newRawData(hour(16).plusMinutes(40), schedule1.id, 5.0),
+            newRawData(hour(16).plusMinutes(15), schedule2.id, 0.0032),
+            newRawData(hour(16).plusMinutes(30), schedule2.id, 0.104),
+            newRawData(hour(16).plusMinutes(7), schedule3.id, 3.14)
+        );
     }
 
     @Test(dependsOnMethods = "insertRawDataDuringHour16")
     public void runAggregationForHour16() throws Exception {
         currentHour = hour(17);
+        testdb.aggregateRawData(hour(16), hour(17));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(16));
 
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
-        schedule1.oneHourData.put(hour(16), new AggregateNumericMetric(schedule1.id, avg(3.0, 5.0), 3.0, 5.0,
-            hour(16).getMillis()));
-        schedule2.oneHourData.put(hour(16), new AggregateNumericMetric(schedule2.id, avg(0.0032, 0.104), 0.0032, 0.104,
-            hour(16).getMillis()));
-        schedule3.oneHourData.put(hour(16), new AggregateNumericMetric(schedule3.id, 3.14, 3.14, 3.14,
-            hour(16).getMillis()));
-
-        List<AggregateNumericMetric> expected = asList(schedule1.oneHourData.get(hour(16)),
-            schedule2.oneHourData.get(hour(16)), schedule3.oneHourData.get(hour(16)));
-        assertCollectionEqualsNoOrder(expected, oneHourData, "The returned one hour aggregates are wrong");
+        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(16)), oneHourData,
+            "The returned one hour aggregates are wrong");
         // verify values in the db
-        assert1HourDataEquals(schedule1.id, schedule1.oneHourData.get(hour(16)));
-        assert1HourDataEquals(schedule2.id, schedule2.oneHourData.get(hour(16)));
-        assert1HourDataEquals(schedule3.id, schedule3.oneHourData.get(hour(16)));
-        assert1HourCacheEquals(hour(12), startScheduleId(schedule1.id), expected);
-        assert6HourDataEmpty(schedule1.id);
-        assert6HourDataEmpty(schedule2.id);
-        assert6HourDataEmpty(schedule3.id);
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(hour(16), schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(hour(16), schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(hour(16), schedule3.id));
+
+        assert6HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
+        assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
+
+        assertRawCacheEmpty(hour(16), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+        assertRawCacheIndexEmpty(hour(16), INDEX_PARTITION);
+
+        assert1HourCacheEquals(hour(12), startScheduleId(schedule1.id),
+            asList(testdb.get1HourData(hour(16), schedule1.id), testdb.get1HourData(hour(16), schedule2.id)));
+        assert1HourCacheIndexEquals(hour(12), INDEX_PARTITION, asList(
+            new1HourCacheIndexEntry(startScheduleId(schedule1.id), hour(12)),
+            new1HourCacheIndexEntry(startScheduleId(schedule3.id), hour(12))
+        ));
+
         assert6HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
-        assertRawHourCacheEmpty(hour(16), startScheduleId(schedule1.id));
+        assert6HourCacheIndexEmpty(hour(0), INDEX_PARTITION);
     }
 
     @Test(dependsOnMethods = "runAggregationForHour16")
     public void insertRawDataDuringHour17() throws Exception {
-        insertRawData(hour(17),
-            new MeasurementDataNumeric(hour(17).plusMinutes(20).getMillis(), schedule1.id, 11.0),
-            new MeasurementDataNumeric(hour(17).plusMinutes(40).getMillis(), schedule1.id, 16.0),
-            new MeasurementDataNumeric(hour(17).plusMinutes(30).getMillis(), schedule2.id, 0.092),
-            new MeasurementDataNumeric(hour(17).plusMinutes(45).getMillis(), schedule2.id, 0.0733)
-        ).await("Failed to insert raw data");
+        dateTimeService.setNow(hour(17).plusMinutes(50));
+        insertRawData(
+            newRawData(hour(17).plusMinutes(20), schedule1.id, 11.0),
+            newRawData(hour(17).plusMinutes(40), schedule1.id, 16.0),
+            newRawData(hour(17).plusMinutes(30), schedule2.id, 0.092),
+            newRawData(hour(17).plusMinutes(45), schedule2.id, 0.0733)
+        );
     }
 
     @Test(dependsOnMethods = "insertRawDataDuringHour17")
     public void runAggregationForHour17() throws Exception {
         currentHour = hour(18);
+        testdb.aggregateRawData(hour(17), hour(18));
+        testdb.aggregate1HourData(hour(12), hour(18));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(17));
 
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
-        schedule1.oneHourData.put(hour(17), new AggregateNumericMetric(schedule1.id, avg(11.0, 16.0), 11.0, 16.0,
-            hour(17).getMillis()));
-        schedule2.oneHourData.put(hour(17), new AggregateNumericMetric(schedule2.id, avg(0.092, 0.0733), 0.0733, 0.092,
-            hour(17).getMillis()));
-
-        schedule1.sixHourData.put(hour(12), new AggregateNumericMetric(schedule1.id,
-            avg(schedule1.oneHourData, hour(16), hour(17)), min(schedule1.oneHourData, hour(16), hour(17)),
-            max(schedule1.oneHourData, hour(16), hour(17)), hour(12).getMillis()));
-        schedule2.sixHourData.put(hour(12), new AggregateNumericMetric(schedule2.id,
-            avg(schedule2.oneHourData, hour(16), hour(17)), min(schedule2.oneHourData, hour(16), hour(17)),
-            max(schedule2.oneHourData, hour(16), hour(17)), hour(12).getMillis()));
-        schedule3.sixHourData.put(hour(12), new AggregateNumericMetric(schedule3.id, 3.14, 3.14, 3.14,
-            hour(12).getMillis()));
-
-        List<AggregateNumericMetric> expected = asList(schedule1.oneHourData.get(hour(17)),
-            schedule2.oneHourData.get(hour(17)));
-        assertCollectionEqualsNoOrder(expected, oneHourData, "The returned one hour data is wrong");
+        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(17)), oneHourData,
+            "The returned one hour data is wrong");
         // verify values in the db
-        assert1HourDataEquals(schedule1.id, schedule1.oneHourData.get(hour(16)), schedule1.oneHourData.get(hour(17)));
-        assert1HourDataEquals(schedule2.id, schedule2.oneHourData.get(hour(16)), schedule2.oneHourData.get(hour(17)));
-        assert1HourDataEquals(schedule3.id, schedule3.oneHourData.get(hour(16)));
-        assert6HourDataEquals(schedule1.id, schedule1.sixHourData.get(hour(12)));
-        assert6HourDataEquals(schedule2.id, schedule2.sixHourData.get(hour(12)));
-        assert6HourDataEquals(schedule3.id, schedule3.sixHourData.get(hour(12)));
-        assert24HourDataEmpty(schedule1.id);
-        assert24HourDataEmpty(schedule2.id);
-        assert24HourDataEmpty(schedule3.id);
-        assertRawHourCacheEmpty(hour(17), startScheduleId(schedule1.id));
-        assert1HourCacheEmpty(hour(12), startScheduleId(schedule1.id));
-        assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(schedule1.sixHourData.get(hour(12)),
-            schedule2.sixHourData.get(hour(12)), schedule3.sixHourData.get(hour(12))
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert6HourDataEquals(schedule1.id, testdb.get6HourData(hour(12), schedule1.id));
+        assert6HourDataEquals(schedule2.id, testdb.get6HourData(hour(12), schedule2.id));
+        assert6HourDataEquals(schedule3.id, testdb.get6HourData(hour(12), schedule3.id));
+
+        assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
+
+        assertRawCacheEmpty(hour(17), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+        assertRawCacheIndexEmpty(hour(17), INDEX_PARTITION);
+
+        assert1HourCacheEmpty(hour(12), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+        assert1HourCacheIndexEmpty(hour(12), INDEX_PARTITION);
+
+        assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), testdb.get6HourData(scheduleIds(schedule1.id)));
+        assert6HourCacheEquals(hour(0), startScheduleId(schedule3.id), testdb.get6HourData(scheduleIds(schedule3.id)));
+        assert6HourCacheIndexEquals(hour(0), INDEX_PARTITION, asList(
+            new6HourCacheIndexEntry(startScheduleId(schedule1.id), hour(0)),
+            new6HourCacheIndexEntry(startScheduleId(schedule3.id), hour(0))
         ));
     }
 
+
     @Test(dependsOnMethods = "runAggregationForHour17")
     public void insertRawDataDuringHour18() throws Exception {
-        insertRawData(hour(18),
-            new MeasurementDataNumeric(hour(18).plusMinutes(20).getMillis(), schedule1.id, 22.0),
-            new MeasurementDataNumeric(hour(18).plusMinutes(40).getMillis(), schedule1.id, 26.0),
-            new MeasurementDataNumeric(hour(18).plusMinutes(15).getMillis(), schedule2.id, 0.205),
-            new MeasurementDataNumeric(hour(18).plusMinutes(15).getMillis(), schedule3.id, 2.42)
-        ).await("Failed to insert raw data");
+        dateTimeService.setNow(hour(18).plusMinutes(50));
+        insertRawData(
+            newRawData(hour(18).plusMinutes(20), schedule1.id, 22.0),
+            newRawData(hour(18).plusMinutes(40), schedule1.id, 26.0),
+            newRawData(hour(18).plusMinutes(15), schedule2.id, 0.205),
+            newRawData(hour(18).plusMinutes(15), schedule3.id, 2.42)
+        );
     }
 
     @Test(dependsOnMethods = "insertRawDataDuringHour18")
     public void runAggregationForHour18() throws Exception {
         currentHour = hour(19);
+        testdb.aggregateRawData(hour(18), hour(19));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(18));
-
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
-        schedule1.oneHourData.put(hour(18), new AggregateNumericMetric(schedule1.id, avg(22.0, 26.0), 22.0, 26.0,
-            hour(18).getMillis()));
-        schedule2.oneHourData.put(hour(18), new AggregateNumericMetric(schedule2.id, 0.205, 0.205, 0.205,
-            hour(18).getMillis()));
-        schedule3.oneHourData.put(hour(18), new AggregateNumericMetric(schedule3.id, 2.42, 2.42, 2.42,
-            hour(18).getMillis()));
-
-        List<AggregateNumericMetric> expected = asList(schedule1.oneHourData.get(hour(18)),
-            schedule2.oneHourData.get(hour(18)), schedule3.oneHourData.get(hour(18)));
-        assertCollectionEqualsNoOrder(expected, oneHourData, "The returned one hour data is wrong");
+        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(18)), oneHourData, "The returned 1 hour data is wrong");
         // verify values in db
-        assert1HourDataEquals(schedule1.id, schedule1.oneHourData.get(hour(18)), schedule1.oneHourData.get(hour(17)),
-            schedule1.oneHourData.get(hour(16)));
-        assert1HourDataEquals(schedule2.id, schedule2.oneHourData.get(hour(18)), schedule2.oneHourData.get(hour(17)),
-            schedule2.oneHourData.get(hour(16)));
-        assert1HourDataEquals(schedule3.id, schedule3.oneHourData.get(hour(18)), schedule3.oneHourData.get(hour(16)));
-        assert6HourDataEquals(schedule1.id, schedule1.sixHourData.get(hour(12)));
-        assert6HourDataEquals(schedule2.id, schedule2.sixHourData.get(hour(12)));
-        assert6HourDataEquals(schedule3.id, schedule3.sixHourData.get(hour(12)));
-        assert1HourCacheEquals(hour(18), startScheduleId(schedule1.id), expected);
-        assert24HourDataEmpty(schedule1.id);
-        assert24HourDataEmpty(schedule2.id);
-        assert24HourDataEmpty(schedule3.id);
-        assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(schedule1.sixHourData.get(hour(12)),
-            schedule2.sixHourData.get(hour(12)), schedule3.sixHourData.get(hour(12))));
-        assertRawHourCacheEmpty(hour(18), startScheduleId(schedule1.id));
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert6HourDataEquals(schedule1.id, testdb.get6HourData(schedule1.id));
+        assert6HourDataEquals(schedule2.id, testdb.get6HourData(schedule2.id));
+        assert6HourDataEquals(schedule3.id, testdb.get6HourData(schedule3.id));
+
+        assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
+
+        assertRawCacheEmpty(hour(18), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+        assertRawCacheIndexEmpty(hour(18), INDEX_PARTITION);
+
+        assert1HourCacheEquals(hour(18), startScheduleId(schedule1.id), asList(
+            testdb.get1HourData(hour(18), schedule1.id),
+            testdb.get1HourData(hour(18), schedule2.id)));
+        assert1HourCacheEquals(hour(18), startScheduleId(schedule3.id),
+            asList(testdb.get1HourData(hour(18), schedule3.id)));
+        assert1HourCacheIndexEquals(hour(18), INDEX_PARTITION, asList(
+            new1HourCacheIndexEntry(startScheduleId(schedule1.id), hour(18)),
+            new1HourCacheIndexEntry(startScheduleId(schedule3.id), hour(18))
+        ));
     }
 
-    @Test(dependsOnMethods = "runAggregationForHour18")
+//    @Test(dependsOnMethods = "runAggregationForHour18")
     public void insertRawDataDuringHour23() throws Exception {
         insertRawData(hour(23),
             new MeasurementDataNumeric(hour(23).plusMinutes(25).getMillis(), schedule1.id, 34.0),
@@ -206,7 +222,7 @@ public class AggregationTests extends MetricsTest {
         ).await("Failed to insert raw data");
     }
 
-    @Test(dependsOnMethods = "insertRawDataDuringHour23")
+//    @Test(dependsOnMethods = "insertRawDataDuringHour23")
     public void runAggregationForHour24() throws Exception {
         currentHour = hour(24);
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(23));
@@ -262,17 +278,17 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEquals(schedule1.id, schedule1.twentyFourHourData.get(hour(0)));
         assert24HourDataEquals(schedule2.id, schedule2.twentyFourHourData.get(hour(0)));
         assert24HourDataEquals(schedule3.id, schedule3.twentyFourHourData.get(hour(0)));
-        assertRawHourCacheEmpty(hour(23), startScheduleId(schedule1.id));
+        assertRawCacheEmpty(hour(23), startScheduleId(schedule1.id));
         assert1HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
         assert6HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
     }
 
-    @Test(dependsOnMethods = "runAggregationForHour24")
+//    @Test(dependsOnMethods = "runAggregationForHour24")
     public void resetDBForFailureScenarios() throws Exception {
         purgeDB();
     }
 
-    @Test(dependsOnMethods = "resetDBForFailureScenarios")
+//    @Test(dependsOnMethods = "resetDBForFailureScenarios")
     public void doNotDeleteCachePartitionOnBatchFailure() throws Exception {
         currentHour = hour(5);
         DateTime time = hour(4).plusMinutes(20);
@@ -354,6 +370,30 @@ public class AggregationTests extends MetricsTest {
 //        assert6HourMetricsIndexEmpty(hour(6));
 //        assert24HourIndexEquals(hour(0), schedule4.id);
 //    }
+
+    private void insertRawData(MeasurementDataNumeric... data) throws Exception {
+        Set<MeasurementDataNumeric> dataSet = Sets.newHashSet(data);
+        for (MeasurementDataNumeric datum : data) {
+            testdb.putRawData(new RawNumericMetric(datum.getScheduleId(), datum.getTimestamp(), datum.getValue()));
+        }
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.length);
+        metricsServer.addNumericData(dataSet, waitForRawInserts);
+
+        waitForRawInserts.await("Failed to insert raw data");
+    }
+
+    private MeasurementDataNumeric newRawData(DateTime timestamp, int scheduleId, double value) {
+        return new MeasurementDataNumeric(timestamp.getMillis(), scheduleId, value);
+    }
+
+    private int[] scheduleIds(int scheduleId) {
+        int[] ids = new int[BATCH_SIZE];
+        int startId = startScheduleId(scheduleId);
+        for (int i = 0; i < BATCH_SIZE; ++i) {
+            ids[i] = startId + i;
+        }
+        return ids;
+    }
 
     private WaitForWrite insert1HourData(AggregateNumericMetric... data) {
         WaitForWrite waitForWrite = new WaitForWrite(data.length * 3);

@@ -26,8 +26,8 @@
               <artifactId>dom4j</artifactId>
             </exclusion>
             <exclusion>
-              <groupId>gnu-getopt</groupId>
-              <artifactId>getopt</artifactId>
+              <groupId>gnu.getopt</groupId>
+              <artifactId>java-getopt</artifactId>
             </exclusion>
             <exclusion>
               <groupId>jboss</groupId>

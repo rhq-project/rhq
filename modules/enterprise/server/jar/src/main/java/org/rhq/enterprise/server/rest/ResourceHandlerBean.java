@@ -72,11 +72,15 @@ import org.jboss.resteasy.annotations.cache.Cache;
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -718,7 +722,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         String typeName = typeValue.getValue();
 
-        return createResourceInternal(name, plugin, parentId, typeName, uriInfo);
+        return createResourceInternalOld(name, plugin, parentId, typeName, uriInfo);
     }
 
     @POST
@@ -739,11 +743,236 @@ public class ResourceHandlerBean extends AbstractRestBean {
         if (handle!=null) {
             return createContentBackedResource(resource,handle,headers,uriInfo);
         } else {
-            return createResourceInternal(resource.getResourceName(),resource.getPluginName(),resource.getParentId(),resource.getTypeName(),uriInfo);
+            return createResourceInternal(resource,headers,uriInfo);
         }
     }
 
-    private Response createResourceInternal(String name, String plugin, int parentId, String typeName,
+    /**
+     * creates regular child resource similar to {@link ResourceHandlerBean#createContentBackedResource(CreateCBResourceRequest, String, HttpHeaders, UriInfo)}
+     * except no content is given and 
+     * @param request
+     * @param headers
+     * @param uriInfo
+     * @return
+     */
+    private Response createResourceRegularChild(CreateCBResourceRequest request, ResourceType resType, HttpHeaders headers, UriInfo uriInfo) {
+        int parentId = request.getParentId();
+        String name = request.getResourceName();
+
+        // fetch default plugin and resource configs
+        ResourceTypeCriteria rtc = new ResourceTypeCriteria();
+        rtc.addFilterId(resType.getId());
+        rtc.fetchPluginConfigurationDefinition(true);
+        rtc.fetchResourceConfigurationDefinition(true);
+        resType = resourceTypeManager.findResourceTypesByCriteria(caller, rtc).get(0);
+
+        Configuration defaultPc = new Configuration();
+        Configuration pluginConfig = ConfigurationHelper.mapToConfiguration(request.getPluginConfig());
+        if (resType.getPluginConfigurationDefinition().getDefaultTemplate() != null) {
+            defaultPc = resType.getPluginConfigurationDefinition().getDefaultTemplate().getConfiguration().deepCopyWithoutProxies();
+        }
+        for (Property p : pluginConfig.getProperties()) {
+            defaultPc.put(p);
+        }
+
+        Configuration defaultRc= new Configuration();
+        Configuration resourceConfig = ConfigurationHelper.mapToConfiguration(request.getResourceConfig());
+        if (resType.getResourceConfigurationDefinition().getDefaultTemplate() != null) {
+            defaultRc = resType.getResourceConfigurationDefinition().getDefaultTemplate().getConfiguration().deepCopyWithoutProxies();
+        }
+        for (Property p : resourceConfig.getProperties()) {
+            defaultRc.put(p);
+        }
+
+        CreateResourceHistory history = resourceFactory.createResource(caller,parentId, resType.getId(),name,defaultPc,
+            defaultRc, null);
+
+        CreateResourceStatus status = history.getStatus();
+
+        try {
+            Thread.sleep(2000L); // give the agent time to do the work
+        } catch (InterruptedException e) {
+            ; // nothing
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        Response.ResponseBuilder builder;
+
+        if ( status == CreateResourceStatus.SUCCESS) {
+
+            ResourceWithType rwt = findCreatedResource(history.getParentResource().getId(),history.getCreatedResourceName(),uriInfo);
+            if (rwt!=null) {
+                builder = Response.ok();
+                builder.entity(rwt);
+            } else {
+                // History says we had success but due to internal timing
+                // the resource is not yet visible, so switch to in_progress
+                status = CreateResourceStatus.IN_PROGRESS;
+            }
+        }
+        if (status==CreateResourceStatus.IN_PROGRESS) {
+
+            try {
+                Thread.sleep(2000L); // give the agent time to do the work
+            } catch (InterruptedException e) {
+                ; // nothing
+            }
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/creationStatus/{id}");
+            URI uri = uriBuilder.build(history.getId());
+            builder =  Response.status(302);
+            builder.entity("Creation is running - please check back later");
+            builder.location(uri); // redirect to self
+
+        }
+        else  {  // All kinds of failures
+            builder = Response.serverError();
+            builder.entity(new StringValue(history.getErrorMessage()));
+        }
+        builder.type(mediaType);
+        return builder.build();
+    }
+
+    /**
+     * creates syntetic resource. This way we can create resources that would normally be discovered by agent 
+     * and there's no way in UI/CLI to create them.
+     * @param request
+     * @param resType
+     * @param headers
+     * @param uriInfo
+     * @return
+     */
+    private Response createResourceSyntetic(CreateCBResourceRequest request, ResourceType resType, HttpHeaders headers, UriInfo uriInfo) {
+        int parentId = request.getParentId();
+        String typeName = request.getTypeName();
+        String plugin = request.getPluginName();
+        String name = request.getResourceName();
+        Resource parent = resMgr.getResourceById(caller,parentId);
+
+        String resourceKey = "res:" + name + ":" + parentId;
+
+        Resource r = resMgr.getResourceByParentAndKey(caller,parent,resourceKey,plugin,typeName);
+        if (r!=null) {
+            // resource exists - return it
+            ResourceWithType rwt = fillRWT(r,uriInfo);
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(r.getId());
+
+            Response.ResponseBuilder builder = Response.created(uri);
+            builder.entity(rwt);
+            return builder.build();
+        }
+
+        Resource res = new Resource(resourceKey,name,resType);
+        res.setUuid(UUID.randomUUID().toString());
+        res.setAgent(parent.getAgent());
+        res.setParentResource(parent);
+        res.setInventoryStatus(InventoryStatus.COMMITTED);
+        res.setDescription(resType.getDescription() + ". Created via REST-api");
+
+        try {
+            resMgr.createResource(caller,res,parent.getId());
+
+            createSchedules(res);
+
+            ResourceWithType rwt = fillRWT(res,uriInfo);
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(res.getId());
+
+            Response.ResponseBuilder builder = Response.created(uri);
+            builder.entity(rwt);
+            return builder.build();
+
+
+        } catch (ResourceAlreadyExistsException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    private Response createResourceManualImport(CreateCBResourceRequest request, ResourceType resType, HttpHeaders headers, UriInfo uriInfo) {
+        // fetch default plugin config
+        ResourceTypeCriteria rtc = new ResourceTypeCriteria();
+        rtc.addFilterId(resType.getId());
+        rtc.fetchPluginConfigurationDefinition(true);
+        resType = resourceTypeManager.findResourceTypesByCriteria(caller, rtc).get(0);
+        Configuration defaultPc = new Configuration();
+
+        if (resType.getPluginConfigurationDefinition().getDefaultTemplate() != null) {
+            defaultPc = resType.getPluginConfigurationDefinition().getDefaultTemplate().getConfiguration().deepCopyWithoutProxies();
+        }
+        Configuration pluginConfig = ConfigurationHelper.mapToConfiguration(request.getPluginConfig());
+        for (Property p : pluginConfig.getProperties()) {
+            defaultPc.put(p);
+        }
+        Response.ResponseBuilder builder;
+        try {
+            long now = System.currentTimeMillis();
+            Resource r = discoveryBoss.manuallyAddResource(caller, resType.getId(), request.getParentId(), defaultPc);           
+            if (now > r.getCtime()) {
+                builder = Response.serverError();
+                builder.entity(new StringValue("Duplicate resource: manuallyAdded resource under same parent having same properties already exists on server. Note that 'resourceName' is ignored."));
+                return builder.build();
+            }
+            if (request.getResourceName()!=null) { 
+                // resourceName is optional, but if specified, let's update it
+                r.setName(request.getResourceName());
+                r = resMgr.updateResource(caller, r);
+            }
+            ResourceWithType rwt = fillRWT(r, uriInfo);
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(r.getId());
+
+            builder = Response.created(uri);
+            builder.entity(rwt);
+            return builder.build();
+
+        } catch (InvalidPluginConfigurationClientException e) {
+            builder = Response.serverError();
+            builder.entity(new StringValue(e.getMessage()));
+            e.printStackTrace();
+        } catch (PluginContainerException e) {
+            builder = Response.serverError();
+            builder.entity(new StringValue(e.getMessage()));
+            e.printStackTrace();
+        } catch (Exception e) {
+            builder = Response.serverError();
+            builder.entity(new StringValue(e.getMessage()));
+            e.printStackTrace();
+        }
+        return builder.build();
+    }
+
+    private Response createResourceInternal(CreateCBResourceRequest request, HttpHeaders headers, UriInfo uriInfo) throws IOException
+    {
+        int parentId = request.getParentId();
+
+        // Check for valid parent
+        fetchResource(parentId);
+
+        ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(request.getTypeName(),request.getPluginName());
+        if (resType == null) {
+            throw new StuffNotFoundException("ResourceType with name [" + request.getTypeName() + "] and plugin [" + request.getPluginName() + "]");
+        }
+        if (resType.isSupportsManualAdd()) {
+            return createResourceManualImport(request, resType, headers, uriInfo);
+        }
+        else if (resType.isCreatable()) {
+            return createResourceRegularChild(request, resType, headers, uriInfo);
+        }
+        else {
+            return createResourceSyntetic(request, resType, headers, uriInfo);
+        }
+    }
+
+    private Response createResourceInternalOld(String name, String plugin, int parentId, String typeName,
                                             UriInfo uriInfo) {
         Resource parent = resMgr.getResourceById(caller,parentId);
 

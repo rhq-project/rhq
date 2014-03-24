@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,18 +77,25 @@ import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.storage.StorageClientManager;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
+import org.rhq.enterprise.server.rest.domain.CallTimeValueRest;
 import org.rhq.enterprise.server.rest.domain.Datapoint;
 import org.rhq.enterprise.server.rest.domain.DoubleValue;
 import org.rhq.enterprise.server.rest.domain.Link;
@@ -114,6 +122,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     static final String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
     static final String NO_SCHEDULE_FOR_ID = "No schedule with the passed id exists";
 
+    @EJB
+    CallTimeDataManagerLocal calltimeDataManager;
     @EJB
     MeasurementDataManagerLocal dataManager;
     @EJB
@@ -745,6 +755,101 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         return so;
     }
 
+    @GET
+    @ApiOperation("Expose callTime data for given scheduleId")
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
+    })
+    @Produces({MediaType.APPLICATION_JSON,MediaType.TEXT_HTML,MediaType.APPLICATION_XML})
+    @Path("data/{scheduleId}/callTime")
+    public StreamingOutput getCallTimesForResource(
+        @ApiParam(required = true) @PathParam("scheduleId") int scheduleId,
+        @ApiParam(value = "Start time since epoch", defaultValue = "Now - 8h") @QueryParam("startTime") long startTime,
+        @ApiParam(value = "End time since epoch", defaultValue = "Now") @QueryParam("endTime") long endTime,
+        @ApiParam(value = "True to return callTimes aggregated by callDestination", defaultValue = "True") @DefaultValue("true") @QueryParam("aggregate") boolean aggregate,
+        @Context HttpHeaders headers
+        ) {
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.CALLTIME);
+        long now = System.currentTimeMillis();
+        if (endTime==0)
+            endTime = now;
+        if (startTime==0)
+            startTime = endTime - EIGHT_HOURS;
+
+        if (startTime == endTime) {
+            endTime++; // add 1ms, as otherwise the backend fails to find a value at the startTime
+        }
+        PageList<CallTimeDataComposite> callTimes;
+        if (aggregate) {
+            callTimes = calltimeDataManager.findCallTimeDataForResource(caller, schedule.getId(), startTime, endTime, PageControl.getUnlimitedInstance());
+        } else {
+            callTimes = calltimeDataManager.findCallTimeDataRawForResource(caller, schedule.getId(), startTime, endTime, PageControl.getUnlimitedInstance());
+        }
+        return new CallTimeDataStreamingOutput(mediaType,callTimes);
+    }
+
+    @PUT
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @ApiOperation("Submit a callTime metrics to the server")
+    @ApiErrors({
+        @ApiError(code=404, reason = NO_SCHEDULE_FOR_ID),
+        @ApiError(code=406, reason = "beginTime is older than 7 days"),
+        @ApiError(code=406, reason = "callDestination is null"),
+        @ApiError(code=406, reason = "duration is negative number")
+    })
+    @Path("data/{scheduleId}/callTime")
+    public Response putCallTimeValues(
+        @ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
+        List<CallTimeValueRest> callTimes,
+        @Context HttpHeaders headers,
+        @Context UriInfo uriInfo
+        ) {
+        if (callTimes.size() < 1) {
+            return Response.ok().build();
+        }
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.CALLTIME);
+        MeasurementScheduleRequest req = new MeasurementScheduleRequest(schedule);
+        CallTimeData ctd = new CallTimeData(req);
+        long now = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime - SEVEN_DAYS;
+        int idx=0;
+        for (CallTimeValueRest v : callTimes) {
+            // validate
+            if (v.getCallDestination() == null) {
+                throw new IllegalArgumentException("Invalid item["+idx+"] "+v+" : callDestination must not be null");
+            }
+            if (v.getDuration()<0) {
+                throw new IllegalArgumentException("Invalid item["+idx+"] "+v+" : duration must be a positive number");
+            }
+            if (now - SEVEN_DAYS > v.getBeginTime()) {
+                throw new IllegalArgumentException("Invalid item["+idx+"] "+v+" : beginTime is older than 7 days");
+            }
+            // measure interval, so we can return proper location header
+            if (v.getBeginTime() < startTime) {
+                startTime = v.getBeginTime();
+            }
+            if (v.getBeginTime()+v.getDuration() > endTime) {
+                endTime = v.getBeginTime()+v.getDuration();
+            }
+            ctd.addCallData(v.getCallDestination(), new Date(v.getBeginTime()), v.getDuration());
+            idx++;
+        }
+        Set<CallTimeData> data = new HashSet<CallTimeData>();
+        data.add(ctd);
+        calltimeDataManager.addCallTimeData(data);
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/metric/data/{scheduleId}/callTime");
+        uriBuilder.queryParam("startTime",startTime);
+        uriBuilder.queryParam("endTime",endTime);
+        URI uri = uriBuilder.build(scheduleId);
+
+        return Response.created(uri).type(mediaType).build();
+    }
+
     @PUT
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -952,6 +1057,85 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         return Response.created(uriInfo.getRequestUriBuilder().build()).build();
 
+    }
+
+    private class CallTimeDataStreamingOutput implements StreamingOutput {
+        private final PageList<CallTimeDataComposite> callTimes;
+        private final MediaType mediaType;
+        public CallTimeDataStreamingOutput(MediaType mType, PageList<CallTimeDataComposite> callTimes) {
+            this.callTimes = callTimes;
+            this.mediaType= mType;
+        }
+
+        private void jsonOutput(CallTimeDataComposite c, PrintWriter pw) {
+            pw.print("{");
+            pw.print("\"callDestination\":\""); pw.print(c.getCallDestination());
+            pw.print("\",\"minimum\":"); pw.print(c.getMinimum());
+            pw.print(",\"maximum\":"); pw.print(c.getMaximum());
+            pw.print(",\"average\":"); pw.print(c.getAverage());
+            pw.print(",\"total\":"); pw.print(c.getTotal());
+            pw.print(",\"count\":"); pw.print(c.getCount());
+            pw.print("}");
+            pw.flush();
+        }
+
+        private void htmlOutput(CallTimeDataComposite c, PrintWriter pw) {
+            pw.print("<tr>");
+            pw.print("<td>"); pw.print(c.getCallDestination());
+            pw.print("</td><td>"); pw.print(c.getMinimum());
+            pw.print("</td><td>"); pw.print(c.getMaximum());
+            pw.print("</td><td>"); pw.print(c.getAverage());
+            pw.print("</td><td>"); pw.print(c.getTotal());
+            pw.print("</td><td>"); pw.print(c.getCount());
+            pw.print("</td></tr>\n");
+            pw.flush();
+        }
+
+        private void xmlOutput(CallTimeDataComposite c, PrintWriter pw) {
+            pw.print(" <callTime ");
+            pw.print("callDestination=\""); pw.print(c.getCallDestination());
+            pw.print("\" minimum=\""); pw.print(c.getMinimum());
+            pw.print("\" maximum=\""); pw.print(c.getMaximum());
+            pw.print("\" average=\""); pw.print(c.getAverage());
+            pw.print("\" total=\""); pw.print(c.getTotal());
+            pw.print("\" count=\""); pw.print(c.getCount());
+            pw.print("\" />\n");
+            pw.flush();
+        }
+
+        @Override
+        public void write(OutputStream os) throws IOException, WebApplicationException {
+            PrintWriter pw = new PrintWriter(os);
+            Iterator<CallTimeDataComposite> i = callTimes.iterator();
+            if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                pw.print("[");
+                if (i.hasNext()) {
+                    jsonOutput(i.next(), pw);
+                }
+                while (i.hasNext()) {
+                    pw.print(",\n");
+                    jsonOutput(i.next(), pw);
+                }
+                pw.println("]");
+            }
+            else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+                pw.println("<table>");
+                pw.print("<tr><th>callDestination</th><th>minimum</th><th>maximum</th><th>average</th><th>total</th><th>count</th></tr>\n");
+                while (i.hasNext()) {
+                    htmlOutput(i.next(), pw);
+                }
+                pw.println("</table>");
+            }
+            else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
+                pw.println("<collection>\n");
+                while (i.hasNext()) {
+                    xmlOutput(i.next(), pw);
+                }
+                pw.println("</collection>");
+            }
+            pw.flush();
+            pw.close();
+         }
     }
 
     /**

@@ -36,7 +36,6 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
 import org.rhq.bindings.client.AbstractRhqFacade;
-import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.util.InterfaceSimplifier;
 import org.rhq.core.domain.auth.Subject;
@@ -513,7 +512,12 @@ public class RemoteClient extends AbstractRhqFacade {
             serverVersionString = this.serverInfo.getVersion();
             ComparableVersion clientVersion = new ComparableVersion(clientVersionString);
             ComparableVersion serverVersion = new ComparableVersion(serverVersionString);
-            supported = clientVersion.equals(serverVersion);
+            int laterVersionCheck = clientVersion.compareTo(serverVersion);
+            if (laterVersionCheck >= 0) {
+                supported = true; //Ex. 3.2.0.GA-redhat-N represent supported non-breaking api patches/changes.
+            } else {
+                supported = false;
+            }
         } catch (Exception e) {
             throw new IllegalStateException("Cannot determine if server version is supported.", e); // assume we can't talk to it
         }

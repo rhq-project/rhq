@@ -70,7 +70,6 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         List<Integer> doomedPlugins = new ArrayList<Integer>(pluginIds);
         pluginMgr.deletePlugins(overlord, doomedPlugins);
-        pluginMgr.markPluginsForPurge(overlord, new ArrayList(doomedPlugins));
         new PurgeResourceTypesJob().executeJobCode(null);
         new PurgePluginsJob().executeJobCode(null);
 

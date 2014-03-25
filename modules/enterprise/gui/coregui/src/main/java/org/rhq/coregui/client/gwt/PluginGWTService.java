@@ -113,16 +113,6 @@ public interface PluginGWTService extends RemoteService {
     ArrayList<String> deleteAgentPlugins(int[] selectedPluginIds) throws RuntimeException;
 
     /**
-     * Schedules an agent plugin to be purged. Purging a plugin permanently deletes it from the database. Purging is done
-     * asynchronously and will not happen until all resource types defined by the plugin have first been purged. Plugins
-     * must first be deleted before they can be purged.
-     *
-     * @param selectedPluginIds the IDs of the plugins that are to be purged
-     * @return list of names of those plugins that were purged
-     */
-    ArrayList<String> purgeAgentPlugins(int[] selectedPluginIds) throws RuntimeException;
-
-    /**
      * Enables the server plugins with the given IDs.
      *
      * @param selectedPluginIds the IDs of the plugins that are to be enabled

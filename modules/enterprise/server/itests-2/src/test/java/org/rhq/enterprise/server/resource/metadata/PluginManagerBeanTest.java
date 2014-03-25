@@ -82,7 +82,6 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             System.out.println("Purging plugins " + plugins + "...");
             for (Plugin plugin : plugins) {
                 pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
-                pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin.getId()));
             }
             new PurgeResourceTypesJob().execute(null);
             new PurgePluginsJob().execute(null);
@@ -271,12 +270,12 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin3.getId()));
         inventoryManager.purgeDeletedResourceType(resourceType);
         inventoryManager.purgeDeletedResourceType(resourceTypeIgnored);
-        pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin3.getId()));
 
         assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been purged "
             + "and the plugin has been marked for purge", pluginMgr.isReadyForPurge(plugin3));
     }
 
+    //TODO make this work again
     @Test(enabled = false, dependsOnMethods = { "deletePlugins" })
     public void purgePlugins() throws Exception {
         Plugin plugin1 = getPlugin(PLUGIN_1,
@@ -284,7 +283,8 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         Plugin plugin2 = getPlugin(PLUGIN_2,
             "Deleting a plugin should not remove it from the database");
 
-        pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
+        //this method has been removed
+        //pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
 
         assertEquals("Failed to purge plugins from the database", 1, pluginMgr.getPlugins().size());
     }

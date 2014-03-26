@@ -456,7 +456,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
+        
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.event.composite.EventComposite( " //
             + "   event.detail," //
@@ -475,8 +475,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-        //log.info(generator.getParameterReplacedQuery(false));
-        //log.info(generator.getParameterReplacedQuery(true));
+//        log.info(generator.getParameterReplacedQuery(false));
+//        log.info(generator.getParameterReplacedQuery(true));
 
         CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner<EventComposite>(criteria, generator,
             entityManager);

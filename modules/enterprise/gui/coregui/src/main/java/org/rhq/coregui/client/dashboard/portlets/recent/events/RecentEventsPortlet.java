@@ -16,34 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.coregui.client.dashboard.portlets.resource;
+package org.rhq.coregui.client.dashboard.portlets.recent.events;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.coregui.client.dashboard.Portlet;
 import org.rhq.coregui.client.dashboard.PortletViewFactory;
-import org.rhq.coregui.client.dashboard.portlets.recent.events.AbstractRecentEventsPortlet;
 
 /**
  * @author Jirka Kremser
  */
-public class ResourceEventsPortlet extends AbstractRecentEventsPortlet {
+public class RecentEventsPortlet extends AbstractRecentEventsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "ResourceEvents";
-    // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_resource_events();
+    public static final String KEY = "RecentEvents";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_recentEvents();
 
-    private int resourceId;
-
-    public ResourceEventsPortlet(int resourceId) {
-
-        super(EntityContext.forResource(resourceId));
-
-        this.resourceId = resourceId;
-    }
-
-    public int getResourceId() {
-        return resourceId;
+    public RecentEventsPortlet() {
+        super(EntityContext.forSubsystemView());
     }
 
     public static final class Factory implements PortletViewFactory {
@@ -51,11 +41,7 @@ public class ResourceEventsPortlet extends AbstractRecentEventsPortlet {
 
         public final Portlet getInstance(EntityContext context) {
 
-            if (EntityContext.Type.Resource != context.getType()) {
-                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
-            }
-
-            return new ResourceEventsPortlet(context.getResourceId());
+            return new RecentEventsPortlet();
         }
     }
 

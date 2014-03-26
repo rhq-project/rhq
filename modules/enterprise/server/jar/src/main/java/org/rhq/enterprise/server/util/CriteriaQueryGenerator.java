@@ -70,7 +70,7 @@ public final class CriteriaQueryGenerator {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking
         GROUP, // specifies the group alias to join on for standard group-role-subject authorization checking
         BUNDLE, // specifies the bundle alias to join on for standard bundle-bundleGroup-role-subject authorization checking
-        BUNDLE_GROUP; // specifies the bundle group alias to join on for standard bundleGroup-role-subject authorization checking        
+        BUNDLE_GROUP; // specifies the bundle group alias to join on for standard bundleGroup-role-subject authorization checking
     }
 
     private Criteria criteria;
@@ -536,10 +536,6 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || authorizationPermsFragment != null
-            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null) {
-            results.append("WHERE ");
-        }
 
         String conjunctiveFragment = criteria.isFiltersOptional() ? "OR " : "AND ";
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
@@ -585,7 +581,9 @@ public final class CriteriaQueryGenerator {
             conjunctiveResults.append(fragment).append(' ');
         }
 
-        if (conjunctiveResults.length() > 0) {
+        if ((filterFields.size() > 0 && conjunctiveResults.length()>0) || authorizationPermsFragment != null
+            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null ) {
+            results.append("WHERE ");
             results.append("( ").append(conjunctiveResults).append(")");
         }
 

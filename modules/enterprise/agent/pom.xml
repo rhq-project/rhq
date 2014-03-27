@@ -11,6 +11,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-agent</artifactId>
+  <version>4.9.0.JON320GA-redhat-1</version>
   <packaging>jar</packaging>
 
   <name>RHQ Enterprise Agent</name>
@@ -39,7 +40,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-comm</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-enterprise-comm.version}</version>
     </dependency>
 
     <dependency>
@@ -51,13 +52,13 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-plugin-container</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-plugin-container.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-client-api.version}</version>
     </dependency>
 
    <dependency>
@@ -125,9 +126,9 @@
                 </tstamp>
 
                 <echo file="${project.build.outputDirectory}/rhq-agent-version.properties" append="false">Product-Name=${rhq.product.name}
-Product-Version=${project.version}
+Product-Version=${project.parent.version}
 Module-Name=${project.name}
-Module-Version=${project.version}
+Module-Version=${rhq-enterprise-agent.version}
 Build-Date=${build.time}
 Build-Jdk-Vendor=${java.vendor}
 Build-Jdk=${java.version}
@@ -151,7 +152,7 @@ Build-Number=${buildNumber}
               <target>
                 <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist" inheritAll="false" inheritRefs="false">
                    <property name="settings.localRepository" value="${settings.localRepository}" />
-                   <property name="project.version" value="${project.version}" />
+                   <property name="project.version" value="${rhq-enterprise-agent.version}" />
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
                    <property name="jboss-jmx.version" value="${jboss-jmx.version}" />
@@ -174,6 +175,8 @@ Build-Number=${buildNumber}
                    <property name="rhq-core-plugin-api.version" value="${rhq-core-plugin-api.version}" />
                    <property name="rhq-core-util.version" value="${rhq-core-util.version}" />
                    <property name="rhq-platform-plugin.version" value="${rhq-platform-plugin.version}" />
+                   <property name="rhq-enterprise-agent.version" value="${rhq-enterprise-agent.version}" />
+                   <property name="rhq-enterprise-agentupdate.version" value="${rhq-enterprise-agentupdate.version}" />
                 </ant>
               </target>
             </configuration>
@@ -204,7 +207,7 @@ Build-Number=${buildNumber}
           <archive>
             <manifestEntries>
               <Product-Name>${rhq.product.name}</Product-Name>
-              <Product-Version>${project.version}</Product-Version>
+              <Product-Version>${project.parent.version}</Product-Version>
             </manifestEntries>
           </archive>
         </configuration>
@@ -256,7 +259,7 @@ Build-Number=${buildNumber}
                   <artifacts> 
                     <artifact>
                       <type>zip</type>
-                      <file>${project.build.directory}/${project.artifactId}-${project.version}.zip</file>
+                      <file>${project.build.directory}/${project.artifactId}-${rhq-enterprise-agent.version}.zip</file>
                     </artifact>
                   </artifacts> 
                 </configuration>

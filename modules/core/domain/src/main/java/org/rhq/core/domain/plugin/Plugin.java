@@ -264,6 +264,16 @@ public class Plugin extends AbstractPlugin {
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "Plugin.updatePluginEnabledById";
     public static final String QUERY_UNACKED_DELETED_PLUGINS = "Plugin.unackedDeletedPlugins";
 
+    /**
+     * @deprecated This used to identify a named query that no longer exist. Do not use this for anything.
+     */
+    @Deprecated
+    public static final String PURGE_PLUGINS = "Plugin.purgePlugins";
+
+    /**
+     * @deprecated This is no longer used and means nothing now.
+     */
+    @Deprecated
     public static final long PURGED = -1;
 
     public Plugin() {

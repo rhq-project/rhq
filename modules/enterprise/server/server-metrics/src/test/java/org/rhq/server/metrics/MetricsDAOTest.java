@@ -428,23 +428,24 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         WaitForWrite indexUpdates = new WaitForWrite(2);
 
-        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, currentTimeSlice.getMillis(),
-            partition, startScheduleId, currentTimeSlice.getMillis());
+        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(),
+            partition, currentTimeSlice.getMillis(), startScheduleId);
         Futures.addCallback(indexFuture, indexUpdates);
 
-        indexFuture = dao.updateCacheIndex(MetricsTable.RAW, currentTimeSlice.getMillis(), 0, startScheduleId,
+        indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(), 0, startScheduleId,
             pastTimeSlice.getMillis(), scheduleIds);
         Futures.addCallback(indexFuture, indexUpdates);
 
         indexUpdates.await("Failed to update " + MetricsTable.METRICS_CACHE_INDEX);
 
         List<CacheIndexEntry> expected = asList(
-            newCacheIndexEntry(MetricsTable.RAW, currentTimeSlice, partition, startScheduleId, pastTimeSlice, scheduleIds),
-            newCacheIndexEntry(MetricsTable.RAW, currentTimeSlice, partition, startScheduleId, currentTimeSlice)
+            newCacheIndexEntry(MetricsTable.RAW, hour0(), partition, startScheduleId, pastTimeSlice, scheduleIds),
+            newCacheIndexEntry(MetricsTable.RAW, hour0(), partition, startScheduleId, currentTimeSlice)
         );
 
-        StorageResultSetFuture queryFuture = dao.findCacheIndexEntries(MetricsTable.RAW, currentTimeSlice.getMillis(),
-            partition);
+        StorageResultSetFuture queryFuture = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW,
+            hour0().getMillis(),
+            partition, pastTimeSlice.getMillis());
         ResultSet resultSet = queryFuture.get();
         CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
         List<CacheIndexEntry> actual = new ArrayList<CacheIndexEntry>(2);
@@ -466,24 +467,25 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         WaitForWrite indexUpdates = new WaitForWrite(2);
 
-        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, currentTimeSlice.getMillis(),
-            partition, startScheduleId, currentTimeSlice.getMillis());
+        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(),
+            partition, currentTimeSlice.getMillis(), startScheduleId);
         Futures.addCallback(indexFuture, indexUpdates);
 
-        indexFuture = dao.updateCacheIndex(MetricsTable.RAW, currentTimeSlice.getMillis(), 0, startScheduleId,
+        indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(), 0, startScheduleId,
             pastTimeSlice.getMillis(), scheduleIds);
         Futures.addCallback(indexFuture, indexUpdates);
 
         indexUpdates.await("Failed to update " + MetricsTable.METRICS_CACHE_INDEX);
 
-        StorageResultSetFuture deleteFuture = dao.deleteCacheIndexEntries(MetricsTable.RAW, currentTimeSlice.getMillis(),
-            partition, startScheduleId, pastTimeSlice.getMillis());
+        StorageResultSetFuture deleteFuture = dao.deleteCacheIndexEntries(MetricsTable.RAW, hour0().getMillis(),
+            partition, pastTimeSlice.getMillis(), startScheduleId);
         deleteFuture.get();
 
-        StorageResultSetFuture queryFuture = dao.findCacheIndexEntries(MetricsTable.RAW, currentTimeSlice.getMillis(),
-            partition);
+        StorageResultSetFuture queryFuture = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW,
+            hour0().getMillis(),
+            partition, hour0().getMillis());
         ResultSet resultSet = queryFuture.get();
-        List<CacheIndexEntry> expected = asList(newCacheIndexEntry(MetricsTable.RAW, currentTimeSlice, partition,
+        List<CacheIndexEntry> expected = asList(newCacheIndexEntry(MetricsTable.RAW, hour0(), partition,
             startScheduleId, currentTimeSlice));
         CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
         List<CacheIndexEntry> actual = new ArrayList<CacheIndexEntry>(2);

@@ -13,4 +13,6 @@ public interface NumericMetric {
 
     Double getAvg();
 
+    long getTimestamp();
+
 }

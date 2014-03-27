@@ -112,6 +112,31 @@ public class DateTimeService {
         return dateTimeComparator.compare(now().minus(configuration.getTwentyFourHourRetention()), dateTime) < 0;
     }
 
+    public DateTime currentHour() {
+        return getTimeSlice(now(), configuration.getRawTimeSliceDuration());
+    }
+
+    public DateTime get24HourTimeSlice(DateTime time) {
+        return getTimeSlice(time, configuration.getSixHourTimeSliceDuration());
+    }
+
+    public DateTime get6HourTimeSlice(DateTime time) {
+        return getTimeSlice(time, configuration.getOneHourTimeSliceDuration());
+    }
+
+    public boolean is6HourTimeSliceFinished(DateTime time) {
+        return hasTimeSliceEnded(get6HourTimeSlice(time), configuration.getOneHourTimeSliceDuration());
+    }
+
+    public boolean is24HourTimeSliceFinished(DateTime time) {
+        return hasTimeSliceEnded(get24HourTimeSlice(time), configuration.getSixHourTimeSliceDuration());
+    }
+
+    private boolean hasTimeSliceEnded(DateTime startTime, Duration duration) {
+        DateTime endTime = startTime.plus(duration);
+        return DateTimeComparator.getInstance().compare(currentHour(), endTime) >= 0;
+    }
+
     public DateTime hour0() {
         DateTime rightNow = now();
         return rightNow.hourOfDay().roundFloorCopy().minusHours(

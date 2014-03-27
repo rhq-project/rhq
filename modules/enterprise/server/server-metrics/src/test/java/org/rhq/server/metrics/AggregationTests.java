@@ -11,7 +11,6 @@ import java.util.concurrent.Executor;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.SettableFuture;
@@ -67,6 +66,7 @@ public class AggregationTests extends MetricsTest {
 
         testdb = new InMemoryMetricsDB();
         dateTimeService = new DateTimeServiceStub();
+        dateTimeService.setConfiguration(new MetricsConfiguration());
         metricsServer = new MetricsServerStub();
         metricsServer.setConfiguration(new MetricsConfiguration());
         metricsServer.setDateTimeService(dateTimeService);
@@ -79,6 +79,7 @@ public class AggregationTests extends MetricsTest {
 
     @Test
     public void insertRawDataDuringHour16() throws Exception {
+
         dateTimeService.setNow(hour(16).plusMinutes(41));
         insertRawData(
             newRawData(hour(16).plusMinutes(20), schedule1.id, 3.0),
@@ -92,9 +93,9 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour16")
     public void runAggregationForHour16() throws Exception {
         currentHour = hour(17);
+        dateTimeService.setNow(hour(17).plusMinutes(1));
         testdb.aggregateRawData(hour(16), hour(17));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(16));
-
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
         assertCollectionEqualsNoOrder(testdb.get1HourData(hour(16)), oneHourData,
@@ -112,9 +113,9 @@ public class AggregationTests extends MetricsTest {
 
         assert1HourCacheEquals(hour(12), startScheduleId(schedule1.id),
             asList(testdb.get1HourData(hour(16), schedule1.id), testdb.get1HourData(hour(16), schedule2.id)));
-        assert1HourCacheIndexEquals(hour(12), INDEX_PARTITION, asList(
-            new1HourCacheIndexEntry(startScheduleId(schedule1.id), hour(12)),
-            new1HourCacheIndexEntry(startScheduleId(schedule3.id), hour(12))
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(12)),
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(12))
         ));
 
         assert6HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
@@ -134,6 +135,7 @@ public class AggregationTests extends MetricsTest {
 
     @Test(dependsOnMethods = "insertRawDataDuringHour17")
     public void runAggregationForHour17() throws Exception {
+        dateTimeService.setNow(hour(18).plusMinutes(1));
         currentHour = hour(18);
         testdb.aggregateRawData(hour(17), hour(18));
         testdb.aggregate1HourData(hour(12), hour(18));
@@ -163,8 +165,8 @@ public class AggregationTests extends MetricsTest {
         assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), testdb.get6HourData(scheduleIds(schedule1.id)));
         assert6HourCacheEquals(hour(0), startScheduleId(schedule3.id), testdb.get6HourData(scheduleIds(schedule3.id)));
         assert6HourCacheIndexEquals(hour(0), INDEX_PARTITION, asList(
-            new6HourCacheIndexEntry(startScheduleId(schedule1.id), hour(0)),
-            new6HourCacheIndexEntry(startScheduleId(schedule3.id), hour(0))
+            new6HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
+            new6HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
         ));
     }
 
@@ -183,6 +185,7 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour18")
     public void runAggregationForHour18() throws Exception {
         currentHour = hour(19);
+        dateTimeService.setNow(hour(19).plusMinutes(1));
         testdb.aggregateRawData(hour(18), hour(19));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(18));
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
@@ -211,16 +214,16 @@ public class AggregationTests extends MetricsTest {
             testdb.get1HourData(hour(18), schedule2.id)));
         assert1HourCacheEquals(hour(18), startScheduleId(schedule3.id),
             asList(testdb.get1HourData(hour(18), schedule3.id)));
-        assert1HourCacheIndexEquals(hour(18), INDEX_PARTITION, asList(
-            new1HourCacheIndexEntry(startScheduleId(schedule1.id), hour(18)),
-            new1HourCacheIndexEntry(startScheduleId(schedule3.id), hour(18))
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(18)),
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(18))
         ));
 
         assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), testdb.get6HourData(schedule1.id, schedule2.id));
         assert6HourCacheEquals(hour(0), startScheduleId(schedule3.id), testdb.get6HourData(schedule3.id));
-        assert6HourCacheIndexEquals(hour(0), INDEX_PARTITION, asList(
-            new6HourCacheIndexEntry(startScheduleId(schedule1.id), hour(0)),
-            new6HourCacheIndexEntry(startScheduleId(schedule3.id), hour(0))
+        assert6HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+            new6HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
+            new6HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
         ));
     }
 
@@ -236,6 +239,7 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour23")
     public void runAggregationForHour24() throws Exception {
         currentHour = hour(24);
+        dateTimeService.setNow(hour(24).plusMinutes(1));
         testdb.aggregateRawData(hour(23), hour(24));
         testdb.aggregate1HourData(hour(18), hour(24));
         testdb.aggregate6HourData(hour(0), hour(24));
@@ -268,6 +272,61 @@ public class AggregationTests extends MetricsTest {
         assert6HourCacheIndexEmpty(hour(18), INDEX_PARTITION);
     }
 
+
+    @Test(dependsOnMethods = "runAggregationForHour24")
+    public void prepareForLateDataAggregationInSame6HourTimeSlice() throws Exception {
+        purgeDB();
+        currentHour = hour(3);
+        testdb = new InMemoryMetricsDB();
+        dateTimeService.setNow(hour(3).plusMinutes(55));
+        insertRawData(
+            newRawData(hour(3).plusMinutes(20), schedule1.id, 20),
+            newRawData(hour(3).plusMinutes(30), schedule1.id, 22),
+            newRawData(hour(3).plusMinutes(15), schedule2.id, 75),
+            newRawData(hour(3).plusMinutes(20), schedule2.id, 100)
+        );
+        testdb.aggregateRawData(hour(3), hour(4));
+        new AggregationManagerTestStub(hour(3)).run();
+    }
+
+    @Test(dependsOnMethods = "prepareForLateDataAggregationInSame6HourTimeSlice")
+    public void aggregateLateDataInSame6HourTimeSlice() throws Exception {
+        currentHour = hour(4);
+        dateTimeService.setNow(hour(4).plusMinutes(55));
+        insertRawData(
+            newRawData(hour(3).plusMinutes(35), schedule1.id, 20),
+            newRawData(hour(3).plusMinutes(40), schedule1.id, 30),
+            newRawData(hour(4).plusMinutes(40), schedule1.id, 27),
+            newRawData(hour(4).plusMinutes(40), schedule2.id, 321),
+            newRawData(hour(4).plusMinutes(45), schedule2.id, 333)
+        );
+
+        testdb.aggregateRawData(hour(3), hour(4));
+        testdb.aggregateRawData(hour(4), hour(5));
+
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(4));
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(4)), oneHourData, "The returned 1 hour data is wrong");
+        // verify values in db
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+
+        assertRawCacheEmpty(hour(4), startScheduleId(schedule1.id));
+        assertRawCacheIndexEmpty(hour(3), INDEX_PARTITION);
+        assertRawCacheIndexEmpty(hour(4), INDEX_PARTITION);
+
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0))
+        ));
+        assert1HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(
+            testdb.get1HourData(hour(3), schedule1.id),
+            testdb.get1HourData(hour(4), schedule1.id),
+            testdb.get1HourData(hour(3), schedule2.id),
+            testdb.get1HourData(hour(4), schedule2.id)
+        ));
+    }
+
 //    @Test(dependsOnMethods = "runAggregationForHour24")
     public void resetDBForFailureScenarios() throws Exception {
         purgeDB();
@@ -297,65 +356,6 @@ public class AggregationTests extends MetricsTest {
             time.getMillis(), 3.0)));
     }
 
-    //@Test(dependsOnMethods = "resetDBForFailureScenarios")
-//    public void failToFetchRawDataIndexDuringAggregationForHour12() throws Exception {
-//        currentHour = hour(12);
-//        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(11), new MetricsDAO(storageSession, configuration) {
-//            @Override
-//            public StorageResultSetFuture findMetricsIndexEntriesAsync(MetricsTable table, long timestamp) {
-//                if (table == MetricsTable.ONE_HOUR) {
-//                    return new FailedStorageResultSetFuture(new Exception("Failed to fetch raw data index"));
-//                } else {
-//                    return super.findMetricsIndexEntriesAsync(table,
-//                        timestamp);
-//                }
-//            }
-//        });
-//
-//        insertRawData(
-//            new MeasurementDataNumeric(hour(12).plusMinutes(10).getMillis(), schedule4.id, 7.456),
-//            new MeasurementDataNumeric(hour(12).plusMinutes(14).getMillis(), schedule5.id, 29.3)
-//        ).await("Failed to insert raw data");
-//
-//        updateIndex(
-//            new IndexUpdate(MetricsTable.ONE_HOUR, schedule4.id, hour(12)),
-//            new IndexUpdate(MetricsTable.ONE_HOUR, schedule5.id, hour(12))
-//        ).await("Failed to update raw data index");
-//
-//        insert1HourData(
-//            new AggregateNumericMetric(schedule4.id, 26.6, 18.33, 29.02, hour(10).getMillis()),
-//            new AggregateNumericMetric(schedule4.id, 25.2, 21.12, 28.05, hour(11).getMillis())
-//        ).await("Failed to insert 1 hour data");
-//
-//        updateIndex(new IndexUpdate(MetricsTable.SIX_HOUR, schedule4.id, hour(6)))
-//            .await("Failed to update 1 hr data index");
-//
-//        schedule4.oneHourData.put(hour(10), new AggregateNumericMetric(schedule4.id, 26.6, 18.33, 29.02,
-//            hour(10).getMillis()));
-//        schedule4.oneHourData.put(hour(11), new AggregateNumericMetric(schedule4.id, 25.2, 21.12, 28.05,
-//            hour(11).getMillis()));
-//        schedule4.sixHourData.put(hour(6), new AggregateNumericMetric(schedule4.id,
-//            avg(schedule4.oneHourData, hour(10), hour(11)),
-//            min(schedule4.oneHourData, hour(10), hour(11)),
-//            max(schedule4.oneHourData, hour(10), hour(11)),
-//            hour(6).getMillis()));
-//
-//        Set<AggregateNumericMetric> oneHourData = aggregator.run();
-//        List<AggregateNumericMetric> emptyAggregates = Collections.emptyList();
-//
-//        assertTrue(oneHourData.isEmpty(), "Did not expect to get back any one hour aggregates");
-//        // verify values in db
-//        assert1HourDataEquals(schedule4.id, schedule4.oneHourData.get(hour(10)), schedule4.oneHourData.get(hour(11)));
-//        assert1HourDataEquals(schedule5.id, emptyAggregates);
-//        assert6HourDataEquals(schedule4.id, schedule4.sixHourData.get(hour(6)));
-//        assert6HourDataEmpty(schedule5.id);
-//        assert24HourDataEmpty(schedule4.id);
-//        assert24HourDataEmpty(schedule5.id);
-//        assert1HourMetricsIndexEmpty(hour(11));
-//        assert6HourMetricsIndexEmpty(hour(6));
-//        assert24HourIndexEquals(hour(0), schedule4.id);
-//    }
-
     private void insertRawData(MeasurementDataNumeric... data) throws Exception {
         Set<MeasurementDataNumeric> dataSet = Sets.newHashSet(data);
         for (MeasurementDataNumeric datum : data) {
@@ -378,52 +378,6 @@ public class AggregationTests extends MetricsTest {
             ids[i] = startId + i;
         }
         return ids;
-    }
-
-    private WaitForWrite insert1HourData(AggregateNumericMetric... data) {
-        WaitForWrite waitForWrite = new WaitForWrite(data.length * 3);
-        for (AggregateNumericMetric datum : data) {
-            StorageResultSetFuture future = dao.insertOneHourDataAsync(datum.getScheduleId(), datum.getTimestamp(),
-                AggregateType.AVG, datum.getAvg());
-            Futures.addCallback(future, waitForWrite);
-
-            future = dao.insertOneHourDataAsync(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MIN,
-                datum.getMin());
-            Futures.addCallback(future, waitForWrite);
-
-            future = dao.insertOneHourDataAsync(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MAX,
-                datum.getMax());
-            Futures.addCallback(future, waitForWrite);
-        }
-        return waitForWrite;
-    }
-
-    private double avg(Map<DateTime, AggregateNumericMetric> data, DateTime... times) {
-        double[] values = new double[times.length];
-        for (int i = 0; i < times.length; ++i) {
-            values[i] = data.get(times[i]).getAvg();
-        }
-        return avg(values);
-    }
-
-    private double min(Map<DateTime, AggregateNumericMetric> data, DateTime... times) {
-        double min = data.get(times[0]).getMin();
-        for (DateTime time : times) {
-            if (data.get(time).getMin() < min) {
-                min = data.get(time).getMin();
-            }
-        }
-        return min;
-    }
-
-    private double max(Map<DateTime, AggregateNumericMetric> data, DateTime... times) {
-        double max = data.get(times[0]).getMin();
-        for (DateTime time : times) {
-            if (data.get(time).getMax() > max) {
-                max = data.get(time).getMax();
-            }
-        }
-        return max;
     }
 
     private class AggregationManagerTestStub extends AggregationManager {

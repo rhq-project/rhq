@@ -59,6 +59,18 @@ public class MetricsTest extends CassandraIntegrationTest {
         return hour0().plusHours(hourOfDay);
     }
 
+    protected DateTime today() {
+        return hour(0);
+    }
+
+    protected DateTime yesterday() {
+        return hour(0).minusHours(24);
+    }
+
+    protected DateTime tomorrow() {
+        return hour(0).plusHours(24);
+    }
+
     protected double avg(double... values) {
         double sum = 0;
         for (double value : values) {
@@ -175,54 +187,6 @@ public class MetricsTest extends CassandraIntegrationTest {
         return waitForRawInserts;
     }
 
-    protected WaitForWrite insert1HourData(DateTime timeSlice, AggregateNumericMetric... data) {
-        WaitForWrite waitForWrites = new WaitForWrite(data.length * 4);
-        StorageResultSetFuture future;
-        for (AggregateNumericMetric metric : data) {
-            future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
-            Futures.addCallback(future, waitForWrites);
-            future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
-            Futures.addCallback(future, waitForWrites);
-            future = dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
-            Futures.addCallback(future, waitForWrites);
-            future = dao.updateMetricsCache(MetricsTable.ONE_HOUR, timeSlice.getMillis(), startScheduleId(
-                metric.getScheduleId()), metric.getScheduleId(), metric.getTimestamp(), ImmutableMap.of(
-                AggregateType.MIN.ordinal(), metric.getMin(),
-                AggregateType.MAX.ordinal(), metric.getMax(),
-                AggregateType.AVG.ordinal(), metric.getAvg()
-            ));
-            Futures.addCallback(future, waitForWrites);
-        }
-        return waitForWrites;
-    }
-
-    protected WaitForWrite insert6HourData(DateTime timeSlice, AggregateNumericMetric... data) {
-        WaitForWrite waitForWrites = new WaitForWrite(data.length * 4);
-        StorageResultSetFuture future;
-        for (AggregateNumericMetric metric : data) {
-            future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
-            Futures.addCallback(future, waitForWrites);
-            future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
-            Futures.addCallback(future, waitForWrites);
-            future = dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
-            Futures.addCallback(future, waitForWrites);
-            future = dao.updateMetricsCache(MetricsTable.SIX_HOUR, timeSlice.getMillis(), startScheduleId(
-                metric.getScheduleId()), metric.getScheduleId(), metric.getTimestamp(), ImmutableMap.of(
-                AggregateType.MIN.ordinal(), metric.getMin(),
-                AggregateType.MAX.ordinal(), metric.getMax(),
-                AggregateType.AVG.ordinal(), metric.getAvg()
-            ));
-            Futures.addCallback(future, waitForWrites);
-        }
-        return waitForWrites;
-    }
-
     protected int startScheduleId(int scheduleId) {
         return (scheduleId / PARTITION_SIZE) * PARTITION_SIZE;
     }
@@ -321,7 +285,8 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     private void assertCacheIndexEquals(DateTime insertTimeSlice, MetricsTable table, int partition,
         List<CacheIndexEntry> expected) {
-        ResultSet resultSet = dao.findCacheIndexEntries(table, insertTimeSlice.getMillis(), partition).get();
+        ResultSet resultSet = dao.findPastCacheIndexEntriesBeforeToday(table, insertTimeSlice.getMillis(), partition,
+            insertTimeSlice.getMillis()).get();
         List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
         for (CacheIndexEntry entry : expected) {
             entry.setInsertTimeSlice(insertTimeSlice.getMillis());
@@ -339,17 +304,23 @@ public class MetricsTest extends CassandraIntegrationTest {
         return newCacheIndexEntry(MetricsTable.RAW, null, 0, startScheduleId, collectionTimeSlice);
     }
 
-    protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice,
+    protected CacheIndexEntry newRawCacheIndexEntry(DateTime day, int startScheduleId, DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.RAW, day, 0, startScheduleId, collectionTimeSlice);
+    }
+
+    protected CacheIndexEntry newRawCacheIndexEntry(DateTime day, int startScheduleId, DateTime collectionTimeSlice,
         Set<Integer> scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.RAW, null, 0, startScheduleId, collectionTimeSlice, scheduleIds);
+        return newCacheIndexEntry(MetricsTable.RAW, day, 0, startScheduleId, collectionTimeSlice, scheduleIds);
     }
 
-    protected CacheIndexEntry new1HourCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.ONE_HOUR, null, 0, startScheduleId, collectionTimeSlice);
+    protected CacheIndexEntry new1HourCacheIndexEntry(DateTime day, int startScheduleId,
+        DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.ONE_HOUR, day, 0, startScheduleId, collectionTimeSlice);
     }
 
-    protected CacheIndexEntry new6HourCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.SIX_HOUR, null, 0, startScheduleId, collectionTimeSlice);
+    protected CacheIndexEntry new6HourCacheIndexEntry(DateTime day, int startScheduleId,
+        DateTime collectionTimeSlice) {
+        return newCacheIndexEntry(MetricsTable.SIX_HOUR, day, 0, startScheduleId, collectionTimeSlice);
     }
 
     @SuppressWarnings("unchecked")

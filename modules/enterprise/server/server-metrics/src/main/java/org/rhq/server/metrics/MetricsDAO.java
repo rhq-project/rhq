@@ -81,7 +81,9 @@ public class MetricsDAO {
     private PreparedStatement findCacheTimeSlice;
     private PreparedStatement deleteCacheEntries;
     private PreparedStatement updateCacheIndex;
-    private PreparedStatement findCacheIndexEntries;
+    private PreparedStatement findPastCacheIndexEntriesBeforeToday;
+    private PreparedStatement findPastCacheIndexEntriesFromToday;
+    private PreparedStatement findCurrentCacheIndexEntries;
     private PreparedStatement deleteCacheIndexEntries;
 
     public MetricsDAO(StorageSession session, MetricsConfiguration configuration) {
@@ -136,26 +138,43 @@ public class MetricsDAO {
         findTwentyFourHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM " +
             MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
-        findCacheEntries = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.METRICS_CACHE +
+        findCacheEntries = storageSession.prepare(
+            "SELECT schedule_id, time, value " +
+            "FROM " + MetricsTable.METRICS_CACHE + " " +
+            "WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
+
+        findCacheTimeSlice = storageSession.prepare(
+            "SELECT time_slice " +
+            "FROM " + MetricsTable.METRICS_CACHE + " " +
             " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
-        findCacheTimeSlice = storageSession.prepare("SELECT time_slice FROM " + MetricsTable.METRICS_CACHE +
-            " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
-
-        deleteCacheEntries = storageSession.prepare("DELETE FROM " + MetricsTable.METRICS_CACHE +
-            " WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
+        deleteCacheEntries = storageSession.prepare(
+            "DELETE FROM " + MetricsTable.METRICS_CACHE + " " +
+            "WHERE bucket = ? AND time_slice = ? AND start_schedule_id = ?");
 
         updateCacheIndex = storageSession.prepare(
             "UPDATE " + MetricsTable.METRICS_CACHE_INDEX + " " +
             "SET schedule_ids = schedule_ids + ? " +
-            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND start_schedule_id = ? AND time = ?");
+            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND time = ? AND start_schedule_id = ?");
 
-        findCacheIndexEntries = storageSession.prepare("SELECT bucket, time_slice, partition, start_schedule_id, " +
-            "time, schedule_ids FROM " + MetricsTable.METRICS_CACHE_INDEX +
-            " WHERE bucket = ? AND time_slice = ? AND partition = ?");
+        findPastCacheIndexEntriesBeforeToday = storageSession.prepare(
+            "SELECT bucket, time_slice, partition, time, start_schedule_id, schedule_ids " +
+            "FROM " + MetricsTable.METRICS_CACHE_INDEX + " " +
+            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND time >= ?");
 
-        deleteCacheIndexEntries = storageSession.prepare("DELETE FROM " + MetricsTable.METRICS_CACHE_INDEX +
-            " WHERE bucket = ? AND time_slice = ? AND partition = ? AND start_schedule_id = ? AND time = ?");
+        findPastCacheIndexEntriesFromToday = storageSession.prepare(
+            "SELECT bucket, time_slice, partition, time, start_schedule_id, schedule_ids " +
+            "FROM " + MetricsTable.METRICS_CACHE_INDEX + " " +
+            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND time < ?");
+
+        findCurrentCacheIndexEntries = storageSession.prepare(
+            "SELECT bucket, time_slice, partition, time, start_schedule_id, schedule_ids " +
+            "FROM " + MetricsTable.METRICS_CACHE_INDEX + " " +
+            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND time = ?");
+
+        deleteCacheIndexEntries = storageSession.prepare(
+            "DELETE FROM " + MetricsTable.METRICS_CACHE_INDEX + " " +
+            "WHERE bucket = ? AND time_slice = ? AND partition = ? AND time = ? AND start_schedule_id = ?");
 
         long endTime = System.currentTimeMillis();
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
@@ -321,26 +340,42 @@ public class MetricsDAO {
     }
 
     public StorageResultSetFuture updateCacheIndex(MetricsTable table, long timeSlice, int partition,
-        int startScheduleId, long time) {
-        return updateCacheIndex(table, timeSlice, partition, startScheduleId, time, EMPTY_SCHEDULE_IDS);
+        long collectionTime, int startScheduleId) {
+        return updateCacheIndex(table, timeSlice, partition, startScheduleId, collectionTime, EMPTY_SCHEDULE_IDS);
     }
 
     public StorageResultSetFuture updateCacheIndex(MetricsTable table, long timeSlice, int partition,
         int startScheduleId, long time, Set<Integer> scheduleIds) {
         BoundStatement statement = updateCacheIndex.bind(scheduleIds, table.getTableName(), new Date(timeSlice),
-            partition, startScheduleId, new Date(time));
+            partition, new Date(time), startScheduleId);
         return storageSession.executeAsync(statement);
     }
 
-    public StorageResultSetFuture findCacheIndexEntries(MetricsTable table, long timeSlice, int partition) {
-        BoundStatement statement = findCacheIndexEntries.bind(table.getTableName(), new Date(timeSlice), partition);
+    public StorageResultSetFuture findPastCacheIndexEntriesBeforeToday(MetricsTable table, long timeSlice,
+        int partition, long collectionTimeSlice) {
+        BoundStatement statement = findPastCacheIndexEntriesBeforeToday.bind(table.getTableName(), new Date(timeSlice),
+            partition, new Date(collectionTimeSlice));
+        return storageSession.executeAsync(statement);
+    }
+
+    public StorageResultSetFuture findPastCacheIndexEntriesFromToday(MetricsTable table, long timeSlice, int partition,
+        long collectionTimeSlice) {
+        BoundStatement statement = findPastCacheIndexEntriesFromToday.bind(table.getTableName(), new Date(timeSlice),
+            partition, new Date(collectionTimeSlice));
+        return storageSession.executeAsync(statement);
+    }
+
+    public StorageResultSetFuture findCurrentCacheIndexEntries(MetricsTable table, long timeSlice, int partition,
+        long collectionTimeSlice) {
+        BoundStatement statement = findCurrentCacheIndexEntries.bind(table.getTableName(), new Date(timeSlice),
+            partition, new Date(collectionTimeSlice));
         return storageSession.executeAsync(statement);
     }
 
     public StorageResultSetFuture deleteCacheIndexEntries(MetricsTable table, long insertTimeSlice, int partition,
-        int startScheduleId, long collectionTimeSlice) {
+        long collectionTimeSlice, int startScheduleId) {
         BoundStatement statement = deleteCacheIndexEntries.bind(table.getTableName(), new Date(insertTimeSlice), partition,
-            startScheduleId, new Date(collectionTimeSlice));
+            new Date(collectionTimeSlice), startScheduleId);
         return storageSession.executeAsync(statement);
     }
 

@@ -25,6 +25,7 @@ import org.rhq.server.metrics.domain.NumericMetric;
 /**
  * @author John Sanda
  */
+// TODO rename class, maybe AggregateCacheBlock
 class ProcessBatch implements AsyncFunction<ResultSet, BatchResult> {
 
     private final Log log = LogFactory.getLog(ProcessBatch.class);

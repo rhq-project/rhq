@@ -16,8 +16,8 @@ public class CacheIndexEntryMapper {
         indexEntry.setBucket(MetricsTable.fromString(row.getString(0)));
         indexEntry.setInsertTimeSlice(row.getDate(1).getTime());
         indexEntry.setPartition(row.getInt(2));
-        indexEntry.setStartScheduleId(row.getInt(3));
-        indexEntry.setCollectionTimeSlice(row.getDate(4).getTime());
+        indexEntry.setCollectionTimeSlice(row.getDate(3).getTime());
+        indexEntry.setStartScheduleId(row.getInt(4));
         indexEntry.setScheduleIds(row.getSet(5, Integer.class));
 
         return indexEntry;

@@ -65,6 +65,8 @@ public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
+//    private static final Hours.hours(24)
+
     private DateTimeService dateTimeService = new DateTimeService();
 
     private MetricsDAO dao;
@@ -428,6 +430,8 @@ public class MetricsServer {
                 continue;
             }
             int startScheduleId = calculateStartScheduleId(data.getScheduleId());
+            DateTime day = dateTimeService.getTimeSlice(collectionTimeSlice,
+                configuration.getSixHourTimeSliceDuration());
 
             StorageResultSetFuture rawFuture = dao.insertRawData(data);
             StorageResultSetFuture cacheFuture = dao.updateMetricsCache(MetricsTable.RAW, collectionTimeSlice, startScheduleId,
@@ -435,11 +439,11 @@ public class MetricsServer {
                 data.getValue()));
             StorageResultSetFuture indexFuture;
             if (collectionTimeSlice < insertTimeSlice) {
-                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId,
+                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, startScheduleId,
                     collectionTimeSlice, ImmutableSet.of(data.getScheduleId()));
             } else {
-                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, insertTimeSlice, partition, startScheduleId,
-                    collectionTimeSlice);
+                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, collectionTimeSlice,
+                    startScheduleId);
             }
             ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, cacheFuture,
                 indexFuture);

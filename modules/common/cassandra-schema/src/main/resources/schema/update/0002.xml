@@ -36,10 +36,10 @@
       bucket varchar,
       time_slice timestamp,
       partition int,
-      start_schedule_id int,
       time timestamp,
+      start_schedule_id int,
       schedule_ids set&lt;int&gt;,
-      PRIMARY KEY ((bucket, time_slice, partition), start_schedule_id, time)
+      PRIMARY KEY ((bucket, time_slice, partition), time, start_schedule_id)
     ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
 </updatePlan>

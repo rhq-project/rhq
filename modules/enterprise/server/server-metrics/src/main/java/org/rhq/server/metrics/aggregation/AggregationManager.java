@@ -23,8 +23,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeComparator;
-import org.joda.time.Duration;
 
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
@@ -63,10 +61,6 @@ public class AggregationManager {
 
     private Set<AggregateNumericMetric> oneHourData;
 
-    private int minScheduleId;
-
-    private int maxScheduleId;
-
     private int cacheBatchSize;
 
     private Semaphore permits;
@@ -80,40 +74,25 @@ public class AggregationManager {
         this.dtService = dtService;
         this.startTime = startTime;
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);
-        this.minScheduleId = minScheduleId;
-        this.maxScheduleId = maxScheduleId;
         this.cacheBatchSize = cacheBatchSize;
         permits = new Semaphore(batchSize * parallelism);
         this.aggregationTasks = aggregationTasks;
     }
 
-    private DateTime get24HourTimeSlice() {
-        return dtService.getTimeSlice(startTime, configuration.getSixHourTimeSliceDuration());
-    }
-
-    private DateTime get6HourTimeSlice() {
-        return dtService.getTimeSlice(startTime, configuration.getOneHourTimeSliceDuration());
-    }
-
     private boolean is6HourTimeSliceFinished() {
-        return hasTimeSliceEnded(get6HourTimeSlice(), configuration.getOneHourTimeSliceDuration());
+        return dtService.is6HourTimeSliceFinished(startTime);
     }
 
     private boolean is24HourTimeSliceFinished() {
-        return hasTimeSliceEnded(get24HourTimeSlice(), configuration.getSixHourTimeSliceDuration());
+        return dtService.is24HourTimeSliceFinished(startTime);
     }
 
-    private boolean hasTimeSliceEnded(DateTime startTime, Duration duration) {
-        DateTime endTime = startTime.plus(duration);
-        return DateTimeComparator.getInstance().compare(currentHour(), endTime) >= 0;
+    private DateTime get6HourTimeSlice() {
+        return dtService.get6HourTimeSlice(startTime);
     }
 
-    protected DateTime currentHour() {
-        return dtService.getTimeSlice(dtService.now(), configuration.getRawTimeSliceDuration());
-    }
-
-    private int calculateStartScheduleId(int scheduleId) {
-        return (scheduleId / cacheBatchSize) * cacheBatchSize;
+    private DateTime get24HourTimeSlice() {
+        return dtService.get24HourTimeSlice(startTime);
     }
 
     public Set<AggregateNumericMetric> run() {
@@ -123,7 +102,7 @@ public class AggregationManager {
         int num1Hour = 0;
         int num6Hour = 0;
         try {
-            final int startScheduleId = calculateStartScheduleId(minScheduleId);
+            createPastDataAggregator().execute();
             numRaw = createRawAggregator().execute();
             if (is6HourTimeSliceFinished()) {
                 num1Hour = create1HourAggregator().execute();
@@ -147,6 +126,19 @@ public class AggregationManager {
         }
     }
 
+    private PastDataAggregator createPastDataAggregator() {
+        PastDataAggregator aggregator = new PastDataAggregator();
+        aggregator.setAggregationTasks(aggregationTasks);
+        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setDao(dao);
+        aggregator.setPermits(permits);
+        aggregator.setStartingDay(get24HourTimeSlice().minusDays(1));
+        aggregator.setStartTime(startTime);
+        aggregator.setDateTimeService(dtService);
+
+        return aggregator;
+    }
+
     private Aggregator createRawAggregator() {
         ComputeMetric compute1HourMetric = new ComputeMetric() {
             @Override
@@ -160,8 +152,8 @@ public class AggregationManager {
                     dao.insertOneHourDataAsync(scheduleId, startTime.getMillis(), MIN, min),
                     dao.updateMetricsCache(ONE_HOUR, get6HourTimeSlice().getMillis(), startScheduleId,
                         scheduleId, startTime.getMillis(), map(min, max,  mean.getArithmeticMean())),
-                    dao.updateCacheIndex(ONE_HOUR, get6HourTimeSlice().getMillis(), INDEX_PARTITION, startScheduleId,
-                        get6HourTimeSlice().getMillis())
+                    dao.updateCacheIndex(ONE_HOUR, get24HourTimeSlice().getMillis(), INDEX_PARTITION,
+                        get6HourTimeSlice().getMillis(), startScheduleId)
                 );
             }
         };
@@ -174,6 +166,8 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(startTime);
+        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setStartingDay(get24HourTimeSlice().minusDays(1));
 
         return aggregator;
     }
@@ -191,8 +185,8 @@ public class AggregationManager {
                     dao.updateMetricsCache(SIX_HOUR, get24HourTimeSlice().getMillis(),
                         startScheduleId, scheduleId, get6HourTimeSlice().getMillis(), map(min, max,
                         mean.getArithmeticMean())),
-                    dao.updateCacheIndex(SIX_HOUR, get24HourTimeSlice().getMillis(), INDEX_PARTITION, startScheduleId,
-                        get24HourTimeSlice().getMillis())
+                    dao.updateCacheIndex(SIX_HOUR, get24HourTimeSlice().getMillis(), INDEX_PARTITION,
+                        get24HourTimeSlice().getMillis(), startScheduleId)
                 );
             }
         };
@@ -205,6 +199,8 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(get6HourTimeSlice());
+        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setStartingDay(get24HourTimeSlice().minusDays(1));
 
         return aggregator;
     }
@@ -233,6 +229,8 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(get24HourTimeSlice());
+        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setStartingDay(get24HourTimeSlice().minusDays(1));
 
         return aggregator;
     }

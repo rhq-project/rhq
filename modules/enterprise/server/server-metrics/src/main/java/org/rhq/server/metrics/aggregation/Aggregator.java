@@ -1,5 +1,6 @@
 package org.rhq.server.metrics.aggregation;
 
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,6 +30,8 @@ class Aggregator {
 
     private static final Log LOG = LogFactory.getLog(Aggregator.class);
 
+    private static final int LATE_DATA_BATCH_SIZE = 5;
+
     private ComputeMetric computeMetric;
 
     private int cacheBatchSize;
@@ -36,6 +39,10 @@ class Aggregator {
     private Semaphore permits;
 
     private DateTime startTime;
+
+    private DateTime startingDay;
+
+    private DateTime currentDay;
 
     private ListeningExecutorService aggregationTasks;
 
@@ -61,6 +68,14 @@ class Aggregator {
         this.startTime = startTime;
     }
 
+    void setStartingDay(DateTime startingDay) {
+        this.startingDay = startingDay;
+    }
+
+    void setCurrentDay(DateTime currentDay) {
+        this.currentDay = currentDay;
+    }
+
     void setAggregationTasks(ListeningExecutorService aggregationTasks) {
         this.aggregationTasks = aggregationTasks;
     }
@@ -77,8 +92,9 @@ class Aggregator {
         Stopwatch stopwatch = new Stopwatch().start();
         AtomicInteger numSchedules = new AtomicInteger();
         try {
-            StorageResultSetFuture indexFuture = dao.findCacheIndexEntries(aggregationType.getCacheTable(),
-                startTime.getMillis(), AggregationManager.INDEX_PARTITION);
+            StorageResultSetFuture indexFuture = dao.findCurrentCacheIndexEntries(
+                aggregationType.getCacheTable(),
+                currentDay.getMillis(), AggregationManager.INDEX_PARTITION, startTime.getMillis());
             ResultSet resultSet = indexFuture.get();
             CacheIndexEntryMapper indexEntryMapper = new CacheIndexEntryMapper();
 
@@ -106,34 +122,6 @@ class Aggregator {
             }
         }
     }
-
-//    public int execute() throws InterruptedException, AbortedException {
-//        Stopwatch stopwatch = new Stopwatch().start();
-//        AtomicInteger numSchedules = new AtomicInteger();
-//        try {
-//            for (int i = startScheduleId; i <= maxScheduleId; i += cacheBatchSize) {
-//                Stopwatch batchStopwatch = new Stopwatch().start();
-//                permits.acquire();
-//                StorageResultSetFuture queryFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
-//                    startTime.getMillis(), i);
-//                taskTracker.addTask();
-//                ListenableFuture<BatchResult> batchResultFuture = Futures.transform(queryFuture,
-//                    new ProcessBatch(dao, computeMetric, i, startTime, aggregationType,
-//                        cacheBatchSize), aggregationTasks);
-//                Futures.addCallback(batchResultFuture, batchFinished(numSchedules, batchStopwatch), aggregationTasks);
-//            }
-//            taskTracker.finishedSchedulingTasks();
-//            taskTracker.waitForTasksToFinish();
-//
-//            return numSchedules.get();
-//        } finally {
-//            stopwatch.stop();
-//            if (LOG.isDebugEnabled()) {
-//                LOG.debug("Finished " + aggregationType + " aggregation of " + numSchedules + " schedules in " +
-//                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
-//            }
-//        }
-//    }
 
     private FutureCallback<BatchResult> batchFinished(final CacheIndexEntry indexEntry,
         final AtomicInteger numSchedules, final Stopwatch stopwatch) {
@@ -179,10 +167,29 @@ class Aggregator {
         };
     }
 
+    private FutureCallback<List<ResultSet>> lateDataAggregationFinished(final CacheIndexEntry indexEntry,
+        final TaskTracker lateTasksTracker, final int numSchedules) {
+        return new FutureCallback<List<ResultSet>>() {
+            @Override
+            public void onSuccess(List<ResultSet> resultSets) {
+                deleteCacheIndexEntry(indexEntry);
+                permits.release(numSchedules);
+                lateTasksTracker.finishedTask();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                LOG.warn("There was an unexpected error while aggregating late data", t);
+                permits.release(numSchedules);
+                lateTasksTracker.finishedTask();
+            }
+        };
+    }
+
     private void deleteCacheIndexEntry(CacheIndexEntry indexEntry) {
         StorageResultSetFuture deleteFuture = dao.deleteCacheIndexEntries(aggregationType.getCacheTable(),
-            indexEntry.getInsertTimeSlice(), AggregationManager.INDEX_PARTITION, indexEntry.getStartScheduleId(),
-            indexEntry.getCollectionTimeSlice());
+            indexEntry.getInsertTimeSlice(), AggregationManager.INDEX_PARTITION, indexEntry.getCollectionTimeSlice(),
+            indexEntry.getStartScheduleId());
         Futures.addCallback(deleteFuture, new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(ResultSet result) {

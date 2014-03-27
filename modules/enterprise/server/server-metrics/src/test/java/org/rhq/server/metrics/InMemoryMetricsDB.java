@@ -46,6 +46,10 @@ public class InMemoryMetricsDB {
 
     }
 
+    public List<AggregateNumericMetric> get1HourData(int... scheduleIds) {
+        return getAllDataForBucket(oneHourData, scheduleIds);
+    }
+
     public AggregateNumericMetric get6HourData(DateTime timeSlice, int scheduleId) {
         return sixHourData.get(scheduleId, timeSlice);
     }

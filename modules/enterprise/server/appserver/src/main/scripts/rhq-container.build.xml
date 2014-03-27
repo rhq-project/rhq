@@ -422,15 +422,15 @@
         <mkdir dir="${rhq.ear.dir}/rhq-downloads/connectors" />
         <mkdir dir="${rhq.ear.dir}/rhq-downloads/bundle-deployer" />
 
-        <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
-        <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
-              tofile="${rhq.ear.dir}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
+        <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq-enterprise-agent.version}.jar</echo>
+        <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq-enterprise-agentupdate.version}/rhq-enterprise-agentupdate-${rhq-enterprise-agentupdate.version}.jar"
+              tofile="${rhq.ear.dir}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq-enterprise-agent.version}.jar"
               verbose="true"
               failonerror="true"/>
 
         <echo>Deploying the latest remote client binary</echo>
-        <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
-              tofile="${rhq.ear.dir}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
+        <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq-remoting-cli.version}/rhq-remoting-cli-${rhq-remoting-cli.version}.zip"
+              tofile="${rhq.ear.dir}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq-remoting-cli.version}.zip"
               verbose="true"
               failonerror="false"/>
 

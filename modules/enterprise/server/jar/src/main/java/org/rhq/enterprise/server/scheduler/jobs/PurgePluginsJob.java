@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +29,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -42,6 +45,11 @@ public class PurgePluginsJob extends AbstractStatefulJob {
 
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
+        purgeAgentPlugins();
+        purgeServerPlugins();
+    }
+
+    private void purgeAgentPlugins() {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         List<Plugin> plugins = pluginMgr.findAllDeletedPlugins();
         List<Plugin> pluginsToPurge = new ArrayList<Plugin>();
@@ -57,6 +65,16 @@ public class PurgePluginsJob extends AbstractStatefulJob {
 
         if (!pluginsToPurge.isEmpty()) {
             pluginMgr.purgePlugins(pluginsToPurge);
+        }
+    }
+
+    private void purgeServerPlugins() {
+        ServerPluginsLocal pluginMgr = LookupUtil.getServerPlugins();
+
+        for (ServerPlugin p : pluginMgr.getDeletedPlugins()) {
+            if (pluginMgr.isReadyForPurge(p.getId())) {
+                pluginMgr.purgeServerPlugin(p.getId());
+            }
         }
     }
 }

@@ -328,7 +328,7 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.undeployServerPlugins(subject, getIds(pluginsToUndeploy));
+            serverPluginsBean.deleteServerPlugins(subject, getIds(pluginsToUndeploy));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: "
                 + selectedPluginNames);
         } catch (Exception e) {
@@ -351,8 +351,10 @@ public class InstalledPluginsUIBean {
         }
 
         try {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.purgeServerPlugins(subject, getIds(allSelectedPlugins));
+            //The JSF UI is no longer used for server plugins, so I'm just commenting out the code
+            //that would not compile anymore...
+            //Subject subject = EnterpriseFacesContextUtility.getSubject();
+            //serverPluginsBean.purgeServerPlugins(subject, getIds(allSelectedPlugins));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Purged server plugins: " + selectedPluginNames);
         } catch (Exception e) {
             processException("Failed to undeploy server plugins", e);

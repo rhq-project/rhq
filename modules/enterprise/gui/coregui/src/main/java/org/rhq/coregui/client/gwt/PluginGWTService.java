@@ -134,16 +134,8 @@ public interface PluginGWTService extends RemoteService {
      * @param selectedPluginIds the IDs of the server plugins that are to be undeployed
      * @return list of names of those server plugins that were undeployed
      */
-    ArrayList<String> undeployServerPlugins(int[] selectedPluginIds) throws RuntimeException;
+    ArrayList<String> deleteServerPlugins(int[] selectedPluginIds) throws RuntimeException;
 
-    /**
-     * Purges the undeployed server plugins from the system so there is no record of them to have
-     * ever existed. This deletes all remnants of the plugin from the database.
-     *
-     * @param selectedPluginIds the IDs of the undeployed server plugins that are to be purged
-     * @return list of names of those server plugins that were purged
-     */
-    ArrayList<String> purgeServerPlugins(int[] selectedPluginIds) throws RuntimeException;
 
     /**
      * Returns the definition for the given plugin's global plugin configuration.

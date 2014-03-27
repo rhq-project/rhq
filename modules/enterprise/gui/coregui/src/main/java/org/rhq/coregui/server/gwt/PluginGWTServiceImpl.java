@@ -290,7 +290,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     }
 
     @Override
-    public ArrayList<String> undeployServerPlugins(int[] selectedPluginIds) throws RuntimeException {
+    public ArrayList<String> deleteServerPlugins(int[] selectedPluginIds) throws RuntimeException {
         try {
             List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins(selectedPluginIds);
             ArrayList<String> selectedPluginNames = new ArrayList<String>();
@@ -307,31 +307,8 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
                 return selectedPluginNames;
             }
 
-            serverPluginManager.undeployServerPlugins(getSessionSubject(), getIds(pluginsToUndeploy));
+            serverPluginManager.deleteServerPlugins(getSessionSubject(), getIds(pluginsToUndeploy));
             log.info("Undeployed server plugins: " + selectedPluginNames);
-            return selectedPluginNames;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public ArrayList<String> purgeServerPlugins(int[] selectedPluginIds) throws RuntimeException {
-        try {
-            List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins(selectedPluginIds);
-            ArrayList<String> selectedPluginNames = new ArrayList<String>();
-
-            for (ServerPlugin selectedPlugin : allSelectedPlugins) {
-                selectedPluginNames.add(selectedPlugin.getDisplayName());
-            }
-
-            if (selectedPluginNames.isEmpty()) {
-                log.debug("No server plugins were selected. Nothing to purge");
-                return selectedPluginNames;
-            }
-
-            serverPluginManager.purgeServerPlugins(getSessionSubject(), getIds(allSelectedPlugins));
-            log.info("Purged server plugins: " + selectedPluginNames);
             return selectedPluginNames;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

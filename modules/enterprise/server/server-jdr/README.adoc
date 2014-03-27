@@ -1,0 +1,51 @@
+== This module contains the JBoss-JDR plugin for RHQ to collect RHQ-specific information
+
+
+
+The jar created from this module needs to be put into
+
+  $RHQ-SERVER/jbossas/modules/system/layers/base/org/jboss/as/jdr/main
+
+the contained modules.xml needs to be augmented with this jar like
+
+    <resources>
+        <resource-root path="jboss-as-jdr-7.2.0.Alpha1-redhat-4.jar"/>
+        <resource-root path="rhq-server-jdr-4.11.0-SNAPSHOT.jar"/>
+        <!-- Insert resources here -->
+        <resource-root path="resources"/>
+    </resources>
+
+Also the dependency list needs an additional entry for `org.jboss.common-core`
+
+        <module name="org.jboss.common-core"/>
+        </dependencies>
+
+The `resources/plugins.properties` needs a new line for the RHQPlugin
+
+```
+org.jboss.as.jdr.plugins.AS7Plugin=true
+org.rhq.server.jdr.RHQPlugin=true
+```
+
+To trigger the report either go to RHQ UI or call this from the `jboss-cli.sh`
+
+```
+[standalone@localhost:6999 /] cd subsystem=jdr
+[standalone@localhost:6999 subsystem=jdr] :generate-jdr-report
+{
+    "outcome" => "success",
+    "result" => {
+        "start-time" => "Thu Mar 27 11:38:08 CET 2014",
+        "end-time" => "Thu Mar 27 11:38:19 CET 2014",
+        "report-location" => "/im/run-rhq/dev-container/rhq-server/jbossas/standalone/tmp/jdr_14-03-27_11-38-08_snert.zip"
+    }
+}
+```
+
+This `.zip` will then contain one or multiple entries like
+
+```
+jdr_14-03-27_11-38-08_snert/rhq-server-state.json
+```
+
+with the content the `RHQPlugin` has added.

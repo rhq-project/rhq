@@ -73,7 +73,6 @@ public class ResourceFacets implements Serializable {
         this.support = support;
         this.drift = drift;
         this.bundle = bundle;
-        initEnum();
     }
 
     public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
@@ -90,7 +89,6 @@ public class ResourceFacets implements Serializable {
         this.support = support.intValue() != 0;
         this.drift = drift.intValue() != 0;
         this.bundle = bundle.intValue() != 0;
-        initEnum();
     }
 
     public int getResourceTypeId() {
@@ -108,7 +106,7 @@ public class ResourceFacets implements Serializable {
     }
 
     /**
-     * Does this resource have any event definitions? 
+     * Does this resource have any event definitions?
      *
      * @return true if the resource has any event definitions
      */
@@ -117,7 +115,7 @@ public class ResourceFacets implements Serializable {
     }
 
     /**
-     * Does this resource have a plugin configuration? If so, the Inventory>Connection subtab will be displayed in the 
+     * Does this resource have a plugin configuration? If so, the Inventory>Connection subtab will be displayed in the
      * GUI.
      *
      * @return true if the resource has a plugin configuration, false otherwise
@@ -197,6 +195,9 @@ public class ResourceFacets implements Serializable {
      * @return an enum representation of the facets
      */
     public Set<ResourceTypeFacet> getFacets() {
+        if (facets == null) {
+            initEnum();
+        }
         return facets;
     }
 

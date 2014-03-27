@@ -62,7 +62,6 @@ import org.rhq.enterprise.server.util.JMXUtil;
 public class CoreServer implements CoreServerMBean {
     private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH =
             "org/rhq/enterprise/server/core/ProductInfo.properties";
-
     private static final Log LOG = LogFactory.getLog(CoreServer.class);
 
     /**
@@ -221,6 +220,9 @@ public class CoreServer implements CoreServerMBean {
             productInfo.setUrlDomain(props.getProperty("urlDomain"));
             productInfo.setUrl(props.getProperty("url"));
             productInfo.setVersion(props.getProperty("version"));
+
+            // Update property which records update/patch version: Ex. update-1, cp1, etc.
+            productInfo.setUpdateVersion(ProductUpdates.getUpdateVersion());
 
             HashMap<String, String> helpViewContent = new HashMap<String, String>();
 

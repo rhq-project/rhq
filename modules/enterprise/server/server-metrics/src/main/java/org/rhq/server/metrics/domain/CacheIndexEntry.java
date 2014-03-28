@@ -68,4 +68,9 @@ public class CacheIndexEntry {
         this.scheduleIds = scheduleIds;
     }
 
+    @Override
+    public String toString() {
+        return "CacheIndexEntry[bucket: " + bucket + ", insertTimeSlice: " + insertTimeSlice + ", partition: " +
+            partition + ", collectionTimeSlice: " + collectionTimeSlice + ", startScheduleId: " + startScheduleId + "]";
+    }
 }

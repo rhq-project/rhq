@@ -259,34 +259,35 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertEquals(metrics.size(), 0, "Expected the " + table + " cache to be empty but found " + metrics);
     }
 
-    protected void assertRawCacheIndexEmpty(DateTime insertTimeSlice, int partition) {
+    protected void assertRawCacheIndexEmpty(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice) {
         List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assertRawCacheIndexEquals(insertTimeSlice, partition, emptyEntries);
+        assertRawCacheIndexEquals(insertTimeSlice, partition, collectionTimeSlice, emptyEntries);
     }
 
-    protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, List<CacheIndexEntry> expected) {
-        assertCacheIndexEquals(insertTimeSlice, MetricsTable.RAW, partition, expected);
-    }
-
-    protected void assert1HourCacheIndexEquals(DateTime insertTimeSlice, int partition,
+    protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice,
         List<CacheIndexEntry> expected) {
-        assertCacheIndexEquals(insertTimeSlice, MetricsTable.ONE_HOUR, partition, expected);
+        assertCacheIndexEquals(insertTimeSlice, MetricsTable.RAW, partition, collectionTimeSlice, expected);
     }
 
-    protected void assert6HourCacheIndexEquals(DateTime insertTimeSlice, int partition,
+    protected void assert1HourCacheIndexEquals(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice,
         List<CacheIndexEntry> expected) {
-        assertCacheIndexEquals(insertTimeSlice, MetricsTable.SIX_HOUR, partition, expected);
+        assertCacheIndexEquals(insertTimeSlice, MetricsTable.ONE_HOUR, partition, collectionTimeSlice, expected);
     }
 
-    protected void assert6HourCacheIndexEmpty(DateTime insertTimeSlice, int partition) {
+    protected void assert6HourCacheIndexEquals(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice,
+        List<CacheIndexEntry> expected) {
+        assertCacheIndexEquals(insertTimeSlice, MetricsTable.SIX_HOUR, partition, collectionTimeSlice, expected);
+    }
+
+    protected void assert6HourCacheIndexEmpty(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice) {
         List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assert6HourCacheIndexEquals(insertTimeSlice, partition, emptyEntries);
+        assert6HourCacheIndexEquals(insertTimeSlice, partition, collectionTimeSlice, emptyEntries);
     }
 
     private void assertCacheIndexEquals(DateTime insertTimeSlice, MetricsTable table, int partition,
-        List<CacheIndexEntry> expected) {
-        ResultSet resultSet = dao.findPastCacheIndexEntriesBeforeToday(table, insertTimeSlice.getMillis(), partition,
-            insertTimeSlice.getMillis()).get();
+        DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
+        ResultSet resultSet = dao.findCurrentCacheIndexEntries(table, insertTimeSlice.getMillis(), partition,
+            collectionTimeSlice.getMillis()).get();
         List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
         for (CacheIndexEntry entry : expected) {
             entry.setInsertTimeSlice(insertTimeSlice.getMillis());
@@ -295,9 +296,9 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertCacheIndexEntriesEqual(actual, expected, table);
     }
 
-    protected void assert1HourCacheIndexEmpty(DateTime insertTimeSlice, int partition) {
+    protected void assert1HourCacheIndexEmpty(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice) {
         List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assert1HourCacheIndexEquals(insertTimeSlice, partition, emptyEntries);
+        assert1HourCacheIndexEquals(insertTimeSlice, partition, collectionTimeSlice, emptyEntries);
     }
 
     protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {

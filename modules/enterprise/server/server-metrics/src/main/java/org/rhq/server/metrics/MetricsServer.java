@@ -130,10 +130,6 @@ public class MetricsServer {
         return aggregationWorkers;
     }
 
-    public void init() {
-        init(-1, -1, false);
-    }
-
     public void init(int minScheduleId, int maxScheduleId) {
         init(minScheduleId, maxScheduleId, true);
     }
@@ -486,20 +482,20 @@ public class MetricsServer {
      * one hour aggregates. The one hour aggregates are returned because they are needed
      * for subsequently computing baselines.
      */
-    public Iterable<AggregateNumericMetric> calculateAggregates(int minScheduleId, int maxScheduleId) {
+    public Iterable<AggregateNumericMetric> calculateAggregates() {
         Stopwatch stopwatch = new Stopwatch().start();
         try {
             DateTime theHour = currentHour();
             if (pastAggregationMissed) {
                 DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                 new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, missedHour,
-                    aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
+                    aggregationBatchSize, parallelism, cacheBatchSize).run();
                 pastAggregationMissed = false;
             }
             DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
 
             return new AggregationManager(aggregationWorkers, dao, configuration, dateTimeService, timeSlice,
-                aggregationBatchSize, parallelism, minScheduleId, maxScheduleId, cacheBatchSize).run();
+                aggregationBatchSize, parallelism, cacheBatchSize).run();
         } finally {
             stopwatch.stop();
             totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));

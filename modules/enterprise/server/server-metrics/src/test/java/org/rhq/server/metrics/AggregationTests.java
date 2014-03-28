@@ -72,7 +72,7 @@ public class AggregationTests extends MetricsTest {
         metricsServer.setDateTimeService(dateTimeService);
         metricsServer.setDAO(dao);
         metricsServer.setCacheBatchSize(PARTITION_SIZE);
-        metricsServer.init();
+        metricsServer.init(MIN_SCHEDULE_ID, MAX_SCHEDULE_ID);
 
         aggregationTasks = metricsServer.getAggregationWorkers();
     }
@@ -109,17 +109,17 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
 
         assertRawCacheEmpty(hour(16), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
-        assertRawCacheIndexEmpty(hour(16), INDEX_PARTITION);
+        assertRawCacheIndexEmpty(hour(16), INDEX_PARTITION, hour(16));
 
         assert1HourCacheEquals(hour(12), startScheduleId(schedule1.id),
             asList(testdb.get1HourData(hour(16), schedule1.id), testdb.get1HourData(hour(16), schedule2.id)));
-        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, hour(12), asList(
             new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(12)),
             new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(12))
         ));
 
         assert6HourCacheEmpty(hour(0), startScheduleId(schedule1.id));
-        assert6HourCacheIndexEmpty(hour(0), INDEX_PARTITION);
+        assert6HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(0));
     }
 
     @Test(dependsOnMethods = "runAggregationForHour16")
@@ -157,14 +157,14 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
 
         assertRawCacheEmpty(hour(17), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
-        assertRawCacheIndexEmpty(hour(17), INDEX_PARTITION);
+        assertRawCacheIndexEmpty(hour(17), INDEX_PARTITION, hour(17));
 
         assert1HourCacheEmpty(hour(12), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
-        assert1HourCacheIndexEmpty(hour(12), INDEX_PARTITION);
+        assert1HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(12));
 
         assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), testdb.get6HourData(scheduleIds(schedule1.id)));
         assert6HourCacheEquals(hour(0), startScheduleId(schedule3.id), testdb.get6HourData(scheduleIds(schedule3.id)));
-        assert6HourCacheIndexEquals(hour(0), INDEX_PARTITION, asList(
+        assert6HourCacheIndexEquals(hour(0), INDEX_PARTITION, hour(0), asList(
             new6HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
             new6HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
         ));
@@ -203,25 +203,25 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEmpty(schedule1.id, schedule2.id, schedule3.id);
 
         assertRawCacheEmpty(hour(18), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
-        assertRawCacheIndexEmpty(hour(18), INDEX_PARTITION);
+        assertRawCacheIndexEmpty(hour(18), INDEX_PARTITION, hour(18));
 
         assert1HourCacheEmpty(hour(12), startScheduleId(schedule1.id));
         assert1HourCacheEmpty(hour(12), startScheduleId(schedule3.id));
-        assert1HourCacheIndexEmpty(hour(12), INDEX_PARTITION);
+        assert1HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(12));
 
         assert1HourCacheEquals(hour(18), startScheduleId(schedule1.id), asList(
             testdb.get1HourData(hour(18), schedule1.id),
             testdb.get1HourData(hour(18), schedule2.id)));
         assert1HourCacheEquals(hour(18), startScheduleId(schedule3.id),
             asList(testdb.get1HourData(hour(18), schedule3.id)));
-        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, hour(18), asList(
             new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(18)),
             new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(18))
         ));
 
         assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), testdb.get6HourData(schedule1.id, schedule2.id));
         assert6HourCacheEquals(hour(0), startScheduleId(schedule3.id), testdb.get6HourData(schedule3.id));
-        assert6HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+        assert6HourCacheIndexEquals(today(), INDEX_PARTITION, hour(0), asList(
             new6HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
             new6HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
         ));
@@ -261,15 +261,15 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEquals(schedule3.id, testdb.get24HourData(schedule3.id));
 
         assertRawCacheEmpty(hour(18), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
-        assertRawCacheIndexEmpty(hour(18), INDEX_PARTITION);
+        assertRawCacheIndexEmpty(hour(18), INDEX_PARTITION, hour(0));
 
         assert1HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
         assert1HourCacheEmpty(hour(18), startScheduleId(schedule3.id));
-        assert1HourCacheIndexEmpty(hour(18), INDEX_PARTITION);
+        assert1HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(18));
 
         assert6HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
         assert6HourCacheEmpty(hour(18), startScheduleId(schedule3.id));
-        assert6HourCacheIndexEmpty(hour(18), INDEX_PARTITION);
+        assert6HourCacheIndexEmpty(hour(0), INDEX_PARTITION,  hour(18));
     }
 
 
@@ -313,10 +313,10 @@ public class AggregationTests extends MetricsTest {
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
 
         assertRawCacheEmpty(hour(4), startScheduleId(schedule1.id));
-        assertRawCacheIndexEmpty(hour(3), INDEX_PARTITION);
-        assertRawCacheIndexEmpty(hour(4), INDEX_PARTITION);
+        assertRawCacheIndexEmpty(hour(3), INDEX_PARTITION, hour(3));
+        assertRawCacheIndexEmpty(hour(4), INDEX_PARTITION, hour(4));
 
-        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, asList(
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, hour(0), asList(
             new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0))
         ));
         assert1HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(
@@ -383,19 +383,13 @@ public class AggregationTests extends MetricsTest {
     private class AggregationManagerTestStub extends AggregationManager {
 
         public AggregationManagerTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, MIN_SCHEDULE_ID,
-                MAX_SCHEDULE_ID, PARTITION_SIZE);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
         }
 
         public AggregationManagerTestStub(DateTime startTime, MetricsDAO dao) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, MIN_SCHEDULE_ID,
-                MAX_SCHEDULE_ID, PARTITION_SIZE);
+            super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
         }
 
-        @Override
-        protected DateTime currentHour() {
-            return currentHour;
-        }
     }
 
     private class Aggregates {

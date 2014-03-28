@@ -178,7 +178,7 @@ public class MetricsPerfTests extends MetricsTest {
         metricsServer.setAggregationBatchSize(250);
         metricsServer.setDateTimeService(new DateTimeServiceStub(hour(4), start));
         Collection<AggregateNumericMetric> oneHourData =
-            (Collection<AggregateNumericMetric>) metricsServer.calculateAggregates(0, NUM_SCHEDULES);
+            (Collection<AggregateNumericMetric>) metricsServer.calculateAggregates();
 
         log.info("Finished computing " + oneHourData.size() + " one hour aggregates in " +
             (System.currentTimeMillis() - start) + " ms");

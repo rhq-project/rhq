@@ -3,27 +3,21 @@ package org.rhq.server.metrics.aggregation;
 import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.AbortedException;
-import org.rhq.server.metrics.ArithmeticMeanCalculator;
-import org.rhq.server.metrics.DateTimeService;
-import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
@@ -31,30 +25,20 @@ import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.NumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
+import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda
  */
-class PastDataAggregator {
+class PastDataAggregator extends BaseAggregator {
 
     private static final Log LOG = LogFactory.getLog(PastDataAggregator.class);
-
-    private static final int PAST_DATA_BATCH_SIZE = 5;
 
     private DateTime startingDay;
 
     private DateTime currentDay;
-
-    private DateTime startTime;
-
-    private MetricsDAO dao;
-
-    private ListeningExecutorService aggregationTasks;
-
-    private Semaphore permits;
-
-    private DateTimeService dateTimeService;
 
     void setStartingDay(DateTime startingDay) {
         this.startingDay = startingDay;
@@ -62,26 +46,6 @@ class PastDataAggregator {
 
     void setCurrentDay(DateTime currentDay) {
         this.currentDay = currentDay;
-    }
-
-    void setStartTime(DateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    void setDao(MetricsDAO dao) {
-        this.dao = dao;
-    }
-
-    void setAggregationTasks(ListeningExecutorService aggregationTasks) {
-        this.aggregationTasks = aggregationTasks;
-    }
-
-    void setPermits(Semaphore permits) {
-        this.permits = permits;
-    }
-
-    void setDateTimeService(DateTimeService dateTimeService) {
-        this.dateTimeService = dateTimeService;
     }
 
     public void execute() throws InterruptedException, AbortedException {
@@ -166,65 +130,68 @@ class PastDataAggregator {
 
     private void processBatch(TaskTracker taskTracker, List<StorageResultSetFuture> queryFutures,
         CacheIndexEntry indexEntry) {
+
         taskTracker.addTask();
+
         ListenableFuture<List<ResultSet>> queriesFuture = Futures.successfulAsList(queryFutures);
-        ListenableFuture<List<NumericMetric>> metricsFuture = Futures.transform(queriesFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice()), aggregationTasks);
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture,
-            persist1HourMetrics(indexEntry.getStartScheduleId()), aggregationTasks);
+
+        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
+            toIterable(new RawNumericMetricMapper()), aggregationTasks);
+
+        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
+            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+
+        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
+            indexAggregatesPair(indexEntry));
+
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetrics, aggregationTasks);
+
         ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
             deleteCacheEntry(indexEntry), aggregationTasks);
+
         ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
             deleteCacheIndexEntry(indexEntry), aggregationTasks);
-        Futures.addCallback(deleteCacheIndexFuture, batchFinished(taskTracker, queryFutures.size()));
+
+        Futures.addCallback(deleteCacheIndexFuture, batchFinished(taskTracker, queryFutures.size()), aggregationTasks);
     }
 
-    private Function<List<ResultSet>, List<NumericMetric>> computeAggregates(final long timeSlice) {
-        return new Function<List<ResultSet>, List<NumericMetric>>() {
-            @Override
-            public List<NumericMetric> apply(List<ResultSet> resultSets) {
-                List<NumericMetric> metrics = new ArrayList<NumericMetric>(resultSets.size());
-                for (ResultSet resultSet : resultSets) {
-                    if (!resultSet.isExhausted()) {
-                        metrics.add(computeAggregate(resultSet, timeSlice));
-                    }
-                }
+    private <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
+        final ResultSetMapper<T> mapper) {
 
-                return metrics;
+        return new Function<List<ResultSet>, Iterable<List<T>>>() {
+            @Override
+            public Iterable<List<T>> apply(final List<ResultSet> resultSets) {
+                return new Iterable<List<T>>() {
+                    private Iterator<ResultSet> resultSetIterator = resultSets.iterator();
+
+                    @Override
+                    public Iterator<List<T>> iterator() {
+                        return new Iterator<List<T>>() {
+                            @Override
+                            public boolean hasNext() {
+                                return resultSetIterator.hasNext();
+                            }
+
+                            @Override
+                            public List<T> next() {
+                                return mapper.mapAll(resultSetIterator.next());
+                            }
+
+                            @Override
+                            public void remove() {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
+                };
             }
         };
     }
 
-    private AggregateNumericMetric computeAggregate(ResultSet resultSet, long timeSlice) {
-        RawNumericMetricMapper mapper = new RawNumericMetricMapper();
-        List<? extends NumericMetric> metrics = mapper.mapAll(resultSet);
-        Double min = Double.NaN;
-        Double max = Double.NaN;
-        ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
-        int scheduleId = 0;
-
-        for (NumericMetric metric : metrics) {
-            mean.add(metric.getAvg());
-            if (Double.isNaN(min)) {
-                scheduleId = metric.getScheduleId();
-                min = metric.getMin();
-                max = metric.getMax();
-            } else {
-                if (metric.getMin() < min) {
-                    min = metric.getMin();
-                }
-                if (metric.getMax() > max) {
-                    max = metric.getMax();
-                }
-            }
-        }
-        return new AggregateNumericMetric(scheduleId, mean.getArithmeticMean(), min, max, timeSlice);
-    }
-
-    private AsyncFunction<List<NumericMetric>, List<ResultSet>> persist1HourMetrics(final int startScheduleId) {
-        return new AsyncFunction<List<NumericMetric>, List<ResultSet>>() {
+    private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetrics(final int startScheduleId) {
+        return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
             @Override
-            public ListenableFuture<List<ResultSet>> apply(List<NumericMetric> metrics) throws Exception {
+            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
                 List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 3);
                 for (NumericMetric metric : metrics) {
                     futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
@@ -240,34 +207,6 @@ class PastDataAggregator {
                         startScheduleId));
                 }
                 return Futures.successfulAsList(futures);
-            }
-        };
-    }
-
-    private Map<Integer, Double> toMap(NumericMetric metric) {
-        return ImmutableMap.of(
-            AggregateType.MAX.ordinal(), metric.getMax(),
-            AggregateType.MIN.ordinal(), metric.getMin(),
-            AggregateType.AVG.ordinal(), metric.getAvg()
-        );
-    }
-
-    private AsyncFunction<List<ResultSet>, ResultSet> deleteCacheEntry(final CacheIndexEntry indexEntry) {
-        return new AsyncFunction<List<ResultSet>, ResultSet>() {
-            @Override
-            public ListenableFuture<ResultSet> apply(List<ResultSet> resultSets) throws Exception {
-                return dao.deleteCacheEntries(MetricsTable.RAW, indexEntry.getCollectionTimeSlice(),
-                    indexEntry.getStartScheduleId());
-            }
-        };
-    }
-
-    private AsyncFunction<ResultSet, ResultSet> deleteCacheIndexEntry(final CacheIndexEntry indexEntry) {
-        return new AsyncFunction<ResultSet, ResultSet>() {
-            @Override
-            public ListenableFuture<ResultSet> apply(ResultSet deleteCacheResultSet) throws Exception {
-                return dao.deleteCacheIndexEntries(MetricsTable.RAW, indexEntry.getInsertTimeSlice(),
-                    indexEntry.getPartition(), indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
             }
         };
     }

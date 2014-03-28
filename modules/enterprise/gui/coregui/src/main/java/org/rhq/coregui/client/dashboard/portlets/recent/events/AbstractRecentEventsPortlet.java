@@ -16,11 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.coregui.client.dashboard.portlets.recent.alerts;
+package org.rhq.coregui.client.dashboard.portlets.recent.events;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.DSRequest;
@@ -38,23 +37,20 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.common.EntityContext.Type;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
-import org.rhq.coregui.client.alert.AlertDataSource;
-import org.rhq.coregui.client.alert.AlertHistoryView;
 import org.rhq.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.dashboard.AutoRefreshPortlet;
@@ -63,33 +59,31 @@ import org.rhq.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.coregui.client.dashboard.PortletWindow;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
+import org.rhq.coregui.client.inventory.common.event.EventCompositeDatasource;
+import org.rhq.coregui.client.inventory.common.event.EventCompositeHistoryView;
+import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
- * A base class for deriving recent alerts portlets for different entity contexts.  In this way the
+ * A base class for deriving recent event portlets for different entity contexts.  In this way the
  * basic plumbing is shared, giving a consistent behavior and configuration for the concrete portlets.
  *
- * @author Jay Shaughnessy
- * @author Simeon Pinder
+ * @author Jirka Kremser
  */
-public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet,
+public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryView implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
-    private AlertsPortletDataSource dataSource;
+    private EventsPortletDataSource dataSource;
 
     // autorefresh timer
     private Timer refreshTimer;
 
-    private String baseViewPath;
-
-    public AbstractRecentAlertsPortlet(EntityContext entityContext) {
-        super(null, entityContext);
-
-        this.baseViewPath = LinkManager.getEntityTabLink(getContext(), "Alerts", "History");
+    public AbstractRecentEventsPortlet(EntityContext entityContext) {
+        super(null, entityContext, false);
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);
@@ -98,15 +92,10 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     @Override
-    protected String getBasePath() {
-        return this.baseViewPath;
-    }
-
-    @Override
     protected CellFormatter getDetailsLinkColumnCellFormatter() {
         return new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
-                String url = getAlertDetailLink(record);
+                String url = getEventDetailLink(record);
                 String formattedValue = TimestampCellFormatter.format(value);
                 return LinkManager.getHref(url, formattedValue);
             }
@@ -115,17 +104,18 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
     @Override
     public void showDetails(ListGridRecord record) {
-        String url = getAlertDetailLink(record);
+        String url = getEventDetailLink(record);
         CoreGUI.goToView(url);
     }
 
-    private String getAlertDetailLink(ListGridRecord record) {
-        Integer alertId = getId(record);
-        return LinkManager.getAlertDetailLink(getContext(), alertId);
+    private String getEventDetailLink(ListGridRecord record) {
+        Integer eventId = getId(record);
+        Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+        return LinkManager.getEventDetailLink(resourceId, eventId);
     }
 
     @Override
-    protected boolean canSupportDeleteAndAcknowledgeAll() {
+    protected boolean canSupportDeleteAndPurgeAll() {
         return false;
     }
 
@@ -138,16 +128,16 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     @Override
-    public AlertsPortletDataSource getDataSource() {
+    public EventsPortletDataSource getDataSource() {
         if (this.dataSource == null) {
-            this.dataSource = new AlertsPortletDataSource(getContext());
+            this.dataSource = new EventsPortletDataSource(getContext());
         }
         return this.dataSource;
     }
 
     @Override
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
+        return new HTMLFlow(MSG.view_portlet_help_events());
     }
 
     @Override
@@ -188,41 +178,59 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
-        // alert name filter
-        final TextItem alertNameFilter = PortletConfigurationEditorComponent.getAlertNameEditor(portletConfig);
+        List<FormItem> items = new ArrayList<FormItem>(4);
+        // resource name
+        final TextItem eventResourceFilter = getContext().type == Type.SubsystemView ? PortletConfigurationEditorComponent
+            .getEventResourceEditor(portletConfig) : null;
+        if (eventResourceFilter != null) {
+            items.add(eventResourceFilter);
+        }
         
-        // alert priority selector
-        final SelectItem alertPrioritySelector = PortletConfigurationEditorComponent
-            .getAlertPriorityEditor(portletConfig);
+        // event source
+        final TextItem eventSourceFilter = PortletConfigurationEditorComponent.getEventSourceEditor(portletConfig);
+        items.add(eventSourceFilter);
+        
+        // event severity
+        final SelectItem eventSeveritySelector = PortletConfigurationEditorComponent
+            .getEventSeverityEditor(portletConfig);
+        items.add(eventSeveritySelector);
 
         // result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
+        items.add(resultCountSelector);
 
         // range selector
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
-
-        filterForm.setItems(alertNameFilter, alertPrioritySelector, resultCountSelector);
+        
+        filterForm.setItems(items.toArray(new FormItem[items.size()]));
 
         //submit handler
         customSettingsForm.addSubmitValuesHandler(new SubmitValuesHandler() {
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
-                // alert name
-                String selectedValue = (null == alertNameFilter.getValue()) ? "" : alertNameFilter.getValue()
-                    .toString();
-                portletConfig.put(new PropertySimple(Constant.ALERT_NAME, selectedValue));
+                // resource name
+                if (eventResourceFilter != null) {
+                    String selectedValue = (null == eventResourceFilter.getValue()) ? "" : eventResourceFilter.getValue()
+                        .toString();
+                    portletConfig.put(new PropertySimple(Constant.EVENT_RESOURCE, selectedValue));
+                }
                 
-                // alert severity
-                selectedValue = (null == alertPrioritySelector.getValue()) ? "" : alertPrioritySelector
+                // event source
+                String selectedValue = (null == eventSourceFilter.getValue()) ? "" : eventSourceFilter.getValue()
+                    .toString();
+                portletConfig.put(new PropertySimple(Constant.EVENT_SOURCE, selectedValue));
+                
+                // event severity
+                selectedValue = (null == eventSeveritySelector.getValue()) ? "" : eventSeveritySelector
                     .getValue().toString();
                 if ((selectedValue.trim().isEmpty())
-                    || (selectedValue.split(",").length == AlertPriority.values().length)) {
+                    || (selectedValue.split(",").length == EventSeverity.values().length)) {
                     // no severity filter
-                    selectedValue = Constant.ALERT_PRIORITY_DEFAULT;
+                    selectedValue = Constant.EVENT_SEVERITY_DEFAULT;
                 }
-                portletConfig.put(new PropertySimple(Constant.ALERT_PRIORITY, selectedValue));
+                portletConfig.put(new PropertySimple(Constant.EVENT_SEVERITY, selectedValue));
 
                 // result count
                 selectedValue = resultCountSelector.getValue().toString();
@@ -302,16 +310,6 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     @Override
-    protected void setupTableInteractions(boolean hasWriteAccess) {
-        if (!hasWriteAccess) {
-            Set<Permission> globalPerm = this.getPortletWindow().getGlobalPermissions();
-            ResourcePermission resPerm = this.getPortletWindow().getResourcePermissions();
-            hasWriteAccess = (globalPerm.contains(Permission.MANAGE_INVENTORY) || (null != resPerm && resPerm.isAlert()));
-        }
-        super.setupTableInteractions(hasWriteAccess);
-    }
-
-    @Override
     public void refreshTableInfo() {
         super.refreshTableInfo();
         if (getTableInfo() != null) {
@@ -343,14 +341,14 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         }
     }
 
-    static public class AlertsPortletDataSource extends AlertDataSource {
+    static public class EventsPortletDataSource extends EventCompositeDatasource {
         private Configuration configuration;
 
-        public AlertsPortletDataSource(EntityContext entityContext) {
+        public EventsPortletDataSource(EntityContext entityContext) {
             this(entityContext, null);
         }
 
-        public AlertsPortletDataSource(EntityContext entityContext, Configuration configuration) {
+        public EventsPortletDataSource(EntityContext entityContext, Configuration configuration) {
             super(entityContext);
             this.configuration = configuration;
         }
@@ -370,49 +368,44 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
          * @see org.rhq.coregui.client.operation.OperationHistoryDataSource#getTotalRows(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
          */
         @Override
-        protected int getTotalRows(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
-
+        protected int getTotalRows(final PageList<EventComposite> result, final DSResponse response, final DSRequest request) {
             return result.size();
         }
 
         @Override
-        protected AlertCriteria getFetchCriteria(DSRequest request) {
-            AlertCriteria criteria = new AlertCriteria();
+        protected EventCriteria getFetchCriteria(DSRequest request) {
+            EventCriteria criteria = new EventCriteria();
             
-            // name filter
-            String currentSetting = this.configuration.getSimpleValue(Constant.ALERT_NAME, "");
-            criteria.addFilterName(currentSetting);
+            // event source filter
+            String currentSetting = this.configuration.getSimpleValue(Constant.EVENT_SOURCE, "");
+            criteria.addFilterSourceName(currentSetting);
 
             // result count
             currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,
                 Constant.RESULT_COUNT_DEFAULT);
 
-            // We have to set a PageControl override here, or RPCDataSource will apply default paging based on the
-            // request. But, once setting a paging override the CriteriaQueryGenerator will use it for
-            // paging *and* sorting, so we need to also ensure our desired sorting is included in the override. So,
-            // to get the most recent alerts, apply a descending ordering on create time.
             int pageNumber = 0;
             int pageSize = Integer.valueOf(currentSetting);
-            OrderingField orderingField = new OrderingField("ctime", PageOrdering.DESC);
+            OrderingField orderingField = new OrderingField("timestamp", PageOrdering.DESC);
             criteria.setPageControl(new PageControl(pageNumber, pageSize, orderingField));
 
-            // filter priority
+            // filter severity
             currentSetting = this.configuration
-                .getSimpleValue(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT);
+                .getSimpleValue(Constant.EVENT_SEVERITY, Constant.EVENT_SEVERITY_DEFAULT);
             String[] parsedValues = currentSetting.trim().split(",");
-            if (!(currentSetting.trim().isEmpty() || parsedValues.length == AlertPriority.values().length)) {
-                AlertPriority[] filterPriorities = new AlertPriority[parsedValues.length];
-                int indx = 0;
-                for (String priority : parsedValues) {
-                    AlertPriority p = AlertPriority.valueOf(priority);
-                    filterPriorities[indx++] = p;
+            if (!(currentSetting.trim().isEmpty() || parsedValues.length == EventSeverity.values().length)) {
+                EventSeverity[] filterSeverities = new EventSeverity[parsedValues.length];
+                int index = 0;
+                for (String severity : parsedValues) {
+                    EventSeverity p = EventSeverity.valueOf(severity);
+                    filterSeverities[index++] = p;
                 }
-                criteria.addFilterPriorities(filterPriorities);
+                criteria.addFilterSeverities(filterSeverities);
             }
 
             //result timeframe if enabled
             PropertySimple property = configuration.getSimple(Constant.METRIC_RANGE_ENABLE);
-            if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+            if (null != property && Boolean.valueOf(property.getBooleanValue())) { //then proceed setting
 
                 boolean isAdvanced = Boolean.valueOf(configuration.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
                     Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));
@@ -442,18 +435,20 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             // add any context related filters
             switch (getEntityContext().type) {
             case Resource:
-                criteria.addFilterResourceIds(getEntityContext().getResourceId());
+                criteria.addFilterResourceId(getEntityContext().getResourceId());
                 break;
             case ResourceGroup:
-                criteria.addFilterResourceGroupIds(getEntityContext().getGroupId());
+                criteria.addFilterResourceGroupId(getEntityContext().getGroupId());
+            case SubsystemView:
+                // event resource name filter
+                currentSetting = this.configuration.getSimpleValue(Constant.EVENT_RESOURCE, "");
+                criteria.addFilterResourceName(currentSetting);
                 break;
             default:
                 // no default
                 break;
             }
-            criteria.fetchAlertDefinition(true);
-            criteria.fetchRecoveryAlertDefinition(true);
-            criteria.fetchConditionLogs(true);
+            criteria.fetchSource(true);
 
             return criteria;
         }

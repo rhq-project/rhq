@@ -176,7 +176,7 @@
 
     <mockito-core.version>1.9.0</mockito-core.version>
 
-    <ojdbc6.version>11.2.0.3.0</ojdbc6.version>
+    <ojdbc6.version>12.1.0.1.0</ojdbc6.version>
     <opencsv.version>1.8</opencsv.version>
 
     <picketbox.version>4.0.7.Final</picketbox.version>

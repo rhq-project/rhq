@@ -581,10 +581,12 @@ public final class CriteriaQueryGenerator {
             conjunctiveResults.append(fragment).append(' ');
         }
 
-        if ((filterFields.size() > 0 && conjunctiveResults.length()>0) || authorizationPermsFragment != null
+        if (conjunctiveResults.length()>0 || authorizationPermsFragment != null
             || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null ) {
             results.append("WHERE ");
-            results.append("( ").append(conjunctiveResults).append(")");
+            if (conjunctiveResults.length()>0) {
+                results.append("( ").append(conjunctiveResults).append(")");
+            }
         }
 
         // authorization

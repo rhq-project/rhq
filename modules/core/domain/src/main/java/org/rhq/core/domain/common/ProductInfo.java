@@ -39,7 +39,6 @@ public class ProductInfo implements Serializable {
     private String version;
     private String buildNumber;
     private String helpDocRoot;
-    private String updateVersion;
     private HashMap<String, String> helpViewContent;
 
     public String getShortName() {
@@ -128,13 +127,5 @@ public class ProductInfo implements Serializable {
 
     public void setHelpViewContent(HashMap<String, String> helpViewContent) {
         this.helpViewContent = helpViewContent;
-    }
-
-    public String getUpdateVersion() {
-        return updateVersion;
-    }
-
-    public void setUpdateVersion(String updateVersion) {
-        this.updateVersion = updateVersion;
     }
 }

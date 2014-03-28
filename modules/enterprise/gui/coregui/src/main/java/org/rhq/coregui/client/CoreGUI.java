@@ -660,4 +660,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         return !GWT.isScript();
     }
 
+    // Update property which records update/patch version: Ex. update-1, cp1, etc.
+    public static String getUpdateVersion() {
+        return "";
+    }
 }

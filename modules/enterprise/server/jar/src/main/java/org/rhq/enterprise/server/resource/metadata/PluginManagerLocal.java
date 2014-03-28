@@ -24,7 +24,10 @@ public interface PluginManagerLocal {
 
     /**
      * @return A list of all plugins deployed in the server, including deleted plugins
+     * @deprecated the deleted plugins will disappear from the database on their own accord when it's safe to do so.
+     * @see #getInstalledPlugins() use <code>getInstalledPlugins</code> method instead
      */
+    @Deprecated
     List<Plugin> getPlugins();
 
     /**
@@ -35,14 +38,13 @@ public interface PluginManagerLocal {
     List<Plugin> getInstalledPlugins();
 
     /**
+     * Do not use this method directly. It is a support method for
+     * {@link org.rhq.enterprise.server.core.plugin.AgentPluginScanner} and
+     * {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob}.
+     *
      * @return All plugins that have been marked deleted.
      */
     List<Plugin> findAllDeletedPlugins();
-
-    /**
-     * @return All plugins that are scheduled to be purged.
-     */
-    List<Plugin> findPluginsMarkedForPurge();
 
     /**
      * Returns a list of plugins with the specified ids. Both installed and deleted plugins will be included in the

@@ -168,11 +168,6 @@ public class PluginManagerBean implements PluginManagerLocal {
         return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_DELETED).getResultList();
     }
 
-    @Override
-    public List<Plugin> findPluginsMarkedForPurge() {
-        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_TO_PURGE).getResultList();
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {

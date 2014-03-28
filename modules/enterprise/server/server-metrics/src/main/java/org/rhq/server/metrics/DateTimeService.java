@@ -25,18 +25,14 @@
 
 package org.rhq.server.metrics;
 
-import org.joda.time.Chronology;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
-import org.joda.time.DateTimeField;
-import org.joda.time.DateTimeFieldType;
 import org.joda.time.Duration;
-import org.joda.time.Minutes;
 import org.joda.time.Period;
-import org.joda.time.chrono.GregorianChronology;
-import org.joda.time.field.DividedDateTimeField;
 
 /**
+ * Provides common DateTime utility functions.
+ *
  * @author John Sanda
  */
 public class DateTimeService {
@@ -49,26 +45,17 @@ public class DateTimeService {
         this.configuration = configuration;
     }
 
+    /**
+     * This method is preferred over DateTime.now() and System.currentTimeMillis() because it provides a hook for tests.
+     *
+     * @return a DateTime object set to milliseconds.
+     */
     public DateTime now() {
         return new DateTime(nowInMillis());
     }
 
     public long nowInMillis() {
         return System.currentTimeMillis();
-    }
-
-    public DateTime getTimeSlice(long timestamp, Minutes interval) {
-        return getTimeSlice(new DateTime(timestamp), interval);
-    }
-
-    public DateTime getTimeSlice(DateTime dateTime, Minutes interval) {
-        Chronology chronology = GregorianChronology.getInstance();
-        DateTimeField hourField = chronology.hourOfDay();
-        DividedDateTimeField dividedField = new DividedDateTimeField(hourField, DateTimeFieldType.clockhourOfDay(),
-            interval.toStandardHours().getHours());
-        long timestamp = dividedField.roundFloor(dateTime.getMillis());
-
-        return new DateTime(timestamp);
     }
 
     public DateTime getTimeSlice(long timestamp, Duration duration) {
@@ -104,30 +91,97 @@ public class DateTimeService {
         return dateTimeComparator.compare(now().minus(configuration.getOneHourRetention()), dateTime) < 0;
     }
 
-    public boolean isIn6HourDataRnage(DateTime dateTime) {
+    public boolean isIn6HourDataRange(DateTime dateTime) {
         return dateTimeComparator.compare(now().minus(configuration.getSixHourRetention()), dateTime) < 0;
     }
 
-    public boolean isIn24HourDataRnage(DateTime dateTime) {
+    public boolean isIn24HourDataRange(DateTime dateTime) {
         return dateTimeComparator.compare(now().minus(configuration.getTwentyFourHourRetention()), dateTime) < 0;
     }
 
+    /**
+     * @return A DateTime object rounded down to the start of the current hour. For example, if the current time is
+     * 17:21:09, then 17:00:00 is returned.
+     */
     public DateTime currentHour() {
         return getTimeSlice(now(), configuration.getRawTimeSliceDuration());
     }
 
+    /**
+     * The six hour time slices for a day are fixed - 00:00 to 06:00, 06:00 to 12:00, 12:00 to 18:00, 18:00 to 24:00.
+     * This method determines the six hour time slice based on {@link #currentHour()} and returns the start of the time
+     * slice.
+     *
+     * @return A DateTime object rounded down to the start of the current six hour time slice.
+     */
+    public DateTime current6HourTimeSlice() {
+        return get6HourTimeSlice(currentHour());
+    }
+
+    /**
+     * The 24 hour time slices are fix - 00:00 to 24:00. This method determines the 24 hour time slice based on
+     * {@link #currentHour()} and returns the start of the time slice.
+     *
+     * @return A DateTime object rounded down to the start of the current 24 hour time slice.
+     */
+    public DateTime current24HourTimeSlice() {
+        return get24HourTimeSlice(currentHour());
+    }
+
+    /**
+     * This method determines the 24 hour time slice for the specified time and returns the start of that time slice.
+     *
+     * @param time The DateTime to be rounded down
+     * @return A DateTime rounded down to the start of the 24 hour time slice in which the time parameter falls.
+     * @see #current24HourTimeSlice()
+     */
     public DateTime get24HourTimeSlice(DateTime time) {
         return getTimeSlice(time, configuration.getSixHourTimeSliceDuration());
     }
 
+    /**
+     * This method determines the six hour time slice for the specified time and returns the start of that time slice.
+     *
+     * @param time The DateTime to be rounded down
+     * @return A DateTime rounded down to the start of the six hour time slice in which the time parameter falls.
+     * @see #current6HourTimeSlice()
+     */
     public DateTime get6HourTimeSlice(DateTime time) {
         return getTimeSlice(time, configuration.getOneHourTimeSliceDuration());
     }
 
+    /**
+     * Determines if the current six hour time slice for the specified time has completed.
+     * <p>
+     * Suppose that the current time is 14:23 and that the specified time is 13:15:00 which falls into the
+     * 12:00 - 18:00 time slice. In this case the time slice has not yet finished.
+     * </p>
+     * <p>
+     * Now suppose that the current time is 12:24 and the specified time is 11:34 which falls into the 06:00 - 12:00
+     * time slice. In this case the time slice has finished.
+     * </p>
+     *
+     * @param time The DateTime to evaluate
+     * @return true if the six hour time slice for the specified time has completed, false otherwise.
+     */
     public boolean is6HourTimeSliceFinished(DateTime time) {
         return hasTimeSliceEnded(get6HourTimeSlice(time), configuration.getOneHourTimeSliceDuration());
     }
 
+    /**
+     * Determines if the current 24 hour time slice for the specified time has completed.
+     * <p>
+     * Suppose that the current time 22:12 Monday and that the specified time is 21:48. The current time slice, i.e.,
+     * Monday, has not yet finished.
+     * </p>
+     * <p>
+     * Now suppose that the current time is 01:13 Tuesday and that the specified time is 23:19 Monday. The time slice
+     * for the specified time has finished.
+     * </p>
+     *
+     * @param time The DateTime to evaluate
+     * @return true if the 24 hour time slice for the specified time has completed, false otherwise.
+     */
     public boolean is24HourTimeSliceFinished(DateTime time) {
         return hasTimeSliceEnded(get24HourTimeSlice(time), configuration.getSixHourTimeSliceDuration());
     }

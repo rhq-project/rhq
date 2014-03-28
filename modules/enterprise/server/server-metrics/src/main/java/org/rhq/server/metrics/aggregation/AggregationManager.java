@@ -84,14 +84,6 @@ public class AggregationManager {
         return dtService.is24HourTimeSliceFinished(startTime);
     }
 
-    private DateTime get6HourTimeSlice() {
-        return dtService.get6HourTimeSlice(startTime);
-    }
-
-    private DateTime get24HourTimeSlice() {
-        return dtService.get24HourTimeSlice(startTime);
-    }
-
     public Set<AggregateNumericMetric> run() {
         log.info("Starting aggregation for time slice " + startTime);
         Stopwatch stopwatch = new Stopwatch().start();
@@ -127,10 +119,10 @@ public class AggregationManager {
         PastDataAggregator aggregator = new PastDataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.RAW);
-        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setCurrentDay(dtService.current24HourTimeSlice());
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartingDay(get24HourTimeSlice().minusDays(1));
+        aggregator.setStartingDay(dtService.current24HourTimeSlice().minusDays(1));
         aggregator.setStartTime(startTime);
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persist1HourMetrics());
@@ -146,7 +138,7 @@ public class AggregationManager {
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(startTime);
-        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setCurrentDay(dtService.current24HourTimeSlice());
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persist1HourMetrics());
         aggregator.setCacheBlockFinishedListener(new CacheAggregator.CacheBlockFinishedListener() {
@@ -165,8 +157,8 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartTime(get6HourTimeSlice());
-        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setStartTime(dtService.current6HourTimeSlice());
+        aggregator.setCurrentDay(dtService.current24HourTimeSlice());
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persist6HourMetrics());
 
@@ -180,8 +172,8 @@ public class AggregationManager {
         aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartTime(get24HourTimeSlice());
-        aggregator.setCurrentDay(get24HourTimeSlice());
+        aggregator.setStartTime(dtService.current24HourTimeSlice());
+        aggregator.setCurrentDay(dtService.current24HourTimeSlice());
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persist24HourMetrics());
 

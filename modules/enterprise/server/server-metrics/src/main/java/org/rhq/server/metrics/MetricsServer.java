@@ -66,8 +66,6 @@ public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
-//    private static final Hours.hours(24)
-
     private DateTimeService dateTimeService = new DateTimeService();
 
     private MetricsDAO dao;
@@ -147,7 +145,7 @@ public class MetricsServer {
     private void determineMostRecentRawDataSinceLastShutdown() {
         DateTime previousHour = currentHour().minus(configuration.getRawTimeSliceDuration());
         DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());  // e.g., 7 days ago
-        DateTime day = dateTimeService.get24HourTimeSlice(currentHour());
+        DateTime day = dateTimeService.current24HourTimeSlice();
 
         CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
         StorageResultSetFuture future = dao.findPastCacheIndexEntriesFromToday(MetricsTable.RAW, day.getMillis(), 0,
@@ -229,9 +227,9 @@ public class MetricsServer {
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
                 metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
-            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn6HourDataRange(begin)) {
                 metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
-            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn24HourDataRange(begin)) {
                 metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
@@ -261,9 +259,9 @@ public class MetricsServer {
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
                 metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
-            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn6HourDataRange(begin)) {
                 metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
-            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn24HourDataRange(begin)) {
                 metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
@@ -292,9 +290,9 @@ public class MetricsServer {
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
                 metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
-            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn6HourDataRange(begin)) {
                 metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
-            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn24HourDataRange(begin)) {
                 metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
@@ -329,9 +327,9 @@ public class MetricsServer {
 
             if (dateTimeService.isIn1HourDataRange(begin)) {
                 queryFuture = dao.findOneHourMetricsAsync(scheduleId, beginTime, endTime);
-            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn6HourDataRange(begin)) {
                 queryFuture = dao.findSixHourMetricsAsync(scheduleId, beginTime, endTime);
-            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn24HourDataRange(begin)) {
                 queryFuture = dao.findTwentyFourHourMetricsAsync(scheduleId, beginTime, endTime);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
@@ -359,9 +357,9 @@ public class MetricsServer {
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
                 metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
-            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn6HourDataRange(begin)) {
                 metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
-            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+            } else if (dateTimeService.isIn24HourDataRange(begin)) {
                 metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
@@ -418,8 +416,7 @@ public class MetricsServer {
         }
         final Stopwatch stopwatch = new Stopwatch().start();
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-        final long insertTimeSlice = dateTimeService.getTimeSlice(dateTimeService.now(),
-            configuration.getRawTimeSliceDuration()).getMillis();
+        final long insertTimeSlice = dateTimeService.currentHour().getMillis();
         // TODO add support for splitting cache index partition
         final int partition = 0;
         DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();

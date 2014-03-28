@@ -38,7 +38,9 @@ class BaseAggregator {
     protected Semaphore permits;
 
     protected ListeningExecutorService aggregationTasks;
+
     protected DateTime startTime;
+
     protected DateTimeService dateTimeService;
 
     void setDao(MetricsDAO dao) {

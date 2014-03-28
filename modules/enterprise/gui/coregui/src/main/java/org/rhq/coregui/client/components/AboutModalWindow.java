@@ -71,8 +71,14 @@ public class AboutModalWindow extends PopupWindow {
         productUrl.setWrap(false);
         productUrl.setWrapTitle(false);
 
+        //Conditionally check for and apply update/patch version details
+        String updatePortion = CoreGUI.getUpdateVersion();
+        if (updatePortion == null) {
+            updatePortion = "";
+        }
+
         StaticTextItem version = new StaticTextItem("version", MSG.view_aboutBox_version());
-        version.setValue(productInfo.getVersion());
+        version.setValue(productInfo.getVersion() + (updatePortion.trim().length() == 0 ? "" : " " + updatePortion));
         version.setWrap(false);
         version.setWrapTitle(false);
 

@@ -1,14 +1,11 @@
 package org.rhq.server.metrics.aggregation;
 
-import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -20,7 +17,6 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -49,11 +45,14 @@ class PastDataAggregator extends BaseAggregator {
     }
 
     public void execute() throws InterruptedException, AbortedException {
-        final TaskTracker taskTracker = new TaskTracker();
+        // need to call addTask() here for this initial callback; otherwise, the
+        // following call waitForTasksToFinish can complete prematurely.
+        taskTracker.addTask();
         Futures.addCallback(findPastIndexEntries(), new FutureCallback<List<CacheIndexEntry>>() {
             @Override
             public void onSuccess(List<CacheIndexEntry> pastIndexEntries) {
-                scheduleLateDataAggregationTasks(taskTracker, pastIndexEntries);
+                scheduleLateDataAggregationTasks(pastIndexEntries);
+                taskTracker.finishedTask();
             }
 
             @Override
@@ -92,44 +91,44 @@ class PastDataAggregator extends BaseAggregator {
         }, aggregationTasks);
     }
 
-    private void scheduleLateDataAggregationTasks(TaskTracker taskTracker, List<CacheIndexEntry> pastIndexEntries) {
+    private void scheduleLateDataAggregationTasks(List<CacheIndexEntry> pastIndexEntries) {
         try {
             List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
-            CacheIndexEntry lastIndexEntry = null;
+//            CacheIndexEntry lastIndexEntry = null;
 
             for (CacheIndexEntry indexEntry : pastIndexEntries) {
-                lastIndexEntry = indexEntry;
-
-                // create task to aggregate past data
-                // Note that if indexEntry.scheduleIds is empty than we can pull
-                // data from metrics_cache and schedule a ProcessBatch task.
+//                lastIndexEntry = indexEntry;
+                permits.acquire();
 
                 if (indexEntry.getScheduleIds().isEmpty()) {
-                    // TODO schedule task to aggregate data in cache block
+                    StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
+                        indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
+                    processCacheBlock(indexEntry, cacheFuture);
                 } else {
                     for (Integer scheduleId : indexEntry.getScheduleIds()) {
-                        permits.acquire();
                         queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(),
                             new DateTime(indexEntry.getCollectionTimeSlice()).plusHours(1).getMillis()));
                         if (queryFutures.size() == PAST_DATA_BATCH_SIZE) {
-                            processBatch(taskTracker, queryFutures, indexEntry);
+                            processBatch(queryFutures, indexEntry);
                             queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
                         }
+                    }
+                    if (!queryFutures.isEmpty()) {
+                        processBatch(queryFutures, indexEntry);
                     }
                 }
             }
             taskTracker.finishedSchedulingTasks();
-            if (!queryFutures.isEmpty()) {
-                processBatch(taskTracker, queryFutures, lastIndexEntry);
-            }
+//            if (!queryFutures.isEmpty()) {
+//                processBatch(queryFutures, lastIndexEntry);
+//            }
         } catch (InterruptedException e) {
             LOG.warn("There was an interrupt while processing past data.", e);
             taskTracker.abort("There was an interrupt while processing past data.");
         }
     }
 
-    private void processBatch(TaskTracker taskTracker, List<StorageResultSetFuture> queryFutures,
-        CacheIndexEntry indexEntry) {
+    private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
 
         taskTracker.addTask();
 
@@ -152,7 +151,7 @@ class PastDataAggregator extends BaseAggregator {
         ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
             deleteCacheIndexEntry(indexEntry), aggregationTasks);
 
-        Futures.addCallback(deleteCacheIndexFuture, batchFinished(taskTracker, queryFutures.size()), aggregationTasks);
+        Futures.addCallback(deleteCacheIndexFuture, batchFinished(queryFutures.size()), aggregationTasks);
     }
 
     private <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
@@ -188,30 +187,7 @@ class PastDataAggregator extends BaseAggregator {
         };
     }
 
-    private AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetrics(final int startScheduleId) {
-        return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
-            @Override
-            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 3);
-                for (NumericMetric metric : metrics) {
-                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MAX, metric.getMax()));
-                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MIN, metric.getMin()));
-                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.AVG, metric.getAvg()));
-                    futures.add(dao.updateMetricsCache(ONE_HOUR, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
-                        startScheduleId, metric.getScheduleId(), metric.getTimestamp(), toMap(metric)));
-                    futures.add(dao.updateCacheIndex(ONE_HOUR, dateTimeService.get24HourTimeSlice(startTime).getMillis(),
-                        AggregationManager.INDEX_PARTITION, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
-                        startScheduleId));
-                }
-                return Futures.successfulAsList(futures);
-            }
-        };
-    }
-
-    private FutureCallback<ResultSet> batchFinished(final TaskTracker taskTracker, final int numSchedules) {
+    private FutureCallback<ResultSet> batchFinished(final int numSchedules) {
         return new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(ResultSet result) {

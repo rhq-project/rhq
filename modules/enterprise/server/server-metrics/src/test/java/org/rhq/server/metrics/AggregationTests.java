@@ -279,14 +279,27 @@ public class AggregationTests extends MetricsTest {
         currentHour = hour(3);
         testdb = new InMemoryMetricsDB();
         dateTimeService.setNow(hour(3).plusMinutes(55));
+
         insertRawData(
             newRawData(hour(3).plusMinutes(20), schedule1.id, 20),
             newRawData(hour(3).plusMinutes(30), schedule1.id, 22),
             newRawData(hour(3).plusMinutes(15), schedule2.id, 75),
             newRawData(hour(3).plusMinutes(20), schedule2.id, 100)
         );
-        testdb.aggregateRawData(hour(3), hour(4));
+
         new AggregationManagerTestStub(hour(3)).run();
+
+        // Insert data here after running aggregation to simulate the scenario in which we
+        // have the full data set in the cache block for past data. This would happen when
+        // aggregation of a cache block fails for example. In this situation we can
+        // aggregate the data stored in the cache block instead of the raw_metrics table
+        // even though the data will be considered old.
+        insertRawData(
+            newRawData(hour(3).plusMinutes(20), schedule3.id, 30),
+            newRawData(hour(3).plusMinutes(40), schedule3.id, 40)
+        );
+
+        testdb.aggregateRawData(hour(3), hour(4));
     }
 
     @Test(dependsOnMethods = "prepareForLateDataAggregationInSame6HourTimeSlice")
@@ -298,7 +311,9 @@ public class AggregationTests extends MetricsTest {
             newRawData(hour(3).plusMinutes(40), schedule1.id, 30),
             newRawData(hour(4).plusMinutes(40), schedule1.id, 27),
             newRawData(hour(4).plusMinutes(40), schedule2.id, 321),
-            newRawData(hour(4).plusMinutes(45), schedule2.id, 333)
+            newRawData(hour(4).plusMinutes(45), schedule2.id, 333),
+            newRawData(hour(4).plusMinutes(20), schedule3.id, 50),
+            newRawData(hour(4).plusMinutes(40), schedule3.id, 60)
         );
 
         testdb.aggregateRawData(hour(3), hour(4));
@@ -311,19 +326,26 @@ public class AggregationTests extends MetricsTest {
         // verify values in db
         assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
 
         assertRawCacheEmpty(hour(4), startScheduleId(schedule1.id));
+        assertRawCacheEmpty(hour(4), startScheduleId(schedule3.id));
         assertRawCacheIndexEmpty(hour(3), INDEX_PARTITION, hour(3));
         assertRawCacheIndexEmpty(hour(4), INDEX_PARTITION, hour(4));
 
         assert1HourCacheIndexEquals(today(), INDEX_PARTITION, hour(0), asList(
-            new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0))
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
         ));
         assert1HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(
             testdb.get1HourData(hour(3), schedule1.id),
             testdb.get1HourData(hour(4), schedule1.id),
             testdb.get1HourData(hour(3), schedule2.id),
             testdb.get1HourData(hour(4), schedule2.id)
+        ));
+        assert1HourCacheEquals(hour(0), startScheduleId(schedule3.id), asList(
+            testdb.get1HourData(hour(3), schedule3.id),
+            testdb.get1HourData(hour(4), schedule3.id)
         ));
     }
 

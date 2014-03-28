@@ -72,7 +72,7 @@ public class AggregationTests extends MetricsTest {
         metricsServer.setDateTimeService(dateTimeService);
         metricsServer.setDAO(dao);
         metricsServer.setCacheBatchSize(PARTITION_SIZE);
-        metricsServer.init(MIN_SCHEDULE_ID, MAX_SCHEDULE_ID);
+        metricsServer.init();
 
         aggregationTasks = metricsServer.getAggregationWorkers();
     }
@@ -383,11 +383,11 @@ public class AggregationTests extends MetricsTest {
     private class AggregationManagerTestStub extends AggregationManager {
 
         public AggregationManagerTestStub(DateTime startTime) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
+            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
         }
 
         public AggregationManagerTestStub(DateTime startTime, MetricsDAO dao) {
-            super(aggregationTasks, dao, configuration, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
+            super(aggregationTasks, dao, dateTimeService, startTime, BATCH_SIZE, 4, PARTITION_SIZE);
         }
 
     }

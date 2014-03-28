@@ -27,7 +27,6 @@ import org.joda.time.DateTime;
 
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.DateTimeService;
-import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
@@ -53,8 +52,6 @@ public class AggregationManager {
 
     private MetricsDAO dao;
 
-    private MetricsConfiguration configuration;
-
     private DateTimeService dtService;
 
     private DateTime startTime;
@@ -67,11 +64,10 @@ public class AggregationManager {
 
     private Semaphore permits;
 
-    public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao,
-        MetricsConfiguration configuration,
-        DateTimeService dtService, DateTime startTime, int batchSize, int parallelism, int cacheBatchSize) {
+    public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
+        DateTime startTime, int batchSize, int parallelism, int cacheBatchSize) {
+
         this.dao = dao;
-        this.configuration = configuration;
         this.dtService = dtService;
         this.startTime = startTime;
         oneHourData = new ConcurrentSkipListSet<AggregateNumericMetric>(AGGREGATE_COMPARATOR);

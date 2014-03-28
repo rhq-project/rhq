@@ -367,24 +367,31 @@ public class MetricsServerTest extends MetricsTest {
         DateTime hour10 = hour0().plusHours(10);
         DateTime hour14 = hour0().plusHours(14);
 
-        insertRawData(hour(10),
+        setNow(hour(11));
+        Set<MeasurementDataNumeric> data = ImmutableSet.of(
             new MeasurementDataNumeric(hour(10).plusMinutes(5).getMillis(), scheduleId, 5.0),
             new MeasurementDataNumeric(hour(10).plusMinutes(10).getMillis(), scheduleId, 10.0),
             new MeasurementDataNumeric(hour(10).plusMinutes(15).getMillis(), scheduleId, 15.0)
-        ).await("Failed to insert raw data");
+        );
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+        metricsServer.addNumericData(data, waitForRawInserts);
+        waitForRawInserts.await("Failed to insert raw data");
 
         // now after the server starts back up in the 14th hour,
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
         setNow(hour0().plusHours(16));
-        metricsServer.init(MIN_SCHEDULE_ID, MAX_SCHEDULE_ID);
+        metricsServer.init();
 
-        insertRawData(hour(14),
+        data = ImmutableSet.of(
             new MeasurementDataNumeric(hour(14).plusMinutes(20).getMillis(), scheduleId, 3.0),
             new MeasurementDataNumeric(hour(14).plusMinutes(25).getMillis(), scheduleId, 5.0),
             new MeasurementDataNumeric(hour(14).plusMinutes(30).getMillis(), scheduleId, 13.0)
-        ).await("Failed to insert raw data");
+        );
+        waitForRawInserts = new WaitForRawInserts(data.size());
+        metricsServer.addNumericData(data, waitForRawInserts);
+        waitForRawInserts.await("Failed to insert raw data");
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
@@ -442,14 +449,11 @@ public class MetricsServerTest extends MetricsTest {
         setNow(hour0().plusHours(10));
         metricsServer.init();
 
-        rawData = new HashSet<MeasurementDataNumeric>();
-        rawData.add(new MeasurementDataNumeric(hour8.plusMinutes(20).getMillis(), scheduleId, 8.0));
-        rawData.add(new MeasurementDataNumeric(hour8.plusMinutes(25).getMillis(), scheduleId, 16.0));
-        rawData.add(new MeasurementDataNumeric(hour8.plusMinutes(30).getMillis(), scheduleId, 5.0));
-
-        waitForRawInserts = new WaitForRawInserts(rawData.size());
-        metricsServer.addNumericData(rawData, waitForRawInserts);
-        waitForRawInserts.await("Failed to insert raw data during hour " + hour8.getHourOfDay());
+        insertRawData(hour(8),
+            new MeasurementDataNumeric(hour(8).plusMinutes(20).getMillis(), scheduleId, 8.0),
+            new MeasurementDataNumeric(hour(8).plusMinutes(25).getMillis(), scheduleId, 16.0),
+            new MeasurementDataNumeric(hour(8).plusMinutes(30).getMillis(), scheduleId, 3.0)
+        ).await("Failed to insert raw data");
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.

@@ -57,6 +57,8 @@ public interface StorageNodeManagerLocal extends StorageNodeManagerRemote {
 
     void linkResource(Resource resource);
 
+    StorageNode linkExistingStorageNodeToResource(StorageNode storageNode);
+
     ListenableFuture<List<StorageNodeLoadComposite>> getLoadAsync(Subject subject, StorageNode node, long beginTime,
         long endTime);
 

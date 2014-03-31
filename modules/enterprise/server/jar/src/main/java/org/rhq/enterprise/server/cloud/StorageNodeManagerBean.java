@@ -204,6 +204,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNode.setAddress(address);
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
+                storageNodeManager.linkExistingStorageNodeToResource(storageNode);
+
             } else {
                 StorageClusterSettings clusterSettings = storageClusterSettingsManager
                     .getClusterSettings(subjectManager.getOverlord());
@@ -224,6 +226,23 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource
                 + " cannot be linked to a storage node", e);
         }
+    }
+
+    @Override
+    public StorageNode linkExistingStorageNodeToResource(StorageNode storageNode) {
+        StorageNode existingStorageNode = entityManager.find(StorageNode.class, storageNode.getId());
+        if (null != existingStorageNode) {
+            existingStorageNode.setAddress(storageNode.getAddress());
+            existingStorageNode.setResource(storageNode.getResource());
+            existingStorageNode.setOperationMode(storageNode.getOperationMode());
+            storageNode = entityManager.merge(existingStorageNode);
+
+        } else {
+            log.info("Storage node did not exist, could not link to Resource. Returning unpersisted Storage Node "
+                + storageNode);
+        }
+
+        return storageNode;
     }
 
     @Override

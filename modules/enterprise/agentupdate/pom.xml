@@ -11,7 +11,6 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-agentupdate</artifactId>
-  <version>4.9.0.JON320GA-redhat-1</version>
   <packaging>jar</packaging>
 
   <name>RHQ Enterprise Agent Update</name>
@@ -29,7 +28,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-agent</artifactId>
-      <version>${rhq-enterprise-agent.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -73,7 +72,7 @@
                   <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z" />
                 </tstamp>
 
-                <echo file="${project.build.outputDirectory}/rhq-agent-update-version.properties" append="false">rhq-agent.latest.version=${rhq-enterprise-agentupdate.version}
+                <echo file="${project.build.outputDirectory}/rhq-agent-update-version.properties" append="false">rhq-agent.latest.version=${project.version}
 rhq-agent.latest.build-number=${buildNumber}
 </echo>
 
@@ -90,7 +89,7 @@ rhq-agent.latest.build-number=${buildNumber}
             <phase>process-resources</phase>
             <configuration>
               <target>
-                <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${rhq-enterprise-agent.version}/rhq-enterprise-agent-${rhq-enterprise-agent.version}.zip" todir="${project.build.outputDirectory}" />
+                <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip" todir="${project.build.outputDirectory}" />
                 <fileset dir="${settings.localRepository}" id="run.classpath.fileset">
                   <!-- we do not need logging (yet) in AgentUpdate
                   <include name="log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" />
@@ -149,7 +148,7 @@ rhq-agent.latest.build-number=${buildNumber}
           <rhq.rootDir>../../..</rhq.rootDir>
           <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
           <rhq.projectJar>${project.build.finalName}.jar</rhq.projectJar>
-          <rhq.deploymentJar>rhq-enterprise-agent-${rhq-enterprise-agent.version}.jar</rhq.deploymentJar>
+          <rhq.deploymentJar>rhq-enterprise-agent-${project.version}.jar</rhq.deploymentJar>
           <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/rhq-downloads/rhq-agent</rhq.deploymentDir>
         </properties>
 

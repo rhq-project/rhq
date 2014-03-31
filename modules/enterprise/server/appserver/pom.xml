@@ -125,7 +125,7 @@
                     <dependency>
                         <groupId>org.rhq</groupId>
                         <artifactId>rhq-remoting-cli</artifactId>
-                        <version>${rhq-remoting-cli.version}</version>
+                        <version>${project.version}</version>
                         <scope>runtime</scope>
                     </dependency>
                 </dependencies>
@@ -136,13 +136,13 @@
                         <configuration>
                             <target>
                                 <echo>Copying sample modules from the CLI distribution</echo>
-                                <unzip src="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq-remoting-cli.version}/rhq-remoting-cli-${rhq-remoting-cli.version}.zip"
+                                <unzip src="${settings.localRepository}/org/rhq/rhq-remoting-cli/${project.version}/rhq-remoting-cli-${project.version}.zip"
                                        dest="${basedir}/target/downloadable-resources/script-modules">
 
                                     <patternset>
                                         <include name="**/samples/modules/**.js"/>
                                     </patternset>
-                                    <globmapper from="rhq-remoting-cli-${rhq-remoting-cli.version}/samples/modules/*" to="*"/>
+                                    <globmapper from="rhq-remoting-cli-${project.version}/samples/modules/*" to="*"/>
                                 </unzip>
                             </target>
                         </configuration>

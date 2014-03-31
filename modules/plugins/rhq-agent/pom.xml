@@ -20,7 +20,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-enterprise-agent</artifactId>
-         <version>${rhq-enterprise-agent.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope> <!-- by the RHQ agent -->
       </dependency>
 

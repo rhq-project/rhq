@@ -1,5 +1,7 @@
 package org.rhq.server.metrics.aggregation;
 
+import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -55,7 +57,9 @@ class BaseAggregator {
     protected DateTimeService dateTimeService;
 
     protected TaskTracker taskTracker = new TaskTracker();
+
     protected CacheBlockFinishedListener cacheBlockFinishedListener;
+
     private int cacheBatchSize;
 
     void setDao(MetricsDAO dao) {
@@ -125,6 +129,56 @@ class BaseAggregator {
         return new AggregateNumericMetric(scheduleId, mean.getArithmeticMean(), min, max, timeSlice);
     }
 
+    protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetrics(
+        final CacheIndexEntry indexEntry) {
+
+        return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
+            @Override
+            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 5);
+                for (NumericMetric metric : metrics) {
+                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.MAX, metric.getMax()));
+                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.MIN, metric.getMin()));
+                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.AVG, metric.getAvg()));
+                    futures.add(dao.updateMetricsCache(ONE_HOUR, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
+                        indexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
+                        toMap(metric)));
+                    futures.add(dao.updateCacheIndex(ONE_HOUR, dateTimeService.get24HourTimeSlice(startTime).getMillis(),
+                        AggregationManager.INDEX_PARTITION, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
+                        indexEntry.getStartScheduleId()));
+                }
+                return Futures.successfulAsList(futures);
+            }
+        };
+    }
+
+    protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist6HourMetrics(
+        final long timestamp) {
+
+        return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
+            @Override
+            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size());
+                for (AggregateNumericMetric metric : metrics) {
+                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), timestamp, AggregateType.MAX,
+                        metric.getMax())));
+                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), timestamp, AggregateType.MIN,
+                        metric.getMin())));
+                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), timestamp, AggregateType.AVG,
+                        metric.getAvg())));
+                }
+                return Futures.successfulAsList(futures);
+            }
+        };
+    }
+
+    /**
+     * @param indexEntry
+     * @return
+     */
     protected AsyncFunction<List<ResultSet>, ResultSet> deleteCacheEntry(final CacheIndexEntry indexEntry) {
         return new AsyncFunction<List<ResultSet>, ResultSet>() {
             @Override
@@ -169,10 +223,6 @@ class BaseAggregator {
 
     @SuppressWarnings("unchecked")
     protected void processCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {
-//        if (LOG.isDebugEnabled()) {
-//            LOG.debug("Processing " + indexEntry);
-//        }
-
         taskTracker.addTask();
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,

@@ -38,8 +38,6 @@ public class AggregationTests extends MetricsTest {
 
     private ListeningExecutorService aggregationTasks;
 
-    private DateTime currentHour;
-
     private final int MIN_SCHEDULE_ID = 100;
 
     private final int MAX_SCHEDULE_ID = 200;
@@ -92,7 +90,6 @@ public class AggregationTests extends MetricsTest {
 
     @Test(dependsOnMethods = "insertRawDataDuringHour16")
     public void runAggregationForHour16() throws Exception {
-        currentHour = hour(17);
         dateTimeService.setNow(hour(17).plusMinutes(1));
         testdb.aggregateRawData(hour(16), hour(17));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(16));
@@ -136,7 +133,6 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "insertRawDataDuringHour17")
     public void runAggregationForHour17() throws Exception {
         dateTimeService.setNow(hour(18).plusMinutes(1));
-        currentHour = hour(18);
         testdb.aggregateRawData(hour(17), hour(18));
         testdb.aggregate1HourData(hour(12), hour(18));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(17));
@@ -184,7 +180,6 @@ public class AggregationTests extends MetricsTest {
 
     @Test(dependsOnMethods = "insertRawDataDuringHour18")
     public void runAggregationForHour18() throws Exception {
-        currentHour = hour(19);
         dateTimeService.setNow(hour(19).plusMinutes(1));
         testdb.aggregateRawData(hour(18), hour(19));
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(18));
@@ -238,7 +233,6 @@ public class AggregationTests extends MetricsTest {
 
     @Test(dependsOnMethods = "insertRawDataDuringHour23")
     public void runAggregationForHour24() throws Exception {
-        currentHour = hour(24);
         dateTimeService.setNow(hour(24).plusMinutes(1));
         testdb.aggregateRawData(hour(23), hour(24));
         testdb.aggregate1HourData(hour(18), hour(24));
@@ -276,7 +270,6 @@ public class AggregationTests extends MetricsTest {
     @Test(dependsOnMethods = "runAggregationForHour24")
     public void prepareForLateDataAggregationInSame6HourTimeSlice() throws Exception {
         purgeDB();
-        currentHour = hour(3);
         testdb = new InMemoryMetricsDB();
         dateTimeService.setNow(hour(3).plusMinutes(55));
 
@@ -304,7 +297,6 @@ public class AggregationTests extends MetricsTest {
 
     @Test(dependsOnMethods = "prepareForLateDataAggregationInSame6HourTimeSlice")
     public void aggregateLateDataInSame6HourTimeSlice() throws Exception {
-        currentHour = hour(4);
         dateTimeService.setNow(hour(4).plusMinutes(55));
         insertRawData(
             newRawData(hour(3).plusMinutes(35), schedule1.id, 20),
@@ -349,6 +341,50 @@ public class AggregationTests extends MetricsTest {
         ));
     }
 
+    @Test(dependsOnMethods = "aggregateLateDataInSame6HourTimeSlice")
+    public void aggregateLateDuringNext6HourTimeSlice() throws Exception {
+        // First we need to run aggregation for the 05:00 hour in order to generate the
+        // necessary 6 hour data
+        dateTimeService.setNow(hour(6).plusMinutes(1));
+        new AggregationManagerTestStub(hour(5)).run();
+
+        // Next we insert late data
+        dateTimeService.setNow(hour(6).plusMinutes(55));
+        insertRawData(
+            newRawData(hour(5).plusMinutes(10), schedule1.id, 5),
+            newRawData(hour(5).plusMinutes(15), schedule1.id, 125),
+            newRawData(hour(5).plusMinutes(20), schedule2.id, 22),
+            newRawData(hour(5).plusMinutes(40), schedule2.id, 18)
+        );
+        testdb.aggregateRawData(hour(5), hour(6));
+
+        // now insert data for the time slice to be aggregated
+        insertRawData(
+            newRawData(hour(6).plusMinutes(25), schedule1.id, 35),
+            newRawData(hour(6).plusMinutes(50), schedule1.id, 40),
+            newRawData(hour(6).plusMinutes(15), schedule2.id, 27),
+            newRawData(hour(6).plusMinutes(50), schedule2.id, 23),
+            newRawData(hour(6).plusMinutes(20), schedule3.id, 86.453),
+            newRawData(hour(6).plusMinutes(40), schedule3.id, 84.77)
+        );
+
+        testdb.aggregateRawData(hour(6), hour(7));
+        testdb.aggregate1HourData(hour(0), hour(6));
+
+       AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(6));
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        assertCollectionEqualsNoOrder(oneHourData, testdb.get1HourData(hour(6)), "The returned 1 hour data is wrong");
+        // verify values in db
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert6HourDataEquals(schedule1.id, testdb.get6HourData(schedule1.id));
+        assert6HourDataEquals(schedule2.id, testdb.get6HourData(schedule2.id));
+        assert6HourDataEquals(schedule3.id, testdb.get6HourData(schedule3.id));
+    }
+
 //    @Test(dependsOnMethods = "runAggregationForHour24")
     public void resetDBForFailureScenarios() throws Exception {
         purgeDB();
@@ -356,7 +392,6 @@ public class AggregationTests extends MetricsTest {
 
 //    @Test(dependsOnMethods = "resetDBForFailureScenarios")
     public void doNotDeleteCachePartitionOnBatchFailure() throws Exception {
-        currentHour = hour(5);
         DateTime time = hour(4).plusMinutes(20);
         insertRawData(hour(4), new MeasurementDataNumeric(time.getMillis(), schedule1.id, 3.0))
             .await("Failed to insert raw data");

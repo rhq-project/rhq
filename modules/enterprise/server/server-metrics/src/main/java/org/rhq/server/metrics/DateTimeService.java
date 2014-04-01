@@ -150,6 +150,10 @@ public class DateTimeService {
         return getTimeSlice(time, configuration.getOneHourTimeSliceDuration());
     }
 
+    public DateTime get6HourTimeSliceEnd(DateTime time) {
+        return get6HourTimeSlice(time).plus(configuration.getOneHourTimeSliceDuration());
+    }
+
     /**
      * Determines if the current six hour time slice for the specified time has completed.
      * <p>

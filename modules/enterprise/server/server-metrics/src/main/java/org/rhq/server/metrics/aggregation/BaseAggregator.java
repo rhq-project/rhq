@@ -160,7 +160,7 @@ class BaseAggregator {
                             indexEntry.getStartScheduleId()));
                     }
                 }
-                return Futures.successfulAsList(futures);
+                return Futures.allAsList(futures);
             }
         };
     }
@@ -188,7 +188,27 @@ class BaseAggregator {
                             toMap(metric)));
                     }
                 }
-                return Futures.successfulAsList(futures);
+                return Futures.allAsList(futures);
+            }
+        };
+    }
+
+    protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist24HourMetrics() {
+
+        return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
+            @Override
+            public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) {
+                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 3);
+                for (AggregateNumericMetric metric : metrics) {
+                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.MAX, metric.getMax()));
+                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.MIN, metric.getMin()));
+                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.AVG, metric.getAvg()));
+                }
+
+                return Futures.allAsList(futures);
             }
         };
     }

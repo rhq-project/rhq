@@ -10,16 +10,17 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 
 /**
+ * CombinedMetricsIterator takes a list {@link CombinedMetricsPair}s, combines the in memory metrics with those
+ * retrieved from the storage cluster, and provides access to those metrics grouped by schedule. Because weak
+ * consistency is used on writes, we cannot guarantee that the result sets will contain the recently written metrics.
+ * It is entirely possible though that the result sets will contain the recently computed metrics. This class ensures
+ * that the lists it returns do not contain duplicate values.
+ *
  * @author John Sanda
  */
 class CombinedMetricsIterator implements Iterator<List<AggregateNumericMetric>> {
 
     private Iterator<List<AggregateNumericMetric>> iterator;
-
-    public CombinedMetricsIterator(List<ResultSet> resultSets, List<AggregateNumericMetric> metrics) {
-        List<List<AggregateNumericMetric>> combinedMetrics = combine(resultSets, metrics);
-        iterator = combinedMetrics.iterator();
-    }
 
     public CombinedMetricsIterator(List<CombinedMetricsPair> pairs) {
         List<ResultSet> resultSets = new ArrayList<ResultSet>(pairs.size());

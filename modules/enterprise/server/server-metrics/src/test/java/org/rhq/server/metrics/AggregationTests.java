@@ -413,6 +413,63 @@ public class AggregationTests extends MetricsTest {
         ));
     }
 
+    @Test(dependsOnMethods = "aggregateLateDuringNext6HourTimeSlice")
+    public void aggregateLateDataDuringNext24HourTimeSlice() throws Exception {
+        // Run aggregation to clear out cache entries from the 06:00 - 12:00 time slice
+        dateTimeService.setNow(hour(12).plusMinutes(1));
+        new AggregationManagerTestStub(hour(11)).run();
+
+        testdb.aggregate1HourData(hour(6), hour(12));
+
+        // Run aggregation to clear out cache entries from the 00:00 - 24:00 time slice
+        dateTimeService.setNow(tomorrow().plusMinutes(1));
+        new AggregationManagerTestStub(hour(23)).run();
+
+        dateTimeService.setNow(tomorrow().plusHours(1).plusMinutes(50));
+
+        insertRawData(
+            newRawData(hour(23).plusMinutes(20), schedule1.id, 750),
+            newRawData(hour(23).plusMinutes(40), schedule1.id, 230),
+            newRawData(hour(23).plusMinutes(20), schedule3.id, 15),
+            newRawData(hour(23).plusMinutes(25), schedule3.id, 325),
+            newRawData(tomorrow().plusHours(1).plusMinutes(15), schedule1.id, 200),
+            newRawData(tomorrow().plusHours(1).plusMinutes(10), schedule2.id, 150),
+            newRawData(tomorrow().plusHours(1).plusMinutes(35), schedule3.id, 475)
+        );
+
+        testdb.aggregateRawData(hour(23), tomorrow());
+        testdb.aggregate1HourData(hour(18), tomorrow());
+        testdb.aggregate6HourData(today(), tomorrow());
+        testdb.aggregateRawData(tomorrow().plusHours(1), tomorrow().plusHours(2));
+
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(tomorrow().plusHours(1));
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        assertCollectionEqualsNoOrder(oneHourData, testdb.get1HourData(tomorrow().plusHours(1)),
+            "The returned 1 hour data is wrong");
+        // verify values in the db
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert1HourCacheIndexEquals(tomorrow(), INDEX_PARTITION, tomorrow(), asList(
+            new1HourCacheIndexEntry(tomorrow(), startScheduleId(schedule1.id), tomorrow()),
+            new1HourCacheIndexEntry(tomorrow(), startScheduleId(schedule3.id), tomorrow())
+        ));
+
+        assert1HourCacheEquals(tomorrow(), startScheduleId(schedule1.id), asList(
+            testdb.get1HourData(tomorrow().plusHours(1), schedule1.id),
+            testdb.get1HourData(tomorrow().plusHours(1), schedule2.id)
+        ));
+
+        assert6HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(18));
+
+        assert6HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
+        assert6HourCacheEmpty(hour(18), startScheduleId(schedule3.id));
+
+        assert24HourDataEquals(schedule1.id, testdb.get24HourData(schedule1.id));
+    }
+
 //    @Test(dependsOnMethods = "runAggregationForHour24")
     public void resetDBForFailureScenarios() throws Exception {
         purgeDB();

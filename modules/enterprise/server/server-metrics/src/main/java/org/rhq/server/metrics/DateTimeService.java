@@ -139,6 +139,17 @@ public class DateTimeService {
         return getTimeSlice(time, configuration.getSixHourTimeSliceDuration());
     }
 
+    public DateTime get24HourTimeSliceEnd(DateTime time) {
+        return get24HourTimeSlice(time).plus(configuration.getSixHourTimeSliceDuration());
+    }
+
+    /**
+     * @see #get24HourTimeSlice(org.joda.time.DateTime)
+     */
+    public DateTime get24HourTimeSlice(long timestamp) {
+        return get24HourTimeSlice(new DateTime(timestamp));
+    }
+
     /**
      * This method determines the six hour time slice for the specified time and returns the start of that time slice.
      *

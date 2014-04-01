@@ -18,6 +18,7 @@
  */
 package org.rhq.coregui.client.admin.topology;
 
+import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_ADDRESS;
 import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
 import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP_ID;
 import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
@@ -36,11 +37,14 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.PopupWindow;
 import org.rhq.coregui.client.admin.AdministrationView;
+import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
@@ -136,13 +140,74 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
         // list of all agents (context #1 see the class JavaDoc)
         if (id == null) {
+            setupNewButton();
             setupDeleteButton();
+            setupStartButton();
+            setupStopButton();
         }
 
         // list of agents assigned to affinity group (context #3)
         if (isAffinityGroupId) {
             showUpdateMembersAction();
         }
+    }
+
+    private void setupNewButton() {
+        addTableAction(MSG.common_button_new(), null, new AuthorizedTableAction(this, TableActionEnablement.ALWAYS,
+            Permission.MANAGE_INVENTORY) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                PopupWindow window = new PopupWindow(new RemoteAgentInstallView(null, true, false, false));
+                window.setTitle(MSG.view_adminTopology_remoteAgentInstall());
+                window.setHeight(600);
+                window.setWidth(800);
+                window.show();
+                refresh();
+            }
+        });
+    }
+
+    private void setupStartButton() {
+        addTableAction(MSG.common_button_start(), null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
+            Permission.MANAGE_INVENTORY) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                if (selections == null || selections.length == 0) {
+                    return; // do nothing since nothing is selected (we really shouldn't get here)
+                }
+
+                RemoteAccessInfo info = new RemoteAccessInfo(selections[0].getAttributeAsString(FIELD_ADDRESS
+                    .propertyName()), null, (String) null);
+                RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(info, false, true, false);
+
+                PopupWindow window = new PopupWindow(remoteAgentView);
+                window.setTitle(MSG.view_adminTopology_agent_start());
+                window.setHeight(300);
+                window.setWidth(800);
+                window.show();
+                refresh();
+            }
+        });
+    }
+
+    private void setupStopButton() {
+        addTableAction(MSG.common_button_stop(), null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
+            Permission.MANAGE_INVENTORY) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                if (selections == null || selections.length == 0) {
+                    return; // do nothing since nothing is selected (we really shouldn't get here)
+                }
+
+                RemoteAccessInfo info = new RemoteAccessInfo(selections[0].getAttributeAsString(FIELD_ADDRESS
+                    .propertyName()), null, (String) null);
+                RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(info, false, true, false);
+
+                PopupWindow window = new PopupWindow(remoteAgentView);
+                window.setTitle(MSG.view_adminTopology_agent_stop());
+                window.setHeight(300);
+                window.setWidth(800);
+                window.show();
+                refresh();
+            }
+        });
     }
 
     private void setupDeleteButton() {

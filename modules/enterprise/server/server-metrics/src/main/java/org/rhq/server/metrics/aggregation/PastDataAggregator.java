@@ -135,10 +135,13 @@ class PastDataAggregator extends BaseAggregator {
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
             computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
 
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture,
-            persist1HourMetrics(indexEntry), aggregationTasks);
+        boolean is6HourTimeSliceFinished = dateTimeService.is6HourTimeSliceFinished(
+            indexEntry.getCollectionTimeSlice());
 
-        if (dateTimeService.is6HourTimeSliceFinished(new DateTime(indexEntry.getCollectionTimeSlice()))) {
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(metricsFuture,
+            persist1HourMetrics(indexEntry, !is6HourTimeSliceFinished), aggregationTasks);
+
+        if (is6HourTimeSliceFinished) {
             ListenableFuture<List<ResultSet>> sixHourInsertsFuture = process1HourData(indexEntry,
                 proceedWithMetricsAfterInserts(insertsFuture, metricsFuture));
 
@@ -195,23 +198,6 @@ class PastDataAggregator extends BaseAggregator {
         };
     }
 
-    private Function<List<ResultSet>, Iterable<List<AggregateNumericMetric>>> toIterable(
-        final List<AggregateNumericMetric> inMemoryMetrics) {
-
-        return new Function<List<ResultSet>, Iterable<List<AggregateNumericMetric>>>() {
-            @Override
-            public Iterable<List<AggregateNumericMetric>> apply(final List<ResultSet> resultSets) {
-
-                return new Iterable<List<AggregateNumericMetric>>() {
-                    @Override
-                    public Iterator<List<AggregateNumericMetric>> iterator() {
-                        return new CombinedMetricsIterator(resultSets, inMemoryMetrics);
-                    }
-                };
-            }
-        };
-    }
-
     private Function<List<CombinedMetricsPair>, Iterable<List<AggregateNumericMetric>>> toIterable() {
         return new Function<List<CombinedMetricsPair>, Iterable<List<AggregateNumericMetric>>>() {
             @Override
@@ -252,6 +238,9 @@ class PastDataAggregator extends BaseAggregator {
 
         DateTime sixHourTimeSlice = dateTimeService.get6HourTimeSlice(new DateTime(indexEntry.getCollectionTimeSlice()));
 
+        boolean is24HourTimeSliceFinished = dateTimeService.is24HourTimeSliceFinished(new DateTime(
+            indexEntry.getCollectionTimeSlice()));
+
         ListenableFuture<List<CombinedMetricsPair>> pairFutures = Futures.transform(metricsFuture,
             fetch1HourData(indexEntry), aggregationTasks);
 
@@ -259,10 +248,10 @@ class PastDataAggregator extends BaseAggregator {
             toIterable(), aggregationTasks);
 
         ListenableFuture<List<AggregateNumericMetric>> sixHourMetricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), AggregateNumericMetric.class), aggregationTasks);
+            computeAggregates(sixHourTimeSlice.getMillis(), AggregateNumericMetric.class), aggregationTasks);
 
         ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(sixHourMetricsFuture,
-            persist6HourMetrics(sixHourTimeSlice.getMillis()), aggregationTasks);
+            persist6HourMetrics(indexEntry, !is24HourTimeSliceFinished), aggregationTasks);
 
         return insertsFuture;
     }

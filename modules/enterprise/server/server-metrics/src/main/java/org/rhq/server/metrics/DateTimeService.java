@@ -173,6 +173,13 @@ public class DateTimeService {
     }
 
     /**
+     * @see #is6HourTimeSliceFinished(org.joda.time.DateTime)
+     */
+    public boolean is6HourTimeSliceFinished(long timestamp) {
+        return is6HourTimeSliceFinished(new DateTime(timestamp));
+    }
+
+    /**
      * Determines if the current 24 hour time slice for the specified time has completed.
      * <p>
      * Suppose that the current time 22:12 Monday and that the specified time is 21:48. The current time slice, i.e.,
@@ -188,6 +195,13 @@ public class DateTimeService {
      */
     public boolean is24HourTimeSliceFinished(DateTime time) {
         return hasTimeSliceEnded(get24HourTimeSlice(time), configuration.getSixHourTimeSliceDuration());
+    }
+
+    /**
+     * @see #is24HourTimeSliceFinished(org.joda.time.DateTime)
+     */
+    public boolean is24HourTimeSliceFinished(long timestamp) {
+        return is24HourTimeSliceFinished(new DateTime(timestamp));
     }
 
     private boolean hasTimeSliceEnded(DateTime startTime, Duration duration) {

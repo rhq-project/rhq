@@ -1,6 +1,7 @@
 package org.rhq.server.metrics.aggregation;
 
 import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
+import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -130,12 +131,18 @@ class BaseAggregator {
     }
 
     protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist1HourMetrics(
-        final CacheIndexEntry indexEntry) {
+        final CacheIndexEntry indexEntry, final boolean updateCache) {
 
         return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 5);
+                List<StorageResultSetFuture> futures;
+                if (updateCache) {
+                    futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 5);
+                } else {
+                    futures = new ArrayList<StorageResultSetFuture>(metrics.size() * 3);
+                }
+
                 for (NumericMetric metric : metrics) {
                     futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
                         AggregateType.MAX, metric.getMax()));
@@ -143,12 +150,15 @@ class BaseAggregator {
                         AggregateType.MIN, metric.getMin()));
                     futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
                         AggregateType.AVG, metric.getAvg()));
-                    futures.add(dao.updateMetricsCache(ONE_HOUR, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
-                        indexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
-                        toMap(metric)));
-                    futures.add(dao.updateCacheIndex(ONE_HOUR, dateTimeService.get24HourTimeSlice(startTime).getMillis(),
-                        AggregationManager.INDEX_PARTITION, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
-                        indexEntry.getStartScheduleId()));
+
+                    if (updateCache) {
+                        futures.add(dao.updateMetricsCache(ONE_HOUR, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
+                            indexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
+                            toMap(metric)));
+                        futures.add(dao.updateCacheIndex(ONE_HOUR, dateTimeService.get24HourTimeSlice(startTime).getMillis(),
+                            AggregationManager.INDEX_PARTITION, dateTimeService.get6HourTimeSlice(startTime).getMillis(),
+                            indexEntry.getStartScheduleId()));
+                    }
                 }
                 return Futures.successfulAsList(futures);
             }
@@ -156,19 +166,27 @@ class BaseAggregator {
     }
 
     protected AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>> persist6HourMetrics(
-        final long timestamp) {
+        final CacheIndexEntry indexEntry, final boolean updateCache) {
 
         return new AsyncFunction<List<AggregateNumericMetric>, List<ResultSet>>() {
             @Override
             public ListenableFuture<List<ResultSet>> apply(List<AggregateNumericMetric> metrics) throws Exception {
                 List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(metrics.size());
                 for (AggregateNumericMetric metric : metrics) {
-                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), timestamp, AggregateType.MAX,
-                        metric.getMax())));
-                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), timestamp, AggregateType.MIN,
-                        metric.getMin())));
-                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), timestamp, AggregateType.AVG,
-                        metric.getAvg())));
+                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.MAX, metric.getMax())));
+                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.MIN, metric.getMin())));
+                    futures.add((dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
+                        AggregateType.AVG, metric.getAvg())));
+
+                    if (updateCache) {
+                        long twentyFourHourTimeSlice = dateTimeService.get24HourTimeSlice(new DateTime(
+                            metric.getTimestamp())).getMillis();
+                        futures.add(dao.updateMetricsCache(SIX_HOUR, twentyFourHourTimeSlice,
+                            indexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
+                            toMap(metric)));
+                    }
                 }
                 return Futures.successfulAsList(futures);
             }

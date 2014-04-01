@@ -329,6 +329,7 @@ public class AggregationTests extends MetricsTest {
             new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
             new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
         ));
+
         assert1HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(
             testdb.get1HourData(hour(3), schedule1.id),
             testdb.get1HourData(hour(4), schedule1.id),
@@ -383,6 +384,33 @@ public class AggregationTests extends MetricsTest {
         assert6HourDataEquals(schedule1.id, testdb.get6HourData(schedule1.id));
         assert6HourDataEquals(schedule2.id, testdb.get6HourData(schedule2.id));
         assert6HourDataEquals(schedule3.id, testdb.get6HourData(schedule3.id));
+
+        // Note that while we aggregated old data from the 00:00 - 06:00 6 hour time slice, we expect the cache
+        // and cache index to be empty for that time its 6 hour time slice has already passed.
+        assert1HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(0));
+        assert1HourCacheEmpty(hour(0), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+
+        assert1HourCacheIndexEquals(hour(0), INDEX_PARTITION, hour(6), asList(
+            new1HourCacheIndexEntry(hour(0), startScheduleId(schedule1.id), hour(6)),
+            new1HourCacheIndexEntry(hour(0), startScheduleId(schedule3.id), hour(6))
+        ));
+
+        assert1HourCacheEquals(hour(6), startScheduleId(schedule1.id), asList(
+            testdb.get1HourData(hour(6), schedule1.id),
+            testdb.get1HourData(hour(6), schedule2.id)
+        ));
+        assert1HourCacheEquals(hour(6), startScheduleId(schedule3.id),
+            asList(testdb.get1HourData(hour(6), schedule3.id)));
+
+        assert6HourCacheIndexEquals(hour(0), INDEX_PARTITION, hour(0), asList(
+            new6HourCacheIndexEntry(hour(0), startScheduleId(schedule1.id), hour(0)),
+            new6HourCacheIndexEntry(hour(0), startScheduleId(schedule3.id), hour(0))
+        ));
+
+        assert6HourCacheEquals(hour(0), startScheduleId(schedule1.id), asList(
+            testdb.get6HourData(hour(0), schedule1.id),
+            testdb.get6HourData(hour(0), schedule2.id)
+        ));
     }
 
 //    @Test(dependsOnMethods = "runAggregationForHour24")

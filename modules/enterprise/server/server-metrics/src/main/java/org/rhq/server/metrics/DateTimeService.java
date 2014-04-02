@@ -161,6 +161,13 @@ public class DateTimeService {
         return getTimeSlice(time, configuration.getOneHourTimeSliceDuration());
     }
 
+    /**
+     * @see #get6HourTimeSlice(org.joda.time.DateTime)
+     */
+    public DateTime get6HourTimeSlice(long timestamp) {
+        return get6HourTimeSlice(new DateTime(timestamp));
+    }
+
     public DateTime get6HourTimeSliceEnd(DateTime time) {
         return get6HourTimeSlice(time).plus(configuration.getOneHourTimeSliceDuration());
     }

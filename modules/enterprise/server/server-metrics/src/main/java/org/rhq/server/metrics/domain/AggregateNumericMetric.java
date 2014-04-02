@@ -26,6 +26,8 @@ package org.rhq.server.metrics.domain;
 
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+
 /**
  * @author John Sanda
  */
@@ -128,6 +130,14 @@ public class AggregateNumericMetric implements NumericMetric {
 
     public void setMaxColumnMetadata(ColumnMetadata maxColumnMetadata) {
         this.maxColumnMetadata = maxColumnMetadata;
+    }
+
+    public Map<Integer, Double> toMap() {
+        return ImmutableMap.of(
+            AggregateType.MAX.ordinal(), max,
+            AggregateType.MIN.ordinal(), min,
+            AggregateType.AVG.ordinal(), avg
+        );
     }
 
     @Override

@@ -37,12 +37,18 @@ class PastDataAggregator extends BaseAggregator {
 
     private DateTime currentDay;
 
+    private PersistFunctions persistFns;
+
     void setStartingDay(DateTime startingDay) {
         this.startingDay = startingDay;
     }
 
     void setCurrentDay(DateTime currentDay) {
         this.currentDay = currentDay;
+    }
+
+    void setPersistFns(PersistFunctions persistFns) {
+        this.persistFns = persistFns;
     }
 
     public void execute() throws InterruptedException, AbortedException {
@@ -101,7 +107,11 @@ class PastDataAggregator extends BaseAggregator {
                 if (indexEntry.getScheduleIds().isEmpty()) {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
-                    processCacheBlock(indexEntry, cacheFuture);
+                    if (dateTimeService.is6HourTimeSliceFinished(indexEntry.getCollectionTimeSlice())) {
+                        processCacheBlock(indexEntry, cacheFuture, persistFns.persist1HourMetrics());
+                    } else {
+                        processCacheBlock(indexEntry, cacheFuture, persistFns.persist1HourMetricsAndUpdateCache());
+                    }
                 } else {
                     for (Integer scheduleId : indexEntry.getScheduleIds()) {
                         queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(),
@@ -135,11 +145,19 @@ class PastDataAggregator extends BaseAggregator {
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
             computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
 
+        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
+            indexAggregatesPair(indexEntry));
+
         boolean is6HourTimeSliceFinished = dateTimeService.is6HourTimeSliceFinished(
             indexEntry.getCollectionTimeSlice());
+        ListenableFuture<List<ResultSet>> oneHourInsertsFuture;
 
-        ListenableFuture<List<ResultSet>> oneHourInsertsFuture = Futures.transform(metricsFuture,
-            persist1HourMetrics(indexEntry, !is6HourTimeSliceFinished), aggregationTasks);
+        if (is6HourTimeSliceFinished) {
+            oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetrics(), aggregationTasks);
+        } else {
+            oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetricsAndUpdateCache(),
+                aggregationTasks);
+        }
 
         ListenableFuture<List<ResultSet>> insertsFuture = oneHourInsertsFuture;
 
@@ -255,8 +273,16 @@ class PastDataAggregator extends BaseAggregator {
         ListenableFuture<List<AggregateNumericMetric>> sixHourMetricsFuture = Futures.transform(iterableFuture,
             computeAggregates(sixHourTimeSlice.getMillis(), AggregateNumericMetric.class), aggregationTasks);
 
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(sixHourMetricsFuture,
-            persist6HourMetrics(indexEntry, !is24HourTimeSliceFinished), aggregationTasks);
+        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(sixHourMetricsFuture,
+            indexAggregatesPair(indexEntry));
+
+        ListenableFuture<List<ResultSet>> insertsFuture;
+        if (is24HourTimeSliceFinished) {
+            insertsFuture = Futures.transform(pairFuture, persistFns.persist6HourMetrics(), aggregationTasks);
+        } else {
+            insertsFuture = Futures.transform(pairFuture, persistFns.persist6HourMetricsAndUpdateCache(),
+                aggregationTasks);
+        }
 
         return new MetricsFuturesPair(insertsFuture, sixHourMetricsFuture);
     }
@@ -275,8 +301,11 @@ class PastDataAggregator extends BaseAggregator {
         ListenableFuture<List<AggregateNumericMetric>> twentyFourHourMetricsFuture = Futures.transform(iterableFuture,
             computeAggregates(timeSlice.getMillis(), AggregateNumericMetric.class), aggregationTasks);
 
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(twentyFourHourMetricsFuture,
-            persist24HourMetrics(), aggregationTasks);
+        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(twentyFourHourMetricsFuture,
+            indexAggregatesPair(indexEntry));
+
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture,
+            persistFns.persist24HourMetrics(), aggregationTasks);
 
         return new MetricsFuturesPair(insertsFuture, twentyFourHourMetricsFuture);
     }

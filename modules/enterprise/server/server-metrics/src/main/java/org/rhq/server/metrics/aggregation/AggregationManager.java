@@ -1,24 +1,13 @@
 package org.rhq.server.metrics.aggregation;
 
-import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
-import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 import org.apache.commons.logging.Log;
@@ -28,10 +17,7 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.NumericMetric;
 
 /**
  * This class is the driver for metrics aggregation.
@@ -91,13 +77,15 @@ public class AggregationManager {
         int num1Hour = 0;
         int num6Hour = 0;
         try {
-            createPastDataAggregator().execute();
-            numRaw = createRawAggregator().execute();
+            PersistFunctions persistFunctions = new PersistFunctions(dao, dtService);
+
+            createPastDataAggregator(persistFunctions).execute();
+            numRaw = createRawAggregator(persistFunctions).execute();
             if (is6HourTimeSliceFinished()) {
-                num1Hour = create1HourAggregator().execute();
+                num1Hour = create1HourAggregator(persistFunctions).execute();
             }
             if (is24HourTimeSliceFinished()) {
-                num6Hour = create6HourAggregator().execute();
+                num6Hour = create6HourAggregator(persistFunctions).execute();
             }
 
             return oneHourData;
@@ -115,7 +103,7 @@ public class AggregationManager {
         }
     }
 
-    private PastDataAggregator createPastDataAggregator() {
+    private PastDataAggregator createPastDataAggregator(PersistFunctions persistFunctions) {
         PastDataAggregator aggregator = new PastDataAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.RAW);
@@ -125,12 +113,13 @@ public class AggregationManager {
         aggregator.setStartingDay(dtService.current24HourTimeSlice().minusDays(1));
         aggregator.setStartTime(startTime);
         aggregator.setDateTimeService(dtService);
-        aggregator.setPersistMetrics(persist1HourMetrics());
+        aggregator.setPersistFns(persistFunctions);
+        aggregator.setPersistMetrics(persistFunctions.persist1HourMetricsAndUpdateCache());
 
         return aggregator;
     }
 
-    private CacheAggregator createRawAggregator() {
+    private CacheAggregator createRawAggregator(PersistFunctions persistFunctions) {
         CacheAggregator aggregator = new CacheAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.RAW);
@@ -140,7 +129,7 @@ public class AggregationManager {
         aggregator.setStartTime(startTime);
         aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
-        aggregator.setPersistMetrics(persist1HourMetrics());
+        aggregator.setPersistMetrics(persistFunctions.persist1HourMetricsAndUpdateCache());
         aggregator.setCacheBlockFinishedListener(new CacheAggregator.CacheBlockFinishedListener() {
             @Override
             public void onFinish(IndexAggregatesPair pair) {
@@ -150,7 +139,7 @@ public class AggregationManager {
         return aggregator;
     }
 
-    private CacheAggregator create1HourAggregator() {
+    private CacheAggregator create1HourAggregator(PersistFunctions persistFunctions) {
         CacheAggregator aggregator = new CacheAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.ONE_HOUR);
@@ -160,12 +149,12 @@ public class AggregationManager {
         aggregator.setStartTime(dtService.get6HourTimeSlice(startTime));
         aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
-        aggregator.setPersistMetrics(persist6HourMetrics());
+        aggregator.setPersistMetrics(persistFunctions.persist6HourMetricsAndUpdateCache());
 
         return aggregator;
     }
 
-    private CacheAggregator create6HourAggregator() {
+    private CacheAggregator create6HourAggregator(PersistFunctions persistFunctions) {
         CacheAggregator aggregator = new CacheAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.SIX_HOUR);
@@ -175,81 +164,9 @@ public class AggregationManager {
         aggregator.setStartTime(dtService.get24HourTimeSlice(startTime));
         aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
-        aggregator.setPersistMetrics(persist24HourMetrics());
+        aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
 
         return aggregator;
-    }
-
-    private AsyncFunction<IndexAggregatesPair, List<ResultSet>> persist1HourMetrics() {
-        return new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
-            @Override
-            public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) throws Exception {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 5);
-                for (NumericMetric metric : pair.metrics) {
-                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MAX, metric.getMax()));
-                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MIN, metric.getMin()));
-                    futures.add(dao.insertOneHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.AVG, metric.getAvg()));
-                    futures.add(dao.updateMetricsCache(ONE_HOUR, dtService.get6HourTimeSlice(startTime).getMillis(),
-                        pair.cacheIndexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(), toMap(
-                        metric)));
-                    futures.add(dao.updateCacheIndex(ONE_HOUR, dtService.get24HourTimeSlice(startTime).getMillis(),
-                        INDEX_PARTITION, dtService.get6HourTimeSlice(startTime).getMillis(), pair.cacheIndexEntry.getStartScheduleId()));
-                }
-                return Futures.successfulAsList(futures);
-            }
-        };
-    }
-
-    private AsyncFunction<IndexAggregatesPair, List<ResultSet>> persist6HourMetrics() {
-        return new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
-            @Override
-            public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) throws Exception {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 5);
-                for (NumericMetric metric : pair.metrics) {
-                    futures.add(dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MAX, metric.getMax()));
-                    futures.add(dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MIN, metric.getMin()));
-                    futures.add(dao.insertSixHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.AVG, metric.getAvg()));
-                    futures.add(dao.updateMetricsCache(SIX_HOUR, dtService.get24HourTimeSlice(startTime).getMillis(),
-                        pair.cacheIndexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(), toMap(metric)));
-                    futures.add(dao.updateCacheIndex(SIX_HOUR, dtService.get24HourTimeSlice(startTime).getMillis(),
-                        INDEX_PARTITION, dtService.get24HourTimeSlice(startTime).getMillis(), pair.cacheIndexEntry.getStartScheduleId()));
-                }
-                return Futures.successfulAsList(futures);
-            }
-        };
-    }
-
-    private AsyncFunction<IndexAggregatesPair, List<ResultSet>> persist24HourMetrics() {
-        return new AsyncFunction<IndexAggregatesPair, List<ResultSet>>() {
-            @Override
-            public ListenableFuture<List<ResultSet>> apply(IndexAggregatesPair pair) throws Exception {
-                List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 3);
-                for (NumericMetric metric : pair.metrics) {
-                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MAX, metric.getMax()));
-                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.MIN, metric.getMin()));
-                    futures.add(dao.insertTwentyFourHourDataAsync(metric.getScheduleId(), metric.getTimestamp(),
-                        AggregateType.AVG, metric.getAvg()));
-                }
-                return Futures.successfulAsList(futures);
-            }
-        };
-    }
-
-    // TODO move the map function into AggregateNumericMetric
-    private Map<Integer, Double> toMap(NumericMetric metric) {
-        return ImmutableMap.of(
-            AggregateType.MAX.ordinal(), metric.getMax(),
-            AggregateType.MIN.ordinal(), metric.getMin(),
-            AggregateType.AVG.ordinal(), metric.getAvg()
-        );
     }
 
 }

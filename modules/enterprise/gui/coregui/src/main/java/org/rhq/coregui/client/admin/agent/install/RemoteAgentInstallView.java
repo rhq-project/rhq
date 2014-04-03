@@ -49,6 +49,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
@@ -86,13 +87,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private final boolean showStartButton;
     private final boolean showStopButton;
 
-    private RemoteAccessInfo initialRemoteAccessInfo;
+    private AgentInstall initialAgentInstall;
 
-    public RemoteAgentInstallView(RemoteAccessInfo initialRemoteAccessInfo, boolean showInstallButton,
+    public RemoteAgentInstallView(AgentInstall initialInfo, boolean showInstallButton,
         boolean showStartButton, boolean showStopButton) {
 
         super();
-        this.initialRemoteAccessInfo = initialRemoteAccessInfo;
+        this.initialAgentInstall = initialInfo;
         this.showInstallButton = showInstallButton;
         this.showStartButton = showStartButton;
         this.showStopButton = showStopButton;
@@ -203,11 +204,14 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        if (initialRemoteAccessInfo != null) {
-            host.setValue(initialRemoteAccessInfo.getHost());
-            port.setValue(String.valueOf(initialRemoteAccessInfo.getPort()));
-            username.setValue(initialRemoteAccessInfo.getUser());
-            password.setValue(initialRemoteAccessInfo.getPassword());
+        if (initialAgentInstall != null) {
+            host.setValue(initialAgentInstall.getSshHost());
+            if (initialAgentInstall.getSshPort() != null) {
+                port.setValue(String.valueOf(initialAgentInstall.getSshPort()));
+            }
+            username.setValue(initialAgentInstall.getSshUsername());
+            password.setValue(initialAgentInstall.getSshPassword());
+            agentInstallPath.setValue(initialAgentInstall.getInstallLocation());
         }
 
         connectionForm.setFields(host, port, username, password, agentInstallPath,
@@ -353,7 +357,10 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         //            return;
         // FOR TESTING WITHOUT DOING A REAL INSTALL - END
 
-        remoteInstallService.installAgent(getRemoteAccessInfo(), getAgentInstallPath(),
+        // TODO: get a UI component for this
+        boolean overwriteExistingAgent = false;
+
+        remoteInstallService.installAgent(getRemoteAccessInfo(), getAgentInstallPath(), overwriteExistingAgent,
             new AsyncCallback<AgentInstallInfo>() {
                 public void onFailure(Throwable caught) {
                     disableButtons(false);

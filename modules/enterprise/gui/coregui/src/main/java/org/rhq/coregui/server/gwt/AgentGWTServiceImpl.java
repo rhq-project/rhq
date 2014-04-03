@@ -20,6 +20,7 @@ package org.rhq.coregui.server.gwt;
 
 import java.util.List;
 
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -39,9 +40,20 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
 
     @Override
+    public AgentInstall getAgentInstallByAgentName(String agentName) throws RuntimeException {
+        try {
+            //security handled in AgentManagerBean. requires Inventory_Manager
+            return SerialUtility.prepare(agentManager.getAgentInstallByAgentName(getSessionSubject(), agentName),
+                "AgentService.getAgentInstallByAgentName");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
     public Agent getAgentForResource(int resourceId) throws RuntimeException {
         try {
-            //security handled in AgentManagerBean. requires View_Resource. 
+            //security handled in AgentManagerBean. requires View_Resource.
             return SerialUtility.prepare(agentManager.getAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.getAgentForResource");
         } catch (Throwable t) {
@@ -52,7 +64,7 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     @Override
     public Boolean pingAgentForResource(int resourceId) throws RuntimeException {
         try {
-            //security handled in AgentManagerBean. requires View_Resource. 
+            //security handled in AgentManagerBean. requires View_Resource.
             return SerialUtility.prepare(agentManager.pingAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.pingAgentForResource");
         } catch (Throwable t) {
@@ -63,7 +75,7 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     @Override
     public List<Agent> getAllAgents() throws RuntimeException {
         try {
-            //security handled in AgentManagerBean. requires View_Resource. 
+            //security handled in AgentManagerBean. requires View_Resource.
             return SerialUtility.prepare(agentManager.getAllAgents(), "AgentService.getAllAgents");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -73,7 +85,7 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     @Override
     public PageList<Agent> getAgentsByServer(Integer serverId, PageControl pc) throws RuntimeException {
         try {
-            //TODO: security handled in AgentManagerBean. requires View_Resource. 
+            //TODO: security handled in AgentManagerBean. requires View_Resource.
             return SerialUtility.prepare(agentManager.getAgentsByServer(getSessionSubject(), serverId, pc),
                 "AgentService.getAgentsByServer");
         } catch (Throwable t) {

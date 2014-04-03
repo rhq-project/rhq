@@ -29,7 +29,7 @@ import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 
 /**
  * Provides methods to remotely install, start and stop agents over SSH.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -38,7 +38,8 @@ public interface RemoteInstallGWTService extends RemoteService {
     // --- RemoteInstallManagerRemote
     boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
-    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
+    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath, boolean overwriteExistingAgent)
+        throws RuntimeException;
 
     String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 

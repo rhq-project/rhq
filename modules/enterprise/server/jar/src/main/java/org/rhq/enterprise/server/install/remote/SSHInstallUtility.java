@@ -37,6 +37,7 @@ import com.jcraft.jsch.Session;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
@@ -44,7 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A utility object that is used to install, start and stop agents remotely over SSH.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -129,7 +130,7 @@ public class SSHInstallUtility {
         }
     }
 
-    public AgentInstallInfo installAgent(String parentPath) {
+    public AgentInstallInfo installAgent(String parentPath, String installId) {
 
         String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
         AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, serverAddress,
@@ -138,6 +139,7 @@ public class SSHInstallUtility {
         executeCommand("uname -a", "Machine uname", info);
         executeCommand("java -version", "Java Version Check", info);
         executeCommand("mkdir -p '" + parentPath + "'", "Create Agent Install Directory", info);
+        executeCommand("rm -rf '" + parentPath + "/rhq-agent'", "Remove any previously installed agent", info);
 
         log.info("Copying agent binary update distribution file to [" + accessInfo.getHost() + "]...");
 
@@ -157,6 +159,11 @@ public class SSHInstallUtility {
 
         String agentScript = parentPath + "/rhq-agent/bin/rhq-agent.sh"; // NOTE: NOT the wrapper script
         String startStringArgs = info.getConfigurationStartString();
+
+        // this ID will be used by the agent when it registered, thus allowing the server to link this install with that agent
+        if (installId != null) {
+            startStringArgs += " -D" + AgentRegistrationRequest.SYSPROP_INSTALL_ID + "=" + installId;
+        }
 
         // Tell the script to store a pid file to make the wrapper script work
         String envCmd1 = "RHQ_AGENT_IN_BACKGROUND='" + parentPath + "/rhq-agent/bin/rhq-agent.pid'";
@@ -262,7 +269,7 @@ public class SSHInstallUtility {
 
         try {
             channel = (ChannelExec) session.openChannel("exec");
-            ((ChannelExec) channel).setCommand(command);
+            channel.setCommand(command);
 
             is = channel.getInputStream();
             es = channel.getErrStream();
@@ -380,7 +387,7 @@ public class SSHInstallUtility {
         System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
         System.out.println("Agent stop: " + ssh.stopAgent(agentInstallPath));
         System.out.println("Agent find: " + ssh.findAgentInstallPath(parentPath));
-        System.out.println("Agent install: " + ssh.installAgent(parentPath));
+        System.out.println("Agent install: " + ssh.installAgent(parentPath, null));
         System.out.println("Agent find: " + ssh.findAgentInstallPath(parentPath));
         System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
         System.out.println("Agent stop: " + ssh.stopAgent(agentInstallPath));

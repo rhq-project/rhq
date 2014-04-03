@@ -18,7 +18,6 @@
  */
 package org.rhq.coregui.client.admin.topology;
 
-import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_ADDRESS;
 import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
 import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP_ID;
 import static org.rhq.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
@@ -37,7 +36,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
@@ -174,16 +173,29 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     return; // do nothing since nothing is selected (we really shouldn't get here)
                 }
 
-                RemoteAccessInfo info = new RemoteAccessInfo(selections[0].getAttributeAsString(FIELD_ADDRESS
-                    .propertyName()), null, (String) null);
-                RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(info, false, true, false);
+                String agentName = selections[0].getAttributeAsString(FIELD_NAME);
+                GWTServiceLookup.getAgentService().getAgentInstallByAgentName(agentName,
+                    new AsyncCallback<AgentInstall>() {
+                        @Override
+                        public void onSuccess(AgentInstall result) {
+                            showRemoteAgentInstallView(result);
+                        }
 
-                PopupWindow window = new PopupWindow(remoteAgentView);
-                window.setTitle(MSG.view_adminTopology_agent_start());
-                window.setHeight(300);
-                window.setWidth(800);
-                window.show();
-                refresh();
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            showRemoteAgentInstallView(null); // can't get any info on the agent - the user will have to provide it all
+                        }
+
+                        private void showRemoteAgentInstallView(AgentInstall ai) {
+                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, false, true, false);
+                            PopupWindow window = new PopupWindow(remoteAgentView);
+                            window.setTitle(MSG.view_adminTopology_agent_start());
+                            window.setHeight(300);
+                            window.setWidth(800);
+                            window.show();
+                            refresh();
+                        }
+                    });
             }
         });
     }
@@ -196,16 +208,29 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     return; // do nothing since nothing is selected (we really shouldn't get here)
                 }
 
-                RemoteAccessInfo info = new RemoteAccessInfo(selections[0].getAttributeAsString(FIELD_ADDRESS
-                    .propertyName()), null, (String) null);
-                RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(info, false, true, false);
+                String agentName = selections[0].getAttributeAsString(FIELD_NAME);
+                GWTServiceLookup.getAgentService().getAgentInstallByAgentName(agentName,
+                    new AsyncCallback<AgentInstall>() {
+                        @Override
+                        public void onSuccess(AgentInstall result) {
+                            showRemoteAgentInstallView(result);
+                        }
 
-                PopupWindow window = new PopupWindow(remoteAgentView);
-                window.setTitle(MSG.view_adminTopology_agent_stop());
-                window.setHeight(300);
-                window.setWidth(800);
-                window.show();
-                refresh();
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            showRemoteAgentInstallView(null); // can't get any info on the agent - the user will have to provide it all
+                        }
+
+                        private void showRemoteAgentInstallView(AgentInstall ai) {
+                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, false, false, true);
+                            PopupWindow window = new PopupWindow(remoteAgentView);
+                            window.setTitle(MSG.view_adminTopology_agent_stop());
+                            window.setHeight(300);
+                            window.setWidth(800);
+                            window.show();
+                            refresh();
+                        }
+                    });
             }
         });
     }

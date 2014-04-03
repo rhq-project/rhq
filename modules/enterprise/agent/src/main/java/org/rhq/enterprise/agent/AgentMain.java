@@ -1420,8 +1420,13 @@ public class AgentMain {
                             String version = Version.getProductVersion();
                             String build = Version.getBuildNumber();
                             AgentVersion agentVersion = new AgentVersion(version, build);
+                            String installId = System.getProperty(AgentRegistrationRequest.SYSPROP_INSTALL_ID);
+                            String installLocation = getAgentHomeDirectory();
+                            if (installLocation != null && installLocation.trim().length() == 0) {
+                                installLocation = null; // tells the server we don't know it
+                            }
                             AgentRegistrationRequest request = new AgentRegistrationRequest(agent_name, address, port,
-                                remote_endpoint, regenerate_token, token, agentVersion);
+                                remote_endpoint, regenerate_token, token, agentVersion, installId, installLocation);
 
                             Thread.sleep(retry_interval);
 

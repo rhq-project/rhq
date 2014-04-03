@@ -27,23 +27,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.as.jdr.commands.JdrCommand;
-import org.jboss.as.jdr.commands.RHQCommand;
+import org.jboss.as.jdr.commands.RHQFilesCollector;
+import org.jboss.as.jdr.commands.RHQGetStatusCommand;
 import org.jboss.as.jdr.plugins.JdrPlugin;
 import org.jboss.as.jdr.plugins.PluginId;
 
 /**
- * Plugin to retrive data from RHQ and add it to the JDR report
+ * Plugin to retrieve data from RHQ and add it to the JDR report
  * @author Heiko W. Rupp
  */
 public class RHQPlugin implements JdrPlugin {
 
     private final PluginId pluginId = new PluginId("RHQ", 1, 0, null);
-
     @Override
     public List<JdrCommand> getCommands() throws Exception {
 
-        List<JdrCommand> commands = new ArrayList<JdrCommand>(1);
-        commands.add(new RHQCommand());
+        List<JdrCommand> commands = new ArrayList<JdrCommand>(4);
+        commands.add(new RHQGetStatusCommand());
+        commands.add(new RHQFilesCollector("bin","rhq-server.properties")); // TODO sanitize *.password=* entries
+        commands.add(new RHQFilesCollector("logs","rhq-storage.log"));
+        commands.add(new RHQFilesCollector("logs","server.log"));
 
         return commands;
 

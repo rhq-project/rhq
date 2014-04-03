@@ -23,6 +23,7 @@
 
 package org.jboss.as.jdr.commands;
 
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,12 +31,13 @@ import java.net.URL;
 import org.jboss.util.Base64;
 
 /**
- * Command to get data from RHQ
+ * Command to get data from the running RHQ server
  * @author Heiko W. Rupp
  */
-public class RHQCommand extends JdrCommand {
+public class RHQGetStatusCommand extends JdrCommand {
 
-    private static final String RHQ_SERVER_STATE_JSON = "rhq-server-state.json";
+    private static final String RHQ_PREFIX = "rhq" + File.separator;
+    private static final String RHQ_SERVER_STATE_JSON = RHQ_PREFIX + "rhq-server-state.json";
 
     @Override
     public void execute() throws Exception {

@@ -6,26 +6,35 @@ The jar created from this module needs to be put into
 
   $RHQ-SERVER/jbossas/modules/system/layers/base/org/jboss/as/jdr/main
 
-the contained modules.xml needs to be augmented with this jar like
+the contained `modules.xml` needs to be augmented with this jar like
 
+[source,xml]
+----
     <resources>
         <resource-root path="jboss-as-jdr-7.2.0.Alpha1-redhat-4.jar"/>
-        <resource-root path="rhq-server-jdr-4.11.0-SNAPSHOT.jar"/>
+        <resource-root path="rhq-server-jdr-4.11.0-SNAPSHOT.jar"/>   <1>
         <!-- Insert resources here -->
         <resource-root path="resources"/>
     </resources>
+----
+<1> This line needs to be added
 
 Also the dependency list needs an additional entry for `org.jboss.common-core`
 
-        <module name="org.jboss.common-core"/>
+[source,xml]
+----
+        <module name="org.jboss.common-core"/>  <1>
         </dependencies>
+----
+<1> This new dependency is needed for Base64 encoding in the current REST-call usage.
 
 The `resources/plugins.properties` needs a new line for the RHQPlugin
 
 ```
 org.jboss.as.jdr.plugins.AS7Plugin=true
-org.rhq.server.jdr.RHQPlugin=true
+org.rhq.server.jdr.RHQPlugin=true <1>
 ```
+<1> Enable our plugin
 
 To trigger the report either go to RHQ UI or call this from the `jboss-cli.sh`
 
@@ -42,10 +51,27 @@ To trigger the report either go to RHQ UI or call this from the `jboss-cli.sh`
 }
 ```
 
-This `.zip` will then contain one or multiple entries like
+This `.zip` will then contain a directory `rhq/` with multiple entries like:
 
 ```
-jdr_14-03-27_11-38-08_snert/rhq-server-state.json
+  inflating: jdr_14-04-03_09-36-32_snert/rhq/rhq-server-state.json
+  inflating: jdr_14-04-03_09-36-32_snert/rhq/rhq-server.properties
+  inflating: jdr_14-04-03_09-36-32_snert/rhq/rhq-storage.log
+  inflating: jdr_14-04-03_09-36-32_snert/rhq/server.log
 ```
 
 with the content the `RHQPlugin` has added.
+
+If for whatever reason the report generation fails, then the above will look like
+
+```
+[standalone@localhost:6999 subsystem=jdr] :generate-jdr-report
+{
+    "outcome" => "failed",
+    "result" => undefined,
+    "failure-description" => "JBAS013353: Could not configure JDR. At least one configuration step failed.",
+    "rolled-back" => true
+}
+```
+
+and the server log will contain more information.

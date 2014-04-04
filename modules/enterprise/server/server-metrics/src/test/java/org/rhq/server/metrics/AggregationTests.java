@@ -470,6 +470,126 @@ public class AggregationTests extends MetricsTest {
         assert24HourDataEquals(schedule1.id, testdb.get24HourData(schedule1.id));
     }
 
+    // The aggregateLateDataFromCacheXXX tests cover scenarios in which aggregation for one
+    // or more cache partitions fails, and we redo the aggregation in a subsequent run. It
+    // can be assumed that all the data for the time slice is present in metrics_cache since
+    // we initially tried to aggregate the data from that table; therefore, we can pull
+    // data from metrics_cache when we redo the failed aggregation(s).
+
+    @Test(dependsOnMethods = "aggregateLateDataDuringNext24HourTimeSlice")
+    public void aggregateLateDataFromCacheInSame6HourTimeSlice() throws Exception {
+        purgeDB();
+        testdb = new InMemoryMetricsDB();
+        dateTimeService.setNow(hour(3).plusMinutes(55));
+
+        dateTimeService.setNow(hour(3).plusMinutes(55));
+
+        insertRawData(
+            newRawData(hour(3).plusMinutes(20), schedule1.id, 30),
+            newRawData(hour(3).plusMinutes(30), schedule1.id, 80),
+            newRawData(hour(3).plusMinutes(15), schedule2.id, 75),
+            newRawData(hour(3).plusMinutes(20), schedule2.id, 100)
+        );
+
+        testdb.aggregateRawData(hour(3), hour(4));
+
+        dateTimeService.setNow(hour(4).plusMinutes(55));
+
+        insertRawData(
+            newRawData(hour(4).plusMinutes(15), schedule1.id, 20),
+            newRawData(hour(4).plusMinutes(30), schedule1.id, 50),
+            newRawData(hour(4).plusMinutes(15), schedule2.id, 50),
+            newRawData(hour(4).plusMinutes(15), schedule3.id, 50),
+            newRawData(hour(4).plusMinutes(30), schedule3.id, 60)
+        );
+
+        dateTimeService.setNow(hour(5).plusSeconds(5));
+
+        testdb.aggregateRawData(hour(4), hour(5));
+
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(4));
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(4)), oneHourData, "The returned 1 hour data is wrong");
+
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert1HourCacheIndexEquals(today(), INDEX_PARTITION, today(), asList(
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule1.id), today()),
+            new1HourCacheIndexEntry(today(), startScheduleId(schedule3.id), today())
+        ));
+
+        assert1HourCacheEquals(hour(0), startScheduleId(schedule1.id),  testdb.get1HourData(schedule1.id, schedule2.id));
+        assert1HourCacheEquals(hour(0), startScheduleId(schedule3.id), testdb.get1HourData(schedule3.id));
+
+        assert6HourCacheIndexEmpty(today(), INDEX_PARTITION, today());
+        assert6HourCacheEmpty(today(), startScheduleId(schedule1.id));
+        assert6HourCacheEmpty(today(), startScheduleId(schedule3.id));
+    }
+
+    @Test(dependsOnMethods = "aggregateLateDataFromCacheInSame6HourTimeSlice")
+    public void aggregateLateDataFromCacheInNext6HourTimeSlice() throws Exception {
+        dateTimeService.setNow(hour(6).plusSeconds(1));
+        new AggregationManagerTestStub(hour(5)).run();
+
+        // reset "now" in order insert the late data
+        dateTimeService.setNow(hour(5).plusMinutes(55));
+
+        insertRawData(
+            newRawData(hour(5).plusMinutes(15), schedule1.id, 15),
+            newRawData(hour(5).plusMinutes(25), schedule1.id, 150),
+            newRawData(hour(5).plusMinutes(10), schedule3.id, 20),
+            newRawData(hour(5).plusMinutes(20), schedule3.id, 80)
+        );
+
+        testdb.aggregateRawData(hour(5), hour(6));
+        testdb.aggregate1HourData(hour(0), hour(6));
+
+        dateTimeService.setNow(hour(6).plusMinutes(50));
+
+        insertRawData(
+            newRawData(hour(6).plusMinutes(15), schedule1.id, 200),
+            newRawData(hour(6).plusMinutes(25), schedule2.id, 225),
+            newRawData(hour(6).plusMinutes(40), schedule3.id, 100)
+        );
+
+        dateTimeService.setNow(hour(7).plusSeconds(1));
+
+        testdb.aggregateRawData(hour(6), hour(7));
+
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(6));
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        assertCollectionEqualsNoOrder(testdb.get1HourData(hour(6)), oneHourData, "The returned 1 hour data is wrong");
+
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert1HourCacheIndexEmpty(today(), INDEX_PARTITION, hour(0));
+        assert1HourCacheEmpty(hour(0), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+
+        assert6HourCacheIndexEquals(today(), INDEX_PARTITION, hour(0), asList(
+            new6HourCacheIndexEntry(today(), startScheduleId(schedule1.id), hour(0)),
+            new6HourCacheIndexEntry(today(), startScheduleId(schedule3.id), hour(0))
+        ));
+        assert6HourCacheEquals(today(), startScheduleId(schedule1.id), asList(
+            testdb.get6HourData(hour(0), schedule1.id),
+            testdb.get6HourData(hour(0), schedule2.id)
+        ));
+        assert6HourCacheEquals(today(), startScheduleId(schedule3.id), asList(
+            testdb.get6HourData(hour(0), schedule3.id)
+        ));
+    }
+
+    @Test(dependsOnMethods = "aggregateLateDataFromCacheInNext6HourTimeSlice")
+    public void aggregateLateDataFromCacheInNext24HourTimeSlice() throws Exception {
+//        dateTimeService.setNow(hour(12).plusSeconds(1));
+//        new AggregationManagerTestStub(hour(11)).run();
+    }
+
 //    @Test(dependsOnMethods = "runAggregationForHour24")
     public void resetDBForFailureScenarios() throws Exception {
         purgeDB();

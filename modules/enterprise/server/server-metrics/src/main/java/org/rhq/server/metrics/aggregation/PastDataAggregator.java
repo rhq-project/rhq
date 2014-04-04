@@ -107,11 +107,7 @@ class PastDataAggregator extends BaseAggregator {
                 if (indexEntry.getScheduleIds().isEmpty()) {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
-                    if (dateTimeService.is6HourTimeSliceFinished(indexEntry.getCollectionTimeSlice())) {
-                        processCacheBlock(indexEntry, cacheFuture, persistFns.persist1HourMetrics());
-                    } else {
-                        processCacheBlock(indexEntry, cacheFuture, persistFns.persist1HourMetricsAndUpdateCache());
-                    }
+                    processCacheBlock(indexEntry, cacheFuture);
                 } else {
                     for (Integer scheduleId : indexEntry.getScheduleIds()) {
                         queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(),
@@ -151,17 +147,11 @@ class PastDataAggregator extends BaseAggregator {
         boolean is6HourTimeSliceFinished = dateTimeService.is6HourTimeSliceFinished(
             indexEntry.getCollectionTimeSlice());
         ListenableFuture<List<ResultSet>> oneHourInsertsFuture;
+        ListenableFuture<List<ResultSet>> insertsFuture;
 
         if (is6HourTimeSliceFinished) {
             oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetrics(), aggregationTasks);
-        } else {
-            oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetricsAndUpdateCache(),
-                aggregationTasks);
-        }
 
-        ListenableFuture<List<ResultSet>> insertsFuture = oneHourInsertsFuture;
-
-        if (is6HourTimeSliceFinished) {
             MetricsFuturesPair sixHourFuturesPair = process1HourData(indexEntry,
                 proceedWithMetricsAfterInserts(new MetricsFuturesPair(oneHourInsertsFuture, metricsFuture)));
 
@@ -172,8 +162,61 @@ class PastDataAggregator extends BaseAggregator {
             } else {
                 insertsFuture = sixHourFuturesPair.resultSetsFuture;
             }
+        } else {
+            oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetricsAndUpdateCache(),
+                aggregationTasks);
+
+            insertsFuture = oneHourInsertsFuture;
         }
         completeBatch(indexEntry, insertsFuture, queryFutures.size());
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void processCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {
+
+        taskTracker.addTask();
+
+        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
+            toIterable(aggregationType.getCacheMapper()), aggregationTasks);
+
+        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
+            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+
+        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
+            indexAggregatesPair(indexEntry));
+
+        boolean is6HourTimeSliceFinished = dateTimeService.is6HourTimeSliceFinished(
+            indexEntry.getCollectionTimeSlice());
+        ListenableFuture<List<ResultSet>> oneHourInsertsFuture;
+        ListenableFuture<List<ResultSet>> insertsFuture;
+
+        if (is6HourTimeSliceFinished) {
+            oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetrics(), aggregationTasks);
+
+            MetricsFuturesPair sixHourFuturesPair = process1HourData(indexEntry,
+                proceedWithMetricsAfterInserts(new MetricsFuturesPair(oneHourInsertsFuture, metricsFuture)));
+
+            if (dateTimeService.is24HourTimeSliceFinished(indexEntry.getCollectionTimeSlice())) {
+                MetricsFuturesPair twentyFourHourFuturesPair = process6HourData(indexEntry,
+                    proceedWithMetricsAfterInserts(sixHourFuturesPair));
+                insertsFuture = twentyFourHourFuturesPair.resultSetsFuture;
+            } else {
+                insertsFuture = sixHourFuturesPair.resultSetsFuture;
+            }
+        } else {
+            oneHourInsertsFuture = Futures.transform(pairFuture, persistFns.persist1HourMetricsAndUpdateCache(),
+                aggregationTasks);
+
+            insertsFuture = oneHourInsertsFuture;
+        }
+
+        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
+            deleteCacheEntry(indexEntry), aggregationTasks);
+
+        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
+            deleteCacheIndexEntry(indexEntry), aggregationTasks);
+
+        Futures.addCallback(deleteCacheIndexFuture, cacheBlockFinished(pairFuture), aggregationTasks);
     }
 
     private void completeBatch(CacheIndexEntry indexEntry, ListenableFuture<List<ResultSet>> insertsFuture,
@@ -234,7 +277,6 @@ class PastDataAggregator extends BaseAggregator {
             }
         };
     }
-
 
     private FutureCallback<ResultSet> batchFinished(final int numSchedules) {
 

@@ -141,6 +141,16 @@ class BaseAggregator {
         };
     }
 
+    protected AsyncFunction<ResultSet, ResultSet> deleteCacheEntry1(final CacheIndexEntry indexEntry) {
+        return new AsyncFunction<ResultSet, ResultSet>() {
+            @Override
+            public ListenableFuture<ResultSet> apply(ResultSet resultSet) {
+                return dao.deleteCacheEntries(indexEntry.getBucket(), indexEntry.getCollectionTimeSlice(),
+                    indexEntry.getStartScheduleId());
+            }
+        };
+    }
+
     protected AsyncFunction<ResultSet, ResultSet> deleteCacheIndexEntry(final CacheIndexEntry indexEntry) {
         return new AsyncFunction<ResultSet, ResultSet>() {
             @Override
@@ -205,7 +215,7 @@ class BaseAggregator {
         Futures.addCallback(deleteCacheIndexFuture, cacheBlockFinished(pairFuture), aggregationTasks);
     }
 
-    private <T extends NumericMetric> Function<ResultSet, Iterable<List<T>>> toIterable(final CacheMapper<T> mapper) {
+    protected <T extends NumericMetric> Function<ResultSet, Iterable<List<T>>> toIterable(final CacheMapper<T> mapper) {
         return new Function<ResultSet, Iterable<List<T>>>() {
             @Override
             public Iterable<List<T>> apply(final ResultSet resultSet) {
@@ -219,7 +229,7 @@ class BaseAggregator {
         };
     }
 
-    private FutureCallback<ResultSet> cacheBlockFinished(final ListenableFuture<IndexAggregatesPair> pairFuture) {
+    protected FutureCallback<ResultSet> cacheBlockFinished(final ListenableFuture<IndexAggregatesPair> pairFuture) {
         return new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(ResultSet result) {

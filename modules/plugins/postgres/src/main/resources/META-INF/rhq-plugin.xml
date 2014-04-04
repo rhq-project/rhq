@@ -47,13 +47,14 @@
       <process-scan name="windows" query="process|basename|match=^(?i)(postgres|postmaster)\.exe$,process|basename|nomatch|parent=^(?i)(postgres|postmaster)\.exe$" />
       <process-scan name="unix" query="process|basename|match=^(postgres|postmaster)$,process|basename|nomatch|parent=^(postgres|postmaster)$" />
 
-      <operation name="listProcessStatistics" description="List statistics about the currently executing postgres backends">
+      <operation name="listProcessStatistics" description="List statistics about the currently executing postgres backends. &lt;em&gt;state&lt;/em&gt; column result is only available with Postgres 9.2+">
          <results>
             <c:list-property name="processList">
                <c:map-property name="process">
                   <c:simple-property name="pid" type="integer"/>
                   <c:simple-property name="userName"/>
                   <c:simple-property name="query"/>
+                  <c:simple-property name="state"/>
                   <c:simple-property name="address"/>
                   <c:simple-property name="port"/>
                </c:map-property>

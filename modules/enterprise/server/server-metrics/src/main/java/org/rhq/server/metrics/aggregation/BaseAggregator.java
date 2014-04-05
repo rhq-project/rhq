@@ -3,13 +3,14 @@ package org.rhq.server.metrics.aggregation;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -20,21 +21,19 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
+import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.ArithmeticMeanCalculator;
 import org.rhq.server.metrics.CacheMapper;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
-import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
-import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * @author John Sanda
  */
-class BaseAggregator {
+abstract class BaseAggregator {
 
     private final Log LOG = LogFactory.getLog(getClass());
 
@@ -56,6 +55,8 @@ class BaseAggregator {
 
     protected TaskTracker taskTracker = new TaskTracker();
 
+    // Currently this is only used by CacheAggregator as a hook to return the 1 hour data
+    // that is needed for subsequent baseline calculations
     protected CacheBlockFinishedListener cacheBlockFinishedListener;
 
     private int cacheBatchSize;
@@ -86,6 +87,59 @@ class BaseAggregator {
 
     void setDateTimeService(DateTimeService dateTimeService) {
         this.dateTimeService = dateTimeService;
+    }
+
+    void setCacheBatchSize(int cacheBatchSize) {
+        this.cacheBatchSize = cacheBatchSize;
+    }
+
+    public int execute() throws InterruptedException, AbortedException {
+        Stopwatch stopwatch = new Stopwatch().start();
+        AtomicInteger numSchedules = new AtomicInteger();
+        try {
+            // need to call addTask() here for this initial callback; otherwise, the
+            // following call waitForTasksToFinish can complete prematurely.
+            taskTracker.addTask();
+            Futures.addCallback(findIndexEntries(), new FutureCallback<List<CacheIndexEntry>>() {
+                @Override
+                public void onSuccess(List<CacheIndexEntry> indexEntries) {
+                    scheduleTasks(indexEntries);
+                    taskTracker.finishedTask();
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    taskTracker.abort("There was an error fetching current cache index entries: " + t.getMessage());
+                }
+            });
+            taskTracker.waitForTasksToFinish();
+
+            return numSchedules.get();
+        } finally {
+            stopwatch.stop();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Finished " + aggregationType + " aggregation of " + numSchedules + " schedules in " +
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            }
+        }
+    }
+
+    abstract ListenableFuture<List<CacheIndexEntry>> findIndexEntries();
+
+    abstract Runnable createAggregationTask(CacheIndexEntry indexEntry);
+
+    private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
+        try {
+            for (CacheIndexEntry indexEntry : indexEntries) {
+                permits.acquire();
+                aggregationTasks.submit(createAggregationTask(indexEntry));
+                taskTracker.addTask();
+            }
+            taskTracker.finishedSchedulingTasks();
+        } catch (InterruptedException e) {
+            LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
+            taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
+        }
     }
 
     protected <T extends NumericMetric> Function<Iterable<List<T>>, List<AggregateNumericMetric>> computeAggregates(
@@ -141,16 +195,6 @@ class BaseAggregator {
         };
     }
 
-    protected AsyncFunction<ResultSet, ResultSet> deleteCacheEntry1(final CacheIndexEntry indexEntry) {
-        return new AsyncFunction<ResultSet, ResultSet>() {
-            @Override
-            public ListenableFuture<ResultSet> apply(ResultSet resultSet) {
-                return dao.deleteCacheEntries(indexEntry.getBucket(), indexEntry.getCollectionTimeSlice(),
-                    indexEntry.getStartScheduleId());
-            }
-        };
-    }
-
     protected AsyncFunction<ResultSet, ResultSet> deleteCacheIndexEntry(final CacheIndexEntry indexEntry) {
         return new AsyncFunction<ResultSet, ResultSet>() {
             @Override
@@ -161,14 +205,6 @@ class BaseAggregator {
         };
     }
 
-    protected Map<Integer, Double> toMap(NumericMetric metric) {
-        return ImmutableMap.of(
-            AggregateType.MAX.ordinal(), metric.getMax(),
-            AggregateType.MIN.ordinal(), metric.getMin(),
-            AggregateType.AVG.ordinal(), metric.getAvg()
-        );
-    }
-
     protected Function<List<AggregateNumericMetric>, IndexAggregatesPair> indexAggregatesPair(
         final CacheIndexEntry indexEntry) {
         return new Function<List<AggregateNumericMetric>, IndexAggregatesPair>() {
@@ -177,42 +213,6 @@ class BaseAggregator {
                 return new IndexAggregatesPair(indexEntry, metrics);
             }
         };
-    }
-
-    void setCacheBatchSize(int cacheBatchSize) {
-        this.cacheBatchSize = cacheBatchSize;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void processCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {
-        processCacheBlock(indexEntry, cacheFuture, persistMetrics);
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void processCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture,
-        AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {
-
-        taskTracker.addTask();
-
-        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
-            toIterable(aggregationType.getCacheMapper()), aggregationTasks);
-
-        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
-            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
-
-        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
-            indexAggregatesPair(indexEntry));
-
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetricsFn,
-            aggregationTasks);
-
-        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
-            deleteCacheEntry(indexEntry), aggregationTasks);
-
-        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-            deleteCacheIndexEntry(indexEntry), aggregationTasks);
-
-        Futures.addCallback(deleteCacheIndexFuture, cacheBlockFinished(pairFuture), aggregationTasks);
     }
 
     protected <T extends NumericMetric> Function<ResultSet, Iterable<List<T>>> toIterable(final CacheMapper<T> mapper) {

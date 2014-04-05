@@ -15,7 +15,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
-import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
@@ -51,23 +50,9 @@ class PastDataAggregator extends BaseAggregator {
         this.persistFns = persistFns;
     }
 
-    public void execute() throws InterruptedException, AbortedException {
-        // need to call addTask() here for this initial callback; otherwise, the
-        // following call waitForTasksToFinish can complete prematurely.
-        taskTracker.addTask();
-        Futures.addCallback(findPastIndexEntries(), new FutureCallback<List<CacheIndexEntry>>() {
-            @Override
-            public void onSuccess(List<CacheIndexEntry> pastIndexEntries) {
-                scheduleLateDataAggregationTasks(pastIndexEntries);
-                taskTracker.finishedTask();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                taskTracker.abort("There was an error fetching late cache index entries: " + t.getMessage());
-            }
-        });
-        taskTracker.waitForTasksToFinish();
+    @Override
+    ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
+        return findPastIndexEntries();
     }
 
     private ListenableFuture<List<CacheIndexEntry>> findPastIndexEntries() {
@@ -98,17 +83,17 @@ class PastDataAggregator extends BaseAggregator {
         }, aggregationTasks);
     }
 
-    private void scheduleLateDataAggregationTasks(List<CacheIndexEntry> pastIndexEntries) {
-        try {
-            List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
-
-            for (CacheIndexEntry indexEntry : pastIndexEntries) {
-                permits.acquire();
+    @Override
+    Runnable createAggregationTask(final CacheIndexEntry indexEntry) {
+        return new Runnable() {
+            @Override
+            public void run() {
                 if (indexEntry.getScheduleIds().isEmpty()) {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
-                    processCacheBlock(indexEntry, cacheFuture);
+                    processRawDataCacheBlock(indexEntry, cacheFuture);
                 } else {
+                    List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
                     for (Integer scheduleId : indexEntry.getScheduleIds()) {
                         queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(),
                             new DateTime(indexEntry.getCollectionTimeSlice()).plusHours(1).getMillis()));
@@ -119,20 +104,13 @@ class PastDataAggregator extends BaseAggregator {
                     }
                     if (!queryFutures.isEmpty()) {
                         processBatch(queryFutures, indexEntry);
-                        queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
                     }
                 }
             }
-            taskTracker.finishedSchedulingTasks();
-        } catch (InterruptedException e) {
-            LOG.warn("There was an interrupt while processing past data.", e);
-            taskTracker.abort("There was an interrupt while processing past data.");
-        }
+        };
     }
 
     private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
-
-        taskTracker.addTask();
 
         ListenableFuture<List<ResultSet>> queriesFuture = Futures.successfulAsList(queryFutures);
 
@@ -173,9 +151,7 @@ class PastDataAggregator extends BaseAggregator {
     }
 
     @SuppressWarnings("unchecked")
-    protected void processCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {
-
-        taskTracker.addTask();
+    protected void processRawDataCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
             toIterable(aggregationType.getCacheMapper()), aggregationTasks);

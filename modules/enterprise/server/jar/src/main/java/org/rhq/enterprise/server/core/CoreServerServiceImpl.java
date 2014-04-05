@@ -299,7 +299,17 @@ public class CoreServerServiceImpl implements CoreServerService {
             }
             ai.setAgentName(agentByName.getName());
             ai.setInstallLocation(request.getInstallLocation());
-            agentManager.updateAgentInstall(subjectManager.getOverlord(), ai);
+            ai = agentManager.updateAgentInstall(subjectManager.getOverlord(), ai);
+
+            // We now have the persisted AgentInstall entity from the database - which may have additional information we didn't have before.
+            // If, however, we still don't have the hostname, fill that in now with the address of the agent entity.
+            // We do this now (rather than when we first updated above) because its possible the user, when remotely installing this agent,
+            // provided a different host IP to connect over SSH to (probably for NAT reasons) and that was persisted before the agent was registered.
+            // Therefore, we want to keep the user's host and not overwrite it. If, however, there is no host information at all, we will fill it in.
+            if (ai.getSshHost() == null) {
+                ai.setSshHost(agentByName.getAddress());
+                ai = agentManager.updateAgentInstall(subjectManager.getOverlord(), ai);
+            }
         } catch (Exception e) {
             log.warn("Could not update the install information for agent [" + agentByName.getName() + "]", e);
         }

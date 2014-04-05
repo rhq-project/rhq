@@ -167,8 +167,8 @@ public class AgentManagerBean implements AgentManagerLocal {
             // will tell us what agent name it wants to use).
             AgentInstall existing = getAgentInstallByAgentName(user, agentInstall.getAgentName());
             if (existing != null) {
-                existing.overlay(agentInstall); // modify the attached hibernate entity so it will be committed when we return
-                agentInstall = existing;
+                existing.overlay(agentInstall); // note: "existing" is detached
+                agentInstall = entityManager.merge(existing);
             } else {
                 entityManager.persist(agentInstall);
             }
@@ -185,7 +185,7 @@ public class AgentManagerBean implements AgentManagerLocal {
                     throw new IllegalStateException("Updating agent install ID [" + agentInstall.getId()
                         + "] with a mismatched agent name is not allowed");
                 }
-                existing.overlay(agentInstall); // modify the attached hibernate entity so it will be committed when we return
+                existing.overlay(agentInstall); // modify the attached hibernate entity
                 agentInstall = existing;
             } else {
                 throw new IllegalStateException("Agent install ID [" + agentInstall.getId()
@@ -193,7 +193,8 @@ public class AgentManagerBean implements AgentManagerLocal {
             }
         }
 
-        // let the caller have the decoded data
+        // let the caller have the decoded data - we need to flush and detach the entity so we can deobfuscate PW and not push it to DB
+        entityManager.flush();
         entityManager.detach(agentInstall);
         deobfuscateAgentInstall(agentInstall);
 

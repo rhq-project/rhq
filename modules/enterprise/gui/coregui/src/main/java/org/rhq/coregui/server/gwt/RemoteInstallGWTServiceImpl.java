@@ -57,6 +57,15 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    public String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(remoteInstallManager.uninstallAgent(getSessionSubject(), remoteAccessInfo),
+                "RemoteInstallService.uninstallAgent");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.startAgent(getSessionSubject(), remoteAccessInfo,

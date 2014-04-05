@@ -41,6 +41,8 @@ public interface RemoteInstallGWTService extends RemoteService {
     AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath, boolean overwriteExistingAgent)
         throws RuntimeException;
 
+    String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws RuntimeException;
+
     String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
     String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;

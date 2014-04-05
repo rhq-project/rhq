@@ -59,35 +59,16 @@ public class SSHInstallUtility {
 
     private Log log = LogFactory.getLog(SSHInstallUtility.class);
 
-    private RemoteAccessInfo accessInfo;
+    private final RemoteAccessInfo accessInfo;
     private Session session;
-
-    private String agentFile;
-    private String agentPath;
-    private String agentVersion;
 
     public SSHInstallUtility(RemoteAccessInfo accessInfo) {
         this.accessInfo = accessInfo;
-
-        try {
-            File agentBinaryFile = LookupUtil.getAgentManager().getAgentUpdateBinaryFile();
-            agentFile = agentBinaryFile.getName();
-            agentPath = agentBinaryFile.getCanonicalPath();
-
-            Properties props = LookupUtil.getAgentManager().getAgentUpdateVersionFileContent();
-            agentVersion = props.getProperty(RHQ_AGENT_LATEST_VERSION_PROP);
-        } catch (Exception e) {
-            agentVersion = getClass().getPackage().getImplementationVersion();
-            agentFile = "rhq-enterprise-agent-" + agentVersion + ".jar";
-            agentPath = "/tmp/rhq-agent/" + agentFile;
-            log.warn("Failed agent binary file lookup - using [" + agentPath + "]", e);
-        }
-
-        if (!new File(agentPath).exists()) {
-            throw new RuntimeException("Unable to find agent binary file for installation at [" + agentPath + "]");
-        }
-
         connect();
+    }
+
+    public RemoteAccessInfo getRemoteAccessInfo() {
+        return this.accessInfo;
     }
 
     public void connect() {
@@ -118,6 +99,10 @@ public class SSHInstallUtility {
         session.disconnect();
     }
 
+    public boolean isConnected() {
+        return session.isConnected();
+    }
+
     public boolean agentInstallCheck(String agentInstallPath) {
         String agentWrapperScript = buildAgentWrapperScriptPath(agentInstallPath);
 
@@ -131,6 +116,28 @@ public class SSHInstallUtility {
     }
 
     public AgentInstallInfo installAgent(String parentPath, String installId) {
+
+        String agentFile;
+        String agentPath;
+        String agentVersion;
+
+        try {
+            File agentBinaryFile = LookupUtil.getAgentManager().getAgentUpdateBinaryFile();
+            agentFile = agentBinaryFile.getName();
+            agentPath = agentBinaryFile.getCanonicalPath();
+
+            Properties props = LookupUtil.getAgentManager().getAgentUpdateVersionFileContent();
+            agentVersion = props.getProperty(RHQ_AGENT_LATEST_VERSION_PROP);
+        } catch (Exception e) {
+            agentVersion = getClass().getPackage().getImplementationVersion();
+            agentFile = "rhq-enterprise-agent-" + agentVersion + ".jar";
+            agentPath = "/tmp/rhq-agent/" + agentFile;
+            log.warn("Failed agent binary file lookup - using [" + agentPath + "]", e);
+        }
+
+        if (!new File(agentPath).exists()) {
+            throw new RuntimeException("Unable to find agent binary file for installation at [" + agentPath + "]");
+        }
 
         String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
         AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, serverAddress,
@@ -173,6 +180,17 @@ public class SSHInstallUtility {
         executeCommand(startCommand, "Start New Agent", info);
 
         return info;
+    }
+
+    public String uninstallAgent(String doomedPath) {
+        String theRealDoomedPath = findAgentInstallPath(doomedPath); // make sure we are looking at an agent
+        if (theRealDoomedPath != null) {
+            stopAgent(theRealDoomedPath);
+            String results = executeCommand("rm -rf '" + theRealDoomedPath + "'", "Uninstall Agent");
+            return results;
+        } else {
+            throw new IllegalArgumentException("There does not appear to be an agent installed here: " + doomedPath);
+        }
     }
 
     public String startAgent(String agentInstallPath) {

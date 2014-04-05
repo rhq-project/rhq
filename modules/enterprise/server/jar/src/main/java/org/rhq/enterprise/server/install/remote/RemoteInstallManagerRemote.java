@@ -71,6 +71,19 @@ public interface RemoteInstallManagerRemote {
     AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 
     /**
+     * Uninstalls the actual distribution files of an installed agent. You must give a valid agent name
+     * in the remote access info and that agent name must have its install location in the database for
+     * this to work. We purposefully do not allow you to give just any path to uninstall as that could
+     * have bad implications such as wiping out large portions of the disk as a mistake.
+     *
+     * @param subject the RHQ user making the request
+     * @param remoteAccessInfo the remote machine information and remote user SSH credentials including the name of the agent.
+     * @return the results of the uninstall - this will be null if there was no install
+     *         information for the given agent (and thus nothing was uninstalled).
+     */
+    String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
+
+    /**
      * Starts the agent located in the given installation directory.
      *
      * @param subject the RHQ user making the request

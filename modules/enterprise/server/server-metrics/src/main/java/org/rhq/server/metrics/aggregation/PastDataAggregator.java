@@ -119,6 +119,7 @@ class PastDataAggregator extends BaseAggregator {
                     }
                     if (!queryFutures.isEmpty()) {
                         processBatch(queryFutures, indexEntry);
+                        queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
                     }
                 }
             }

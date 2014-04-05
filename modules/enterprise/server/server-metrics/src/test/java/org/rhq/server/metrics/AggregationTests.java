@@ -534,9 +534,9 @@ public class AggregationTests extends MetricsTest {
         dateTimeService.setNow(hour(6).plusSeconds(1));
         new AggregationManagerTestStub(hour(5)).run();
 
-        // reset "now" in order insert the late data
-        dateTimeService.setNow(hour(5).plusMinutes(55));
-
+        // We have to reset "now" in order for the following late data to get pulled from
+        // metrics_cache during aggregation.
+        dateTimeService.setNow(hour(5).plusMinutes(45));
         insertRawData(
             newRawData(hour(5).plusMinutes(15), schedule1.id, 15),
             newRawData(hour(5).plusMinutes(25), schedule1.id, 150),
@@ -586,8 +586,70 @@ public class AggregationTests extends MetricsTest {
 
     @Test(dependsOnMethods = "aggregateLateDataFromCacheInNext6HourTimeSlice")
     public void aggregateLateDataFromCacheInNext24HourTimeSlice() throws Exception {
-//        dateTimeService.setNow(hour(12).plusSeconds(1));
-//        new AggregationManagerTestStub(hour(11)).run();
+        dateTimeService.setNow(hour(12).plusSeconds(1));
+        new AggregationManagerTestStub(hour(11)).run();
+        testdb.aggregate1HourData(hour(6), hour(12));
+        testdb.aggregate1HourData(hour(12), hour(18));
+
+        dateTimeService.setNow(hour(23).plusMinutes(55));
+
+        insertRawData(
+            newRawData(hour(23).plusMinutes(10), schedule1.id, 450),
+            newRawData(hour(23).plusMinutes(10), schedule2.id, 400),
+            newRawData(hour(23).plusMinutes(10), schedule3.id, 25),
+            newRawData(hour(23).plusMinutes(40), schedule2.id, 10),
+            newRawData(hour(23).plusMinutes(40), schedule3.id, 15),
+            newRawData(hour(23).plusMinutes(45), schedule2.id, 500),
+            newRawData(hour(23).plusMinutes(44), schedule3.id, 525)
+        );
+
+        testdb.aggregateRawData(hour(23), hour(24));
+        testdb.aggregate1HourData(hour(18), hour(24));
+        testdb.aggregate6HourData(hour(0), hour(24));
+
+        dateTimeService.setNow(tomorrow().plusMinutes(50));
+
+        insertRawData(
+            newRawData(tomorrow().plusMinutes(10), schedule1.id, 420),
+            newRawData(tomorrow().plusMinutes(15), schedule1.id, 390),
+            newRawData(tomorrow().plusMinutes(15), schedule2.id, 490),
+            newRawData(tomorrow().plusMinutes(15), schedule3.id, 500)
+        );
+
+        dateTimeService.setNow(tomorrow().plusHours(1).plusSeconds(1));
+
+        AggregationManagerTestStub aggregator = new AggregationManagerTestStub(tomorrow());
+        Set<AggregateNumericMetric> oneHourData = aggregator.run();
+
+        testdb.aggregateRawData(tomorrow(), tomorrow().plusHours(1));
+
+        assertCollectionEqualsNoOrder(testdb.get1HourData(tomorrow()), oneHourData, "The returned 1 hour data is wrong");
+
+        assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
+        assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));
+        assert1HourDataEquals(schedule3.id, testdb.get1HourData(schedule3.id));
+
+        assert1HourCacheIndexEquals(tomorrow(), INDEX_PARTITION, tomorrow(), asList(
+            new1HourCacheIndexEntry(tomorrow(), startScheduleId(schedule1.id), tomorrow()),
+            new1HourCacheIndexEntry(tomorrow(), startScheduleId(schedule3.id), tomorrow())
+        ));
+
+        assert1HourCacheEquals(tomorrow(), startScheduleId(schedule1.id), asList(
+            testdb.get1HourData(tomorrow(), schedule1.id),
+            testdb.get1HourData(tomorrow(), schedule2.id)
+        ));
+        assert1HourCacheEquals(tomorrow(), startScheduleId(schedule3.id), asList(
+            testdb.get1HourData(tomorrow(), schedule3.id)
+        ));
+
+        assert6HourCacheIndexEmpty(hour(0), INDEX_PARTITION, hour(18));
+
+        assert6HourCacheEmpty(hour(18), startScheduleId(schedule1.id));
+        assert6HourCacheEmpty(hour(18), startScheduleId(schedule3.id));
+
+        assert24HourDataEquals(schedule1.id, testdb.get24HourData(schedule1.id));
+        assert24HourDataEquals(schedule2.id, testdb.get24HourData(schedule2.id));
+        assert24HourDataEquals(schedule3.id, testdb.get24HourData(schedule3.id));
     }
 
 //    @Test(dependsOnMethods = "runAggregationForHour24")

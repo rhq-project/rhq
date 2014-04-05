@@ -203,19 +203,25 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     private void obfuscateAgentInstall(AgentInstall ai) {
         try {
-            ai.setSshPassword(Obfuscator.encode(ai.getSshPassword()));
+            String pw = ai.getSshPassword();
+            if (pw != null && pw.length() > 0) {
+                ai.setSshPassword(Obfuscator.encode(pw));
+            }
         } catch (Exception e) {
-            ai.setSshPassword(null);
-            LOG.debug("Failed to obfuscate password for agent [" + ai.getAgentName() + "]. Will be set to null");
+            ai.setSshPassword("");
+            LOG.debug("Failed to obfuscate password for agent [" + ai.getAgentName() + "]. Will be emptied.");
         }
     }
 
     private void deobfuscateAgentInstall(AgentInstall ai) {
         try {
-            ai.setSshPassword(Obfuscator.decode(ai.getSshPassword()));
+            String pw = ai.getSshPassword();
+            if (pw != null && pw.length() > 0) {
+                ai.setSshPassword(Obfuscator.decode(pw));
+            }
         } catch (Exception e) {
-            ai.setSshPassword(null);
-            LOG.debug("Failed to deobfuscate password for agent [" + ai.getAgentName() + "]. Will be set to null");
+            ai.setSshPassword("");
+            LOG.debug("Failed to deobfuscate password for agent [" + ai.getAgentName() + "]. Will be emptied.");
         }
     }
 

@@ -160,10 +160,12 @@ public class AgentInstall implements Serializable {
             this.sshPort = overlay.sshPort;
         }
         if (overlay.sshUsername != null) {
-            this.sshUsername = overlay.sshUsername;
+            // to force usename to be nulled out, caller will pass in an empty string - that signals us to null out username
+            this.sshUsername = (overlay.sshUsername.length() == 0) ? null : overlay.sshUsername;
         }
         if (overlay.sshPassword != null) {
-            this.sshPassword = overlay.sshPassword;
+            // to force password to be nulled out, caller will pass in an empty string - that signals us to null out password
+            this.sshPassword = (overlay.sshPassword.length() == 0) ? null : overlay.sshPassword;
         }
     }
 

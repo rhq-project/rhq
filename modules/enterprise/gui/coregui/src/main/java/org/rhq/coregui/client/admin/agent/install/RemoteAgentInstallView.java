@@ -225,6 +225,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             username.setValue(initialAgentInstall.getSshUsername());
             password.setValue(initialAgentInstall.getSshPassword());
             agentInstallPath.setValue(initialAgentInstall.getInstallLocation());
+            rememberMeCheckbox.setValue(initialAgentInstall.getSshPassword() != null); // if it was already saved, assume they want it to stay remembered
         }
 
         connectionForm.setFields(host, port, username, password, rememberMeCheckbox, agentInstallPath,

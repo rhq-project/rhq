@@ -81,9 +81,9 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             ai.setSshUsername(remoteAccessInfo.getUser());
             ai.setSshPassword(remoteAccessInfo.getPassword());
         } else {
-            // user doesn't want to remember the creds, null them out
-            ai.setSshUsername(null);
-            ai.setSshPassword(null);
+            // user doesn't want to remember the creds, set them to "" which tells our persistence layer to null them out
+            ai.setSshUsername("");
+            ai.setSshPassword("");
         }
 
         try {

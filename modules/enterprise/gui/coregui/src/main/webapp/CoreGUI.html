@@ -1,4 +1,4 @@
-<html id="htmlId" xmlns="http://www.w3.org/1999/html">
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <!-- this forces us to emulate IE8 "quirks" mode regardless of IE browser version.  It:
          1) Follows the SmartGWT recommendation of not declaring a DOCTYPE and instead using these meta elements.
@@ -13,11 +13,6 @@
     <link rel="stylesheet" href="CoreGUI-4.10.0.css">
     <!-- for d3 charting -->
     <link rel="stylesheet" href="css/charts-4.10.0.css">
-    
-    <!-- PatternFly -->
-    <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
-    <link href="css/patternfly.min.css" rel="stylesheet" media="screen, print">
-    <script src="js/bootstrap.min.js"></script>
 
     <script type="text/javascript">
         var search = location.search;
@@ -75,53 +70,6 @@
     <h2>Please turn it on or use a different browser.</h2>
 </noscript>
 
-<div id="patternFlyLogin" style="display: none;">
-    <span id="badge">
-      <img src="img/logo.svg" alt="" />
-    </span>
-    <div class="container">
-      <div class="row">
-        <div class="col-sm-12">
-          <div id="brand">
-            <img src="img/brand.svg">
-          </div><!--/#brand-->
-        </div><!--/.col-*-->
-        <div class="col-sm-7 col-md-6 col-lg-5 login">
-          <form action="login" id="loginForm" autocomplete="on" class="form-horizontal" role="form">
-            <div class="form-group">
-              <label for="inputUsername" class="col-sm-2 col-md-2 control-label">Username</label>
-              <div class="col-sm-10 col-md-10">
-                <input type="text" class="form-control" id="inputUsername" placeholder="" tabindex="1">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="inputPassword" class="col-sm-2 col-md-2 control-label">Password</label>
-              <div class="col-sm-10 col-md-10">
-                <input type="password" class="form-control" id="inputPassword" placeholder="" tabindex="2">
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="col-xs-8 col-sm-offset-2 col-sm-6 col-md-offset-2 col-md-6">
-                <div class="checkbox">
-                  <label>
-                    <input type="checkbox" tabindex="3"> Remember Username
-                  </label>
-                </div>
-                <span class="help-block"> Forgot <a href="#" tabindex="5">Username</a> or <a href="#" tabindex="6">Password</a>?</span>
-              </div>
-              <div class="col-xs-4 col-sm-4 col-md-4 submit">
-                <button id="loginSubmit" type="submit" class="btn btn-primary btn-lg" tabindex="4">Log In</button>
-              </div>
-            </div>
-          </form>
-        </div><!--/.col-*-->
-        <div class="col-sm-5 col-md-6 col-lg-7 details">
-          <p><strong>Welcome to PatternFly!</strong>
-          This is placeholder text, only. Use this area to place any information or introductory message about your application that may be relevant for users. For example, you might include news or information about the latest release of your product here&mdash;such as a version number.</p>
-        </div><!--/.col-*-->
-      </div><!--/.row-->
-    </div><!--/.container-->
-</div>
 
 <iframe src="javascript:''" id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
 

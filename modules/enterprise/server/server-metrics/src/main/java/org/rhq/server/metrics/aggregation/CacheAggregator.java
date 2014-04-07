@@ -58,10 +58,10 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @Override
-    protected Runnable createAggregationTask(final CacheIndexEntry indexEntry) {
-        return new Runnable() {
+    protected AggregationTask createAggregationTask(CacheIndexEntry indexEntry) {
+        return new AggregationTask(indexEntry) {
             @Override
-            public void run() {
+            void run(CacheIndexEntry indexEntry) {
                 StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                     startTime.getMillis(), indexEntry.getStartScheduleId());
 

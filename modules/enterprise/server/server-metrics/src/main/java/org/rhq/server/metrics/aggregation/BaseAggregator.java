@@ -57,6 +57,31 @@ abstract class BaseAggregator {
 
     private int cacheBatchSize;
 
+    /**
+     * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
+     * If there are any unexpected errors, e.g., a NullPointerException, aggregation will be aborted.
+     */
+    protected abstract class AggregationTask implements Runnable {
+
+        private CacheIndexEntry indexEntry;
+
+        public AggregationTask(CacheIndexEntry indexEntry) {
+            this.indexEntry = indexEntry;
+        }
+
+        @Override
+        public void run() {
+            try {
+                run(indexEntry);
+            } catch (Exception e) {
+                LOG.error("Aggregation will be aborted due to an unexpected error", e);
+                taskTracker.abort("Aborting aggregation due to an unexpected error: " + e.getMessage());
+            }
+        }
+
+        abstract void run(CacheIndexEntry indexEntry);
+    }
+
     protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {
         @Override
         public void onSuccess(T args) {
@@ -144,7 +169,7 @@ abstract class BaseAggregator {
 
     protected abstract ListenableFuture<List<CacheIndexEntry>> findIndexEntries();
 
-    protected abstract Runnable createAggregationTask(CacheIndexEntry indexEntry);
+    protected abstract AggregationTask createAggregationTask(CacheIndexEntry indexEntry);
 
     protected abstract Map<AggregationType, Integer> getAggregationCounts();
 

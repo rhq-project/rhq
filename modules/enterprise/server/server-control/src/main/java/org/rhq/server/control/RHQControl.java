@@ -307,7 +307,7 @@ public class RHQControl {
 
     private boolean isHelp(String[] args) {
         for (String arg : args) {
-            if (ControlCommand.HELP_OPTION.equals(arg)) {
+            if (ControlCommand.HELP_OPTION_1.equals(arg) || ControlCommand.HELP_OPTION_2.equals(arg)) {
                 return true;
             }
         }

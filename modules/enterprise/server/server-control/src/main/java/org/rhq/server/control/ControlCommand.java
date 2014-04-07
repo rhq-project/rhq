@@ -61,7 +61,8 @@ public abstract class ControlCommand {
     public static final String SERVER_OPTION = "server";
     public static final String STORAGE_OPTION = "storage";
     public static final String AGENT_OPTION = "agent";
-    public static final String HELP_OPTION = "--help";
+    public static final String HELP_OPTION_1 = "--help";
+    public static final String HELP_OPTION_2 = "-h";
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";

@@ -431,11 +431,6 @@ public class InstallerServiceImpl implements InstallerService {
                 } else {
                     throw new Exception("Cannot get server, port or db name from connection URL: " + url);
                 }
-            } else {
-                // these need to be set to "unused" to pass property file validation
-                serverProperties.put(ServerProperties.PROP_DATABASE_SERVER_NAME, "unused");
-                serverProperties.put(ServerProperties.PROP_DATABASE_PORT, "unused");
-                serverProperties.put(ServerProperties.PROP_DATABASE_DB_NAME, "unused");
             }
         } catch (Exception e) {
             throw new Exception("JDBC connection URL seems to be invalid", e);

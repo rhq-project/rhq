@@ -154,7 +154,10 @@ public interface ConfigurationManagerRemote {
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
      * newConfiguration</code> is usually a modified version of a configuration returned by
-     * {@link #getPluginConfiguration(Subject, int)}.
+     * {@link #getPluginConfiguration(Subject, int)}.  If the user does not have the proper permissions to
+     * modify the resource, an exception is thrown.
+     *
+     * <p>No validation is performed by this call, the configuration is applied as provided.</p>
      *
      * @param  subject          The logged in user's subject.
      * @param  resourceId       a {@link Resource} id
@@ -172,6 +175,8 @@ public interface ConfigurationManagerRemote {
      *
      * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
      * sent.</p>
+     *
+     * <p>No validation is performed by this call, the configuration is applied as provided.</p>
      *
      * @param  subject          The logged in user's subject.
      * @param  resourceId       identifies the resource to be updated

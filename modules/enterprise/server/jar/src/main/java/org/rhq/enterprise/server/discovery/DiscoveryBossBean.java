@@ -218,7 +218,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             long rootStart = System.currentTimeMillis();
             if (!initResourceTypes(root, allTypes)) {
                 LOG.error("Reported resource [" + root + "] has an unknown type [" + root.getResourceType()
-                    + "]. The Agent [" + knownAgent + "] most likely has a plugin named '" + root.getResourceType().getPlugin()
+                    + "]. The Agent [" + knownAgent + "] most likely has a plugin named '"
+                    + root.getResourceType().getPlugin()
                     + "' installed that is not installed on the Server. Resource will be ignored...");
                 continue;
             }
@@ -362,14 +363,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         query.setParameter("resourceId", resourceId);
 
-        if ( isNative ) {
+        if (isNative) {
             List<Object[]> rows = query.getResultList();
             result = new ArrayList<ResourceSyncInfo>(rows.size());
-            for ( Object[] row : rows ) {
+            for (Object[] row : rows) {
                 int id = dbType.getInteger(row[0]);
-                String uuid = (String)row[1];
+                String uuid = (String) row[1];
                 long mtime = dbType.getLong(row[2]);
-                InventoryStatus status = InventoryStatus.valueOf((String)row[3]);
+                InventoryStatus status = InventoryStatus.valueOf((String) row[3]);
                 result.add(new ResourceSyncInfo(id, uuid, mtime, status));
             }
         } else {
@@ -888,6 +889,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    enum PostMergeAction {
+        LINK_STORAGE_NODE
+    };
+
     /**
      * <p>Should Not Be Called With Existing Transaction !!!</p>
      *
@@ -922,12 +927,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + MERGE_BATCH_SIZE + "]");
         }
 
+        Map<Resource, Set<PostMergeAction>> postMergeActions = new HashMap<Resource, Set<PostMergeAction>>();
         while (!resourceList.isEmpty()) {
             int size = resourceList.size();
             int end = (MERGE_BATCH_SIZE < size) ? MERGE_BATCH_SIZE : size;
 
             List<Resource> resourceBatch = resourceList.subList(0, end);
-            discoveryBoss.mergeResourceInNewTransaction(resourceBatch, agent);
+            discoveryBoss.mergeResourceInNewTransaction(resourceBatch, agent, postMergeActions);
+            if (!postMergeActions.isEmpty()) {
+                performPostMergeActions(postMergeActions);
+            }
 
             // Advance our progress and possibly help GC. This will remove the processed resources from the backing list
             resourceBatch.clear();
@@ -939,6 +948,18 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         return;
+    }
+
+    private void performPostMergeActions(Map<Resource, Set<PostMergeAction>> postMergeActions) {
+        for (Resource r : postMergeActions.keySet()) {
+            for (PostMergeAction a : postMergeActions.get(r)) {
+                switch (a) {
+                case LINK_STORAGE_NODE:
+                    storageNodeManager.linkResource(r);
+                }
+            }
+        }
+        postMergeActions.clear();
     }
 
     private List<Resource> treeToBreadthFirstList(Resource resource) {
@@ -970,8 +991,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent)
-        throws InvalidInventoryReportException {
+    public void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent,
+        Map<Resource, Set<PostMergeAction>> postMergeActions) throws InvalidInventoryReportException {
 
         long batchStart = System.currentTimeMillis();
         boolean isDebugEnabled = LOG.isDebugEnabled();
@@ -990,7 +1011,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
             } else {
                 presetAgent(resource, agent);
-                persistResource(resource, parentMap);
+                persistResource(resource, parentMap, postMergeActions);
             }
 
             if (isDebugEnabled) {
@@ -1295,7 +1316,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return true;
     }
 
-    private void persistResource(Resource resource, Map<Integer, Resource> parentMap) {
+    private void persistResource(Resource resource, Map<Integer, Resource> parentMap,
+        Map<Resource, Set<PostMergeAction>> postMergeActions) {
 
         // Id of detached parent resource
         Integer parentId = (null != resource.getParentResource()) ? resource.getParentResource().getId() : null;
@@ -1351,7 +1373,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         resource.setItime(System.currentTimeMillis());
         resource.setModifiedBy(overlord.getName());
 
-        setInventoryStatus(parentResource, resource);
+        setInventoryStatus(parentResource, resource, postMergeActions);
 
         // Extend implicit (recursive) group membership of the parent to the new child
         if (null != parentResource) {
@@ -1381,7 +1403,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     // - The resource is a platform and has an RHQ Storage Node child
     // - The resource is an RHQ Storage Node child
     // Ensure the new resource has the proper inventory status
-    private void setInventoryStatus(Resource parentResource, Resource resource) {
+    private void setInventoryStatus(Resource parentResource, Resource resource,
+        Map<Resource, Set<PostMergeAction>> postMergeActions) {
+
         // never autocommit a platform
         if (null == parentResource) {
             resource.setInventoryStatus(InventoryStatus.NEW);
@@ -1410,7 +1434,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 parentResource.setInventoryStatus(InventoryStatus.COMMITTED);
             }
 
-            storageNodeManager.linkResource(resource);
+            addPostMergeAction(postMergeActions, resource, PostMergeAction.LINK_STORAGE_NODE);
 
             return;
         }
@@ -1419,6 +1443,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         resource.setInventoryStatus(InventoryStatus.NEW);
 
         return;
+    }
+
+    private void addPostMergeAction(Map<Resource, Set<PostMergeAction>> postMergeActions, Resource resource,
+        PostMergeAction action) {
+        if (postMergeActions.containsKey(resource)) {
+            postMergeActions.get(resource).add(action);
+        } else {
+            postMergeActions.put(resource, EnumSet.of(PostMergeAction.LINK_STORAGE_NODE));
+        }
     }
 
     public void importResources(Subject subject, int[] resourceIds) {

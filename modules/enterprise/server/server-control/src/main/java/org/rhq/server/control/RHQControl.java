@@ -228,7 +228,6 @@ public class RHQControl {
             // Now, validate the property settings
             try {
                 ServerProperties.validate(serverPropertiesFile);
-
             } catch (Throwable t) {
                 throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
                     + t.getMessage());
@@ -305,7 +304,7 @@ public class RHQControl {
 
         return commandNames.get(0);
     }
-    
+
     private boolean isHelp(String[] args) {
         for (String arg : args) {
             if (ControlCommand.HELP_OPTION.equals(arg)) {

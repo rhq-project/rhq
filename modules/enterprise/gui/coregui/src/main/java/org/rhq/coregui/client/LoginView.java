@@ -27,9 +27,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -114,6 +114,8 @@ public class LoginView extends Canvas {
     private static final String USERNAME_ID = "inputUsername";
     private static final String PASSWORD_ID = "inputPassword";
     private static final String LOGIN_DIV_ID = "patternFlyLogin";
+    private static final String LOGIN_ERROR_DIV_ID = "loginError";
+    private static final String ERROR_FEEDBACK_DIV_ID = "errorFeedback";
     private static final String HTML_ID = "htmlId";
     
     private ProductInfo productInfo;
@@ -125,6 +127,11 @@ public class LoginView extends Canvas {
 
     public void showLoginDialog() {
         if (!loginShowing) {
+            if (!com.google.gwt.user.client.Window.Location.getHref().contains("login")) {
+                redirectTo("login");
+                return;
+            }
+            
             loginShowing = true;
             UserSessionManager.logout();
 
@@ -198,7 +205,7 @@ public class LoginView extends Canvas {
             window.setAutoCenter(true);
 
             window.addItem(form);
-            setLoginVisible(true);
+//            setLoginVisible(true);
 
             form.addSubmitValuesHandler(new SubmitValuesHandler() {
                 public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
@@ -564,10 +571,12 @@ public class LoginView extends Canvas {
                     int statusCode = response.getStatusCode();
                     if (statusCode == 200) {
                         window.destroy();
-                        setLoginVisible(false);
+//                        setLoginVisible(false);
                         fakeForm.setVisible(false);
                         loginShowing = false;
                         UserSessionManager.login(username, password);
+                        redirectTo(""); // root path
+                        setLoginError(null);
                     } else {
                         handleError(statusCode);
                     }
@@ -596,10 +605,13 @@ public class LoginView extends Canvas {
     private void handleError(int statusCode) {
         if (statusCode == 401) {
             form.setFieldErrors("login", MSG.view_login_noUser(), true);
+            setLoginError(MSG.view_login_noUser());
         } else if (statusCode == 503) {
             form.setFieldErrors("login", MSG.view_core_serverInitializing(), true);
+            setLoginError(MSG.view_core_serverInitializing());
         } else {
             form.setFieldErrors("login", MSG.view_login_noBackend(), true);
+            setLoginError(MSG.view_login_noBackend());
         }
         loginButton.setDisabled(false);
     }
@@ -636,9 +648,14 @@ public class LoginView extends Canvas {
         ((InputElement) Document.get().getElementById(USERNAME_ID)).setValue(username);
     }
     
-    private void setLoginVisible(boolean show) {
-        DOM.getElementById(LOGIN_DIV_ID).getStyle().setDisplay(show ? Display.BLOCK : Display.NONE);
-        DOM.getElementById(HTML_ID).setClassName(show ? "login-pf" : "");
+//    private void setLoginVisible(boolean show) {
+//        DOM.getElementById(LOGIN_DIV_ID).getStyle().setDisplay(show ? Display.BLOCK : Display.NONE);
+//        DOM.getElementById(HTML_ID).setClassName(show ? "login-pf" : "");
+//    }
+    
+    private void setLoginError(String error) {
+        DOM.getElementById(LOGIN_ERROR_DIV_ID).setInnerHTML(error);
+        DOM.getElementById(ERROR_FEEDBACK_DIV_ID).setClassName(error != null ? "showError" : "hideError");
     }
 
     // This is our JSNI method that will be called on form submit
@@ -647,5 +664,8 @@ public class LoginView extends Canvas {
         view.@org.rhq.coregui.client.LoginView::doLogin()();
       });
     }-*/;
-
+    
+    private void redirectTo(String path) {
+        com.google.gwt.user.client.Window.Location.replace(GWT.getHostPageBaseURL() + path);
+    }
 }

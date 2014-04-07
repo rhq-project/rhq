@@ -27,13 +27,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -83,6 +88,7 @@ public class LoginView extends Canvas {
     private static final Messages MSG = CoreGUI.getMessages();
 
     private Window window;
+    private FormPanel fakeForm;
     private DynamicForm form;
     private DynamicForm inputForm;
 
@@ -102,6 +108,14 @@ public class LoginView extends Canvas {
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "ldap.sessionid";
     static final String PASSWORD = "ldap.password";
+    
+    private static final String LOGINFORM_ID = "loginForm";
+    private static final String LOGINBUTTON_ID = "loginSubmit";
+    private static final String USERNAME_ID = "inputUsername";
+    private static final String PASSWORD_ID = "inputPassword";
+    private static final String LOGIN_DIV_ID = "patternFlyLogin";
+    private static final String HTML_ID = "htmlId";
+    
     private ProductInfo productInfo;
 
     public void showLoginDialog(String message) {
@@ -159,6 +173,13 @@ public class LoginView extends Canvas {
                     }
                 }
             });
+            
+            // Get a handle to the form and set its action to __gwt_login() method
+            fakeForm = FormPanel.wrap(Document.get().getElementById(LOGINFORM_ID), false);
+            fakeForm.setVisible(true);
+            fakeForm.setAction("javascript:__gwt_login()");
+            // export the JSNI function
+            injectLoginFunction(this);
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
@@ -177,12 +198,14 @@ public class LoginView extends Canvas {
             window.setAutoCenter(true);
 
             window.addItem(form);
-            window.show();
+            setLoginVisible(true);
 
             form.addSubmitValuesHandler(new SubmitValuesHandler() {
                 public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
                     if (form.validate()) {
-                        login(form.getValueAsString("user"), form.getValueAsString("password"));
+                        setUsername(form.getValueAsString("user"));
+                        setPassword(form.getValueAsString("password"));
+                        fakeForm.submit();
                     }
                 }
             });
@@ -541,6 +564,8 @@ public class LoginView extends Canvas {
                     int statusCode = response.getStatusCode();
                     if (statusCode == 200) {
                         window.destroy();
+                        setLoginVisible(false);
+                        fakeForm.setVisible(false);
                         loginShowing = false;
                         UserSessionManager.login(username, password);
                     } else {
@@ -586,5 +611,41 @@ public class LoginView extends Canvas {
     public static boolean isLoginShowing() {
         return loginShowing;
     }
+
+    private void doSubmitForm() {
+        form.submit();
+    }
+
+    private void doLogin() {
+        login(getUsername(), getPassword());
+    }
+
+    private String getPassword() {
+        return ((InputElement) Document.get().getElementById(PASSWORD_ID)).getValue();
+    }
+
+    private String getUsername() {
+        return ((InputElement) Document.get().getElementById(USERNAME_ID)).getValue();
+    }
+
+    private void setPassword(String password) {
+        ((InputElement) Document.get().getElementById(PASSWORD_ID)).setValue(password);
+    }
+
+    private void setUsername(String username) {
+        ((InputElement) Document.get().getElementById(USERNAME_ID)).setValue(username);
+    }
+    
+    private void setLoginVisible(boolean show) {
+        DOM.getElementById(LOGIN_DIV_ID).getStyle().setDisplay(show ? Display.BLOCK : Display.NONE);
+        DOM.getElementById(HTML_ID).setClassName(show ? "login-pf" : "");
+    }
+
+    // This is our JSNI method that will be called on form submit
+    private native void injectLoginFunction(LoginView view) /*-{
+      $wnd.__gwt_login = $entry(function(){
+        view.@org.rhq.coregui.client.LoginView::doLogin()();
+      });
+    }-*/;
 
 }

@@ -177,8 +177,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         UserSessionManager.login();
 
         // Remove loading image, which can be seen if LoginView doesn't completely cover it.
-        Element loadingPanel = DOM.getElementById("Loading-Panel");
-        loadingPanel.removeFromParent();
+//        Element loadingPanel = DOM.getElementById("Loading-Panel");
+//        loadingPanel.removeFromParent();
     }
 
     public int getRpcTimeout() {

@@ -2,6 +2,7 @@ package org.rhq.server.metrics.aggregation;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
@@ -79,13 +80,21 @@ public class AggregationManager {
         try {
             PersistFunctions persistFunctions = new PersistFunctions(dao, dtService);
 
-            createPastDataAggregator(persistFunctions).execute();
-            numRaw = createRawAggregator(persistFunctions).execute();
+            Map<AggregationType, Integer> counts = createPastDataAggregator(persistFunctions).execute();
+            numRaw += counts.get(AggregationType.RAW);
+            num1Hour += counts.get(AggregationType.ONE_HOUR);
+            num6Hour += counts.get(AggregationType.SIX_HOUR);
+
+            counts = createRawAggregator(persistFunctions).execute();
+            numRaw += counts.get(AggregationType.RAW);
+
             if (is6HourTimeSliceFinished()) {
-                num1Hour = create1HourAggregator(persistFunctions).execute();
+                counts = create1HourAggregator(persistFunctions).execute();
+                num1Hour += counts.get(AggregationType.ONE_HOUR);
             }
             if (is24HourTimeSliceFinished()) {
-                num6Hour = create6HourAggregator(persistFunctions).execute();
+                counts = create6HourAggregator(persistFunctions).execute();
+                num6Hour += counts.get(AggregationType.SIX_HOUR);
             }
 
             return oneHourData;

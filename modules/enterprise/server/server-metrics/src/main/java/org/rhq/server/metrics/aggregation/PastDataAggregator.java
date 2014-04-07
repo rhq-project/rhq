@@ -3,11 +3,13 @@ package org.rhq.server.metrics.aggregation;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -38,6 +40,12 @@ class PastDataAggregator extends BaseAggregator {
 
     private PersistFunctions persistFns;
 
+    private AtomicInteger rawSchedulesCount = new AtomicInteger();
+
+    private AtomicInteger oneHourSchedulesCount = new AtomicInteger();
+
+    private AtomicInteger sixHourScheduleCount = new AtomicInteger();
+
     void setStartingDay(DateTime startingDay) {
         this.startingDay = startingDay;
     }
@@ -51,7 +59,7 @@ class PastDataAggregator extends BaseAggregator {
     }
 
     @Override
-    ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
+    protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
         return findPastIndexEntries();
     }
 
@@ -84,7 +92,7 @@ class PastDataAggregator extends BaseAggregator {
     }
 
     @Override
-    Runnable createAggregationTask(final CacheIndexEntry indexEntry) {
+    protected Runnable createAggregationTask(final CacheIndexEntry indexEntry) {
         return new Runnable() {
             @Override
             public void run() {
@@ -110,6 +118,15 @@ class PastDataAggregator extends BaseAggregator {
         };
     }
 
+    @Override
+    protected Map<AggregationType, Integer> getAggregationCounts() {
+        return ImmutableMap.of(
+            AggregationType.RAW, rawSchedulesCount.get(),
+            AggregationType.ONE_HOUR, oneHourSchedulesCount.get(),
+            AggregationType.SIX_HOUR, sixHourScheduleCount.get()
+        );
+    }
+
     private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
 
         ListenableFuture<List<ResultSet>> queriesFuture = Futures.successfulAsList(queryFutures);
@@ -125,6 +142,8 @@ class PastDataAggregator extends BaseAggregator {
 
         boolean is6HourTimeSliceFinished = dateTimeService.is6HourTimeSliceFinished(
             indexEntry.getCollectionTimeSlice());
+        boolean is24HourTimeSliceFinished = dateTimeService.is24HourTimeSliceFinished(
+            indexEntry.getCollectionTimeSlice());
         ListenableFuture<List<ResultSet>> oneHourInsertsFuture;
         ListenableFuture<List<ResultSet>> insertsFuture;
 
@@ -134,7 +153,7 @@ class PastDataAggregator extends BaseAggregator {
             MetricsFuturesPair sixHourFuturesPair = process1HourData(indexEntry,
                 proceedWithMetricsAfterInserts(new MetricsFuturesPair(oneHourInsertsFuture, metricsFuture)));
 
-            if (dateTimeService.is24HourTimeSliceFinished(indexEntry.getCollectionTimeSlice())) {
+            if (is24HourTimeSliceFinished) {
                 MetricsFuturesPair twentyFourHourFuturesPair = process6HourData(indexEntry,
                     proceedWithMetricsAfterInserts(sixHourFuturesPair));
                 insertsFuture = twentyFourHourFuturesPair.resultSetsFuture;
@@ -147,7 +166,14 @@ class PastDataAggregator extends BaseAggregator {
 
             insertsFuture = oneHourInsertsFuture;
         }
-        completeBatch(indexEntry, insertsFuture, queryFutures.size());
+
+        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
+            deleteCacheEntry(indexEntry), aggregationTasks);
+
+        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
+            deleteCacheIndexEntry(indexEntry), aggregationTasks);
+
+        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture, is6HourTimeSliceFinished, is24HourTimeSliceFinished);
     }
 
     @SuppressWarnings("unchecked")
@@ -164,6 +190,8 @@ class PastDataAggregator extends BaseAggregator {
 
         boolean is6HourTimeSliceFinished = dateTimeService.is6HourTimeSliceFinished(
             indexEntry.getCollectionTimeSlice());
+        boolean is24HourTimeSliceFinished = dateTimeService.is24HourTimeSliceFinished(
+            indexEntry.getCollectionTimeSlice());
         ListenableFuture<List<ResultSet>> oneHourInsertsFuture;
         ListenableFuture<List<ResultSet>> insertsFuture;
 
@@ -173,7 +201,7 @@ class PastDataAggregator extends BaseAggregator {
             MetricsFuturesPair sixHourFuturesPair = process1HourData(indexEntry,
                 proceedWithMetricsAfterInserts(new MetricsFuturesPair(oneHourInsertsFuture, metricsFuture)));
 
-            if (dateTimeService.is24HourTimeSliceFinished(indexEntry.getCollectionTimeSlice())) {
+            if (is24HourTimeSliceFinished) {
                 MetricsFuturesPair twentyFourHourFuturesPair = process6HourData(indexEntry,
                     proceedWithMetricsAfterInserts(sixHourFuturesPair));
                 insertsFuture = twentyFourHourFuturesPair.resultSetsFuture;
@@ -193,19 +221,7 @@ class PastDataAggregator extends BaseAggregator {
         ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
             deleteCacheIndexEntry(indexEntry), aggregationTasks);
 
-        Futures.addCallback(deleteCacheIndexFuture, cacheBlockFinished(pairFuture), aggregationTasks);
-    }
-
-    private void completeBatch(CacheIndexEntry indexEntry, ListenableFuture<List<ResultSet>> insertsFuture,
-        int numSchedules) {
-
-        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
-            deleteCacheEntry(indexEntry), aggregationTasks);
-
-        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-            deleteCacheIndexEntry(indexEntry), aggregationTasks);
-
-        Futures.addCallback(deleteCacheIndexFuture, batchFinished(numSchedules), aggregationTasks);
+        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture, is6HourTimeSliceFinished, is24HourTimeSliceFinished);
     }
 
     private <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
@@ -255,24 +271,29 @@ class PastDataAggregator extends BaseAggregator {
         };
     }
 
-    private FutureCallback<ResultSet> batchFinished(final int numSchedules) {
+    @SuppressWarnings("unchecked")
+    private void aggregationTaskFinished(ListenableFuture<ResultSet> deleteCacheIndexFuture,
+        ListenableFuture<IndexAggregatesPair> pairFuture, final boolean oneHourDataAggregated,
+        final boolean sixHourDataAggregated) {
 
-        return new FutureCallback<ResultSet>() {
+        final ListenableFuture<List<Object>> argsFuture = Futures.allAsList(deleteCacheIndexFuture, pairFuture);
+
+        Futures.addCallback(argsFuture, new AggregationTaskFinishedCallback<List<Object>>() {
             @Override
-            public void onSuccess(ResultSet result) {
-                LOG.debug("Finished batch");
+            protected void onFinish(List<Object> args) {
+                IndexAggregatesPair pair = (IndexAggregatesPair) args.get(1);
 
-                permits.release(numSchedules);
-                taskTracker.finishedTask();
-            }
+                rawSchedulesCount.addAndGet(pair.metrics.size());
 
-            @Override
-            public void onFailure(Throwable t) {
-                LOG.warn("There was an error aggregating data", t);
-                permits.release(numSchedules);
-                taskTracker.finishedTask();
+                if (oneHourDataAggregated) {
+                    oneHourSchedulesCount.addAndGet(pair.metrics.size());
+                }
+
+                if (sixHourDataAggregated) {
+                    sixHourScheduleCount.addAndGet(pair.metrics.size());
+                }
             }
-        };
+        }, aggregationTasks);
     }
 
     private MetricsFuturesPair process1HourData(CacheIndexEntry indexEntry,

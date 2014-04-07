@@ -3,7 +3,7 @@ package org.rhq.server.metrics.aggregation;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,11 +55,29 @@ abstract class BaseAggregator {
 
     protected TaskTracker taskTracker = new TaskTracker();
 
-    // Currently this is only used by CacheAggregator as a hook to return the 1 hour data
-    // that is needed for subsequent baseline calculations
-    protected CacheBlockFinishedListener cacheBlockFinishedListener;
-
     private int cacheBatchSize;
+
+    protected class AggregationTaskFinishedCallback<T> implements FutureCallback<T> {
+        @Override
+        public void onSuccess(T args) {
+            try {
+                onFinish(args);
+            } finally {
+                permits.release();
+                taskTracker.finishedTask();
+            }
+        }
+
+        protected void onFinish(T args) {
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            LOG.warn("There was an error aggregating data", t);
+            permits.release();
+            taskTracker.finishedTask();
+        }
+    }
 
     void setDao(MetricsDAO dao) {
         this.dao = dao;
@@ -93,7 +111,7 @@ abstract class BaseAggregator {
         this.cacheBatchSize = cacheBatchSize;
     }
 
-    public int execute() throws InterruptedException, AbortedException {
+    public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
         Stopwatch stopwatch = new Stopwatch().start();
         AtomicInteger numSchedules = new AtomicInteger();
         try {
@@ -114,7 +132,7 @@ abstract class BaseAggregator {
             });
             taskTracker.waitForTasksToFinish();
 
-            return numSchedules.get();
+            return getAggregationCounts();
         } finally {
             stopwatch.stop();
             if (LOG.isDebugEnabled()) {
@@ -124,9 +142,11 @@ abstract class BaseAggregator {
         }
     }
 
-    abstract ListenableFuture<List<CacheIndexEntry>> findIndexEntries();
+    protected abstract ListenableFuture<List<CacheIndexEntry>> findIndexEntries();
 
-    abstract Runnable createAggregationTask(CacheIndexEntry indexEntry);
+    protected abstract Runnable createAggregationTask(CacheIndexEntry indexEntry);
+
+    protected abstract Map<AggregationType, Integer> getAggregationCounts();
 
     private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
         try {
@@ -229,39 +249,5 @@ abstract class BaseAggregator {
         };
     }
 
-    protected FutureCallback<ResultSet> cacheBlockFinished(final ListenableFuture<IndexAggregatesPair> pairFuture) {
-        return new FutureCallback<ResultSet>() {
-            @Override
-            public void onSuccess(ResultSet result) {
-                if (cacheBlockFinishedListener != null) {
-                    notifyListener(pairFuture);
-                }
-                permits.release();
-                taskTracker.finishedTask();
-            }
 
-            @Override
-            public void onFailure(Throwable t) {
-                LOG.warn("There was an error aggregating data", t);
-                permits.release();
-                taskTracker.finishedTask();
-            }
-        };
-    }
-
-    private void notifyListener(ListenableFuture<IndexAggregatesPair> pairFuture) {
-        try {
-            IndexAggregatesPair pair = pairFuture.get();
-            cacheBlockFinishedListener.onFinish(pair);
-        } catch (InterruptedException e) {
-            LOG.info("There was an interrupt while trying to notify the cache block finished listener", e);
-        } catch (ExecutionException e) {
-            LOG.error("There was an unexpected error obtaining the " + IndexAggregatesPair.class.getSimpleName() +
-                ". This should not happen!", e);
-        }
-    }
-
-    static interface CacheBlockFinishedListener {
-        void onFinish(IndexAggregatesPair pair);
-    }
 }

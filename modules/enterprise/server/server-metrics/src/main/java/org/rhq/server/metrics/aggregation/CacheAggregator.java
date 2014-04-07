@@ -1,9 +1,12 @@
 package org.rhq.server.metrics.aggregation;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -27,7 +30,15 @@ class CacheAggregator extends BaseAggregator {
 
     private static final int LATE_DATA_BATCH_SIZE = 5;
 
+    static interface CacheBlockFinishedListener {
+        void onFinish(IndexAggregatesPair pair);
+    }
+
     private DateTime currentDay;
+
+    private AtomicInteger schedulesCount = new AtomicInteger();
+
+    private CacheBlockFinishedListener cacheBlockFinishedListener;
 
     void setStartTime(DateTime startTime) {
         this.startTime = startTime;
@@ -42,20 +53,26 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @Override
-    ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
+    protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
         return findCurrentCacheIndexEntries();
     }
 
     @Override
-    Runnable createAggregationTask(final CacheIndexEntry indexEntry) {
+    protected Runnable createAggregationTask(final CacheIndexEntry indexEntry) {
         return new Runnable() {
             @Override
             public void run() {
                 StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                     startTime.getMillis(), indexEntry.getStartScheduleId());
+
                 processCacheBlock(indexEntry, cacheFuture, persistMetrics);
             }
         };
+    }
+
+    @Override
+    protected Map<AggregationType, Integer> getAggregationCounts() {
+        return ImmutableMap.of(aggregationType, schedulesCount.get());
     }
 
     private ListenableFuture<List<CacheIndexEntry>> findCurrentCacheIndexEntries() {
@@ -73,8 +90,8 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @SuppressWarnings("unchecked")
-    protected void processCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture,
-        AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {
+    protected void processCacheBlock(CacheIndexEntry indexEntry,
+        StorageResultSetFuture cacheFuture, AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(cacheFuture,
             toIterable(aggregationType.getCacheMapper()), aggregationTasks);
@@ -94,6 +111,25 @@ class CacheAggregator extends BaseAggregator {
         ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
             deleteCacheIndexEntry(indexEntry), aggregationTasks);
 
-        Futures.addCallback(deleteCacheIndexFuture, cacheBlockFinished(pairFuture), aggregationTasks);
+        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void aggregationTaskFinished(ListenableFuture<ResultSet> deleteCacheIndexFuture,
+        ListenableFuture<IndexAggregatesPair> pairFuture) {
+
+        final ListenableFuture<List<Object>> argsFuture = Futures.allAsList(deleteCacheIndexFuture, pairFuture);
+
+        Futures.addCallback(argsFuture, new AggregationTaskFinishedCallback<List<Object>>() {
+            @Override
+            protected void onFinish(List<Object> args) {
+                IndexAggregatesPair pair = (IndexAggregatesPair) args.get(1);
+
+                if (cacheBlockFinishedListener != null) {
+                    cacheBlockFinishedListener.onFinish(pair);
+                }
+                schedulesCount.addAndGet(pair.metrics.size());
+            }
+        }, aggregationTasks);
     }
 }

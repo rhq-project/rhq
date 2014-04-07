@@ -45,6 +45,7 @@ import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.PopupWindow;
 import org.rhq.coregui.client.admin.AdministrationView;
 import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView;
+import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView.Type;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
@@ -292,15 +293,22 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                                         public void onSuccess(AgentInstall result) {
                                             RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(result,
                                                 false, true, false, false);
+                                            remoteAgentView
+                                                .setSuccessHandler(new RemoteAgentInstallView.SuccessHandler() {
+                                                    @Override
+                                                    public void onSuccess(RemoteAgentInstallView.Type type) {
+                                                        if (type == Type.UNINSTALL) {
+                                                            removeResources();
+                                                        }
+                                                    }
+                                                });
+
                                             PopupWindow window = new PopupWindow(remoteAgentView);
-                                            window.setTitle(MSG.view_adminTopology_agent_stop());
+                                            window.setTitle(MSG.view_adminTopology_agent_uninstall());
                                             window.setHeight(300);
                                             window.setWidth(800);
                                             window.show();
                                             refresh();
-
-                                            // TODO do this after uninstall finished, right now, its done immediately
-                                            removeResources();
                                         }
 
                                         @Override

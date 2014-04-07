@@ -94,6 +94,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private AgentInstall initialAgentInstall;
 
+    private SuccessHandler successHandler = null;
+
+    public static enum Type {
+        INSTALL, UNINSTALL, START, STOP;
+    }
+
     public RemoteAgentInstallView(AgentInstall initialInfo, boolean showInstallButton, boolean showUninstallButton,
         boolean showStartButton, boolean showStopButton) {
 
@@ -407,6 +413,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                                 buildInstallInfoCanvas(agentInfoLayout, result);
                                 agentInfoLayout.markForRedraw();
                                 agentStatusCheck();
+
+                                // tell the success handler
+                                invokeSuccessHandler(Type.INSTALL);
                             }
                         });
                 }
@@ -429,6 +438,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                     connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_uninstallSuccess());
                     displayMessage(MSG.view_remoteAgentInstall_uninstallAgentResults(result));
                     agentStatusCheck();
+
+                    // tell the success handler
+                    invokeSuccessHandler(Type.UNINSTALL);
                 } else {
                     connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_error_7());
                 }
@@ -448,6 +460,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                 disableButtons(false);
                 displayMessage(MSG.view_remoteAgentInstall_startAgentResults(result));
                 agentStatusCheck();
+
+                // tell the success handler
+                invokeSuccessHandler(Type.START);
             }
         });
     }
@@ -464,6 +479,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                 disableButtons(false);
                 displayMessage(MSG.view_remoteAgentInstall_stopAgentResults(result));
                 agentStatusCheck();
+
+                // tell the success handler
+                invokeSuccessHandler(Type.STOP);
             }
         });
     }
@@ -588,5 +606,29 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             findAgentInstallPath();
         }
         return connectionForm.getValueAsString("agentInstallPath");
+    }
+
+    /**
+     * Allows one success handler to be added to this view. When anything is done that is a success,
+     * this handler will be called. If you set this to null, any previous success handler will be removed.
+     *
+     * @param successHandler the handler to call when this view does anything successful.
+     */
+    public void setSuccessHandler(SuccessHandler successHandler) {
+        this.successHandler = successHandler;
+    }
+
+    private void invokeSuccessHandler(Type type) {
+        if (this.successHandler != null) {
+            try {
+                this.successHandler.onSuccess(type);
+            } catch (Exception e) {
+                displayError("success handler failed", e);
+            }
+        }
+    }
+
+    public interface SuccessHandler {
+        void onSuccess(Type type);
     }
 }

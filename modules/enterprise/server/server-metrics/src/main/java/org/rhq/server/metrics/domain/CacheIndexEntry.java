@@ -10,6 +10,8 @@ public class CacheIndexEntry {
 
     private MetricsTable bucket;
 
+    private long day;
+
     private long insertTimeSlice;
 
     private int partition;
@@ -18,7 +20,7 @@ public class CacheIndexEntry {
 
     private long collectionTimeSlice;
 
-    private Set<Integer> scheduleIds = Collections.EMPTY_SET;
+    private Set<Integer> scheduleIds = Collections.emptySet();
 
     public MetricsTable getBucket() {
         return bucket;
@@ -26,6 +28,14 @@ public class CacheIndexEntry {
 
     public void setBucket(MetricsTable bucket) {
         this.bucket = bucket;
+    }
+
+    public long getDay() {
+        return day;
+    }
+
+    public void setDay(long day) {
+        this.day = day;
     }
 
     public long getInsertTimeSlice() {
@@ -70,7 +80,8 @@ public class CacheIndexEntry {
 
     @Override
     public String toString() {
-        return "CacheIndexEntry[bucket: " + bucket + ", insertTimeSlice: " + insertTimeSlice + ", partition: " +
-            partition + ", collectionTimeSlice: " + collectionTimeSlice + ", startScheduleId: " + startScheduleId + "]";
+        return "CacheIndexEntry[bucket: " + bucket + ", day: " + day + ", insertTimeSlice: " + insertTimeSlice +
+            ", partition: " + partition + ", collectionTimeSlice: " + collectionTimeSlice + ", startScheduleId: " +
+            startScheduleId + "]";
     }
 }

@@ -55,8 +55,6 @@ abstract class BaseAggregator {
 
     protected TaskTracker taskTracker = new TaskTracker();
 
-    private int cacheBatchSize;
-
     /**
      * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
      * If there are any unexpected errors, e.g., a NullPointerException, aggregation will be aborted.
@@ -130,10 +128,6 @@ abstract class BaseAggregator {
 
     void setDateTimeService(DateTimeService dateTimeService) {
         this.dateTimeService = dateTimeService;
-    }
-
-    void setCacheBatchSize(int cacheBatchSize) {
-        this.cacheBatchSize = cacheBatchSize;
     }
 
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
@@ -244,8 +238,9 @@ abstract class BaseAggregator {
         return new AsyncFunction<ResultSet, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(ResultSet deleteCacheResultSet) throws Exception {
-                return dao.deleteCacheIndexEntries(aggregationType.getCacheTable(), indexEntry.getInsertTimeSlice(),
-                    indexEntry.getPartition(), indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
+                return dao.deleteCacheIndexEntries(aggregationType.getCacheTable(), indexEntry.getDay(),
+                    indexEntry.getPartition(), indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId(),
+                    indexEntry.getInsertTimeSlice());
             }
         };
     }

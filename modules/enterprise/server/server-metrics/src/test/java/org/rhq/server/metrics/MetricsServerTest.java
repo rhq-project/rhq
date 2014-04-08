@@ -135,8 +135,8 @@ public class MetricsServerTest extends MetricsTest {
         assertRawCacheEquals(hour(4), startScheduleId(scheduleId), expected);
 
         int partition = 0;
-        assertRawCacheIndexEquals(today(), partition, hour(4), asList(newRawCacheIndexEntry(today(),
-            startScheduleId(scheduleId), hour(4))));
+        assertRawCacheIndexEquals(today(), partition, hour(4), asList(newRawCacheIndexEntry(hour(4),
+            startScheduleId(scheduleId), scheduleId)));
     }
 
     @Test(enabled = ENABLED)
@@ -173,9 +173,9 @@ public class MetricsServerTest extends MetricsTest {
         assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3, expected4);
 
         assertRawCacheIndexEquals(today(), partition, hour(5), asList(
-            newRawCacheIndexEntry(today(), startScheduleId(scheduleId1), hour(5)),
-            newRawCacheIndexEntry(today(), startScheduleId(scheduleId2), hour(5)),
-            newRawCacheIndexEntry(today(), startScheduleId(scheduleId3), hour(5))
+            newRawCacheIndexEntry(hour(5), startScheduleId(scheduleId1), scheduleId1),
+            newRawCacheIndexEntry(hour(5), startScheduleId(scheduleId2), scheduleId2),
+            newRawCacheIndexEntry(hour(5), startScheduleId(scheduleId3), scheduleId3, scheduleId4)
         ));
     }
 
@@ -215,11 +215,19 @@ public class MetricsServerTest extends MetricsTest {
         assertRawCacheEquals(yesterday().plusHours(19), startScheduleId(scheduleId2), expected2);
         assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3);
 
+        assertRawCacheIndexEquals(today(), partition, hour(4), asList(
+            newRawCacheIndexEntry(today(), hour(4), startScheduleId(scheduleId4), hour(5), scheduleId4)
+        ));
+
+        assertRawCacheIndexEquals(today(), partition, hour(5), asList(
+            newRawCacheIndexEntry(hour(5), startScheduleId(scheduleId3), scheduleId3)
+        ));
+
         assertRawCacheIndexEquals(yesterday(), partition, yesterday().plusHours(19), asList(
-            newRawCacheIndexEntry(yesterday(), startScheduleId(scheduleId1), yesterday().plusHours(19),
-                ImmutableSet.of(scheduleId1)),
-            newRawCacheIndexEntry(yesterday(), startScheduleId(scheduleId2), yesterday().plusHours(19),
-                ImmutableSet.of(scheduleId2))
+            newRawCacheIndexEntry(yesterday(), yesterday().plusHours(19), startScheduleId(scheduleId1), hour(5),
+                scheduleId1),
+            newRawCacheIndexEntry(yesterday(), yesterday().plusHours(19), startScheduleId(scheduleId2), hour(5),
+                scheduleId2)
         ));
         // TODO I think the query used in this assert only handles a single collection time slice
 //        assertRawCacheIndexEquals(today(), partition, asList(

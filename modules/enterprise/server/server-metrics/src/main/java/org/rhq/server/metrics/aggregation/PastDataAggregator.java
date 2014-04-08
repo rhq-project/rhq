@@ -96,7 +96,7 @@ class PastDataAggregator extends BaseAggregator {
         return new AggregationTask(indexEntry) {
             @Override
             public void run(CacheIndexEntry indexEntry) {
-                if (indexEntry.getScheduleIds().isEmpty()) {
+                if (indexEntry.getCollectionTimeSlice() == indexEntry.getInsertTimeSlice()) {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
                     processRawDataCacheBlock(indexEntry, cacheFuture);

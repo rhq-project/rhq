@@ -14,11 +14,12 @@ public class CacheIndexEntryMapper {
     public CacheIndexEntry map(Row row) {
         CacheIndexEntry indexEntry = new CacheIndexEntry();
         indexEntry.setBucket(MetricsTable.fromString(row.getString(0)));
-        indexEntry.setInsertTimeSlice(row.getDate(1).getTime());
+        indexEntry.setDay(row.getDate(1).getTime());
         indexEntry.setPartition(row.getInt(2));
         indexEntry.setCollectionTimeSlice(row.getDate(3).getTime());
         indexEntry.setStartScheduleId(row.getInt(4));
-        indexEntry.setScheduleIds(row.getSet(5, Integer.class));
+        indexEntry.setInsertTimeSlice(row.getDate(5).getTime());
+        indexEntry.setScheduleIds(row.getSet(6, Integer.class));
 
         return indexEntry;
     }

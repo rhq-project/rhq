@@ -1,5 +1,6 @@
 package org.rhq.server.metrics.aggregation;
 
+import static org.rhq.server.metrics.aggregation.AggregationManager.INDEX_PARTITION;
 import static org.rhq.server.metrics.domain.MetricsTable.ONE_HOUR;
 import static org.rhq.server.metrics.domain.MetricsTable.SIX_HOUR;
 
@@ -65,16 +66,15 @@ class PersistFunctions {
                 List<StorageResultSetFuture> futures = new ArrayList<StorageResultSetFuture>(pair.metrics.size() * 5);
                 long start6HourTimeSlice = dateTimeService.get6HourTimeSlice(pair.cacheIndexEntry.
                     getCollectionTimeSlice()).getMillis();
-                long start24HourTimeSlice = dateTimeService.get24HourTimeSlice(pair.cacheIndexEntry
-                    .getCollectionTimeSlice()).getMillis();
 
                 for (AggregateNumericMetric metric : pair.metrics) {
                     futures.addAll(persist1HourMetric(metric));
                     futures.add(dao.updateMetricsCache(ONE_HOUR, start6HourTimeSlice,
                         pair.cacheIndexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
                         metric.toMap()));
-                    futures.add(dao.updateCacheIndex(ONE_HOUR, start24HourTimeSlice, AggregationManager.INDEX_PARTITION,
-                        start6HourTimeSlice, pair.cacheIndexEntry.getStartScheduleId()));
+                    futures.add(dao.updateCacheIndex(ONE_HOUR, pair.cacheIndexEntry.getDay(), INDEX_PARTITION,
+                        start6HourTimeSlice, pair.cacheIndexEntry.getStartScheduleId(), start6HourTimeSlice,
+                        pair.cacheIndexEntry.getScheduleIds()));
                 }
                 return Futures.allAsList(futures);
             }
@@ -103,8 +103,9 @@ class PersistFunctions {
                     futures.add(dao.updateMetricsCache(SIX_HOUR, start24HourTimeSlice,
                         pair.cacheIndexEntry.getStartScheduleId(), metric.getScheduleId(), metric.getTimestamp(),
                         metric.toMap()));
-                    futures.add(dao.updateCacheIndex(SIX_HOUR, start24HourTimeSlice, AggregationManager.INDEX_PARTITION,
-                        start24HourTimeSlice, pair.cacheIndexEntry.getStartScheduleId()));
+                    futures.add(dao.updateCacheIndex(SIX_HOUR, start24HourTimeSlice, INDEX_PARTITION,
+                        start24HourTimeSlice, pair.cacheIndexEntry.getStartScheduleId(), start24HourTimeSlice,
+                        pair.cacheIndexEntry.getScheduleIds()));
                 }
                 return Futures.allAsList(futures);
             }

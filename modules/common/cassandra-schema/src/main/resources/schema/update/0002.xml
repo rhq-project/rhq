@@ -34,12 +34,13 @@
   <step>
     CREATE TABLE rhq.metrics_cache_index (
       bucket varchar,
-      time_slice timestamp,
+      day timestamp,
+      insert_time_slice timestamp,
       partition int,
-      time timestamp,
+      collection_time_slice timestamp,
       start_schedule_id int,
       schedule_ids set&lt;int&gt;,
-      PRIMARY KEY ((bucket, time_slice, partition), time, start_schedule_id)
+      PRIMARY KEY ((bucket, day, partition), collection_time_slice, start_schedule_id, insert_time_slice)
     ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
 </updatePlan>

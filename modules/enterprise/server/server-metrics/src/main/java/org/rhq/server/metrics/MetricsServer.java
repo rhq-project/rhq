@@ -416,37 +416,41 @@ public class MetricsServer {
         }
         final Stopwatch stopwatch = new Stopwatch().start();
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-        final long insertTimeSlice = dateTimeService.currentHour().getMillis();
         // TODO add support for splitting cache index partition
         final int partition = 0;
         DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 
         for (final MeasurementDataNumeric data : dataSet) {
-            long collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
-                configuration.getRawTimeSliceDuration()).getMillis();
+            DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
+                configuration.getRawTimeSliceDuration());
             // TODO make the age cap configurable
             if (dateTimeComparator.compare(collectionTimeSlice, dateTimeService.now().minusHours(24)) < 0) {
                 callback.onSuccess(data);
                 continue;
             }
             int startScheduleId = calculateStartScheduleId(data.getScheduleId());
-            DateTime day = dateTimeService.getTimeSlice(collectionTimeSlice,
-                configuration.getSixHourTimeSliceDuration());
+            DateTime insertTimeSlice = dateTimeService.currentHour();
+            DateTime day = dateTimeService.get24HourTimeSlice(collectionTimeSlice);
 
             StorageResultSetFuture rawFuture = dao.insertRawData(data);
-            StorageResultSetFuture cacheFuture = dao.updateMetricsCache(MetricsTable.RAW, collectionTimeSlice, startScheduleId,
-                data.getScheduleId(), data.getTimestamp(), ImmutableMap.of(AggregateType.VALUE.ordinal(),
-                data.getValue()));
-            StorageResultSetFuture indexFuture;
-            if (collectionTimeSlice < insertTimeSlice) {
-                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, startScheduleId,
-                    collectionTimeSlice, ImmutableSet.of(data.getScheduleId()));
-            } else {
-                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, collectionTimeSlice,
-                    startScheduleId);
-            }
+
+            StorageResultSetFuture cacheFuture = dao.updateMetricsCache(MetricsTable.RAW,
+                collectionTimeSlice.getMillis(), startScheduleId, data.getScheduleId(), data.getTimestamp(),
+                ImmutableMap.of(AggregateType.VALUE.ordinal(), data.getValue()));
+
+            StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition,
+                collectionTimeSlice.getMillis(), startScheduleId, insertTimeSlice.getMillis(),
+                ImmutableSet.of(data.getScheduleId()));
+//            if (collectionTimeSlice.isBefore(insertTimeSlice)) {
+//                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, collectionTimeSlice.getMillis(),
+//                    startScheduleId, insertTimeSlice.getMillis(), ImmutableSet.of(data.getScheduleId()));
+//            } else {
+//                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, collectionTimeSlice.getMillis(),
+//                    startScheduleId, insertTimeSlice.getMillis(), ImmutableSet.of(data.getScheduleId()));
+//            }
             ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, cacheFuture,
                 indexFuture);
+
             Futures.addCallback(insertsFuture, new FutureCallback<List<ResultSet>>() {
                 @Override
                 public void onSuccess(List<ResultSet> result) {

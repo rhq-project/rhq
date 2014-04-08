@@ -33,7 +33,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -426,26 +425,21 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int startScheduleId = 100;
         Set<Integer> scheduleIds = ImmutableSet.of(122, 123);
 
-        WaitForWrite indexUpdates = new WaitForWrite(2);
+        WaitForWrite indexUpdates = new WaitForWrite(1);
 
-        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(),
-            partition, currentTimeSlice.getMillis(), startScheduleId);
-        Futures.addCallback(indexFuture, indexUpdates);
-
-        indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(), 0, startScheduleId,
-            pastTimeSlice.getMillis(), scheduleIds);
+        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(), 0,
+            pastTimeSlice.getMillis(), startScheduleId, currentTimeSlice.getMillis(), scheduleIds);
         Futures.addCallback(indexFuture, indexUpdates);
 
         indexUpdates.await("Failed to update " + MetricsTable.METRICS_CACHE_INDEX);
 
         List<CacheIndexEntry> expected = asList(
-            newCacheIndexEntry(MetricsTable.RAW, hour0(), partition, startScheduleId, pastTimeSlice, scheduleIds),
-            newCacheIndexEntry(MetricsTable.RAW, hour0(), partition, startScheduleId, currentTimeSlice)
+            newCacheIndexEntry(MetricsTable.RAW, hour0(), partition, pastTimeSlice, startScheduleId, currentTimeSlice,
+                scheduleIds)
         );
 
         StorageResultSetFuture queryFuture = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW,
-            hour0().getMillis(),
-            partition, pastTimeSlice.getMillis());
+            hour0().getMillis(), partition, pastTimeSlice.getMillis());
         ResultSet resultSet = queryFuture.get();
         CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
         List<CacheIndexEntry> actual = new ArrayList<CacheIndexEntry>(2);
@@ -465,49 +459,37 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int startScheduleId = 100;
         Set<Integer> scheduleIds = ImmutableSet.of(122, 123);
 
-        WaitForWrite indexUpdates = new WaitForWrite(2);
-
-        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(),
-            partition, currentTimeSlice.getMillis(), startScheduleId);
-        Futures.addCallback(indexFuture, indexUpdates);
-
-        indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(), 0, startScheduleId,
-            pastTimeSlice.getMillis(), scheduleIds);
-        Futures.addCallback(indexFuture, indexUpdates);
-
-        indexUpdates.await("Failed to update " + MetricsTable.METRICS_CACHE_INDEX);
+        StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, hour0().getMillis(), 0,
+            currentTimeSlice.getMillis(), startScheduleId, currentTimeSlice.getMillis(), scheduleIds);
+        indexFuture.get();
 
         StorageResultSetFuture deleteFuture = dao.deleteCacheIndexEntries(MetricsTable.RAW, hour0().getMillis(),
-            partition, pastTimeSlice.getMillis(), startScheduleId);
+            partition, currentTimeSlice.getMillis(), startScheduleId, currentTimeSlice.getMillis());
         deleteFuture.get();
 
-        StorageResultSetFuture queryFuture = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW,
-            hour0().getMillis(),
-            partition, hour0().getMillis());
+        StorageResultSetFuture queryFuture = dao.findCurrentCacheIndexEntries(MetricsTable.RAW,
+            hour0().getMillis(), partition, currentTimeSlice.getMillis());
         ResultSet resultSet = queryFuture.get();
-        List<CacheIndexEntry> expected = asList(newCacheIndexEntry(MetricsTable.RAW, hour0(), partition,
-            startScheduleId, currentTimeSlice));
-        CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
-        List<CacheIndexEntry> actual = new ArrayList<CacheIndexEntry>(2);
 
-        for (Row row : resultSet) {
-            actual.add(mapper.map(row));
-        }
+        assertTrue(resultSet.isExhausted(), "Expected an empty result set");
 
-        assertCacheIndexEntriesEqual(actual, expected);
+//        List<CacheIndexEntry> expected = asList(newCacheIndexEntry(MetricsTable.RAW, hour0(), partition,
+//            currentTimeSlice, startScheduleId, currentTimeSlice, scheduleIds));
+//        CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
+//        List<CacheIndexEntry> actual = new ArrayList<CacheIndexEntry>(2);
+//
+//        for (Row row : resultSet) {
+//            actual.add(mapper.map(row));
+//        }
+//
+//        assertCacheIndexEntriesEqual(actual, expected);
     }
 
-    @SuppressWarnings("unchecked")
-    private CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime insertTimeSlice, int partition,
-        int startScheduleId, DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(table, insertTimeSlice, partition, startScheduleId, collectionTimeSlice,
-            Collections.EMPTY_SET);
-    }
-
-    private CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime insertTimeSlice, int partition,
-        int startScheduleId, DateTime collectionTimeSlice, Set<Integer> scheduleIds) {
+    private CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime day, int partition,
+        DateTime collectionTimeSlice, int startScheduleId, DateTime insertTimeSlice, Set<Integer> scheduleIds) {
         CacheIndexEntry entry = new CacheIndexEntry();
         entry.setBucket(table);
+        entry.setDay(day.getMillis());
         entry.setInsertTimeSlice(insertTimeSlice.getMillis());
         entry.setPartition(partition);
         entry.setStartScheduleId(startScheduleId);

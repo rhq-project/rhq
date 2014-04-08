@@ -15,6 +15,7 @@ import java.util.Set;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 
@@ -264,86 +265,139 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertRawCacheIndexEquals(insertTimeSlice, partition, collectionTimeSlice, emptyEntries);
     }
 
-    protected void assertRawCacheIndexEquals(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice,
+    protected void assertRawCacheIndexEquals(DateTime day, int partition, DateTime collectionTimeSlice,
         List<CacheIndexEntry> expected) {
-        assertCacheIndexEquals(insertTimeSlice, MetricsTable.RAW, partition, collectionTimeSlice, expected);
+        assertCacheIndexEquals(day, MetricsTable.RAW, partition, collectionTimeSlice, expected);
     }
 
-    protected void assert1HourCacheIndexEquals(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice,
-        List<CacheIndexEntry> expected) {
-        assertCacheIndexEquals(insertTimeSlice, MetricsTable.ONE_HOUR, partition, collectionTimeSlice, expected);
+    protected void assert1HourCacheIndexEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
+        assertCacheIndexEquals(dateTimeService.get24HourTimeSlice(collectionTimeSlice), MetricsTable.ONE_HOUR, 0,
+            collectionTimeSlice, expected);
     }
 
-    protected void assert6HourCacheIndexEquals(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice,
+    protected void assert1HourCacheIndexEquals(DateTime day, DateTime collectionTimeSlice,
         List<CacheIndexEntry> expected) {
-        assertCacheIndexEquals(insertTimeSlice, MetricsTable.SIX_HOUR, partition, collectionTimeSlice, expected);
+        assertCacheIndexEquals(day, MetricsTable.ONE_HOUR, 0, collectionTimeSlice, expected);
     }
 
-    protected void assert6HourCacheIndexEmpty(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice) {
+    protected void assert1HourCacheIndexEmpty(DateTime collectionTimeSlice) {
         List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assert6HourCacheIndexEquals(insertTimeSlice, partition, collectionTimeSlice, emptyEntries);
+        assert1HourCacheIndexEquals(collectionTimeSlice, emptyEntries);
     }
 
-    private void assertCacheIndexEquals(DateTime insertTimeSlice, MetricsTable table, int partition,
+    protected void assert6HourCacheIndexEquals(DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
+        assertCacheIndexEquals(dateTimeService.get24HourTimeSlice(collectionTimeSlice), MetricsTable.SIX_HOUR, 0,
+            collectionTimeSlice, expected);
+    }
+
+    protected void assert6HourCacheIndexEmpty(DateTime collectionTimeSlice) {
+        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
+        assert6HourCacheIndexEquals(collectionTimeSlice, emptyEntries);
+    }
+
+    private void assertCacheIndexEquals(DateTime day, MetricsTable table, int partition,
         DateTime collectionTimeSlice, List<CacheIndexEntry> expected) {
-        ResultSet resultSet = dao.findCurrentCacheIndexEntries(table, insertTimeSlice.getMillis(), partition,
+        ResultSet resultSet = dao.findCurrentCacheIndexEntries(table, day.getMillis(), partition,
             collectionTimeSlice.getMillis()).get();
         List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
-        for (CacheIndexEntry entry : expected) {
-            entry.setInsertTimeSlice(insertTimeSlice.getMillis());
-            entry.setPartition(partition);
-        }
         assertCacheIndexEntriesEqual(actual, expected, table);
     }
 
-    protected void assert1HourCacheIndexEmpty(DateTime insertTimeSlice, int partition, DateTime collectionTimeSlice) {
-        List<CacheIndexEntry> emptyEntries = Collections.emptyList();
-        assert1HourCacheIndexEquals(insertTimeSlice, partition, collectionTimeSlice, emptyEntries);
+    /**
+     * Creates a raw cache index entry. {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} will be the same
+     * as <code>collectionTimeSlice</code> and {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
+     * <code>collectionTimeSlice</code>.
+     *
+     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
+     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
+     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
+     *
+     * @return A new raw cache index entry
+     */
+    protected CacheIndexEntry newRawCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
+        Integer... scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.RAW, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
+            collectionTimeSlice, startScheduleId, collectionTimeSlice, ImmutableSet.copyOf(scheduleIds));
     }
 
-    protected CacheIndexEntry newRawCacheIndexEntry(int startScheduleId, DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.RAW, null, 0, startScheduleId, collectionTimeSlice);
+    /**
+     * Creates a new raw cache index entry.
+     *
+     * @param day The value to assign to The value to assign {@link CacheIndexEntry#getDay() CacheIndexEntry.day}
+     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
+     * @param startScheduleId The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
+     * @param insertTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.insertTimeSlice}
+     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
+     * @return A new raw cache index entry
+     */
+    protected CacheIndexEntry newRawCacheIndexEntry(DateTime day, DateTime collectionTimeSlice, int startScheduleId,
+        DateTime insertTimeSlice, Integer... scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.RAW, day, 0, collectionTimeSlice, startScheduleId, insertTimeSlice,
+            ImmutableSet.copyOf(scheduleIds));
     }
 
-    protected CacheIndexEntry newRawCacheIndexEntry(DateTime day, int startScheduleId, DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.RAW, day, 0, startScheduleId, collectionTimeSlice);
+    /**
+     * Creates a 1 hour raw cache index entry.
+     *
+     * @param day The value to assign to The value to assign {@link CacheIndexEntry#getDay() CacheIndexEntry.day}
+     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
+     * @param startScheduleId The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
+     * @param insertTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.insertTimeSlice}
+     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
+     * @return A new 1 hour cache index entry
+     */
+    protected CacheIndexEntry new1HourCacheIndexEntry(DateTime day, DateTime collectionTimeSlice, int startScheduleId,
+        DateTime insertTimeSlice, Integer... scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.ONE_HOUR, day, 0, collectionTimeSlice, startScheduleId, insertTimeSlice,
+            ImmutableSet.copyOf(scheduleIds));
     }
 
-    protected CacheIndexEntry newRawCacheIndexEntry(DateTime day, int startScheduleId, DateTime collectionTimeSlice,
-        Set<Integer> scheduleIds) {
-        return newCacheIndexEntry(MetricsTable.RAW, day, 0, startScheduleId, collectionTimeSlice, scheduleIds);
+    /**
+     * Creates a 1 hour cache index entry. {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} will be the same
+     * as <code>collectionTimeSlice</code> and {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
+     * <code>collectionTimeSlice</code>.
+     *
+     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
+     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
+     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
+     *
+     * @return A new 1 hour cache index entry
+     */
+    protected CacheIndexEntry new1HourCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
+        Integer... scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.ONE_HOUR, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
+            collectionTimeSlice, startScheduleId, collectionTimeSlice, ImmutableSet.copyOf(scheduleIds));
     }
 
-    protected CacheIndexEntry new1HourCacheIndexEntry(DateTime day, int startScheduleId,
-        DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.ONE_HOUR, day, 0, startScheduleId, collectionTimeSlice);
+    /**
+     * Creates a 6 hour cache index entry. {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} will be the same
+     * as <code>collectionTimeSlice</code> and {@link CacheIndexEntry#getDay() day} will be the 24 hour time slice of
+     * <code>collectionTimeSlice</code>.
+     *
+     * @param collectionTimeSlice The value to assign {@link CacheIndexEntry#getCollectionTimeSlice() CacheIndexEntry.collectionTimeSlice}
+     * @param startScheduleId     The value to assign {@link CacheIndexEntry#getStartScheduleId() CacheIndexEntry.startScheduleId}
+     * @param scheduleIds The value(s) to assign {@link CacheIndexEntry#getScheduleIds() CacheIndexEntry.scheduleIds}
+     *
+     * @return A new 6 hour cache index entry
+     */
+    protected CacheIndexEntry new6HourCacheIndexEntry(DateTime collectionTimeSlice, int startScheduleId,
+        Integer... scheduleIds) {
+        return newCacheIndexEntry(MetricsTable.SIX_HOUR, dateTimeService.get24HourTimeSlice(collectionTimeSlice), 0,
+            collectionTimeSlice, startScheduleId, collectionTimeSlice, ImmutableSet.copyOf(scheduleIds));
     }
 
-    protected CacheIndexEntry new6HourCacheIndexEntry(DateTime day, int startScheduleId,
-        DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(MetricsTable.SIX_HOUR, day, 0, startScheduleId, collectionTimeSlice);
-    }
+    protected CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime day, int partition,
+        DateTime collectionTimeSlice, int startScheduleId, DateTime insertTimeSlice, Set<Integer> scheduleIds) {
+        CacheIndexEntry indexEntry = new CacheIndexEntry();
+        indexEntry.setBucket(table);
+        indexEntry.setDay(day.getMillis());
+        indexEntry.setPartition(partition);
+        indexEntry.setCollectionTimeSlice(collectionTimeSlice.getMillis());
+        indexEntry.setStartScheduleId(startScheduleId);
+        indexEntry.setInsertTimeSlice(insertTimeSlice.getMillis());
+        indexEntry.setScheduleIds(scheduleIds);
 
-    @SuppressWarnings("unchecked")
-    protected CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime insertTimeSlice, int partition,
-        int startScheduleId, DateTime collectionTimeSlice) {
-        return newCacheIndexEntry(table, insertTimeSlice, partition, startScheduleId, collectionTimeSlice,
-            Collections.EMPTY_SET);
-    }
-
-    protected CacheIndexEntry newCacheIndexEntry(MetricsTable table, DateTime insertTimeSlice, int partition,
-        int startScheduleId, DateTime collectionTimeSlice, Set<Integer> scheduleIds) {
-        CacheIndexEntry entry = new CacheIndexEntry();
-        entry.setBucket(table);
-        if (insertTimeSlice != null) {
-            entry.setInsertTimeSlice(insertTimeSlice.getMillis());
-        }
-        entry.setPartition(partition);
-        entry.setStartScheduleId(startScheduleId);
-        entry.setCollectionTimeSlice(collectionTimeSlice.getMillis());
-        entry.setScheduleIds(scheduleIds);
-
-        return entry;
+        return indexEntry;
     }
 
     static class MetricsServerStub extends MetricsServer {

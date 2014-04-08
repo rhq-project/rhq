@@ -132,7 +132,6 @@ public class AggregationManager {
         CacheAggregator aggregator = new CacheAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.RAW);
-        aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(startTime);
@@ -152,7 +151,6 @@ public class AggregationManager {
         CacheAggregator aggregator = new CacheAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.ONE_HOUR);
-        aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(dtService.get6HourTimeSlice(startTime));
@@ -167,7 +165,6 @@ public class AggregationManager {
         CacheAggregator aggregator = new CacheAggregator();
         aggregator.setAggregationTasks(aggregationTasks);
         aggregator.setAggregationType(AggregationType.SIX_HOUR);
-        aggregator.setCacheBatchSize(cacheBatchSize);
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
         aggregator.setStartTime(dtService.get24HourTimeSlice(startTime));

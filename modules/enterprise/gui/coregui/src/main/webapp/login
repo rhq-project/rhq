@@ -16,14 +16,28 @@
     <style>
        #patternFlyLogin h2 {
          font-family: "Overpass", sans-serif;
-         font-size: 2.3em;
+         font-size: 2.7em;
          font-weight: 100;
          text-transform: uppercase;
          letter-spacing: 0.005em;
        }
+       
+       #patternFlyLogin .details p {
+         padding-bottom: 6em;
+       }
+
+       #patternFlyLogin .rhqLabel {
+         bottom: 45%;
+         position: absolute;
+       }
+
+       #patternFlyLogin .caps {
+         background-image: url(img/caps.png);
+         background-position: right center;
+         background-repeat: no-repeat;
+       }
 
        #patternFlyLogin #errorFeedback {
-         
          background-position: left bottom;
          background-repeat: no-repeat;
          padding-bottom: 1em;
@@ -71,7 +85,6 @@
     <script type="text/javascript">
         var isomorphicDir = "org.rhq.coregui.CoreGUI/sc/";
     </script>
-
 </head>
 <body>
 
@@ -88,12 +101,14 @@
     <span id="badge">
       <img src="img/logo.svg" alt="" />
     </span>
+    <div class="col-sm-12 rhqLabel">
+      <h2>Log in to <strong>RHQ</strong></h2>
+    </div>
     <div class="container">
       <div class="row">
         <div class="col-sm-12">
-          <h2>Log in to <strong>RHQ</strong></h2>
-        </div><!--/.col-*-->
-
+          <br/>
+        </div>
         <div id="errorFeedback" class="hideError">
           <p>
             <strong id="loginError">Invalid username or password.</strong><br/>Please, fill in the fields again.
@@ -105,13 +120,13 @@
             <div class="form-group">
               <label for="inputUsername" class="col-sm-2 col-md-2 control-label">Username</label>
               <div class="col-sm-10 col-md-10">
-                <input type="text" class="form-control" id="inputUsername" placeholder="" tabindex="1">
+                <input type="text" class="form-control" id="inputUsername" placeholder="" tabindex="1" autofocus>
               </div>
             </div>
             <div class="form-group">
               <label for="inputPassword" class="col-sm-2 col-md-2 control-label">Password</label>
               <div class="col-sm-10 col-md-10">
-                <input type="password" class="form-control" id="inputPassword" placeholder="" tabindex="2">
+                <input type="password" class="form-control" id="inputPassword" placeholder="" tabindex="2" >
               </div>
             </div>
             <div class="form-group">
@@ -126,12 +141,27 @@
           </form>
         </div><!--/.col-*-->
         <div class="col-sm-5 col-md-6 col-lg-7 details">
-          <p><strong>Welcome to RHQ 4.11.0-SNAPSHOT!</strong>
-          RHQ is an enterprise management solution for JBoss middleware projects, Tomcat, Apache Web Server, and numerous other server-side applications.</p>
+          <p><strong>Welcome to RHQ ${project.version}!</strong><br/>
+          RHQ is an enterprise management solution for JBoss middleware projects, Tomcat, Apache Web Server, and numerous other server-side applications.<br/></p>
         </div><!--/.col-*-->
       </div><!--/.row-->
     </div><!--/.container-->
 </div>
+
+<!-- check if CAPS LOCK is on -->
+<script type="text/javascript" language="javascript">
+<!--
+$('#inputPassword').keypress(function(e) { 
+    var s = String.fromCharCode( e.which );
+    if ((s.toUpperCase() === s && !e.shiftKey) || (s.toLowerCase() === s && e.shiftKey)) {
+      $('#inputPassword').addClass("caps");
+    } else {
+      $('#inputPassword').removeClass("caps");
+    }
+});
+// -->
+</script>
+
 
 <!-- GWT iframe -->
 <iframe src="javascript:''" id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>

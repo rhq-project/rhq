@@ -37,6 +37,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.smartgwt.client.types.Alignment;
@@ -86,6 +87,8 @@ public class LoginView extends Canvas {
     private static boolean loginShowing = false;
 
     private static final Messages MSG = CoreGUI.getMessages();
+    
+    private static final String LOGIN_VIEW = "login";
 
     private Window window;
     private FormPanel fakeForm;
@@ -94,7 +97,7 @@ public class LoginView extends Canvas {
 
     private SubmitItem loginButton;
 
-    //registration fields
+    // registration fields
     private TextItem first;
     private TextItem last;
     private TextItem email;
@@ -109,6 +112,7 @@ public class LoginView extends Canvas {
     private static final String SESSIONID = "ldap.sessionid";
     static final String PASSWORD = "ldap.password";
     
+    // html login form
     private static final String LOGINFORM_ID = "loginForm";
     private static final String LOGINBUTTON_ID = "loginSubmit";
     private static final String USERNAME_ID = "inputUsername";
@@ -117,24 +121,33 @@ public class LoginView extends Canvas {
     private static final String LOGIN_ERROR_DIV_ID = "loginError";
     private static final String ERROR_FEEDBACK_DIV_ID = "errorFeedback";
     private static final String HTML_ID = "htmlId";
+    private String errorMessage;
     
     private ProductInfo productInfo;
 
     public void showLoginDialog(String message) {
-        showLoginDialog();
-        form.setErrorsPreamble(message);
+        if (!loginShowing) {
+            errorMessage = message;
+            if (!isLoginView()) {
+                redirectTo(LOGIN_VIEW);
+                return;
+            }
+            showLoginDialog();
+        } else {
+            form.setErrorsPreamble(message);
+            setLoginError(message);
+        }
     }
-
+    
     public void showLoginDialog() {
         if (!loginShowing) {
-            if (!com.google.gwt.user.client.Window.Location.getHref().contains("login")) {
-                redirectTo("login");
+            UserSessionManager.logout();
+            if (!isLoginView()) {
+                redirectTo(LOGIN_VIEW);
                 return;
             }
             
             loginShowing = true;
-            UserSessionManager.logout();
-
             form = new DynamicForm();
             form.setMargin(25);
             form.setAutoFocus(true);
@@ -180,13 +193,6 @@ public class LoginView extends Canvas {
                     }
                 }
             });
-            
-            // Get a handle to the form and set its action to __gwt_login() method
-            fakeForm = FormPanel.wrap(Document.get().getElementById(LOGINFORM_ID), false);
-            fakeForm.setVisible(true);
-            fakeForm.setAction("javascript:__gwt_login()");
-            // export the JSNI function
-            injectLoginFunction(this);
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
@@ -205,7 +211,6 @@ public class LoginView extends Canvas {
             window.setAutoCenter(true);
 
             window.addItem(form);
-//            setLoginVisible(true);
 
             form.addSubmitValuesHandler(new SubmitValuesHandler() {
                 public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
@@ -216,6 +221,18 @@ public class LoginView extends Canvas {
                     }
                 }
             });
+
+            // Get a handle to the form and set its action to __gwt_login() method
+            fakeForm = FormPanel.wrap(Document.get().getElementById(LOGINFORM_ID), false);
+            fakeForm.setVisible(true);
+            fakeForm.setAction("javascript:__gwt_login()");
+            // export the JSNI function
+            injectLoginFunction(this);
+
+            if (errorMessage != null) {
+                form.setFieldErrors("login", MSG.view_login_noUser(), true);
+                errorMessage = null; // hide it next time
+            }
         }
     }
 
@@ -280,23 +297,17 @@ public class LoginView extends Canvas {
         header.setWidth("100%");
         //build ui elements for registration screen
         first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
-        {
-            first.setRequired(true);
-            first.setWrapTitle(false);
-            first.setWidth(fieldWidth);
-        }
+        first.setRequired(true);
+        first.setWrapTitle(false);
+        first.setWidth(fieldWidth);
         last = new TextItem(LAST, MSG.dataSource_users_field_lastName());
-        {
-            last.setWrapTitle(false);
-            last.setWidth(fieldWidth);
-            last.setRequired(true);
-        }
+        last.setWrapTitle(false);
+        last.setWidth(fieldWidth);
+        last.setRequired(true);
         final TextItem username = new TextItem(USERNAME, MSG.dataSource_users_field_name());
-        {
-            username.setValue(user);
-            username.setDisabled(true);
-            username.setWidth(fieldWidth);
-        }
+        username.setValue(user);
+        username.setDisabled(true);
+        username.setWidth(fieldWidth);
         email = new TextItem(EMAIL, MSG.dataSource_users_field_emailAddress());
         email.setRequired(true);
         email.setWidth(fieldWidth);
@@ -387,13 +398,11 @@ public class LoginView extends Canvas {
                 }
 
                 //clear out all validation messages.
-                {
-                    String empty = "                  ";
-                    first.setValue(empty);
-                    last.setValue(empty);
-                    email.setValue("test@test.com");
-                    inputForm.validate();
-                }
+                String empty = "                  ";
+                first.setValue(empty);
+                last.setValue(empty);
+                email.setValue("test@test.com");
+                inputForm.validate();
                 first.clearValue();
                 last.clearValue();
                 email.clearValue();
@@ -571,11 +580,10 @@ public class LoginView extends Canvas {
                     int statusCode = response.getStatusCode();
                     if (statusCode == 200) {
                         window.destroy();
-//                        setLoginVisible(false);
                         fakeForm.setVisible(false);
                         loginShowing = false;
                         UserSessionManager.login(username, password);
-                        redirectTo(""); // root path
+                        redirectTo(""); // redirect back to the "root" path (coregui/)
                         setLoginError(null);
                     } else {
                         handleError(statusCode);
@@ -628,6 +636,7 @@ public class LoginView extends Canvas {
         form.submit();
     }
 
+    // called from EcmaScript method (__gwt_login)
     private void doLogin() {
         login(getUsername(), getPassword());
     }
@@ -648,14 +657,13 @@ public class LoginView extends Canvas {
         ((InputElement) Document.get().getElementById(USERNAME_ID)).setValue(username);
     }
     
-//    private void setLoginVisible(boolean show) {
-//        DOM.getElementById(LOGIN_DIV_ID).getStyle().setDisplay(show ? Display.BLOCK : Display.NONE);
-//        DOM.getElementById(HTML_ID).setClassName(show ? "login-pf" : "");
-//    }
-    
     private void setLoginError(String error) {
-        DOM.getElementById(LOGIN_ERROR_DIV_ID).setInnerHTML(error);
-        DOM.getElementById(ERROR_FEEDBACK_DIV_ID).setClassName(error != null ? "showError" : "hideError");
+        Element errorDiv = DOM.getElementById(LOGIN_ERROR_DIV_ID);
+        Element feedbackDiv = DOM.getElementById(ERROR_FEEDBACK_DIV_ID);
+        if (errorDiv != null && feedbackDiv != null) {
+            errorDiv.setInnerHTML(error);
+            feedbackDiv.setClassName(error != null ? "showError" : "hideError");
+        }
     }
 
     // This is our JSNI method that will be called on form submit
@@ -665,7 +673,12 @@ public class LoginView extends Canvas {
       });
     }-*/;
     
+    public static boolean isLoginView() {
+        return com.google.gwt.user.client.Window.Location.getHref().contains(LOGIN_VIEW);
+    }
+    
     private void redirectTo(String path) {
-        com.google.gwt.user.client.Window.Location.replace(GWT.getHostPageBaseURL() + path);
+        com.google.gwt.user.client.Window.Location.replace(GWT.getHostPageBaseURL() + path
+            + com.google.gwt.user.client.Window.Location.getHash());
     }
 }

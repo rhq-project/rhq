@@ -44,6 +44,7 @@ import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -82,6 +83,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private EnhancedIButton uninstallButton;
     private EnhancedIButton startButton;
     private EnhancedIButton stopButton;
+    private TextItem agentInstallPath;
     private ButtonItem findAgentInstallPathButton;
     private ButtonItem statusCheckButton;
     private CheckboxItem rememberMeCheckbox;
@@ -95,6 +97,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private AgentInstall initialAgentInstall;
 
     private SuccessHandler successHandler = null;
+
+    private final AbsolutePathValidator absPathValidator = new AbsolutePathValidator();
 
     public static enum Type {
         INSTALL, UNINSTALL, START, STOP;
@@ -182,12 +186,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         rememberMeCheckbox.setColSpan(2);
         rememberMeCheckbox.setEndRow(true);
 
-        TextItem agentInstallPath = new TextItem("agentInstallPath", MSG.view_remoteAgentInstall_installPath());
+        agentInstallPath = new TextItem("agentInstallPath", MSG.view_remoteAgentInstall_installPath());
         agentInstallPath.setWidth(textFieldWidth);
         agentInstallPath.setPrompt(MSG.view_remoteAgentInstall_promptInstallPath());
         agentInstallPath.setHoverWidth(300);
         agentInstallPath.setStartRow(true);
         agentInstallPath.setEndRow(false);
+        agentInstallPath.setValidators(absPathValidator); // we will "turn this on" when needed - this is to ensure we create paths properly and it doesn't go in places user isn't expecting
 
         findAgentInstallPathButton = new ButtonItem("findAgentInstallPathButton",
             MSG.view_remoteAgentInstall_buttonFindAgent());
@@ -247,8 +252,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         installButton.setExtraSpace(10);
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (connectionForm.validate()) {
-                    installAgent();
+                absPathValidator.setPerformCheck(true);
+                try {
+                    if (connectionForm.validate()) {
+                        installAgent();
+                    }
+                } finally {
+                    absPathValidator.setPerformCheck(false);
                 }
             }
         });
@@ -257,8 +267,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         uninstallButton.setExtraSpace(10);
         uninstallButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (connectionForm.validate()) {
-                    uninstallAgent();
+                absPathValidator.setPerformCheck(true);
+                try {
+                    if (connectionForm.validate()) {
+                        uninstallAgent();
+                    }
+                } finally {
+                    absPathValidator.setPerformCheck(false);
                 }
             }
         });
@@ -331,7 +346,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         if (errors.isEmpty()) {
             disableButtons(true);
 
-            final String parentPath = connectionForm.getValueAsString("agentInstallPath");
+            final String parentPath = getAgentInstallPath();
 
             remoteInstallService.findAgentInstallPath(getRemoteAccessInfo(), parentPath, new AsyncCallback<String>() {
                 public void onFailure(Throwable caught) {
@@ -342,7 +357,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                 public void onSuccess(String result) {
                     disableButtons(false);
                     if (result != null) {
-                        connectionForm.setValue("agentInstallPath", result);
+                        agentInstallPath.setValue(result);
                     } else {
                         String err;
                         if (parentPath == null || parentPath.length() == 0) {
@@ -601,11 +616,20 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private String getAgentInstallPath() {
-        if (connectionForm.getValueAsString("agentInstallPath") == null
-            || connectionForm.getValueAsString("agentInstallPath").trim().isEmpty()) {
-            findAgentInstallPath();
+        return agentInstallPath.getValueAsString();
+    }
+
+    private class AbsolutePathValidator extends CustomValidator {
+        private boolean performCheck = false;
+        public AbsolutePathValidator() {
+            setErrorMessage(MSG.view_remoteAgentInstall_error_needAbsPath());
         }
-        return connectionForm.getValueAsString("agentInstallPath");
+        public void setPerformCheck(boolean b) {
+            this.performCheck = b;
+        }
+        public boolean condition(Object value) {
+            return (this.performCheck == false) || ((value != null) && (value.toString().startsWith("/")));
+        }
     }
 
     /**

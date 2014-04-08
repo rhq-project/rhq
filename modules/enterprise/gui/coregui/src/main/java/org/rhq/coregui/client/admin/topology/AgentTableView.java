@@ -331,7 +331,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_adminTopology_agent_delete_submitted(Integer
                                             .toString(agents.length))));
-                                    refresh();
+                                    refreshTableInfo();
                                 }
 
                                 public void onFailure(Throwable caught) {

@@ -58,6 +58,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -92,7 +93,17 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     public void start(ResourceContext context) throws Exception {
         this.resourceContext = context;
         buildSharedConnectionIfNeeded();
-        pooledConnectionProvider = new PostgresPooledConnectionProvider(resourceContext.getPluginConfiguration());
+        try {
+            pooledConnectionProvider = new PostgresPooledConnectionProvider(resourceContext.getPluginConfiguration());
+        } catch (SQLException e) {
+            if (e.getCause() instanceof SQLException) {
+                SQLException cause = (SQLException) e.getCause();
+                if ("28P01".equals(cause.getSQLState())) {
+                    throw new InvalidPluginConfigurationException("Invalid password");
+                }
+            }
+            throw new InvalidPluginConfigurationException("Cannot open database connection", e);
+        }
         ProcessInfo processInfo = resourceContext.getNativeProcess();
         if (processInfo != null) {
             aggregateProcessInfo = processInfo.getAggregateProcessTree();

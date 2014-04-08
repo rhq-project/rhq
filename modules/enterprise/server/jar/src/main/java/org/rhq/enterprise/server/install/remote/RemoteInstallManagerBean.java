@@ -29,11 +29,14 @@ import javax.ejb.TransactionAttributeType;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
  * Installs, starts and stops remote agents via SSH.
@@ -46,6 +49,9 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
     @EJB
     private AgentManagerLocal agentManager;
+
+    @EJB
+    private SystemManagerLocal systemSettingsManager;
 
     /**
      * Call this when an SSH session is already connected and this will store the credentials if the user wanted
@@ -238,7 +244,16 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
         if (remoteAccessInfo.getHost() == null) {
             throw new RuntimeException("Enter a host");
         }
-        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo);
+
+        SystemSettings settings = systemSettingsManager.getUnmaskedSystemSettings(false);
+        String username = settings.get(SystemSetting.REMOTE_SSH_USERNAME_DEFAULT);
+        String password = settings.get(SystemSetting.REMOTE_SSH_PASSWORD_DEFAULT);
+        SSHInstallUtility.Credentials creds = null;
+        if ((username != null && username.length() > 0) || (password != null && password.length() > 0)) {
+            creds = new SSHInstallUtility.Credentials(username, password);
+        }
+
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo, creds);
         return sshUtil;
     }
 }

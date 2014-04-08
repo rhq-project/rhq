@@ -51,6 +51,29 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class SSHInstallUtility {
 
+    static class Credentials {
+        private String username;
+        private String password;
+        public Credentials () {
+        }
+        public Credentials (String username, String password) {
+            setUsername(username);
+            setPassword(password);
+        }
+        public String getUsername() {
+            return this.username;
+        }
+        public void setUsername(String u) {
+            this.username = u;
+        }
+        public String getPassword() {
+            return this.password;
+        }
+        public void setPassword(String p) {
+            this.password = p;
+        }
+    }
+
     private static final String RHQ_AGENT_LATEST_VERSION_PROP = "rhq-agent.latest.version";
     private static final int DEFAULT_BUFFER_SIZE = 4096;
     private static final int CONNECTION_TIMEOUT = 30000;
@@ -60,11 +83,18 @@ public class SSHInstallUtility {
     private Log log = LogFactory.getLog(SSHInstallUtility.class);
 
     private final RemoteAccessInfo accessInfo;
+    private final Credentials defaultCredentials;
+
     private Session session;
 
-    public SSHInstallUtility(RemoteAccessInfo accessInfo) {
+    public SSHInstallUtility(RemoteAccessInfo accessInfo, Credentials defaultCredentials) {
         this.accessInfo = accessInfo;
+        this.defaultCredentials = defaultCredentials;
         connect();
+    }
+
+    public SSHInstallUtility(RemoteAccessInfo accessInfo) {
+        this(accessInfo, null);
     }
 
     public RemoteAccessInfo getRemoteAccessInfo() {
@@ -79,10 +109,12 @@ public class SSHInstallUtility {
             //    jsch.addIdentity(...);
             //}
 
-            session = jsch.getSession(accessInfo.getUser(), accessInfo.getHost(), accessInfo.getPort());
+            Credentials credentials = getCredentialsToUse();
 
-            if (accessInfo.getPassword() != null) {
-                session.setPassword(accessInfo.getPassword());
+            session = jsch.getSession(credentials.getUsername(), accessInfo.getHost(), accessInfo.getPort());
+
+            if (credentials.getPassword() != null) {
+                session.setPassword(credentials.getPassword());
             }
 
             Properties config = new Properties();
@@ -139,9 +171,10 @@ public class SSHInstallUtility {
             throw new RuntimeException("Unable to find agent binary file for installation at [" + agentPath + "]");
         }
 
+        Credentials credentials = getCredentialsToUse();
         String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
-        AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, serverAddress,
-            accessInfo.getHost());
+        AgentInstallInfo info = new AgentInstallInfo(parentPath, credentials.getUsername(), agentVersion,
+            serverAddress, accessInfo.getHost());
 
         executeCommand("uname -a", "Machine uname", info);
         executeCommand("java -version", "Java Version Check", info);
@@ -219,7 +252,7 @@ public class SSHInstallUtility {
         if (parentPath == null || parentPath.trim().length() == 0) {
             // user doesn't know where the agent might be - let's try to guess
             String[] possiblePaths = new String[] { "/opt", "/usr/local", "/usr/share", "/rhq",
-                "/home/" + accessInfo.getUser() };
+                "/home/" + getCredentialsToUse().getUsername() };
             for (String possiblePath : possiblePaths) {
                 String path = findAgentInstallPath(possiblePath);
                 if (path != null) {
@@ -245,6 +278,19 @@ public class SSHInstallUtility {
     public String[] pathDiscovery(String parentPath) {
         String full = executeCommand("ls -1 '" + parentPath + "'", "Path Discovery");
         return full.split("\n");
+    }
+
+    private Credentials getCredentialsToUse() {
+        String user = accessInfo.getUser();
+        if ((user == null || user.length() == 0) && this.defaultCredentials != null) {
+            user = this.defaultCredentials.getUsername();
+        }
+        String pw = accessInfo.getPassword();
+        if ((pw == null || pw.length() == 0) && this.defaultCredentials != null) {
+            pw = this.defaultCredentials.getPassword();
+        }
+        Credentials creds = new Credentials(user, pw);
+        return creds;
     }
 
     private String buildAgentWrapperScriptPath(String agentInstallPath) {
@@ -388,31 +434,4 @@ public class SSHInstallUtility {
             this.errorCode = errorCode;
         }
     }
-
-    public static void main(String[] args) throws IOException {
-
-        String pass = null;
-        if (args.length > 2) {
-            pass = args[2];
-        }
-        RemoteAccessInfo info = new RemoteAccessInfo(args[0], args[1], pass);
-
-        SSHInstallUtility ssh = new SSHInstallUtility(info);
-
-        String parentPath = "/tmp/new-remote-agent";
-        String agentInstallPath = parentPath + "/rhq-agent";
-
-        System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
-        System.out.println("Agent stop: " + ssh.stopAgent(agentInstallPath));
-        System.out.println("Agent find: " + ssh.findAgentInstallPath(parentPath));
-        System.out.println("Agent install: " + ssh.installAgent(parentPath, null));
-        System.out.println("Agent find: " + ssh.findAgentInstallPath(parentPath));
-        System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
-        System.out.println("Agent stop: " + ssh.stopAgent(agentInstallPath));
-        System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
-        System.out.println("Agent start: " + ssh.startAgent(agentInstallPath));
-
-        ssh.disconnect();
-    }
-
 }

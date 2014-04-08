@@ -193,6 +193,16 @@ public class AgentManagerBean implements AgentManagerLocal {
             }
         }
 
+        // don't allow empty strings in credentials, use null
+        String s = agentInstall.getSshUsername();
+        if (s != null && s.trim().length() == 0) {
+            agentInstall.setSshUsername(null);
+        }
+        s = agentInstall.getSshPassword();
+        if (s != null && s.trim().length() == 0) {
+            agentInstall.setSshPassword(null);
+        }
+
         // let the caller have the decoded data - we need to flush and detach the entity so we can deobfuscate PW and not push it to DB
         entityManager.flush();
         entityManager.detach(agentInstall);

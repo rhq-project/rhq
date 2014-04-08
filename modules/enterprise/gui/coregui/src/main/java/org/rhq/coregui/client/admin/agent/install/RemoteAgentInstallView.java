@@ -162,14 +162,14 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         port.setEndRow(true);
 
         TextItem username = new TextItem("username", MSG.common_title_user());
-        username.setRequired(true);
+        username.setRequired(false); // if not specified, the server will attempt to use the default ssh user defined in system settings
         username.setWidth(textFieldWidth);
         username.setPrompt(MSG.view_remoteAgentInstall_promptUser());
         username.setHoverWidth(300);
         username.setEndRow(true);
 
         PasswordItem password = new PasswordItem("password", MSG.common_title_password());
-        password.setRequired(false);
+        password.setRequired(false); // if not specified, the server will attempt to use the default ssh pw defined in system settings
         password.setWidth(textFieldWidth);
         password.setPrompt(MSG.view_remoteAgentInstall_promptPassword());
         password.setHoverWidth(300);

@@ -5,7 +5,6 @@
         package="org.rhq.plugins.postgres"
         pluginLifecycleListener="PostgresPluginLifecycleListener"
         description="Management and monitoring of PostgreSQL versions 8.2 and higher"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -293,19 +292,6 @@
 
       </resource-configuration>
 
-
-     <!-- TODO GH: Should i aggregate all these... they're also in the child db components (the autogroup should do this for us right?)
-      <metric displayName="Backend Count" property="numbackends" measurementType="dynamic" displayType="summary"/>
-      <metric displayName="Commits" property="xact_commit" measurementType="trendsup" displayType="summary"/>
-      <metric displayName="Rollbacks" property="xact_rollback" measurementType="trendsup" displayType="summary"/>
-      <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"/>
-      <metric displayName="Buffer Hits" property="blks_hit" measurementType="trendsup"/>
-
-      <metric displayName="Locks Held" property="LocksHeld" measurementType="dynamic"/>
-      <metric displayName="Data Space Used" property="DataSpaceUsed" units="bytes" measurementType="dynamic"/>
-      <metric displayName="Index Space Used" property="IndexSpaceUsed" units="bytes" measurementType="dynamic"/>-->
-
-
       <service name="Database" class="PostgresDatabaseComponent" discovery="PostgresDatabaseDiscoveryComponent">
          <plugin-configuration>
             <c:simple-property name="databaseName" displayName="Database Name" readOnly="true" />
@@ -329,7 +315,6 @@
               </results>
           </operation>
 
-
          <metric displayName="Backends" property="numbackends"
                  description="Number of active server processes for database"/>
          <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"
@@ -347,14 +332,13 @@
                   description="Database table" createDeletePolicy="both" creationDataType="configuration">
 
             <plugin-configuration>
-               <c:simple-property name="tableName" readOnly="true" />
+              <c:simple-property name="schemaName" default="public"/>
+              <c:simple-property name="tableName"/>
             </plugin-configuration>
 
-            <operation name="vacuum" description="Vacuum the table">
-                 <!--TODO add options like analyze-->
-            </operation>
+           <operation name="vacuum" description="Vacuum the table"/>
 
-            <metric displayName="Sequential Scans" property="seq_scan" measurementType="trendsup"
+           <metric displayName="Sequential Scans" property="seq_scan" measurementType="trendsup"
                     description="Number of sequential scans done against this table (when an index scan was not possible)"/>
             <metric displayName="Sequential Rows Read" property="seq_tup_read" measurementType="trendsup"
                     description="Number of rows read by sequential scans"/>
@@ -398,11 +382,10 @@
                     defaultOn="false" 
                     description="The approximate count of rows in the table. This is basically the number of rows of the last ANALYZE of the table. This metric is not expensive."/>
 
-            <!-- TODO GH: add metrics for data and index space used -->
-
             <resource-configuration>
-               <c:simple-property name="tableName"/>
-               <c:list-property name="columns">
+              <c:simple-property name="schemaName" readOnly="true"/>
+              <c:simple-property name="tableName" readOnly="true"/>
+              <c:list-property name="columns">
                   <c:map-property name="columnDefinition">
                      <c:simple-property name="columnName" displayName="Column Name" summary="true" description="name of the column"/>
                      <c:simple-property name="columnType" displayName="Type" summary="true" description="data type of the column, if it is a built-in type, or ARRAY if it is some array (in that case, see the view element_types), else USER-DEFINED (in that case, the type is identified in udt_name and associated columns).">

@@ -367,7 +367,17 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         Exception {
 
         if ("vacuum".equals(name)) {
-            DatabaseQueryUtility.executeUpdate(this, "vacuum " + getTableNameFromContext(resourceContext));
+            Connection connection = null;
+            PreparedStatement statement = null;
+            try {
+                connection = getPooledConnectionProvider().getPooledConnection();
+                statement = connection.prepareStatement("vacuum "
+                    + getFullyQualifiedTableName(getSchemaNameFromContext(resourceContext),
+                        getTableNameFromContext(resourceContext)));
+                statement.executeUpdate();
+            } finally {
+                safeClose(connection, statement);
+            }
         }
         return null;
     }

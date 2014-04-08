@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,19 +19,26 @@
 
 package org.rhq.plugins.postgres;
 
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.core.util.StringUtil.isBlank;
 import static org.rhq.plugins.database.DatabasePluginUtil.getNumericQueryValues;
 import static org.rhq.plugins.database.DatabasePluginUtil.getSingleNumericQueryValue;
+import static org.rhq.plugins.database.DatabasePluginUtil.safeClose;
+import static org.rhq.plugins.postgres.PostgresTableDiscoveryComponent.SCHEMA_SEPARATOR;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -46,13 +53,13 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.database.ConnectionPoolingSupport;
 import org.rhq.plugins.database.DatabaseComponent;
-import org.rhq.plugins.database.DatabasePluginUtil;
 import org.rhq.plugins.database.DatabaseQueryUtility;
 import org.rhq.plugins.database.PooledConnectionProvider;
 
@@ -64,23 +71,80 @@ import org.rhq.plugins.database.PooledConnectionProvider;
 public class PostgresTableComponent implements DatabaseComponent<PostgresDatabaseComponent>, ConnectionPoolingSupport,
     MeasurementFacet, ConfigurationFacet, DeleteResourceFacet, OperationFacet {
 
-    private static final List<String> PG_STAT_USER_TABLE_STATS = Arrays.asList("seq_scan", "seq_tup_read", "idx_scan",
-        "idx_tup_fetch", "n_tup_ins", "n_tup_upd", "n_tup_del", "table_size", "total_size");
+    private static final Log LOG = LogFactory.getLog(PostgresTableComponent.class);
 
+    private static final String TABLE_EXISTS_QUERY = "select 1 from pg_stat_user_tables "
+        + "where schemaname = ? and relname = ?";
+
+    private static final String TABLE_STATS_QUERY = "select ts.*,  "
+        + "pg_relation_size(ts.relid) AS table_size, pg_total_relation_size(ts.relid) AS total_size, "
+        + "ios.heap_blks_read, ios.heap_blks_hit, ios.idx_blks_read, ios.idx_blks_hit, "
+        + "ios.toast_blks_read, ios.toast_blks_hit, ios.tidx_blks_read, ios.tidx_blks_hit "
+        + "from pg_stat_user_tables ts left join pg_statio_user_tables ios on ts.relid = ios.relid "
+        + "where ts.schemaname = ? and ts.relname = ?";
+
+    private static final String TABLE_ROW_COUNT_APPROX_QUERY = "select pgc.reltuples "
+        + "from pg_class pgc, pg_namespace pgn "
+        + "where pgn.nspname = ? and pgc.relname = ? and pgc.relnamespace = pgn.oid";
+
+    /**
+     * @deprecated as of RHQ4.11. No longer used (and shouldn't have been exposed anyway).
+     */
+    @Deprecated
     public static final String PG_STAT_USER_TABLES_QUERY = "SELECT ts.*,  pg_relation_size(ts.relid) AS table_size, pg_total_relation_size(ts.relid) AS total_size, \n"
         + "  ios.heap_blks_read, ios.heap_blks_hit, ios.idx_blks_read, ios.idx_blks_hit, \n"
         + "  ios.toast_blks_read, ios.toast_blks_hit, ios.tidx_blks_read, ios.tidx_blks_hit \n"
         + "FROM pg_stat_user_tables ts LEFT JOIN pg_statio_user_tables ios on ts.relid = ios.relid \n"
         + "WHERE ts.relname = ?";
 
-    // NOTE: You can't bind table names as parameters
+    /**
+     * @deprecated as of RHQ4.11. No longer used (and shouldn't have been exposed anyway).
+     */
+    @Deprecated
     public static final String PG_COUNT_ROWS = "SELECT COUNT(*) FROM ";
+
+    /**
+     * @deprecated as of RHQ4.11. No longer used (and shouldn't have been exposed anyway).
+     */
+    @Deprecated
     public static final String PG_COUNT_ROWS_APPROX = "SELECT reltuples FROM pg_class WHERE relname = ? ";
 
     private ResourceContext<PostgresDatabaseComponent> resourceContext;
 
     public void start(ResourceContext<PostgresDatabaseComponent> context) {
+        if (!context.getResourceKey().contains(SCHEMA_SEPARATOR)) {
+            throw new InvalidPluginConfigurationException("Resource key in old format (missing schema name)");
+        }
+        if (isBlank(getSchemaNameFromContext(context))) {
+            throw new InvalidPluginConfigurationException("schemaName is not defined");
+        }
+        if (isBlank(getTableNameFromContext(context))) {
+            throw new InvalidPluginConfigurationException("tableName is not defined");
+        }
+        try {
+            if (!tableExists(context)) {
+                throw new InvalidPluginConfigurationException("table does not exist");
+            }
+        } catch (SQLException e) {
+            throw new InvalidPluginConfigurationException("Exception while checking table existence", e);
+        }
         this.resourceContext = context;
+    }
+
+    private boolean tableExists(ResourceContext<PostgresDatabaseComponent> context) throws SQLException {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = context.getParentResourceComponent().getPooledConnectionProvider().getPooledConnection();
+            statement = connection.prepareStatement(TABLE_EXISTS_QUERY);
+            statement.setString(1, getSchemaNameFromContext(context));
+            statement.setString(2, getTableNameFromContext(context));
+            resultSet = statement.executeQuery();
+            return resultSet.next();
+        } finally {
+            safeClose(connection, statement, resultSet);
+        }
     }
 
     public void stop() {
@@ -97,29 +161,47 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         return resourceContext.getParentResourceComponent().getPooledConnectionProvider();
     }
 
+    /**
+     * May be useful for child components.
+     *
+     * @return the name of the schema the table belongs to
+     */
+    public String getSchemaName() {
+        return getSchemaNameFromContext(resourceContext);
+    }
+
+    /**
+     * May be useful for child components.
+     *
+     * @return the name of the table
+     */
     public String getTableName() {
-        return this.resourceContext.getPluginConfiguration().getSimple("tableName").getStringValue();
+        return getTableNameFromContext(resourceContext);
     }
 
     public AvailabilityType getAvailability() {
-        return resourceContext.getParentResourceComponent().getAvailability();
+        try {
+            return tableExists(resourceContext) ? UP : DOWN;
+        } catch (SQLException e) {
+            LOG.debug("Exception while checking table existence", e);
+            return UNKNOWN;
+        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
-        this.resourceContext.getParentResourceComponent().getConnection();
-
-        Map<String, Double> results = getNumericQueryValues(this, PG_STAT_USER_TABLES_QUERY, getTableName());
+        String tableName = getTableNameFromContext(resourceContext);
+        String schemaName = getSchemaNameFromContext(resourceContext);
+        Map<String, Double> results = getNumericQueryValues(this, TABLE_STATS_QUERY, schemaName, tableName);
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             Double value;
             if (metricName.equals("rows")) {
-                value = getSingleNumericQueryValue(this, PG_COUNT_ROWS + getTableName());
+                value = getSingleNumericQueryValue(this, getCountQuery(schemaName, tableName));
             } else if (metricName.equals("rows_approx")) {
-                value = getSingleNumericQueryValue(this, PG_COUNT_ROWS_APPROX, getTableName());
+                value = getSingleNumericQueryValue(this, TABLE_ROW_COUNT_APPROX_QUERY, schemaName, tableName);
             } else {
                 value = results.get(metricName);
             }
-
             if (value != null) {
                 MeasurementDataNumeric mdn = new MeasurementDataNumeric(request, value);
                 report.addData(mdn);
@@ -127,29 +209,42 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         }
     }
 
+    private String getCountQuery(String schemaName, String tableName) {
+        return "select count(1) from " + getFullyQualifiedTableName(schemaName, tableName);
+    }
+
+    private String getFullyQualifiedTableName(String schemaName, String tableName) {
+        return schemaName + SCHEMA_SEPARATOR + tableName;
+    }
+
     public void deleteResource() throws Exception {
         Connection connection = null;
         PreparedStatement statement = null;
         try {
             connection = getPooledConnectionProvider().getPooledConnection();
-            statement = connection.prepareStatement("DROP TABLE " + getTableName());
+            statement = connection.prepareStatement("drop table "
+                + getFullyQualifiedTableName(getSchemaNameFromContext(resourceContext),
+                    getTableNameFromContext(resourceContext)));
             statement.executeUpdate();
         } finally {
-            DatabasePluginUtil.safeClose(connection, statement);
+            safeClose(connection, statement);
         }
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration config = new Configuration();
+        config.put(new PropertySimple("schemaName", resourceContext.getPluginConfiguration().getSimple("schemaName")
+            .getStringValue()));
         config.put(new PropertySimple("tableName", resourceContext.getPluginConfiguration().getSimple("tableName")
             .getStringValue()));
 
         Connection connection = null;
-        ResultSet columns = null;
+        ResultSet columns;
         try {
             connection = this.resourceContext.getParentResourceComponent().getConnection();
             DatabaseMetaData databaseMetaData = connection.getMetaData();
-            columns = databaseMetaData.getColumns("", "", getTableName(), "");
+            columns = databaseMetaData.getColumns("", getSchemaNameFromContext(resourceContext),
+                getTableNameFromContext(resourceContext), "");
 
             PropertyList columnList = new PropertyList("columns");
 
@@ -168,7 +263,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
             config.put(columnList);
         } finally {
-            DatabasePluginUtil.safeClose(connection);
+            safeClose(connection);
         }
 
         return config;
@@ -182,7 +277,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             Connection connection = this.resourceContext.getParentResourceComponent().getConnection();
 
             DatabaseMetaData dmd = connection.getMetaData();
-            ResultSet rs = dmd.getColumns("", "", getTableName(), "");
+            ResultSet rs = dmd.getColumns("", "", getTableNameFromContext(resourceContext), "");
             Map<String, ColumnDefinition> existingDefs = new HashMap<String, ColumnDefinition>();
             try {
                 while (rs.next()) {
@@ -200,7 +295,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 ColumnDefinition newDef = new ColumnDefinition(colDef);
                 if (existingDef == null) {
                     // This is a new column to add
-                    String sql = "ALTER TABLE " + getTableName() + " ADD COLUMN " + newDef.getColumnSql();
+                    String sql = "ALTER TABLE " + getTableNameFromContext(resourceContext) + " ADD COLUMN "
+                        + newDef.getColumnSql();
                     if (DatabaseQueryUtility.executeUpdate(this, sql) != 0) {
                         throw new RuntimeException("Couldn't add column using SQL: " + sql);
                     }
@@ -212,8 +308,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                         .equals(newDef.columnPrecision)) || (existingDef.columnPrecision == null && existingDef.columnPrecision != null));
                     if (!existingDef.columnType.equals(newDef.columnType) || columnLengthChanged
                         || columnPrecisionChanged) {
-                        String sql = "ALTER TABLE " + getTableName() + " ALTER COLUMN " + newDef.columnName + " TYPE "
-                            + newDef.columnType;
+                        String sql = "ALTER TABLE " + getTableNameFromContext(resourceContext) + " ALTER COLUMN "
+                            + newDef.columnName + " TYPE " + newDef.columnType;
                         if (newDef.columnLength != null) {
                             sql += " ( " + newDef.columnLength;
                             // TODO: Implement a more robust check to figure out if this column has a numeric type.
@@ -231,7 +327,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                     boolean columnDefaultChanged = ((existingDef.columnDefault != null && !existingDef.columnDefault
                         .equals(newDef.columnDefault)) || (existingDef.columnDefault == null && newDef.columnDefault != null));
                     if (columnDefaultChanged) {
-                        String sql = "ALTER TABLE " + getTableName() + " ALTER COLUMN " + newDef.columnName;
+                        String sql = "ALTER TABLE " + getTableNameFromContext(resourceContext) + " ALTER COLUMN "
+                            + newDef.columnName;
                         if (newDef.columnDefault == null) {
                             sql += " DROP DEFAULT";
                         } else {
@@ -247,8 +344,8 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
             // Cols left in existdef map have been removed and need to be dropped
             for (ColumnDefinition def : existingDefs.values()) {
-                DatabaseQueryUtility.executeUpdate(this, "ALTER TABLE " + getTableName() + " DROP COLUMN "
-                    + def.columnName);
+                DatabaseQueryUtility.executeUpdate(this, "ALTER TABLE " + getTableNameFromContext(resourceContext)
+                    + " DROP COLUMN " + def.columnName);
             }
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
@@ -270,7 +367,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         Exception {
 
         if ("vacuum".equals(name)) {
-            DatabaseQueryUtility.executeUpdate(this, "vacuum " + getTableName());
+            DatabaseQueryUtility.executeUpdate(this, "vacuum " + getTableNameFromContext(resourceContext));
         }
         return null;
     }
@@ -328,5 +425,13 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
             return buf.toString();
         }
+    }
+
+    private static String getSchemaNameFromContext(ResourceContext<PostgresDatabaseComponent> resourceContext) {
+        return resourceContext.getPluginConfiguration().getSimpleValue("schemaName");
+    }
+
+    private static String getTableNameFromContext(ResourceContext<PostgresDatabaseComponent> resourceContext) {
+        return resourceContext.getPluginConfiguration().getSimpleValue("tableName");
     }
 }

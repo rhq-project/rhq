@@ -23,6 +23,7 @@
 package org.rhq.coregui.server.gwt;
 
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.coregui.client.gwt.RemoteInstallGWTService;
 import org.rhq.coregui.server.util.SerialUtility;
@@ -47,11 +48,12 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath,
-        boolean overwriteExistingAgent) throws RuntimeException {
+    public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData)
+        throws RuntimeException {
         try {
-            return SerialUtility.prepare(remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo,
-                parentPath, overwriteExistingAgent), "RemoteInstallService.installAgent");
+            return SerialUtility.prepare(
+                remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo, customData),
+                "RemoteInstallService.installAgent");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

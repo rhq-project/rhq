@@ -33,6 +33,7 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -115,17 +116,19 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath) {
-        return installAgent(subject, remoteAccessInfo, parentPath, false);
+        CustomAgentInstallData data = new CustomAgentInstallData(parentPath, false, null, null);
+        return installAgent(subject, remoteAccessInfo, data);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath,
-        boolean overwriteExistingAgent) {
+    public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo,
+        CustomAgentInstallData customData) {
 
+        String parentPath = customData.getParentPath();
         boolean agentAlreadyInstalled = agentInstallCheck(subject, remoteAccessInfo, parentPath);
         if (agentAlreadyInstalled) {
-            if (!overwriteExistingAgent) {
+            if (!customData.isOverwriteExistingAgent()) {
                 throw new IllegalStateException("Agent appears to already be installed under: " + parentPath);
             } else {
                 // we were asked to overwrite it; make sure we shut it down first before the install happens (which will remove it)

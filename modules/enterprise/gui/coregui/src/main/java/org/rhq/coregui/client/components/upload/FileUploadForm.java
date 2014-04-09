@@ -43,8 +43,8 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * A base form widget for file upload. Uploaded files are uploaded to the server into a temp directory via
- * FileUploadServlet. 
- * 
+ * FileUploadServlet.
+ *
  * @author Jay Shaughnessy
  */
 public class FileUploadForm extends DynamicCallbackForm {
@@ -126,6 +126,17 @@ public class FileUploadForm extends DynamicCallbackForm {
     }
 
     /**
+     * Returns true if the user selected a file. This doesn't mean the file has been uploaded,
+     * just that a file has been selected at least for potentially being uploaded.
+     *
+     * @return true if file selected, false if no file has been selected yet
+     */
+    public boolean isFileSelected() {
+        String value = fileUploadItem != null ? fileUploadItem.getValueAsString() : null;
+        return (value != null && !value.isEmpty());
+    }
+
+    /**
      * Returns true if the file was successfully uploaded, false if an error occurred.
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
      * @return status of the upload request
@@ -134,7 +145,7 @@ public class FileUploadForm extends DynamicCallbackForm {
         return uploadResult;
     }
 
-    /** 
+    /**
      * @return Error text if {@link #getUploadResult()} returns false, otherwise null
      */
     public String getUploadError() {
@@ -159,12 +170,11 @@ public class FileUploadForm extends DynamicCallbackForm {
             return;
         }
 
-        Object value = fileUploadItem.getValue();
-        if (value == null || value.toString().length() == 0) {
+        if (!isFileSelected()) {
             String message = MSG.view_upload_prompt_1(name);
             changeIcon(iconRed, message);
             setUploadError(message);
-            // note - don't even submit this definite failure            
+            // note - don't even submit this definite failure
         } else {
             changeIcon(iconLoading, MSG.common_msg_loading());
             uploadInProgress = true;
@@ -209,8 +219,7 @@ public class FileUploadForm extends DynamicCallbackForm {
 
                 @Override
                 public void enable() {
-                    String selectedFile = fileUploadItem.getValueAsString();
-                    if (selectedFile != null && selectedFile.length() > 0) {
+                    if (isFileSelected()) {
                         super.enable();
                     }
                 }

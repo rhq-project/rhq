@@ -26,6 +26,7 @@ import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 
 /**
@@ -54,20 +55,17 @@ public interface RemoteInstallManagerRemote {
      *
      * @param subject the RHQ user making the request
      * @param remoteAccessInfo the remote machine information and remote user SSH credentials
-     * @param parentPath where the agent install directory will be
-     * @param overwriteExistingAgent if true, any existing agent in the install path will be shutdown and overwritten.
+     * @param customData contains custom install details such as where the agent install directory will be
      *
      * @return info containing the results of the installation
      */
-    AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath,
-        boolean overwriteExistingAgent);
+    AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData);
 
     /**
-     * Same as {@link #installAgent(Subject, RemoteAccessInfo, String, boolean)} with
-     * the overwriteExistingAgent parameter having the value of <code>false</code>.
-     *
-     *  @see #installAgent(Subject, RemoteAccessInfo, String, boolean)
+     *  @see #installAgent(Subject, RemoteAccessInfo, String, CustomAgentInstallData)
+     *  @deprecated
      */
+    @Deprecated
     AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 
     /**

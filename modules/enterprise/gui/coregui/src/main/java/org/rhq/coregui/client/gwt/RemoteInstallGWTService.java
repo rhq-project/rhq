@@ -25,6 +25,7 @@ package org.rhq.coregui.client.gwt;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 
 /**
@@ -38,7 +39,7 @@ public interface RemoteInstallGWTService extends RemoteService {
     // --- RemoteInstallManagerRemote
     boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
 
-    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath, boolean overwriteExistingAgent)
+    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData)
         throws RuntimeException;
 
     String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws RuntimeException;

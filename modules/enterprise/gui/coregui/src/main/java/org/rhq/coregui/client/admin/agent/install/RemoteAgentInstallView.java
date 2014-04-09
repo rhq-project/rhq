@@ -25,8 +25,11 @@ package org.rhq.coregui.client.admin.agent.install;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ExpansionMode;
@@ -55,10 +58,14 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
+import org.rhq.coregui.client.components.upload.DynamicFormHandler;
+import org.rhq.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
+import org.rhq.coregui.client.components.upload.FileUploadForm;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.gwt.RemoteInstallGWTServiceAsync;
@@ -98,6 +105,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private SuccessHandler successHandler = null;
 
+    // for installing agents, these are the components to work with uploading config files for the new agent to use
+    private FileUploadForm agentConfigXmlUploadForm;
+    private FileUploadForm rhqAgentEnvUploadForm;
+    private String agentConfigurationXml = null;
+    private String rhqAgentEnvSh = null;
+
     private final AbsolutePathValidator absPathValidator = new AbsolutePathValidator();
 
     public static enum Type {
@@ -128,6 +141,14 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         header.setExtraSpace(5);
         layout.addMember(header);
         layout.addMember(getConnectionForm());
+
+        if (this.showInstallButton) {
+            agentConfigXmlUploadForm = createAgentConfigXmlUploadForm();
+            layout.addMember(agentConfigXmlUploadForm);
+            rhqAgentEnvUploadForm = createAgentEnvUploadForm();
+            layout.addMember(rhqAgentEnvUploadForm);
+        }
+
         header = new HTMLFlow("");
         header.setStyleName("headerItem");
         header.setExtraSpace(5);
@@ -332,15 +353,45 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             new Message(msg, Message.Severity.Info, EnumSet.of(Message.Option.BackgroundJobResult)));
     }
 
+    private FileUploadForm createAgentConfigXmlUploadForm() {
+        final FileUploadForm uploadForm = new FileUploadForm("agent-configuration.xml", "1", true, true, null);
+        uploadForm.setWidth100();
+        uploadForm.addFormHandler(new DynamicFormHandler() {
+            @Override
+            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                List<String> paths = uploadForm.getUploadedFilePaths();
+                if (paths != null && paths.size() == 1) {
+                    agentConfigurationXml = paths.get(0);
+                } else {
+                    agentConfigurationXml = null;
+                }
+            }
+        });
+        return uploadForm;
+    }
+
+    private FileUploadForm createAgentEnvUploadForm() {
+        final FileUploadForm uploadForm = new FileUploadForm("rhq-agent-env.sh", "1", true, true, null);
+        uploadForm.setWidth100();
+        uploadForm.addFormHandler(new DynamicFormHandler() {
+            @Override
+            public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
+                List<String> paths = uploadForm.getUploadedFilePaths();
+                if (paths != null && paths.size() == 1) {
+                    rhqAgentEnvSh = paths.get(0);
+                } else {
+                    rhqAgentEnvSh = null;
+                }
+            }
+        });
+        return uploadForm;
+    }
+
     private void findAgentInstallPath() {
         final Map<String, String> errors = new HashMap<String, String>(2);
         if (connectionForm.getValueAsString("host") == null
             || connectionForm.getValueAsString("host").trim().isEmpty()) {
             errors.put("host", CoreGUI.getSmartGwtMessages().validator_requiredField());
-        }
-        if (connectionForm.getValueAsString("username") == null
-            || connectionForm.getValueAsString("username").trim().isEmpty()) {
-            errors.put("username", CoreGUI.getSmartGwtMessages().validator_requiredField());
         }
         connectionForm.setErrors(errors, true);
         if (errors.isEmpty()) {
@@ -390,7 +441,6 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void installAgent() {
         disableButtons(true);
-        connectionForm.setValue("agentStatus", "Installing, this may take a few minutes...");
 
         // FOR TESTING WITHOUT DOING A REAL INSTALL - START
         //        AgentInstallInfo result = new AgentInstallInfo("mypath", "myown", "1.1", "localHOST", "serverHOST");
@@ -405,12 +455,62 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         //            return;
         // FOR TESTING WITHOUT DOING A REAL INSTALL - END
 
+        // help out the user here - if they selected file(s) but didn't upload them yet, press the upload button(s) for him
+        // Note that if the user didn't upload yet, we have to wait for it to complete and ask the user to press install again
+        boolean needToWaitForUpload = false;
+        if (agentConfigXmlUploadForm != null && agentConfigXmlUploadForm.isFileSelected()
+            && agentConfigurationXml == null) {
+            if (!agentConfigXmlUploadForm.isUploadInProgress()) {
+                agentConfigXmlUploadForm.submitForm();
+            }
+            needToWaitForUpload = true;
+        }
+        if (rhqAgentEnvUploadForm != null && rhqAgentEnvUploadForm.isFileSelected() && rhqAgentEnvSh == null) {
+            if (!rhqAgentEnvUploadForm.isUploadInProgress()) {
+                rhqAgentEnvUploadForm.submitForm();
+            }
+            needToWaitForUpload = true;
+        }
+
+        if (!needToWaitForUpload) {
+            reallyInstallAgent();
+            return;
+        }
+
+        SC.showPrompt(MSG.view_remoteAgentInstall_waitForUpload());
+
+        Scheduler.get().scheduleEntry(new RepeatingCommand() {
+            @Override
+            public boolean execute() {
+                // Make sure the file upload(s) (if there are any) have completed before we do anything
+                boolean waitForUploadToFinish = false;
+                if (agentConfigXmlUploadForm != null && agentConfigXmlUploadForm.isUploadInProgress()) {
+                    waitForUploadToFinish = true;
+                }
+                if (rhqAgentEnvUploadForm != null && rhqAgentEnvUploadForm.isUploadInProgress()) {
+                    waitForUploadToFinish = true;
+                }
+                if (waitForUploadToFinish) {
+                    return true; // keep waiting, call us back later
+                }
+
+                SC.clearPrompt();
+                reallyInstallAgent();
+                return false; // upload is done, we can stop calling ourselves
+            }
+        });
+    }
+
+    private void reallyInstallAgent() {
+        disableButtons(true);
+        connectionForm.setValue("agentStatus", "Installing, this may take a few minutes...");
         SC.ask(MSG.view_remoteAgentInstall_overwriteAgentTitle(), MSG.view_remoteAgentInstall_overwriteAgentQuestion(),
             new BooleanCallback() {
                 @Override
                 public void execute(Boolean overwriteExistingAgent) {
-                    remoteInstallService.installAgent(getRemoteAccessInfo(), getAgentInstallPath(),
-                        overwriteExistingAgent.booleanValue(), new AsyncCallback<AgentInstallInfo>() {
+                    CustomAgentInstallData customData = new CustomAgentInstallData(getAgentInstallPath(), overwriteExistingAgent.booleanValue(), agentConfigurationXml, rhqAgentEnvSh);
+                    remoteInstallService.installAgent(getRemoteAccessInfo(), customData,
+                        new AsyncCallback<AgentInstallInfo>() {
                             public void onFailure(Throwable caught) {
                                 disableButtons(false);
                                 displayError(MSG.view_remoteAgentInstall_error_4(), caught);

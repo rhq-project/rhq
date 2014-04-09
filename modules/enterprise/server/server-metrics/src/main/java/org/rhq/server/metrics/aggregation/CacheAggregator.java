@@ -1,5 +1,6 @@
 package org.rhq.server.metrics.aggregation;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -7,6 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -57,11 +60,41 @@ class CacheAggregator extends BaseAggregator {
         return findCurrentCacheIndexEntries();
     }
 
+    /**
+     * Filters out index entries where {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice} does not
+     * equal {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice}. The filtering is done in support of data
+     * migration which will be necessary for users upgrading from versions prior to RHQ 4.11.
+     *
+     * @param indexEntries The index entries returned from the storage cluster
+     * @return An Iterable of the index entries with those having {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}
+     * not equal to {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} filtered out.
+     */
     @Override
-    protected void doScheduleTasks(List<CacheIndexEntry> indexEntries) throws InterruptedException {
-        for (CacheIndexEntry indexEntry : indexEntries) {
-            submitAggregationTask(indexEntry);
-        }
+    protected Iterable<CacheIndexEntry> reduceIndexEntries(List<CacheIndexEntry> indexEntries) {
+        final PeekingIterator<CacheIndexEntry> iterator = Iterators.peekingIterator(indexEntries.iterator());
+
+        return new Iterable<CacheIndexEntry>() {
+            @Override
+            public Iterator<CacheIndexEntry> iterator() {
+                return new Iterator<CacheIndexEntry>() {
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext() &&
+                            iterator.peek().getCollectionTimeSlice() == iterator.peek().getInsertTimeSlice();
+                    }
+
+                    @Override
+                    public CacheIndexEntry next() {
+                        return iterator.next();
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+        };
     }
 
     @Override

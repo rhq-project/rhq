@@ -165,14 +165,26 @@ abstract class BaseAggregator {
 
     protected abstract AggregationTask createAggregationTask(CacheIndexEntry indexEntry);
 
+    /**
+     * @return A mapping of the number of schedules that had data aggregated for each bucket, e.g., raw, 1 hour, 6 hour
+     */
     protected abstract Map<AggregationType, Integer> getAggregationCounts();
 
-    protected abstract void doScheduleTasks(List<CacheIndexEntry> indexEntries) throws InterruptedException;
+    /**
+     * Aggregation tasks are scheduled based on a {collectionTimeSlice, startScheduleId} pair, and there can be multiple
+     * index entries per pair. This method is responsible for reducing or combining those into a single a index entry.
+     * Index entries can also be altogether filtered out as well. See {@link CacheAggregator#reduceIndexEntries(java.util.List)}
+     * for details.
+     *
+     * @param indexEntries The index entries returned from the storage cluster
+     * @return An Iterable of index entries for which aggregation tasks will be scheduled
+     */
+    protected abstract Iterable<CacheIndexEntry> reduceIndexEntries(List<CacheIndexEntry> indexEntries);
 
     private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
         try {
-            if (!indexEntries.isEmpty()) {
-                doScheduleTasks(indexEntries);
+            for (CacheIndexEntry indexEntry : reduceIndexEntries(indexEntries)) {
+                submitAggregationTask(indexEntry);
             }
             taskTracker.finishedSchedulingTasks();
         } catch (InterruptedException e) {

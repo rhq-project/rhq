@@ -37,9 +37,6 @@ class PastDataAggregator extends BaseAggregator {
 
     private static final Log LOG = LogFactory.getLog(PastDataAggregator.class);
 
-    private static class CombinedCacheIndexEntry extends CacheIndexEntry {
-    }
-
     private DateTime startingDay;
 
     private DateTime currentDay;
@@ -98,32 +95,57 @@ class PastDataAggregator extends BaseAggregator {
     }
 
     @Override
-    protected void doScheduleTasks(List<CacheIndexEntry> indexEntries) throws InterruptedException {
-        PeekingIterator<CacheIndexEntry> iterator = Iterators.peekingIterator(indexEntries.iterator());
+    protected Iterable<CacheIndexEntry> reduceIndexEntries(final List<CacheIndexEntry> indexEntries) {
+        final PeekingIterator<CacheIndexEntry> iterator = Iterators.peekingIterator(indexEntries.iterator());
 
-        while (iterator.hasNext()) {
-            CacheIndexEntry current = iterator.next();
-            List<CacheIndexEntry> currentEntries = new ArrayList<CacheIndexEntry>();
-            currentEntries.add(current);
+        return new Iterable<CacheIndexEntry>() {
+            @Override
+            public Iterator<CacheIndexEntry> iterator() {
+                return new Iterator<CacheIndexEntry>() {
 
-            // We want to group all index entries having the same startScheduleId and the same collectionTimeSlice. It
-            // is possible to have more than one index entry for a {collectionTimeSlice, startScheduleId} pair. For
-            // example, suppose we have an entry with collectionTimeSlice and insertTimeSlice 14:00. Aggregation fails
-            // and the index entry remains intact. Then at 15:10 we insert some late data such that we have another
-            // index entry where collectionTimeSlice is 14:00 and insertTimeSlice is 15:00.
-            while (iterator.hasNext() && current.getCollectionTimeSlice() == iterator.peek().getCollectionTimeSlice() &&
-                current.getStartScheduleId() == iterator.peek().getStartScheduleId()) {
-                current = iterator.next();
-                currentEntries.add(current);
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    @Override
+                    public CacheIndexEntry next() {
+                        CacheIndexEntry current = iterator.next();
+                        List<CacheIndexEntry> currentEntries = new ArrayList<CacheIndexEntry>();
+                        currentEntries.add(current);
+
+                        // We want to group all index entries having the same startScheduleId and the same
+                        // collectionTimeSlice. It is possible to have more than one index entry for a
+                        // {collectionTimeSlice, startScheduleId} pair. For example, suppose we have an entry with
+                        // collectionTimeSlice and insertTimeSlice 14:00. Aggregation fails and the index entry remains
+                        // intact. Then at 15:10 we insert some late data such that we have another index entry where
+                        // collectionTimeSlice is 14:00 and insertTimeSlice is 15:00.
+                        while (iterator.hasNext() && isSameCollectionTimeSliceStartScheduleIdPair(current,
+                            iterator.peek())) {
+
+                            current = iterator.next();
+                            currentEntries.add(current);
+                        }
+
+                        if (isDataInCache(currentEntries)) {
+                            return combineEntries(currentEntries, current.getCollectionTimeSlice());
+                        } else {
+                            return combineEntries(currentEntries, 0);
+                        }
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
             }
-            // Now that we have all index entries for the {collectionTimeSlice, startScheduleId} pair, we need to
-            // determine if we can pull data from metrics_cache or if have to pull from raw_metrics.
-            if (isDataInCache(currentEntries)) {
-                submitAggregationTask(combineEntries(currentEntries, current.getCollectionTimeSlice()));
-            } else {
-                submitAggregationTask(combineEntries(currentEntries, 0));
-            }
-        }
+        };
+    }
+
+    private boolean isSameCollectionTimeSliceStartScheduleIdPair(CacheIndexEntry left, CacheIndexEntry right) {
+        return left.getCollectionTimeSlice() == right.getCollectionTimeSlice() &&
+            left.getStartScheduleId() == right.getStartScheduleId();
     }
 
     /**
@@ -148,8 +170,8 @@ class PastDataAggregator extends BaseAggregator {
         return false;
     }
 
-    private CombinedCacheIndexEntry combineEntries(List<CacheIndexEntry> indexEntries, long insertTimeSlice) {
-        CombinedCacheIndexEntry combinedEntry = new CombinedCacheIndexEntry();
+    private CacheIndexEntry combineEntries(List<CacheIndexEntry> indexEntries, long insertTimeSlice) {
+        CacheIndexEntry combinedEntry = new CacheIndexEntry();
         combinedEntry.setBucket(MetricsTable.RAW);
         combinedEntry.setDay(indexEntries.get(0).getDay());
         combinedEntry.setStartScheduleId(indexEntries.get(0).getStartScheduleId());

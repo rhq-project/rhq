@@ -49,10 +49,10 @@ public class ConfigurationUtility {
      * A default template will only be created if one or more properties are required
      * or have default values. If no property definition is required or has a default value,
      * the default template will remain <code>null</code> in the given config definition.
-     * 
+     *
      * Note that if the given configuration definition already has a default template defined
      * for it, this method is a no-op and will return immediately.
-     * 
+     *
      * @param configDef the configuration definition whose default template is to be created and set
      */
     public static void initializeDefaultTemplate(ConfigurationDefinition configDef) {
@@ -78,7 +78,7 @@ public class ConfigurationUtility {
      * value defined in the definition, the property value will be set to <code>null</code>.
      *
      * Use this to help create the definition's default template.
-     * 
+     *
      * @param configurationDefinition the configuration definition whose default configuration is to be created
      * @return configuration the default configuration
      */
@@ -134,15 +134,34 @@ public class ConfigurationUtility {
      * @param  configuration           the configuration to be validated (must not be null)
      * @param  configurationDefinition the configuration definition to validate the configuration against (may be null)
      *
-     * @return a list of messages describing any errors that were found - will be empty if there are no messagse
+     * @return a list of messages describing any errors that were found - will be empty if there are no messages
      */
     public static List<String> validateConfiguration(Configuration configuration,
+        ConfigurationDefinition configurationDefinition) {
+        return validateConfiguration(configuration, null, configurationDefinition);
+    }
+
+    /**
+     * Validate the given configuration according to the given configuration definition. That is, check that any
+     * required properties in the top-level configuration Map or any sub-Maps, are defined and, in the case of simple
+     * properties, check that they have a non-null value. Optionally, ensure configuration does not alter readOnly
+     * properties already defined in an existingConfiguration. A list of messages describing any errors that were found
+     * is returned. Additionally, any undefined or null simple properties will be assigned a value of "".
+     *
+     * @param  configuration           the configuration to be validated (must not be null)
+     * @param  currentConfiguration    if supplied, validate that readOnly properties do not differ between
+     *                                 configuration and existingConfiguration. Ignored if null.
+     * @param  configurationDefinition the configuration definition to validate the configuration against (may be null)
+     *
+     * @return a list of messages describing any errors that were found - will be empty if there are no messages
+     */
+    public static List<String> validateConfiguration(Configuration configuration, Configuration currentConfiguration,
         ConfigurationDefinition configurationDefinition) {
         List<String> errorMessages = new ArrayList<String>();
         if (configurationDefinition != null) {
             Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
-                validateProperty(childPropertyDefinition, configuration, errorMessages);
+                validateProperty(childPropertyDefinition, configuration, currentConfiguration, errorMessages);
             }
         }
         return errorMessages;
@@ -283,23 +302,43 @@ public class ConfigurationUtility {
     }
 
     private static void validateProperty(PropertyDefinition propertyDefinition, AbstractPropertyMap parentPropertyMap,
-        List<String> errorMessages) {
+        AbstractPropertyMap currentParentPropertyMap, List<String> errorMessages) {
         if (parentPropertyMap.getMap().keySet().contains(propertyDefinition.getName())) // property is already set
         {
             if (propertyDefinition instanceof PropertyDefinitionSimple) {
                 PropertySimple propertySimple = parentPropertyMap.getSimple(propertyDefinition.getName());
+                // make sure required properties have a value
                 if (propertyDefinition.isRequired() && (propertySimple.getStringValue() == null)) {
                     errorMessages.add("Required property '" + propertyDefinition.getName() + "' has a null value in "
                         + parentPropertyMap + ".");
                     propertySimple.setStringValue("");
+                }
+                // make sure readOnly properties are not being changed
+                if (propertyDefinition.isReadOnly() && null != currentParentPropertyMap) {
+                    PropertySimple currentPropertySimple = currentParentPropertyMap.getSimple(propertyDefinition
+                        .getName());
+                    if (null != currentPropertySimple) {
+                        String currentValue = currentPropertySimple.getStringValue();
+                        // if there is no current value allow an initial value to be set for the readOnly property.
+                        if (!(null == currentValue || currentValue.trim().isEmpty() || propertySimple.getStringValue()
+                            .equals(currentValue))) {
+
+                            errorMessages.add("ReadOnly property '" + propertyDefinition.getName() + "' has a value ["
+                                + propertySimple.getStringValue() + "] different than the current value ["
+                                + currentValue + "]. It is not allowed to change.");
+                        }
+                    }
                 }
             }
 
             // If the property is a Map, recurse into it and validate its child properties.
             else if (propertyDefinition instanceof PropertyDefinitionMap) {
                 PropertyMap propertyMap = parentPropertyMap.getMap(propertyDefinition.getName());
+                PropertyMap currentPropertyMap = (null == currentParentPropertyMap) ? null : currentParentPropertyMap
+                    .getMap(propertyDefinition.getName());
                 PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
-                validatePropertyMap(propertyMap, propertyDefinitionMap, errorMessages);
+                validatePropertyMap(propertyMap, currentPropertyMap, propertyDefinitionMap, errorMessages);
+
             } else if (propertyDefinition instanceof PropertyDefinitionList) {
                 PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
                 PropertyDefinition listMemberPropertyDefinition = propertyDefinitionList.getMemberDefinition();
@@ -309,10 +348,14 @@ public class ConfigurationUtility {
                 if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) listMemberPropertyDefinition;
                     PropertyList propertyList = parentPropertyMap.getList(propertyDefinition.getName());
+                    PropertyList currentPropertyList = (null == currentParentPropertyMap) ? null
+                        : currentParentPropertyMap.getList(propertyDefinition.getName());
                     validatePropertyListSize(propertyList, propertyDefinitionList, errorMessages);
-                    for (Property property : propertyList.getList()) {
-                        PropertyMap propertyMap = (PropertyMap) property;
-                        validatePropertyMap(propertyMap, propertyDefinitionMap, errorMessages);
+                    for (int i = 0, size = propertyList.getList().size(); (i < size); ++i) {
+                        PropertyMap propertyMap = (PropertyMap) propertyList.getList().get(i);
+                        PropertyMap currentPropertyMap = (null == currentPropertyList) ? null
+                            : (PropertyMap) currentPropertyList.getList().get(i);
+                        validatePropertyMap(propertyMap, currentPropertyMap, propertyDefinitionMap, errorMessages);
                     }
                 }
             }
@@ -329,11 +372,11 @@ public class ConfigurationUtility {
         }
     }
 
-    private static void validatePropertyMap(AbstractPropertyMap propertyMap,
+    private static void validatePropertyMap(AbstractPropertyMap propertyMap, AbstractPropertyMap currentPropertyMap,
         PropertyDefinitionMap propertyDefinitionMap, List<String> errorMessages) {
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
-            validateProperty(childPropertyDefinition, propertyMap, errorMessages);
+            validateProperty(childPropertyDefinition, propertyMap, currentPropertyMap, errorMessages);
         }
     }
 

@@ -13,8 +13,9 @@ rem ============================================================================
 
 setlocal enabledelayedexpansion
 
-if exist ".\rhq-server-env.bat" (
-   call ".\rhq-server-env.bat" %*
+set _SCRIPT_DIR=%~dp0
+if exist "%_SCRIPT_DIR%\rhq-server-env.bat" (
+   call "%_SCRIPT_DIR%\rhq-server-env.bat" %*
 ) else (
    echo Failed to find rhq-server-env.bat. This file should exist in the bin directory.
    exit /B 1

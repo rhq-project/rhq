@@ -336,13 +336,14 @@ public class FileUploadForm extends DynamicCallbackForm {
 
         try {
             files = new ArrayList<String>();
-            int begin = 0, end;
-            while (null != results && -1 != (end = results.indexOf("\n"))) {
-                String line = results.substring(begin, end);
-                if (!line.endsWith("html>")) {
-                    files.add(line);
+            if (results != null) {
+                String[] allLines = results.split("\n");
+                for (String line : allLines) {
+                    String trimmedLine = line.trim();
+                    if (!trimmedLine.endsWith("html>")) {
+                        files.add(trimmedLine);
+                    }
                 }
-                begin = end + 1;
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_results(results), e);

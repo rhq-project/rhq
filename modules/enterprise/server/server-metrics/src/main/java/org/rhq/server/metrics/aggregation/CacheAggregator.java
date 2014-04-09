@@ -58,6 +58,13 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @Override
+    protected void doScheduleTasks(List<CacheIndexEntry> indexEntries) throws InterruptedException {
+        for (CacheIndexEntry indexEntry : indexEntries) {
+            submitAggregationTask(indexEntry);
+        }
+    }
+
+    @Override
     protected AggregationTask createAggregationTask(CacheIndexEntry indexEntry) {
         return new AggregationTask(indexEntry) {
             @Override

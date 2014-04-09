@@ -167,18 +167,24 @@ abstract class BaseAggregator {
 
     protected abstract Map<AggregationType, Integer> getAggregationCounts();
 
+    protected abstract void doScheduleTasks(List<CacheIndexEntry> indexEntries) throws InterruptedException;
+
     private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
         try {
-            for (CacheIndexEntry indexEntry : indexEntries) {
-                permits.acquire();
-                aggregationTasks.submit(createAggregationTask(indexEntry));
-                taskTracker.addTask();
+            if (!indexEntries.isEmpty()) {
+                doScheduleTasks(indexEntries);
             }
             taskTracker.finishedSchedulingTasks();
         } catch (InterruptedException e) {
             LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
             taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
         }
+    }
+
+    protected void submitAggregationTask(CacheIndexEntry indexEntry) throws InterruptedException {
+        permits.acquire();
+        aggregationTasks.submit(createAggregationTask(indexEntry));
+        taskTracker.addTask();
     }
 
     protected <T extends NumericMetric> Function<Iterable<List<T>>, List<AggregateNumericMetric>> computeAggregates(
@@ -238,7 +244,7 @@ abstract class BaseAggregator {
         return new AsyncFunction<ResultSet, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(ResultSet deleteCacheResultSet) throws Exception {
-                return dao.deleteCacheIndexEntries(aggregationType.getCacheTable(), indexEntry.getDay(),
+                return dao.deleteCacheIndexEntry(aggregationType.getCacheTable(), indexEntry.getDay(),
                     indexEntry.getPartition(), indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId(),
                     indexEntry.getInsertTimeSlice());
             }

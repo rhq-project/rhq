@@ -477,9 +477,14 @@ public class AggregationTests extends MetricsTest {
     public void aggregateLateDataFromCacheInSame6HourTimeSlice() throws Exception {
         purgeDB();
         testdb = new InMemoryMetricsDB();
-        dateTimeService.setNow(hour(3).plusMinutes(55));
+        dateTimeService.setNow(hour(2).plusMinutes(55));
+
+        insertRawData(
+            newRawData(hour(2).plusMinutes(15), schedule1.id, 22)
+        );
 
         dateTimeService.setNow(hour(3).plusMinutes(55));
+        new AggregationManagerTestStub(hour(2)).run();
 
         insertRawData(
             newRawData(hour(3).plusMinutes(20), schedule1.id, 30),
@@ -488,11 +493,11 @@ public class AggregationTests extends MetricsTest {
             newRawData(hour(3).plusMinutes(20), schedule2.id, 100)
         );
 
-        testdb.aggregateRawData(hour(3), hour(4));
-
         dateTimeService.setNow(hour(4).plusMinutes(55));
 
         insertRawData(
+            newRawData(hour(2).plusMinutes(56), schedule1.id, 11),
+            newRawData(hour(3).plusMinutes(45), schedule1.id, 95),
             newRawData(hour(4).plusMinutes(15), schedule1.id, 20),
             newRawData(hour(4).plusMinutes(30), schedule1.id, 50),
             newRawData(hour(4).plusMinutes(15), schedule2.id, 50),
@@ -500,14 +505,21 @@ public class AggregationTests extends MetricsTest {
             newRawData(hour(4).plusMinutes(30), schedule3.id, 60)
         );
 
+        testdb.aggregateRawData(hour(2), hour(3));
+        testdb.aggregateRawData(hour(3), hour(4));
         dateTimeService.setNow(hour(5).plusSeconds(5));
-
         testdb.aggregateRawData(hour(4), hour(5));
 
         AggregationManagerTestStub aggregator = new AggregationManagerTestStub(hour(4));
         Set<AggregateNumericMetric> oneHourData = aggregator.run();
 
         assertCollectionEqualsNoOrder(testdb.get1HourData(hour(4)), oneHourData, "The returned 1 hour data is wrong");
+
+        assertRawCacheEmpty(hour(3), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+        assertRawCacheEmpty(hour(4), startScheduleId(schedule1.id), startScheduleId(schedule3.id));
+
+        assertRawCacheIndexEmpty(today(), INDEX_PARTITION, hour(3));
+        assertRawCacheIndexEmpty(today(), INDEX_PARTITION, hour(4));
 
         assert1HourDataEquals(schedule1.id, testdb.get1HourData(schedule1.id));
         assert1HourDataEquals(schedule2.id, testdb.get1HourData(schedule2.id));

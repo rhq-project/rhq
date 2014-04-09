@@ -463,7 +463,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             currentTimeSlice.getMillis(), startScheduleId, currentTimeSlice.getMillis(), scheduleIds);
         indexFuture.get();
 
-        StorageResultSetFuture deleteFuture = dao.deleteCacheIndexEntries(MetricsTable.RAW, hour0().getMillis(),
+        StorageResultSetFuture deleteFuture = dao.deleteCacheIndexEntry(MetricsTable.RAW, hour0().getMillis(),
             partition, currentTimeSlice.getMillis(), startScheduleId, currentTimeSlice.getMillis());
         deleteFuture.get();
 

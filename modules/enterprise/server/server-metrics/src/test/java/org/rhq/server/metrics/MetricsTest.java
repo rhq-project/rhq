@@ -43,7 +43,7 @@ public class MetricsTest extends CassandraIntegrationTest {
 
     protected MetricsDAO dao;
     protected MetricsConfiguration configuration = new MetricsConfiguration();
-    protected DateTimeService dateTimeService;
+    protected DateTimeServiceStub dateTimeService;
     private RawCacheMapper rawCacheMapper = new RawCacheMapper();
     private AggregateCacheMapper aggregateCacheMapper = new AggregateCacheMapper();
     private CacheIndexEntryMapper cacheIndexEntryMapper = new CacheIndexEntryMapper();
@@ -52,7 +52,7 @@ public class MetricsTest extends CassandraIntegrationTest {
     @BeforeClass
     public void initClass() throws Exception {
         dao = new MetricsDAO(storageSession, configuration);
-        dateTimeService = new DateTimeService();
+        dateTimeService = new DateTimeServiceStub();
         dateTimeService.setConfiguration(configuration);
     }
 
@@ -300,6 +300,26 @@ public class MetricsTest extends CassandraIntegrationTest {
         ResultSet resultSet = dao.findCurrentCacheIndexEntries(table, day.getMillis(), partition,
             collectionTimeSlice.getMillis()).get();
         List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
+        assertCacheIndexEntriesEqual(actual, expected, table);
+    }
+
+    protected void assertCacheIndexBeforeTodayEquals(MetricsTable table, DateTime day, DateTime collectionTimeSlice,
+        List<CacheIndexEntry> expected) {
+        ResultSet resultSet = dao.findPastCacheIndexEntriesBeforeToday(table, day.getMillis(), 0,
+            collectionTimeSlice.getMillis()).get();
+        List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
+
+        assertCacheIndexEntriesEqual(actual, expected, table);
+    }
+
+    protected void assertCacheIndexForEarlierTodayEquals(MetricsTable table, List<CacheIndexEntry> expected) {
+        DateTime today = dateTimeService.current24HourTimeSlice();
+        DateTime currentHour = dateTimeService.currentHour();
+
+        ResultSet resultSet = dao.findPastCacheIndexEntriesFromToday(table, today.getMillis(), 0,
+            currentHour.getMillis()).get();
+        List<CacheIndexEntry> actual = cacheIndexEntryMapper.map(resultSet);
+
         assertCacheIndexEntriesEqual(actual, expected, table);
     }
 

@@ -1,6 +1,7 @@
 package org.rhq.server.metrics.aggregation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,6 +36,9 @@ import org.rhq.server.metrics.domain.ResultSetMapper;
 class PastDataAggregator extends BaseAggregator {
 
     private static final Log LOG = LogFactory.getLog(PastDataAggregator.class);
+
+    private static class CombinedCacheIndexEntry extends CacheIndexEntry {
+    }
 
     private DateTime startingDay;
 
@@ -89,6 +95,73 @@ class PastDataAggregator extends BaseAggregator {
                 return indexEntries;
             }
         }, aggregationTasks);
+    }
+
+    @Override
+    protected void doScheduleTasks(List<CacheIndexEntry> indexEntries) throws InterruptedException {
+        PeekingIterator<CacheIndexEntry> iterator = Iterators.peekingIterator(indexEntries.iterator());
+
+        while (iterator.hasNext()) {
+            CacheIndexEntry current = iterator.next();
+            List<CacheIndexEntry> currentEntries = new ArrayList<CacheIndexEntry>();
+            currentEntries.add(current);
+
+            // We want to group all index entries having the same startScheduleId and the same collectionTimeSlice. It
+            // is possible to have more than one index entry for a {collectionTimeSlice, startScheduleId} pair. For
+            // example, suppose we have an entry with collectionTimeSlice and insertTimeSlice 14:00. Aggregation fails
+            // and the index entry remains intact. Then at 15:10 we insert some late data such that we have another
+            // index entry where collectionTimeSlice is 14:00 and insertTimeSlice is 15:00.
+            while (iterator.hasNext() && current.getCollectionTimeSlice() == iterator.peek().getCollectionTimeSlice() &&
+                current.getStartScheduleId() == iterator.peek().getStartScheduleId()) {
+                current = iterator.next();
+                currentEntries.add(current);
+            }
+            // Now that we have all index entries for the {collectionTimeSlice, startScheduleId} pair, we need to
+            // determine if we can pull data from metrics_cache or if have to pull from raw_metrics.
+            if (isDataInCache(currentEntries)) {
+                submitAggregationTask(combineEntries(currentEntries, current.getCollectionTimeSlice()));
+            } else {
+                submitAggregationTask(combineEntries(currentEntries, 0));
+            }
+        }
+    }
+
+    /**
+     * This method determines whether or not all of the raw data for a {collectionTimeSlice, startScheduleId} pair is
+     * available in the metrics_cache table. If there is at least one entry having {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}
+     * the same as {@link CacheIndexEntry#getInsertTimeSlice() insertTimeSlice} then we know that the data is available
+     * in metrics_cache. If this condition is satisfied, then it means that the cache partition was created during the
+     * collection time slice, and it has not been deleted; thus, all raw data for the
+     * {collectionTimeSlice, startScheduleId} is available in metrics_cache.
+     *
+     * @param indexEntries The index entries which should all have the same {@link CacheIndexEntry#getCollectionTimeSlice() collectionTimeSlice}
+     *                     and the same {@link CacheIndexEntry#getStartScheduleId() startScheduleId}
+     * @return True if all of the raw data for the collection time slice is available in the metrics_cache table, false
+     * otherwise.
+     */
+    private boolean isDataInCache(List<CacheIndexEntry> indexEntries) {
+        for (CacheIndexEntry indexEntry : indexEntries) {
+            if (indexEntry.getCollectionTimeSlice() == indexEntry.getInsertTimeSlice()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private CombinedCacheIndexEntry combineEntries(List<CacheIndexEntry> indexEntries, long insertTimeSlice) {
+        CombinedCacheIndexEntry combinedEntry = new CombinedCacheIndexEntry();
+        combinedEntry.setBucket(MetricsTable.RAW);
+        combinedEntry.setDay(indexEntries.get(0).getDay());
+        combinedEntry.setStartScheduleId(indexEntries.get(0).getStartScheduleId());
+        combinedEntry.setCollectionTimeSlice(indexEntries.get(0).getCollectionTimeSlice());
+        combinedEntry.setInsertTimeSlice(insertTimeSlice);
+        combinedEntry.setScheduleIds(new HashSet<Integer>());
+
+        for (CacheIndexEntry indexEntry : indexEntries) {
+            combinedEntry.getScheduleIds().addAll(indexEntry.getScheduleIds());
+        }
+
+        return combinedEntry;
     }
 
     @Override
@@ -171,7 +244,7 @@ class PastDataAggregator extends BaseAggregator {
             deleteCacheEntry(indexEntry), aggregationTasks);
 
         ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-            deleteCacheIndexEntry(indexEntry), aggregationTasks);
+            deleteCacheIndexEntries(indexEntry), aggregationTasks);
 
         aggregationTaskFinished(deleteCacheIndexFuture, pairFuture, is6HourTimeSliceFinished, is24HourTimeSliceFinished);
     }
@@ -219,7 +292,7 @@ class PastDataAggregator extends BaseAggregator {
             deleteCacheEntry(indexEntry), aggregationTasks);
 
         ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
-            deleteCacheIndexEntry(indexEntry), aggregationTasks);
+            deleteCacheIndexEntries(indexEntry), aggregationTasks);
 
         aggregationTaskFinished(deleteCacheIndexFuture, pairFuture, is6HourTimeSliceFinished, is24HourTimeSliceFinished);
     }
@@ -267,6 +340,17 @@ class PastDataAggregator extends BaseAggregator {
                         return new CombinedMetricsIterator(pairs);
                     }
                 };
+            }
+        };
+    }
+
+    protected AsyncFunction<ResultSet, ResultSet> deleteCacheIndexEntries(final CacheIndexEntry indexEntry) {
+
+        return new AsyncFunction<ResultSet, ResultSet>() {
+            @Override
+            public ListenableFuture<ResultSet> apply(ResultSet deleteCacheResultSet) throws Exception {
+                return dao.deleteCacheIndexEntries(aggregationType.getCacheTable(), indexEntry.getDay(),
+                    indexEntry.getPartition(), indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
             }
         };
     }

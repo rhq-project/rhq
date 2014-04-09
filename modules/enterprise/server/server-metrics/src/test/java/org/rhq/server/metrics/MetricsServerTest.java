@@ -77,15 +77,15 @@ public class MetricsServerTest extends MetricsTest {
 
     private MetricsServerStub metricsServer;
 
-    private DateTimeServiceStub dateTimeService;
+//    private DateTimeServiceStub dateTimeService;
 
     @BeforeMethod
     public void initServer() throws Exception {
         metricsServer = new MetricsServerStub();
         metricsServer.setConfiguration(configuration);
 
-        dateTimeService = new DateTimeServiceStub();
-        dateTimeService.setConfiguration(configuration);
+//        dateTimeService = new DateTimeServiceStub();
+//        dateTimeService.setConfiguration(configuration);
         metricsServer.setDateTimeService(dateTimeService);
 
         metricsServer.setDAO(dao);
@@ -215,20 +215,30 @@ public class MetricsServerTest extends MetricsTest {
         assertRawCacheEquals(yesterday().plusHours(19), startScheduleId(scheduleId2), expected2);
         assertRawCacheEquals(hour(5), startScheduleId(scheduleId3), expected3);
 
-        assertRawCacheIndexEquals(today(), partition, hour(4), asList(
+        assertCacheIndexForEarlierTodayEquals(MetricsTable.RAW, asList(
             newRawCacheIndexEntry(today(), hour(4), startScheduleId(scheduleId4), hour(5), scheduleId4)
         ));
+//        assertRawCacheIndexEquals(today(), partition, hour(4), asList(
+//            newRawCacheIndexEntry(today(), hour(4), startScheduleId(scheduleId4), hour(5), scheduleId4)
+//        ));
 
         assertRawCacheIndexEquals(today(), partition, hour(5), asList(
             newRawCacheIndexEntry(hour(5), startScheduleId(scheduleId3), scheduleId3)
         ));
 
-        assertRawCacheIndexEquals(yesterday(), partition, yesterday().plusHours(19), asList(
+        assertCacheIndexBeforeTodayEquals(MetricsTable.RAW, yesterday(), yesterday().plusHours(19), asList(
             newRawCacheIndexEntry(yesterday(), yesterday().plusHours(19), startScheduleId(scheduleId1), hour(5),
                 scheduleId1),
             newRawCacheIndexEntry(yesterday(), yesterday().plusHours(19), startScheduleId(scheduleId2), hour(5),
                 scheduleId2)
         ));
+
+//        assertRawCacheIndexEquals(yesterday(), partition, yesterday().plusHours(19), asList(
+//            newRawCacheIndexEntry(yesterday(), yesterday().plusHours(19), startScheduleId(scheduleId1), hour(5),
+//                scheduleId1),
+//            newRawCacheIndexEntry(yesterday(), yesterday().plusHours(19), startScheduleId(scheduleId2), hour(5),
+//                scheduleId2)
+//        ));
         // TODO I think the query used in this assert only handles a single collection time slice
 //        assertRawCacheIndexEquals(today(), partition, asList(
 //            newRawCacheIndexEntry(today(), startScheduleId(scheduleId4), hour(4), ImmutableSet.of(scheduleId4)),

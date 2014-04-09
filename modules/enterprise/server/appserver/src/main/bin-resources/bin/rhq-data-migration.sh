@@ -34,7 +34,7 @@ if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
    _READLINK_ARG="-e"
 fi
 
-_SCRIPT_DIR="$(dirname "$(readlink $_READLINK_ARG "$0" 2>/dev/null)")"
+_SCRIPT_DIR="$(dirname "$(readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0")")"
 echo "$_SCRIPT_DIR/rhq-server-env.sh"
 if [ -f "$_SCRIPT_DIR/rhq-server-env.sh" ]; then
    . "$_SCRIPT_DIR/rhq-server-env.sh" $*

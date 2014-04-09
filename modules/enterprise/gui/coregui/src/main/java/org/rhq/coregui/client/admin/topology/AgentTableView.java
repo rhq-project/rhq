@@ -157,12 +157,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
         addTableAction(MSG.common_button_new(), null, new AuthorizedTableAction(this, TableActionEnablement.ALWAYS,
             Permission.MANAGE_INVENTORY) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                PopupWindow window = new PopupWindow(new RemoteAgentInstallView(null, true, false, false, false));
-                window.setTitle(MSG.view_adminTopology_remoteAgentInstall());
-                window.setHeight(600);
-                window.setWidth(800);
-                window.show();
-                refresh();
+                newDetails();
             }
         });
     }
@@ -357,7 +352,11 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new AgentDetailView(id);
+        if (id != null && id.intValue() > 0) {
+            return new AgentDetailView(id);
+        } else {
+            return new RemoteAgentInstallView(null, true, false, false, false);
+        }
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,11 @@
  */
 package org.rhq.plugins.jmx.test;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,6 +41,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -45,6 +53,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -63,6 +72,7 @@ import org.rhq.core.pc.util.InventoryPrinter;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.util.JvmResourceKey;
 
@@ -105,6 +115,7 @@ public class JMXPluginTest {
             Thread.sleep(3000);
 
             File pluginDir = new File("target/itest/plugins");
+            deployCustomPlugin(pluginDir);
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
@@ -124,6 +135,33 @@ public class JMXPluginTest {
             t.printStackTrace();
             throw new RuntimeException(t);
         }
+    }
+
+    private void deployCustomPlugin(File targetDir) throws Exception{
+
+        File plugin = new File("src/test/resources/custom-test-plugin.xml");
+        File targetFile = new File(targetDir,"custom-test-plugin.jar");
+
+        ZipOutputStream outputStream = new ZipOutputStream(new FileOutputStream(targetFile));
+        ZipEntry metainf = new ZipEntry("META-INF");
+        outputStream.putNextEntry(metainf);
+        outputStream.closeEntry();
+
+        ZipEntry pluginXml = new ZipEntry("META-INF/rhq-plugin.xml");
+        outputStream.putNextEntry(pluginXml);
+        FileInputStream fis = new FileInputStream(plugin);
+        int bufferSize = 1024;
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(fis, bufferSize);
+        int size = -1;
+        byte data[] = new byte[bufferSize];
+        while(  (size = bufferedInputStream.read(data, 0, bufferSize)) != -1  )
+        {
+            outputStream.write(data, 0, size);
+        }
+        bufferedInputStream.close();
+        outputStream.closeEntry();
+        outputStream.flush();
+        outputStream.finish();
     }
 
     private Process startTestServerJvm(String... jvmArgs) throws IOException {
@@ -227,8 +265,8 @@ public class JMXPluginTest {
             // Each JMX Server should have exactly six singleton child Resources with the following types:
             // Operating System, Threading, VM Class Loading System, VM Compilation System, VM Memory System, and
             // java.util.logging.
-            assert childResources.size() == 6 : jmxServer + " does not have 6 child Resources - child Resources: "
-                + childResources;
+            assert childResources.size() == 7 : jmxServer + " does not have 7 child Resources but " + childResources.size()
+                + " - child Resources: " + childResources;
         }
 
         InventoryPrinter.outputInventory(new PrintWriter(System.out), false);
@@ -267,6 +305,7 @@ public class JMXPluginTest {
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation() throws Exception {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
+        boolean found = false;
         for (Resource server : platform.getChildResources()) {
             List<Resource> services = new ArrayList<Resource>(server.getChildResources());
             Collections.sort(services);
@@ -274,13 +313,89 @@ public class JMXPluginTest {
                 if (service.getResourceType().getName().equals("Threading")) {
                     ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
                         .getResourceComponent(service);
+                    found = true;
 
-                    Object result = ((OperationFacet) serviceComponent).invokeOperation("findMonitorDeadlockedThreads",
+                    OperationResult result = ((OperationFacet) serviceComponent).invokeOperation("findMonitorDeadlockedThreads",
                         new Configuration());
                     System.out.println("Result of operation test was: " + result);
+                    if (result.getErrorMessage()!=null) {
+                        throw new RuntimeException("Operation was no success: " + result.toString());
+                    }
                 }
             }
         }
+        if (!found) {
+            throw new RuntimeException("Did not find the requested operation");
+        }
+    }
+
+    @Test(dependsOnMethods = "testServiceDiscovery")
+    public void testOperation1() throws Exception {
+        runOperation("Threading", "findMonitorDeadlockedThreads", new Configuration());
+    }
+
+    @Test(dependsOnMethods = "testServiceDiscovery")
+    public void testOperation2() throws Exception {
+        String result = runOperation("TestService_", "doSomething", new Configuration());
+        assert result == null; // Operation did not define a "<results>" block.
+    }
+
+    @Test(dependsOnMethods = "testServiceDiscovery")
+    public void testOperation3() throws Exception {
+        String result = runOperation("TestService_", "hello", new Configuration());
+        assert "Hello World".equals(result);
+    }
+
+    @Test(dependsOnMethods = "testServiceDiscovery")
+    public void testOperation4() throws Exception {
+        Configuration parameters = new Configuration();
+        parameters.put(new PropertySimple("p1","Hello Test"));
+        String result = runOperation("TestService_", "echo", parameters);
+        assert "Hello Test".equals(result);
+    }
+
+    @Test(dependsOnMethods = "testServiceDiscovery")
+    public void testOperation5() throws Exception {
+        Configuration parameters = new Configuration();
+        parameters.put(new PropertySimple("p1","Hello"));
+        parameters.put(new PropertySimple("p2","Test"));
+        String result = runOperation("TestService_", "concat", parameters);
+        assert "HelloTest".equals(result);
+    }
+
+
+
+    private String runOperation(String typeName, String operationName, Configuration parameters) throws Exception {
+        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
+        boolean found = false;
+        String outcome = null;
+        for (Resource server : platform.getChildResources()) {
+            List<Resource> services = new ArrayList<Resource>(server.getChildResources());
+            Collections.sort(services);
+            for (Resource service : services) {
+                if (service.getResourceType().getName().equals(typeName)) {
+                    ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
+                        .getResourceComponent(service);
+                    found = true;
+
+                    OperationResult result = ((OperationFacet) serviceComponent).invokeOperation(operationName,
+                        parameters);
+                    System.out.println("Result of operation test was: " + result);
+                    if (result!=null) {
+                        // Operations are not required to return anything
+                        if (result.getErrorMessage() != null) {
+                            throw new RuntimeException("Operation was no success: " + result.toString());
+                        }
+                        outcome = result.getSimpleResult();
+                    }
+                }
+            }
+        }
+        if (!found) {
+            throw new RuntimeException("Did not find the requested operation");
+        }
+
+        return outcome;
     }
 
     /*
@@ -365,6 +480,15 @@ public class JMXPluginTest {
             }
 
             RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+
+            // Deploy an MBean of our own to run additional tests with a custom-jmx-plugin
+            try {
+                ObjectName mBeanName = new ObjectName("rhq.test:name=TestTarget");
+                mBeanServer.createMBean(TestTarget.class.getName(),mBeanName);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             String jvmName = runtimeMXBean.getName();
             int atIndex = jvmName.indexOf('@');
             String pid = (atIndex != -1) ? jvmName.substring(0, atIndex) : "?";

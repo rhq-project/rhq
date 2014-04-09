@@ -41,6 +41,8 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -155,7 +157,9 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         IButton saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                saveForm(form, dynaGroupChildrenView, false);
+                if (form.validate()) {
+                    saveFormCheckCannedExpr(form, dynaGroupChildrenView, false);
+                }
             }
         });
 
@@ -163,7 +167,9 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         recalculateButton.setWidth(150);
         recalculateButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                saveForm(form, dynaGroupChildrenView, true);
+                if (form.validate()) {
+                    saveFormCheckCannedExpr(form, dynaGroupChildrenView, true);
+                }
             }
         });
 
@@ -184,7 +190,6 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         addMember(form);
         addMember(buttonLayout);
         addMember(dynaGroupChildrenView);
-
         markForRedraw();
     }
     public void setCannedExpressions(final ArrayList<CannedGroupExpression> list) {
@@ -194,10 +199,24 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         }
         templateSelector.setValueMap(cannedExpressions.keySet().toArray(new String[cannedExpressions.size()]));
     }
+    
+    private void saveFormCheckCannedExpr(final DynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
+        final boolean recalc) {
+        if (this.groupDefinition.getCannedExpression() != null) {
+            SC.ask(MSG.view_dynagroup_saveCannedDefWarning(this.groupDefinition.getCannedExpression().replaceAll(":.*", "")), new BooleanCallback() {
+                public void execute(Boolean confirmed) {
+                    if (confirmed) {
+                        saveForm(form, dynaGroupChildrenView, recalc);
+                    }
+                }
+            });
+        } else {
+            saveForm(form, dynaGroupChildrenView, recalc);
+        }
+    }
 
     private void saveForm(final DynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
         final boolean recalc) {
-        if (form.validate()) {
             form.saveData(new DSCallback() {
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
@@ -245,7 +264,6 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                     }
                 }
             });
-        }
     }
 
     private void recalculate(final DynaGroupChildrenView dynaGroupChildrenView, int groupDefId) {

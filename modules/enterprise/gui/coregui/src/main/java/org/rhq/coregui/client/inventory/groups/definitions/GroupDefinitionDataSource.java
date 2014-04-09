@@ -95,6 +95,9 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
             MSG.view_dynagroup_nextCalculationTime());
         fields.add(nextCalculationTimeField);
 
+        DataSourceTextField cannedExpressionField = new DataSourceTextField("cannedExpression", "Origin");
+        fields.add(cannedExpressionField);
+
         return fields;
     }
 
@@ -203,7 +206,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
         record.setAttribute("description", from.getDescription());
         record.setAttribute("expression", from.getExpression());
         record.setAttribute("recursive", from.isRecursive());
-
+        record.setAttribute("cannedExpression", from.getCannedExpression());
         // convert millis to minutes for display
         long recalcIntervalLong = from.getRecalculationInterval() / (60 * 1000);
         record.setAttribute("recalculationInterval", convertLongToString(recalcIntervalLong));

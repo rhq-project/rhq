@@ -145,11 +145,11 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             agentInstall.setSshUsername(remoteAccessInfo.getUser());
             agentInstall.setSshPassword(remoteAccessInfo.getPassword());
         }
-
         AgentInstall ai = agentManager.updateAgentInstall(subject, agentInstall);
+
         SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
         try {
-            return sshUtil.installAgent(parentPath, String.valueOf(ai.getId()));
+            return sshUtil.installAgent(customData, String.valueOf(ai.getId()));
         } finally {
             sshUtil.disconnect();
         }

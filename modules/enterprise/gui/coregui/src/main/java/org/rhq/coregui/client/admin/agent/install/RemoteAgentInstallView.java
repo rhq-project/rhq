@@ -91,6 +91,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private EnhancedIButton startButton;
     private EnhancedIButton stopButton;
     private TextItem agentInstallPath;
+    private StaticTextItem agentStatusText;
     private ButtonItem findAgentInstallPathButton;
     private ButtonItem statusCheckButton;
     private CheckboxItem rememberMeCheckbox;
@@ -228,12 +229,11 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        StaticTextItem agentStatus = new StaticTextItem("agentStatus", MSG.view_remoteAgentInstall_agentStatus());
-        agentStatus.setDefaultValue(MSG.view_remoteAgentInstall_agentStatusDefault());
-        agentStatus.setRedrawOnChange(true);
-        agentStatus.setRedrawOnChange(true);
-        agentStatus.setStartRow(true);
-        agentStatus.setEndRow(false);
+        agentStatusText = new StaticTextItem("agentStatus", MSG.view_remoteAgentInstall_agentStatus());
+        agentStatusText.setDefaultValue(MSG.view_remoteAgentInstall_agentStatusDefault());
+        agentStatusText.setRedrawOnChange(true);
+        agentStatusText.setStartRow(true);
+        agentStatusText.setEndRow(false);
 
         statusCheckButton = new ButtonItem("updateStatus", MSG.view_remoteAgentInstall_updateStatus());
         statusCheckButton.setStartRow(false);
@@ -261,7 +261,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         }
 
         connectionForm.setFields(host, port, username, password, rememberMeCheckbox, agentInstallPath,
-            findAgentInstallPathButton, agentStatus, statusCheckButton);
+            findAgentInstallPathButton, agentStatusText, statusCheckButton);
 
         return connectionForm;
     }
@@ -429,12 +429,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         remoteInstallService.agentStatus(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 disableButtons(false);
-                connectionForm.setValue("agentStatus", caught.getMessage());
+                agentStatusText.setValue(caught.getMessage());
             }
 
             public void onSuccess(String result) {
                 disableButtons(false);
-                connectionForm.setValue("agentStatus", result);
+                agentStatusText.setValue(result);
             }
         });
     }
@@ -503,7 +503,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void reallyInstallAgent() {
         disableButtons(true);
-        connectionForm.setValue("agentStatus", "Installing, this may take a few minutes...");
+        agentStatusText.setValue("Installing, this may take a few minutes...");
         SC.ask(MSG.view_remoteAgentInstall_overwriteAgentTitle(), MSG.view_remoteAgentInstall_overwriteAgentQuestion(),
             new BooleanCallback() {
                 @Override
@@ -514,13 +514,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                             public void onFailure(Throwable caught) {
                                 disableButtons(false);
                                 displayError(MSG.view_remoteAgentInstall_error_4(), caught);
-                                connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_error_4());
+                                agentStatusText.setValue(MSG.view_remoteAgentInstall_error_4());
                             }
 
                             public void onSuccess(AgentInstallInfo result) {
                                 disableButtons(false);
                                 displayMessage(MSG.view_remoteAgentInstall_success());
-                                connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_success());
+                                agentStatusText.setValue(MSG.view_remoteAgentInstall_success());
 
                                 for (Canvas child : agentInfoLayout.getChildren()) {
                                     child.destroy();
@@ -544,20 +544,20 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             public void onFailure(Throwable caught) {
                 disableButtons(false);
                 displayError(MSG.view_remoteAgentInstall_error_7(), caught);
-                connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_error_7());
+                agentStatusText.setValue(MSG.view_remoteAgentInstall_error_7());
             }
 
             public void onSuccess(String result) {
                 disableButtons(false);
                 if (result != null) {
-                    connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_uninstallSuccess());
+                    agentStatusText.setValue(MSG.view_remoteAgentInstall_uninstallSuccess());
                     displayMessage(MSG.view_remoteAgentInstall_uninstallAgentResults(result));
                     agentStatusCheck();
 
                     // tell the success handler
                     invokeSuccessHandler(Type.UNINSTALL);
                 } else {
-                    connectionForm.setValue("agentStatus", MSG.view_remoteAgentInstall_error_7());
+                    agentStatusText.setValue(MSG.view_remoteAgentInstall_error_7());
                 }
             }
         });

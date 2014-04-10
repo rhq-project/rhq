@@ -583,7 +583,6 @@ public class LoginView extends Canvas {
                         fakeForm.setVisible(false);
                         loginShowing = false;
                         UserSessionManager.login(username, password);
-                        redirectTo(""); // redirect back to the "root" path (coregui/)
                         setLoginError(null);
                     } else {
                         handleError(statusCode);
@@ -677,8 +676,11 @@ public class LoginView extends Canvas {
         return com.google.gwt.user.client.Window.Location.getHref().contains(LOGIN_VIEW);
     }
     
-    private void redirectTo(String path) {
-        com.google.gwt.user.client.Window.Location.replace(GWT.getHostPageBaseURL() + path
-            + com.google.gwt.user.client.Window.Location.getHash());
+    public static void redirectTo(String path) {
+        if (path != null && !("/coregui/" + path).equals(com.google.gwt.user.client.Window.Location.getPath())) {
+            com.google.gwt.user.client.Window.Location.replace(GWT.getHostPageBaseURL() + path
+                + com.google.gwt.user.client.Window.Location.getQueryString()
+                + com.google.gwt.user.client.Window.Location.getHash());
+        }
     }
 }

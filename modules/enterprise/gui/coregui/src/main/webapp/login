@@ -141,7 +141,7 @@
           </form>
         </div><!--/.col-*-->
         <div class="col-sm-5 col-md-6 col-lg-7 details">
-          <p><strong>Welcome to RHQ 4.11.0-SNAPSHOT!</strong><br/>
+          <p><strong>Welcome to RHQ ${project.version}!</strong><br/>
           RHQ is an enterprise management solution for JBoss middleware projects, Tomcat, Apache Web Server, and numerous other server-side applications.<br/></p>
         </div><!--/.col-*-->
       </div><!--/.row-->

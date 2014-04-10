@@ -67,6 +67,8 @@ public class FileUploadForm extends DynamicCallbackForm {
 
     private List<String> uploadedFilePaths;
 
+    private String customTooltipMessage;
+
     public FileUploadForm(String name, String version, boolean showNameLabel, boolean showUploadButton,
         Boolean isAlreadyUploaded) {
 
@@ -77,6 +79,7 @@ public class FileUploadForm extends DynamicCallbackForm {
         this.showUploadButton = showUploadButton;
         this.uploadResult = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
         this.uploadInProgress = false;
+        this.customTooltipMessage = null;
 
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/FileUploadServlet");
@@ -123,6 +126,14 @@ public class FileUploadForm extends DynamicCallbackForm {
     public void setVersion(String version) {
         this.version = version;
         onDraw();
+    }
+
+    public String getCustomTooltipMessage() {
+        return customTooltipMessage;
+    }
+
+    public void setCustomTooltipMessage(String tooltipMessage) {
+        this.customTooltipMessage = tooltipMessage;
     }
 
     /**
@@ -218,6 +229,10 @@ public class FileUploadForm extends DynamicCallbackForm {
         fileUploadItem.setShowTitle(showNameLabel);
         fileUploadItem.setWrapTitle(false);
         fileUploadItem.setColSpan(1);
+        if (getCustomTooltipMessage() != null) {
+            fileUploadItem.setPrompt(getCustomTooltipMessage());
+            fileUploadItem.setHoverWidth(300);
+        }
         onDrawItems.add(fileUploadItem);
 
         if (showUploadButton) {

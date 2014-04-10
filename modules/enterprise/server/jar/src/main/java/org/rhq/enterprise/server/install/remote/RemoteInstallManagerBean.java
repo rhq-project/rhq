@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.server.install.remote;
 
+import java.io.File;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -125,33 +127,45 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
     public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo,
         CustomAgentInstallData customData) {
 
-        String parentPath = customData.getParentPath();
-        boolean agentAlreadyInstalled = agentInstallCheck(subject, remoteAccessInfo, parentPath);
-        if (agentAlreadyInstalled) {
-            if (!customData.isOverwriteExistingAgent()) {
-                throw new IllegalStateException("Agent appears to already be installed under: " + parentPath);
-            } else {
-                // we were asked to overwrite it; make sure we shut it down first before the install happens (which will remove it)
-                stopAgent(subject, remoteAccessInfo, parentPath);
-            }
-        }
-
-        // before we install, let's create a AgentInstall and pass its ID
-        // as the install ID so the agent can link up with it when it registers.
-        AgentInstall agentInstall = new AgentInstall();
-        agentInstall.setSshHost(remoteAccessInfo.getHost());
-        agentInstall.setSshPort(remoteAccessInfo.getPort());
-        if (remoteAccessInfo.getRememberMe()) {
-            agentInstall.setSshUsername(remoteAccessInfo.getUser());
-            agentInstall.setSshPassword(remoteAccessInfo.getPassword());
-        }
-        AgentInstall ai = agentManager.updateAgentInstall(subject, agentInstall);
-
-        SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
         try {
-            return sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+            String parentPath = customData.getParentPath();
+            boolean agentAlreadyInstalled = agentInstallCheck(subject, remoteAccessInfo, parentPath);
+            if (agentAlreadyInstalled) {
+                if (!customData.isOverwriteExistingAgent()) {
+                    throw new IllegalStateException("Agent appears to already be installed under: " + parentPath);
+                } else {
+                    // we were asked to overwrite it; make sure we shut it down first before the install happens (which will remove it)
+                    stopAgent(subject, remoteAccessInfo, parentPath);
+                }
+            }
+
+            // before we install, let's create a AgentInstall and pass its ID
+            // as the install ID so the agent can link up with it when it registers.
+            AgentInstall agentInstall = new AgentInstall();
+            agentInstall.setSshHost(remoteAccessInfo.getHost());
+            agentInstall.setSshPort(remoteAccessInfo.getPort());
+            if (remoteAccessInfo.getRememberMe()) {
+                agentInstall.setSshUsername(remoteAccessInfo.getUser());
+                agentInstall.setSshPassword(remoteAccessInfo.getPassword());
+            }
+            AgentInstall ai = agentManager.updateAgentInstall(subject, agentInstall);
+
+            SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
+            try {
+                return sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+            } finally {
+                sshUtil.disconnect();
+            }
         } finally {
-            sshUtil.disconnect();
+            // don't leave these around - whether we succeeded or failed, its a one-time-chance with these.
+            // we want to delete them in case they have some sensitive info
+            if (customData.getAgentConfigurationXml() != null) {
+                new File(customData.getAgentConfigurationXml()).delete();
+            }
+            if (customData.getRhqAgentEnv() != null) {
+                new File(customData.getRhqAgentEnv()).delete();
+            }
+
         }
     }
 

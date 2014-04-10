@@ -161,6 +161,16 @@ public class FileUploadForm extends DynamicCallbackForm {
     }
 
     @Override
+    public void reset() {
+        this.uploadError = null;
+        this.uploadInProgress = false;
+        this.uploadResult = null;
+        this.uploadedFilePaths = null;
+        changeIcon(iconGrey, (showUploadButton) ? MSG.view_upload_tooltip_1a() : MSG.view_upload_tooltip_1b());
+        super.reset();
+    }
+
+    @Override
     public void submitForm() {
         setUploadError(null);
 

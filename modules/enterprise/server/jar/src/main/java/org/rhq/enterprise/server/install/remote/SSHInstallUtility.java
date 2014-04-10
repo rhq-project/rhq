@@ -211,9 +211,8 @@ public class SSHInstallUtility {
 
         log.info("Agent binary update distribution file copied");
 
-        executeCommand("cd '" + parentPath + "'", "Change to install directory", info);
-        executeCommand("java -jar '" + parentPath + "/" + agentFile + "' '--install=" + parentPath + "'",
-            "Install Agent", info);
+        executeCommand("cd '" + parentPath + "' ; " + "java -jar '" + parentPath + "/" + agentFile + "' '--install="
+            + parentPath + "'", "Install Agent", info);
 
         if (customData.getAgentConfigurationXml() != null) {
             log.info("Copying custom agent configuration file...");

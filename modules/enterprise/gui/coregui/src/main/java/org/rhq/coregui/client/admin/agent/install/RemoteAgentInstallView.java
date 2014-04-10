@@ -442,6 +442,11 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void installAgent() {
         disableButtons(true);
 
+        // clear any old information that was from a prior attempt
+        for (Canvas child : agentInfoLayout.getChildren()) {
+            child.destroy();
+        }
+
         // FOR TESTING WITHOUT DOING A REAL INSTALL - START
         //        AgentInstallInfo result = new AgentInstallInfo("mypath", "myown", "1.1", "localHOST", "serverHOST");
         //        for (int i = 1; i < 20; i++)
@@ -515,16 +520,22 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                                 disableButtons(false);
                                 displayError(MSG.view_remoteAgentInstall_error_4(), caught);
                                 agentStatusText.setValue(MSG.view_remoteAgentInstall_error_4());
+
+                                if (agentConfigXmlUploadForm != null) {
+                                    agentConfigXmlUploadForm.reset();
+                                }
+                                if (rhqAgentEnvUploadForm != null) {
+                                    rhqAgentEnvUploadForm.reset();
+                                }
                             }
 
                             public void onSuccess(AgentInstallInfo result) {
                                 disableButtons(false);
+                                installButton.setDisabled(true); // don't re-enable install - install was successful, no need to do it again
+
                                 displayMessage(MSG.view_remoteAgentInstall_success());
                                 agentStatusText.setValue(MSG.view_remoteAgentInstall_success());
 
-                                for (Canvas child : agentInfoLayout.getChildren()) {
-                                    child.destroy();
-                                }
                                 buildInstallInfoCanvas(agentInfoLayout, result);
                                 agentInfoLayout.markForRedraw();
                                 agentStatusCheck();

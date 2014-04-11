@@ -190,8 +190,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                             if (ai != null && ai.getSshHost() == null) {
                                 ai.setSshHost(agentAddress);
                             }
-                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, false, false, true,
-                                false);
+                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.START);
                             PopupWindow window = new PopupWindow(remoteAgentView);
                             window.setTitle(MSG.view_adminTopology_agent_start());
                             window.setHeight(300);
@@ -232,8 +231,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                             if (ai != null && ai.getSshHost() == null) {
                                 ai.setSshHost(agentAddress);
                             }
-                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, false, false,
-                                false, true);
+                            RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.STOP);
                             PopupWindow window = new PopupWindow(remoteAgentView);
                             window.setTitle(MSG.view_adminTopology_agent_stop());
                             window.setHeight(300);
@@ -287,7 +285,14 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                                         @Override
                                         public void onSuccess(AgentInstall result) {
                                             RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(result,
-                                                false, true, false, false);
+                                                Type.UNINSTALL);
+
+                                            final PopupWindow window = new PopupWindow(remoteAgentView);
+                                            window.setTitle(MSG.view_adminTopology_agent_uninstall());
+                                            window.setHeight(300);
+                                            window.setWidth(800);
+                                            window.show();
+
                                             remoteAgentView
                                                 .setSuccessHandler(new RemoteAgentInstallView.SuccessHandler() {
                                                     @Override
@@ -297,12 +302,6 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                                                         }
                                                     }
                                                 });
-
-                                            PopupWindow window = new PopupWindow(remoteAgentView);
-                                            window.setTitle(MSG.view_adminTopology_agent_uninstall());
-                                            window.setHeight(300);
-                                            window.setWidth(800);
-                                            window.show();
                                         }
 
                                         @Override
@@ -326,7 +325,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_adminTopology_agent_delete_submitted(Integer
                                             .toString(agents.length))));
-                                    refreshTableInfo();
+                                    refresh();
                                 }
 
                                 public void onFailure(Throwable caught) {
@@ -355,7 +354,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
         if (id != null && id.intValue() > 0) {
             return new AgentDetailView(id);
         } else {
-            return new RemoteAgentInstallView(null, true, false, false, false);
+            return new RemoteAgentInstallView(null, Type.INSTALL);
         }
     }
 

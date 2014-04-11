@@ -118,18 +118,17 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         INSTALL, UNINSTALL, START, STOP;
     }
 
-    public RemoteAgentInstallView(AgentInstall initialInfo, boolean showInstallButton, boolean showUninstallButton,
-        boolean showStartButton, boolean showStopButton) {
-
+    public RemoteAgentInstallView(AgentInstall initialInfo, Type type) {
         super();
-        this.initialAgentInstall = initialInfo;
-        this.showInstallButton = showInstallButton;
-        this.showUninstallButton = showUninstallButton;
-        this.showStartButton = showStartButton;
-        this.showStopButton = showStopButton;
         setMembersMargin(1);
         setWidth100();
         setHeight100();
+
+        this.initialAgentInstall = initialInfo;
+        this.showInstallButton = (type == Type.INSTALL);
+        this.showUninstallButton = (type == Type.UNINSTALL);
+        this.showStartButton = (type == Type.START);
+        this.showStopButton = (type == Type.STOP);
     }
 
     @Override
@@ -257,11 +256,29 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             username.setValue(initialAgentInstall.getSshUsername());
             password.setValue(initialAgentInstall.getSshPassword());
             agentInstallPath.setValue(initialAgentInstall.getInstallLocation());
-            rememberMeCheckbox.setValue(initialAgentInstall.getSshPassword() != null); // if it was already saved, assume they want it to stay remembered
+            // if it was already saved, assume they want it to stay remembered
+            // however, because the uninstall page is getting rid of the agent, we don't need or want to remember the credentials anymore
+            if (!this.showUninstallButton) {
+                rememberMeCheckbox.setValue(initialAgentInstall.getSshPassword() != null);
+            }
         }
 
-        connectionForm.setFields(host, port, username, password, rememberMeCheckbox, agentInstallPath,
-            findAgentInstallPathButton, agentStatusText, statusCheckButton);
+        // disable some form elements if we don't want the user changing them - they should have been filled in by who ever created this view
+        if (this.showUninstallButton || this.showStartButton || this.showStopButton) {
+            host.setDisabled(true);
+            port.setDisabled(true);
+            agentInstallPath.setDisabled(true);
+            findAgentInstallPathButton.setDisabled(true);
+        }
+
+        if (this.showUninstallButton) {
+            // don't show rememberMe checkbox - we're getting rid of this agent so there won't be a record to store the creds
+            connectionForm.setFields(host, port, username, password, agentInstallPath, findAgentInstallPathButton,
+                agentStatusText, statusCheckButton);
+        } else {
+            connectionForm.setFields(host, port, username, password, rememberMeCheckbox, agentInstallPath,
+                findAgentInstallPathButton, agentStatusText, statusCheckButton);
+        }
 
         return connectionForm;
     }
@@ -698,8 +715,11 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         startButton.setDisabled(disabled);
         stopButton.setDisabled(disabled);
         buttonsForm.setDisabled(disabled);
-        findAgentInstallPathButton.setDisabled(disabled);
         statusCheckButton.setDisabled(disabled);
+        // we only want to mess with this if we are in "install" mode
+        if (showInstallButton) {
+            findAgentInstallPathButton.setDisabled(disabled);
+        }
     }
 
     private RemoteAccessInfo getRemoteAccessInfo() {

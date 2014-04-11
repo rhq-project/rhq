@@ -239,7 +239,7 @@ case "$1" in
         # start the agent now!
         if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND}"
-           eval "$RHQ_AGENT_START_COMMAND > \"${RHQ_AGENT_HOME}/logs/${wrapper}\" 2>&1"
+           eval "$RHQ_AGENT_START_COMMAND > \"${RHQ_AGENT_HOME}/logs/rhq-agent-wrapper.log\" 2>&1"
         else
            eval "$RHQ_AGENT_START_COMMAND > \"${RHQ_AGENT_HOME}/logs/rhq-agent-wrapper.log\" 2>&1"
         fi

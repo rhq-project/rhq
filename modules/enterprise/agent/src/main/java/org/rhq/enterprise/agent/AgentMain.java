@@ -585,6 +585,7 @@ public class AgentMain {
                     if (lastIndexOfLib >= 0) {
                         int lastIndexOfFileProtocol = pathStr.lastIndexOf("file:") + 5;
                         pathStr = pathStr.substring(lastIndexOfFileProtocol, lastIndexOfLib);
+                        pathStr = pathStr.replace("%20", " "); // the URL will have spaces encoded - this is so we can support agent installs in dirs with spaces
                         File file = new File(pathStr);
                         if (file.exists()) {
                             agentHomeDir = file;

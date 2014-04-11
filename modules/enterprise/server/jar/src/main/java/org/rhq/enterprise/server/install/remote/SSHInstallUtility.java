@@ -75,6 +75,8 @@ public class SSHInstallUtility {
         }
     }
 
+    public static final String AGENT_STATUS_NOT_INSTALLED = "Agent Not Installed";
+
     private static final String RHQ_AGENT_LATEST_VERSION_PROP = "rhq-agent.latest.version";
     private static final int DEFAULT_BUFFER_SIZE = 4096;
     private static final int CONNECTION_TIMEOUT = 30000;
@@ -305,7 +307,7 @@ public class SSHInstallUtility {
         String agentWrapperScript = buildAgentWrapperScriptPath(agentInstallPath);
 
         if (!agentInstallCheck(agentInstallPath)) {
-            return "Agent Not Installed";
+            return AGENT_STATUS_NOT_INSTALLED;
         }
 
         return executeCommand("'" + agentWrapperScript + "' status", "Agent Status");

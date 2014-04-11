@@ -58,6 +58,8 @@ public class FileUploadServlet extends HttpServlet {
      */
     private static final int MAX_INACTIVE_INTERVAL = 60 * 60;
 
+    private File tmpDir;
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
@@ -67,6 +69,10 @@ public class FileUploadServlet extends HttpServlet {
         if (ServletFileUpload.isMultipartContent(req)) {
 
             DiskFileItemFactory fileItemFactory = new DiskFileItemFactory();
+            if (tmpDir == null) {
+                tmpDir = LookupUtil.getCoreServer().getJBossServerTempDir();
+            }
+            fileItemFactory.setRepository(tmpDir);
             //fileItemFactory.setSizeThreshold(0);
 
             ServletFileUpload servletFileUpload = new ServletFileUpload(fileItemFactory);
@@ -142,6 +148,14 @@ public class FileUploadServlet extends HttpServlet {
                 for (FileItem fileItem : actualFiles) {
                     File theFile = forceToFile(fileItem);
                     if (obfuscate) {
+                        // The commons fileupload API has a file tracker that deletes the file when the File object is garbage collected (huh?).
+                        // Because we will be using these files later, and because they are going to be obfuscated, we don't want this to happen,
+                        // so just rename the file to move it away from the file tracker and thus won't get
+                        // prematurely deleted before we get a chance to use it.
+                        File movedFile = new File(theFile.getAbsolutePath() + ".temp");
+                        if (theFile.renameTo(movedFile)) {
+                            theFile = movedFile;
+                        }
                         try {
                             FileUtil.compressFile(theFile); // we really just compress it with our special compressor since its faster than obsfucation
                         } catch (Exception e) {

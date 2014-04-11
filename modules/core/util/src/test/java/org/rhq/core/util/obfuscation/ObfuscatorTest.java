@@ -19,6 +19,8 @@
 
 package org.rhq.core.util.obfuscation;
 
+import java.io.ByteArrayOutputStream;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,6 +32,16 @@ public class ObfuscatorTest {
 
     public void testCanDecodePassword() throws Exception {
         testEncodeDecode("0_[");
+    }
+
+    public void testDecodeLongData() throws Exception {
+        byte[] testBytes = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ `1234567890-=~!@#$%^&*()_+ []\\{}|;':\",./<>?\n"
+            .getBytes();
+        ByteArrayOutputStream fullTestBytes = new ByteArrayOutputStream();
+        for (int i = 0; i < 500; i++) {
+            fullTestBytes.write(testBytes);
+        }
+        testEncodeDecode(fullTestBytes.toString());
     }
 
     /**
@@ -49,6 +61,7 @@ public class ObfuscatorTest {
     }
 
     private void testEncodeDecode(String pass) throws Exception {
+        //System.out.println("Testing obfuscation of pass:\n" + pass);
         String encoded = Obfuscator.encode(pass);
         String decoded = Obfuscator.decode(encoded);
 

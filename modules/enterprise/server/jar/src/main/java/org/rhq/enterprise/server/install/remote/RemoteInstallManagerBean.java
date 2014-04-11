@@ -37,6 +37,7 @@ import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -139,6 +140,14 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
                 }
             }
 
+            // we know the uploaded files had to have their contents obfuscated, we need to deobfuscate them
+            if (customData.getAgentConfigurationXml() != null) {
+                deobfuscateFile(new File(customData.getAgentConfigurationXml()));
+            }
+            if (customData.getRhqAgentEnv() != null) {
+                deobfuscateFile(new File(customData.getRhqAgentEnv()));
+            }
+
             // before we install, let's create a AgentInstall and pass its ID
             // as the install ID so the agent can link up with it when it registers.
             AgentInstall agentInstall = new AgentInstall();
@@ -165,7 +174,6 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             if (customData.getRhqAgentEnv() != null) {
                 new File(customData.getRhqAgentEnv()).delete();
             }
-
         }
     }
 
@@ -272,5 +280,17 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
         SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo, creds);
         return sshUtil;
+    }
+
+    private void deobfuscateFile(File f) {
+        if (!f.exists()) {
+            throw new RuntimeException("Uploaded file has been purged and no longer available: " + f);
+        }
+
+        try {
+            FileUtil.decompressFile(f); // we really just compressed it with our special compressor since its faster than obsfucation
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot unobfuscate uploaded file [" + f + "]", e);
+        }
     }
 }

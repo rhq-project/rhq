@@ -68,9 +68,15 @@ public class FileUploadForm extends DynamicCallbackForm {
     private List<String> uploadedFilePaths;
 
     private String customTooltipMessage;
+    private boolean obfuscate;
 
     public FileUploadForm(String name, String version, boolean showNameLabel, boolean showUploadButton,
         Boolean isAlreadyUploaded) {
+        this(name, version, showNameLabel, showUploadButton, isAlreadyUploaded, false);
+    }
+
+    public FileUploadForm(String name, String version, boolean showNameLabel, boolean showUploadButton,
+        Boolean isAlreadyUploaded, boolean obfuscate) {
 
         super(name);
         this.name = name;
@@ -80,6 +86,7 @@ public class FileUploadForm extends DynamicCallbackForm {
         this.uploadResult = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
         this.uploadInProgress = false;
         this.customTooltipMessage = null;
+        this.obfuscate = obfuscate;
 
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/FileUploadServlet");
@@ -134,6 +141,21 @@ public class FileUploadForm extends DynamicCallbackForm {
 
     public void setCustomTooltipMessage(String tooltipMessage) {
         this.customTooltipMessage = tooltipMessage;
+    }
+
+    /**
+     * If true, the server will be told to obfuscate the content of the file being uploaded when it saves it in order to
+     * help shield sensitive data.
+     *
+     * @return obfuscate flag
+     */
+    public boolean isObfuscate() {
+        return obfuscate;
+    }
+
+    public void setObfuscate(boolean obfuscate) {
+        this.obfuscate = obfuscate;
+        onDraw();
     }
 
     /**
@@ -224,6 +246,10 @@ public class FileUploadForm extends DynamicCallbackForm {
         HiddenItem versionField = new HiddenItem("version");
         versionField.setDefaultValue(version);
         onDrawItems.add(versionField);
+
+        HiddenItem obfuscateField = new HiddenItem("obfuscate");
+        obfuscateField.setDefaultValue(obfuscate);
+        onDrawItems.add(obfuscateField);
 
         fileUploadItem = new UploadItem("fileUploadItem", name);
         fileUploadItem.setShowTitle(showNameLabel);

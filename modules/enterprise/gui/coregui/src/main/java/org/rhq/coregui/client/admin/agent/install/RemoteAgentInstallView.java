@@ -354,7 +354,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private FileUploadForm createAgentConfigXmlUploadForm() {
-        final FileUploadForm uploadForm = new FileUploadForm("agent-configuration.xml", "1", true, true, null);
+        final FileUploadForm uploadForm = new FileUploadForm("agent-configuration.xml", "1", true, true, null, true);
         uploadForm.setCustomTooltipMessage(MSG.view_remoteAgentInstall_promptAgentConfigXml());
         uploadForm.setWidth100();
         uploadForm.addFormHandler(new DynamicFormHandler() {
@@ -372,7 +372,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private FileUploadForm createAgentEnvUploadForm() {
-        final FileUploadForm uploadForm = new FileUploadForm("rhq-agent-env.sh", "1", true, true, null);
+        final FileUploadForm uploadForm = new FileUploadForm("rhq-agent-env.sh", "1", true, true, null, true);
         uploadForm.setCustomTooltipMessage(MSG.view_remoteAgentInstall_promptRhqAgentEnv());
         uploadForm.setWidth100();
         uploadForm.addFormHandler(new DynamicFormHandler() {

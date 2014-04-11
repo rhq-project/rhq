@@ -42,6 +42,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -53,7 +54,7 @@ public class FileUploadServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     /* The number of seconds the session can remain inactive. The default is 600 (10 minutes).
-     * It may take longer than 10 minutes to upload a large file, so we'll increase... 
+     * It may take longer than 10 minutes to upload a large file, so we'll increase...
      */
     private static final int MAX_INACTIVE_INTERVAL = 60 * 60;
 
@@ -72,7 +73,7 @@ public class FileUploadServlet extends HttpServlet {
 
             List<FileItem> fileItemsList;
             try {
-                fileItemsList = (List<FileItem>) servletFileUpload.parseRequest(req);
+                fileItemsList = servletFileUpload.parseRequest(req);
             } catch (FileUploadException e) {
                 writeExceptionResponse(resp, "File upload failed", e);
                 return;
@@ -81,6 +82,7 @@ public class FileUploadServlet extends HttpServlet {
             List<FileItem> actualFiles = new ArrayList<FileItem>();
             Map<String, String> formFields = new HashMap<String, String>();
             boolean retrieve = false;
+            boolean obfuscate = false;
             Subject authenticatedSubject = null;
 
             for (FileItem fileItem : fileItemsList) {
@@ -90,6 +92,8 @@ public class FileUploadServlet extends HttpServlet {
                     }
                     if ("retrieve".equals(fileItem.getFieldName())) {
                         retrieve = true;
+                    } else if ("obfuscate".equals(fileItem.getFieldName())) {
+                        obfuscate = Boolean.parseBoolean(fileItem.getString());
                     } else if ("sessionid".equals(fileItem.getFieldName())) {
                         int sessionid = Integer.parseInt(fileItem.getString());
                         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -137,9 +141,15 @@ public class FileUploadServlet extends HttpServlet {
                 Map<String, String> allUploadedFileNames = new HashMap<String, String>(); // maps form field name to upload file name
                 for (FileItem fileItem : actualFiles) {
                     File theFile = forceToFile(fileItem);
+                    if (obfuscate) {
+                        try {
+                            FileUtil.compressFile(theFile); // we really just compress it with our special compressor since its faster than obsfucation
+                        } catch (Exception e) {
+                            throw new ServletException("Cannot obfuscate uploaded files", e);
+                        }
+                    }
                     allUploadedFiles.put(fileItem.getFieldName(), theFile);
-                    allUploadedFileNames.put(fileItem.getFieldName(), (fileItem.getName() != null) ? fileItem.getName()
-                        : theFile.getName());
+                    allUploadedFileNames.put(fileItem.getFieldName(), theFile.getName());
                 }
                 processUploadedFiles(authenticatedSubject, allUploadedFiles, allUploadedFileNames, formFields, req,
                     resp);
@@ -162,11 +172,11 @@ public class FileUploadServlet extends HttpServlet {
      * This method will write the names of all files (the local file system location where the file was stored)
      * to the response - each local filename on its own line.
      * Subclasses are free to override this to process the files however they need.
-     * 
+     *
      * @param subject
      * @param files maps form field name to the actual File
      * @param fileNames maps form field name to the name of the file, as told to us by the client
-     * @param formFields 
+     * @param formFields
      * @param request
      * @param response
      * @throws IOException

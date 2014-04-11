@@ -227,6 +227,9 @@ public class SSHInstallUtility {
                 return info; // abort and return what we did - no sense continuing if the custom config file failed to copy
             }
             log.info("Custom agent configuration file copied.");
+
+            // tell the info object - this is needed so it adds the --config command line option
+            info.setCustomAgentConfigurationFile("agent-configuration.xml");
         }
 
         if (customData.getRhqAgentEnv() != null) {
@@ -242,9 +245,6 @@ public class SSHInstallUtility {
                 return info; // abort and return what we did - no sense continuing if the custom env script file failed to copy
             }
             log.info("Custom agent environment script copied.");
-
-            // tell the info object - this is needed so it adds the --config command line option
-            info.setCustomAgentConfigurationFile("agent-configuration.xml");
         }
 
         log.info("Will start new agent @ [" + accessInfo.getHost() + "] pointing to server @ [" + serverAddress + "]");

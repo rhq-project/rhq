@@ -37,6 +37,8 @@ public class AgentInstallInfo implements Serializable {
 
     public List<AgentInstallStep> steps = new ArrayList<AgentInstallStep>();
 
+    private String customAgentConfigFile = null;
+
     public static final String SETUP_PROP = "rhq.agent.configuration-setup-flag";
 
     public static final String SERVER_ADDRESS_PROP = "rhq.agent.server.bind-address";
@@ -107,6 +109,14 @@ public class AgentInstallInfo implements Serializable {
         return steps;
     }
 
+    public String getCustomAgentConfigurationFile() {
+        return customAgentConfigFile;
+    }
+
+    public void setCustomAgentConfigurationFile(String file) {
+        this.customAgentConfigFile = file;
+    }
+
     public String getConfigurationStartString() {
         StringBuilder buf = new StringBuilder();
 
@@ -119,6 +129,11 @@ public class AgentInstallInfo implements Serializable {
         buf.append("-D").append(SETUP_PROP).append("=").append("true");
         buf.append(" ");
         buf.append("--daemon ");
+
+        if (customAgentConfigFile != null) {
+            buf.append("--config=" + customAgentConfigFile);
+            buf.append(" ");
+        }
 
         return buf.toString();
     }

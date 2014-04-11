@@ -183,7 +183,9 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
         String agentName = remoteAccessInfo.getAgentName();
         AgentInstall ai = agentManager.getAgentInstallByAgentName(subject, agentName);
         if (ai == null || ai.getInstallLocation() == null || ai.getInstallLocation().trim().length() == 0) {
-            return null;
+            throw new IllegalArgumentException("Agent [" + agentName
+                + "] does not have a known install location. For security purposes, the uninstall will not be allowed."
+                + " You will have to manually uninstall it from that machine.");
         }
 
         // for security reasons, don't connect to a different machine than where the AgentInstall thinks the agent is.

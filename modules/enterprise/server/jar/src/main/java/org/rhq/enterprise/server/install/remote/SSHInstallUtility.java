@@ -197,6 +197,9 @@ public class SSHInstallUtility {
         executeCommand("java -version", "Java Version Check", info);
         executeCommand("mkdir -p '" + parentPath + "'", "Create Agent Install Directory", info);
         executeCommand("rm -rf '" + parentPath + "/rhq-agent'", "Remove any previously installed agent", info);
+        executeCommand("rm -f '" + parentPath + "/rhq-agent-update.log'", "Remove any old agent update logs", info);
+        executeCommand("rm -f " + parentPath.replace(" ", "\\ ") + "/rhq-enterprise-agent*.jar",
+            "Remove any old agent update binary jars", info); // because we use * wildcard, can't wrap in quotes, so escape spaces if there are any in the path
 
         log.info("Copying agent binary update distribution file to [" + accessInfo.getHost() + "]...");
 
@@ -270,7 +273,15 @@ public class SSHInstallUtility {
     public String uninstallAgent(String doomedPath) {
         String theRealDoomedPath = findAgentInstallPath(doomedPath); // make sure we are looking at an agent
         if (theRealDoomedPath != null) {
+            // if the agent is still running, make sure we stop it
             stopAgent(theRealDoomedPath);
+
+            // Before removing the agent dir, remove these first. Since we use ".." it requires the parent to exist
+            executeCommand("rm -f '" + theRealDoomedPath + "/../rhq-agent-update.log'", "Remove old agent update logs");
+            executeCommand("rm -f " + theRealDoomedPath.replace(" ", "\\ ") + "/../rhq-enterprise-agent*.jar",
+                "Remove old agent update binary jars"); // because we use * wildcard, can't wrap in quotes, so escape spaces if there are any in the path
+
+            // now remove the actual agent dir
             String results = executeCommand("rm -rf '" + theRealDoomedPath + "'", "Uninstall Agent");
             return results;
         } else {
@@ -318,13 +329,27 @@ public class SSHInstallUtility {
             return parentPath; // assume the caller's parent path *is* the agent install path
         }
 
-        String full = executeCommand("find '" + parentPath + "' -name rhq-agent -print", "Find Agent Install Path");
-        if (full == null || full.trim().length() == 0) {
+        String findOutput;
+
+        try {
+            findOutput = executeCommand("find '" + parentPath + "' -name rhq-agent -print"); // don't call the other execute methods, we want to be able to catch the exception here
+        } catch (ExecuteException e) {
+            // It is possible the 'find' returned a non-zero exit code because some subdirectories were unreadable.
+            // Ignore that and just analyze the files that 'find' did return.
+            findOutput = e.stdout;
+        }
+
+        if (findOutput == null || findOutput.trim().length() == 0) {
             return null;
         }
-        String[] results = full.split("\n");
-        String path = results[0];
-        return path;
+        String[] results = findOutput.split("\n");
+        for (String result : results) {
+            if (result.contains("/.java/")) {
+                continue; // ignore the rhq-agent Java Preference node - we know that's not an agent
+            }
+            return result; // just return the first place we find that looks like an agent
+        }
+        return null; // nothing looks like an agent
     }
 
     public String[] pathDiscovery(String parentPath) {
@@ -407,7 +432,7 @@ public class SSHInstallUtility {
                 }
 
                 if (exitStatus != 0) {
-                    throw new ExecuteException(exitStatus, err);
+                    throw new ExecuteException(exitStatus, err, out);
                 } else if (out.length() == 0) {
                     return err;
                 }
@@ -480,10 +505,17 @@ public class SSHInstallUtility {
     private static class ExecuteException extends RuntimeException {
         private static final long serialVersionUID = 1L;
         int errorCode;
+        String stdout;
 
         public ExecuteException(int errorCode, String message) {
             super(message);
             this.errorCode = errorCode;
+        }
+
+        public ExecuteException(int errorCode, String message, String stdout) {
+            super(message);
+            this.errorCode = errorCode;
+            this.stdout = stdout;
         }
     }
 }

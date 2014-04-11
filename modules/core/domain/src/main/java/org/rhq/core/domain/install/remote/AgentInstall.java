@@ -31,6 +31,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -54,6 +56,9 @@ public class AgentInstall implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_AGENT_INSTALL_ID_SEQ")
     @Id
     private int id;
+
+    @Column(name = "MTIME", nullable = false)
+    private long mtime = System.currentTimeMillis();
 
     @Column(name = "AGENT_NAME", nullable = true)
     private String agentName;
@@ -85,6 +90,10 @@ public class AgentInstall implements Serializable {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public long getModifiedTime() {
+        return this.mtime;
     }
 
     public String getAgentName() {
@@ -219,5 +228,15 @@ public class AgentInstall implements Serializable {
     public String toString() {
         return "AgentInstall[id=" + id + ",agentName=" + this.agentName + ",installLocation=" + this.installLocation
             + "]";
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.mtime = System.currentTimeMillis();
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.mtime = System.currentTimeMillis();
     }
 }

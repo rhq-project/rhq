@@ -60,6 +60,7 @@
     <!-- if we know where an agent is installed, this provides information to it -->
     <table name="RHQ_AGENT_INSTALL">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="MTIME" required="true" type="LONG"/>
         <column name="AGENT_NAME" required="false" size="255" type="VARCHAR2"/>
         <column name="INSTALL_LOCATION" required="false" size="4000" type="VARCHAR2"/>
         <column name="SSH_HOST" required="false" size="255" type="VARCHAR2"/>

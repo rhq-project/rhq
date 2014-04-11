@@ -163,7 +163,8 @@ public class FileUploadServlet extends HttpServlet {
                         }
                     }
                     allUploadedFiles.put(fileItem.getFieldName(), theFile);
-                    allUploadedFileNames.put(fileItem.getFieldName(), theFile.getName());
+                    allUploadedFileNames.put(fileItem.getFieldName(), (fileItem.getName() != null) ? fileItem.getName()
+                        : theFile.getName());
                 }
                 processUploadedFiles(authenticatedSubject, allUploadedFiles, allUploadedFileNames, formFields, req,
                     resp);

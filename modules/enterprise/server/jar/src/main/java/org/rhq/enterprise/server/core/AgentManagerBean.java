@@ -180,10 +180,25 @@ public class AgentManagerBean implements AgentManagerLocal {
             // If there is no entity with the given ID then throw an error.
             AgentInstall existing = entityManager.find(AgentInstall.class, agentInstall.getId());
             if (existing != null) {
-                if (existing.getAgentName() != null && agentInstall.getAgentName() != null
-                    && !agentInstall.getAgentName().equals(existing.getAgentName())) {
-                    throw new IllegalStateException("Updating agent install ID [" + agentInstall.getId()
-                        + "] with a mismatched agent name is not allowed");
+                if (agentInstall.getAgentName() != null) {
+                    if (existing.getAgentName() != null && !agentInstall.getAgentName().equals(existing.getAgentName())) {
+                        throw new IllegalStateException("Updating agent install ID [" + agentInstall.getId()
+                            + "] with a mismatched agent name is not allowed");
+                    }
+
+                    // It is possible some past installs were aborted, or this agent is getting reinstalled.
+                    // This cases like this, we'll have duplicate rows with the same agent name - this just deletes
+                    // those older rows since this new agent supercedes the other ones.
+                    Query q = entityManager.createNamedQuery(AgentInstall.QUERY_FIND_BY_NAME);
+                    q.setParameter("agentName", agentInstall.getAgentName());
+                    List<AgentInstall> otherAgentInstalls = q.getResultList();
+                    if (otherAgentInstalls != null) {
+                        for (AgentInstall otherAgentInstall : otherAgentInstalls) {
+                            if (otherAgentInstall.getId() != agentInstall.getId()) {
+                                entityManager.remove(otherAgentInstall);
+                            }
+                        }
+                    }
                 }
                 existing.overlay(agentInstall); // modify the attached hibernate entity
                 agentInstall = existing;

@@ -138,6 +138,30 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
                 if (!customData.isOverwriteExistingAgent()) {
                     throw new IllegalStateException("Agent appears to already be installed under: " + parentPath);
                 } else {
+                    // if the caller passed in the actual install directory and not the parent directory
+                    // (e.g. if "parentPath" is "/opt/rhq/rhq-agent" instead of "/opt/rhq") we don't want to install
+                    // in the path given to us ("/opt/rhq/rhq-agent"); we want to use the parent path ("/opt/rhq").
+                    // The directory passed into us must be the parent directory (hence the name parentPath),
+                    // but we don't want to have to thrown an error and ask the user to give us the parent - if we know
+                    // this is where an install is, its obvious this is where the user wants to install the new agent.
+                    // So let's just do what they really want and use the parent directory, stripping the child
+                    // "rhq-agent" directory name for them.
+                    // Here we want to make sure that's what happened first and if so we need to strip off the
+                    // child path to get the parent path.
+                    if (parentPath.endsWith("/rhq-agent")) {
+                        SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
+                        try {
+                            String results = sshUtil.findAgentInstallPath(parentPath);
+                            if (parentPath.equals(results)) {
+                                // yup, there is an agent installed in the exact "parentPath" - so its not really
+                                // the parent path; let's strip the child "rhq-agent" dir name and get the real parent path
+                                parentPath = parentPath.substring(0, parentPath.lastIndexOf("/rhq-agent"));
+                                customData.setParentPath(parentPath);
+                            }
+                        } finally {
+                            sshUtil.disconnect();
+                        }
+                    }
                     // we were asked to overwrite it; make sure we shut it down first before the install happens (which will remove it)
                     stopAgent(subject, remoteAccessInfo, parentPath);
                 }

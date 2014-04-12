@@ -327,14 +327,16 @@ public class SSHInstallUtility {
             return null;
         }
 
-        if (parentPath.endsWith("rhq-agent") || parentPath.endsWith("rhq-agent/")) {
-            return parentPath; // assume the caller's parent path *is* the agent install path
+        if (parentPath.endsWith("/rhq-agent") || parentPath.endsWith("/rhq-agent/")) {
+            // strip "rhq-agent" so we look to see if its really there in the parent
+            // we can't use java.io.File for this because we might be running on a Windows box - don't forget, we are ssh'ing into a remote box
+            parentPath = parentPath.substring(0, parentPath.lastIndexOf("/rhq-agent"));
         }
 
         String findOutput;
 
         try {
-            findOutput = executeCommand("find '" + parentPath + "' -name rhq-agent -print"); // don't call the other execute methods, we want to be able to catch the exception here
+            findOutput = executeCommand("find '" + parentPath + "' -maxdepth 4 -name rhq-agent -print"); // don't call the other execute methods, we want to be able to catch the exception here
         } catch (ExecuteException e) {
             // It is possible the 'find' returned a non-zero exit code because some subdirectories were unreadable.
             // Ignore that and just analyze the files that 'find' did return.

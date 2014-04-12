@@ -379,21 +379,18 @@ public class MetricGraphData implements JsonMetricProducer {
 
                 if (!Double.isNaN(measurement.getValue())) {
 
-                    MeasurementNumericValueAndUnits newHigh = MeasurementUtility.normalizeUnitsAndValues(measurement.getHighValue(),
-                        definition.getUnits());
-                    MeasurementNumericValueAndUnits newLow = MeasurementUtility.normalizeUnitsAndValues(measurement.getLowValue(),
-                        definition.getUnits());
-                    MeasurementNumericValueAndUnits newAvg = MeasurementUtility.normalizeUnitsAndValues(measurement.getValue(),
-                        definition.getUnits());
+                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), definition.getUnits());
+                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(), definition.getUnits());
+                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), definition.getUnits());
+
                     if (!gotAdjustedMeasurementUnits) {
-                        adjustedMeasurementUnits = newAvg.getUnits();
+                        adjustedMeasurementUnits = newHigh.getUnits();
                         gotAdjustedMeasurementUnits = true;
                     }
                     sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
-                    sb.append(" \"high\":" + cleanseHigh(newLow.getValue(), newAvg.getValue(), newHigh.getValue())
-                        + ",");
+                    sb.append(" \"high\":" + newHigh.getValue() + ",");
                     sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
-                    sb.append(" \"y\":" + newAvg.getValue() + "},");
+                    sb.append(" \"y\":" +  newAvg.getValue() + "},");
                 } else {
                     // give it some values so that we dont have NaN
                     sb.append(" \"high\":0,");
@@ -413,21 +410,31 @@ public class MetricGraphData implements JsonMetricProducer {
         return sb.toString();
     }
 
-    /**
-     * This is cleaning the data as sometimes the data coming from the metric query
-     * is erroneous: for instance the low is greater than the high. This causes the
-     * geometries to get weird. We normally should not have to do this!
-     * @todo: Remove this data cleansing once we have fixed it at the metric query.
-     *
-     * @param low supposed low value
-     * @param high supposed high value
-     * @return the real high value
-     */
-    private Double cleanseHigh(Double low, Double avg, Double high) {
-        double highLowMax = Math.max(low, high);
-        return Math.max(highLowMax, avg);
+    public  static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
+        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
+        MeasurementNumericValueAndUnits returnValue;
+
+        // adjust for percentage numbers
+        if (measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100, newValue.getUnits());
+        } else {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue(), newValue.getUnits());
+        }
+
+        return returnValue;
     }
 
+
+        /**
+         * This is cleaning the data as sometimes the data coming from the metric query
+         * is erroneous: for instance the low is greater than the high. This causes the
+         * geometries to get weird. We normally should not have to do this!
+         * @todo: Remove this data cleansing once we have fixed it at the metric query.
+         *
+         * @param low supposed low value
+         * @param high supposed high value
+         * @return the real low value
+         */
     private Double cleanseLow(Double low, Double avg, Double high) {
         double highLowMin = Math.min(low, high);
         return Math.min(highLowMin, avg);

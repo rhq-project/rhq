@@ -29,9 +29,11 @@ import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -42,6 +44,93 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class FileUtilTest {
+    /* I commented out the obfuscate/deobfuscate methods because I didn't have a use for them, but they may be useful
+     * in the future, so I left the commented code in, so I'm leaving this commented test in. We can resurrect in the future if needed.
+     *
+    public void testObfuscateDeobfuscateFile() throws Exception {
+        System.out.println("testObfuscateDeobfuscateFile");
+
+        byte[] line = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ `1234567890-=~!@#$%^&*()_+ []\\{}|;':\",./<>?\n"
+            .getBytes();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        for (int i = 0; i < 10; i++) {
+            baos.write(line);
+        }
+        String data = baos.toString();
+
+        File tempFile = File.createTempFile("FileUtilTest", ".txt");
+        try {
+            // write the original data in a file
+            FileUtil.writeFile(new ByteArrayInputStream(data.getBytes()), tempFile);
+
+            // compress the file
+            FileUtil.obfuscateFile(tempFile);
+            String obfuscatedStr = new String(StreamUtil.slurp(new FileInputStream(tempFile)));
+            assert !data.equals(obfuscatedStr) : "obfuscated data should be different than original data";
+
+            // now deobfuscate it
+            FileUtil.deobfuscateFile(tempFile);
+            String deobfuscatedStr = new String(StreamUtil.slurp(new FileInputStream(tempFile)));
+            assert data.equals(deobfuscatedStr) : "obfuscated data should be same as original data";
+            assert data.length() == deobfuscatedStr.length() : "data should be equal: " + deobfuscatedStr;
+
+            // try to deobfuscate it again - this should fail (its already deobfuscated) but test that the original file is restored
+            try {
+                FileUtil.deobfuscateFile(tempFile);
+                assert false : "Should not have been able to deobfuscate a non-compressed file";
+            } catch (IOException ioe) {
+                deobfuscatedStr = new String(StreamUtil.slurp(new FileInputStream(tempFile)));
+                assert data.equals(deobfuscatedStr) : "data should be same as original data";
+                assert data.length() == deobfuscatedStr.length() : "data should be equal: " + deobfuscatedStr;
+            }
+        } finally {
+            tempFile.delete();
+        }
+    }
+    */
+
+    public void testCompressDecompressFile() throws Exception {
+        System.out.println("testCompressDecompressFile");
+
+        byte[] line = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ `1234567890-=~!@#$%^&*()_+ []\\{}|;':\",./<>?\n"
+            .getBytes();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        for (int i = 0; i < 10; i++) {
+            baos.write(line);
+        }
+        String data = baos.toString();
+
+        File tempFile = File.createTempFile("FileUtilTest", ".txt");
+        try {
+            // write the original data in a file
+            FileUtil.writeFile(new ByteArrayInputStream(data.getBytes()), tempFile);
+
+            // compress the file
+            FileUtil.compressFile(tempFile);
+            String compressedStr = new String(StreamUtil.slurp(new FileInputStream(tempFile)));
+            assert !data.equals(compressedStr) : "compressed data should be different than original data";
+            assert data.length() > compressedStr.length() : "compressed data should be smaller: " + compressedStr;
+
+            // now decompress it
+            FileUtil.decompressFile(tempFile);
+            String decompressedStr = new String(StreamUtil.slurp(new FileInputStream(tempFile)));
+            assert data.equals(decompressedStr) : "compressed data should be same as original data";
+            assert data.length() == decompressedStr.length() : "compressed data should be equal: " + decompressedStr;
+
+            // try to decompress it again - this should fail (its already decompressed) but test that the original file is restored
+            try {
+                FileUtil.decompressFile(tempFile);
+                assert false : "Should not have been able to decompress a non-compressed file";
+            } catch (IOException ioe) {
+                decompressedStr = new String(StreamUtil.slurp(new FileInputStream(tempFile)));
+                assert data.equals(decompressedStr) : "data should be same as original data";
+                assert data.length() == decompressedStr.length() : "data should be equal: " + decompressedStr;
+            }
+        } finally {
+            tempFile.delete();
+        }
+    }
+
     public void testIsAbsolutePath() {
         assert true == FileUtil.isAbsolutePath("/unix/abs/path");
         assert false == FileUtil.isAbsolutePath("unix/rel/path");

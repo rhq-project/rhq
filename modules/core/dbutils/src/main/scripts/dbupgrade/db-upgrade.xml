@@ -2289,6 +2289,26 @@
             <schemaSpec version="2.143">
               <schema-alterColumn table="RHQ_RAW_CONFIG" column="config_ID" nullable="true"/>
             </schemaSpec>
+            
+            <schemaSpec version="2.144">
+                <!-- RHQ_AGENT_INSTALL -->
+                <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_AGENT_INSTALL">
+                        CREATE TABLE RHQ_AGENT_INSTALL ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_AGENT_INSTALL" column="ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="MTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_AGENT_INSTALL" column="MTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="AGENT_NAME" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="INSTALL_LOCATION" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_HOST" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_PORT" columnType="INTEGER" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_USERNAME" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_PASSWORD" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

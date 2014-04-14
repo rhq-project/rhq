@@ -145,8 +145,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         if (this.showInstallButton) {
             agentConfigXmlUploadForm = createAgentConfigXmlUploadForm();
             layout.addMember(agentConfigXmlUploadForm);
+            /* For now, don't allow users to upload and ship their own env script to a remote machine; that might have security implications.
+             * If we want to allow this, just uncomment these lines and you are good to go because everything else that is needed
+             * is already in place and working as of April 2014.
             rhqAgentEnvUploadForm = createAgentEnvUploadForm();
             layout.addMember(rhqAgentEnvUploadForm);
+            */
         }
 
         header = new HTMLFlow("");

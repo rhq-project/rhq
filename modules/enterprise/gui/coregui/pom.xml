@@ -304,6 +304,32 @@
         </configuration>
       </plugin>
 
+      <!-- copy and filter login page -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/${project.build.finalName}</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>src/main/webapp</directory>
+                  <filtering>true</filtering>
+                  <includes>
+                    <include>login</include>
+                  </includes>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>

@@ -152,10 +152,22 @@ public class SessionTestHelper {
 
     public static ResourceType createNewResourceType(EntityManager em) {
         ResourceType type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
-        ConfigurationDefinition resourceConfigDef = new ConfigurationDefinition("Fake def",
+        ConfigurationDefinition resourceConfigDef = new ConfigurationDefinition("Fake resconfig def",
             "Resource config def for fake test resource");
-        resourceConfigDef.put(new PropertyDefinitionSimple("fake property", "fake", false, PropertySimpleType.BOOLEAN));
+        resourceConfigDef.put(new PropertyDefinitionSimple("fake", "fake property", false, PropertySimpleType.BOOLEAN));
+        resourceConfigDef.put(new PropertyDefinitionSimple("fakeReadOnly", "fake readonly property", false,
+            PropertySimpleType.BOOLEAN));
+        resourceConfigDef.getPropertyDefinitions().get("fakeReadOnly").setReadOnly(true);
         type.setResourceConfigurationDefinition(resourceConfigDef);
+
+        ConfigurationDefinition pluginConfigDef = new ConfigurationDefinition("Fake pluginconfig def",
+            "Plugin config def for fake test resource");
+        pluginConfigDef.put(new PropertyDefinitionSimple("fake", "fake property", false, PropertySimpleType.BOOLEAN));
+        pluginConfigDef.put(new PropertyDefinitionSimple("fakeReadOnly", "fake readonly property", false,
+            PropertySimpleType.BOOLEAN));
+        pluginConfigDef.getPropertyDefinitions().get("fakeReadOnly").setReadOnly(true);
+        type.setPluginConfigurationDefinition(pluginConfigDef);
+
         em.persist(type);
         em.flush();
 

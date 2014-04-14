@@ -195,7 +195,11 @@ Ant Script that provides ways to package the Agent.
        <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_32" />
     </copy>
 
-    <copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
+    <copy todir="${agent.distro.dir}/bin/wrapper/windows-x86_64">
+       <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_64" />
+    </copy>
+
+   	<copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
        <fileset refid="plugins.fileset"/>
     </copy>
     <!--

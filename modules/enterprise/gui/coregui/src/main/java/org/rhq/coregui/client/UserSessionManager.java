@@ -438,6 +438,7 @@ public class UserSessionManager {
                         }
 
                         refresh();
+                        LoginView.redirectTo(""); // redirect back to the "root" path (coregui/)
                     }
 
                     @Override

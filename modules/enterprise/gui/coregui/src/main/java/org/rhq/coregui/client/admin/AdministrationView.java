@@ -30,7 +30,6 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
-import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.coregui.client.admin.roles.RolesView;
 import org.rhq.coregui.client.admin.storage.StorageNodeAdminView;
 import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
@@ -133,12 +132,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName()); // use this to hide experimental features from product
 
-        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, new ViewFactory() {
-            public Canvas createView() {
-                return new RemoteAgentInstallView();
-            }
-        }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
-
         NavigationItem serversItem = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new ServerTableView(null, false);
@@ -172,7 +165,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         // Arrays.asList returns a list with a fixed size, therefore there is the wrapping ArrayList
         List<NavigationItem> navigationItems = new ArrayList<NavigationItem>(Arrays.asList(serversItem,
             storageNodesItem, agentsItem, affinityGroupsItem, partitionEventsItem));
-        navigationItems.add(remoteAgentInstallItem);
 
         NavigationSection topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID,
             navigationItems.toArray(new NavigationItem[] {}));

@@ -167,6 +167,7 @@ public class ServerProperties {
     }
 
     // this list contains all the properties that are to have non-empty string values
+    // note - in special cases some of this may be optional.
     private static final Set<String> STRING_PROPERTIES;
     static {
         STRING_PROPERTIES = new HashSet<String>();
@@ -202,11 +203,13 @@ public class ServerProperties {
         OPTIONAL_PROPERTIES.add(PROP_CONNECTOR_BIND_PORT);
     }
 
-    // this list contains all the non-STRING properties that can be set to "unused" (for oracle support) 
-    private static final Set<String> UNUSED_PROPERTIES;
+    // this list contains all the properties that can be unset for Oracle
+    private static final Set<String> OPTIONAL_PROPERTIES_ORACLE;
     static {
-        UNUSED_PROPERTIES = new HashSet<String>();
-        UNUSED_PROPERTIES.add(PROP_DATABASE_PORT);
+        OPTIONAL_PROPERTIES_ORACLE = new HashSet<String>();
+        OPTIONAL_PROPERTIES_ORACLE.add(PROP_DATABASE_DB_NAME);
+        OPTIONAL_PROPERTIES_ORACLE.add(PROP_DATABASE_PORT);
+        OPTIONAL_PROPERTIES_ORACLE.add(PROP_DATABASE_SERVER_NAME);
     }
 
     public static final Set<String> CLIENT_AUTH_MODES;
@@ -276,10 +279,7 @@ public class ServerProperties {
 
         for (String name : ServerProperties.BOOLEAN_PROPERTIES) {
             String val = serverProperties.get(name);
-            if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
-                continue;
-            }
-            if ("unused".equalsIgnoreCase(val) && UNUSED_PROPERTIES.contains(name)) {
+            if (isOptional(serverProperties, name, val)) {
                 continue;
             }
             if (!("true".equals(val) || "false".equals(val))) {
@@ -289,10 +289,7 @@ public class ServerProperties {
 
         for (String name : ServerProperties.INTEGER_PROPERTIES) {
             String val = serverProperties.get(name);
-            if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
-                continue;
-            }
-            if ("unused".equalsIgnoreCase(val) && UNUSED_PROPERTIES.contains(name)) {
+            if (isOptional(serverProperties, name, val)) {
                 continue;
             }
             try {
@@ -309,6 +306,10 @@ public class ServerProperties {
         }
         for (String name : requiredStringProperties) {
             String val = serverProperties.get(name);
+            // in certain configurations a normally required property can be optional
+            if (isOptional(serverProperties, name, val)) {
+                continue;
+            }
             if (StringUtil.isBlank(val)) {
                 dataErrors.append("[" + name + "] must exist and be set to a valid string value\n");
 
@@ -328,5 +329,24 @@ public class ServerProperties {
         if (dataErrors.length() > 0) {
             throw new Exception("Validation errors:\n" + dataErrors.toString());
         }
+    }
+
+    static private boolean isOracle(Map<String, String> serverProperties) {
+        String dialect = serverProperties.get(ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT);
+        return null != dialect && dialect.toLowerCase().contains("oracle");
+    }
+
+    static private boolean isOptional(Map<String, String> serverProperties, String name, String val) {
+
+        if (StringUtil.isBlank(val)) {
+            if (OPTIONAL_PROPERTIES.contains(name)) {
+                return true;
+            }
+            if (isOracle(serverProperties) && ServerProperties.OPTIONAL_PROPERTIES_ORACLE.contains(name)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

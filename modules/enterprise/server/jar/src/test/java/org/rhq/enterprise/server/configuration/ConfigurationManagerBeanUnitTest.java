@@ -25,39 +25,42 @@ package org.rhq.enterprise.server.configuration;
 
 import static org.rhq.core.domain.authz.Permission.CONFIGURE_READ;
 import static org.rhq.core.domain.authz.Permission.CONFIGURE_WRITE;
-import static org.rhq.test.AssertUtils.*;
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
-import static org.testng.Assert.*;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.INPROGRESS;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertSame;
 
-import org.rhq.core.domain.authz.Permission;
+import java.lang.reflect.Field;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
+import org.hamcrest.Matcher;
+import org.jmock.Expectations;
+import org.jmock.Sequence;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.test.JMockTest;
 import org.rhq.test.jmock.PropertyMatcher;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.jmock.Expectations;
-import org.jmock.Sequence;
-import org.hamcrest.Matcher;
-
-import javax.persistence.EntityManager;
-import java.lang.reflect.Field;
 
 public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
@@ -107,19 +110,14 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             Field field = src.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(src, value);
-        }
-        catch (SecurityException e) {
+        } catch (SecurityException e) {
             throw new RuntimeException(e);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
-        }
-        catch (NoSuchFieldException e) {
-            String msg = "The field <" + fieldName + "> does not exist for " +
-                src.getClass().getName();
+        } catch (NoSuchFieldException e) {
+            String msg = "The field <" + fieldName + "> does not exist for " + src.getClass().getName();
             throw new RuntimeException(e);
-        }
-        catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 
@@ -138,28 +136,47 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final ConfigurationUpdateRequest expectedUpdateRequest = new ConfigurationUpdateRequest(expectedUpdate.getId(),
             expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
 
-        context.checking(new Expectations() {{
-            allowing(subjectMgr).getOverlord(); will(returnValue(OVERLORD));
+        final Query query = context.mock(Query.class);
 
-            allowing(resourceMgr).getResource(OVERLORD, fixture.resourceId);
-            will(returnValue(fixture.resource));
+        context.checking(new Expectations() {
+            {
+                allowing(subjectMgr).getOverlord();
+                will(returnValue(OVERLORD));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
-            will(returnValue(true));
+                allowing(resourceMgr).getResource(OVERLORD, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
-            
-            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
-                fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
-                fixture.isPartOfGroupUpdate);
-            will(returnValue(expectedUpdate));
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+                oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
+                    fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                    fixture.isPartOfGroupUpdate);
+                will(returnValue(expectedUpdate));
 
-            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
-        }});
+                allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
+                will(returnValue(agentClient));
+
+                allowing(agentClient).getConfigurationAgentService();
+                will(returnValue(configAgentService));
+
+                oneOf(configAgentService).updateResourceConfiguration(
+                    with(matchingUpdateRequest(expectedUpdateRequest)));
+
+                allowing(entityMgr).createNamedQuery("ConfigurationDefinition.findResourceByResourceTypeId");
+                will(returnValue(query));
+                allowing(query).setParameter("resourceTypeId", fixture.resourceTypeId);
+                allowing(query).getSingleResult();
+                will(returnValue(fixture.configurationDefinition));
+
+                oneOf(configurationMgrLocal).getResourceConfigurationDefinitionForResourceType(fixture.subject,
+                    fixture.resourceTypeId);
+                will(returnValue(fixture.configurationDefinition));
+            }
+        });
 
         ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration);
@@ -180,28 +197,47 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final ConfigurationUpdateRequest expectedUpdateRequest = new ConfigurationUpdateRequest(expectedUpdate.getId(),
             expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
 
-        context.checking(new Expectations() {{
-            allowing(subjectMgr).getOverlord(); will(returnValue(OVERLORD));
+        final Query query = context.mock(Query.class);
 
-            allowing(resourceMgr).getResource(OVERLORD, fixture.resourceId);
-            will(returnValue(fixture.resource));
+        context.checking(new Expectations() {
+            {
+                allowing(subjectMgr).getOverlord();
+                will(returnValue(OVERLORD));
 
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+                allowing(resourceMgr).getResource(OVERLORD, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
-            will(returnValue(true));
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
-                fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
-                fixture.isPartOfGroupUpdate);
-            will(returnValue(expectedUpdate));
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+                oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
+                    fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                    fixture.isPartOfGroupUpdate);
+                will(returnValue(expectedUpdate));
 
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+                allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
+                will(returnValue(agentClient));
 
-            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
-        }});
+                allowing(agentClient).getConfigurationAgentService();
+                will(returnValue(configAgentService));
+
+                oneOf(configAgentService).updateResourceConfiguration(
+                    with(matchingUpdateRequest(expectedUpdateRequest)));
+
+                allowing(entityMgr).createNamedQuery("ConfigurationDefinition.findResourceByResourceTypeId");
+                will(returnValue(query));
+                allowing(query).setParameter("resourceTypeId", fixture.resourceTypeId);
+                allowing(query).getSingleResult();
+                will(returnValue(fixture.configurationDefinition));
+
+                oneOf(configurationMgrLocal).getResourceConfigurationDefinitionForResourceType(fixture.subject,
+                    fixture.resourceTypeId);
+                will(returnValue(fixture.configurationDefinition));
+            }
+        });
 
         ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration);
@@ -213,9 +249,12 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
     public void exceptionShouldBeThrownWhenCallingWrongMethodForConfigThatSupportsStructuredAndRaw() throws Exception {
         final ResourceConfigUpdateFixture fixture = newStructuredAndRawResourceConfigUpdateFixture();
 
-        context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
-        }});
+        context.checking(new Expectations() {
+            {
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
+            }
+        });
 
         configurationMgr.updateResourceConfiguration(fixture.subject, fixture.resourceId, fixture.configuration);
     }
@@ -236,31 +275,37 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         final Sequence configUdpate = context.sequence("structured-config-update");
 
-        context.checking(new Expectations() {{
-            oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId);
-            will(returnValue(true));
+        context.checking(new Expectations() {
+            {
+                oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId);
+                will(returnValue(true));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
-            will(returnValue(true));
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+                allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
+                will(returnValue(agentClient));
 
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+                allowing(agentClient).getConfigurationAgentService();
+                will(returnValue(configAgentService));
 
-            oneOf(configAgentService).validate(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
-            inSequence(configUdpate);
+                oneOf(configAgentService).validate(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
+                inSequence(configUdpate);
 
-            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
-                fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
-                fixture.isPartOfGroupUpdate);
-            will(returnValue(expectedUpdate));
-            inSequence(configUdpate);
+                oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
+                    fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                    fixture.isPartOfGroupUpdate);
+                will(returnValue(expectedUpdate));
+                inSequence(configUdpate);
 
-            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
-            inSequence(configUdpate);
-        }});
+                oneOf(configAgentService).updateResourceConfiguration(
+                    with(matchingUpdateRequest(expectedUpdateRequest)));
+                inSequence(configUdpate);
+            }
+        });
 
         ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration, FROM_STRUCTURED);
@@ -276,8 +321,8 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Configuration translatedConfig = fixture.configuration.deepCopy();
         translatedConfig.put(new PropertySimple("x", "y"));
 
-        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource, translatedConfig,
-            fixture.subject.getName());
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource,
+            translatedConfig, fixture.subject.getName());
         expectedUpdate.setId(-1);
 
         final AgentClient agentClient = context.mock(AgentClient.class);
@@ -288,35 +333,43 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         final Sequence configUdpate = context.sequence("raw-config-update");
 
-        context.checking(new Expectations() {{
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
-            will(returnValue(true));
+        context.checking(new Expectations() {
+            {
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
+                will(returnValue(true));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
-            will(returnValue(true));
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
+                allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId);
+                will(returnValue(true));
 
-            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
-            will(returnValue(translatedConfig)); inSequence(configUdpate);
+                oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
+                will(returnValue(translatedConfig));
+                inSequence(configUdpate);
 
-            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
-                fixture.resourceId, translatedConfig, INPROGRESS, fixture.subject.getName(),
-                fixture.isPartOfGroupUpdate);
-            will(returnValue(expectedUpdate));
-            inSequence(configUdpate);
+                oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
+                    fixture.resourceId, translatedConfig, INPROGRESS, fixture.subject.getName(),
+                    fixture.isPartOfGroupUpdate);
+                will(returnValue(expectedUpdate));
+                inSequence(configUdpate);
 
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+                allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
+                will(returnValue(agentClient));
 
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+                allowing(agentClient).getConfigurationAgentService();
+                will(returnValue(configAgentService));
 
-            oneOf(configAgentService).validate(fixture.configuration, fixture.resourceId, FROM_RAW);
+                oneOf(configAgentService).validate(fixture.configuration, fixture.resourceId, FROM_RAW);
 
-            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
-            inSequence(configUdpate);
-        }});
+                oneOf(configAgentService).updateResourceConfiguration(
+                    with(matchingUpdateRequest(expectedUpdateRequest)));
+                inSequence(configUdpate);
+            }
+        });
 
         ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration, FROM_RAW);
@@ -336,31 +389,48 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         expectedUpdate.setStatus(FAILURE);
         expectedUpdate.setErrorMessage(ThrowableUtil.getStackAsString(exception));
 
-        context.checking(new Expectations() {{
-            allowing(subjectMgr).getOverlord(); will(returnValue(OVERLORD));
+        final Query query = context.mock(Query.class);
 
-            allowing(resourceMgr).getResource(OVERLORD, fixture.resourceId);
-            will(returnValue(fixture.resource));
+        context.checking(new Expectations() {
+            {
+                allowing(subjectMgr).getOverlord();
+                will(returnValue(OVERLORD));
 
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+                allowing(resourceMgr).getResource(OVERLORD, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            allowing(entityMgr).find(ResourceConfigurationUpdate.class, expectedUpdate.getId());
-            will(returnValue(expectedUpdate));
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
-            will(returnValue(true));
-            
-            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject, fixture.resourceId,
-                fixture.configuration, INPROGRESS, fixture.subject.getName(), fixture.isPartOfGroupUpdate);
-            will(returnValue(expectedUpdate));
+                allowing(entityMgr).find(ResourceConfigurationUpdate.class, expectedUpdate.getId());
+                will(returnValue(expectedUpdate));
 
-            oneOf(configurationMgrLocal).mergeConfigurationUpdate(expectedUpdate);
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
-            will(throwException(exception));
-        }});
+                oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
+                    fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                    fixture.isPartOfGroupUpdate);
+                will(returnValue(expectedUpdate));
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject, 
+                oneOf(configurationMgrLocal).mergeConfigurationUpdate(expectedUpdate);
+
+                allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
+                will(throwException(exception));
+
+                allowing(entityMgr).createNamedQuery("ConfigurationDefinition.findResourceByResourceTypeId");
+                will(returnValue(query));
+                allowing(query).setParameter("resourceTypeId", fixture.resourceTypeId);
+                allowing(query).getSingleResult();
+                will(returnValue(fixture.configurationDefinition));
+
+                oneOf(configurationMgrLocal).getResourceConfigurationDefinitionForResourceType(fixture.subject,
+                    fixture.resourceTypeId);
+                will(returnValue(fixture.configurationDefinition));
+            }
+        });
+
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration);
 
         assertPropertiesMatch(expectedUpdate, actualUpdate, "Expected to get back a failure update");
@@ -375,27 +445,30 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         final Configuration expectedConfig = new Configuration();
 
-        context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+        context.checking(new Expectations() {
+            {
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            allowing(agentMgr).getAgentClient(fixture.resource.getAgent()); will(returnValue(agentClient));
+                allowing(agentMgr).getAgentClient(fixture.resource.getAgent());
+                will(returnValue(agentClient));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
-            will(returnValue(true));
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+                allowing(agentClient).getConfigurationAgentService();
+                will(returnValue(configAgentService));
 
-            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
-            will(returnValue(expectedConfig));
-        }});
+                oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
+                will(returnValue(expectedConfig));
+            }
+        });
 
         Configuration translatedConfig = configurationMgr.translateResourceConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration, FROM_STRUCTURED);
 
-        assertSame(
-            translatedConfig,
-            expectedConfig,
-            "Expected to get back the configuration translated by the " + ConfigurationAgentService.class.getSimpleName());
+        assertSame(translatedConfig, expectedConfig, "Expected to get back the configuration translated by the "
+            + ConfigurationAgentService.class.getSimpleName());
     }
 
     @Test
@@ -407,36 +480,42 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         final Configuration expectedConfig = new Configuration();
 
-        context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+        context.checking(new Expectations() {
+            {
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
 
-            oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
-            will(returnValue(true));
+                oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_READ, fixture.resourceId);
+                will(returnValue(true));
 
-            allowing(agentMgr).getAgentClient(fixture.resource.getAgent()); will(returnValue(agentClient));
+                allowing(agentMgr).getAgentClient(fixture.resource.getAgent());
+                will(returnValue(agentClient));
 
-            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+                allowing(agentClient).getConfigurationAgentService();
+                will(returnValue(configAgentService));
 
-            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
-            will(returnValue(expectedConfig));
-        }});
+                oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
+                will(returnValue(expectedConfig));
+            }
+        });
 
         Configuration translatedConfig = configurationMgr.translateResourceConfiguration(fixture.subject,
             fixture.resourceId, fixture.configuration, FROM_RAW);
 
-        assertSame(
-            translatedConfig,
-            expectedConfig,
-            "Expected to get back the configuration translated by the " + ConfigurationAgentService.class.getSimpleName());
+        assertSame(translatedConfig, expectedConfig, "Expected to get back the configuration translated by the "
+            + ConfigurationAgentService.class.getSimpleName());
     }
 
     @Test(expectedExceptions = TranslationNotSupportedException.class)
     public void exceptionShouldBeThrownWhenTryingToTranslateStructuredOnlyConfig() throws Exception {
         final ConfigTranslationFixture fixture = newStructuredTranslationFixture();
 
-        context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));    
-        }});
+        context.checking(new Expectations() {
+            {
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
+            }
+        });
 
         configurationMgr.translateResourceConfiguration(fixture.subject, fixture.resourceId, fixture.configuration,
             FROM_STRUCTURED);
@@ -446,12 +525,15 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
     public void exceptionShouldBeThrownWhenTryingToTranslateRawOnlyConfig() throws Exception {
         final ConfigTranslationFixture fixture = newRawTranslationFixture();
 
-        context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
-        }});
+        context.checking(new Expectations() {
+            {
+                allowing(entityMgr).find(Resource.class, fixture.resourceId);
+                will(returnValue(fixture.resource));
+            }
+        });
 
         configurationMgr.translateResourceConfiguration(fixture.subject, fixture.resourceId, fixture.configuration,
-            FROM_RAW);                
+            FROM_RAW);
     }
 
     public static Matcher<ConfigurationUpdateRequest> matchingUpdateRequest(ConfigurationUpdateRequest expected) {
@@ -560,9 +642,11 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
     static class ResourceConfigUpdateFixture {
         Subject subject = new Subject("rhqadmin", true, true);
         int resourceId = -1;
+        int resourceTypeId = 0;
         Configuration configuration = new Configuration();
         boolean isPartOfGroupUpdate = false;
         Resource resource;
+        ConfigurationDefinition configurationDefinition = new ConfigurationDefinition("name", "description");
     }
 
     static class ConfigTranslationFixture {

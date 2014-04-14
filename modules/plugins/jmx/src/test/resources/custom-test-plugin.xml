@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License, version 2, as
+  ~ published by the Free Software Foundation, and/or the GNU Lesser
+  ~ General Public License, version 2.1, also as published by the Free
+  ~ Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License and the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ and the GNU Lesser General Public License along with this program;
+  ~ if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+  -->
+
+<plugin name="Custom-JMX"
+        displayName="Custom JMX"
+        package="org.rhq.plugins.jmx"
+        ampsVersion="2.0"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+  <depends plugin="JMX" useClasses="true"/>
+
+  <service name="TestService_"
+           description="TestMBean with some operations"
+           discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+           class="org.rhq.plugins.jmx.MBeanResourceComponent">
+
+     <runs-inside>
+        <parent-resource-type name="JMX Server" plugin="JMX"/>
+     </runs-inside>
+
+     <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" default="rhq.test:name=TestTarget"/>
+     </plugin-configuration>
+
+    <operation name="doSomething"/>
+
+    <operation name="echo">
+      <parameters>
+        <c:simple-property name="p1" type="string"/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
+
+    <operation name="hello">
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
+
+    <operation name="concat">
+      <parameters>
+        <c:simple-property name="p1" type="string"/>
+        <c:simple-property name="p2" type="string"/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult"/>
+      </results>
+    </operation>
+
+    <metric property="value" />
+
+  </service>
+
+</plugin>

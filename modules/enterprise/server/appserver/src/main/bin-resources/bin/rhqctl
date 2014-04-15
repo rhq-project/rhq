@@ -11,6 +11,14 @@
 # script directly.
 # =============================================================================
 
+debug_msg ()
+{
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
+      echo $1
+   fi
+}
+
 # ----------------------------------------------------------------------
 # Determine what specific platform we are running on.
 # Set some platform-specific variables.
@@ -42,14 +50,6 @@ else
    echo "Failed to find rhq-server-env.sh. This file should exist in the bin directory."
    exit 1
 fi
-
-debug_msg ()
-{
-   # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
-      echo $1
-   fi
-}
 
 # ----------------------------------------------------------------------
 # Determine the RHQ Server installation directory.

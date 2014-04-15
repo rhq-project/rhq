@@ -25,8 +25,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.smartgwt.client.types.MultipleAppearance;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.form.fields.PickerIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
@@ -151,6 +155,13 @@ public class PortletConfigurationEditorComponent {
         alertNameEditor.setWidth(100);
         String currentValue = portletConfig.getSimpleValue(Constant.ALERT_NAME, "");
         alertNameEditor.setValue(currentValue);
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {  
+            public void onFormItemClick(FormItemIconClickEvent event) {  
+                alertNameEditor.clearValue();
+            }  
+        });
+        alertNameEditor.setIcons(refreshFilter);
+        alertNameEditor.setIconPrompt("Resets the alert name filter.");
         return alertNameEditor;
     }
     
@@ -161,6 +172,13 @@ public class PortletConfigurationEditorComponent {
         eventSourceEditor.setWidth(100);
         String currentValue = portletConfig.getSimpleValue(Constant.EVENT_SOURCE, "");
         eventSourceEditor.setValue(currentValue);
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {  
+            public void onFormItemClick(FormItemIconClickEvent event) {  
+                eventSourceEditor.clearValue();
+            }  
+        });
+        eventSourceEditor.setIcons(refreshFilter);
+        eventSourceEditor.setIconPrompt("Resets the event source filter.");
         return eventSourceEditor;
     }
     
@@ -171,6 +189,13 @@ public class PortletConfigurationEditorComponent {
         eventResourceEditor.setWidth(100);
         String currentValue = portletConfig.getSimpleValue(Constant.EVENT_RESOURCE, "");
         eventResourceEditor.setValue(currentValue);
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {  
+            public void onFormItemClick(FormItemIconClickEvent event) {  
+                eventResourceEditor.clearValue();
+            }  
+        });
+        eventResourceEditor.setIcons(refreshFilter);
+        eventResourceEditor.setIconPrompt("Resets the resource filter.");
         return eventResourceEditor;
     }
     

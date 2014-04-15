@@ -31,8 +31,6 @@ class CacheAggregator extends BaseAggregator {
 
     private static final Log LOG = LogFactory.getLog(CacheAggregator.class);
 
-    private static final int LATE_DATA_BATCH_SIZE = 5;
-
     static interface CacheBlockFinishedListener {
         void onFinish(IndexAggregatesPair pair);
     }
@@ -57,7 +55,17 @@ class CacheAggregator extends BaseAggregator {
 
     @Override
     protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
-        return findCurrentCacheIndexEntries();
+        StorageResultSetFuture indexFuture = dao.findCurrentCacheIndexEntries(aggregationType.getCacheTable(),
+            currentDay.getMillis(), AggregationManager.INDEX_PARTITION, startTime.getMillis());
+
+        return Futures.transform(indexFuture, new Function<ResultSet, List<CacheIndexEntry>>() {
+            @Override
+            public List<CacheIndexEntry> apply(ResultSet resultSet) {
+                CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
+
+                return mapper.map(resultSet);
+            }
+        });
     }
 
     /**
@@ -113,20 +121,6 @@ class CacheAggregator extends BaseAggregator {
     @Override
     protected Map<AggregationType, Integer> getAggregationCounts() {
         return ImmutableMap.of(aggregationType, schedulesCount.get());
-    }
-
-    private ListenableFuture<List<CacheIndexEntry>> findCurrentCacheIndexEntries() {
-        StorageResultSetFuture indexFuture = dao.findCurrentCacheIndexEntries(aggregationType.getCacheTable(),
-            currentDay.getMillis(), AggregationManager.INDEX_PARTITION, startTime.getMillis());
-
-        return Futures.transform(indexFuture, new Function<ResultSet, List<CacheIndexEntry>>() {
-            @Override
-            public List<CacheIndexEntry> apply(ResultSet resultSet) {
-                CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
-
-                return mapper.map(resultSet);
-            }
-        });
     }
 
     @SuppressWarnings("unchecked")

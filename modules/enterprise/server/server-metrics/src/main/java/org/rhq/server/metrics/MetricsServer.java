@@ -143,7 +143,7 @@ public class MetricsServer {
      * purged.
      */
     private void determineMostRecentRawDataSinceLastShutdown() {
-        DateTime previousHour = currentHour().minus(configuration.getRawTimeSliceDuration());
+        DateTime previousHour = dateTimeService.currentHour().minus(configuration.getRawTimeSliceDuration());
         DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());  // e.g., 7 days ago
         DateTime day = dateTimeService.current24HourTimeSlice();
 
@@ -186,10 +186,6 @@ public class MetricsServer {
                     "next time the aggregation job runs.");
             }
         }
-    }
-
-    protected DateTime currentHour() {
-        return dateTimeService.getTimeSlice(dateTimeService.now(), configuration.getRawTimeSliceDuration());
     }
 
     protected DateTime roundDownToHour(long timestamp) {
@@ -493,7 +489,7 @@ public class MetricsServer {
     public Iterable<AggregateNumericMetric> calculateAggregates() {
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            DateTime theHour = currentHour();
+            DateTime theHour = dateTimeService.currentHour();
             if (pastAggregationMissed) {
                 DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                 new AggregationManager(aggregationWorkers, dao, dateTimeService, missedHour, aggregationBatchSize, parallelism,

@@ -61,12 +61,15 @@ class PastDataAggregator extends BaseAggregator {
         this.persistFns = persistFns;
     }
 
+    /**
+     * We store a configurable amount of past data where the amount is specified as a duration in days. Suppose that the
+     * duration is set at 4 days, and the current time is 14:00 Friday. This method will query the index as far back
+     * as 14:00 on Monday, and each day up to the current time slice of today will be queried for past data.
+     *
+     * @return The past cache index entries
+     */
     @Override
     protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
-        return findPastIndexEntries();
-    }
-
-    private ListenableFuture<List<CacheIndexEntry>> findPastIndexEntries() {
         List<ListenableFuture<ResultSet>> insertFutures = new ArrayList<ListenableFuture<ResultSet>>();
         DateTime day = startingDay;
 

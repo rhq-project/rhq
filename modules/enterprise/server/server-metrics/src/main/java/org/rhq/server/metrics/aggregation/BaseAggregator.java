@@ -161,6 +161,9 @@ abstract class BaseAggregator {
         }
     }
 
+    /**
+     * @return The cache index entries for which aggregation tasks will be scheduled
+     */
     protected abstract ListenableFuture<List<CacheIndexEntry>> findIndexEntries();
 
     protected abstract AggregationTask createAggregationTask(CacheIndexEntry indexEntry);

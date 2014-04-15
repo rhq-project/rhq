@@ -31,20 +31,6 @@ import org.rhq.server.metrics.domain.RawNumericMetricMapper;
  */
 public class MetricsPerfTests extends MetricsTest {
 
-    private class MetricsServerStub extends MetricsServer {
-
-        DateTime currentHour;
-
-        @Override
-        public DateTime currentHour() {
-            return currentHour;
-        }
-
-        public void setCurrentHour(DateTime currentHour) {
-            this.currentHour = currentHour;
-        }
-    }
-
     private class DateTimeServiceStub extends DateTimeService {
 
         DateTime currentHour;
@@ -69,7 +55,7 @@ public class MetricsPerfTests extends MetricsTest {
 
     private final Log log = LogFactory.getLog(MetricsPerfTests.class);
 
-    private MetricsServerStub metricsServer;
+    private MetricsServer metricsServer;
 
     private final int NUM_SCHEDULES = 1000;
 
@@ -80,7 +66,7 @@ public class MetricsPerfTests extends MetricsTest {
         purgeDB();
         log.info("Sleeping while table truncation completes...");
         Thread.sleep(3000);
-        metricsServer = new MetricsServerStub();
+        metricsServer = new MetricsServer();
         metricsServer.setConfiguration(configuration);
         metricsServer.setDAO(dao);
         metricsServer.setDateTimeService(dateTimeService);
@@ -96,7 +82,7 @@ public class MetricsPerfTests extends MetricsTest {
         Random random = new Random();
         DateTime currentHour = hour(3);
         storageSession.setRequestLimit(10000);
-        metricsServer.setCurrentHour(currentHour);
+        dateTimeService.setNow(currentHour);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
         for (int i = 0; i < NUM_SCHEDULES; ++i) {
             DateTime time = currentHour;
@@ -174,7 +160,7 @@ public class MetricsPerfTests extends MetricsTest {
 
         long start = System.currentTimeMillis();
         DateTime currentHour = hour(4);
-        metricsServer.setCurrentHour(currentHour);
+        dateTimeService.setNow(currentHour);
         metricsServer.setAggregationBatchSize(250);
         metricsServer.setDateTimeService(new DateTimeServiceStub(hour(4), start));
         Collection<AggregateNumericMetric> oneHourData =

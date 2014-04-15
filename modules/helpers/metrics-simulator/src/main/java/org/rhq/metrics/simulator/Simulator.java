@@ -85,7 +85,7 @@ public class Simulator implements ShutdownManager {
         storageSession = new StorageSession(session);
         metricsDAO = new MetricsDAO(storageSession, plan.getMetricsServerConfiguration());
 
-        metricsServer = new SimulatedMetricsServer();
+        metricsServer = new MetricsServer();
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
         metricsServer.setAggregationBatchSize(plan.getAggregationBatchSize());

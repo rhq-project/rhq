@@ -63,6 +63,20 @@
         </constraint>
     </table>
 
+    <!-- Many To Many mapping for resource type to its proper subcategories -->
+    <table name="RHQ_RESOURCE_TYPE_SUBCATS">
+        <column name="RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
+        <column name="RESOURCE_SUBCAT_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_SUBCAT"/>
+
+        <!-- not using full words to fit index name length -->
+        <constraint name="RHQ_RES_TYPE_SUBCATS_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_TYPE_ID"/>
+                <field ref="RESOURCE_SUBCAT_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
     <table name="RHQ_PROCESS_SCAN">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>

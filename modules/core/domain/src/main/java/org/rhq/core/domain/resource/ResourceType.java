@@ -396,7 +396,10 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<PackageType> packageTypes;
 
-    @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @JoinTable(name = "RHQ_RESOURCE_TYPE_SUBCATS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_SUBCAT_ID") })
+    @OrderBy
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private List<ResourceSubCategory> subCategories;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.REMOVE)
@@ -855,7 +858,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         if (this.subCategories == null) {
             this.subCategories = new ArrayList<ResourceSubCategory>();
         }
-        subCategory.setResourceType(this);
         this.subCategories.add(subCategory);
     }
 

@@ -2356,6 +2356,43 @@
                 </schema-directSQL>
             </schemaSpec>
 
+	
+          <schemaSpec version="2.147">
+            <schema-directSQL>
+              <statement desc="Creating table RHQ_RESOURCE_TYPE_SUBCATS">
+                CREATE TABLE RHQ_RESOURCE_TYPE_SUBCATS (
+                  RESOURCE_TYPE_ID INTEGER,
+                  RESOURCE_SUBCAT_ID INTEGER)
+              </statement>
+            </schema-directSQL>
+
+            <schema-alterColumn table="RHQ_RESOURCE_TYPE_SUBCATS" column="RESOURCE_TYPE_ID" nullable="FALSE" />
+            <schema-alterColumn table="RHQ_RESOURCE_TYPE_SUBCATS" column="RESOURCE_SUBCAT_ID" nullable="FALSE" />
+
+            <schema-directSQL>
+              <statement>
+                ALTER TABLE RHQ_RESOURCE_TYPE_SUBCATS
+                ADD CONSTRAINT RHQ_RES_TYPE_SUBCATS_KEY
+                PRIMARY KEY ( RESOURCE_TYPE_ID, RESOURCE_SUBCAT_ID )
+              </statement>
+              <statement desc="Creating RHQ_RESOURCE_TYPE_SUBCATS foreign key to RHQ_RESOURCE_TYPE">
+                ALTER TABLE RHQ_RESOURCE_TYPE_SUBCATS
+                ADD CONSTRAINT RHQ_RTS_RESOURCE_TYPE_ID_FK
+                FOREIGN KEY (RESOURCE_TYPE_ID)
+                REFERENCES RHQ_RESOURCE_TYPE (ID)
+              </statement>
+              <statement desc="Creating RHQ_ROLE_BUNDLE_GROUP_MAP foreign key to RHQ_BUNDLE_GROUP">
+                ALTER TABLE RHQ_RESOURCE_TYPE_SUBCATS
+                ADD CONSTRAINT RHQ_RTS_RESOURCE_SUBCAT_ID_FK
+                FOREIGN KEY (RESOURCE_SUBCAT_ID)
+                REFERENCES RHQ_RESOURCE_SUBCAT (ID)
+             </statement>
+           </schema-directSQL>
+
+           <schema-javaTask className="SubcategoryUpgradeTask" />
+
+         </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

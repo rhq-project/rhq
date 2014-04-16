@@ -175,7 +175,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY 
+    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
     // Start with no transaction so we can control the transactional boundaries. Obsolete type removal removes
     // resources of the obsolete type. We need to avoid an umbrella transaction for the type removal because large
     // inventories of obsolete resources will generate very large transactions. Potentially resulting in timeouts
@@ -294,7 +294,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         c.addFilterResourceTypeId(existingType.getId());
         c.addFilterInventoryStatus(null);
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
-        //Chunk through the results in 200(default) page element batches to avoid excessive 
+        //Chunk through the results in 200(default) page element batches to avoid excessive
         //memory usage for large deployments. No need to use CriteriaQuery here as this loop is more efficient at catching stragglers
         while ((resources != null) && (!resources.isEmpty())) {
             Iterator<Resource> resIter = resources.iterator();
@@ -885,7 +885,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
                     + "] to SubCategory [" + existingSubCat.getName() + "]...");
                 existingSubCat.addChildSubCategory(newChildSubCategory);
-                entityManager.persist(newChildSubCategory);
+                entityManager.merge(newChildSubCategory);
             }
             return;
         }
@@ -918,7 +918,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
                 + "] to SubCategory [" + existingSubCat.getName() + "]...");
             existingSubCat.addChildSubCategory(newChildSubCategory);
-            entityManager.persist(newChildSubCategory);
+            entityManager.merge(newChildSubCategory);
         }
     }
 

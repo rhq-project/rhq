@@ -24,8 +24,10 @@ package org.rhq.core.clientapi.agent.metadata;
 
 import java.util.List;
 import java.util.Set;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -58,7 +60,6 @@ public class SubCategoriesMetadataParser {
         }
 
         subCat.setDescription(descriptor.getDescription());
-        //resourceType.addSubCategory(subCat);
 
         List<SubCategoryDescriptor> childDescriptors = descriptor.getSubcategory();
         if (childDescriptors != null) {

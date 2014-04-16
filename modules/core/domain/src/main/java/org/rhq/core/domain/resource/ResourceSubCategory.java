@@ -24,10 +24,7 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -38,8 +35,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
@@ -55,11 +50,8 @@ import org.jetbrains.annotations.NotNull;
 @Entity
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SUBCAT_ID_SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_SUBCAT")
-@NamedQueries( { @NamedQuery(name = ResourceSubCategory.QUERY_FIND_BY_NAME_AND_PLUGIN, query = "SELECT rsc FROM ResourceSubCategory AS rsc WHERE rsc.name = :name AND rsc.resourceType.plugin = :plugin") })
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
     private static final long serialVersionUID = 1L;
-
-    public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceSubCategory.findByNameAndPlugin";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
@@ -90,14 +82,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     @ManyToOne
     private ResourceSubCategory parentSubCategory;
 
-    /**
-     * A subcategory is associated with the type of resource it was defined in This is nullable since child
-     * subcategories don't want to be directly associated with a resourceType, rather they can obtain their type through
-     * their parent
-     */
-    @JoinColumn(name = "RESOURCE_TYPE_ID", updatable = false)
-    @ManyToOne
-    private ResourceType resourceType;
 
     /* no-arg constructor required by EJB spec */
     public ResourceSubCategory() {
@@ -114,50 +98,21 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
         this.mtime = this.ctime = System.currentTimeMillis();
     }
 
-    /**
-     * Returns the resource types that belong to this subcategory; the Set of types is sorted by name.
-     *
-     * @return the resource types that belong to this subcategory; the Set of types is sorted by name
-     */
-    @NotNull
+    /*@NotNull
+    @Deprecated
     public Set<ResourceType> findTaggedResourceTypes() {
-        ResourceType parentResourceType = findParentResourceType();
-        Set<ResourceType> taggedResourceTypes = new TreeSet<ResourceType>();
-        findTaggedResourceTypes(parentResourceType, taggedResourceTypes);
-        return taggedResourceTypes;
+        return new HashSet<ResourceType>();
     }
 
-    private void findTaggedResourceTypes(ResourceType parentResourceType, Collection<ResourceType> taggedResourceTypes) {
-        Set<ResourceType> childResourceTypes = parentResourceType.getChildResourceTypes();
-        for (ResourceType childResourceType : childResourceTypes) {
-            if (this.equals(childResourceType.getSubCategory())) {
-                taggedResourceTypes.add(childResourceType);
-            }
-            // check children if their parents are tagged
-            findTaggedResourceTypes(childResourceType, taggedResourceTypes);
-        }
-    }
-
-    @NotNull
+    @Deprecated
     public ResourceType findParentResourceType() {
-        ResourceSubCategory subCategory = this;
-        while (subCategory != null && subCategory.getResourceType() == null)
-            subCategory = subCategory.getParentSubCategory();
-        if (subCategory == null)
-            throw new IllegalStateException(this + " has no parent resource type.");
-        return subCategory.getResourceType();
+        return null;
     }
 
+    @Deprecated
     public boolean isCreatable() {
-        for (ResourceType taggedResourceType : findTaggedResourceTypes()) {
-            // if any resourceType is creatable then this subCategory is
-            if (taggedResourceType.isCreatable()) {
-                return true;
-            }
-        }
-
         return false;
-    }
+    }*/
 
     public int getId() {
         return this.id;
@@ -261,14 +216,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
         return parentSubCategory;
     }
 
-    public ResourceType getResourceType() {
-        return resourceType;
-    }
-
-    public void setResourceType(ResourceType resourceType) {
-        this.resourceType = resourceType;
-    }
-
     public int compareTo(ResourceSubCategory that) {
         return this.name.compareTo(that.getName());
     }
@@ -287,7 +234,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
 
         if (!name.equals(that.getName())) {
             return false;
-            //if (plugin != null ? !plugin.equals(that.plugin) : that.plugin != null) return false;
         }
 
         return true;
@@ -295,11 +241,7 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
 
     @Override
     public int hashCode() {
-        int result;
-        result = name.hashCode();
-
-        //result = 31 * result + (plugin != null ? plugin.hashCode() : 0);
-        return result;
+        return this.getName().hashCode();
     }
 
     @Override

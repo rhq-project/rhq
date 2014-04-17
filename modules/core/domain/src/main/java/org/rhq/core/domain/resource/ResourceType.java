@@ -396,10 +396,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<PackageType> packageTypes;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @ManyToMany
     @JoinTable(name = "RHQ_RESOURCE_TYPE_SUBCATS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_SUBCAT_ID") })
-    @OrderBy
-    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private List<ResourceSubCategory> subCategories;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.REMOVE)

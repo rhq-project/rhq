@@ -35,6 +35,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
@@ -50,8 +52,15 @@ import org.jetbrains.annotations.NotNull;
 @Entity
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SUBCAT_ID_SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_SUBCAT")
+@NamedQueries({ @NamedQuery(name = ResourceSubCategory.FIND_BY_NAME_WITH_SUBCATEGORIES, query = "" //
+    + "  SELECT rs " //
+    + "    FROM ResourceSubCategory rs "
+    + "    JOIN FETCH rs.childSubCategories" //
+    + "    WHERE rs.name = :name") })
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String FIND_BY_NAME_WITH_SUBCATEGORIES = "ResourceSubCategory.findByNameWithSubCategories";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SUBCAT_ID_SEQ")

@@ -19,13 +19,11 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -430,7 +428,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         // Make sure to first add/update any subcategories on the parent before trying to update children.
         // Otherwise, the children may try to save themselves with subcategories which wouldn't exist yet.
-        updateChildSubCategories(resourceType, existingType);
+        //updateChildSubCategories(resourceType, existingType);
+        persistSubCategories(resourceType);
 
         entityManager.flush();
 
@@ -624,6 +623,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // Those are the subcategories we offer for children of us
         checkForValidSubcategories(resourceType.getChildSubCategories());
 
+        //Persist subcategories only if they are new
+        persistSubCategories(resourceType);
+
         // Check if we have a subcategory attached that needs to be linked to one of the parents
         // This is a subcategory of our parent where we are supposed to be grouped in.
         linkSubCategoryToParents(resourceType);
@@ -631,7 +633,39 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // Ensure that the new type has any built-in metrics (like Availability Type)
         MeasurementMetadataManagerBean.getMetricDefinitions(resourceType);
 
-        entityManager.persist(resourceType);
+        entityManager.merge(resourceType);
+    }
+
+
+    private void persistSubCategories(ResourceType resourceType) {
+        boolean newSubcategoriesCreated = false;
+        for (int i = 0; i < resourceType.getChildSubCategories().size(); i++) {
+            ResourceSubCategory currentSubCategory = resourceType.getChildSubCategories().get(i);
+
+            ResourceSubCategory existingSubCategory = null;
+            try {
+                existingSubCategory = (ResourceSubCategory) entityManager
+                    .createNamedQuery(ResourceSubCategory.FIND_BY_NAME_WITH_SUBCATEGORIES)
+                    .setParameter("name", currentSubCategory.getName())
+                    .getSingleResult();
+            } catch (NoResultException e) {
+                //do nothing since that means this is a new subcategory
+            }
+
+            log.info("Searched for existing subcategory " + currentSubCategory.getName() + " and found "
+                + existingSubCategory);
+
+            if (existingSubCategory != null) {
+                resourceType.getChildSubCategories().set(i, existingSubCategory);
+            } else {
+                newSubcategoriesCreated = true;
+                entityManager.persist(currentSubCategory);
+            }
+        }
+
+        if (newSubcategoriesCreated) {
+            entityManager.flush();
+        }
     }
 
     private void linkSubCategoryToParents(ResourceType resourceType) {
@@ -820,158 +854,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    /**
-     * Updates the database with new child subcategory definitions found in the new resource type. Any definitions
-     * common to both will be merged.
-     *
-     * @param newType      new resource type containing updated definitions
-     * @param existingType old resource type with existing definitions
-     */
-    private void updateChildSubCategories(ResourceType newType, ResourceType existingType) {
-        // we'll do the removal of all definitions that are in the existing type but not in the new type
-        // once the child resource types have had a chance to stop referencing any old subcategories
-
-        // Easy case: If the existing type did not have any definitions, simply save the new type defs and return
-        if (existingType.getChildSubCategories() == null) {
-            for (ResourceSubCategory newSubCategory : newType.getChildSubCategories()) {
-                log.info("Metadata update: Adding new child SubCategory [" + newSubCategory.getName()
-                    + "] to ResourceType [" + existingType.getName() + "]...");
-                existingType.addChildSubCategory(newSubCategory);
-                entityManager.persist(newSubCategory);
-            }
-            return;
-        }
-
-        // Merge definitions that were already in the existing type and also in the new type
-        //
-        // First, put the new subcategories in a map for easier access when iterating over the existing ones
-        Map<String, ResourceSubCategory> subCategoriesFromNewType = new HashMap<String, ResourceSubCategory>(newType
-            .getChildSubCategories().size());
-        for (ResourceSubCategory newSubCategory : newType.getChildSubCategories()) {
-            subCategoriesFromNewType.put(newSubCategory.getName(), newSubCategory);
-        }
-
-        // Second, loop over the sub categories that need to be merged and update and persist them
-        List<ResourceSubCategory> mergedSubCategories = new ArrayList<ResourceSubCategory>(
-            existingType.getChildSubCategories());
-        mergedSubCategories.retainAll(subCategoriesFromNewType.values());
-        for (ResourceSubCategory existingSubCat : mergedSubCategories) {
-            updateSubCategory(existingSubCat, subCategoriesFromNewType.get(existingSubCat.getName()));
-            entityManager.merge(existingSubCat);
-        }
-
-        // Persist all new definitions
-        List<ResourceSubCategory> newSubCategories = new ArrayList<ResourceSubCategory>(newType.getChildSubCategories());
-        newSubCategories.removeAll(existingType.getChildSubCategories());
-        for (ResourceSubCategory newSubCat : newSubCategories) {
-            log.info("Metadata update: Adding new child SubCategory [" + newSubCat.getName() + "] to ResourceType ["
-                + existingType.getName() + "]...");
-            existingType.addChildSubCategory(newSubCat);
-            entityManager.persist(newSubCat);
-        }
-    }
-
-    private void updateSubCategory(ResourceSubCategory existingSubCat, ResourceSubCategory newSubCategory) {
-        // update the basic properties
-        existingSubCat.update(newSubCategory);
-
-        // we'll do the removal of all child subcategories that are in the existing subcat but not in the new one
-        // once the child resource types have had a chance to stop referencing any old subcategories
-
-        // Easy case: If the existing sub category did not have any child sub categories,
-        // simply use the ones from the new type
-        if ((existingSubCat.getChildSubCategories() == null) || existingSubCat.getChildSubCategories().isEmpty()) {
-            for (ResourceSubCategory newChildSubCategory : newSubCategory.getChildSubCategories()) {
-                log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
-                    + "] to SubCategory [" + existingSubCat.getName() + "]...");
-                existingSubCat.addChildSubCategory(newChildSubCategory);
-                entityManager.merge(newChildSubCategory);
-            }
-            return;
-        }
-
-        // Merge definitions that were already in the existing sub cat and also in the new one
-        //
-        // First, put the new child sub categories in a map for easier access when iterating over the existing ones
-        Map<String, ResourceSubCategory> childSubCategoriesFromNewSubCat = new HashMap<String, ResourceSubCategory>(
-            newSubCategory.getChildSubCategories().size());
-        for (ResourceSubCategory newChildSubCategory : newSubCategory.getChildSubCategories()) {
-            childSubCategoriesFromNewSubCat.put(newChildSubCategory.getName(), newChildSubCategory);
-        }
-
-        // Second, loop over the sub categories that need to be merged and update and persist them
-        List<ResourceSubCategory> mergedChildSubCategories = new ArrayList<ResourceSubCategory>(
-            existingSubCat.getChildSubCategories());
-        mergedChildSubCategories.retainAll(childSubCategoriesFromNewSubCat.values());
-        for (ResourceSubCategory existingChildSubCategory : mergedChildSubCategories) {
-            // recursively update childSubCategory
-            updateSubCategory(existingChildSubCategory,
-                childSubCategoriesFromNewSubCat.get(existingChildSubCategory.getName()));
-            entityManager.merge(existingChildSubCategory);
-        }
-
-        // Persist all new definitions
-        List<ResourceSubCategory> newChildSubCategories = new ArrayList<ResourceSubCategory>(
-            newSubCategory.getChildSubCategories());
-        newChildSubCategories.removeAll(existingSubCat.getChildSubCategories());
-        for (ResourceSubCategory newChildSubCategory : newChildSubCategories) {
-            log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
-                + "] to SubCategory [" + existingSubCat.getName() + "]...");
-            existingSubCat.addChildSubCategory(newChildSubCategory);
-            entityManager.merge(newChildSubCategory);
-        }
-    }
-
-    /**
-     * Remove all subcategory definitions that are in the existing type but not in the new type.
-     *
-     * @param newType      new resource type containing updated definitions
-     * @param existingType old resource type with existing definitions
-     */
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Override
     public void removeObsoleteSubCategories(Subject subject, ResourceType newType, ResourceType existingType) {
-        // Remove all definitions that are in the existing type but not in the new type
-        existingType = entityManager.find(ResourceType.class, existingType.getId());
-        List<ResourceSubCategory> removedSubCategories = new ArrayList<ResourceSubCategory>(
-            existingType.getChildSubCategories());
-        removedSubCategories.removeAll(newType.getChildSubCategories());
-        for (ResourceSubCategory removedSubCat : removedSubCategories) {
-            // remove it from the resourceType too, so we dont try to persist it again
-            // when saving the type
-            existingType.getChildSubCategories().remove(removedSubCat);
-            entityManager.remove(removedSubCat);
-        }
+        // TODO Auto-generated method stub
 
-        // now need to recursively remove any child sub categories which no longer appear
-        removeChildSubCategories(existingType.getChildSubCategories(), newType.getChildSubCategories());
-        entityManager.flush();
     }
-
-    private void removeChildSubCategories(List<ResourceSubCategory> existingSubCategories,
-        List<ResourceSubCategory> newSubCategories) {
-        // create a map of the new sub categories, for easier retrieval
-        Map<String, ResourceSubCategory> mapOfNewSubCategories = new HashMap<String, ResourceSubCategory>(
-            newSubCategories.size());
-        for (ResourceSubCategory newSubCategory : newSubCategories) {
-            mapOfNewSubCategories.put(newSubCategory.getName(), newSubCategory);
-        }
-
-        for (ResourceSubCategory existingSubCat : existingSubCategories) {
-            // Remove all definitions that are in the existing type but not in the new type
-            List<ResourceSubCategory> removedChildSubCategories = new ArrayList<ResourceSubCategory>(
-                existingSubCat.getChildSubCategories());
-            List<ResourceSubCategory> newChildSubCategories = mapOfNewSubCategories.get(existingSubCat.getName())
-                .getChildSubCategories();
-            removedChildSubCategories.removeAll(newChildSubCategories);
-            for (ResourceSubCategory removedChildSubCat : removedChildSubCategories) {
-                // remove subcat and all its children, due to the CASCADE.DELETE
-                existingSubCat.removeChildSubCategory(removedChildSubCat);
-                entityManager.remove(removedChildSubCat);
-            }
-
-            // for any remaining children of this subCat, see if any of their children should be removed
-            removeChildSubCategories(existingSubCat.getChildSubCategories(), newChildSubCategories);
-        }
-    }
-
 }

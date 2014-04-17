@@ -707,10 +707,17 @@ public class InstallerServiceImpl implements InstallerService {
         final File serverPropertiesFile = getServerPropertiesFile();
         final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
 
-        // GWT can't handle Properties - so we use HashMap but convert to Properties internally
+        // this code use to be used within GWT which is why the signature uses HashMap and we convert to Properties here
         final Properties props = new Properties();
         for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
             props.setProperty(entry.getKey(), entry.getValue());
+        }
+
+        // BZ 1080508 - the server will fail to install if rhq.server.log-level isn't set
+        // (as will be the case for upgrades from older versions), so force it to be set now
+        if (!props.containsKey(ServerProperties.PROP_LOG_LEVEL)) {
+            props.setProperty(ServerProperties.PROP_LOG_LEVEL, "INFO");
+            serverProperties.put(ServerProperties.PROP_LOG_LEVEL, "INFO");
         }
 
         propsFile.update(props);

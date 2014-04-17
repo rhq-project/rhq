@@ -34,7 +34,6 @@ import org.rhq.coregui.client.inventory.common.detail.summary.AbstractActivityVi
 import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
-import org.rhq.coregui.client.util.MeasurementUtility;
 
 
 /**
@@ -360,7 +359,6 @@ public class MetricGraphData implements JsonMetricProducer {
      */
     public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder();
-        boolean gotAdjustedMeasurementUnits = false;
         if (null != metricData) {
             sb = new StringBuilder("[");
             long firstBarTime = metricData.get(0).getTimestamp();
@@ -370,6 +368,21 @@ public class MetricGraphData implements JsonMetricProducer {
                 MeasurementUnits.MILLISECONDS, true);
 
             calculateOOB();
+
+            // find the lowest value and use it's UOM to translated everything else into
+            MeasurementDataNumericHighLowComposite lowestValue = null;
+            for (MeasurementDataNumericHighLowComposite measurement : metricData) {
+                if(!Double.isNaN(measurement.getValue())) {
+                    if(null == lowestValue){
+                       lowestValue = measurement;
+                    }
+                    if (measurement.getLowValue() < lowestValue.getLowValue()) {
+                        lowestValue = measurement;
+                    }
+                }
+            }
+            MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(lowestValue.getLowValue(), definition.getUnits());
+            adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
                 sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
@@ -381,14 +394,10 @@ public class MetricGraphData implements JsonMetricProducer {
 
                 if (!Double.isNaN(measurement.getValue())) {
 
-                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), definition.getUnits());
-                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(), definition.getUnits());
-                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), definition.getUnits());
+                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), adjustedMeasurementUnits);
+                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(), adjustedMeasurementUnits);
+                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), adjustedMeasurementUnits);
 
-                    if (!gotAdjustedMeasurementUnits) {
-                        adjustedMeasurementUnits = newHigh.getUnits();
-                        gotAdjustedMeasurementUnits = true;
-                    }
                     sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
                     sb.append(" \"high\":" + newHigh.getValue() + ",");
                     sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
@@ -413,19 +422,9 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public  static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
-        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
-        MeasurementNumericValueAndUnits returnValue;
-
-        // adjust for percentage numbers
-        if (measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100, newValue.getUnits());
-        } else {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue(), newValue.getUnits());
-        }
-
-        return returnValue;
+        double adjustedValue = measurementUnits == MeasurementUnits.PERCENTAGE ? value * 100 : value;
+        return new MeasurementNumericValueAndUnits(MeasurementConverterClient.scale(adjustedValue, measurementUnits),measurementUnits);
     }
-
 
         /**
          * This is cleaning the data as sometimes the data coming from the metric query

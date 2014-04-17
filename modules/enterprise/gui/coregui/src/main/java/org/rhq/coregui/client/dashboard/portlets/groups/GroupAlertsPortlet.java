@@ -65,7 +65,7 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupEventsPortlet(context);
+            return new GroupAlertsPortlet(context);
         }
     }
 

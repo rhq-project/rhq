@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -89,6 +90,7 @@ public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryV
         setOverflow(Overflow.VISIBLE);
         setShowFooterRefresh(false); //disable footer refresh button as redundant for portlets
         setShowHeader(false);//disable header for portlets
+        setMinHeight(400);
     }
 
     @Override
@@ -138,6 +140,13 @@ public abstract class AbstractRecentEventsPortlet extends EventCompositeHistoryV
     @Override
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_events());
+    }
+    
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields(false);
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
     }
 
     @Override

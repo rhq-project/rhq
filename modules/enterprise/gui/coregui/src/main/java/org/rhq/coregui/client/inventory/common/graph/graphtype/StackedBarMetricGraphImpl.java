@@ -84,8 +84,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
         // Define the Stacked Bar Graph function using the module pattern
         var metricStackedBarGraph = function () {
             // privates
-            var margin = {top: 10, right: 5, bottom: 5, left: 40},
-                    margin2 = {top: 150, right: 5, bottom: 5, left: 0},
+            var margin = {top: 10, right: 5, bottom: 5, left: 90},
+                    margin2 = {top: 150, right: 5, bottom: 5, left: 90},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 50,
                     height = adjustedChartHeight - margin.top - margin.bottom,
@@ -656,7 +656,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("class", "y axis")
                         .call(yAxis)
                         .append("text")
-                        .attr("transform", "rotate(-90),translate( -60,0)")
+                        .attr("transform", "rotate(-90),translate( -60,-30)")
                         .attr("y", -30)
                         .style("text-anchor", "end")
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);

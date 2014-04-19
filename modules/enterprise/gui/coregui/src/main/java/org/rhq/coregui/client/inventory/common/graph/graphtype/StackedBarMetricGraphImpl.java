@@ -84,8 +84,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
         // Define the Stacked Bar Graph function using the module pattern
         var metricStackedBarGraph = function () {
             // privates
-            var margin = {top: 10, right: 5, bottom: 5, left: 40},
-                    margin2 = {top: 150, right: 5, bottom: 5, left: 0},
+            var margin = {top: 10, right: 5, bottom: 5, left: 90},
+                    margin2 = {top: 150, right: 5, bottom: 5, left: 90},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 50,
                     height = adjustedChartHeight - margin.top - margin.bottom,
@@ -155,11 +155,11 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                     avgFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
-                            return d.y;
+                            return d.avg;
                         }
                     });
                     avg = $wnd.d3.mean(avgFiltered.map(function (d) {
-                        return d.y;
+                        return d.avg;
                     }));
                     peakFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
@@ -363,18 +363,18 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 metricGraphTooltipDiv.select("#metricGraphTooltipMaxLabel")
                         .text(chartContext.peakChartTitle);
                 metricGraphTooltipDiv.select("#metricGraphTooltipMaxValue")
-                        .text(d.high.toFixed(1));
+                        .text(d.highFormatted);
 
                 metricGraphTooltipDiv.select("#metricGraphTooltipAvgLabel")
                         .text(chartContext.avgChartTitle);
                 metricGraphTooltipDiv.select("#metricGraphTooltipAvgValue")
-                        .text(d.y.toFixed(1));
+                        .text(d.avgFormatted);
 
 
                 metricGraphTooltipDiv.select("#metricGraphTooltipMinLabel")
                         .text(chartContext.minChartTitle);
                 metricGraphTooltipDiv.select("#metricGraphTooltipMinValue")
-                        .text(d.low.toFixed(1));
+                        .text(d.lowFormatted);
 
 
                 //Show the tooltip
@@ -490,14 +490,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                 return 0;
                             }
                             else {
-                                return  yScale(d.y) - yScale(d.high);
+                                return  yScale(d.avg) - yScale(d.high);
                             }
                         })
                         .attr("width", function () {
                             return  calcBarWidth();
                         })
                         .attr("data-rhq-value", function (d) {
-                            return d.y;
+                            return d.avg;
                         })
                         .attr("opacity", 0.9)
                         .on("mouseover",function (d) {
@@ -521,14 +521,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             return timeScale(d.x);
                         })
                         .attr("y", function (d) {
-                            return isNaN(d.y) ? height : yScale(d.y);
+                            return isNaN(d.avg) ? height : yScale(d.avg);
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
                                 return 0;
                             }
                             else {
-                                return  yScale(d.low) - yScale(d.y);
+                                return  yScale(d.low) - yScale(d.avg);
                             }
                         })
                         .attr("width", function () {
@@ -567,7 +567,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     singleValueGraphTooltipDiv.select("#singleValueTooltipValueLabel")
                             .text(chartContext.singleValueLabel);
                     singleValueGraphTooltipDiv.select("#singleValueTooltipValue")
-                            .text(d.y.toFixed(1));
+                            .text(d.avgFormatted);
 
 
                     //Show the tooltip
@@ -586,7 +586,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             return timeScale(d.x);
                         })
                         .attr("y", function (d) {
-                            return isNaN(d.y) ? height : yScale(d.y) - 2;
+                            return isNaN(d.avg) ? height : yScale(d.avg) - 2;
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
@@ -594,7 +594,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             }
                             else {
                                 if (d.low === d.high) {
-                                    return  yScale(d.low) - yScale(d.y) + 2;
+                                    return  yScale(d.low) - yScale(d.avg) + 2;
                                 }
                                 else {
                                     return  0;
@@ -656,7 +656,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("class", "y axis")
                         .call(yAxis)
                         .append("text")
-                        .attr("transform", "rotate(-90),translate( -60,0)")
+                        .attr("transform", "rotate(-90),translate( -60,-30)")
                         .attr("y", -30)
                         .style("text-anchor", "end")
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
@@ -676,7 +676,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                 })
                                 .y(function (d) {
                                     if (showBarAvgTrendline) {
-                                        return yScale(d.y);
+                                        return yScale(d.avg);
                                     }
                                     else {
                                         return NaN;

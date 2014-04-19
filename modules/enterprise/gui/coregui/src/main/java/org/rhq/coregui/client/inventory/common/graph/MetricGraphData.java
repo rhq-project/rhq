@@ -400,13 +400,16 @@ public class MetricGraphData implements JsonMetricProducer {
 
                     sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
                     sb.append(" \"high\":" + newHigh.getValue() + ",");
+                    sb.append(" \"highFormatted\":\"" + MeasurementConverterClient.format(measurement.getHighValue(),definition.getUnits(), true,0,3) + "\",");
                     sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
-                    sb.append(" \"y\":" +  newAvg.getValue() + "},");
+                    sb.append(" \"lowFormatted\":\"" + MeasurementConverterClient.format(cleanseLow(measurement.getLowValue(), measurement.getValue(), measurement.getHighValue()),definition.getUnits(),true,0,3) + "\",");
+                    sb.append(" \"avg\":" +  newAvg.getValue() + ",");
+                    sb.append(" \"avgFormatted\":\"" +  MeasurementConverterClient.format(measurement.getValue(), definition.getUnits(),true,0,3) + "\"},");
                 } else {
                     // give it some values so that we dont have NaN
                     sb.append(" \"high\":0,");
                     sb.append(" \"low\":0,");
-                    sb.append(" \"y\":0,");
+                    sb.append(" \"avg\":0,");
                     sb.append(" \"nodata\":true },");
                 }
                 if (!sb.toString().endsWith("},")) {

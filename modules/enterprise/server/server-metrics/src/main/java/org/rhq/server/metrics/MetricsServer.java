@@ -415,6 +415,7 @@ public class MetricsServer {
         // TODO add support for splitting cache index partition
         final int partition = 0;
         DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
+        DateTime insertTimeSlice = dateTimeService.currentHour();
 
         for (final MeasurementDataNumeric data : dataSet) {
             DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
@@ -425,7 +426,6 @@ public class MetricsServer {
                 continue;
             }
             int startScheduleId = calculateStartScheduleId(data.getScheduleId());
-            DateTime insertTimeSlice = dateTimeService.currentHour();
             DateTime day = dateTimeService.get24HourTimeSlice(collectionTimeSlice);
 
             StorageResultSetFuture rawFuture = dao.insertRawData(data);

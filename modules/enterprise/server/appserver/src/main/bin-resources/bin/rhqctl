@@ -58,7 +58,7 @@ fi
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   RHQ_SERVER_HOME=`dirname "$_SCRIPT_DIR"`
+   RHQ_SERVER_HOME="$_SCRIPT_DIR/.."
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then
       echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid directory"

@@ -11,6 +11,14 @@
 # script directly.
 # =============================================================================
 
+debug_msg ()
+{
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
+      echo $1
+   fi
+}
+
 # ----------------------------------------------------------------------
 # Determine what specific platform we are running on.
 # Set some platform-specific variables.
@@ -43,14 +51,6 @@ else
    exit 1
 fi
 
-debug_msg ()
-{
-   # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
-      echo $1
-   fi
-}
-
 # ----------------------------------------------------------------------
 # Determine the RHQ Server installation directory.
 # If RHQ_SERVER_HOME is not defined, we will assume we are running
@@ -58,7 +58,7 @@ debug_msg ()
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   RHQ_SERVER_HOME=`dirname "$_SCRIPT_DIR"`
+   RHQ_SERVER_HOME="$_SCRIPT_DIR/.."
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then
       echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid directory"

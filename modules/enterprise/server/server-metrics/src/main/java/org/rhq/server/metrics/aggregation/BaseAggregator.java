@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.base.Function;
@@ -41,6 +40,10 @@ abstract class BaseAggregator {
 
     protected MetricsDAO dao;
 
+    /**
+     * This should always be raw for PastDataAggregator and for CacheAggregator it should match the bucket, e.g.,
+     * raw, 1 hour, 6 hr, being aggregated.
+     */
     protected AggregationType aggregationType;
 
     protected AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetrics;
@@ -88,6 +91,10 @@ abstract class BaseAggregator {
             } finally {
                 permits.release();
                 taskTracker.finishedTask();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
+                        permits.availablePermits() + " available permits");
+                }
             }
         }
 
@@ -99,6 +106,10 @@ abstract class BaseAggregator {
             LOG.warn("There was an error aggregating data", t);
             permits.release();
             taskTracker.finishedTask();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("There are " + taskTracker.getRemainingTasks() + " remaining tasks and " +
+                    permits.availablePermits() + " available permits");
+            }
         }
     }
 
@@ -131,8 +142,9 @@ abstract class BaseAggregator {
     }
 
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
+        LOG.debug("Starting aggregation");
+
         Stopwatch stopwatch = new Stopwatch().start();
-        AtomicInteger numSchedules = new AtomicInteger();
         try {
             // need to call addTask() here for this initial callback; otherwise, the
             // following call waitForTasksToFinish can complete prematurely.
@@ -148,15 +160,14 @@ abstract class BaseAggregator {
                 public void onFailure(Throwable t) {
                     taskTracker.abort("There was an error fetching current cache index entries: " + t.getMessage());
                 }
-            });
+            }, aggregationTasks);
             taskTracker.waitForTasksToFinish();
 
             return getAggregationCounts();
         } finally {
             stopwatch.stop();
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Finished " + aggregationType + " aggregation of " + numSchedules + " schedules in " +
-                    stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                LOG.debug("Finished aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
             }
         }
     }
@@ -184,8 +195,18 @@ abstract class BaseAggregator {
      */
     protected abstract Iterable<CacheIndexEntry> reduceIndexEntries(List<CacheIndexEntry> indexEntries);
 
+    /**
+     * @return The aggregation type for display in debug log messages
+     */
+    protected abstract String getDebugType();
+
     private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
         try {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Scheduling aggregation tasks for " + getDebugType() + " " + indexEntries.size() +
+                    " index entries");
+            }
+
             for (CacheIndexEntry indexEntry : reduceIndexEntries(indexEntries)) {
                 submitAggregationTask(indexEntry);
             }
@@ -193,6 +214,8 @@ abstract class BaseAggregator {
         } catch (InterruptedException e) {
             LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
             taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
+        } finally {
+            LOG.debug("Finished scheduling aggregation tasks");
         }
     }
 

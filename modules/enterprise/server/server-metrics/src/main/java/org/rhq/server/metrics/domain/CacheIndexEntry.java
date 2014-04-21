@@ -110,8 +110,8 @@ public class CacheIndexEntry {
 
     @Override
     public String toString() {
-        return "CacheIndexEntry[bucket: " + bucket + ", day: " + day + ", insertTimeSlice: " + insertTimeSlice +
-            ", partition: " + partition + ", collectionTimeSlice: " + collectionTimeSlice + ", startScheduleId: " +
-            startScheduleId + ", insertTimeSlice: " + insertTimeSlice + "]";
+        return "CacheIndexEntry[bucket: " + bucket + ", day: " + day + ", partition: " + partition +
+            ", collectionTimeSlice: " + collectionTimeSlice + ", startScheduleId: " + startScheduleId +
+            ", insertTimeSlice: " + insertTimeSlice + "]";
     }
 }

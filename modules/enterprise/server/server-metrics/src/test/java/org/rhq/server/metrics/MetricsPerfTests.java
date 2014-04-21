@@ -57,7 +57,7 @@ public class MetricsPerfTests extends MetricsTest {
 
     private MetricsServer metricsServer;
 
-    private final int NUM_SCHEDULES = 1000;
+    private final int NUM_SCHEDULES = 10000;
 
     private double requestLimit;
 
@@ -71,6 +71,8 @@ public class MetricsPerfTests extends MetricsTest {
         metricsServer.setDAO(dao);
         metricsServer.setDateTimeService(dateTimeService);
         requestLimit = storageSession.getRequestLimit();
+
+        metricsServer.init();
     }
 
     private void resetRateLimits() {

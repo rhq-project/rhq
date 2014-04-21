@@ -54,6 +54,11 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @Override
+    protected String getDebugType() {
+        return aggregationType.toString();
+    }
+
+    @Override
     protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
         StorageResultSetFuture indexFuture = dao.findCurrentCacheIndexEntries(aggregationType.getCacheTable(),
             currentDay.getMillis(), AggregationManager.INDEX_PARTITION, startTime.getMillis());
@@ -110,6 +115,10 @@ class CacheAggregator extends BaseAggregator {
         return new AggregationTask(indexEntry) {
             @Override
             void run(CacheIndexEntry indexEntry) {
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Executing " + getDebugType() + " aggregation task for " + indexEntry);
+                }
+
                 StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                     startTime.getMillis(), indexEntry.getStartScheduleId());
 

@@ -37,6 +37,8 @@ class PastDataAggregator extends BaseAggregator {
 
     private static final Log LOG = LogFactory.getLog(PastDataAggregator.class);
 
+    private static final String DEBUG_TYPE = "past data";
+
     private DateTime startingDay;
 
     private DateTime currentDay;
@@ -61,6 +63,11 @@ class PastDataAggregator extends BaseAggregator {
         this.persistFns = persistFns;
     }
 
+    @Override
+    protected String getDebugType() {
+        return DEBUG_TYPE;
+    }
+
     /**
      * We store a configurable amount of past data where the amount is specified as a duration in days. Suppose that the
      * duration is set at 4 days, and the current time is 14:00 Friday. This method will query the index as far back
@@ -81,7 +88,7 @@ class PastDataAggregator extends BaseAggregator {
         insertFutures.add(dao.findPastCacheIndexEntriesFromToday(MetricsTable.RAW, currentDay.getMillis(),
             AggregationManager.INDEX_PARTITION, startTime.getMillis()));
 
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(insertFutures);
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.allAsList(insertFutures);
         return Futures.transform(insertsFuture, new Function<List<ResultSet>, List<CacheIndexEntry>>() {
             @Override
             public List<CacheIndexEntry> apply(List<ResultSet> resultSets) {
@@ -194,6 +201,10 @@ class PastDataAggregator extends BaseAggregator {
         return new AggregationTask(indexEntry) {
             @Override
             public void run(CacheIndexEntry indexEntry) {
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Executing " + getDebugType() + " aggregation task for " + indexEntry);
+                }
+
                 if (indexEntry.getCollectionTimeSlice() == indexEntry.getInsertTimeSlice()) {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
@@ -227,7 +238,7 @@ class PastDataAggregator extends BaseAggregator {
 
     private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
 
-        ListenableFuture<List<ResultSet>> queriesFuture = Futures.successfulAsList(queryFutures);
+        ListenableFuture<List<ResultSet>> queriesFuture = Futures.allAsList(queryFutures);
 
         ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
             toIterable(new RawNumericMetricMapper()), aggregationTasks);
@@ -392,6 +403,10 @@ class PastDataAggregator extends BaseAggregator {
             protected void onFinish(List<Object> args) {
                 IndexAggregatesPair pair = (IndexAggregatesPair) args.get(1);
 
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Finished batch for " + pair.cacheIndexEntry);
+                }
+
                 rawSchedulesCount.addAndGet(pair.metrics.size());
 
                 if (oneHourDataAggregated) {
@@ -407,6 +422,10 @@ class PastDataAggregator extends BaseAggregator {
 
     private MetricsFuturesPair process1HourData(CacheIndexEntry indexEntry,
         ListenableFuture<List<AggregateNumericMetric>> metricsFuture) {
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Processing 1 hour data for " + indexEntry);
+        }
 
         DateTime sixHourTimeSlice = dateTimeService.get6HourTimeSlice(new DateTime(indexEntry.getCollectionTimeSlice()));
 
@@ -438,6 +457,10 @@ class PastDataAggregator extends BaseAggregator {
 
     private MetricsFuturesPair process6HourData(CacheIndexEntry indexEntry,
         ListenableFuture<List<AggregateNumericMetric>> sixHourMetricsFuture) {
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Processing 6 hour data for " + indexEntry);
+        }
 
         DateTime timeSlice = dateTimeService.get24HourTimeSlice(indexEntry.getCollectionTimeSlice());
 

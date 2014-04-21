@@ -132,6 +132,32 @@ class CacheAggregator extends BaseAggregator {
         return ImmutableMap.of(aggregationType, schedulesCount.get());
     }
 
+    /**
+     * <p>
+     * This method provides the core aggregation logic. It performs the following steps:
+     *
+     * <ul>
+     *  <li>Iterate over a cache result set (which may contain data for multiple schedules)</li>
+     *  <li>Compute aggregate metrics</li>
+     *  <li>Persist the aggregate metrics</li>
+     *  <li>Delete the cache partition</li>
+     *  <li>Delete the cache index row</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Be aware that this method is completely asynchronous. Each of the preceding steps correspond to function calls
+     * that return a ListenableFuture. While this method is asynchronous, the steps will execute in the order listed.
+     * </p>
+     * <p>
+     * It is also important to note that if one of the function calls fails, then the functions for the steps that
+     * follow are <strong>not</strong> executed. This is by design so that the task can be retried during a subsequent
+     * aggregation run.
+     * </p>
+     *
+     * @param indexEntry The index entry for which data is being aggregated
+     * @param cacheFuture A future of the cache query result set
+     * @param persistMetricsFn The function that will be used to persist the aggregate metrics
+     */
     @SuppressWarnings("unchecked")
     protected void processCacheBlock(CacheIndexEntry indexEntry,
         StorageResultSetFuture cacheFuture, AsyncFunction<IndexAggregatesPair, List<ResultSet>> persistMetricsFn) {

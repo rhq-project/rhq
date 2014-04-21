@@ -142,7 +142,7 @@ abstract class BaseAggregator {
     }
 
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
-        LOG.debug("Starting aggregation");
+        LOG.debug("Starting " + getDebugType() + " aggregation");
 
         Stopwatch stopwatch = new Stopwatch().start();
         try {
@@ -167,7 +167,8 @@ abstract class BaseAggregator {
         } finally {
             stopwatch.stop();
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Finished aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+                LOG.debug("Finished " + getDebugType() + " aggregation in " + stopwatch.elapsed(TimeUnit.MILLISECONDS)
+                    + " ms");
             }
         }
     }
@@ -203,7 +204,7 @@ abstract class BaseAggregator {
     private void scheduleTasks(List<CacheIndexEntry> indexEntries) {
         try {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Scheduling aggregation tasks for " + getDebugType() + " " + indexEntries.size() +
+                LOG.debug("Scheduling " + getDebugType() + " aggregation tasks for " + indexEntries.size() +
                     " index entries");
             }
 
@@ -214,6 +215,9 @@ abstract class BaseAggregator {
         } catch (InterruptedException e) {
             LOG.warn("There was an interrupt while scheduling aggregation tasks.", e);
             taskTracker.abort("There was an interrupt while scheduling aggregation tasks.");
+        } catch (Exception e) {
+            LOG.error("There was an unexpected error while scheduling " + getDebugType() + " aggregation tasks", e);
+            taskTracker.abort("Aborting " + getDebugType() + " aggregation due to unexpected error: " + e.getMessage());
         } finally {
             LOG.debug("Finished scheduling aggregation tasks");
         }
@@ -289,6 +293,20 @@ abstract class BaseAggregator {
         };
     }
 
+    /**
+     * <p>
+     * Some functions called during aggregation need as input both the computed, aggregate metrics and their
+     * corresponding index entry. Guava is pretty limited when it comes to passing multiple arguments (which are
+     * ListenableFutures) to a function. You are left with Futures.allAsList or Futures.successfulAsList. These methods
+     * are fine sometimes, but when you have futures of different types, callee code gets littered with a lot type
+     * casting.
+     * </p>
+     * <p>
+     * This method returns a function that combines an index entry with aggregate metrics. The function returns a
+     * {@link IndexAggregatesPair} which provides a strongly typed alternative to either Futures.allAsList or
+     * Futures.successfulAsList.
+     * </p>
+     */
     protected Function<List<AggregateNumericMetric>, IndexAggregatesPair> indexAggregatesPair(
         final CacheIndexEntry indexEntry) {
         return new Function<List<AggregateNumericMetric>, IndexAggregatesPair>() {

@@ -236,6 +236,34 @@ class PastDataAggregator extends BaseAggregator {
         );
     }
 
+    /**
+     * <p>
+     * This method provides the core aggregation logic for aggregating past that is pulled from the raw_metrics table
+     * and not the cache table. It performs the following steps:
+     *
+     * <ul>
+     *   <li>Iterate over the query result sets (from the raw_metrics table)</li>
+     *   <li>Compute aggregate metrics</li>
+     *   <li>Persist aggregate metrics</li>
+     *   <li>Aggregate 1 hour data if the 6 hour time slice has finished</li>
+     *   <li>Aggregate 6 hour data if the 24 hour time slice has finished</li>
+     *   <li>Delete the cache partition</li>
+     *   <li>Delete the cache index row</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Be aware that this method is completely asynchronous. Each of the preceding steps correspond to function calls
+     * that return a ListenableFuture. While this method is asynchronous, the steps will execute in the order listed.
+     * </p>
+     * <p>
+     * It is also important to note that if one of the function calls fails, then the functions for the steps that
+     * follow are <strong>not</strong> executed. This is by design so that the task can be retried during a subsequent
+     * aggregation run.
+     * </p>
+     *
+     * @param queryFutures Futures of the raw data result sets
+     * @param indexEntry The index entry for which data is being aggregated
+     */
     private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
 
         ListenableFuture<List<ResultSet>> queriesFuture = Futures.allAsList(queryFutures);
@@ -285,6 +313,35 @@ class PastDataAggregator extends BaseAggregator {
         aggregationTaskFinished(deleteCacheIndexFuture, pairFuture, is6HourTimeSliceFinished, is24HourTimeSliceFinished);
     }
 
+    /**
+     * <p>
+     * This method provides the core aggregation logic for aggregating past that is pulled from the metrics_cache table
+     * and not the raw_metrics table. It performs the following steps:
+     *
+     * <ul>
+     *   <li>Iterate over the query result set from the metrics_cache table which may contain data for multiple
+     *   schedules</li>
+     *   <li>Compute aggregate metrics</li>
+     *   <li>Persist aggregate metrics</li>
+     *   <li>Aggregate 1 hour data if the 6 hour time slice has finished</li>
+     *   <li>Aggregate 6 hour data if the 24 hour time slice has finished</li>
+     *   <li>Delete the cache partition</li>
+     *   <li>Delete the cache index row</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Be aware that this method is completely asynchronous. Each of the preceding steps correspond to function calls
+     * that return a ListenableFuture. While this method is asynchronous, the steps will execute in the order listed.
+     * </p>
+     * <p>
+     * It is also important to note that if one of the function calls fails, then the functions for the steps that
+     * follow are <strong>not</strong> executed. This is by design so that the task can be retried during a subsequent
+     * aggregation run.
+     * </p>
+     *
+     * @param queryFutures Futures of the raw data result sets
+     * @param indexEntry The index entry for which data is being aggregated
+     */
     @SuppressWarnings("unchecked")
     protected void processRawDataCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {
 

@@ -71,9 +71,7 @@ public class DriftDetector implements Runnable {
 
     private final DriftClient driftClient;
 
-    public DriftDetector(ScheduleQueue scheduleQueue,
-            ChangeSetManager changeSetMgr,
-            DriftClient driftClient) {
+    public DriftDetector(ScheduleQueue scheduleQueue, ChangeSetManager changeSetMgr, DriftClient driftClient) {
         this.scheduleQueue = scheduleQueue;
         this.changeSetMgr = changeSetMgr;
         this.driftClient = driftClient;
@@ -212,10 +210,14 @@ public class DriftDetector implements Runnable {
                 forEachFile(dir, new FilterFileVisitor(basedir, includes, excludes, new FileVisitor() {
                     @Override
                     public void visit(File file) {
-                        if (file.canRead()) {
-                            newFiles.add(file);
+                        if (file.isFile()) {
+                            if (file.canRead()) {
+                                newFiles.add(file);
+                            } else if (log.isDebugEnabled()) {
+                                log.debug("Skipping " + file.getPath() + " as new file since it is not readable.");
+                            }
                         } else if (log.isDebugEnabled()) {
-                            log.debug("Skipping " + file.getPath() + " as new file since it is not readable.");
+                            log.debug("Skipping " + file.getPath() + " as new file since it is not a normal file.");
                         }
                     }
                 }));

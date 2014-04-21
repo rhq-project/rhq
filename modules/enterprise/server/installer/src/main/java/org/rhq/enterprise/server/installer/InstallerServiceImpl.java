@@ -250,9 +250,10 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         // its possible the ear is not yet deployed (during server init/startup, it won't show up)
-        // but our extension should always show up and its one of the last things our installer deploys.
-        // if this doesn't exist, our installation isn't done yet
-        if (isExtensionDeployed()) {
+        // but our marker file should exist (since its the last thing the installer will write).
+        // If the marker file exists, we can assume the installer is done and we just have to wait.
+
+        if (getInstalledFileMarker().exists()) {
             return ""; // installer has done all it could - just need to wait for the EAR to fully startup
         }
 
@@ -1249,12 +1250,17 @@ public class InstallerServiceImpl implements InstallerService {
         return new SchemaManager(username, password, nodes, cqlPort);
     }
 
-    private void writeInstalledFileMarker() throws Exception {
+    private File getInstalledFileMarker() throws Exception {
         File datadir = new File(getAppServerDataDir());
         if (!datadir.isDirectory()) {
             throw new IOException("Directory Not Found: [" + datadir.getPath() + "]");
         }
         File markerFile = new File(datadir, "rhq.installed");
+        return markerFile;
+    }
+
+    private void writeInstalledFileMarker() throws Exception {
+        File markerFile = getInstalledFileMarker();
         markerFile.createNewFile();
     }
 }

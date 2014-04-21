@@ -28,6 +28,7 @@ import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.NumericMetric;
+import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda
@@ -36,7 +37,7 @@ abstract class BaseAggregator {
 
     private final Log LOG = LogFactory.getLog(getClass());
 
-    protected static final int PAST_DATA_BATCH_SIZE = 5;
+    protected static final int BATCH_SIZE = 5;
 
     protected MetricsDAO dao;
 
@@ -57,6 +58,14 @@ abstract class BaseAggregator {
     protected DateTimeService dateTimeService;
 
     protected TaskTracker taskTracker = new TaskTracker();
+
+    /**
+     * This is a flag that determines whether or not we pull data from the metrics_cache table. It servers as a global
+     * override that applies to both past and current data. There are two use cases for when this would be false.
+     * The first is for the data migration that will be necessary when users upgrade to RHQ 4.11. The second is to
+     * allow resizing of cache partitions to take effect.
+     */
+    protected boolean cacheActive = true;
 
     /**
      * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
@@ -139,6 +148,10 @@ abstract class BaseAggregator {
 
     void setDateTimeService(DateTimeService dateTimeService) {
         this.dateTimeService = dateTimeService;
+    }
+
+    void setCacheActive(boolean cacheActive) {
+        this.cacheActive = cacheActive;
     }
 
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
@@ -229,13 +242,46 @@ abstract class BaseAggregator {
         taskTracker.addTask();
     }
 
+    protected <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
+        final ResultSetMapper<T> mapper) {
+
+        return new Function<List<ResultSet>, Iterable<List<T>>>() {
+            @Override
+            public Iterable<List<T>> apply(final List<ResultSet> resultSets) {
+                return new Iterable<List<T>>() {
+                    private Iterator<ResultSet> resultSetIterator = resultSets.iterator();
+
+                    @Override
+                    public Iterator<List<T>> iterator() {
+                        return new Iterator<List<T>>() {
+                            @Override
+                            public boolean hasNext() {
+                                return resultSetIterator.hasNext();
+                            }
+
+                            @Override
+                            public List<T> next() {
+                                return mapper.mapAll(resultSetIterator.next());
+                            }
+
+                            @Override
+                            public void remove() {
+                                throw new UnsupportedOperationException();
+                            }
+                        };
+                    }
+                };
+            }
+        };
+    }
+
     protected <T extends NumericMetric> Function<Iterable<List<T>>, List<AggregateNumericMetric>> computeAggregates(
         final long timeSlice, Class<T> type) {
 
         return new Function<Iterable<List<T>>, List<AggregateNumericMetric>>() {
             @Override
             public List<AggregateNumericMetric> apply(Iterable<List<T>> values) {
-                List<AggregateNumericMetric> aggregates = new ArrayList<AggregateNumericMetric>(PAST_DATA_BATCH_SIZE);
+                List<AggregateNumericMetric> aggregates = new ArrayList<AggregateNumericMetric>(BATCH_SIZE);
                 for (List<T> metricList : values) {
                     aggregates.add(computeAggregate(metricList, timeSlice));
                 }

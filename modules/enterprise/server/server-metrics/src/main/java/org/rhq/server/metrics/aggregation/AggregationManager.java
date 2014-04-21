@@ -19,6 +19,8 @@ import org.rhq.server.metrics.AbortedException;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
+import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
 /**
  * This class is the driver for metrics aggregation.
@@ -51,6 +53,8 @@ public class AggregationManager {
 
     private Semaphore permits;
 
+    private Long cacheActivationTime;
+
     public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
         DateTime startTime, int batchSize, int parallelism, int cacheBatchSize) {
 
@@ -69,6 +73,17 @@ public class AggregationManager {
 
     private boolean is24HourTimeSliceFinished() {
         return dtService.is24HourTimeSliceFinished(startTime);
+    }
+
+    /**
+     * <i>Deactivates</i> the metrics_cache table. Data will not be pulled from metrics_cache until
+     * <code>cacheActivationTime</code> has been reached. This applies to both past and current data. At that time,
+     * metrics_cache will be reactivated, and we will start pulling data from it again.
+     *
+     * @param cacheActivationTime The time to reactivate metrics_cache
+     */
+    public void setCacheActivationTime(Long cacheActivationTime) {
+        this.cacheActivationTime = cacheActivationTime;
     }
 
     public Set<AggregateNumericMetric> run() {
@@ -124,6 +139,7 @@ public class AggregationManager {
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistFns(persistFunctions);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetricsAndUpdateCache());
+        aggregator.setCacheActive(isCacheActive());
 
         return aggregator;
     }
@@ -144,6 +160,9 @@ public class AggregationManager {
                 oneHourData.addAll(pair.metrics);
             }
         });
+        aggregator.setCacheActive(isCacheActive());
+        aggregator.setResultSetMapper(new RawNumericMetricMapper());
+
         return aggregator;
     }
 
@@ -157,6 +176,8 @@ public class AggregationManager {
         aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist6HourMetricsAndUpdateCache());
+        aggregator.setCacheActive(isCacheActive());
+        aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
 
         return aggregator;
     }
@@ -171,8 +192,14 @@ public class AggregationManager {
         aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
+        aggregator.setCacheActive(isCacheActive());
+        aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
 
         return aggregator;
+    }
+
+    private boolean isCacheActive() {
+        return cacheActivationTime == null || startTime.getMillis() >= cacheActivationTime;
     }
 
 }

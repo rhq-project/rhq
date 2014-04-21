@@ -1,5 +1,6 @@
 package org.rhq.server.metrics.aggregation;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
 import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.RawNumericMetric;
+import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda
@@ -41,6 +43,8 @@ class CacheAggregator extends BaseAggregator {
 
     private CacheBlockFinishedListener cacheBlockFinishedListener;
 
+    private ResultSetMapper resultSetMapper;
+
     void setStartTime(DateTime startTime) {
         this.startTime = startTime;
     }
@@ -51,6 +55,10 @@ class CacheAggregator extends BaseAggregator {
 
     void setCacheBlockFinishedListener(CacheBlockFinishedListener cacheBlockFinishedListener) {
         this.cacheBlockFinishedListener = cacheBlockFinishedListener;
+    }
+
+    void setResultSetMapper(ResultSetMapper resultSetMapper) {
+        this.resultSetMapper = resultSetMapper;
     }
 
     @Override
@@ -119,12 +127,70 @@ class CacheAggregator extends BaseAggregator {
                     LOG.trace("Executing " + getDebugType() + " aggregation task for " + indexEntry);
                 }
 
-                StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
-                    startTime.getMillis(), indexEntry.getStartScheduleId());
+                if (cacheActive) {
+                    StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
+                        startTime.getMillis(), indexEntry.getStartScheduleId());
 
-                processCacheBlock(indexEntry, cacheFuture, persistMetrics);
+                    processCacheBlock(indexEntry, cacheFuture, persistMetrics);
+                } else {
+                    switch (aggregationType) {
+                        case RAW:
+                            processRawBatches(indexEntry);
+                            break;
+                        case ONE_HOUR:
+                            process1HourBatches(indexEntry);
+                            break;
+                        default:
+                            process6HourBatches(indexEntry);
+                    }
+                }
             }
         };
+    }
+
+    private void processRawBatches(CacheIndexEntry indexEntry) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+        long endTime = new DateTime(startTime).plusHours(1).getMillis();
+        for (Integer scheduleId : indexEntry.getScheduleIds()) {
+            queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
+            if (queryFutures.size() == BATCH_SIZE) {
+                processBatch(queryFutures, indexEntry);
+                queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+            }
+        }
+        if (!queryFutures.isEmpty()) {
+            processBatch(queryFutures, indexEntry);
+        }
+    }
+
+    private void process1HourBatches(CacheIndexEntry indexEntry) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+        long endTime = dateTimeService.get6HourTimeSliceEnd(new DateTime(startTime)).getMillis();
+        for (Integer scheduleId : indexEntry.getScheduleIds()) {
+            queryFutures.add(dao.findOneHourMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
+            if (queryFutures.size() == BATCH_SIZE) {
+                processBatch(queryFutures, indexEntry);
+                queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+            }
+        }
+        if (!queryFutures.isEmpty()) {
+            processBatch(queryFutures, indexEntry);
+        }
+    }
+
+    private void process6HourBatches(CacheIndexEntry indexEntry) {
+        List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+        long endTime = dateTimeService.get24HourTimeSliceEnd(new DateTime(startTime)).getMillis();
+        for (Integer scheduleId : indexEntry.getScheduleIds()) {
+            queryFutures.add(dao.findSixHourMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(), endTime));
+            if (queryFutures.size() == BATCH_SIZE) {
+                processBatch(queryFutures, indexEntry);
+                queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
+            }
+        }
+        if (!queryFutures.isEmpty()) {
+            processBatch(queryFutures, indexEntry);
+        }
     }
 
     @Override
@@ -172,6 +238,31 @@ class CacheAggregator extends BaseAggregator {
             indexAggregatesPair(indexEntry));
 
         ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetricsFn,
+            aggregationTasks);
+
+        ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,
+            deleteCacheEntry(indexEntry), aggregationTasks);
+
+        ListenableFuture<ResultSet> deleteCacheIndexFuture = Futures.transform(deleteCacheFuture,
+            deleteCacheIndexEntry(indexEntry), aggregationTasks);
+
+        aggregationTaskFinished(deleteCacheIndexFuture, pairFuture);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void processBatch(List<StorageResultSetFuture> queryFutures, CacheIndexEntry indexEntry) {
+        ListenableFuture<List<ResultSet>> queriesFuture = Futures.allAsList(queryFutures);
+
+        ListenableFuture<Iterable<List<RawNumericMetric>>> iterableFuture = Futures.transform(queriesFuture,
+            toIterable(resultSetMapper), aggregationTasks);
+
+        ListenableFuture<List<AggregateNumericMetric>> metricsFuture = Futures.transform(iterableFuture,
+            computeAggregates(indexEntry.getCollectionTimeSlice(), RawNumericMetric.class), aggregationTasks);
+
+        ListenableFuture<IndexAggregatesPair> pairFuture = Futures.transform(metricsFuture,
+            indexAggregatesPair(indexEntry));
+
+        ListenableFuture<List<ResultSet>> insertsFuture = Futures.transform(pairFuture, persistMetrics,
             aggregationTasks);
 
         ListenableFuture<ResultSet> deleteCacheFuture = Futures.transform(insertsFuture,

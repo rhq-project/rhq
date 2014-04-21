@@ -205,18 +205,18 @@ class PastDataAggregator extends BaseAggregator {
                     LOG.trace("Executing " + getDebugType() + " aggregation task for " + indexEntry);
                 }
 
-                if (indexEntry.getCollectionTimeSlice() == indexEntry.getInsertTimeSlice()) {
+                if (cacheActive && (indexEntry.getCollectionTimeSlice() == indexEntry.getInsertTimeSlice())) {
                     StorageResultSetFuture cacheFuture = dao.findCacheEntriesAsync(aggregationType.getCacheTable(),
                         indexEntry.getCollectionTimeSlice(), indexEntry.getStartScheduleId());
                     processRawDataCacheBlock(indexEntry, cacheFuture);
                 } else {
-                    List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
+                    List<StorageResultSetFuture> queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
                     for (Integer scheduleId : indexEntry.getScheduleIds()) {
                         queryFutures.add(dao.findRawMetricsAsync(scheduleId, indexEntry.getCollectionTimeSlice(),
                             new DateTime(indexEntry.getCollectionTimeSlice()).plusHours(1).getMillis()));
-                        if (queryFutures.size() == PAST_DATA_BATCH_SIZE) {
+                        if (queryFutures.size() == BATCH_SIZE) {
                             processBatch(queryFutures, indexEntry);
-                            queryFutures = new ArrayList<StorageResultSetFuture>(PAST_DATA_BATCH_SIZE);
+                            queryFutures = new ArrayList<StorageResultSetFuture>(BATCH_SIZE);
                         }
                     }
                     if (!queryFutures.isEmpty()) {
@@ -388,39 +388,6 @@ class PastDataAggregator extends BaseAggregator {
             deleteCacheIndexEntries(indexEntry), aggregationTasks);
 
         aggregationTaskFinished(deleteCacheIndexFuture, pairFuture, is6HourTimeSliceFinished, is24HourTimeSliceFinished);
-    }
-
-    private <T extends NumericMetric> Function<List<ResultSet>, Iterable<List<T>>> toIterable(
-        final ResultSetMapper<T> mapper) {
-
-        return new Function<List<ResultSet>, Iterable<List<T>>>() {
-            @Override
-            public Iterable<List<T>> apply(final List<ResultSet> resultSets) {
-                return new Iterable<List<T>>() {
-                    private Iterator<ResultSet> resultSetIterator = resultSets.iterator();
-
-                    @Override
-                    public Iterator<List<T>> iterator() {
-                        return new Iterator<List<T>>() {
-                            @Override
-                            public boolean hasNext() {
-                                return resultSetIterator.hasNext();
-                            }
-
-                            @Override
-                            public List<T> next() {
-                                return mapper.mapAll(resultSetIterator.next());
-                            }
-
-                            @Override
-                            public void remove() {
-                                throw new UnsupportedOperationException();
-                            }
-                        };
-                    }
-                };
-            }
-        };
     }
 
     private Function<List<CombinedMetricsPair>, Iterable<List<AggregateNumericMetric>>> toIterable() {

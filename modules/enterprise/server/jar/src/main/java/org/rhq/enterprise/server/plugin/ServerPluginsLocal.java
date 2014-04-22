@@ -73,8 +73,18 @@ public interface ServerPluginsLocal {
      * that are still installed.
      *
      * @return all installed and deleted server plugins found in the DB
+     * @deprecated do not use this as the deleted plugins are essentially ephemeral and will be removed from the
+     *             database in due time automatically.
      */
+    @Deprecated
     List<ServerPlugin> getAllServerPlugins();
+
+    /**
+     * Returns the plugins that have been marked as deleted.
+     * This is more or less a helper method to {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob}
+     * which goes ahead and removes such plugins from database once it's safe to do so.
+     */
+    List<ServerPlugin> getDeletedPlugins();
 
     /**
      * Returns a plugin with the given key.
@@ -171,18 +181,7 @@ public interface ServerPluginsLocal {
      * @return the list of keys of plugins that were undeployed
      * @throws Exception if failed to undeploy a plugin
      */
-    List<PluginKey> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
-
-    /**
-     * Purges the undeployed plugins from the system so there is no record of them to have
-     * ever existed. This deletes all remnants of the plugin from the database.
-     *
-     * @param subject user making the request
-     * @param pluginIds the plugins to be purged
-     * @return the list of keys of plugins that were purged
-     * @throws Exception if failed to purge a plugin
-     */
-    List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    List<PluginKey> deleteServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Turns on or off the enabled flag in the database but does NOT restart the server plugin.
@@ -240,14 +239,13 @@ public interface ServerPluginsLocal {
      * the given plugin will be unknown. The plugin can be installed again later.
      *
      * This has "requires new" semantics, so the results are committed immediately upon return.
-     * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, ServerPlugin, File)} - you'll
-     * probably want to use that instead. Do not blindly purge server plugins using this method unless you
-     * know what you are doing.
+     * <p/>
+     * Do not invoke this method directly. It is meant as a support for
+     * {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob}.
      *
-     * @param subject user making the request
-     * @param pluginKey the key of the server plugin to delete
+     * @param pluginId the id of the server plugin to delete
      */
-    void purgeServerPlugin(Subject subject, PluginKey pluginKey);
+    void purgeServerPlugin(int pluginId);
 
     /**
      * Given the key of a server plugin, this will return the status of that plugin.
@@ -321,4 +319,23 @@ public interface ServerPluginsLocal {
      * @return List of server plugins matching that type.
      */
     List<ServerPlugin> getEnabledServerPluginsByType(String type);
+
+    /**
+     * A helper method for {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob}.
+     * Checks whether given server plugin is safe for purging from the database.
+     */
+    boolean isReadyForPurge(int pluginId);
+
+    /**
+     * The provided server acknowledges the deletion of all plugins marked as deleted by calling this method.
+     * Once all the servers in the HA cloud acknowledge the deletion of a  plugin and the plugin is made purgable
+     * (after its resource types are deleted, etc) it will be automatically purged from the database.
+     * <p/>
+     * This method is not meant for "public" consumption and is only called from
+     * {@link org.rhq.enterprise.server.core.plugin.ServerPluginScanner}
+     *
+     * @param serverId the id of the server that wants to acknowledge that it has seen the deleted plugins
+     */
+    void acknowledgeDeletedPluginsBy(int serverId);
+
 }

@@ -2289,7 +2289,7 @@
             <schemaSpec version="2.143">
               <schema-alterColumn table="RHQ_RAW_CONFIG" column="config_ID" nullable="true"/>
             </schemaSpec>
-            
+
             <schemaSpec version="2.144">
                 <!-- RHQ_AGENT_INSTALL -->
                 <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
@@ -2314,6 +2314,17 @@
               <schema-alterColumn table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" nullable="true"/>
             </schemaSpec>
 
+            <schemaSpec version="2.146">
+                <schema-directSQL>
+                    <statement desc="Create new RHQ_PLUGIN_SERVER_ACK_DELETE table">
+                        CREATE TABLE RHQ_PLUGIN_SERVER_ACK_DELETE (
+                        PLUGIN_ID INTEGER NOT NULL REFERENCES RHQ_PLUGIN,
+                        SERVER_ID INTEGER NOT NULL REFERENCES RHQ_SERVER,
+                        CONSTRAINT RHQ_PLUGIN_SERVER_ACK_DELETE_PK PRIMARY KEY (PLUGIN_ID, SERVER_ID)
+                        )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

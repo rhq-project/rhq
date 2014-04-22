@@ -51,8 +51,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -61,6 +63,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
@@ -87,8 +90,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     private EntityManager entityManager;
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource dataSource;
+
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
+
+    @EJB
+    private ServerManagerLocal serverManager;
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void restartMasterPluginContainer(Subject subject) {
@@ -104,6 +111,13 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @SuppressWarnings("unchecked")
     public List<ServerPlugin> getAllServerPlugins() {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL);
+        return q.getResultList();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<ServerPlugin> getDeletedPlugins() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_DELETED);
         return q.getResultList();
     }
 
@@ -324,7 +338,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public List<PluginKey> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<PluginKey> deleteServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return new ArrayList<PluginKey>(); // nothing to do
         }
@@ -399,24 +413,6 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
 
         return success;
-    }
-
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<PluginKey>(); // nothing to do
-        }
-
-        // first, ensure we undeploy them
-        List<PluginKey> purgePlugins = undeployServerPlugins(subject, pluginIds);
-
-        // now remove them from the db
-        for (PluginKey pluginKey : purgePlugins) {
-            purgeServerPlugin(subject, pluginKey); // delete the row in the DB
-        }
-
-        log.info("Server plugins " + purgePlugins + " have been purged");
-        return purgePlugins;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -519,18 +515,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return;
     }
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void purgeServerPlugin(Subject subject, PluginKey pluginKey) {
-        Query q = this.entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ANY_BY_NAME);
-        q.setParameter("name", pluginKey.getPluginName());
-        ServerPlugin doomed = (ServerPlugin) q.getSingleResult();
-
+    public void purgeServerPlugin(int pluginId) {
         // get the reference to attach to em and use the em.remove. this cascade deletes too.
-        doomed = this.entityManager.getReference(ServerPlugin.class, doomed.getId());
+        ServerPlugin doomed = this.entityManager.find(ServerPlugin.class, pluginId);
+        doomed.getServersAcknowledgedDelete().clear();
         this.entityManager.remove(doomed);
 
-        log.info("Server plugin [" + pluginKey + "] has been purged from the db");
+        log.info("Server plugin [" + doomed + "] has been purged from the db");
         return;
     }
 
@@ -672,6 +664,42 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         } else {
             throw new Exception("Master plugin container not available - is it initialized?");
+        }
+    }
+
+    @Override
+    public boolean isReadyForPurge(int pluginId) {
+        ServerPlugin plugin = entityManager.find(ServerPlugin.class, pluginId);
+
+        @SuppressWarnings("unchecked")
+        List<Server> allServers = entityManager.createNamedQuery(Server.QUERY_FIND_ALL).getResultList();
+
+        for (Server s : allServers) {
+            if (!plugin.getServersAcknowledgedDelete().contains(s)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(plugin + " is not ready to be purged. Server " + s +
+                        " has not acknowledged it knows about its deletion.");
+                }
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public void acknowledgeDeletedPluginsBy(int serverId) {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_UNACKED_DELETED_PLUGINS);
+        q.setParameter("serverId", serverId);
+
+        @SuppressWarnings("unchecked")
+        List<ServerPlugin> plugins = (List<ServerPlugin>) q.getResultList();
+
+        Server server = entityManager.find(Server.class, serverId);
+
+        for (ServerPlugin p : plugins) {
+            p.getServersAcknowledgedDelete().add(server);
+            entityManager.merge(p);
         }
     }
 

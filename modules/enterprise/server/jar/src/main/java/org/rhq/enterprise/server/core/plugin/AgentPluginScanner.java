@@ -52,10 +52,12 @@ import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployer.DeploymentInfo;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -188,6 +190,13 @@ public class AgentPluginScanner {
             log.debug("Scan detected agent plugin [" + di.url + "]...");
             this.scanned.add(di);
         }
+
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+        ServerManagerLocal serverMgr = LookupUtil.getServerManager();
+        Server thisServer = serverMgr.getServer();
+
+        pluginMgr.acknowledgeDeletedPluginsBy(thisServer.getId());
+
         return;
     }
 

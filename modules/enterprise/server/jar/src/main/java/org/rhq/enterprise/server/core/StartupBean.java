@@ -627,9 +627,9 @@ public class StartupBean implements StartupLocal {
         }
 
         try {
-            // Do not check until we are up at least 1 min, and every 5 minutes thereafter.
+            // Do not check until we are up at least 1 min, and every 3 minutes thereafter.
             final long initialDelay = 1000L * 60;
-            final long interval = 1000L * 60 * 5;
+            final long interval = 1000L * 60 * 3;
             schedulerBean.scheduleSimpleRepeatingJob(PurgePluginsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule purge plugins job.", e);

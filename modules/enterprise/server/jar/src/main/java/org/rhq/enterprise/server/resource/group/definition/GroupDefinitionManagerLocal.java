@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.server.resource.group.definition;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -49,4 +52,7 @@ public interface GroupDefinitionManagerLocal extends GroupDefinitionManagerRemot
 
     void removeManagedResource_helper(Subject subject, int groupDefinitionId, Integer doomedGroupId)
         throws GroupDefinitionDeleteException, GroupDefinitionNotFoundException;
+
+    void updateGroupsByCannedExpressions(String plugin, List<CannedGroupExpression> expressions);
+
 }

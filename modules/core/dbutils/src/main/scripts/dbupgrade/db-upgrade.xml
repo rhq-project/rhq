@@ -2309,6 +2309,11 @@
                 <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_PASSWORD" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
 
+			<schemaSpec version="2.145">
+              <schema-addColumn   table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" columnType="VARCHAR2" precision="100" />
+              <schema-alterColumn table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" nullable="true"/>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

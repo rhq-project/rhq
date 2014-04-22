@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
@@ -213,4 +214,9 @@ public interface PluginGWTService extends RemoteService {
      * @param jobsConfig the new config containing the scheduled jobs configuration
      */
     void updateServerPluginScheduledJobs(PluginKey serverPluginKey, Configuration jobsConfig) throws RuntimeException;
+    /**
+     * returns canned group expressions
+     * @return
+     */
+    ArrayList<CannedGroupExpression> getCannedGroupExpressions();
 }

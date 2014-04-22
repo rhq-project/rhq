@@ -25,10 +25,11 @@ import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceFie
 import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -40,6 +41,8 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -69,6 +72,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -96,18 +100,6 @@ import org.rhq.coregui.client.util.message.Message.Severity;
  */
 public class SingleGroupDefinitionView extends EnhancedVLayout implements BookmarkableView {
 
-    private static final String TEMPLATE_JBOSSAS4_CLUSTERS = MSG.view_dynagroup_template_jbossas4_clusters();
-    private static final String TEMPLATE_JBOSSAS5_CLUSTERS = MSG.view_dynagroup_template_jbossas5_clusters(); // true for AS 5 and 6
-    private static final String TEMPLATE_JBOSSAS4_EAR_CLUSTERS = MSG.view_dynagroup_template_jbossas4_earClusters();
-    private static final String TEMPLATE_JBOSSAS4_UNIQUE_VERSIONS = MSG
-        .view_dynagroup_template_jbossas4_uniqueVersions();
-    private static final String TEMPLATE_PLATFORMS = MSG.view_dynagroup_template_platforms();
-    private static final String TEMPLATE_UNIQUE_RESOURCE_TYPES = MSG.view_dynagroup_template_uniqueResourceTypes();
-    private static final String TEMPLATE_JBOSSAS4_HOSTING_APP = MSG.view_dynagroup_template_jbossas4_hostingApp();
-    private static final String TEMPLATE_JBOSSAS4_NONSECURED = MSG.view_dynagroup_template_jbossas4_nonsecured();
-    private static final String TEMPLATE_DOWNED_RESOURCES = MSG.view_dynagroup_template_downedResources();
-    private static final String TEMPLATE_RHQ_AGENTS = MSG.view_dynagroup_template_rhq_agents();
-
     private int groupDefinitionId;
     private GroupDefinition groupDefinition;
     private String basePath;
@@ -121,7 +113,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
     private CheckboxItem recursive;
     private SpacerItem templateSelectorTitleSpacer;
     private SelectItem templateSelector;
-    private LinkedHashMap<String, String> templateStrings;
+    private TreeMap<String,CannedGroupExpression> cannedExpressions;
     private TextAreaItem expression;
     private SpinnerItem recalculationInterval;
 
@@ -165,7 +157,9 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         IButton saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                saveForm(form, dynaGroupChildrenView, false);
+                if (form.validate()) {
+                    saveFormCheckCannedExpr(form, dynaGroupChildrenView, false);
+                }
             }
         });
 
@@ -173,7 +167,9 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         recalculateButton.setWidth(150);
         recalculateButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                saveForm(form, dynaGroupChildrenView, true);
+                if (form.validate()) {
+                    saveFormCheckCannedExpr(form, dynaGroupChildrenView, true);
+                }
             }
         });
 
@@ -194,13 +190,33 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         addMember(form);
         addMember(buttonLayout);
         addMember(dynaGroupChildrenView);
-
         markForRedraw();
+    }
+    public void setCannedExpressions(final ArrayList<CannedGroupExpression> list) {
+        this.cannedExpressions = new TreeMap<String, CannedGroupExpression>();
+        for (CannedGroupExpression cge : list) {
+            this.cannedExpressions.put(cge.getPlugin() + " - " + cge.getName(), cge);
+        }
+        templateSelector.setValueMap(cannedExpressions.keySet().toArray(new String[cannedExpressions.size()]));
+    }
+    
+    private void saveFormCheckCannedExpr(final DynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
+        final boolean recalc) {
+        if (this.groupDefinition.getCannedExpression() != null) {
+            SC.ask(MSG.view_dynagroup_saveCannedDefWarning(this.groupDefinition.getCannedExpression().replaceAll(":.*", "")), new BooleanCallback() {
+                public void execute(Boolean confirmed) {
+                    if (confirmed) {
+                        saveForm(form, dynaGroupChildrenView, recalc);
+                    }
+                }
+            });
+        } else {
+            saveForm(form, dynaGroupChildrenView, recalc);
+        }
     }
 
     private void saveForm(final DynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
         final boolean recalc) {
-        if (form.validate()) {
             form.saveData(new DSCallback() {
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
@@ -248,7 +264,6 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                     }
                 }
             });
-        }
     }
 
     private void recalculate(final DynaGroupChildrenView dynaGroupChildrenView, int groupDefId) {
@@ -389,15 +404,14 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         templateSelectorTitleSpacer.setEndRow(false);
 
         templateSelector = new SelectItem("templateSelector", MSG.view_dynagroup_exprBuilder_savedExpression());
-        templateStrings = getTemplates();
-        templateSelector.setValueMap(templateStrings.keySet().toArray(new String[templateStrings.size()]));
         templateSelector.setAllowEmptyValue(true);
-        templateSelector.setWidth(300);
+        templateSelector.setWidth(400);
         templateSelector.setColSpan(1);
         templateSelector.setEndRow(true);
         templateSelector.setStartRow(false);
         templateSelector.setIcons(expressionBuilderIcon);
         templateSelector.setHoverWidth(200);
+        templateSelector.setValueMap("");
 
         expression = new TextAreaItem("expression", MSG.view_dynagroup_expression());
         expression.setWidth(400);
@@ -421,9 +435,22 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
             public void onChanged(ChangedEvent event) {
                 if (event.getValue() != null) {
                     String selectedTemplateId = event.getValue().toString();
-                    // user picked one of the canned templates - put it in the expression text area
-                    String selectedTemplate = templateStrings.get(selectedTemplateId);
-                    expression.setValue((selectedTemplate != null) ? selectedTemplate : "");
+                    // user picked one of the canned expressions - update field values
+                    CannedGroupExpression cge = cannedExpressions.get(selectedTemplateId);
+                    if (cge != null) {
+                        StringBuilder expr = new StringBuilder();
+                        for (String e : cge.getExpression()) {
+                            expr.append(e+"\n");
+                        }
+                        expression.setValue(expr.toString());
+                        recalculationInterval.setValue(cge.getRecalcInMinutes());
+                        description.setValue(cge.getDescription());
+                        recursive.setValue(cge.isRecursive());
+                        name.setValue(cge.getName());
+                    }
+                    else {
+                        expression.setValue("");
+                    }
                 } else {
                     expression.setValue("");
                 }
@@ -437,64 +464,18 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         recalculationInterval.setStep(1); // the recalc interval is in milliseconds, step up one minute at a time
     }
 
-    public static LinkedHashMap<String, String> getTemplates() {
-        LinkedHashMap<String, String> items = new LinkedHashMap<String, String>();
+    private void lookupCannedExpressions() {
+        GWTServiceLookup.getPluginService().getCannedGroupExpressions(new AsyncCallback<ArrayList<CannedGroupExpression>>() {
 
-        // grouped items (these can potentially create multiple groups)
-        items.put(TEMPLATE_JBOSSAS4_CLUSTERS, //
-            buildTemplate("groupby resource.trait[partitionName]", //
-                "resource.type.plugin = JBossAS", //
-                "resource.type.name = JBossAS Server"));
-        items.put(TEMPLATE_JBOSSAS5_CLUSTERS, //
-            buildTemplate("groupby resource.trait[MCBean|ServerConfig|*|partitionName]", //
-                "resource.type.plugin = JBossAS5", //
-                "resource.type.name = JBossAS Server"));
-        items.put(TEMPLATE_JBOSSAS4_EAR_CLUSTERS, //
-            buildTemplate("groupby resource.parent.trait[partitionName]", //
-                "groupby resource.name", //
-                "resource.type.plugin = JBossAS", //
-                "resource.type.name = Enterprise Application (EAR)"));
-        items.put(TEMPLATE_JBOSSAS4_UNIQUE_VERSIONS, //
-            buildTemplate("groupby resource.trait[jboss.system:type=Server:VersionName]", //
-                "resource.type.plugin = JBossAS", //
-                "resource.type.name = JBossAS Server"));
-        items.put(TEMPLATE_PLATFORMS, //
-            buildTemplate("resource.type.category = PLATFORM", //
-                "groupby resource.name"));
-        items.put(TEMPLATE_UNIQUE_RESOURCE_TYPES, //
-            buildTemplate("groupby resource.type.plugin", //
-                "groupby resource.type.name"));
-
-        // simple items (these create one group)
-        items.put(TEMPLATE_JBOSSAS4_HOSTING_APP, //
-            buildTemplate("resource.type.plugin = JBossAS", //
-                "resource.type.name = JBossAS Server", //
-                "resource.child.name.contains = my"));
-        items.put(TEMPLATE_JBOSSAS4_NONSECURED, //
-            buildTemplate("empty resource.pluginConfiguration[principal]", //
-                "resource.type.plugin = JBossAS", //
-                "resource.type.name = JBossAS Server"));
-        items.put(TEMPLATE_DOWNED_RESOURCES, //
-            buildTemplate("resource.availability = DOWN"));
-        items.put(TEMPLATE_RHQ_AGENTS, //
-            buildTemplate("resource.type.plugin = RHQAgent", //
-                "resource.type.name = RHQ Agent"));
-
-        return items;
-    }
-
-    private static String buildTemplate(String... pieces) {
-        StringBuilder results = new StringBuilder();
-        boolean first = true;
-        for (String next : pieces) {
-            if (first) {
-                first = false;
-            } else {
-                results.append('\n');
+            @Override
+            public void onFailure(Throwable arg0) {
             }
-            results.append(next);
-        }
-        return results.toString();
+
+            @Override
+            public void onSuccess(ArrayList<CannedGroupExpression> arg0) {
+                setCannedExpressions(arg0);
+            }
+        });;
     }
 
     private void lookupDetails(final int groupDefinitionId) {
@@ -560,6 +541,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                     groupDefinitionId = viewPath.getCurrentAsInt();
                     basePath = viewPath.getPathToCurrent();
                     lookupDetails(groupDefinitionId);
+                    lookupCannedExpressions();
                 } else {
                     handleAuthorizationFailure();
                 }

@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.server.scheduler.jobs;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 

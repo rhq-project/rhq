@@ -23,7 +23,6 @@
 package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -368,9 +367,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition resourceConfigurationDefinition;
 
-    @JoinColumn(name = "SUBCATEGORY_ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    private ResourceSubCategory subCategory;
+    @Column(name = "SUBCATEGORY")
+    private String subCategory;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
@@ -395,10 +393,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<PackageType> packageTypes;
-
-    @ManyToMany
-    @JoinTable(name = "RHQ_RESOURCE_TYPE_SUBCATS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") }, inverseJoinColumns = { @JoinColumn(name = "RESOURCE_SUBCAT_ID") })
-    private List<ResourceSubCategory> subCategories;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.REMOVE)
     private List<Resource> resources;
@@ -518,14 +512,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
      * has been tagged with. If the ResourceType has not been tagged with
      * a subcategory, <code>null</code> is returned.
      */
-    public ResourceSubCategory getSubCategory() {
+    public String getSubCategory() {
         return this.subCategory;
     }
 
     /**
      * Tags this ResourceType as being part of the specified ResourceSubCategory
      */
-    public void setSubCategory(ResourceSubCategory subcategory) {
+    public void setSubCategory(String subcategory) {
         this.subCategory = subcategory;
     }
 
@@ -824,41 +818,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
     }
 
-    /**
-     * Returns the List of child ResourceSubCategorys which have been defined
-     * on this ResourceType. These ResourceSubCategory's are available to
-     * tag any child ResourceTypes of this ResourceType.
-     *
-     * @return the list of ResourceSubCategory's which have been defined
-     *         on this ResourceType
-     */
-    public List<ResourceSubCategory> getChildSubCategories() {
-        if (subCategories==null) {
-            return Collections.emptyList();
-        }
-        return this.subCategories;
-    }
-
-    /**
-     * Sets the List of child ResourceSubCategorys for this ResourceType.
-     *
-     * @param subCategories the List of ResourceSubCategory's for this ResourceType
-     */
-    public void setChildSubCategories(List<ResourceSubCategory> subCategories) {
-        this.subCategories = subCategories;
-    }
-
-    /**
-     * Adds a child ResourceSubCategory to the List which has been defined
-     * on this ResourceType.
-     */
-    public void addChildSubCategory(ResourceSubCategory subCategory) {
-        if (this.subCategories == null) {
-            this.subCategories = new ArrayList<ResourceSubCategory>();
-        }
-        this.subCategories.add(subCategory);
-    }
-
     public Set<ProductVersion> getProductVersions() {
         if (productVersions==null) {
             return Collections.emptySet();
@@ -919,6 +878,19 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setDriftDefinitionTemplates(Set<DriftDefinitionTemplate> driftDefinitionTemplates) {
         this.driftDefinitionTemplates = driftDefinitionTemplates;
+    }
+
+    @Deprecated
+    public List<ResourceSubCategory> getChildSubCategories() {
+        return null;
+    }
+
+    @Deprecated
+    public void setChildSubCategories(List<ResourceSubCategory> subCategories) {
+    }
+
+    @Deprecated
+    public void addChildSubCategory(ResourceSubCategory subCategory) {
     }
 
     // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing ResourceTypes, or

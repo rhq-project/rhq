@@ -178,7 +178,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                 event.cancel();
 
                 // don't select the node on a right click, since we're not navigating to it, and
-                // re-select the current node if necessary                
+                // re-select the current node if necessary
                 ResourceGroupEnhancedTreeNode contextNode = (ResourceGroupEnhancedTreeNode) event.getNode();
 
                 if (null != currentNodeId) {
@@ -231,7 +231,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                         ClusterKey key = newNode.getClusterKey();
                         Log.debug("Selecting autocluster group [" + key + "]...");
                         currentNodeId = newNode.getID();
-                        // the user selected a cluster node - let's switch to that cluster group view                            
+                        // the user selected a cluster node - let's switch to that cluster group view
                         selectClusterGroup(key);
 
                     } else if (newNode.isMixedGroupTopNode()) {
@@ -487,8 +487,10 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                     nodesByType.add(autoTypeGroupNode);
                 }
 
+                //TODO: BZ 1069545 Fix this!
                 // Insert subcategory node(s) if the type has a subcategory.
-                ResourceSubCategory subcategory = childType.getSubCategory();
+                //ResourceSubCategory subcategory = childType.getSubCategory();
+                ResourceSubCategory subcategory = null;
                 if (subcategory != null) {
                     ResourceGroupEnhancedTreeNode lastSubcategoryNode = null;
 
@@ -568,7 +570,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
         // If an autoCluster contains disparate resource names the server returns only "..." because it doesn't
         // know what to name the node.  This typically happens if the cluster group (i.e. root group) members are
         // themselves disparate. In general this is not the case, because recursive compat groups are typically
-        // used specifically for groups of logically equivalent resources, like cloned AS instances. 
+        // used specifically for groups of logically equivalent resources, like cloned AS instances.
         String childName = child.getName();
         if ("...".equals(childName)) {
             childName = MSG.group_tree_groupOfResourceType(type.getName());

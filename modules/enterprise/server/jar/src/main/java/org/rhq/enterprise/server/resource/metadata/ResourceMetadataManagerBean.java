@@ -41,7 +41,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
-import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -51,7 +50,6 @@ import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
@@ -205,28 +203,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 // 3) Immediately finish removing the deleted types by forcing the normally async work to run in-band
                 new PurgeResourceTypesJob().executeJobCode(null);
             }
-
-            // Now it's safe to remove any obsolete subcategories on the legit types.
-            for (ResourceType legitType : legitTypes) {
-                ResourceType updateType = metadataCache.getType(legitType.getName(), legitType.getPlugin());
-
-                // If we've got a type from the descriptor which matches an existing one,
-                // then let's see if we need to remove any subcategories from the existing one.
-
-                // NOTE: I don't think updateType will ever be null here because we have previously verified
-                // its existence above when we called resourceMetadataManager.getPluginTypes. All of the types contained
-                // in legitTypes are all types found to exist in metadataCache. Therefore, I think that this null
-                // check can be removed.
-                //
-                // jsanda - 11/11/2010
-                if (updateType != null) {
-                    try {
-                        resourceMetadataManager.removeObsoleteSubCategories(subject, updateType, legitType);
-                    } catch (Exception e) {
-                        throw new Exception("Failed to delete obsolete subcategories from " + legitType + ".", e);
-                    }
-                }
-            }
         } catch (Throwable t) {
             // Catch all exceptions, so a failure here does not cause the outer tx to rollback.
             log.error("Failure during removal of obsolete ResourceTypes and Subcategories.", t);
@@ -258,65 +234,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.error("Failure during removal of obsolete ResourceTypes and Subcategories.", e);
         }
     }
-
-    /*
-    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
-    private void removeResourceTypes(Subject subject, Set<ResourceType> candidateTypes,
-        Set<ResourceType> typesToBeRemoved) throws Exception {
-
-        for (ResourceType candidateType : candidateTypes) {
-            // Remove obsolete descendant types first.
-            //Set<ResourceType> childTypes = candidateType.getChildResourceTypes();
-            List<ResourceType> childTypes = resourceTypeManager.getChildResourceTypes(subject, candidateType);
-            if (childTypes != null && !childTypes.isEmpty()) {
-                // Wrap child types in new HashSet to avoid ConcurrentModificationExceptions.
-                removeResourceTypes(subject, new HashSet<ResourceType>(childTypes), typesToBeRemoved);
-            }
-            if (typesToBeRemoved.contains(candidateType)) {
-                try {
-                    removeResourceType(subject, candidateType);
-                } catch (Exception e) {
-                    throw new Exception("Failed to remove " + candidateType + ".", e);
-                }
-                typesToBeRemoved.remove(candidateType);
-            }
-        }
-    }
-
-    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
-    private void removeResourceType(Subject subject, ResourceType existingType) {
-        log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
-
-        // Remove all Resources that are of the type (regardless of inventory status).
-        ResourceCriteria c = new ResourceCriteria();
-        c.addFilterResourceTypeId(existingType.getId());
-        c.addFilterInventoryStatus(null);
-        List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
-        //Chunk through the results in 200(default) page element batches to avoid excessive
-        //memory usage for large deployments. No need to use CriteriaQuery here as this loop is more efficient at catching stragglers
-        while ((resources != null) && (!resources.isEmpty())) {
-            Iterator<Resource> resIter = resources.iterator();
-            while (resIter.hasNext()) {
-                Resource res = resIter.next();
-                List<Integer> deletedIds = resourceManager.uninventoryResource(subject, res.getId());
-                // do this out of band because the current transaction is locking rows that due to
-                // updates that may need to get deleted. If you do it here the NewTrans used below
-                // may deadlock with the current transactions locks.
-                for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.uninventoryResourceAsyncWork(subject, deletedResourceId);
-                }
-                resIter.remove();
-                }
-            //process next batch if available with new criteria instance
-            c = new ResourceCriteria();
-            c.addFilterResourceTypeId(existingType.getId());
-            c.addFilterInventoryStatus(null);
-            resources = resourceManager.findResourcesByCriteria(subject, c);
-        }
-
-        resourceMetadataManager.completeRemoveResourceType(subject, existingType);
-    }
-    */
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void completeRemoveResourceType(Subject subject, ResourceType existingType) {
@@ -426,13 +343,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void mergeExistingType(ResourceType resourceType, ResourceType existingType) {
         log.debug("Merging type [" + resourceType + "] + into existing type [" + existingType + "]...");
 
-        // Make sure to first add/update any subcategories on the parent before trying to update children.
-        // Otherwise, the children may try to save themselves with subcategories which wouldn't exist yet.
-        //updateChildSubCategories(resourceType, existingType);
-        persistSubCategories(resourceType);
-
-        entityManager.flush();
-
         // even though we've updated our child types to use new subcategory references, its still
         // not safe to delete the old sub categories yet, because we haven't yet deleted all of the old
         // child types which may still be referencing these sub categories
@@ -468,33 +378,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         existingType.setDescription(resourceType.getDescription());
         existingType.setSingleton(resourceType.isSingleton());
         existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
-
-        // We need to be careful updating the subcategory. If it is not null and the same ("equals")
-        // to the new one, we need to copy over the attributes, as the existing will be kept and
-        // the new one not persisted. Otherwise, we can just use the new one.
-        ResourceSubCategory oldSubCat = existingType.getSubCategory();
-        ResourceSubCategory newSubCat = resourceType.getSubCategory();
-        if (oldSubCat != null && oldSubCat.equals(newSubCat)) {
-            // Subcategory hasn't changed - nothing to do (call to addAndUpdateChildSubCategories()
-            // above already took care of any modifications to the ResourceSubCategories themselves).
-        } else if (newSubCat == null) {
-            if (oldSubCat != null) {
-                log.info("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
-                    + oldSubCat + " to " + newSubCat);
-                existingType.setSubCategory(null);
-            }
-        } else {
-            // New subcategory is non-null and not equal to the old subcategory.
-            ResourceSubCategory existingSubCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                existingType, newSubCat.getName());
-            if (existingSubCat == null)
-                throw new IllegalStateException("Resource type [" + resourceType.getName() + "] in plugin ["
-                    + resourceType.getPlugin() + "] has a subcategory (" + newSubCat.getName()
-                    + ") which was not defined as a child subcategory of one of its ancestor resource types.");
-            log.info("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
-                + oldSubCat + " to " + existingSubCat);
-            existingType.setSubCategory(existingSubCat);
-        }
 
         existingType = entityManager.merge(existingType);
     }
@@ -619,70 +502,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // metric and operation definitions and their dependent types,
         // but first do some validity checking.
 
-        // Check if the subcategories as children of resourceType are valid
-        // Those are the subcategories we offer for children of us
-        checkForValidSubcategories(resourceType.getChildSubCategories());
-
-        //Persist subcategories only if they are new
-        persistSubCategories(resourceType);
-
-        // Check if we have a subcategory attached that needs to be linked to one of the parents
-        // This is a subcategory of our parent where we are supposed to be grouped in.
-        linkSubCategoryToParents(resourceType);
 
         // Ensure that the new type has any built-in metrics (like Availability Type)
         MeasurementMetadataManagerBean.getMetricDefinitions(resourceType);
 
         entityManager.merge(resourceType);
-    }
-
-
-    private void persistSubCategories(ResourceType resourceType) {
-        boolean newSubcategoriesCreated = false;
-        for (int i = 0; i < resourceType.getChildSubCategories().size(); i++) {
-            ResourceSubCategory currentSubCategory = resourceType.getChildSubCategories().get(i);
-
-            ResourceSubCategory existingSubCategory = null;
-            try {
-                existingSubCategory = (ResourceSubCategory) entityManager
-                    .createNamedQuery(ResourceSubCategory.FIND_BY_NAME_WITH_SUBCATEGORIES)
-                    .setParameter("name", currentSubCategory.getName())
-                    .getSingleResult();
-            } catch (NoResultException e) {
-                //do nothing since that means this is a new subcategory
-            }
-
-            log.info("Searched for existing subcategory " + currentSubCategory.getName() + " and found "
-                + existingSubCategory);
-
-            if (existingSubCategory != null) {
-                resourceType.getChildSubCategories().set(i, existingSubCategory);
-            } else {
-                newSubcategoriesCreated = true;
-                entityManager.persist(currentSubCategory);
-            }
-        }
-
-        if (newSubcategoriesCreated) {
-            entityManager.flush();
-        }
-    }
-
-    private void linkSubCategoryToParents(ResourceType resourceType) {
-        if (resourceType.getSubCategory() == null) {
-            return; // Nothing to do
-        }
-
-        ResourceSubCategory mySubCategory = resourceType.getSubCategory();
-        ResourceSubCategory existingCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-            resourceType, mySubCategory.getName());
-        if (existingCat != null) {
-            resourceType.setSubCategory(existingCat);
-        } else {
-            throw new IllegalStateException("Subcategory " + mySubCategory.getName() + " defined on resource type "
-                + resourceType.getName() + " in plugin " + resourceType.getPlugin()
-                + " is not defined in a parent type");
-        }
     }
 
     private void updateParentResourceTypes(ResourceType newType, ResourceType existingType) {
@@ -789,33 +613,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     + " to a new valid parent with one of the following types: " + newParentTypes);
             }
         }
-    }
-
-    private void checkForValidSubcategories(List<ResourceSubCategory> subCategories) {
-        Set<String> subCatNames = new HashSet<String>();
-
-        for (ResourceSubCategory subCategory : subCategories) {
-            List<ResourceSubCategory> allSubcategories = getAllSubcategories(subCategory);
-            for (ResourceSubCategory subCategory2 : allSubcategories) {
-                if (subCatNames.contains(subCategory2.getName())) {
-                    throw new RuntimeException("Subcategory [" + subCategory.getName() + "] is duplicated");
-                }
-                subCatNames.add(subCategory2.getName());
-            }
-        }
-    }
-
-    private List<ResourceSubCategory> getAllSubcategories(ResourceSubCategory cat) {
-        List<ResourceSubCategory> result = new ArrayList<ResourceSubCategory>();
-
-        if (cat.getChildSubCategories() != null) {
-            for (ResourceSubCategory cat2 : cat.getChildSubCategories()) {
-                result.addAll(getAllSubcategories(cat2));
-            }
-        }
-
-        result.add(cat);
-        return result;
     }
 
     /**

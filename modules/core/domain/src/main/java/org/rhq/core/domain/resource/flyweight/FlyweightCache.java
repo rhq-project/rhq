@@ -40,7 +40,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * The <code>construct*</code> methods are provided to correctly initialize
  * instances of the flyweight types in the cache instance from a minimal set
  * of data.
- * 
+ *
  * @author Lukas Krejci
  */
 public class FlyweightCache {
@@ -63,7 +63,7 @@ public class FlyweightCache {
 
     /**
      * @see #constructResource(int, String, String, String, Integer, int, AvailabilityType)
-     * 
+     *
      * @param original the resource
      * @return the initialized resource flyweight
      */
@@ -91,10 +91,10 @@ public class FlyweightCache {
      * <p>
      * The type is supposed to exist in this cache already. If it doesn't, no type is assigned
      * to the returned resource flyweight.
-     * <p> 
+     * <p>
      * If a corresponding flyweight for the provided resource id is already found in this cache,
      * it is refreshed with the data provided to this call.
-     * 
+     *
      * @param id the resource id
      * @param name the resource name
      * @param uuid the resource uuid
@@ -141,18 +141,13 @@ public class FlyweightCache {
 
     /**
      * @see #constructSubCategory(int, String, Integer, String)
-     * 
+     *
      * @param original
      * @return a fully initialized resource sub category flyweight
      */
+    @Deprecated
     public ResourceSubCategoryFlyweight constructSubCategory(ResourceSubCategory original) {
-        int id = original.getId();
-        String name = original.getName();
-        ResourceSubCategory parent = original.getParentSubCategory();
-        Integer parentId = parent != null ? parent.getId() : null;
-        String parentName = parent != null ? parent.getName() : null;
-
-        return constructSubCategory(id, name, parentId, parentName);
+        return null;
     }
 
     /**
@@ -162,7 +157,7 @@ public class FlyweightCache {
      * <p>
      * If parent sub category id is not null but a corresponding flyweight doesn't exist in this cache yet,
      * a new instance is put in this cache initialized with the parent id and name.
-     * 
+     *
      * @param id
      * @param name
      * @param parentSubCategoryId
@@ -196,7 +191,7 @@ public class FlyweightCache {
 
     /**
      * @see #constructResourceType(int, String, String, boolean, ResourceCategory, Integer)
-     * 
+     *
      * @param original the original resource type
      * @return a fully initialized resource type flyweight
      */
@@ -206,10 +201,9 @@ public class FlyweightCache {
         String plugin = original.getPlugin();
         boolean singleton = original.isSingleton();
         ResourceCategory category = original.getCategory();
-        ResourceSubCategory subCategory = original.getSubCategory();
+        String subCategory = original.getSubCategory();
 
-        return constructResourceType(id, name, plugin, singleton, category, subCategory != null ? subCategory.getId()
-            : null);
+        return constructResourceType(id, name, plugin, singleton, category, subCategory);
     }
 
     /**
@@ -220,7 +214,7 @@ public class FlyweightCache {
      * <p>
      * The subcategory is supposed to exist in the cache. If it doesn't the subcategory of the
      * returned resource type flyweight is set to null.
-     * 
+     *
      * @param id the resource type id
      * @param name the resource type name
      * @param plugin the resource type plugin
@@ -230,7 +224,7 @@ public class FlyweightCache {
      * @return the resource type flyweight
      */
     public ResourceTypeFlyweight constructResourceType(int id, String name, String plugin, boolean singleton,
-        ResourceCategory category, Integer subCategory) {
+        ResourceCategory category, String subCategory) {
 
         ResourceTypeFlyweight ret = getResourceTypes().get(id);
 
@@ -244,11 +238,7 @@ public class FlyweightCache {
         ret.setPlugin(plugin);
         ret.setSingleton(singleton);
         ret.setCategory(category);
-        if (subCategory != null) {
-            ret.setSubCategory(getSubCategories().get(subCategory));
-        } else {
-            ret.setSubCategory(null);
-        }
+        ret.setSubCategory(subCategory);
 
         return ret;
     }

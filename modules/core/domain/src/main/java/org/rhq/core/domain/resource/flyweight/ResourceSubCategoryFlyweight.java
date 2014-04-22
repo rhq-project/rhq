@@ -27,45 +27,56 @@ import java.io.Serializable;
 
 /**
  * Flyweight representation of a resource sub category. Only id, name and parent are preserved.
- * 
+ *
  * @author Lukas Krejci
  */
+@Deprecated
 public class ResourceSubCategoryFlyweight implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Deprecated
     private int id;
+    @Deprecated
     private String name;
+    @Deprecated
     private ResourceSubCategoryFlyweight parentSubCategory;
 
+    @Deprecated
     public ResourceSubCategoryFlyweight() {
 
     }
 
+    @Deprecated
     public int getId() {
         return id;
     }
 
+    @Deprecated
     public void setId(int id) {
         this.id = id;
     }
 
+    @Deprecated
     public String getName() {
         return name;
     }
 
+    @Deprecated
     public void setName(String name) {
         this.name = name;
     }
 
+    @Deprecated
     public ResourceSubCategoryFlyweight getParentSubCategory() {
         return parentSubCategory;
     }
 
+    @Deprecated
     public void setParentSubCategory(ResourceSubCategoryFlyweight parentSubCategory) {
         this.parentSubCategory = parentSubCategory;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -91,5 +102,5 @@ public class ResourceSubCategoryFlyweight implements Serializable {
         result = name.hashCode();
 
         return result;
-    }    
+    }
 }

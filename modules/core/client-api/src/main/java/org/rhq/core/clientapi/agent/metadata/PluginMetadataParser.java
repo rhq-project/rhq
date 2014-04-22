@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryCallbacksType;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryTypeCallbackType;
@@ -53,8 +54,6 @@ import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.configuration.Configuration;
@@ -65,7 +64,6 @@ import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -295,7 +293,7 @@ public class PluginMetadataParser {
             // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
             // values.
             serverResourceType.setDescription(serverDescriptor.getDescription());
-            setSubCategory(serverDescriptor, serverResourceType);
+            serverResourceType.setSubCategory(serverDescriptor.getSubCategory());
 
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
@@ -431,7 +429,7 @@ public class PluginMetadataParser {
             // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
             // values.
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
-            setSubCategory(serviceDescriptor, serviceResourceType);
+            serviceResourceType.setSubCategory(serviceDescriptor.getSubCategory());
 
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
@@ -494,60 +492,6 @@ public class PluginMetadataParser {
     }
 
     /**
-     * Try to find the subCategory of the p/s/s descriptor in one of the parents
-     * &lt;subcategories>&lt;subcategory>Foo&lt;/subcategory>&lt;/subcategories> elements and
-     * set it on the resourceType if found.
-     *
-     * It is not enough to look at the direct parents, but we need to also look at the
-     * &lt;runs-inside> types if our type is "embedded" in a different type.
-     * @param resourceDescriptor Descriptor to get the subCategory attribute from
-     * @param resourceType The type to attach the ResourceSubCategory to.
-     * @throws InvalidPluginDescriptorException If the descriptor.subCategory can not be found in any parent.
-     */
-    private  void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
-        throws InvalidPluginDescriptorException {
-        String subCatName = resourceDescriptor.getSubCategory();
-        if (subCatName != null) {
-            ResourceSubCategory subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                resourceType, subCatName);
-
-            // We need to look at resourceDescriptor -> runsInside to see if one of those defines the
-            // subcategories that we are looking for.
-            if (subCat == null && resourceDescriptor.getRunsInside() != null) {
-                RunsInsideType rit = resourceDescriptor.getRunsInside();
-                List<ParentResourceType> parentResourceTypeList = rit.getParentResourceType();
-                for (ParentResourceType parentResourceType : parentResourceTypeList) {
-                    ResourceType parentType = getResourceTypeFromPlugin(parentResourceType.getName(),parentResourceType.getPlugin());
-                    // check on the parent
-                    if (parentType.getChildSubCategories()!=null ) {
-                        for (ResourceSubCategory parentSubcat : parentType.getChildSubCategories()) {
-                            if (parentSubcat.getName().equals(subCatName)) {
-                                subCat = parentSubcat;
-                                break;
-                            }
-                        }
-                    }
-
-                    // Not found on runs-inside type look at the ancestor of those runs-inside types?
-                    if (subCat==null) {
-                        subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(parentType,subCatName);
-                    }
-                    if (subCat!=null) {
-                        break;
-                    }
-                }
-            }
-
-            if (subCat == null) {
-                throw new InvalidPluginDescriptorException("Resource type [" + resourceType.getName()
-                    + "] specified a subcategory (" + subCatName
-                    + ") that is not defined as a child subcategory of one of its ancestor resource types.");
-            }
-            resourceType.setSubCategory(subCat);
-        }
-    }
-
-    /**
      * Parses the resource descriptor and registers the type and its component classes.
      *
      * @param  resourceDescriptor
@@ -586,9 +530,8 @@ public class PluginMetadataParser {
             resourceType.setDescription(resourceDescriptor.getDescription());
         }
 
-        // TODO (ips): I don't think platforms can have a subcategory.
         if (resourceType.getSubCategory() == null) {
-            setSubCategory(resourceDescriptor, resourceType);
+            resourceType.setSubCategory(resourceDescriptor.getSubCategory());
         }
 
         if (discoveryClass == null) {
@@ -653,15 +596,6 @@ public class PluginMetadataParser {
 
             for (ContentDescriptor contentDescriptor : resourceDescriptor.getContent()) {
                 resourceType.addPackageType(ContentMetadataParser.parseContentDescriptor(contentDescriptor));
-            }
-
-            // TODO not sure we really want this wrapping <subcategories> element since no one else uses it
-            if (resourceDescriptor.getSubcategories() != null) {
-                for (SubCategoryDescriptor subCategoryDescriptor : resourceDescriptor.getSubcategories()
-                    .getSubcategory()) {
-                    resourceType.addChildSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
-                        resourceType));
-                }
             }
 
             Bundle bundle = resourceDescriptor.getBundle();

@@ -50,8 +50,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assertAppsSubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -69,8 +68,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assertAppsSubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -88,11 +86,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 2, 0);
-            assertAppsSubCategory(subCat);
-
-            subCat = assertSubCategory(server1.getChildSubCategories(), 2, 1);
-            assertServicesSubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -110,8 +104,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assertServicesSubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -129,8 +122,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assertServicesSubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -148,8 +140,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assertApps2SubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -167,7 +158,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            assertSubCategory(server1.getChildSubCategories(), 0, null);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -185,9 +176,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-            assertServicesSubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -205,9 +194,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-            assertAppsSubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -225,9 +212,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-            assertServicesSubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -245,9 +230,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 2, 1);
-            assertAppsSubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -265,10 +248,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-
-            assertServicesSubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -286,10 +266,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-            ResourceSubCategory grandChildSubCat = assertSubCategory(childSubCat.getChildSubCategories(), 1, 0);
-            assertAppsSubCategory(grandChildSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -307,10 +284,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-
-            assertApps2SubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -328,10 +302,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-
-            assertApps2SubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -348,10 +319,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
-
-            assertApps2SubCategory(childSubCat);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -369,7 +337,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            assertSubCategory(server1.getChildSubCategories(), 0, null);
+            assert server1.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -390,10 +358,11 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
             assert children.size() == 3;
 
             ResourceType services = getResourceType("testService1");
-            assertServicesSubCategory(services.getSubCategory());
+            assert services.getSubCategory().equals("services");
 
             ResourceType apps = getResourceType("testApp1");
-            assertAppsSubCategory(apps.getSubCategory());
+            assert apps.getSubCategory().equals("applications");
+
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -414,10 +383,10 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
             assert children.size() == 2;
 
             ResourceType services = getResourceType("testService2");
-            assert services.getSubCategory().getName().equals("applications2");
+            assert services.getSubCategory().equals("applications2");
 
             ResourceType apps = getResourceType("testApp1");
-            assert apps.getSubCategory().getName().equals("applications2");
+            assert apps.getSubCategory().equals("applications2");
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -470,14 +439,11 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
             subCategories = service2.getChildSubCategories();
             assert subCategories.isEmpty() : "Expected subcategories to be empty, but was " + subCategories;
 
-            ResourceSubCategory subCategory = service2.getSubCategory(); // the subcategory attribute
-            // TODO the subCategory is currently not persisted to the DB, so can not be found
-            subCategory = em.find(ResourceSubCategory.class, subCategory.getId());
-            String name = subCategory.getName();
-            assert name.equals("applications2") : "Expected 'applictions2', but got " + name;
+            String subCategory = service2.getSubCategory(); // the subcategory attribute
+            assert subCategory.equals("applications2") : "Expected 'applictions2', but got " + subCategory;
 
             ResourceType apps = getResourceType("testApp1");
-            assert apps.getSubCategory().getName().equals("applications2");
+            assert apps.getSubCategory().equals("applications2");
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -514,22 +480,12 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assert subCat.getName().equals("applications");
+            assert server1.getChildSubCategories() == null;
 
             ResourceType server2 = getResourceType("testServer2");
             server2 = em.find(ResourceType.class, server2.getId());
 
-            assert server2.getChildSubCategories() != null;
-            assert server2.getChildSubCategories().size() == 2 : "Unexpected number of subcategories ["
-                + server2.getChildSubCategories().size() + "]";
-            subCat = server2.getChildSubCategories().get(1);
-            assert subCat.getName().equals("resource");
-
-            List<ResourceSubCategory> childSubCats = subCat.getChildSubCategories();
-            assert childSubCats.size() == 2;
-            subCat = childSubCats.get(1);
-            assert subCat.getName().equals("destinations");
+            assert server2.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -549,8 +505,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
 
             server1 = em.find(ResourceType.class, server1.getId());
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
-            assertApps2SubCategory(subCat);
+            assert server1.getChildSubCategories() == null;
 
             ResourceType server2 = getResourceType("testServer2");
             server2 = em.find(ResourceType.class, server2.getId());
@@ -572,10 +527,7 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
             assert found == 2;
             assert resourceSubCat != null;
 
-            List<ResourceSubCategory> childSubCats = resourceSubCat.getChildSubCategories();
-            assert childSubCats.size() == 2;
-            subCat = childSubCats.get(1);
-            assert subCat.getName().equals("destinations");
+            assert resourceSubCat.getChildSubCategories() == null;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
@@ -618,38 +570,4 @@ public class UpdateResourceSubsystemTest extends UpdatePluginMetadataTestBase {
             }
         }
     }
-
-    private ResourceSubCategory assertSubCategory(List<ResourceSubCategory> subCats, Integer size, Integer index) {
-        assert subCats != null;
-        assert subCats.size() == size : "Unexpected number of Sub categories. Expected [" + size + "] got ["
-            + subCats.size() + "].";
-        ResourceSubCategory subCat = null;
-        if (index != null) {
-            subCat = subCats.get(index);
-        }
-
-        return subCat;
-    }
-
-    private void assertServicesSubCategory(ResourceSubCategory subCat) {
-        assert subCat != null;
-        assert subCat.getName().equals("services");
-        assert subCat.getDisplayName().equals("Services");
-        assert subCat.getDescription().equals("Some services");
-    }
-
-    private void assertAppsSubCategory(ResourceSubCategory subCat) {
-        assert subCat != null;
-        assert subCat.getName().equals("applications");
-        assert subCat.getDisplayName().equals("Apps");
-        assert subCat.getDescription().equals("The apps.");
-    }
-
-    private void assertApps2SubCategory(ResourceSubCategory subCat) {
-        assert subCat != null;
-        assert subCat.getName().equals("applications");
-        assert subCat.getDisplayName().equals("Apps2");
-        assert subCat.getDescription().equals("The apps2.");
-    }
-
 }

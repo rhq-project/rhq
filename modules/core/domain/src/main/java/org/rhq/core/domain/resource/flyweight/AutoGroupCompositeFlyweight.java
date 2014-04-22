@@ -27,19 +27,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 
 /**
  * This class is mostly a copy of {@link AutoGroupComposite} but is linked together
- * with {@link ResourceFlyweight}, {@link ResourceTypeFlyweight} and {@link ResourceSubCategoryFlyweight} instances as opposed to 
+ * with {@link ResourceFlyweight}, {@link ResourceTypeFlyweight} and {@link ResourceSubCategoryFlyweight} instances as opposed to
  * their fully featured counterparts which is  what makes this class flyweight.
  * <p>
  * In addition to the {@link AutoGroupComposite}, this class contains some more properties used
  * in the UI layer.
- * 
+ *
  * @see AutoGroupComposite
- * 
+ *
  * @author Lukas Krejci
  */
 public class AutoGroupCompositeFlyweight implements Serializable {
@@ -48,7 +47,7 @@ public class AutoGroupCompositeFlyweight implements Serializable {
 
     private Double availability;
     private ResourceTypeFlyweight resourceType;
-    private ResourceSubCategoryFlyweight subcategory;
+    private String subcategory;
     private long memberCount;
     private int depth;
     private boolean mainResource;
@@ -56,7 +55,7 @@ public class AutoGroupCompositeFlyweight implements Serializable {
     private String name;
     private MembersAvailabilityHint membersAvailabilityHint;
     private MembersCategoryHint membersCategoryHint;
-    
+
     private List<ResourceFlyweight> resources;
 
     public AutoGroupCompositeFlyweight(AutoGroupCompositeFlyweight other) {
@@ -99,12 +98,13 @@ public class AutoGroupCompositeFlyweight implements Serializable {
     }
 
     public AutoGroupCompositeFlyweight(Double availability, ResourceFlyweight parentResource,
-        ResourceSubCategoryFlyweight subcategory, long memberCount) {
+ String subcategory,
+        long memberCount) {
         this.availability = availability;
         this.parentResource = parentResource;
         this.subcategory = subcategory;
         this.memberCount = memberCount;
-        this.name = this.subcategory.getName();
+        this.name = this.subcategory;
     }
 
     public Double getAvailability() {
@@ -123,7 +123,7 @@ public class AutoGroupCompositeFlyweight implements Serializable {
         this.resources = resources;
     }
 
-    public ResourceSubCategoryFlyweight getSubcategory() {
+    public String getSubcategory() {
         return subcategory;
     }
 
@@ -185,48 +185,48 @@ public class AutoGroupCompositeFlyweight implements Serializable {
         return "AutoGroupCompositeFlyweight[" + ((this.resourceType != null) ? "Resource: " : "Subcategory: ")
             + "name=" + this.name + ", members=" + this.memberCount + ", availability=" + this.availability + "]";
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        
+
         if (!(o instanceof AutoGroupCompositeFlyweight)) {
             return false;
         }
-        
+
         AutoGroupCompositeFlyweight other = (AutoGroupCompositeFlyweight) o;
-        
+
         if (!parentResource.equals(other.parentResource)) {
             return false;
         }
-        
+
         if (resourceType != null) {
             if (!resourceType.equals(other.resourceType)) {
                 return false;
             }
         }
-        
+
         if (subcategory != null) {
             if (!subcategory.equals(other.subcategory)) {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     @Override
     public int hashCode() {
         int hash = parentResource.hashCode();
-        
+
         if (resourceType != null) {
             hash *= resourceType.hashCode();
         }
-        
+
         if (subcategory != null) {
             hash *= subcategory.hashCode();
         }
-        
+
         return hash;
     }
 }

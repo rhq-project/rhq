@@ -176,9 +176,7 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         ResourceTypeBundleConfiguration bundle;
         BundleDestinationBaseDirectory bundleBasedir;
 
-        assert resourceType.getChildSubCategories().size() == 1;
-        assert resourceType.getChildSubCategories().get(0).getName().equals(SUBCAT);
-        assert resourceType.getChildSubCategories().get(0).getDisplayName().equals(SUBCAT_DISPLAYNAME);
+        assert resourceType.getChildSubCategories() == null;
 
         assert resourceType.getPluginConfigurationDefinition().getGroupDefinitions().size() == 1;
         group = resourceType.getPluginConfigurationDefinition().getGroupDefinitions().get(0);
@@ -236,9 +234,7 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         PropertyDefinition prop;
         Set<String> seen = new HashSet<String>(2); // we use to this remember names of the things that we've seen
 
-        assert resourceType.getChildSubCategories().size() == 1;
-        assert resourceType.getChildSubCategories().get(0).getName().equals(SUBCAT);
-        assert resourceType.getChildSubCategories().get(0).getDisplayName().equals(SUBCAT_DISPLAYNAME);
+        assert resourceType.getChildSubCategories() == null;
 
         seen.clear();
         ConfigurationDefinition pcDef = resourceType.getPluginConfigurationDefinition();

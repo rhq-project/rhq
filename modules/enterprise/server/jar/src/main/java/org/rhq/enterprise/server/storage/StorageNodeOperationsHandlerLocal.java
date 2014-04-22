@@ -58,4 +58,37 @@ public interface StorageNodeOperationsHandlerLocal {
     void logError(String address, String error, Exception e);
 
     StorageNode setMode(StorageNode storageNode, StorageNode.OperationMode newMode);
+
+    List<StorageNode> getStorageNodesByMode(StorageNode.OperationMode mode);
+
+    /**
+     * sets all NORMAL StorageNodes to setMaintenancePending(true).
+     *
+     * @param storageNode
+     * @param mode
+     * @return the updated StorageNodes
+     */
+    List<StorageNode> setMaintenancePending();
+
+    /**
+     * Checks the NORMAL StorageNodes to see if they need a schema update, and if so, reflect that fact in
+     * the storage node being manipulated.
+     *
+     * @param storageNode
+     * @param mode
+     * @return
+     */
+    StorageNode setMaintenancePendingDecommissionStorageNode(StorageNode storageNode);
+
+    /**
+     * sets all NORMAL StorageNodes to setMaintenancePending(true) as well as the supplied StorageNode. And
+     * returns them all in one List.
+     *
+     * @param storageNode
+     * @param mode
+     * @return the updated StorageNodes
+     */
+    List<StorageNode> setMaintenancePendingPerformAddMaintenance(StorageNode storageNode);
+
+    void finishUninstall(Subject subject, StorageNode storageNode);
 }

@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.coregui.client.dashboard.portlets.recent.alerts;
 
 import java.util.ArrayList;
@@ -18,6 +36,7 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.Alert;
@@ -131,6 +150,13 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
     }
+    
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields(false);
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
+    }
 
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -170,7 +196,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
-        // alert priority selector
+        // alert name filter
         final TextItem alertNameFilter = PortletConfigurationEditorComponent.getAlertNameEditor(portletConfig);
         
         // alert priority selector
@@ -426,11 +452,13 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             case Resource:
                 criteria.addFilterResourceIds(getEntityContext().getResourceId());
                 break;
-
             case ResourceGroup:
                 criteria.addFilterResourceGroupIds(getEntityContext().getGroupId());
+                break;
+            default:
+                // no default
+                break;
             }
-
             criteria.fetchAlertDefinition(true);
             criteria.fetchRecoveryAlertDefinition(true);
             criteria.fetchConditionLogs(true);

@@ -223,6 +223,7 @@
     <!-- FOR RHQ TESTING -->
     <system-properties>
         <property name="jboss.socket.binding.port-offset" value="${jboss.socket.binding.port-offset}" />
+        <property name="hibernate.dialect" value="${rhq.test.ds.hibernate-dialect}" />
     </system-properties>]]></replacevalue>
                       </replacefilter>
                       <replacefilter>

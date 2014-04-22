@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
 package org.rhq.coregui.client.dashboard.portlets.groups;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.coregui.client.dashboard.Portlet;
 import org.rhq.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.coregui.client.dashboard.portlets.recent.alerts.AbstractRecentAlertsPortlet;
@@ -52,7 +51,8 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
 
     @Override
     protected String getBasePath() {
-        return (isAutogroup ? ResourceGroupDetailView.AUTO_GROUP_VIEW + '/' : "ResourceGroup/") + groupId + "/Alerts/History";
+        return (isAutogroup ? ResourceGroupDetailView.AUTO_GROUP_VIEW + '/' : "ResourceGroup/") + groupId
+            + "/Alerts/History";
 
     }
 

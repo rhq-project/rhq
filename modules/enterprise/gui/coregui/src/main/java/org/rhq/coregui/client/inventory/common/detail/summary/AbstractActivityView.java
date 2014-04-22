@@ -101,7 +101,7 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
     public static final String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
     public static final String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
     public static final String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    public static final String RECENT_EVENTS = MSG.common_title_recent_event_counts();
+    public static final String RECENT_EVENTS = MSG.view_portlet_defaultName_recentEvents();
     public static final String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
     public static final String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
     public static final String SEE_MORE = MSG.common_msg_see_more();

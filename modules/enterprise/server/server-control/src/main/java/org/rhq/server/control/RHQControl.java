@@ -89,7 +89,10 @@ public class RHQControl {
                 String commandName = findCommand(commands, args);
                 command = commands.get(commandName);
 
-                logWarningIfAgentRPMIsInstalled(command);
+                if (!isHelp(args)) {
+                    // don't wait for user to read the warning if this is just request for help
+                    logWarningIfAgentRPMIsInstalled(command);
+                }
 
                 validateInstallCommand(command, args);
 
@@ -183,15 +186,11 @@ public class RHQControl {
     }
 
     private void validateInstallCommand(ControlCommand command, String[] args) {
-        if (!"install".equalsIgnoreCase(command.getName())) {
+        // just return if we're asking for help or if it is not an install command
+        if (!"install".equalsIgnoreCase(command.getName()) || isHelp(args)) {
             return;
         }
-
-        // just return if we're asking for help
         List<String> argsList = Arrays.asList(args);
-        if (argsList.contains("--help")) {
-            return;
-        }
 
         // don't perform validation for components not involved in the command
         boolean validateServer = argsList.contains("--server")
@@ -229,7 +228,6 @@ public class RHQControl {
             // Now, validate the property settings
             try {
                 ServerProperties.validate(serverPropertiesFile);
-
             } catch (Throwable t) {
                 throw new RHQControlException("The rhq-server.properties file is not valid. Installation is canceled: "
                     + t.getMessage());
@@ -305,6 +303,15 @@ public class RHQControl {
         }
 
         return commandNames.get(0);
+    }
+
+    private boolean isHelp(String[] args) {
+        for (String arg : args) {
+            if (ControlCommand.HELP_OPTION_1.equals(arg) || ControlCommand.HELP_OPTION_2.equals(arg)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String[] getCommandLine(String cmd, String[] args) {

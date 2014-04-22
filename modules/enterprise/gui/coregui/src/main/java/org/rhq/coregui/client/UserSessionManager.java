@@ -437,7 +437,7 @@ public class UserSessionManager {
                             sessionTimeout = SESSION_TIMEOUT_MINIMUM;
                         }
 
-                        refresh();
+                        LoginView.redirectTo(""); // redirect back to the "root" path (coregui/)
                     }
 
                     @Override

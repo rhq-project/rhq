@@ -33,6 +33,10 @@ import java.io.Serializable;
 public class AgentRegistrationRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    // This is the name of the system property that should be passed into an agent to identify its installation.
+    // Note that it purposefully does not start with "rhq.agent" or "rhq.communications" so it isn't persisted in agent config prefs.
+    public static final String SYSPROP_INSTALL_ID = "rhq.install.id";
+
     private final String name;
     private final String address;
     private final int port;
@@ -40,6 +44,8 @@ public class AgentRegistrationRequest implements Serializable {
     private final boolean regenerateTokenFlag;
     private final String originalToken;
     private final AgentVersion agentVersion;
+    private final String installId;
+    private final String installLocation;
 
     /**
      * Creates a new {@link AgentRegistrationRequest} object. Note that <code>address</code> and <code>port</code> must
@@ -58,9 +64,12 @@ public class AgentRegistrationRequest implements Serializable {
      *                            and the agent already exists, its current token is returned.
      * @param originalToken       the agent's original token, if this is a re-registration (may be <code>null</code>)
      * @param agentVersion        the agent's version information
+     * @param installId           if the agent was started with an install id, its value is passed here; otherwise, null
+     * @param installLocation     location where the agent is installed - could be null if its not known or not applicable
      */
     public AgentRegistrationRequest(String name, String address, int port, String remoteEndpoint,
-        boolean regenerateTokenFlag, String originalToken, AgentVersion agentVersion) {
+        boolean regenerateTokenFlag, String originalToken, AgentVersion agentVersion, String installId,
+        String installLocation) {
         this.name = name;
         this.address = address;
         this.port = port;
@@ -68,6 +77,8 @@ public class AgentRegistrationRequest implements Serializable {
         this.regenerateTokenFlag = regenerateTokenFlag;
         this.originalToken = originalToken;
         this.agentVersion = agentVersion;
+        this.installId = installId;
+        this.installLocation = installLocation;
     }
 
     /**
@@ -133,11 +144,30 @@ public class AgentRegistrationRequest implements Serializable {
 
     /**
      * Returns the information that identifies the version of the agent asking to be registered.
-     * 
+     *
      * @return agent version information
      */
     public AgentVersion getAgentVersion() {
         return agentVersion;
+    }
+
+    /**
+     * If the agent was given an install ID at startup, this is that ID. Otherwise, this will be null;
+     *
+     * @return agent installation ID
+     */
+    public String getInstallId() {
+        return installId;
+    }
+
+    /**
+     * Returns the location of the agent install. If the agent doesn't know it or its not applicable for the agent,
+     * this can be null.
+     *
+     * @return location of the agent installation if known
+     */
+    public String getInstallLocation() {
+        return installLocation;
     }
 
     /**
@@ -153,6 +183,8 @@ public class AgentRegistrationRequest implements Serializable {
         str.append("]; regenerate-token=[" + this.regenerateTokenFlag);
         str.append("]; original-token=[<was " + ((this.originalToken == null) ? "" : "not ") + "null>");
         str.append("]; agent-version=[" + this.agentVersion);
+        str.append("]; install-id=[" + this.installId);
+        str.append("]; install-location=[" + this.installLocation);
         str.append("]");
         return str.toString();
     }

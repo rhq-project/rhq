@@ -25,6 +25,7 @@ package org.rhq.core.clientapi.descriptor;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +45,16 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.xml.sax.SAXException;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph.PluginDependency;
+import org.rhq.core.clientapi.descriptor.group.expressions.CannedGroupExpressions;
 import org.rhq.core.clientapi.descriptor.plugin.ParentResourceType;
 import org.rhq.core.clientapi.descriptor.plugin.PlatformDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -59,7 +63,6 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.exception.WrappedRemotingException;
-import org.xml.sax.SAXException;
 
 /**
  * Utilities for agent plugin descriptors.
@@ -72,6 +75,8 @@ public abstract class AgentPluginDescriptorUtil {
 
     private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
     private static final String PLUGIN_SCHEMA_PATH = "rhq-plugin.xsd";
+    private static final String CANNED_GROUP_EXPRESSION_SCHEMA_PATH="rhq-canned-groups.xsd";
+    private static final String CANNED_GROUP_EXPRESSION_DESCRIPTOR_PATH="META-INF/rhq-group-expressions.xml";
 
     /**
      * Determines which of the two plugins is obsolete - in other words, this determines which
@@ -284,6 +289,58 @@ public abstract class AgentPluginDescriptorUtil {
     }
 
     /**
+     * Retrieves file content as string from given jar
+     * @param pluginJarFileUrl  URL to a plugin jar file
+     * @param additionPath addition file path within JAR (eg. META-INF/mydescriptor.xml)
+     * @return content of additionPath file as String, or null if file does not exist in JAR
+     * @throws PluginContainerException if we fail to read content
+     */
+    public static CannedGroupExpressions loadCannedExpressionsFromUrl(URL pluginJarFileUrl) throws PluginContainerException {
+        final Log logger = LogFactory.getLog(AgentPluginDescriptorUtil.class);
+
+        if (pluginJarFileUrl == null) {
+            throw new PluginContainerException("A valid plugin JAR URL must be supplied.");
+        }
+        logger.debug("Loading plugin additions from plugin jar at [" + pluginJarFileUrl + "]...");
+        ValidationEventCollector validationEventCollector = new ValidationEventCollector();
+        testPluginJarIsReadable(pluginJarFileUrl);
+
+        JarInputStream jis = null;
+        JarEntry descriptorEntry = null;
+        try {
+            jis = new JarInputStream(pluginJarFileUrl.openStream());
+            JarEntry nextEntry = jis.getNextJarEntry();
+            while (nextEntry != null && descriptorEntry == null) {
+                if (CANNED_GROUP_EXPRESSION_DESCRIPTOR_PATH.equals(nextEntry.getName())) {
+                    descriptorEntry = nextEntry;
+                } else {
+                    jis.closeEntry();
+                    nextEntry = jis.getNextJarEntry();
+                }
+            }
+
+            if (descriptorEntry == null) {
+                logger.debug("Plugin additions not found");
+                // plugin additions are optional thing
+                return null;
+            }
+            return parseCannedGroupExpressionsDescriptor(jis, validationEventCollector);
+        } catch (Exception e) {
+            throw new PluginContainerException("Could not parse the plugin additions ["
+                + CANNED_GROUP_EXPRESSION_DESCRIPTOR_PATH + "] found in plugin jar at [" + pluginJarFileUrl + "].",
+                new WrappedRemotingException(e));
+        } finally {
+            if (jis != null) {
+                try {
+                    jis.close();
+                } catch (Exception e) {
+                    logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
+                }
+            }
+        }
+    }
+
+    /**
      * Loads a plugin descriptor from the given plugin jar and returns it.
      *
      * This is a static method to provide a convenience method for others to be able to use.
@@ -359,8 +416,32 @@ public abstract class AgentPluginDescriptorUtil {
     public static PluginDescriptor parsePluginDescriptor(InputStream is,
             ValidationEventCollector validationEventCollector) throws PluginContainerException {
         JAXBContext jaxbContext;
+        return (PluginDescriptor) parsePluginDescriptor(is, validationEventCollector, PLUGIN_SCHEMA_PATH, DescriptorPackages.PC_PLUGIN);
+    }
+    
+    /**
+     * Parses a descriptor from InputStream without a validator.
+     * @param is input to check
+     * @return parsed PluginDescriptor
+     * @throws PluginContainerException if validation fails
+     */
+    public static CannedGroupExpressions parseCannedGroupExpressionsDescriptor(InputStream is,
+            ValidationEventCollector validationEventCollector) throws PluginContainerException {
+        JAXBContext jaxbContext;
+        return (CannedGroupExpressions) parsePluginDescriptor(is, validationEventCollector, CANNED_GROUP_EXPRESSION_SCHEMA_PATH, DescriptorPackages.CANNED_EXPRESSIONS);
+    }
+    
+    /**
+     * Parses a descriptor from InputStream without a validator.
+     * @param is input to check
+     * @return parsed PluginDescriptor
+     * @throws PluginContainerException if validation fails
+     */
+    private static Object parsePluginDescriptor(InputStream is,
+            ValidationEventCollector validationEventCollector, String xsd, String jaxbPackage) throws PluginContainerException {
+        JAXBContext jaxbContext;
         try {
-            jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
+            jaxbContext = JAXBContext.newInstance(jaxbPackage);
         } catch (Exception e) {
             throw new PluginContainerException("Failed to create JAXB Context.", new WrappedRemotingException(e));
         }
@@ -369,14 +450,13 @@ public abstract class AgentPluginDescriptorUtil {
         try {
             unmarshaller = jaxbContext.createUnmarshaller();
             // Enable schema validation
-            URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
+            URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(xsd);
             Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
                     pluginSchemaURL);
             unmarshaller.setSchema(pluginSchema);
             unmarshaller.setEventHandler(validationEventCollector);
 
-            PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(is);
-            return pluginDescriptor;
+            return unmarshaller.unmarshal(is);
         } catch (JAXBException e) {
             throw new PluginContainerException(e);
         } catch (SAXException e) {

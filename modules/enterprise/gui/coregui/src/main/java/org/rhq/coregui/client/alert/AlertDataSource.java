@@ -113,13 +113,18 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         return fields;
     }
 
+    
+    public ArrayList<ListGridField> getListGridFields() {
+        return getListGridFields(true);
+    }
+    
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
      *
      * @return list grid fields used to display the datasource data
      */
-    public ArrayList<ListGridField> getListGridFields() {
+    public ArrayList<ListGridField> getListGridFields(boolean showResourceAncestry) {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
         ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG.common_title_createTime());
@@ -219,9 +224,11 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             });
             fields.add(resourceNameField);
 
-            ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
-            fields.add(ancestryField);
-
+            if (showResourceAncestry) {
+                ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+                fields.add(ancestryField);
+                ancestryField.setWidth("20%");
+            }
             ctimeField.setWidth(100);
             nameField.setWidth("15%");
             conditionField.setWidth("15%");
@@ -229,7 +236,6 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             priorityField.setWidth(50);
             statusField.setWidth(80);
             resourceNameField.setWidth("20%");
-            ancestryField.setWidth("20%");
         } else {
             ctimeField.setWidth(200);
             nameField.setWidth("15%");

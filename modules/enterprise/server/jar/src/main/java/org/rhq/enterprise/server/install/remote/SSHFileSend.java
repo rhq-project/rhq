@@ -43,7 +43,7 @@ public class SSHFileSend {
 
         try {
 
-            String command = "scp -p -t " + destFilename;
+            String command = "scp -p -t '" + destFilename + "'";
             Channel channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
 

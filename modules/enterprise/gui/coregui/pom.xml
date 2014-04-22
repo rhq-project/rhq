@@ -299,6 +299,17 @@
             <resource>
               <filtering>false</filtering>
               <directory>${basedir}/src/main/webapp</directory>
+              <excludes>
+                <exclude>login</exclude>
+              </excludes>
+            </resource>
+            <resource>
+              <directory>${basedir}/src/main/webapp</directory>
+              <!-- enable filtering for login page -->
+              <filtering>true</filtering>
+              <includes>
+                <include>login</include>
+              </includes>
             </resource>
           </webResources>
         </configuration>

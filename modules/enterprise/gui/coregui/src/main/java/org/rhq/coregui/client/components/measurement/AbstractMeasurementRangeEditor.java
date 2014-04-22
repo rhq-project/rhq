@@ -70,6 +70,7 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
     private boolean displaySetButton = true;
     private boolean displayEnableButton = false;
     private boolean displayRangeItemGrouping = false;
+    private boolean displayCheckboxLabel = false;
     protected CheckboxItem enableRangeItem;
     private SpacerItem space;
 
@@ -118,9 +119,9 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
             setIsGroup(true);
             setGroupTitle("Filter by: Time");
         }
-        enableRangeItem = new CheckboxItem(ENABLE_RANGE_ITEM, "");
-        enableRangeItem.setShowTitle(false);
-        enableRangeItem.setShowLabel(false);
+        enableRangeItem = new CheckboxItem(ENABLE_RANGE_ITEM, "Filter By Time:");
+        enableRangeItem.setShowTitle(isDisplayCheckboxLabel());
+        enableRangeItem.setShowLabel(isDisplayCheckboxLabel());
         enableRangeItem.addChangeHandler(new ChangeHandler() {
             @Override
             public void onChange(ChangeEvent event) {
@@ -376,5 +377,13 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
 
     public void setDisplayRangeItemGrouping(boolean displayRangeItemGrouping) {
         this.displayRangeItemGrouping = displayRangeItemGrouping;
+    }
+
+    public boolean isDisplayCheckboxLabel() {
+        return displayCheckboxLabel;
+    }
+
+    public void setDisplayCheckboxLabel(boolean displayCheckboxLabel) {
+        this.displayCheckboxLabel = displayCheckboxLabel;
     }
 }

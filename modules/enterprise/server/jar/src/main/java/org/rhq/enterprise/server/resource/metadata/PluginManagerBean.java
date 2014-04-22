@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.resource.metadata;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,7 +38,10 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.CannedGroupAddition;
+import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -46,9 +50,11 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.core.plugin.PluginAdditionsReader;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Stateless
@@ -321,6 +327,10 @@ public class PluginManagerBean implements PluginManagerLocal {
             log.warn(
                 "Failed to uninventory all resources of deleted plugins. This should fix itself automatically when the PurgeResourceTypsJob executes.",
                 t);
+        }
+        GroupDefinitionManagerLocal groupDefMgr = LookupUtil.getGroupDefinitionManager();
+        for (Plugin plugin : plugins) {
+            groupDefMgr.updateGroupsByCannedExpressions(plugin.getName(), null);
         }
     }
 
@@ -644,5 +654,33 @@ public class PluginManagerBean implements PluginManagerLocal {
      */
     private PluginMetadataManager getPluginMetadataManager() {
         return LookupUtil.getPluginDeploymentScanner().getPluginMetadataManager();
+    }
+
+    /**
+     * gets canned expressions from all plugins by direct reading and parsing additional descriptors;
+     */
+    public List<CannedGroupExpression> getCannedGroupExpressions() {
+        ArrayList<CannedGroupExpression> list = new ArrayList<CannedGroupExpression>();
+        String pluginDir = LookupUtil.getPluginDeploymentScanner().getAgentPluginDir();
+        long now = System.currentTimeMillis();
+        log.debug("Reading canned expressions from all agent plugin jars");
+        for (Plugin plugin : this.getInstalledPlugins()) {
+            if (plugin.getDeployment().equals(PluginDeploymentType.AGENT)) {
+                File pluginFile = new File(pluginDir, plugin.getPath());
+                try {
+                    URL pluginUrl = pluginFile.toURI().toURL();
+                    CannedGroupAddition addition = PluginAdditionsReader.getCannedGroupsAddition(pluginUrl, plugin.getName());
+                    if (addition != null) {
+                        list.addAll(addition.getExpressions());
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to parse plugin addition found in plugin [" + pluginFile.getAbsolutePath() + "]",e);
+                }
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Reading "+list.size()+" canned expressions from all plugins took "+(System.currentTimeMillis()-now)+"ms");
+        }
+        return list;
     }
 }

@@ -37,18 +37,45 @@ import com.jcraft.jsch.Session;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A utility object that is used to install, start and stop agents remotely over SSH.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
 public class SSHInstallUtility {
+
+    static class Credentials {
+        private String username;
+        private String password;
+        public Credentials () {
+        }
+        public Credentials (String username, String password) {
+            setUsername(username);
+            setPassword(password);
+        }
+        public String getUsername() {
+            return this.username;
+        }
+        public void setUsername(String u) {
+            this.username = u;
+        }
+        public String getPassword() {
+            return this.password;
+        }
+        public void setPassword(String p) {
+            this.password = p;
+        }
+    }
+
+    public static final String AGENT_STATUS_NOT_INSTALLED = "Agent Not Installed";
 
     private static final String RHQ_AGENT_LATEST_VERSION_PROP = "rhq-agent.latest.version";
     private static final int DEFAULT_BUFFER_SIZE = 4096;
@@ -58,16 +85,77 @@ public class SSHInstallUtility {
 
     private Log log = LogFactory.getLog(SSHInstallUtility.class);
 
-    private RemoteAccessInfo accessInfo;
+    private final RemoteAccessInfo accessInfo;
+    private final Credentials defaultCredentials;
+
     private Session session;
 
-    private String agentFile;
-    private String agentPath;
-    private String agentVersion;
+    public SSHInstallUtility(RemoteAccessInfo accessInfo, Credentials defaultCredentials) {
+        this.accessInfo = accessInfo;
+        this.defaultCredentials = defaultCredentials;
+        connect();
+    }
 
     public SSHInstallUtility(RemoteAccessInfo accessInfo) {
-        this.accessInfo = accessInfo;
+        this(accessInfo, null);
+    }
 
+    public RemoteAccessInfo getRemoteAccessInfo() {
+        return this.accessInfo;
+    }
+
+    public void connect() {
+        try {
+            JSch jsch = new JSch();
+
+            //if (accessInfo.getKey() != null) {
+            //    jsch.addIdentity(...);
+            //}
+
+            Credentials credentials = getCredentialsToUse();
+
+            session = jsch.getSession(credentials.getUsername(), accessInfo.getHost(), accessInfo.getPort());
+
+            if (credentials.getPassword() != null) {
+                session.setPassword(credentials.getPassword());
+            }
+
+            Properties config = new Properties();
+            config.put("StrictHostKeyChecking", "no");
+            session.setConfig(config);
+
+            session.connect(CONNECTION_TIMEOUT); // making a connection with timeout.
+        } catch (JSchException e) {
+            throw new RuntimeException("Failed SSH connection", e);
+        }
+    }
+
+    public void disconnect() {
+        session.disconnect();
+    }
+
+    public boolean isConnected() {
+        return session.isConnected();
+    }
+
+    public boolean agentInstallCheck(String agentInstallPath) {
+        String agentWrapperScript = buildAgentWrapperScriptPath(agentInstallPath);
+
+        String value = executeCommand("if  [ -f '" + agentWrapperScript + "' ]; then echo \"exists\"; fi",
+            "Agent Install Check");
+        if (value == null || value.trim().length() == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public AgentInstallInfo installAgent(CustomAgentInstallData customData, String installId) {
+        String agentFile;
+        String agentPath;
+        String agentVersion;
+
+        // get information about the agent distro file
         try {
             File agentBinaryFile = LookupUtil.getAgentManager().getAgentUpdateBinaryFile();
             agentFile = agentBinaryFile.getName();
@@ -86,58 +174,34 @@ public class SSHInstallUtility {
             throw new RuntimeException("Unable to find agent binary file for installation at [" + agentPath + "]");
         }
 
-        connect();
-    }
-
-    public void connect() {
-        try {
-            JSch jsch = new JSch();
-
-            //if (accessInfo.getKey() != null) {
-            //    jsch.addIdentity(...);
-            //}
-
-            session = jsch.getSession(accessInfo.getUser(), accessInfo.getHost(), accessInfo.getPort());
-
-            if (accessInfo.getPassword() != null) {
-                session.setPassword(accessInfo.getPassword());
+        // confirm that we still have the custom files the user was supposed to have file uploaded
+        if (customData.getAgentConfigurationXml() != null) {
+            if (!new File(customData.getAgentConfigurationXml()).exists()) {
+                throw new RuntimeException("Unable to find custom agent config file at ["
+                    + customData.getAgentConfigurationXml() + "]");
             }
-
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-
-            session.connect(CONNECTION_TIMEOUT); // making a connection with timeout.
-        } catch (JSchException e) {
-            throw new RuntimeException("Failed SSH connection", e);
         }
-    }
-
-    public void disconnect() {
-        session.disconnect();
-    }
-
-    public boolean agentInstallCheck(String agentInstallPath) {
-        String agentWrapperScript = buildAgentWrapperScriptPath(agentInstallPath);
-
-        String value = executeCommand("if  [ -f '" + agentWrapperScript + "' ]; then echo \"exists\"; fi",
-            "Agent Install Check");
-        if (value == null || value.trim().length() == 0) {
-            return false;
-        } else {
-            return true;
+        if (customData.getRhqAgentEnv() != null) {
+            if (!new File(customData.getRhqAgentEnv()).exists()) {
+                throw new RuntimeException("Unable to find custom agent environment script file at ["
+                    + customData.getRhqAgentEnv() + "]");
+            }
         }
-    }
 
-    public AgentInstallInfo installAgent(String parentPath) {
-
+        // do the install work
+        String parentPath = customData.getParentPath();
+        Credentials credentials = getCredentialsToUse();
         String serverAddress = LookupUtil.getServerManager().getServer().getAddress();
-        AgentInstallInfo info = new AgentInstallInfo(parentPath, accessInfo.getUser(), agentVersion, serverAddress,
-            accessInfo.getHost());
+        AgentInstallInfo info = new AgentInstallInfo(parentPath, credentials.getUsername(), agentVersion,
+            serverAddress, accessInfo.getHost());
 
         executeCommand("uname -a", "Machine uname", info);
         executeCommand("java -version", "Java Version Check", info);
         executeCommand("mkdir -p '" + parentPath + "'", "Create Agent Install Directory", info);
+        executeCommand("rm -rf '" + parentPath + "/rhq-agent'", "Remove any previously installed agent", info);
+        executeCommand("rm -f '" + parentPath + "/rhq-agent-update.log'", "Remove any old agent update logs", info);
+        executeCommand("rm -f " + parentPath.replace(" ", "\\ ") + "/rhq-enterprise-agent*.jar",
+            "Remove any old agent update binary jars", info); // because we use * wildcard, can't wrap in quotes, so escape spaces if there are any in the path
 
         log.info("Copying agent binary update distribution file to [" + accessInfo.getHost() + "]...");
 
@@ -146,17 +210,57 @@ public class SSHInstallUtility {
         AgentInstallStep scpStep = new AgentInstallStep("ssh copy '" + agentPath + "' -> '" + parentPath + "'",
             "Remote copy the agent binary update distribution", 0, fileSent ? "Success" : "Failed", getTimeDiff(start));
         info.addStep(scpStep);
+        if (!fileSent) {
+            return info; // abort and return what we did - no sense continuing if the agent distro failed to copy
+        }
 
         log.info("Agent binary update distribution file copied");
 
-        executeCommand("cd '" + parentPath + "'", "Change to install directory", info);
-        executeCommand("java -jar '" + parentPath + "/" + agentFile + "' '--install=" + parentPath + "'",
-            "Install Agent", info);
+        executeCommand("cd '" + parentPath + "' ; " + "java -jar '" + parentPath + "/" + agentFile + "' '--install="
+            + parentPath + "'", "Install Agent", info);
+
+        if (customData.getAgentConfigurationXml() != null) {
+            log.info("Copying custom agent configuration file...");
+            String destFilename = parentPath + "/rhq-agent/conf/agent-configuration.xml";
+            start = System.currentTimeMillis();
+            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXml(), destFilename);
+            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXml()
+                + "' -> '" + destFilename + "'", "Remote copy the agent configuration file", 0, fileSent ? "Success"
+                : "Failed", getTimeDiff(start));
+            info.addStep(step);
+            if (!fileSent) {
+                return info; // abort and return what we did - no sense continuing if the custom config file failed to copy
+            }
+            log.info("Custom agent configuration file copied.");
+
+            // tell the info object - this is needed so it adds the --config command line option
+            info.setCustomAgentConfigurationFile("agent-configuration.xml");
+        }
+
+        if (customData.getRhqAgentEnv() != null) {
+            log.info("Copying custom agent environment script...");
+            String destFilename = parentPath + "/rhq-agent/bin/rhq-agent-env.sh";
+            start = System.currentTimeMillis();
+            fileSent = SSHFileSend.sendFile(session, customData.getRhqAgentEnv(), destFilename);
+            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getRhqAgentEnv()
+                + "' -> '" + destFilename + "'", "Remote copy the agent environment script file", 0,
+                fileSent ? "Success" : "Failed", getTimeDiff(start));
+            info.addStep(step);
+            if (!fileSent) {
+                return info; // abort and return what we did - no sense continuing if the custom env script file failed to copy
+            }
+            log.info("Custom agent environment script copied.");
+        }
 
         log.info("Will start new agent @ [" + accessInfo.getHost() + "] pointing to server @ [" + serverAddress + "]");
 
         String agentScript = parentPath + "/rhq-agent/bin/rhq-agent.sh"; // NOTE: NOT the wrapper script
         String startStringArgs = info.getConfigurationStartString();
+
+        // this ID will be used by the agent when it registered, thus allowing the server to link this install with that agent
+        if (installId != null) {
+            startStringArgs += " -D" + AgentRegistrationRequest.SYSPROP_INSTALL_ID + "=" + installId;
+        }
 
         // Tell the script to store a pid file to make the wrapper script work
         String envCmd1 = "RHQ_AGENT_IN_BACKGROUND='" + parentPath + "/rhq-agent/bin/rhq-agent.pid'";
@@ -166,6 +270,25 @@ public class SSHInstallUtility {
         executeCommand(startCommand, "Start New Agent", info);
 
         return info;
+    }
+
+    public String uninstallAgent(String doomedPath) {
+        String theRealDoomedPath = findAgentInstallPath(doomedPath); // make sure we are looking at an agent
+        if (theRealDoomedPath != null) {
+            // if the agent is still running, make sure we stop it
+            stopAgent(theRealDoomedPath);
+
+            // Before removing the agent dir, remove these first. Since we use ".." it requires the parent to exist
+            executeCommand("rm -f '" + theRealDoomedPath + "/../rhq-agent-update.log'", "Remove old agent update logs");
+            executeCommand("rm -f " + theRealDoomedPath.replace(" ", "\\ ") + "/../rhq-enterprise-agent*.jar",
+                "Remove old agent update binary jars"); // because we use * wildcard, can't wrap in quotes, so escape spaces if there are any in the path
+
+            // now remove the actual agent dir
+            String results = executeCommand("rm -rf '" + theRealDoomedPath + "'", "Uninstall Agent");
+            return results;
+        } else {
+            throw new IllegalArgumentException("There does not appear to be an agent installed here: " + doomedPath);
+        }
     }
 
     public String startAgent(String agentInstallPath) {
@@ -184,7 +307,7 @@ public class SSHInstallUtility {
         String agentWrapperScript = buildAgentWrapperScriptPath(agentInstallPath);
 
         if (!agentInstallCheck(agentInstallPath)) {
-            return "Agent Not Installed";
+            return AGENT_STATUS_NOT_INSTALLED;
         }
 
         return executeCommand("'" + agentWrapperScript + "' status", "Agent Status");
@@ -194,7 +317,7 @@ public class SSHInstallUtility {
         if (parentPath == null || parentPath.trim().length() == 0) {
             // user doesn't know where the agent might be - let's try to guess
             String[] possiblePaths = new String[] { "/opt", "/usr/local", "/usr/share", "/rhq",
-                "/home/" + accessInfo.getUser() };
+                "/home/" + getCredentialsToUse().getUsername() };
             for (String possiblePath : possiblePaths) {
                 String path = findAgentInstallPath(possiblePath);
                 if (path != null) {
@@ -204,22 +327,51 @@ public class SSHInstallUtility {
             return null;
         }
 
-        if (parentPath.endsWith("rhq-agent") || parentPath.endsWith("rhq-agent/")) {
-            return parentPath; // assume the caller's parent path *is* the agent install path
+        if (parentPath.endsWith("/rhq-agent") || parentPath.endsWith("/rhq-agent/")) {
+            // strip "rhq-agent" so we look to see if its really there in the parent
+            // we can't use java.io.File for this because we might be running on a Windows box - don't forget, we are ssh'ing into a remote box
+            parentPath = parentPath.substring(0, parentPath.lastIndexOf("/rhq-agent"));
         }
 
-        String full = executeCommand("find '" + parentPath + "' -name rhq-agent -print", "Find Agent Install Path");
-        if (full == null || full.trim().length() == 0) {
+        String findOutput;
+
+        try {
+            findOutput = executeCommand("find '" + parentPath + "' -maxdepth 4 -name rhq-agent -print"); // don't call the other execute methods, we want to be able to catch the exception here
+        } catch (ExecuteException e) {
+            // It is possible the 'find' returned a non-zero exit code because some subdirectories were unreadable.
+            // Ignore that and just analyze the files that 'find' did return.
+            findOutput = e.stdout;
+        }
+
+        if (findOutput == null || findOutput.trim().length() == 0) {
             return null;
         }
-        String[] results = full.split("\n");
-        String path = results[0];
-        return path;
+        String[] results = findOutput.split("\n");
+        for (String result : results) {
+            if (result.contains("/.java/")) {
+                continue; // ignore the rhq-agent Java Preference node - we know that's not an agent
+            }
+            return result; // just return the first place we find that looks like an agent
+        }
+        return null; // nothing looks like an agent
     }
 
     public String[] pathDiscovery(String parentPath) {
         String full = executeCommand("ls -1 '" + parentPath + "'", "Path Discovery");
         return full.split("\n");
+    }
+
+    private Credentials getCredentialsToUse() {
+        String user = accessInfo.getUser();
+        if ((user == null || user.length() == 0) && this.defaultCredentials != null) {
+            user = this.defaultCredentials.getUsername();
+        }
+        String pw = accessInfo.getPassword();
+        if ((pw == null || pw.length() == 0) && this.defaultCredentials != null) {
+            pw = this.defaultCredentials.getPassword();
+        }
+        Credentials creds = new Credentials(user, pw);
+        return creds;
     }
 
     private String buildAgentWrapperScriptPath(String agentInstallPath) {
@@ -262,7 +414,7 @@ public class SSHInstallUtility {
 
         try {
             channel = (ChannelExec) session.openChannel("exec");
-            ((ChannelExec) channel).setCommand(command);
+            channel.setCommand(command);
 
             is = channel.getInputStream();
             es = channel.getErrStream();
@@ -284,7 +436,7 @@ public class SSHInstallUtility {
                 }
 
                 if (exitStatus != 0) {
-                    throw new ExecuteException(exitStatus, err);
+                    throw new ExecuteException(exitStatus, err, out);
                 } else if (out.length() == 0) {
                     return err;
                 }
@@ -357,37 +509,17 @@ public class SSHInstallUtility {
     private static class ExecuteException extends RuntimeException {
         private static final long serialVersionUID = 1L;
         int errorCode;
+        String stdout;
 
         public ExecuteException(int errorCode, String message) {
             super(message);
             this.errorCode = errorCode;
         }
-    }
 
-    public static void main(String[] args) throws IOException {
-
-        String pass = null;
-        if (args.length > 2) {
-            pass = args[2];
+        public ExecuteException(int errorCode, String message, String stdout) {
+            super(message);
+            this.errorCode = errorCode;
+            this.stdout = stdout;
         }
-        RemoteAccessInfo info = new RemoteAccessInfo(args[0], args[1], pass);
-
-        SSHInstallUtility ssh = new SSHInstallUtility(info);
-
-        String parentPath = "/tmp/new-remote-agent";
-        String agentInstallPath = parentPath + "/rhq-agent";
-
-        System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
-        System.out.println("Agent stop: " + ssh.stopAgent(agentInstallPath));
-        System.out.println("Agent find: " + ssh.findAgentInstallPath(parentPath));
-        System.out.println("Agent install: " + ssh.installAgent(parentPath));
-        System.out.println("Agent find: " + ssh.findAgentInstallPath(parentPath));
-        System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
-        System.out.println("Agent stop: " + ssh.stopAgent(agentInstallPath));
-        System.out.println("Agent status: " + ssh.agentStatus(agentInstallPath));
-        System.out.println("Agent start: " + ssh.startAgent(agentInstallPath));
-
-        ssh.disconnect();
     }
-
 }

@@ -29,6 +29,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.AbstractPlugin;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -54,6 +55,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
 
     private PluginManagerLocal pluginManager = LookupUtil.getPluginManager();
     private ServerPluginsLocal serverPluginManager = LookupUtil.getServerPlugins();
+    
 
     @Override
     public void restartMasterPluginContainer() throws RuntimeException {
@@ -479,5 +481,10 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
             ids.add(plugin.getId());
         }
         return ids;
+    }
+
+    @Override
+    public ArrayList<CannedGroupExpression> getCannedGroupExpressions() {
+        return new ArrayList<CannedGroupExpression>(pluginManager.getCannedGroupExpressions());
     }
 }

@@ -65,7 +65,7 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent<HostContro
 
         parentComponent = discoveryContext.getParentResourceComponent();
         Configuration hcConfig = discoveryContext.getParentResourceContext().getPluginConfiguration();
-        String hostName = hcConfig.getSimpleValue("domainHost", null);
+        String hostName = parentComponent.getAsHostName();
         if (hostName==null) {
             hostName = getHostName(discoveryContext.getParentResourceComponent().getASConnection());
         }

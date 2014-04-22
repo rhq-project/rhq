@@ -192,6 +192,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
 
         String domainHost = findHost(hostXmlFile);
+        // this property is DEPRECATED we don't need it during discovery
         pluginConfig.setSimpleValue("domainHost", domainHost);
 
         File logDir = getLogDir(process, commandLine, baseDir);
@@ -608,6 +609,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return props;
     }
 
+    /**
+     * @deprecated
+     * @param hostXmlFile
+     * @return
+     */
     private String findHost(File hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         String hostName = null;

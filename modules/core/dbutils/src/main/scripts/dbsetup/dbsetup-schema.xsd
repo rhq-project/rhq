@@ -67,6 +67,8 @@
                         <xs:enumeration value="DOUBLE"/>
                         <xs:enumeration value="TIMESTAMP"/>
                         <xs:enumeration value="LONGVARCHAR"/>
+                        <xs:enumeration value="BLOB"/>
+                        <xs:enumeration value="CLOB"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>

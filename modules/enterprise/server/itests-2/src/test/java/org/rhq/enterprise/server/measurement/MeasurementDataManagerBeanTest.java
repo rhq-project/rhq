@@ -98,8 +98,6 @@ import org.rhq.test.AssertUtils;
  */
 public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
-    // this must match the constant found in ServerManagerBean
-    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
     private static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "TestServer";
 
     //private final Log log = LogFactory.getLog(MeasurementDataManagerBeanTest.class);
@@ -154,6 +152,8 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private TestServerCommunicationsService agentServiceContainer;
 
+    private String oldServerName;
+
     private Subject getOverlord() {
         return subjectManager.getOverlord();
     }
@@ -172,7 +172,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
+        setServerIdentity(RHQ_SERVER_NAME_PROPERTY_VALUE);
 
         createInventory();
         insertDummyReport();

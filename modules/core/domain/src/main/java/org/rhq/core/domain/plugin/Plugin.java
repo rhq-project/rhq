@@ -239,8 +239,11 @@ import javax.persistence.NamedQuery;
         + "    WHERE p.ctime = -1 AND p.status = 'DELETED'"
     ),
 
-    @NamedQuery(name = Plugin.PURGE_PLUGINS, query = ""
-        + " DELETE FROM Plugin p WHERE p IN (:plugins)")
+    @NamedQuery(
+        name = Plugin.QUERY_UNACKED_DELETED_PLUGINS,
+        query = "SELECT p FROM Plugin p WHERE p.status = 'DELETED' AND :serverId NOT MEMBER OF p.serversAcknowledgedDelete"
+    )
+
 })
 @Entity
 public class Plugin extends AbstractPlugin {
@@ -259,8 +262,18 @@ public class Plugin extends AbstractPlugin {
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "Plugin.updatePluginEnabledById";
+    public static final String QUERY_UNACKED_DELETED_PLUGINS = "Plugin.unackedDeletedPlugins";
+
+    /**
+     * @deprecated This used to identify a named query that no longer exist. Do not use this for anything.
+     */
+    @Deprecated
     public static final String PURGE_PLUGINS = "Plugin.purgePlugins";
 
+    /**
+     * @deprecated This is no longer used and means nothing now.
+     */
+    @Deprecated
     public static final long PURGED = -1;
 
     public Plugin() {

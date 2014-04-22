@@ -32,7 +32,9 @@ import org.xml.sax.InputSource;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -70,7 +72,10 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         List<Integer> doomedPlugins = new ArrayList<Integer>(pluginIds);
         pluginMgr.deletePlugins(overlord, doomedPlugins);
-        pluginMgr.markPluginsForPurge(overlord, new ArrayList(doomedPlugins));
+
+        //the following 3 lines ensure we truly delete the above plugins
+        //from the database
+        ackDeletedPlugins();
         new PurgeResourceTypesJob().executeJobCode(null);
         new PurgePluginsJob().executeJobCode(null);
 

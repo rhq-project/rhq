@@ -237,7 +237,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
         ids.add(p2.getId());
-        List<PluginKey> undeployed = this.serverPluginsBean.undeployServerPlugins(getOverlord(), ids);
+        List<PluginKey> undeployed = this.serverPluginsBean.deleteServerPlugins(getOverlord(), ids);
         assert undeployed.size() == 2 : undeployed;
         assert undeployed.contains(p1key) : undeployed;
         assert undeployed.contains(p2key) : undeployed;
@@ -284,7 +284,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
         ids.add(p2.getId());
-        List<PluginKey> undeployed = this.serverPluginsBean.undeployServerPlugins(getOverlord(), ids);
+        List<PluginKey> undeployed = this.serverPluginsBean.deleteServerPlugins(getOverlord(), ids);
         assert undeployed.size() == 2 : undeployed;
         assert undeployed.contains(p1key) : undeployed;
         assert undeployed.contains(p2key) : undeployed;
@@ -305,8 +305,8 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert !pluginKeys.contains(p2key) : pluginKeys;
 
         // purge them completely from the DB to prepare to re-register them
-        this.serverPluginsBean.purgeServerPlugin(getOverlord(), p1key);
-        this.serverPluginsBean.purgeServerPlugin(getOverlord(), p2key);
+        this.serverPluginsBean.purgeServerPlugin(p1.getId());
+        this.serverPluginsBean.purgeServerPlugin(p2.getId());
 
         // we just purged the database, make sure our entity ID's are all zero, since the original IDs are gone
         p1.setId(0);

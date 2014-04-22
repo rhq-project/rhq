@@ -35,6 +35,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.CannedGroupExpression;
@@ -100,23 +101,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
-    public void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception {
-        for (Integer id : pluginIds) {
-            Plugin plugin = entityManager.find(Plugin.class, id);
-            plugin.setCtime(Plugin.PURGED);
-            log.info("Scheduling plugin [" + plugin + "] to be purged from the database.");
-        }
-    }
-
-    @Override
     public boolean isReadyForPurge(Plugin plugin) {
-        if (!isMarkedForPurge(plugin.getId())) {
-            if (log.isDebugEnabled()) {
-                log.debug(plugin + " is not ready to be purged. It has not been marked for purge.");
-            }
-            return false;
-        }
-
         int resourceTypeCount = getResourceTypeCount(plugin);
         if (resourceTypeCount > 0) {
             if (log.isDebugEnabled()) {
@@ -126,12 +111,23 @@ public class PluginManagerBean implements PluginManagerLocal {
             return false;
         }
 
-        return true;
-    }
+        //check that all the servers have acked the deletion
+        Plugin inDbPlugin = entityManager.find(Plugin.class, plugin.getId());
 
-    private boolean isMarkedForPurge(int pluginId) {
-        Plugin plugin = entityManager.find(Plugin.class, pluginId);
-        return plugin.getStatus() == PluginStatusType.DELETED && plugin.getCtime() == Plugin.PURGED;
+        @SuppressWarnings("unchecked")
+        List<Server> allServers = entityManager.createNamedQuery(Server.QUERY_FIND_ALL).getResultList();
+
+        for (Server s : allServers) {
+            if (!inDbPlugin.getServersAcknowledgedDelete().contains(s)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(plugin + " is not ready to be purged. Server " + s +
+                        " has not acknowledged it knows about its deletion.");
+                }
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private int getResourceTypeCount(Plugin plugin) {
@@ -150,7 +146,15 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @Override
     public void purgePlugins(List<Plugin> plugins) {
-        entityManager.createNamedQuery(Plugin.PURGE_PLUGINS).setParameter("plugins", plugins).executeUpdate();
+        for(Plugin p : plugins) {
+            Plugin inDb = entityManager.find(Plugin.class, p.getId());
+            inDb.getServersAcknowledgedDelete().clear();
+            entityManager.remove(inDb);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("The following plugins were purged from the database: " + plugins);
+        }
     }
 
     @Override
@@ -168,11 +172,6 @@ public class PluginManagerBean implements PluginManagerLocal {
     @Override
     public List<Plugin> findAllDeletedPlugins() {
         return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_DELETED).getResultList();
-    }
-
-    @Override
-    public List<Plugin> findPluginsMarkedForPurge() {
-        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_TO_PURGE).getResultList();
     }
 
     @SuppressWarnings("unchecked")
@@ -454,7 +453,10 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         if (isDeleted(plugin)) {
             String msg = "A deleted version of " + plugin + " already exists in the database. The plugin cannot be "
-                + "installed until the deleted version is purged from the database.";
+                + "installed until the deleted version is purged from the database (which should happen a couple of" +
+                " minutes after all servers acknowledged the plugin was deleted). Especially, the plugin won't be" +
+                " purged if ANY of the servers in the HA cloud have been down at the point in time the plugin was" +
+                " deleted and haven't gone back up yet.";
             log.warn(msg);
             throw new IllegalStateException(msg);
         }
@@ -557,6 +559,22 @@ public class PluginManagerBean implements PluginManagerLocal {
         }
 
         return typesUpdated;
+    }
+
+    @Override
+    public void acknowledgeDeletedPluginsBy(int serverId) {
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_UNACKED_DELETED_PLUGINS);
+        q.setParameter("serverId", serverId);
+
+        @SuppressWarnings("unchecked")
+        List<Plugin> plugins = (List<Plugin>) q.getResultList();
+
+        Server server = entityManager.find(Server.class, serverId);
+
+        for (Plugin p : plugins) {
+            p.getServersAcknowledgedDelete().add(server);
+            entityManager.merge(p);
+        }
     }
 
     private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {

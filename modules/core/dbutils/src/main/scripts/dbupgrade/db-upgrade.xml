@@ -2310,8 +2310,8 @@
             </schemaSpec>
 
             <schemaSpec version="2.145">
-              <schema-addColumn   table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" columnType="VARCHAR2" precision="100" />
-              <schema-alterColumn table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" nullable="true"/>
+                <schema-addColumn   table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" columnType="VARCHAR2" precision="100" />
+                <schema-alterColumn table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" nullable="true"/>
             </schemaSpec>
 
             <schemaSpec version="2.146">

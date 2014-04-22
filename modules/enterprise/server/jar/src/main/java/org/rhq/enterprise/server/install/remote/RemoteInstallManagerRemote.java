@@ -58,12 +58,16 @@ public interface RemoteInstallManagerRemote {
      * @param customData contains custom install details such as where the agent install directory will be
      *
      * @return info containing the results of the installation
+     * @since 4.11
      */
     AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData);
 
     /**
-     *  @see #installAgent(Subject, RemoteAccessInfo, String, CustomAgentInstallData)
-     *  @deprecated
+     * @param subject
+     * @param remoteAccessInfo
+     * @param parentPath
+     * @return info containing the results of the installation
+     * @deprecated use {@link #installAgent(Subject, RemoteAccessInfo, CustomAgentInstallData)}
      */
     @Deprecated
     AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
@@ -78,6 +82,7 @@ public interface RemoteInstallManagerRemote {
      * @param remoteAccessInfo the remote machine information and remote user SSH credentials including the name of the agent.
      * @return the results of the uninstall - this will be null if there was no install
      *         information for the given agent (and thus nothing was uninstalled).
+     * @since 4.11
      */
     String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
 

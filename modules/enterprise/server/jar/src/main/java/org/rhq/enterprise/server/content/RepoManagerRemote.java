@@ -212,6 +212,7 @@ public interface RepoManagerRemote {
      * @param repoId
      * @param packageVersionId
      * @return the bytes of the package version
+     * @since 4.5
      */
     byte[] getPackageVersionBytes(Subject subject, int repoId, int packageVersionId);
 }

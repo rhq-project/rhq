@@ -52,6 +52,7 @@ public interface ConfigurationManagerRemote {
      * @param subject
      * @param criteria
      * @return not null
+     *
      * @since 4.10
      */
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
@@ -61,6 +62,7 @@ public interface ConfigurationManagerRemote {
      * @param subject
      * @param criteria
      * @return not null
+     *
      * @since 4.10
      */
     PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,

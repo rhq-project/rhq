@@ -143,6 +143,8 @@ public interface RoleManagerRemote {
      * @param subject The logged in user's subject.
      * @param roleId
      * @param bundleGroupIds
+     *
+     * @since 4.9
      */
     void addBundleGroupsToRole(Subject subject, int roleId, int[] bundleGroupIds);
 
@@ -159,6 +161,8 @@ public interface RoleManagerRemote {
      * @param subject
      * @param bundleGroupId
      * @param roleIds
+     *
+     * @since 4.9
      */
     void addRolesToBundleGroup(Subject subject, int bundleGroupId, int[] roleIds);
 
@@ -175,6 +179,8 @@ public interface RoleManagerRemote {
      * @param subject
      * @param roleId
      * @param bundleGroupIds
+     *
+     * @since 4.9
      */
     void setAssignedBundleGroups(Subject subject, int roleId, int[] bundleGroupIds);
 
@@ -193,6 +199,8 @@ public interface RoleManagerRemote {
      * @param subject user attempting to remove the groups from the role
      * @param roleId
      * @param bundleGroupIds
+     *
+     * @since 4.9
      */
     void removeBundleGroupsFromRole(Subject subject, int roleId, int[] bundleGroupIds);
 
@@ -211,6 +219,8 @@ public interface RoleManagerRemote {
      * @param subject
      * @param bundleGroupId
      * @param roleIds
+     *
+     * @since 4.9
      */
     void removeRolesFromBundleGroup(Subject subject, int bundleGroupId, int[] roleIds);
 

@@ -34,7 +34,7 @@ public interface DiscoveryBossRemote {
      * Analogous to the GUI feature Import Resources in the auto discovery queue.
      * Note, to query for Resources with a specific InventoryStatus, see
      * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
-     * 
+     *
      * @param subject
      * @param resourceIds
      */
@@ -45,7 +45,7 @@ public interface DiscoveryBossRemote {
      * ignore committed resources as well.
      * Note, to query for Resources with a specific InventoryStatus, see
      * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
-     * 
+     *
      * @param subject
      * @param resourceIds
      */
@@ -55,7 +55,7 @@ public interface DiscoveryBossRemote {
      * Analogous to the GUI feature Unignore Resources in the auto discovery queue.
      * Note, to query for Resources with a specific InventoryStatus, see
      * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
-     * 
+     *
      * @param subject
      * @param resourceIds
      */
@@ -65,12 +65,14 @@ public interface DiscoveryBossRemote {
      * This is used to specifically unignore previously ignored resources. This has the added feature
      * of immediately importing those newly unignored resources. This should only be used for unignoring
      * those resources that were previously committed but ignored.
-     * 
+     *
      * Note, to query for Resources with a specific InventoryStatus, see
      * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
-     * 
+     *
      * @param subject
      * @param resourceIds
+     *
+     * @since 4.7
      */
     void unignoreAndImportResources(Subject subject, int[] resourceIds);
 

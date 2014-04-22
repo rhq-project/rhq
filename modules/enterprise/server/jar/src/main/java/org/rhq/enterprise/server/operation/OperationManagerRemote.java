@@ -99,7 +99,7 @@ public interface OperationManagerRemote {
      * @param subject
      * @param historyIds
      * @param deleteEvenIfInProgress
-     * @Throws {@link ApplicationException} Thrown if any history records fail to delete. Message indicates
+     * @throws ApplicationException Thrown if any history records fail to delete. Message indicates
      * partial success and gives detail on each failure.
      */
     void deleteOperationHistories(Subject subject, int[] historyIds, boolean deleteEvenIfInProgress)
@@ -168,6 +168,8 @@ public interface OperationManagerRemote {
      * @return the information on the new schedule
      *
      * @throws ScheduleException if failed to schedule the operation
+     *
+     * @since 4.6
      */
     ResourceOperationSchedule scheduleResourceOperationUsingCron(Subject subject, int resourceId, String operationName,
         String cronExpression, int timeout, Configuration parameters, String description) throws ScheduleException;
@@ -181,7 +183,6 @@ public interface OperationManagerRemote {
      *            identifies the operation to unschedule
      * @param resourceId
      *            the ID of the resource whose operation is getting unscheduled
-     * @throws UnscheduleException TODO
      * @throws UnscheduleException
      */
     void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException;
@@ -248,6 +249,8 @@ public interface OperationManagerRemote {
      * @return the information  on the new schedule
      *
      * @throws ScheduleException if failed to schedule the operation
+     *
+     * @since 4.6
      */
     GroupOperationSchedule scheduleGroupOperationUsingCron(Subject subject, int groupId,
         int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
@@ -259,7 +262,7 @@ public interface OperationManagerRemote {
      * @param  subject          the user who is asking to unschedule the operation
      * @param  jobId           identifies the operation to unschedule
      * @param  resourceGroupId the ID of the group whose operation is getting unscheduled
-     * @throws UnscheduleException TODO
+     * @throws UnscheduleException
      */
     void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 
@@ -273,7 +276,6 @@ public interface OperationManagerRemote {
      * @param resourceId
      *
      * @return resource scheduled operations
-     * @throws Exception TODO
      * @throws Exception
      */
     List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId) throws Exception;
@@ -287,17 +289,17 @@ public interface OperationManagerRemote {
      * @param groupId
      *
      * @return resource scheduled operations
-     * @throws Exception TODO
      * @throws Exception
      */
     List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
+    // TODO: major release: this should return PageList as all our criteria finder do
     /**
-     * TODO: major release: this should return PageList as all our criteria finder do
-     *
      * @param subject The logged in user's subject.
      * @param criteria The criteria object for the finding.
      * @return instance of PageList<OperationDefinition> (can be safely casted)
+     *
+     * @since 4.7
      */
     List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
 

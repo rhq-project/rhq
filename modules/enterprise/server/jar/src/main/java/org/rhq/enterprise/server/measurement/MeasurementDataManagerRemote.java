@@ -73,6 +73,8 @@ public interface MeasurementDataManagerRemote {
      *
      * @throws MeasurementException if the schedule does not reference numerical data or if the user is not allowed to view
      *                        the {@link Resource} corresponding to this scheduleId
+     *
+     * @since 4.10
      */
     MeasurementAggregate getMeasurementAggregate(Subject subject, int scheduleId, long startTime, long endTime)
         throws MeasurementException;

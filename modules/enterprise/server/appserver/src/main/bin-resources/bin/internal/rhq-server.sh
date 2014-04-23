@@ -566,10 +566,10 @@ case "$1" in
             RHQ_SERVER_STOP_DELAY=5
         fi
         waited_seconds=0
-        max_wait_seconds=$(expr $RHQ_SERVER_STOP_DELAY \* 60)
+        max_wait_seconds=`expr $RHQ_SERVER_STOP_DELAY \* 60`
         while [ "$_SERVER_RUNNING" -eq "1"  ] && [ $waited_seconds -lt $max_wait_seconds ]; do
             sleep 2
-            waited_seconds=$(expr $waited_seconds + 2)
+            waited_seconds=`expr $waited_seconds + 2`
             check_status "stopping..."
         done
 

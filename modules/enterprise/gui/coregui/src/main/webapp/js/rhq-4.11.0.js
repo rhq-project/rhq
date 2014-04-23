@@ -1,3 +1,4 @@
+"use strict";
 /**
  * RHQ Charting Javascript Functions.
  */
@@ -41,7 +42,6 @@
  * @constructor
  */
 var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend, chartAverage, chartMin, chartMax, isSummaryGraph) {
-            "use strict";
             if (!(this instanceof ChartContext)) {
                 throw new Error("ChartContext function cannot be called as a function.");
             }
@@ -108,7 +108,6 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
          * @constructor
          */
                 AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes) {
-            "use strict";
             if (!(this instanceof AvailChartContext)) {
                 throw new Error("AvailChartContext function cannot be called as a function.");
             }
@@ -138,7 +137,6 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
          * @constructor
          */
                 GraphDateContext = function (startDate, endDate) {
-            "use strict";
             if (!(this instanceof GraphDateContext)) {
                 throw new Error("GraphDateContext function cannot be called as a function.");
             }
@@ -146,9 +144,6 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
             this.endDate = endDate;
         },
         rhqCommon = (function () {
-            "use strict";
-
-
             var timeFormat = function (formats) {
                 return function(date) {
                     var i = formats.length - 1, f = formats[i];

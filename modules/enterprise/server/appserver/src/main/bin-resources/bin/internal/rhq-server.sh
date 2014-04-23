@@ -118,7 +118,7 @@ orange () { sed "/$1/s//`printf "\033[33m$1\033[0m"`/"; }
 
 add_colors () {
     # find out if terminal support colors
-    _COLORS_NUM=$(tput colors 2> /dev/null)
+    _COLORS_NUM=`tput colors 2> /dev/null`
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
         (sh --version | grep bash) 1> /dev/null 2>&1
         _IS_BASH=$?
@@ -528,10 +528,10 @@ case "$1" in
             RHQ_SERVER_STOP_DELAY=5
         fi
         waited_seconds=0
-        max_wait_seconds=$(expr $RHQ_SERVER_STOP_DELAY \* 60)
+        max_wait_seconds=`expr $RHQ_SERVER_STOP_DELAY \* 60`
         while [ "$_SERVER_RUNNING" -eq "1"  ] && [ $waited_seconds -lt $max_wait_seconds ]; do
             sleep 2
-            waited_seconds=$(expr $waited_seconds + 2)
+            waited_seconds=`expr $waited_seconds + 2`
             check_status "stopping..."
         done
 

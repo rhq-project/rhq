@@ -78,7 +78,7 @@ green () { sed "/$1/s//`printf "\033[32m$2$1\033[0m"`/"; }
 
 add_colors () {
     # find out if terminal support colors
-    _COLORS_NUM=$(tput colors 2> /dev/null)
+    _COLORS_NUM=`tput colors 2> /dev/null`
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
         _COLOR=true
         (sh --version | grep bash) 1> /dev/null 2>&1

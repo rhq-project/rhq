@@ -388,14 +388,12 @@ public class ConfigurationUtility {
     private static void validatePropertyMap(AbstractPropertyMap propertyMap, AbstractPropertyMap currentPropertyMap,
         PropertyDefinitionMap propertyDefinitionMap, List<String> errorMessages) {
         // if the entire map is read-only then the new map must match the current map if the current map is non-empty
-        if (propertyDefinitionMap.isReadOnly()) {
-            if (!currentPropertyMap.getMap().isEmpty()) {
-                if (!propertyMap.getMap().equals(currentPropertyMap.getMap())) {
-                    errorMessages.add("ReadOnly property '" + propertyDefinitionMap.getName() + "' has a value "
-                        + propertyMap.getMap() + " different than the current value " + currentPropertyMap.getMap()
-                        + "]. It is not allowed to change.");
-                    return;
-                }
+        if (propertyDefinitionMap.isReadOnly() && null != currentPropertyMap && !currentPropertyMap.getMap().isEmpty()) {
+            if (!propertyMap.getMap().equals(currentPropertyMap.getMap())) {
+                errorMessages.add("ReadOnly property '" + propertyDefinitionMap.getName() + "' has a value "
+                    + propertyMap.getMap() + " different than the current value " + currentPropertyMap.getMap()
+                    + "]. It is not allowed to change.");
+                return;
             }
         }
 

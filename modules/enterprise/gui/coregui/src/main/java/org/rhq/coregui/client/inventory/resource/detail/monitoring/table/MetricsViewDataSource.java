@@ -196,10 +196,10 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                     doubleValue = Double.parseDouble(measurementData.getValue().toString());
                 }
 
-                String value = MeasurementConverterClient.formatToSignificantPrecision(new double[] { doubleValue },
-                    MeasurementUnits.valueOf(from.getUnits()), true)[0];
+                String liveValue = MeasurementConverterClient.format(doubleValue,
+                    MeasurementUnits.valueOf(from.getUnits()), true, 0, 1);
 
-                sb.append(value);
+                sb.append(liveValue);
 
                 break;
             }

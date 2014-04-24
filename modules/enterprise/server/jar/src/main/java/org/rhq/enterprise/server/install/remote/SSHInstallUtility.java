@@ -26,6 +26,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Properties;
 
 import com.jcraft.jsch.Channel;
@@ -219,14 +221,15 @@ public class SSHInstallUtility {
         executeCommand("cd '" + parentPath + "' ; " + "java -jar '" + parentPath + "/" + agentFile + "' '--install="
             + parentPath + "'", "Install Agent", info);
 
+        String agentConfigXmlFilename = parentPath + "/rhq-agent/conf/agent-configuration.xml";
+
         if (customData.getAgentConfigurationXml() != null) {
             log.info("Copying custom agent configuration file...");
-            String destFilename = parentPath + "/rhq-agent/conf/agent-configuration.xml";
             start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXml(), destFilename);
+            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXml(), agentConfigXmlFilename);
             AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXml()
-                + "' -> '" + destFilename + "'", "Remote copy the agent configuration file", 0, fileSent ? "Success"
-                : "Failed", getTimeDiff(start));
+                + "' -> '" + agentConfigXmlFilename + "'", "Remote copy the agent configuration file", 0,
+                fileSent ? "Success" : "Failed", getTimeDiff(start));
             info.addStep(step);
             if (!fileSent) {
                 return info; // abort and return what we did - no sense continuing if the custom config file failed to copy
@@ -235,6 +238,20 @@ public class SSHInstallUtility {
 
             // tell the info object - this is needed so it adds the --config command line option
             info.setCustomAgentConfigurationFile("agent-configuration.xml");
+        }
+
+        // try to see if we can figure out what the port will be that the agent will bind to
+        // this will use awk to find a line in the agent config xml that matches this:
+        //    <entry key="rhq.communications.connector.bind-port" value="16163" />
+        // where we use " as the field separator and the port number will be the fourth field.
+        String agentPortAwkCommand = "awk '-F\"' '/key.*=.*" + AgentInstallInfo.AGENT_PORT_PROP + "/ {print $4}' "
+            + "'" + agentConfigXmlFilename + "'";
+        String portStr = executeCommand(agentPortAwkCommand, "Determine the agent's bind port", info);
+        try {
+            int port = Integer.parseInt(portStr.trim());
+            info.setAgentPort(port);
+        } catch (NumberFormatException nfe) {
+            info.setAgentPort(0); // indicate that we don't know it
         }
 
         if (customData.getRhqAgentEnv() != null) {
@@ -268,6 +285,37 @@ public class SSHInstallUtility {
 
         String startCommand = envCmd1 + " ; " + envCmd2 + " ; nohup '" + agentScript + "' " + startStringArgs + " &";
         executeCommand(startCommand, "Start New Agent", info);
+
+        // If we know the port the agent is going to listen to, see if we can ping it.
+        // If we don't know the port, then just skip this test and hope for the best - if there
+        // is a problem later, the user will have to examine the agent logs.
+        if (info.getAgentPort() > 0) {
+            info.setConfirmedAgentConnection(false);
+            for (int attempt = 0; attempt < 5 && !info.isConfirmedAgentConnection(); attempt++) {
+                Socket ping = new Socket();
+                try {
+                    ping.connect(new InetSocketAddress(info.getAgentAddress(), info.getAgentPort()), 5000);
+                    if (ping.isConnected()) {
+                        info.setConfirmedAgentConnection(true);
+                    }
+                } catch (Exception e) {
+                    info.setConfirmedAgentConnection(false);
+                } finally {
+                    try {
+                        ping.close();
+                    } catch (Exception ignore) {
+                    }
+                }
+            }
+            if (!info.isConfirmedAgentConnection()) {
+                log.warn("Just installed an agent at [" + info.getAgentAddress()
+                    + "] but could not ping its port. Something might be bad with the install or it is behind a firewall.");
+            }
+        } else {
+            info.setConfirmedAgentConnection(null); // indicates we didn't try to ping the agent
+            log.warn("Just installed an agent at [" + info.getAgentAddress()
+                + "] but could not determine its port. No validation check will be made.");
+        }
 
         return info;
     }
@@ -405,7 +453,7 @@ public class SSHInstallUtility {
         return result;
     }
 
-    private String executeCommand(String command) {
+    private String executeCommand(String command) throws ExecuteException {
         ChannelExec channel = null;
         int exitStatus = -1;
 

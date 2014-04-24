@@ -561,6 +561,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         if (failure != null) {
+            log.warn(failure);
             throw failure;
         }
 

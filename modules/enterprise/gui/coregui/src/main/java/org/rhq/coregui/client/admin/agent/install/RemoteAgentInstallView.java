@@ -362,6 +362,10 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         return buttonsForm;
     }
 
+    private void displayError(String msg) {
+        displayError(msg, null);
+    }
+
     private void displayError(String msg, Throwable caught) {
         CoreGUI.getErrorHandler().handleError(msg, caught);
         String rootCause = ErrorHandler.getRootCauseMessage(caught);
@@ -558,6 +562,11 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
                                 displayMessage(MSG.view_remoteAgentInstall_success());
                                 agentStatusText.setValue(MSG.view_remoteAgentInstall_success());
+
+                                if (!result.isConfirmedAgentConnection()) {
+                                    displayError(MSG.view_remoteAgentInstall_error_cannotPingAgent(
+                                        result.getAgentAddress(), String.valueOf(result.getAgentPort())));
+                                }
 
                                 buildInstallInfoCanvas(agentInfoLayout, result);
                                 agentInfoLayout.markForRedraw();

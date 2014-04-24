@@ -188,7 +188,8 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
             SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
             try {
-                return sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+                AgentInstallInfo info = sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+                return info;
             } finally {
                 sshUtil.disconnect();
             }

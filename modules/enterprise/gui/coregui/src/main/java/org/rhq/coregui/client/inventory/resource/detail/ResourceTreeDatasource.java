@@ -317,15 +317,15 @@ public class ResourceTreeDatasource extends DataSource {
     private static void addSubCategoryNodes(List<TreeNode> allNodes, Set<String> allNodeIds, Resource resource) {
         Resource parentResource = resource.getParentResource();
         ResourceType type = resource.getResourceType();
-        String subCategory = type.getSubCategory();
+
         String subCategoryNodeId = null;
 
-        String[] subCategories = subCategory.split("|");
+        String[] subCategories = type.getSubCategory().split("\\|");
         for (String currentSubCategory : subCategories) {
             subCategoryNodeId = SubCategoryTreeNode.idOf(currentSubCategory, parentResource);
 
             if (!allNodeIds.contains(subCategoryNodeId)) {
-                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subCategory, parentResource);
+                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(currentSubCategory, parentResource);
                 allNodeIds.add(subCategoryNodeId);
                 allNodes.add(subCategoryNode);
             }

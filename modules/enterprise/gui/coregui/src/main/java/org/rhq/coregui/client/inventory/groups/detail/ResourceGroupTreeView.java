@@ -486,10 +486,9 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
 
                 // Insert subcategory node(s) if the type has a subcategory.
                 if (childType.getSubCategory() != null) {
-                    ResourceGroupEnhancedTreeNode lastSubcategoryNode = null;
-
-                    String[] subcategoryHierarchy = childType.getSubCategory().split("|");
+                    String[] subcategoryHierarchy = childType.getSubCategory().split("\\|");
                     ResourceGroupEnhancedTreeNode parentSubcategory = null;
+
                     for(String currentSubCategory: subcategoryHierarchy){
                         ResourceGroupEnhancedTreeNode currentSubcategoryNode = subCategoryNodesByName
                             .get(currentSubCategory);

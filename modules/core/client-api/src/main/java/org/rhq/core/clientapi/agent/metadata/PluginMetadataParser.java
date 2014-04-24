@@ -265,6 +265,7 @@ public class PluginMetadataParser {
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentServerType);
             serverResourceType.setDescription(serverDescriptor.getDescription());
+            serverResourceType.setSubCategory(serverDescriptor.getSubCategory());
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
                 .setCreateDeletePolicy(convertCreateDeletePolicy(serverDescriptor.getCreateDeletePolicy()));
@@ -387,6 +388,7 @@ public class PluginMetadataParser {
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
+            serviceResourceType.setSubCategory(serviceDescriptor.getSubCategory());
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
                 .getCreateDeletePolicy()));

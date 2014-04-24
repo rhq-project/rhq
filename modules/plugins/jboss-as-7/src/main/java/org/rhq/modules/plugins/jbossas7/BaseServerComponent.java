@@ -75,6 +75,7 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 
 /**
  * Base component for functionality that is common to Standalone Servers and Host Controllers.
@@ -96,7 +97,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private AvailabilityType previousAvailabilityType;
     private AvailabilityCollectorRunnable availabilityCollector;
     private String releaseVersion;
-    private String asHostName;
+    private String aSHostName;
+    private DocumentBuilderFactory docBuilderFactory;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -106,7 +108,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         connection = ASConnection.newInstanceForServerPluginConfiguration(serverPluginConfig);
         // The availabilityCollector is still null at this point. So this call will always perform a real availability
         // check and throw InvalidPluginConfigurationException as needed.
-        asHostName = findDomainHostName();
+        docBuilderFactory = DocumentBuilderFactory.newInstance();
+        setASHostName(findASDomainHostName());
         getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
@@ -159,10 +162,28 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private AvailabilityType getAvailabilityNow(int timeoutSec) {
         AvailabilityType availabilityType;
         try {
-            readAttribute("launch-type", timeoutSec);
-            availabilityType = AvailabilityType.UP;
-        } catch (Exception e) {
-            availabilityType = AvailabilityType.DOWN;
+            readAttribute(getHostAddress(), "name");
+            availabilityType = UP;
+        } 
+        catch (ResultFailedException e) {
+            log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
+            setASHostName(findASDomainHostName());
+            log.info("Detected domain host name ["+getASHostName()+"]");
+            try {
+                readAttribute(getHostAddress(), "name");
+                availabilityType = UP;
+            } catch (Exception ex) {
+                if (log.isDebugEnabled()) {
+                    log.debug(getResourceDescription() + ": exception while checking availability", e);
+                }
+                availabilityType = DOWN;
+            }
+        }
+        catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug(getResourceDescription() + ": exception while checking availability", e);
+            }
+            availabilityType = DOWN;
         }
 
         try {
@@ -180,16 +201,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     private void validateServerAttributes() throws InvalidPluginConfigurationException {
-        // validate domainHost property
-        try {
-            readAttribute(getHostAddress(), "name");
-        } catch (Exception ex) {
-            // this can happen when host was renamed, so our hostAddress (host=<name>) is no longer up-to-date
-            log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
-            asHostName = findDomainHostName();
-            log.info("Detected domain host name ["+asHostName+"]");
-        }
-
         // Validate the base dir (e.g. /opt/jboss-as-7.1.1.Final/standalone).
         File runtimeBaseDir;
         File baseDir = null;
@@ -718,31 +729,33 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             report.addData(data);
         }
     }
+    private synchronized void setASHostName(String aSHostName) {
+        this.aSHostName = aSHostName;
+    }
     /**
      * gets AS domain host name (defult is master for HC) null for standalone;
      * @return AS domain host name
      */
-    public String getAsHostName() {
-        return asHostName;
+    protected synchronized String getASHostName() {
+           return aSHostName;
     }
 
     /**
      * reads <host name= attribute from host.xml file
      * @param hostXmlFile
-     * @return
+     * @return name attribute from host.xml file
      */
-    protected String findDomainHostName() {
+    protected String findASDomainHostName() {
         File hostXmlFile = getServerPluginConfiguration().getHostConfigFile();
         if (hostXmlFile==null) {
             return null;
         }
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         String hostName = null;
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
             InputStream is = new FileInputStream(hostXmlFile);
             try {
-                Document document = builder.parse(is); // TODO keep this around
+                Document document = builder.parse(is);
                 hostName = document.getDocumentElement().getAttribute("name");
             } finally {
                 is.close();

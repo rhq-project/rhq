@@ -590,9 +590,10 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     }
 
     /**
-     * @deprecated
-     * @param hostXmlFile
-     * @return
+     * reads <host name= attribute from host.xml file
+     * @param hostXmlFile file
+     * @return name attribute from host.xml
+     * @Deprecated as of RHQ 4.12. domainHost pluginConfig property is deprecated as well, so this method will no longer be needed.
      */
     private String findHost(File hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

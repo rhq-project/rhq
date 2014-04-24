@@ -75,6 +75,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.ResolveExpression;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 
 /**
  * The base class for all AS7 resource components.
@@ -832,7 +833,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
-            throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
+            throw new ResultFailedException("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }
         return (T) res.getResult();

@@ -27,12 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.Menu;
@@ -44,13 +38,7 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.dashboard.Dashboard;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -60,14 +48,11 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.Messages;
-import org.rhq.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.coregui.client.inventory.resource.detail.ResourceTreeView;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.coregui.client.util.Log;
-import org.rhq.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy
@@ -138,7 +123,6 @@ public class ResourceGroupContextMenu extends Menu {
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             groupMemberType.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
-                ResourceTypeRepository.MetadataType.subCategory,
                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {

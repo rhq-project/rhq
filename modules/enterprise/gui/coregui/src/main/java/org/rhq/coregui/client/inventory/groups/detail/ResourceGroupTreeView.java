@@ -25,7 +25,6 @@ package org.rhq.coregui.client.inventory.groups.detail;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -356,8 +355,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
         typeIds.add(this.rootResourceGroup.getResourceType().getId());
         getTreeTypes(root, typeIds);
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(typeIds.toArray(new Integer[typeIds.size()]),
-            EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(typeIds.toArray(new Integer[typeIds.size()]), null,
             new ResourceTypeRepository.TypesLoadedCallback() {
 
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {

@@ -13,11 +13,9 @@ import org.rhq.core.db.DbUtilsI18NFactory;
 import org.rhq.core.db.DbUtilsI18NResourceKeys;
 
 /**
- * Updates the address field of storage node entities to ensure we are storing IP addresses and not hostnames. We want
- * to store the IP address since that is what Cassandra uses for inter-node communication. JMX operations that return
- * nodes will return the node IP addresses and not hostnames.
+ * Updates the subcategories in preparation of dropping the subcategories table.
  *
- * @author John Sanda
+ * @author Stefan Negrea
  */
 public class SubcategoryUpgradeTask implements DatabaseUpgradeTask {
 

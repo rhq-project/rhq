@@ -393,7 +393,6 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         c.addFilterName(typeName);
         c.addFilterPluginName(typePlugin);
         c.setStrict(true);
-        c.fetchSubCategories(true);
         c.fetchPluginConfigurationDefinition(true);
         c.fetchProcessScans(true);
         c.fetchOperationDefinitions(true);

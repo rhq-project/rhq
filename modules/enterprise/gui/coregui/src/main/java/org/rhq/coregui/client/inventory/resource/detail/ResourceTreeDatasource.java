@@ -186,8 +186,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
             result,
-            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
-                ResourceTypeRepository.MetadataType.subCategory),
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                 public void onResourceTypeLoaded(List<Resource> result) {

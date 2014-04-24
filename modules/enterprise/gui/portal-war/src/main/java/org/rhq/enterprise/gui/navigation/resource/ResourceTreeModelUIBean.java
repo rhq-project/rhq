@@ -106,7 +106,6 @@ public class ResourceTreeModelUIBean {
             }
         }
         ResourceTreeNode root = new ResourceTreeNode(found);
-        long start = System.currentTimeMillis();
         load(root);
         return root;
     }
@@ -180,7 +179,7 @@ public class ResourceTreeModelUIBean {
                     if (compositeParent.getSubcategory() != null) {
                         // parent is a sub category
                         if (res.getResourceType().getSubCategory() != null
-                        //TODO: BZ1069545 FIX THIS!
+                        //BZ1069545 This functionality is no longer needed since portal-war is no longer needed.
                         //&& compositeParent.getSubcategory().equals(
                         //    res.getResourceType().getSubCategory().getParentSubCategory())
                             && compositeParent.getParentResource().equals(res.getParentResource())) {

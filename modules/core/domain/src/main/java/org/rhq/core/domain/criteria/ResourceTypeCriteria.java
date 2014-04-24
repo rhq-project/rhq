@@ -60,7 +60,6 @@ public class ResourceTypeCriteria extends Criteria {
     private Set<ResourceCategory> filterCategories; // needs overrides
     private Boolean filterParentResourceTypesEmpty; // needs overrides
 
-    private boolean fetchSubCategory;
     private boolean fetchChildResourceTypes;
     private boolean fetchParentResourceTypes;
     private boolean fetchPluginConfigurationDefinition;
@@ -70,7 +69,6 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchOperationDefinitions;
     private boolean fetchProcessScans;
     private boolean fetchPackageTypes;
-    private boolean fetchSubCategories;
     private boolean fetchProductVersions;
     private boolean fetchBundleType;
     private boolean fetchResources;
@@ -170,10 +168,6 @@ public class ResourceTypeCriteria extends Criteria {
         this.filterParentResourceTypesEmpty = filterParentResourceTypesEmpty;
     }
 
-    public void fetchSubCategory(boolean fetchSubCategory) {
-        this.fetchSubCategory = fetchSubCategory;
-    }
-
     public void fetchChildResourceTypes(boolean fetchChildResourceTypes) {
         this.fetchChildResourceTypes = fetchChildResourceTypes;
     }
@@ -208,10 +202,6 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchPackageTypes(boolean fetchPackageTypes) {
         this.fetchPackageTypes = fetchPackageTypes;
-    }
-
-    public void fetchSubCategories(boolean fetchSubCategories) {
-        this.fetchSubCategories = fetchSubCategories;
     }
 
     public void fetchProductVersions(boolean fetchProductVersions) {

@@ -87,7 +87,9 @@ public class MetricsServer {
 
     private int parallelism = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.parallelism", "3"));
 
-    private int cacheBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.cache.batch-size", "100"));
+    private int cacheBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.cache.batch-size", "5"));
+
+    private Long cacheActivationTime;
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -127,6 +129,10 @@ public class MetricsServer {
 
     ListeningExecutorService getAggregationWorkers() {
         return aggregationWorkers;
+    }
+
+    public void setCacheActivationTime(Long cacheActivationTime) {
+        this.cacheActivationTime = cacheActivationTime;
     }
 
     public void init() {
@@ -492,14 +498,18 @@ public class MetricsServer {
             DateTime theHour = dateTimeService.currentHour();
             if (pastAggregationMissed) {
                 DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
-                new AggregationManager(aggregationWorkers, dao, dateTimeService, missedHour, aggregationBatchSize, parallelism,
-                    cacheBatchSize).run();
+                AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService,
+                    missedHour, aggregationBatchSize, parallelism, cacheBatchSize);
+                aggregator.setCacheActivationTime(cacheActivationTime);
                 pastAggregationMissed = false;
             }
             DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
 
-            return new AggregationManager(aggregationWorkers, dao, dateTimeService, timeSlice, aggregationBatchSize,
-                parallelism, cacheBatchSize).run();
+            AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService, timeSlice,
+                aggregationBatchSize, parallelism, cacheBatchSize);
+            aggregator.setCacheActivationTime(cacheActivationTime);
+
+            return aggregator.run();
         } finally {
             stopwatch.stop();
             totalAggregationTime.addAndGet(stopwatch.elapsed(TimeUnit.MILLISECONDS));

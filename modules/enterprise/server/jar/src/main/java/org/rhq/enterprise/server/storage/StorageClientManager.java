@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.annotation.Resource;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
@@ -553,6 +552,12 @@ public class StorageClientManager implements StorageClientManagerMBean{
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
+        metricsServer.setCacheActivationTime(getCacheActivationTime());
         metricsServer.init();
+    }
+
+    private Long getCacheActivationTime() {
+        SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
+        return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
     }
 }

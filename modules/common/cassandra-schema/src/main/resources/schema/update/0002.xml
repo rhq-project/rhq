@@ -43,4 +43,6 @@
       PRIMARY KEY ((bucket, day, partition), collection_time_slice, start_schedule_id, insert_time_slice)
     ) WITH compression = { 'sstable_compression' : 'LZ4Compressor' };
   </step>
+
+  <step class="org.rhq.cassandra.schema.PopulateCacheIndex"/>
 </updatePlan>

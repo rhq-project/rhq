@@ -508,7 +508,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     /**
-     * Returns the ResourceSubCategory, if any, which this ResourceType
+     * Returns the resource subcategory, if any, which this ResourceType
      * has been tagged with. If the ResourceType has not been tagged with
      * a subcategory, <code>null</code> is returned.
      */
@@ -517,7 +517,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     /**
-     * Tags this ResourceType as being part of the specified ResourceSubCategory
+     * Tags this ResourceType as being part of the specified subcategory
      */
     public void setSubCategory(String subcategory) {
         this.subCategory = subcategory;

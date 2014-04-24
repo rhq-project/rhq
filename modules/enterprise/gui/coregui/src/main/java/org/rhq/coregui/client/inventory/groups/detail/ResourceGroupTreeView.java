@@ -47,7 +47,6 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -487,53 +486,41 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                     nodesByType.add(autoTypeGroupNode);
                 }
 
-                //TODO: BZ 1069545 Fix this!
                 // Insert subcategory node(s) if the type has a subcategory.
-                //ResourceSubCategory subcategory = childType.getSubCategory();
-                ResourceSubCategory subcategory = null;
-                if (subcategory != null) {
+                if (childType.getSubCategory() != null) {
                     ResourceGroupEnhancedTreeNode lastSubcategoryNode = null;
 
-                    ResourceSubCategory currentSubCategory = subcategory;
-                    boolean currentSubcategoryNodeCreated = false;
-                    do {
+                    String[] subcategoryHierarchy = childType.getSubCategory().split("|");
+                    ResourceGroupEnhancedTreeNode parentSubcategory = null;
+                    for(String currentSubCategory: subcategoryHierarchy){
                         ResourceGroupEnhancedTreeNode currentSubcategoryNode = subCategoryNodesByName
-                            .get(currentSubCategory.getName());
+                            .get(currentSubCategory);
                         if (currentSubcategoryNode == null) {
                             // This node represents a subcategory. It is not associated with any specific resource type
                             // or cluster key - it is merely a way plugin developers organize different resource types into groups.
-                            currentSubcategoryNode = new ResourceGroupEnhancedTreeNode(currentSubCategory.getName());
-                            currentSubcategoryNode.setTitle(currentSubCategory.getDisplayName()); // subcategory names are normally plural already, no need to pluralize them
+                            currentSubcategoryNode = new ResourceGroupEnhancedTreeNode(currentSubCategory);
+                            currentSubcategoryNode.setTitle(currentSubCategory);
                             currentSubcategoryNode.setIsFolder(true);
-                            currentSubcategoryNode.setID("cat" + currentSubCategory.getName());
-                            currentSubcategoryNode.setParentID(parentKey.getKey());
-                            subCategoryNodesByName.put(currentSubCategory.getName(), currentSubcategoryNode);
-                            subCategoryChildrenByName.put(currentSubCategory.getName(),
-                                new ArrayList<ResourceGroupEnhancedTreeNode>());
+                            currentSubcategoryNode.setID("cat" + currentSubCategory);
 
-                            if (currentSubCategory.getParentSubCategory() == null) {
+                            if (parentSubcategory == null) {
                                 // It's a root subcategory - add a node for it to the tree.
                                 childNodes.add(currentSubcategoryNode);
+                                currentSubcategoryNode.setParentID(parentKey.getKey());
+                            } else {
+                                currentSubcategoryNode.setParentID(parentSubcategory.getID());
                             }
 
-                            currentSubcategoryNodeCreated = true;
+                            subCategoryNodesByName.put(currentSubCategory, currentSubcategoryNode);
+                            subCategoryChildrenByName.put(currentSubCategory,
+                                new ArrayList<ResourceGroupEnhancedTreeNode>());
                         }
 
-                        if (lastSubcategoryNode != null) {
-                            List<ResourceGroupEnhancedTreeNode> currentSubcategoryChildren = subCategoryChildrenByName
-                                .get(currentSubcategoryNode.getName());
-                            // make sure we re-parent the child so it is under the subcategory folder
-                            for (ResourceGroupEnhancedTreeNode currentSubcategoryChild : currentSubcategoryChildren) {
-                                currentSubcategoryChild.setParentID(currentSubcategoryNode.getID());
-                            }
-                            currentSubcategoryChildren.add(lastSubcategoryNode);
-                        }
-                        lastSubcategoryNode = currentSubcategoryNode;
-                    } while (currentSubcategoryNodeCreated
-                        && (currentSubCategory = currentSubCategory.getParentSubCategory()) != null);
+                        parentSubcategory = currentSubcategoryNode;
+                    }
 
-                    List<ResourceGroupEnhancedTreeNode> subcategoryChildren = subCategoryChildrenByName.get(subcategory
-                        .getName());
+                    List<ResourceGroupEnhancedTreeNode> subcategoryChildren = subCategoryChildrenByName
+                        .get(parentSubcategory);
                     subcategoryChildren.addAll(nodesByType);
                 } else {
                     childNodes.addAll(nodesByType);
@@ -548,7 +535,6 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
                 for (ResourceGroupEnhancedTreeNode subcatChild : subcategoryChildren) {
                     subcatChild.setParentID(subcategoryNode.getID());
                 }
-                createSortedArray(subcategoryChildren);
                 subcategoryNode.setChildren(createSortedArray(subcategoryChildren));
             }
 

@@ -320,18 +320,17 @@ public class ResourceTreeDatasource extends DataSource {
         ResourceType type = resource.getResourceType();
         String subCategory = type.getSubCategory();
         String subCategoryNodeId = null;
-        int insertAt = allNodes.size();
 
-        //TODO: BZ1069545 Fix this
-        /*do {
-            subCategoryNodeId = SubCategoryTreeNode.idOf(subCategory, parentResource);
+        String[] subCategories = subCategory.split("|");
+        for (String currentSubCategory : subCategories) {
+            subCategoryNodeId = SubCategoryTreeNode.idOf(currentSubCategory, parentResource);
 
             if (!allNodeIds.contains(subCategoryNodeId)) {
                 SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subCategory, parentResource);
                 allNodeIds.add(subCategoryNodeId);
-                allNodes.add(insertAt, subCategoryNode);
+                allNodes.add(subCategoryNode);
             }
-        } while ((subCategory = subCategory.getParentSubCategory()) != null);*/
+        }
     }
 
     public static class ResourceTreeNode extends EnhancedTreeNode {

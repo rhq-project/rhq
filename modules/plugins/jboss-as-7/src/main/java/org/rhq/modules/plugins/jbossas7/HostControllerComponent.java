@@ -67,7 +67,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             if (requestName.equals(DOMAIN_CONFIG_TRAIT) || requestName.equals(HOST_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
             } else if (requestName.equals(DOMAIN_HOST_TRAIT)) {
-                MeasurementDataTrait data = new MeasurementDataTrait(request, findDomainHostName());
+                MeasurementDataTrait data = new MeasurementDataTrait(request, findASDomainHostName());
                 report.addData(data);
             }
             else {
@@ -91,7 +91,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             return runCliCommand(parameters);
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
-            String domainHost = getAsHostName();
+            String domainHost = getASHostName();
             if (domainHost.isEmpty()) {
                 OperationResult result = new OperationResult();
                 result.setErrorMessage("No domain host found - can not continue");
@@ -241,13 +241,13 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     @NotNull
     @Override
     protected Address getEnvironmentAddress() {
-        return new Address("host=" + getAsHostName() + ",core-service=host-environment");
+        return new Address("host=" + getASHostName() + ",core-service=host-environment");
     }
 
     @NotNull
     @Override
     protected Address getHostAddress() {
-        return new Address("host=" + getAsHostName());
+        return new Address("host=" + getASHostName());
     }
 
     @NotNull

@@ -269,6 +269,24 @@ public class SSHInstallUtility {
             log.info("Custom agent environment script copied.");
         }
 
+        // Do a quick check to see if there is something already listening on the agent's port.
+        start = System.currentTimeMillis();
+        Boolean squatterCheck = checkAgentConnection(info, 1);
+        if (squatterCheck != null) { // if this is null, we weren't even able to check
+            if (squatterCheck.booleanValue()) {
+                AgentInstallStep step = new AgentInstallStep("ping " + info.getAgentAddress() + ":"
+                    + info.getAgentPort(), "See if anything has already taken the agent port", 1,
+                    "Port already in use", getTimeDiff(start));
+                info.addStep(step);
+                return info; // abort, don't install an agent if something is already squatting on its port
+            } else {
+                AgentInstallStep step = new AgentInstallStep("ping " + info.getAgentAddress() + ":"
+                    + info.getAgentPort(), "See if anything has already taken the agent port", 0, "Port free",
+                    getTimeDiff(start));
+                info.addStep(step);
+            }
+        }
+
         log.info("Will start new agent @ [" + accessInfo.getHost() + "] pointing to server @ [" + serverAddress + "]");
 
         String agentScript = parentPath + "/rhq-agent/bin/rhq-agent.sh"; // NOTE: NOT the wrapper script
@@ -286,18 +304,38 @@ public class SSHInstallUtility {
         String startCommand = envCmd1 + " ; " + envCmd2 + " ; nohup '" + agentScript + "' " + startStringArgs + " &";
         executeCommand(startCommand, "Start New Agent", info);
 
+        // see if we can confirm the agent connection now
+        Boolean pingResults = checkAgentConnection(info, 5);
+        if (pingResults == null) {
+            log.warn("Just installed an agent at [" + info.getAgentAddress()
+                + "] but could not determine its port. No validation check will be made.");
+        } else if (!pingResults.booleanValue()) {
+            log.warn("Just installed an agent at [" + info.getAgentAddress()
+                + "] but could not ping its port. Something might be bad with the install or it is behind a firewall.");
+        }
+
+        return info;
+    }
+
+    /**
+     * Checks if the agent's host/port can be connected to via a TCP socket.
+     * This will set the given info's "ConfirmedAgentConnection" attribute as well as return it.
+     *
+     * @param info information on the agent endpoint; its confirmed-agent-connection flag will be set
+     * @param retries number of times to try to connect before aborting (it will set the flag to false and return false when it aborts)
+     * @return the flag to indicate if the agent endpoint was able to be successfully connected to (could be null
+     *         if the agent port was not known and thus the connection attempt was never made).
+     */
+    private Boolean checkAgentConnection(AgentInstallInfo info, int retries) {
         // If we know the port the agent is going to listen to, see if we can ping it.
-        // If we don't know the port, then just skip this test and hope for the best - if there
-        // is a problem later, the user will have to examine the agent logs.
+        // If we don't know the port, then just skip this test and set the confirm connection flag to null.
         if (info.getAgentPort() > 0) {
             info.setConfirmedAgentConnection(false);
-            for (int attempt = 0; attempt < 5 && !info.isConfirmedAgentConnection(); attempt++) {
+            for (int attempt = 0; attempt < retries && !info.isConfirmedAgentConnection(); attempt++) {
                 Socket ping = new Socket();
                 try {
                     ping.connect(new InetSocketAddress(info.getAgentAddress(), info.getAgentPort()), 5000);
-                    if (ping.isConnected()) {
-                        info.setConfirmedAgentConnection(true);
-                    }
+                    info.setConfirmedAgentConnection(ping.isConnected());
                 } catch (Exception e) {
                     info.setConfirmedAgentConnection(false);
                 } finally {
@@ -307,17 +345,11 @@ public class SSHInstallUtility {
                     }
                 }
             }
-            if (!info.isConfirmedAgentConnection()) {
-                log.warn("Just installed an agent at [" + info.getAgentAddress()
-                    + "] but could not ping its port. Something might be bad with the install or it is behind a firewall.");
-            }
         } else {
             info.setConfirmedAgentConnection(null); // indicates we didn't try to ping the agent
-            log.warn("Just installed an agent at [" + info.getAgentAddress()
-                + "] but could not determine its port. No validation check will be made.");
         }
 
-        return info;
+        return info.isConfirmedAgentConnection();
     }
 
     public String uninstallAgent(String doomedPath) {

@@ -35,7 +35,6 @@ import org.rhq.coregui.client.inventory.common.graph.graphtype.StackedBarMetricG
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.MeasurementConverterClient;
 
-
 /**
  * The data portion of the graphs making these methods accessible via JSNI to
  * classes extending this and implementing graphs.
@@ -124,8 +123,10 @@ public class MetricGraphData implements JsonMetricProducer {
     public static MetricGraphData createForResource(int resourceId, String resourceName,
         MeasurementDefinition measurementDef, List<MeasurementDataNumericHighLowComposite> metrics,
         PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
-        return new MetricGraphData(resourceId, resourceName, measurementDef, metrics, measurementOOBCompositeList, false);
+        return new MetricGraphData(resourceId, resourceName, measurementDef, metrics, measurementOOBCompositeList,
+            false);
     }
+
     public static MetricGraphData createForResourceSummary(int resourceId, String resourceName,
         MeasurementDefinition measurementDef, List<MeasurementDataNumericHighLowComposite> metrics,
         PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
@@ -155,12 +156,10 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public void setEntityId(int entityId) {
         this.entityId = entityId;
-        //this.definition = null;
     }
 
     public void setEntityName(String entityName) {
         this.entityName = entityName;
-        //this.definition = null;
     }
 
     public int getDefinitionId() {
@@ -169,7 +168,6 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
-        //this.definition = null;
     }
 
     public MeasurementDefinition getDefinition() {
@@ -210,25 +208,25 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getChartAverage() {
-        if(average != 0.0){
+        if (average != 0.0) {
             return AbstractActivityView.convertLastValueForDisplay(average, definition);
-        }else {
+        } else {
             return "";
         }
     }
 
     public String getChartMax() {
-        if(max != Double.MIN_VALUE){
+        if (max != Double.MIN_VALUE) {
             return AbstractActivityView.convertLastValueForDisplay(max, definition);
-        }else {
+        } else {
             return "";
         }
     }
 
     public String getChartMin() {
-        if(min != Double.MAX_VALUE){
+        if (min != Double.MAX_VALUE) {
             return AbstractActivityView.convertLastValueForDisplay(min, definition);
-        }else {
+        } else {
             return "";
         }
     }
@@ -370,16 +368,17 @@ public class MetricGraphData implements JsonMetricProducer {
             // find the lowest value and use it's UOM to translated everything else into
             MeasurementDataNumericHighLowComposite lowestValue = null;
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-                if(!Double.isNaN(measurement.getValue())) {
-                    if(null == lowestValue){
-                       lowestValue = measurement;
+                if (!Double.isNaN(measurement.getValue())) {
+                    if (null == lowestValue) {
+                        lowestValue = measurement;
                     }
                     if (measurement.getLowValue() < lowestValue.getLowValue()) {
                         lowestValue = measurement;
                     }
                 }
             }
-            MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(lowestValue.getLowValue(), definition.getUnits());
+            MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
+                lowestValue.getLowValue(), definition.getUnits());
             adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
@@ -392,17 +391,27 @@ public class MetricGraphData implements JsonMetricProducer {
 
                 if (!Double.isNaN(measurement.getValue())) {
 
-                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), adjustedMeasurementUnits);
-                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(), adjustedMeasurementUnits);
-                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), adjustedMeasurementUnits);
+                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
+                        adjustedMeasurementUnits);
+                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(),
+                        adjustedMeasurementUnits);
+                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
+                        adjustedMeasurementUnits);
 
                     sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
                     sb.append(" \"high\":" + newHigh.getValue() + ",");
-                    sb.append(" \"highFormatted\":\"" + MeasurementConverterClient.format(measurement.getHighValue(),definition.getUnits(), true,0,3) + "\",");
+                    sb.append(" \"highFormatted\":\""
+                        + MeasurementConverterClient.format(measurement.getHighValue(), definition.getUnits(), true, 0,
+                            3) + "\",");
                     sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
-                    sb.append(" \"lowFormatted\":\"" + MeasurementConverterClient.format(cleanseLow(measurement.getLowValue(), measurement.getValue(), measurement.getHighValue()),definition.getUnits(),true,0,3) + "\",");
-                    sb.append(" \"avg\":" +  newAvg.getValue() + ",");
-                    sb.append(" \"avgFormatted\":\"" +  MeasurementConverterClient.format(measurement.getValue(), definition.getUnits(),true,0,3) + "\"},");
+                    sb.append(" \"lowFormatted\":\""
+                        + MeasurementConverterClient.format(
+                            cleanseLow(measurement.getLowValue(), measurement.getValue(), measurement.getHighValue()),
+                            definition.getUnits(), true, 0, 3) + "\",");
+                    sb.append(" \"avg\":" + newAvg.getValue() + ",");
+                    sb.append(" \"avgFormatted\":\""
+                        + MeasurementConverterClient.format(measurement.getValue(), definition.getUnits(), true, 0, 3)
+                        + "\"},");
                 } else {
                     // give it some values so that we dont have NaN
                     sb.append(" \"high\":0,");
@@ -422,21 +431,50 @@ public class MetricGraphData implements JsonMetricProducer {
         return sb.toString();
     }
 
-    public  static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
+    public static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value,
+        MeasurementUnits measurementUnits) {
+        MeasurementNumericValueAndUnits returnValueAndUnits;
         double adjustedValue = measurementUnits == MeasurementUnits.PERCENTAGE ? value * 100 : value;
-        return new MeasurementNumericValueAndUnits(MeasurementConverterClient.scale(adjustedValue, measurementUnits),measurementUnits);
+        if (measurementUnits.getFamily() == MeasurementUnits.Family.BYTES || measurementUnits.getFamily() == MeasurementUnits.Family.BITS) {
+            returnValueAndUnits = autoScaleBytesAndBits(adjustedValue, measurementUnits);
+        } else if(measurementUnits.getFamily() == MeasurementUnits.Family.TIME){
+            returnValueAndUnits = new MeasurementNumericValueAndUnits( MeasurementConverterClient.scale(adjustedValue/1000, measurementUnits), measurementUnits);
+        } else {
+            returnValueAndUnits = new MeasurementNumericValueAndUnits( MeasurementConverterClient.scale(adjustedValue, measurementUnits), measurementUnits);
+        }
+        return returnValueAndUnits;
     }
 
-        /**
-         * This is cleaning the data as sometimes the data coming from the metric query
-         * is erroneous: for instance the low is greater than the high. This causes the
-         * geometries to get weird. We normally should not have to do this!
-         * @todo: Remove this data cleansing once we have fixed it at the metric query.
-         *
-         * @param low supposed low value
-         * @param high supposed high value
-         * @return the real low value
-         */
+    // fix for: BZ1089108
+    public static MeasurementNumericValueAndUnits autoScaleBytesAndBits(double size, MeasurementUnits measurementUnits) {
+        MeasurementNumericValueAndUnits valueAndUnits;
+        if (size <= 0)
+            return new MeasurementNumericValueAndUnits(0d, measurementUnits);
+        final String[] byteUnits = new String[] { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
+        final String[] bitUnits = new String[] { "B", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
+        String[] units = measurementUnits.getFamily() == MeasurementUnits.Family.BYTES ? byteUnits : bitUnits;
+        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+        MeasurementUnits selectedUnits = null;
+        for (MeasurementUnits measurementUnit : MeasurementUnits.values()) {
+            if (measurementUnit.toString().equals(units[digitGroups])) {
+                selectedUnits = measurementUnit;
+                break;
+            }
+        }
+        valueAndUnits = new MeasurementNumericValueAndUnits(size / Math.pow(1024, digitGroups), selectedUnits);
+        return valueAndUnits;
+    }
+
+    /**
+     * This is cleaning the data as sometimes the data coming from the metric query
+     * is erroneous: for instance the low is greater than the high. This causes the
+     * geometries to get weird. We normally should not have to do this!
+     * @todo: Remove this data cleansing once we have fixed it at the metric query.
+     *
+     * @param low supposed low value
+     * @param high supposed high value
+     * @return the real low value
+     */
     private Double cleanseLow(Double low, Double avg, Double high) {
         double highLowMin = Math.min(low, high);
         return Math.min(highLowMin, avg);

@@ -18,11 +18,8 @@
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
         <column name="DELETED" type="BOOLEAN" default="FALSE" required="TRUE"/>
-        <column name="SUBCATEGORY_ID" type="INTEGER"/>
-        <!--
-        TODO add support to DB setup for tables with circular dependencies and then add back this RI
-        <column name="SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT" />
-        -->
+        <column name="SUBCATEGORY" type="VARCHAR2" size="1000"/>
+
         <column name="PLUGIN_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
         <column name="RES_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
         <column name="BUNDLE_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG"/>
@@ -35,20 +32,6 @@
         </index>
     </table>
 
-    <!-- NEW RESOURCE SUBCATEGORIES -->
-    <table name="RHQ_RESOURCE_SUBCAT">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" type="VARCHAR2" size="100"/>
-        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
-        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-        <column name="CTIME" type="LONG"/>
-        <column name="MTIME" type="LONG"/>
-        <column name="PARENT_SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT"/>
-        <!-- resourceTypeId is not required on child sub categories -->
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
-    </table>
-
     <!-- Many To Many mapping for resource type to its parents -->
     <table name="RHQ_RESOURCE_TYPE_PARENTS">
         <column name="RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
@@ -59,20 +42,6 @@
             <primaryKey>
                 <field ref="RESOURCE_TYPE_ID"/>
                 <field ref="PARENT_RESOURCE_TYPE_ID"/>
-            </primaryKey>
-        </constraint>
-    </table>
-
-    <!-- Many To Many mapping for resource type to its proper subcategories -->
-    <table name="RHQ_RESOURCE_TYPE_SUBCATS">
-        <column name="RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
-        <column name="RESOURCE_SUBCAT_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_SUBCAT"/>
-
-        <!-- not using full words to fit index name length -->
-        <constraint name="RHQ_RES_TYPE_SUBCATS_KEY">
-            <primaryKey>
-                <field ref="RESOURCE_TYPE_ID"/>
-                <field ref="RESOURCE_SUBCAT_ID"/>
             </primaryKey>
         </constraint>
     </table>

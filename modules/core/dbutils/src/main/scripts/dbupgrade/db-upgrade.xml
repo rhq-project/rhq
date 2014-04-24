@@ -2298,7 +2298,7 @@
 
             <schemaSpec version="2.144">
                 <!-- RHQ_AGENT_INSTALL -->
-                <schema-createSequence name="RHQ_AGENT_INSTALL_ID_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_AGENT_INSTALL">
                         CREATE TABLE RHQ_AGENT_INSTALL ( ID INTEGER PRIMARY KEY )
@@ -2391,8 +2391,7 @@
 
            <schema-javaTask className="SubcategoryUpgradeTask" />
 
-         </schemaSpec>
-
+          </schemaSpec-->
         </dbupgrade>
     </target>
 </project>

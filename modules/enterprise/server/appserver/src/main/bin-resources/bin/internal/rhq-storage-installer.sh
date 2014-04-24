@@ -11,13 +11,6 @@
 # script directly.
 # =============================================================================
 
-if [ -f "../rhq-server-env.sh" ]; then
-   . "../rhq-server-env.sh" $*
-else
-   echo "Failed to find rhq-server-env.bat. This file should exist in the bin directory."
-   exit 1
-fi
-
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
@@ -25,6 +18,12 @@ debug_msg ()
       echo $1
    fi
 }
+
+if [ -f "../rhq-server-env.sh" ]; then
+   . "../rhq-server-env.sh" $*
+else
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
+fi
 
 # ----------------------------------------------------------------------
 # Determine what specific platform we are running on.

@@ -22,11 +22,22 @@
 # This script calls standalone.sh when starting the underlying JBossAS server.
 # =============================================================================
 
+# ----------------------------------------------------------------------
+# Dumps a message iff debug mode is enabled
+# ----------------------------------------------------------------------
+
+debug_msg ()
+{
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+      echo $1
+   fi
+}
+
 if [ -f "../rhq-server-env.sh" ]; then
    . "../rhq-server-env.sh" $*
 else
-   echo "Failed to find rhq-server-env.sh. This file should exist in the bin directory."
-   exit 1
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
 fi
 
 # ----------------------------------------------------------------------
@@ -55,18 +66,6 @@ fi
 #RHQ_SERVER_ADDITIONAL_JAVA_OPTS="$RHQ_SERVER_ADDITIONAL_JAVA_OPTS -agentlib:jprofilerti=port=8849 -Xbootclasspath/a:$JPROFILER_HOME/bin/agent.jar"
 #export PATH="$PATH:$JPROFILER_HOME/bin"
 #export LD_LIBRARY_PATH="$JPROFILER_HOME/bin/linux-x64"
-
-# ----------------------------------------------------------------------
-# Dumps a message iff debug mode is enabled
-# ----------------------------------------------------------------------
-
-debug_msg ()
-{
-   # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
-      echo $1
-   fi
-}
 
 # ----------------------------------------------------------------------
 # Sets _SERVER_STATUS, _SERVER_RUNNING and _SERVER_PID based on the

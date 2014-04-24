@@ -48,8 +48,7 @@ echo "$_SCRIPT_DIR/rhq-server-env.sh"
 if [ -f "$_SCRIPT_DIR/rhq-server-env.sh" ]; then
    . "$_SCRIPT_DIR/rhq-server-env.sh" $*
 else
-   echo "Failed to find rhq-server-env.bat. This file should exist in the bin directory."
-   exit 1
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
 fi
 
 # ----------------------------------------------------------------------

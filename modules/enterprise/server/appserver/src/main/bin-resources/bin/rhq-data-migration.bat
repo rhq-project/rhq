@@ -13,17 +13,16 @@ rem ============================================================================
 
 setlocal enabledelayedexpansion
 
+rem if debug variable is set, it is assumed to be on, unless its value is false
+if "%RHQ_DATA_MIGRATION_DEBUG%" == "false" (
+   set RHQ_DATA_MIGRATION_DEBUG=
+)
+
 set _SCRIPT_DIR=%~dp0
 if exist "%_SCRIPT_DIR%\rhq-server-env.bat" (
    call "%_SCRIPT_DIR%\rhq-server-env.bat" %*
 ) else (
-   echo Failed to find rhq-server-env.bat. This file should exist in the bin directory.
-   exit /B 1
-)
-
-rem if debug variable is set, it is assumed to be on, unless its value is false
-if "%RHQ_DATA_MIGRATION_DEBUG%" == "false" (
-   set RHQ_DATA_MIGRATION_DEBUG=
+   if defined RHQ_DATA_MIGRATION_DEBUG echo Failed to find rhq-server-env.bat. Continuing with current environment...
 )
 
 rem ----------------------------------------------------------------------

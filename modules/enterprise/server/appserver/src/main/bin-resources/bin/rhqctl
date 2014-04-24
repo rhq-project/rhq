@@ -42,7 +42,8 @@ if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
    _READLINK_ARG="-e"
 fi
 
-_SCRIPT_DIR="$(dirname "$(readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0")")"
+_SCRIPT_DIR_AND_NAME="`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`"
+_SCRIPT_DIR="`dirname $_SCRIPT_DIR_AND_NAME`"
 debug_msg "Sourcing $_SCRIPT_DIR/rhq-server-env.sh"
 if [ -f "$_SCRIPT_DIR/rhq-server-env.sh" ]; then
    . "$_SCRIPT_DIR/rhq-server-env.sh" $*
@@ -205,7 +206,7 @@ _JBOSS_MODULEPATH="${_RHQ_MODULES_PATH}:${_INTERNAL_MODULES_PATH}"
 debug_msg "_JBOSS_MODULEPATH: $_JBOSS_MODULEPATH"
 
 # find out if terminal support colors
-COLORS=$(tput colors 2> /dev/null)
+COLORS=`tput colors 2> /dev/null`
 if [ $? = 0 ] && [ $COLORS -gt 2 ]; then
     RHQ_CONTROL_ADDITIONAL_JAVA_OPTS="-Dcolor=true ${RHQ_CONTROL_ADDITIONAL_JAVA_OPTS}"
 fi

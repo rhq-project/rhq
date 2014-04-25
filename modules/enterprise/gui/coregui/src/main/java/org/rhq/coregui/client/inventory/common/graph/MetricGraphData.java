@@ -391,24 +391,26 @@ public class MetricGraphData implements JsonMetricProducer {
 
                 if (!Double.isNaN(measurement.getValue())) {
 
-                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
+                    Double newHigh = normalizeUnitsAndValues(
+                        new MeasurementNumericValueAndUnits(measurement.getHighValue(), definition.getUnits()),
                         adjustedMeasurementUnits);
-                    MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(),
-                        adjustedMeasurementUnits);
-                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
+                    Double newAvg = normalizeUnitsAndValues(new MeasurementNumericValueAndUnits(measurement.getValue(),
+                        definition.getUnits()), adjustedMeasurementUnits);
+                    Double newLow = normalizeUnitsAndValues(
+                        new MeasurementNumericValueAndUnits(measurement.getLowValue(), definition.getUnits()),
                         adjustedMeasurementUnits);
 
                     sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
-                    sb.append(" \"high\":" + newHigh.getValue() + ",");
+                    sb.append(" \"high\":" + newHigh + ",");
                     sb.append(" \"highFormatted\":\""
                         + MeasurementConverterClient.format(measurement.getHighValue(), definition.getUnits(), true, 0,
                             3) + "\",");
-                    sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
+                    sb.append(" \"low\":" + cleanseLow(newLow, newAvg, newHigh) + ",");
                     sb.append(" \"lowFormatted\":\""
                         + MeasurementConverterClient.format(
                             cleanseLow(measurement.getLowValue(), measurement.getValue(), measurement.getHighValue()),
                             definition.getUnits(), true, 0, 3) + "\",");
-                    sb.append(" \"avg\":" + newAvg.getValue() + ",");
+                    sb.append(" \"avg\":" + newAvg + ",");
                     sb.append(" \"avgFormatted\":\""
                         + MeasurementConverterClient.format(measurement.getValue(), definition.getUnits(), true, 0, 3)
                         + "\"},");
@@ -431,38 +433,13 @@ public class MetricGraphData implements JsonMetricProducer {
         return sb.toString();
     }
 
-    public static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value,
-        MeasurementUnits measurementUnits) {
-        MeasurementNumericValueAndUnits returnValueAndUnits;
-        double adjustedValue = measurementUnits == MeasurementUnits.PERCENTAGE ? value * 100 : value;
-        if (measurementUnits.getFamily() == MeasurementUnits.Family.BYTES || measurementUnits.getFamily() == MeasurementUnits.Family.BITS) {
-            returnValueAndUnits = autoScaleBytesAndBits(adjustedValue, measurementUnits);
-        } else if(measurementUnits.getFamily() == MeasurementUnits.Family.TIME){
-            returnValueAndUnits = new MeasurementNumericValueAndUnits( MeasurementConverterClient.scale(adjustedValue/1000, measurementUnits), measurementUnits);
-        } else {
-            returnValueAndUnits = new MeasurementNumericValueAndUnits( MeasurementConverterClient.scale(adjustedValue, measurementUnits), measurementUnits);
+    public static Double normalizeUnitsAndValues(MeasurementNumericValueAndUnits valueAndUnits,
+        MeasurementUnits targetUnits) {
+        if (valueAndUnits.getUnits() == MeasurementUnits.PERCENTAGE) {
+            return valueAndUnits.getValue() * 100;
         }
-        return returnValueAndUnits;
-    }
-
-    // fix for: BZ1089108
-    public static MeasurementNumericValueAndUnits autoScaleBytesAndBits(double size, MeasurementUnits measurementUnits) {
-        MeasurementNumericValueAndUnits valueAndUnits;
-        if (size <= 0)
-            return new MeasurementNumericValueAndUnits(0d, measurementUnits);
-        final String[] byteUnits = new String[] { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
-        final String[] bitUnits = new String[] { "B", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
-        String[] units = measurementUnits.getFamily() == MeasurementUnits.Family.BYTES ? byteUnits : bitUnits;
-        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-        MeasurementUnits selectedUnits = null;
-        for (MeasurementUnits measurementUnit : MeasurementUnits.values()) {
-            if (measurementUnit.toString().equals(units[digitGroups])) {
-                selectedUnits = measurementUnit;
-                break;
-            }
-        }
-        valueAndUnits = new MeasurementNumericValueAndUnits(size / Math.pow(1024, digitGroups), selectedUnits);
-        return valueAndUnits;
+        Double multiplier = MeasurementUnits.calculateOffset(valueAndUnits.getUnits(), targetUnits);
+        return valueAndUnits.getValue() * multiplier;
     }
 
     /**

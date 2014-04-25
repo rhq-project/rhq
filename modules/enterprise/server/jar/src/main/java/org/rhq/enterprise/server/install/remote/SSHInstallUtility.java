@@ -367,7 +367,9 @@ public class SSHInstallUtility {
             String results = executeCommand("rm -rf '" + theRealDoomedPath + "'", "Uninstall Agent");
             return results;
         } else {
-            throw new IllegalArgumentException("There does not appear to be an agent installed here: " + doomedPath);
+            log.warn("Asked to uninstall an agent from [" + accessInfo.getHost() + ":" + doomedPath
+                + "] but there does not appear to be an agent there. Skipping the attempt to remove any files.");
+            return "There does not appear to be an agent installed here: " + accessInfo.getHost() + ":" + doomedPath;
         }
     }
 

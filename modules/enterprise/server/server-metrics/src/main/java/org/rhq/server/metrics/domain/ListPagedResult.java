@@ -74,7 +74,7 @@ public class ListPagedResult<T> implements Iterable<T> {
             while ((existingResultSet == null || existingResultSet.isExhausted()) && ids.size() != 0) {
                 BoundStatement boundStatement = this.preparedStatement.bind(ids.remove(0), new Date(startTime),
                     new Date(endTime));
-                return session.execute(boundStatement);
+                existingResultSet = session.execute(boundStatement);
             }
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
@@ -90,7 +90,7 @@ public class ListPagedResult<T> implements Iterable<T> {
     public Iterator<T> iterator() {
         return new Iterator<T>() {
             @SuppressWarnings({ "unchecked", "rawtypes" })
-            private List<Integer> ids = new LinkedList<Integer>(scheduleIds);
+            private final List<Integer> ids = new LinkedList<Integer>(scheduleIds);
             private ResultSet resultSet = retrieveNextResultSet(null, ids);
             private T lastRetrievedItem = null;
 

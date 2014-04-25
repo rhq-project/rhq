@@ -540,7 +540,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             new BooleanCallback() {
                 @Override
                 public void execute(Boolean overwriteExistingAgent) {
-                    CustomAgentInstallData customData = new CustomAgentInstallData(getAgentInstallPath(), overwriteExistingAgent.booleanValue(), agentConfigurationXml, rhqAgentEnvSh);
+                    CustomAgentInstallData customData = new CustomAgentInstallData(getAgentInstallPath(),
+                        overwriteExistingAgent.booleanValue(), agentConfigurationXml); //, rhqAgentEnvSh);
                     remoteInstallService.installAgent(getRemoteAccessInfo(), customData,
                         new AsyncCallback<AgentInstallInfo>() {
                             public void onFailure(Throwable caught) {

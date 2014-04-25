@@ -122,7 +122,7 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath) {
-        CustomAgentInstallData data = new CustomAgentInstallData(parentPath, false, null, null);
+        CustomAgentInstallData data = new CustomAgentInstallData(parentPath, false);
         return installAgent(subject, remoteAccessInfo, data);
     }
 
@@ -168,11 +168,11 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             }
 
             // we know the uploaded files had to have their contents obfuscated, we need to deobfuscate them
-            if (customData.getAgentConfigurationXml() != null) {
-                deobfuscateFile(new File(customData.getAgentConfigurationXml()));
+            if (customData.getAgentConfigurationXmlFile() != null) {
+                deobfuscateFile(new File(customData.getAgentConfigurationXmlFile()));
             }
-            if (customData.getRhqAgentEnv() != null) {
-                deobfuscateFile(new File(customData.getRhqAgentEnv()));
+            if (customData.getRhqAgentEnvFile() != null) {
+                deobfuscateFile(new File(customData.getRhqAgentEnvFile()));
             }
 
             // before we install, let's create a AgentInstall and pass its ID
@@ -196,11 +196,11 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
         } finally {
             // don't leave these around - whether we succeeded or failed, its a one-time-chance with these.
             // we want to delete them in case they have some sensitive info
-            if (customData.getAgentConfigurationXml() != null) {
-                new File(customData.getAgentConfigurationXml()).delete();
+            if (customData.getAgentConfigurationXmlFile() != null) {
+                new File(customData.getAgentConfigurationXmlFile()).delete();
             }
-            if (customData.getRhqAgentEnv() != null) {
-                new File(customData.getRhqAgentEnv()).delete();
+            if (customData.getRhqAgentEnvFile() != null) {
+                new File(customData.getRhqAgentEnvFile()).delete();
             }
         }
     }

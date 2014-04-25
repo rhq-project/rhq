@@ -177,16 +177,16 @@ public class SSHInstallUtility {
         }
 
         // confirm that we still have the custom files the user was supposed to have file uploaded
-        if (customData.getAgentConfigurationXml() != null) {
-            if (!new File(customData.getAgentConfigurationXml()).exists()) {
+        if (customData.getAgentConfigurationXmlFile() != null) {
+            if (!new File(customData.getAgentConfigurationXmlFile()).exists()) {
                 throw new RuntimeException("Unable to find custom agent config file at ["
-                    + customData.getAgentConfigurationXml() + "]");
+                    + customData.getAgentConfigurationXmlFile() + "]");
             }
         }
-        if (customData.getRhqAgentEnv() != null) {
-            if (!new File(customData.getRhqAgentEnv()).exists()) {
+        if (customData.getRhqAgentEnvFile() != null) {
+            if (!new File(customData.getRhqAgentEnvFile()).exists()) {
                 throw new RuntimeException("Unable to find custom agent environment script file at ["
-                    + customData.getRhqAgentEnv() + "]");
+                    + customData.getRhqAgentEnvFile() + "]");
             }
         }
 
@@ -223,11 +223,11 @@ public class SSHInstallUtility {
 
         String agentConfigXmlFilename = parentPath + "/rhq-agent/conf/agent-configuration.xml";
 
-        if (customData.getAgentConfigurationXml() != null) {
+        if (customData.getAgentConfigurationXmlFile() != null) {
             log.info("Copying custom agent configuration file...");
             start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXml(), agentConfigXmlFilename);
-            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXml()
+            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXmlFile(), agentConfigXmlFilename);
+            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXmlFile()
                 + "' -> '" + agentConfigXmlFilename + "'", "Remote copy the agent configuration file", 0,
                 fileSent ? "Success" : "Failed", getTimeDiff(start));
             info.addStep(step);
@@ -254,12 +254,12 @@ public class SSHInstallUtility {
             info.setAgentPort(0); // indicate that we don't know it
         }
 
-        if (customData.getRhqAgentEnv() != null) {
+        if (customData.getRhqAgentEnvFile() != null) {
             log.info("Copying custom agent environment script...");
             String destFilename = parentPath + "/rhq-agent/bin/rhq-agent-env.sh";
             start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getRhqAgentEnv(), destFilename);
-            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getRhqAgentEnv()
+            fileSent = SSHFileSend.sendFile(session, customData.getRhqAgentEnvFile(), destFilename);
+            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getRhqAgentEnvFile()
                 + "' -> '" + destFilename + "'", "Remote copy the agent environment script file", 0,
                 fileSent ? "Success" : "Failed", getTimeDiff(start));
             info.addStep(step);

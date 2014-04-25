@@ -136,18 +136,5 @@ public class MeasurementUtility {
         }
     }
 
-    public  static MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
-        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
-        MeasurementNumericValueAndUnits returnValue;
-
-        // adjust for percentage numbers
-        if (measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100, newValue.getUnits());
-        } else {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue(), newValue.getUnits());
-        }
-
-        return returnValue;
-    }
 
 }

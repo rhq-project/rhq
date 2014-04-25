@@ -48,6 +48,8 @@ import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
+import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -189,6 +191,10 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         port.setPrompt(MSG.view_remoteAgentInstall_promptPort());
         port.setHoverWidth(300);
         port.setEndRow(true);
+        IntegerRangeValidator portValidator = new IntegerRangeValidator();
+        portValidator.setMin(1);
+        portValidator.setMax(65535);
+        port.setValidators(new IsIntegerValidator(), portValidator);
 
         TextItem username = new TextItem("username", MSG.common_title_user());
         username.setRequired(false); // if not specified, the server will attempt to use the default ssh user defined in system settings

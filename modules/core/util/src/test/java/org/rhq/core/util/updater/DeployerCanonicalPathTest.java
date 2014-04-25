@@ -23,8 +23,6 @@
 
 package org.rhq.core.util.updater;
 
-import static org.testng.Assert.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -94,7 +92,7 @@ public class DeployerCanonicalPathTest {
             FileUtil.copyFile(new File("target/test-classes/updater-testB.txt"), testRawFileB);
 
             DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = null;
+            HashMap<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>(3);
             rawFiles.put(testRawFileA, rawFileRelativeDest); // we will realize this one ...
             rawFiles.put(testRawFileA2, rawFileRelativeDest2); // and this one ...
@@ -174,7 +172,7 @@ public class DeployerCanonicalPathTest {
             FileUtil.copyFile(new File("target/test-classes/updater-testB.txt"), testRawFileB);
 
             DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = null;
+            HashMap<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>(3);
             rawFiles.put(testRawFileA, rawFileRelativeDest);
             rawFiles.put(testRawFileA2, rawFileRelativeDest2);
@@ -326,7 +324,7 @@ public class DeployerCanonicalPathTest {
             FileUtil.copyFile(new File("target/test-classes/updater-testB.txt"), testRawFileB);
 
             DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = null;
+            HashMap<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>(3);
             rawFiles.put(testRawFileA, testRawFileADest);
             rawFiles.put(testRawFileA2, testRawFileA2Dest);

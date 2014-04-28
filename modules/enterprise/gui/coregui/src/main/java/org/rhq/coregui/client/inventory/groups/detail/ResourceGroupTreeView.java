@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.History;
@@ -460,8 +461,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
 
             // Second pass - process each of the sets of like-typed children created in the first pass.
             List<ResourceGroupEnhancedTreeNode> childNodes = new ArrayList<ResourceGroupEnhancedTreeNode>();
-            Map<String, ResourceGroupEnhancedTreeNode> subCategoryNodesByName = new HashMap<String, ResourceGroupEnhancedTreeNode>();
-            Map<String, List<ResourceGroupEnhancedTreeNode>> subCategoryChildrenByName = new HashMap<String, List<ResourceGroupEnhancedTreeNode>>();
+            Map<String, SubcategoryNode> subcategoryTreeRoots = new HashMap<String, SubcategoryNode>();
             for (ResourceType childType : childrenByType.keySet()) {
                 List<ClusterFlyweight> children = childrenByType.get(childType);
                 List<ResourceGroupEnhancedTreeNode> nodesByType = new ArrayList<ResourceGroupEnhancedTreeNode>();
@@ -486,56 +486,73 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
 
                 // Insert subcategory node(s) if the type has a subcategory.
                 if (childType.getSubCategory() != null) {
-                    String[] subcategoryHierarchy = childType.getSubCategory().split("\\|");
-                    ResourceGroupEnhancedTreeNode parentSubcategory = null;
+                    SubcategoryNode parentSubcategoryNode = null;
 
-                    for(String currentSubCategory: subcategoryHierarchy){
-                        ResourceGroupEnhancedTreeNode currentSubcategoryNode = subCategoryNodesByName
-                            .get(currentSubCategory);
+                    for(String currentSubcategoryName: childType.getSubCategory().split("\\|")){
+                        SubcategoryNode currentSubcategoryNode = null;
+                        if (parentSubcategoryNode == null) {
+                            currentSubcategoryNode = subcategoryTreeRoots.get(currentSubcategoryName);
+                        } else {
+                            currentSubcategoryNode = parentSubcategoryNode.subcategoryChildren
+                                .get(currentSubcategoryName);
+                        }
+
                         if (currentSubcategoryNode == null) {
                             // This node represents a subcategory. It is not associated with any specific resource type
                             // or cluster key - it is merely a way plugin developers organize different resource types into groups.
-                            currentSubcategoryNode = new ResourceGroupEnhancedTreeNode(currentSubCategory);
-                            currentSubcategoryNode.setTitle(currentSubCategory);
-                            currentSubcategoryNode.setIsFolder(true);
-                            currentSubcategoryNode.setID("cat" + currentSubCategory);
+                            ResourceGroupEnhancedTreeNode subcategoryResourceTreeNode = new ResourceGroupEnhancedTreeNode(currentSubcategoryName);
+                            subcategoryResourceTreeNode.setTitle(currentSubcategoryName);
+                            subcategoryResourceTreeNode.setIsFolder(true);
+                            subcategoryResourceTreeNode.setID("cat" + currentSubcategoryName);
 
-                            if (parentSubcategory == null) {
-                                // It's a root subcategory - add a node for it to the tree.
-                                childNodes.add(currentSubcategoryNode);
-                                currentSubcategoryNode.setParentID(parentKey.getKey());
+                            currentSubcategoryNode = new SubcategoryNode(currentSubcategoryName, subcategoryResourceTreeNode);
+
+                            if (parentSubcategoryNode == null) {
+                                subcategoryResourceTreeNode.setParentID(parentKey.getKey());
+                                subcategoryTreeRoots.put(currentSubcategoryName, currentSubcategoryNode);
+
+                                childNodes.add(subcategoryResourceTreeNode);
                             } else {
-                                currentSubcategoryNode.setParentID(parentSubcategory.getID());
-                            }
+                                subcategoryResourceTreeNode.setParentID(parentSubcategoryNode.resource.getID());
+                                parentSubcategoryNode.subcategoryChildren.put(currentSubcategoryName,
+                                    currentSubcategoryNode);
 
-                            subCategoryNodesByName.put(currentSubCategory, currentSubcategoryNode);
-                            subCategoryChildrenByName.put(currentSubCategory,
-                                new ArrayList<ResourceGroupEnhancedTreeNode>());
+                                parentSubcategoryNode.allChildren.add(subcategoryResourceTreeNode);
+                            }
                         }
 
-                        parentSubcategory = currentSubcategoryNode;
+                        parentSubcategoryNode = currentSubcategoryNode;
                     }
 
-                    List<ResourceGroupEnhancedTreeNode> subcategoryChildren = subCategoryChildrenByName
-                        .get(parentSubcategory);
-                    subcategoryChildren.addAll(nodesByType);
+                    parentSubcategoryNode.allChildren.addAll(nodesByType);
                 } else {
                     childNodes.addAll(nodesByType);
                 }
             }
 
-            for (String subcategoryName : subCategoryNodesByName.keySet()) {
-                ResourceGroupEnhancedTreeNode subcategoryNode = subCategoryNodesByName.get(subcategoryName);
-                List<ResourceGroupEnhancedTreeNode> subcategoryChildren = subCategoryChildrenByName
-                    .get(subcategoryName);
-                // make sure the parent for the subcat children are referring to the parent subcat node
-                for (ResourceGroupEnhancedTreeNode subcatChild : subcategoryChildren) {
-                    subcatChild.setParentID(subcategoryNode.getID());
-                }
-                subcategoryNode.setChildren(createSortedArray(subcategoryChildren));
+            Stack<SubcategoryNode> unvisitedNodes = new Stack<SubcategoryNode>();
+            unvisitedNodes.addAll(subcategoryTreeRoots.values());
+            while (!unvisitedNodes.empty()) {
+                SubcategoryNode node = unvisitedNodes.pop();
+                node.resource.setChildren(createSortedArray(node.allChildren));
+                unvisitedNodes.addAll(node.subcategoryChildren.values());
             }
 
             parentNode.setChildren(createSortedArray(childNodes));
+        }
+    }
+
+    public class SubcategoryNode {
+        public String name;
+        public ResourceGroupEnhancedTreeNode resource;
+        public HashMap<String, SubcategoryNode> subcategoryChildren;
+        public ArrayList<ResourceGroupEnhancedTreeNode> allChildren;
+
+        public SubcategoryNode(String name, ResourceGroupEnhancedTreeNode resource) {
+            this.name = name;
+            this.resource = resource;
+            this.subcategoryChildren = new HashMap<String, SubcategoryNode>();
+            this.allChildren = new ArrayList<ResourceGroupEnhancedTreeNode>();
         }
     }
 

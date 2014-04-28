@@ -137,12 +137,11 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     protected void onInit() {
         super.onInit();
         Layout layout = new VLayout();
-        layout.setPadding(10);
-        HTMLFlow header = new HTMLFlow(MSG.view_remoteAgentInstall_connInfo());
-        header.setStyleName("headerItem");
-        header.setExtraSpace(5);
-        layout.addMember(header);
+        layout.setPadding(5);
+        layout.setMembersMargin(5);
         layout.addMember(getConnectionForm());
+        layout.setDefaultLayoutAlign(Alignment.CENTER);
+        layout.setLayoutAlign(Alignment.CENTER);
 
         if (this.showInstallButton) {
             agentConfigXmlUploadForm = createAgentConfigXmlUploadForm();
@@ -155,7 +154,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             */
         }
 
-        header = new HTMLFlow("");
+        HTMLFlow header = new HTMLFlow("");
         header.setStyleName("headerItem");
         header.setExtraSpace(5);
         layout.addMember(header);
@@ -176,6 +175,10 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         connectionForm.setWrapItemTitles(false);
         connectionForm.setColWidths("130", "450", "110");
         connectionForm.setExtraSpace(15);
+        connectionForm.setWidth(790);
+        connectionForm.setPadding(5);
+        connectionForm.setIsGroup(true);
+        connectionForm.setGroupTitle(MSG.view_remoteAgentInstall_connInfo());
         final int textFieldWidth = 440;
 
         TextItem host = new TextItem("host", MSG.common_title_host());
@@ -385,9 +388,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private FileUploadForm createAgentConfigXmlUploadForm() {
-        final FileUploadForm uploadForm = new FileUploadForm("agent-configuration.xml", "1", true, true, null, true);
+        final FileUploadForm uploadForm = new FileUploadForm("agent-configuration.xml", "1", false, true, null, true);
         uploadForm.setCustomTooltipMessage(MSG.view_remoteAgentInstall_promptAgentConfigXml());
-        uploadForm.setWidth100();
+        uploadForm.setAutoWidth();
+        uploadForm.setPadding(5);
+        uploadForm.setIsGroup(true);
+        uploadForm.setGroupTitle("agent-configuration.xml");
+
         uploadForm.addFormHandler(new DynamicFormHandler() {
             @Override
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
@@ -403,9 +410,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private FileUploadForm createAgentEnvUploadForm() {
-        final FileUploadForm uploadForm = new FileUploadForm("rhq-agent-env.sh", "1", true, true, null, true);
+        final FileUploadForm uploadForm = new FileUploadForm("rhq-agent-env.sh", "1", false, true, null, true);
         uploadForm.setCustomTooltipMessage(MSG.view_remoteAgentInstall_promptRhqAgentEnv());
-        uploadForm.setWidth100();
+        uploadForm.setAutoWidth();
+        uploadForm.setPadding(5);
+        uploadForm.setIsGroup(true);
+        uploadForm.setGroupTitle("rhq-agent-env.sh");
         uploadForm.addFormHandler(new DynamicFormHandler() {
             @Override
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
@@ -542,7 +552,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void reallyInstallAgent() {
         disableButtons(true);
-        agentStatusText.setValue("Installing, this may take a few minutes...");
+        agentStatusText.setValue(MSG.view_remoteAgentInstall_installingPleaseWait());
         SC.ask(MSG.view_remoteAgentInstall_overwriteAgentTitle(), MSG.view_remoteAgentInstall_overwriteAgentQuestion(),
             new BooleanCallback() {
                 @Override

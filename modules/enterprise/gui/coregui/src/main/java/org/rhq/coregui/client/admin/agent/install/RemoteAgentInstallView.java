@@ -442,6 +442,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                     disableButtons(false);
                     if (result != null) {
                         agentInstallPath.setValue(result);
+                        agentStatusCheck();
                     } else {
                         String err;
                         if (parentPath == null || parentPath.length() == 0) {
@@ -450,8 +451,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                             err = MSG.view_remoteAgentInstall_error_3(parentPath);
                         }
                         displayError(err, null);
+                        agentStatusText.setValue(MSG.view_remoteAgentInstall_agentStatusDefault());
                     }
-                    agentStatusCheck();
                 }
             });
         }

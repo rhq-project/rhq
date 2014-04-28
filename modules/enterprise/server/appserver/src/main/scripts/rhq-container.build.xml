@@ -233,6 +233,24 @@
         <unzip src="${settings.localRepository}/org/rhq/rhq-server-control/${project.version}/rhq-server-control-${project.version}.zip"
                dest="${jboss.modules.dir}"/>
 
+        <echo>Adding RHQ JDR module to ${jboss.home}/modules</echo>
+        <copy file="${settings.localRepository}/org/rhq/rhq-server-jdr/${project.version}/rhq-server-jdr-${project.version}.jar" todir="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main" />
+        <!-- add RHQ jar resource to module.xml-->
+        <replaceregexp
+          file="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main/module.xml"
+          match="&lt;resources&gt;"
+          replace="&lt;resources&gt;&#xA;        &lt;resource-root path=&quot;rhq-server-jdr-${project.version}.jar&quot; /&gt;" />
+
+        <!-- additional dependncy module.xml-->
+        <replaceregexp
+          file="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main/module.xml"
+          match="&lt;dependencies&gt;"
+          replace="&lt;dependencies&gt;&#xA;        &lt;module name=&quot;org.jboss.common-core&quot; /&gt;" />
+        <!-- enable RHQ JDR plugin -->
+        <propertyfile file="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main/resources/plugins.properties">
+            <entry key="org.rhq.server.jdr.RHQPlugin" value="true"/>
+        </propertyfile>
+
         <echo>Updating module descriptor for sun.jdk to work around https://issues.jboss.org/browse/AS7-2138</echo>
         <copy file="src/main/bin-resources/jbossas/modules/system/layers/base/sun/jdk/main/module.xml"
               tofile="${jboss.home}/modules/system/layers/base/sun/jdk/main/module.xml"

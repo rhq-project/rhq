@@ -203,7 +203,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         } catch (EJBException ee) {
             if (ee.getCause() == null || !(ee.getCause() instanceof IllegalArgumentException)) {
                 fail("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins, got: "
-                                + ee);
+                    + ee);
             }
 
         } catch (Throwable t) {
@@ -234,9 +234,9 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         Plugin plugin = getDeletedPlugin(PLUGIN_1);
         if (plugin == null) {
             //ok so there's no delete plugin like that. Let's check that there's no installed plugin either
-            plugin = getPlugin(PLUGIN_1);
+            plugin = pluginMgr.getPlugin(PLUGIN_1);
             if (plugin != null) {
-                fail(PLUGIN_1 + "should have been delete in PluginManagerBeanTest#deletePlugins()");
+                fail(PLUGIN_1 + "should have been deleted in PluginManagerBeanTest#deletePlugins()");
             }
 
             //So there's no such plugin at all. This means that some other test intertwined between this test and
@@ -254,13 +254,15 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         List<ResourceType> resourceTypes = resourceTypeManager.getResourceTypesByPlugin(plugin.getName());
         List<ResourceType> deletedTypes = inventoryManager.getDeletedTypes();
 
-        assertTrue("All of the resource types declared in " + plugin + " should have already been deleted",
-            deletedTypes.containsAll(resourceTypes));
+        boolean resourceTypesPurged = resourceTypes.isEmpty() && deletedTypes.isEmpty();
 
+        //ack the plugins as deleted so that the only remaining condition for their
+        //purge-ability is the disappearance of their resource types.
         ackDeletedPlugins();
 
-        assertFalse("A plugin is not ready to be purged until all of its resource types have already been purged "
-            + "and until the plugin itself has been acked for deletion by all servers", pluginMgr.isReadyForPurge(plugin));
+        assertTrue("A plugin is not ready to be purged until all of its resource types have already been purged "
+                + "and until the plugin itself has been acked for deletion by all servers",
+            resourceTypesPurged == pluginMgr.isReadyForPurge(plugin));
     }
 
     private Plugin getDeletedPlugin(String name) {
@@ -299,20 +301,6 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
         assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been purged "
             + "and the servers acked its deletion", pluginMgr.isReadyForPurge(plugin3));
-    }
-
-    //TODO make this work again
-    @Test(enabled = false, dependsOnMethods = { "deletePlugins" })
-    public void purgePlugins() throws Exception {
-        Plugin plugin1 = getPlugin(PLUGIN_1,
-            "Deleting a plugin should not remove it from the database");
-        Plugin plugin2 = getPlugin(PLUGIN_2,
-            "Deleting a plugin should not remove it from the database");
-
-        //this method has been removed
-        //pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
-
-        assertEquals("Failed to purge plugins from the database", 1, pluginMgr.getPlugins().size());
     }
 
     // this needs to be the last test executed in the class, it does cleanup

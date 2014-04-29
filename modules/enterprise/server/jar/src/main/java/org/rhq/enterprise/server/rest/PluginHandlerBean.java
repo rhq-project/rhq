@@ -82,7 +82,6 @@ public class PluginHandlerBean extends AbstractRestBean {
         @ApiParam("Look for enabled, disabled or both kinds of plugins?") @QueryParam("enabled") Boolean enabled,
         @ApiParam("The version of the plugin to look for") @QueryParam("version") String version,
         @ApiParam("Whether to look for deleted, installed or both plugins") @DefaultValue("false") @QueryParam("deleted") Boolean deleted,
-        @ApiParam("Whether to look for deleted plugins that are safe to be purged") @DefaultValue("false") @QueryParam("purgeable") Boolean markedForPurge,
         @ApiParam("Whether to reload the plugins from the filesystem before performing the search. This can be used to " +
             "take into effect the plugins that have been manually put into server's plugin \"dropbox\" directory.")
             @QueryParam("reload") boolean reload,
@@ -105,10 +104,6 @@ public class PluginHandlerBean extends AbstractRestBean {
 
         if (deleted != null) {
             crit.addFilterDeleted(deleted);
-        }
-
-        if (markedForPurge != null) {
-            crit.addFilterMarkedForPurge(markedForPurge);
         }
 
         if (reload) {

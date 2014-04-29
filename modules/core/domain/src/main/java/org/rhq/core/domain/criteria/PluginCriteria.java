@@ -44,7 +44,6 @@ public class PluginCriteria extends Criteria {
     //see the filter overrides in the constructor
     private Integer filterInstalled;
     private Integer filterDeleted;
-    private Integer filterMarkedForPurge;
 
     private PageOrdering sortName;
 
@@ -53,8 +52,6 @@ public class PluginCriteria extends Criteria {
             "id IN (SELECT p.id FROM Plugin p, ResourceType rt WHERE rt.plugin = p.name AND rt.id IN ( ? ))");
         filterOverrides.put("installed", "id IN (SELECT p.id FROM Plugin p WHERE (? = 1 AND p.status = 'INSTALLED') OR (? = 0 AND p.status <> 'INSTALLED'))");
         filterOverrides.put("deleted", "id IN (SELECT p.id FROM Plugin p WHERE (? = 1 AND p.status = 'DELETED') OR (? = 0 AND p.status <> 'DELETED'))");
-        filterOverrides.put("markedForPurge",
-            "id IN (SELECT p.id FROM Plugin p WHERE (? = 1 AND p.status = 'DELETED' AND p.ctime = -1) OR (? = 0 AND (p.status <> 'DELETED' OR p.ctime <> -1)))");
 
     }
 
@@ -89,9 +86,5 @@ public class PluginCriteria extends Criteria {
 
     public void addFilterDeleted(boolean value) {
         filterDeleted = value ? 1 : 0;
-    }
-
-    public void addFilterMarkedForPurge(boolean value) {
-        filterMarkedForPurge = value ? 1 : 0;
     }
 }

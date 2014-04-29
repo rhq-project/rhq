@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.MBeanServer;
 import javax.naming.InitialContext;
@@ -53,6 +54,8 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
 
     private static final Log log = LogFactory.getLog(RemoteSafeInvocationHandler.class);
     private static final Map<String, Class<?>> PRIMITIVE_CLASSES;
+    private static final ConcurrentHashMap<Class<?>, String> LOCAL_JNDI_NAMES;
+    private static final ConcurrentHashMap<Class<?>, String> REMOTE_JNDI_NAMES;
 
     static {
         PRIMITIVE_CLASSES = new HashMap<String, Class<?>>();
@@ -64,6 +67,9 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
         PRIMITIVE_CLASSES.put(Boolean.TYPE.getName(), Boolean.TYPE);
         PRIMITIVE_CLASSES.put(Character.TYPE.getName(), Character.TYPE);
         PRIMITIVE_CLASSES.put(Byte.TYPE.getName(), Byte.TYPE);
+
+        LOCAL_JNDI_NAMES = new ConcurrentHashMap<Class<?>, String>();
+        REMOTE_JNDI_NAMES = new ConcurrentHashMap<Class<?>, String>();
     }
 
     private RemoteSafeInvocationHandlerMetrics metrics = new RemoteSafeInvocationHandlerMetrics();
@@ -146,13 +152,23 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
     }
 
     private static <T> String getLocalJNDIName(Class<?> remoteClass) {
-        return ("java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replace("Remote", "Bean")
-            + "!" + remoteClass.getName().replace("Remote", "Local"));
+        String jndiName = LOCAL_JNDI_NAMES.get(remoteClass);
+        if (jndiName == null) {
+            jndiName = "java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replaceFirst("Remote$", "Bean")
+                + "!" + remoteClass.getName().replaceFirst("Remote$", "Local");
+            LOCAL_JNDI_NAMES.put(remoteClass, jndiName);
+        }
+        return jndiName;
     }
 
     private static <T> String getRemoteJNDIName(Class<?> remoteClass) {
-        return ("java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replace("Remote", "Bean")
-            + "!" + remoteClass.getName());
+        String jndiName = REMOTE_JNDI_NAMES.get(remoteClass);
+        if (jndiName == null) {
+            jndiName = "java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replaceFirst("Remote$", "Bean")
+                + "!" + remoteClass.getName();
+            REMOTE_JNDI_NAMES.put(remoteClass, jndiName);
+        }
+        return jndiName;
     }
 
     private static Class<?> getClass(String name) throws ClassNotFoundException {

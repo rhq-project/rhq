@@ -377,9 +377,13 @@ public class MetricGraphData implements JsonMetricProducer {
                     }
                 }
             }
-            MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
+            if (null != lowestValue) {
+                MeasurementNumericValueAndUnits adjustedMeasurementUnitsAndValue = MeasurementConverterClient.fit(
                 lowestValue.getLowValue(), definition.getUnits());
-            adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
+                adjustedMeasurementUnits = adjustedMeasurementUnitsAndValue.getUnits();
+            } else {
+                adjustedMeasurementUnits = definition.getUnits();
+            }
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
                 sb.append("{ \"x\":" + measurement.getTimestamp() + ",");

@@ -320,18 +320,28 @@ public class ResourceTreeDatasource extends DataSource {
         ResourceType type = resource.getResourceType();
 
         String subCategoryNodeId = null;
+        String treeParentId = ResourceTreeNode.idOf(parentResourceId);
 
-        String[] subCategories = type.getSubCategory().split("\\|");
-        for (String currentSubCategory : subCategories) {
-            subCategoryNodeId = SubCategoryTreeNode.idOf(currentSubCategory, parentResourceId);
+        String[] subcategoryNames = type.getSubCategory().split("\\|");
+        String subcategoryAncestry = null;
+        for (String subcategoryName : subcategoryNames) {
+            if (subcategoryAncestry == null) {
+                subcategoryAncestry = subcategoryName;
+            } else {
+                subcategoryAncestry = subcategoryAncestry + "|" + subcategoryName;
+            }
+
+            subCategoryNodeId = SubCategoryTreeNode.idOf(subcategoryAncestry, parentResourceId);
 
             if (!allNodeIds.contains(subCategoryNodeId)) {
-                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(currentSubCategory, parentResourceId);
+                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subcategoryName, subcategoryAncestry,
+                    parentResourceId, treeParentId);
+
                 allNodeIds.add(subCategoryNodeId);
                 allNodes.add(subCategoryNode);
             }
 
-            //parentResourceId = currentSubCategory.hashCode();
+            treeParentId = subCategoryNodeId;
         }
     }
 
@@ -370,10 +380,9 @@ public class ResourceTreeDatasource extends DataSource {
                     this.parentAutoGroup = true;
 
                 } else {
-                    String subcategoriesString = resource.getResourceType().getSubCategory();
-                    if (null != subcategoriesString) {
-                        String[] subcategories = subcategoriesString.split("\\|");
-                        parentId = SubCategoryTreeNode.idOf(subcategories[subcategories.length - 1], parentResource);
+                    String subcategory = resource.getResourceType().getSubCategory();
+                    if (null != subcategory) {
+                        parentId = SubCategoryTreeNode.idOf(subcategory, parentResource.getId());
                         this.parentSubCategory = true;
                     } else
                         parentId = ResourceTreeNode.idOf(parentResource);
@@ -424,37 +433,21 @@ public class ResourceTreeDatasource extends DataSource {
      */
     public static class SubCategoryTreeNode extends EnhancedTreeNode {
 
-        public SubCategoryTreeNode(String subcategoryName, Resource parentResource) {
-            String id = idOf(subcategoryName, parentResource);
+        public SubCategoryTreeNode(String subcategoryName, String subcategoryAncestry, int parentResourceId,
+            String parentTreeId) {
+
+            String id = idOf(subcategoryAncestry, parentResourceId);
             setID(id);
 
-            setParentID(ResourceTreeNode.idOf(parentResource));
+            setParentID(parentTreeId);
 
             // Note, subCategory names are typically already plural, so there's no need to pluralize them.
             setName(subcategoryName);
 
             setAttribute(Attributes.DESCRIPTION, subcategoryName);
-        }
-
-        public SubCategoryTreeNode(String subcategoryName, int parentResourceId) {
-            String id = idOf(subcategoryName, parentResourceId);
-            setID(id);
-
-            setParentID(ResourceTreeNode.idOf(parentResourceId));
-
-            // Note, subCategory names are typically already plural, so there's no need to pluralize them.
-            setName(subcategoryName);
-
-            setAttribute(Attributes.DESCRIPTION, subcategoryName);
-        }
-
-        public static String idOf(String subcategoryName, Resource parentResource) {
-            Log.debug(subcategoryName);
-            return "subcat_" + subcategoryName.hashCode() + "_" + parentResource.getId();
         }
 
         public static String idOf(String subcategoryName, int parentResourceId) {
-            Log.debug(subcategoryName);
             return "subcat_" + subcategoryName.hashCode() + "_" + parentResourceId;
         }
     }
@@ -482,11 +475,9 @@ public class ResourceTreeDatasource extends DataSource {
 
             // parent node is either a subCategory node or a resource node
             String parentId;
-            String subcategoriesString = this.resourceType.getSubCategory();
-            if (subcategoriesString != null) {
-                //TODO: BZ 1069545 fix this
-                String[] subcategories = subcategoriesString.split("\\|");
-                parentId = SubCategoryTreeNode.idOf(subcategories[subcategories.length - 1], this.parentResource);
+            String subcategory = this.resourceType.getSubCategory();
+            if (subcategory != null) {
+                parentId = SubCategoryTreeNode.idOf(subcategory, this.parentResource.getId());
                 this.parentSubcategory = true;
             } else {
                 parentId = ResourceTreeNode.idOf(this.parentResource);

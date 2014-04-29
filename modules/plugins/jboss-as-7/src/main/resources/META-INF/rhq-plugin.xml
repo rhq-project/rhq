@@ -10468,7 +10468,7 @@
            discovery="SubsystemDiscovery"
            description="JBoss Diagnostic Reporter (JDR) Subsystem."
            singleton="true"
-           subCategory="Subsystems|Weird">
+           subCategory="Subsystems|Weird|Subsystems">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>

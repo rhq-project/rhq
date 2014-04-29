@@ -274,7 +274,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
                         long delay;
                         if (MSG.view_admin_plugins_update_on_agents_now().equals(scheduling.getSelected())) {
                             delay = 0;
-                        } else if (MSG.view_admin_plugins_update_on_agents_schedule().equals(scheduling.getSelected())) {
+                        } else if (MSG.view_admin_plugins_update_on_agents_delayed().equals(scheduling.getSelected())) {
                             Integer value = (Integer) startDelay.getValue();
                             TimeUnit u = startDelay.getValueUnit();
 

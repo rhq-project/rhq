@@ -147,12 +147,12 @@
         <column name="CALC_INTERVAL" type="LONG"/>
         <column name="RECURSIVE" type="BOOLEAN"/>
         <column name="EXPRESSION" type="VARCHAR2" size="1000"/>
+        <column name="CANNED_EXPRESSION" type="VARCHAR2" size="100"/>
 
         <index name="RHQ_GROUP_DEF_NAME" unique="true">
             <field ref="NAME"/>
         </index>
     </table>
-
     <table name="RHQ_RESOURCE_GROUP">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>

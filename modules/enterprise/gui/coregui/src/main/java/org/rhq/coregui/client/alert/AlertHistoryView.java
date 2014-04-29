@@ -46,7 +46,6 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
-import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.form.EnumSelectItem;
 import org.rhq.coregui.client.components.table.RecordExtractor;

@@ -586,6 +586,7 @@ public class AgentMain {
                     if (lastIndexOfLib >= 0) {
                         int lastIndexOfFileProtocol = pathStr.lastIndexOf("file:") + 5;
                         pathStr = pathStr.substring(lastIndexOfFileProtocol, lastIndexOfLib);
+                        pathStr = pathStr.replace("%20", " "); // the URL will have spaces encoded - this is so we can support agent installs in dirs with spaces
                         File file = new File(pathStr);
                         if (file.exists()) {
                             agentHomeDir = file;
@@ -1421,8 +1422,13 @@ public class AgentMain {
                             String version = Version.getProductVersion();
                             String build = Version.getBuildNumber();
                             AgentVersion agentVersion = new AgentVersion(version, build);
+                            String installId = System.getProperty(AgentRegistrationRequest.SYSPROP_INSTALL_ID);
+                            String installLocation = getAgentHomeDirectory();
+                            if (installLocation != null && installLocation.trim().length() == 0) {
+                                installLocation = null; // tells the server we don't know it
+                            }
                             AgentRegistrationRequest request = new AgentRegistrationRequest(agent_name, address, port,
-                                remote_endpoint, regenerate_token, token, agentVersion);
+                                remote_endpoint, regenerate_token, token, agentVersion, installId, installLocation);
 
                             Thread.sleep(retry_interval);
 

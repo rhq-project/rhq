@@ -326,6 +326,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @param name
      * @param blockingTimeoutWaitMillis
      * @param driverName
+     * @param xaDataSourceClass
      * @param exceptionSorterClassName
      * @param idleTimeoutMinutes
      * @param minPoolSize
@@ -342,7 +343,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      *
      * @return the request that can be used to create the XA datasource
      */
-    public ModelNode createNewXADatasourceRequest(String name, int blockingTimeoutWaitMillis, String driverName,
+    public ModelNode createNewXADatasourceRequest(String name, int blockingTimeoutWaitMillis, String driverName, String xaDataSourceClass,
         String exceptionSorterClassName, int idleTimeoutMinutes, int minPoolSize, int maxPoolSize, Boolean noRecovery,
         Boolean noTxSeparatePool, int preparedStatementCacheSize, String recoveryPluginClassName,
         String securityDomain, String staleConnectionCheckerClassName, String transactionIsolation,
@@ -352,7 +353,8 @@ public class DatasourceJBossASClient extends JBossASClient {
 
         String dmrTemplate = "" //
             + "{" //
-            + "\"blocking-timeout-wait-millis\" => %dL " //
+            + "\"xa-datasource-class\" => \"%s\""
+            + ", \"blocking-timeout-wait-millis\" => %dL " //
             + ", \"driver-name\" => \"%s\" " //
             + ", \"exception-sorter-class-name\" => \"%s\" " //
             + ", \"idle-timeout-minutes\" => %dL " //
@@ -371,7 +373,7 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"valid-connection-checker-class-name\" => \"%s\" " //
             + "}";
 
-        String dmr = String.format(dmrTemplate, blockingTimeoutWaitMillis, driverName, exceptionSorterClassName,
+        String dmr = String.format(dmrTemplate, xaDataSourceClass, blockingTimeoutWaitMillis, driverName, exceptionSorterClassName,
             idleTimeoutMinutes, jndiName, minPoolSize, maxPoolSize, noRecovery, noTxSeparatePool,
             preparedStatementCacheSize, recoveryPluginClassName, securityDomain, staleConnectionCheckerClassName,
             transactionIsolation, validConnectionCheckerClassName);

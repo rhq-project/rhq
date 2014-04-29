@@ -12,89 +12,33 @@
 # the platform's bootup sequence or as a foreground console process.
 # Run this script without any command line options for the syntax help.
 #
-# This script is customizable by setting the following environment variables:
+# This script is customized by the settings in rhq-server-env.sh.  The options
+# set there will be applied to this script.  It is not recommended to edit this
+# script directly.
 #
-# Note that if this script is to be used as an init.d script, you must set
+# NOTE: If this script is to be used as an init.d script, you must set
 # RHQ_SERVER_HOME so this script knows where to find the Server installation.
-#
-#    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
-#                       messages. If this is not defined or set to "false"
-#                       debug messages are not emitted.
-#
-#    RHQ_SERVER_HOME - Defines where the server's home install directory is.
-#                      If not defined, it will be assumed to be the parent
-#                      directory of the directory where this script lives.
-#
-#    RHQ_SERVER_JBOSS_HOME - The location of the AS instance that will
-#                            host RHQ. If this is set, it overrides any
-#                            JBOSS_HOME that might be set. If this not
-#                            set, JBOSS_HOME is used as a fallback. If
-#                            neither is set, it is assumed the AS bundled
-#                            under RHQ_SERVER_HOME/jbossas is to be used.
-#
-#    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
-#                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
-#                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
-#                    JAVA_HOME will be used.
-#
-#    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
-#                             use. If this is set, RHQ_JAVA_HOME is ignored.
-#                             If this is not set, then $RHQ_JAVA_HOME/bin/java
-#                             is used. If this and RHQ_JAVA_HOME are not set,
-#                             then $JAVA_HOME/bin/java will be used.
-#
-#    RHQ_SERVER_JAVA_OPTS - Java VM command line options to be
-#                           passed into the Server's VM. If this is not defined
-#                           this script will pass in a default set of options.
-#                           If this is set, it completely overrides the
-#                           Server's defaults. If you only want to add options
-#                           to the Server's defaults, then you will want to
-#                           use RHQ_SERVER_ADDITIONAL_JAVA_OPTS instead.
-#
-#    RHQ_SERVER_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
-#                                      to be passed into the Server's VM. This
-#                                      is added to RHQ_SERVER_JAVA_OPTS; it
-#                                      is mainly used to augment the Server's
-#                                      default set of options. This can be
-#                                      left unset if it is not needed.
-#
-#    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
-#                              arguments that will be passed to the RHQ Server
-#                              JBossAS standalone.sh. If you only want to add
-#                              options to the Server's defaults, then you will
-#                              want to use RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS
-#                              instead.
-#
-#    RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS - additional command line arguments to
-#                                         be passed to the RHQ Server JBossAS
-#                                         standalone.sh. This is added to
-#                                         RHQ_SERVER_CMDLINE_OPTS; it is mainly
-#                                         used to augment the Server's default
-#                                         set of options. This can be left unset
-#                                         if it is not needed.
-#
-#    RHQ_SERVER_PIDFILE_DIR - a full path to a writable directory where this
-#                             script can write its pidfile to.
-#                             If not defined, this defaults to the Server's
-#                             bin directory.
-#
-#    RHQ_SERVER_STOP_DELAY - the number of minutes to wait for the server to go
-#                            down after sending the TERM signal. Defaults to
-#                            5 minutes.
-#
-#    RHQ_SERVER_KILL_AFTER_STOP_DELAY - If this is defined, the server will be
-#                                       killed if it is still running after the
-#                                       RHQ_SERVER_STOP_DELAY. If this is not
-#                                       defined or set to "false" the script
-#                                       will exit with error code 127.
-#
-#
-#
-# If the embedded JRE is to be used but is not available, the fallback
-# JRE to be used will be determined by the JAVA_HOME environment variable.
 #
 # This script calls standalone.sh when starting the underlying JBossAS server.
 # =============================================================================
+
+# ----------------------------------------------------------------------
+# Dumps a message iff debug mode is enabled
+# ----------------------------------------------------------------------
+
+debug_msg ()
+{
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+      echo $1
+   fi
+}
+
+if [ -f "../rhq-server-env.sh" ]; then
+   . "../rhq-server-env.sh" $*
+else
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
+fi
 
 # ----------------------------------------------------------------------
 # Environment variables that can customize the launch of the RHQ Server.
@@ -122,18 +66,6 @@
 #RHQ_SERVER_ADDITIONAL_JAVA_OPTS="$RHQ_SERVER_ADDITIONAL_JAVA_OPTS -agentlib:jprofilerti=port=8849 -Xbootclasspath/a:$JPROFILER_HOME/bin/agent.jar"
 #export PATH="$PATH:$JPROFILER_HOME/bin"
 #export LD_LIBRARY_PATH="$JPROFILER_HOME/bin/linux-x64"
-
-# ----------------------------------------------------------------------
-# Dumps a message iff debug mode is enabled
-# ----------------------------------------------------------------------
-
-debug_msg ()
-{
-   # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
-      echo $1
-   fi
-}
 
 # ----------------------------------------------------------------------
 # Sets _SERVER_STATUS, _SERVER_RUNNING and _SERVER_PID based on the
@@ -185,7 +117,7 @@ orange () { sed "/$1/s//`printf "\033[33m$1\033[0m"`/"; }
 
 add_colors () {
     # find out if terminal support colors
-    _COLORS_NUM=$(tput colors 2> /dev/null)
+    _COLORS_NUM=`tput colors 2> /dev/null`
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
         (sh --version | grep bash) 1> /dev/null 2>&1
         _IS_BASH=$?
@@ -595,10 +527,10 @@ case "$1" in
             RHQ_SERVER_STOP_DELAY=5
         fi
         waited_seconds=0
-        max_wait_seconds=$(expr $RHQ_SERVER_STOP_DELAY \* 60)
+        max_wait_seconds=`expr $RHQ_SERVER_STOP_DELAY \* 60`
         while [ "$_SERVER_RUNNING" -eq "1"  ] && [ $waited_seconds -lt $max_wait_seconds ]; do
-            sleep 2s
-            waited_seconds=$(expr $waited_seconds + 2)
+            sleep 2
+            waited_seconds=`expr $waited_seconds + 2`
             check_status "stopping..."
         done
 

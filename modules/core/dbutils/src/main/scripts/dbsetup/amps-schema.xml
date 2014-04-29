@@ -30,4 +30,15 @@
         </index>
     </table>
 
+    <table name="RHQ_PLUGIN_SERVER_ACK_DELETE">
+        <column name="PLUGIN_ID" type="INTEGER" required="true" references="RHQ_PLUGIN"/>
+        <column name="SERVER_ID" type="INTEGER" required="true" references="RHQ_SERVER"/>
+
+        <constraint name="RHQ_P_S_ACK_DELETE_PK">
+            <primaryKey>
+                <field ref="PLUGIN_ID"/>
+                <field ref="SERVER_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
 </dbsetup>

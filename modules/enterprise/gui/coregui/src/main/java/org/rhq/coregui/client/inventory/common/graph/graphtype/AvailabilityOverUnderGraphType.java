@@ -165,7 +165,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
         var availabilityGraph = function () {
 
-            var margin = {top: 5, right: 5, bottom: 5, left: 40},
+            var margin = {top: 5, right: 5, bottom: 5, left: 90},
                     barOffset = 10,
                     width = 750 - margin.left - margin.right + barOffset,
                     height = 40 - margin.top - margin.bottom;

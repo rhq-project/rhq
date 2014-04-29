@@ -40,7 +40,11 @@ import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
+
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
@@ -52,6 +56,7 @@ import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 import org.rhq.server.control.util.ExecutorAssist;
+import org.rhq.server.control.RHQPosixParser;
 
 /**
  * Common code for commands that perform installs. Basically shared code for Install and Upgrade commands.
@@ -822,7 +827,7 @@ public abstract class AbstractInstall extends ControlCommand {
         addUndoTask(new ControlCommand.UndoTask("Stopping component: " + componentArgument) {
             public void performUndoWork() throws Exception {
                 Stop stopCommand = new Stop();
-                CommandLineParser parser = new PosixParser();
+                CommandLineParser parser = new RHQPosixParser(true);
                 CommandLine cmdLine = parser.parse(stopCommand.getOptions(), new String[] { componentArgument });
                 stopCommand.exec(cmdLine);
             }

@@ -95,6 +95,7 @@
         <property name="project.version" value="${project.version}"/>
         <property name="rhq.server.content.filesystem" value="${jboss.unzip.location}/standalone/data/packagebits" />
         <property name="jboss.socket.binding.port-offset" value="${jboss.socket.binding.port-offset}" />
+        <property name="hibernate.dialect" value="${rhq.test.ds.hibernate-dialect}" />
     </system-properties>]]></replacevalue>
                   </replacefilter>
 

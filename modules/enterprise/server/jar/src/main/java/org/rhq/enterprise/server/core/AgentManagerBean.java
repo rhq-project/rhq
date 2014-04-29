@@ -37,6 +37,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.interceptor.ExcludeDefaultInterceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -50,6 +51,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.criteria.AgentCriteria;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite;
@@ -59,6 +61,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -127,11 +130,136 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public AgentInstall getAgentInstallByAgentName(Subject user, String agentName) {
+        if (agentName == null) {
+            return null;
+        }
+        Query q = entityManager.createNamedQuery(AgentInstall.QUERY_FIND_BY_NAME);
+        q.setParameter("agentName", agentName);
+        try {
+            AgentInstall ai;
+            ai = (AgentInstall) q.getSingleResult();
+
+            entityManager.detach(ai);
+            deobfuscateAgentInstall(ai);
+            return ai;
+        } catch (NoResultException e) {
+            return null;
+        } catch (NonUniqueResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public AgentInstall updateAgentInstall(Subject user, AgentInstall agentInstall) {
+        // make sure we encode the password before persisting it
+        obfuscateAgentInstall(agentInstall);
+
+        if (agentInstall.getId() == 0) {
+            // Caller gave us an agentInstall without an ID - see if there is already an entity with the given agent name.
+            // If there is one already with the given agent name then update that record, overlaying it with the data from agentInstall.
+            // If there is nothing with the given agent name, persist a new record with the data in agentInstall.
+            // Note that if the caller didn't give us either an install ID or an agent name, we still persist the entity
+            // with the expectation that the new ID will be used later by a new agent (new agent will register with this new ID and
+            // will tell us what agent name it wants to use).
+            AgentInstall existing = getAgentInstallByAgentName(user, agentInstall.getAgentName());
+            if (existing != null) {
+                existing.overlay(agentInstall); // note: "existing" is detached
+                agentInstall = entityManager.merge(existing);
+            } else {
+                entityManager.persist(agentInstall);
+            }
+        } else {
+            // Caller gave us an agentInstall with an ID. See if there is already an entity with the given ID.
+            // If there is an entity with the given ID, but that entity's agentName does not match the agentName given in agentInstall,
+            // abort - one agent can't change another agent's install data.
+            // If there is an entity with the given ID and the agentName matches then update that record, overlaying it with data from agentInstall.
+            // If there is no entity with the given ID then throw an error.
+            AgentInstall existing = entityManager.find(AgentInstall.class, agentInstall.getId());
+            if (existing != null) {
+                if (agentInstall.getAgentName() != null) {
+                    if (existing.getAgentName() != null && !agentInstall.getAgentName().equals(existing.getAgentName())) {
+                        throw new IllegalStateException("Updating agent install ID [" + agentInstall.getId()
+                            + "] with a mismatched agent name is not allowed");
+                    }
+
+                    // It is possible some past installs were aborted, or this agent is getting reinstalled.
+                    // This cases like this, we'll have duplicate rows with the same agent name - this just deletes
+                    // those older rows since this new agent supercedes the other ones.
+                    Query q = entityManager.createNamedQuery(AgentInstall.QUERY_FIND_BY_NAME);
+                    q.setParameter("agentName", agentInstall.getAgentName());
+                    List<AgentInstall> otherAgentInstalls = q.getResultList();
+                    if (otherAgentInstalls != null) {
+                        for (AgentInstall otherAgentInstall : otherAgentInstalls) {
+                            if (otherAgentInstall.getId() != agentInstall.getId()) {
+                                entityManager.remove(otherAgentInstall);
+                            }
+                        }
+                    }
+                }
+                existing.overlay(agentInstall); // modify the attached hibernate entity
+                agentInstall = existing;
+            } else {
+                throw new IllegalStateException("Agent install ID [" + agentInstall.getId()
+                    + "] does not exist. Cannot update install info for agent [" + agentInstall.getAgentName() + "]");
+            }
+        }
+
+        // don't allow empty strings in credentials, use null
+        String s = agentInstall.getSshUsername();
+        if (s != null && s.trim().length() == 0) {
+            agentInstall.setSshUsername(null);
+        }
+        s = agentInstall.getSshPassword();
+        if (s != null && s.trim().length() == 0) {
+            agentInstall.setSshPassword(null);
+        }
+
+        // let the caller have the decoded data - we need to flush and detach the entity so we can deobfuscate PW and not push it to DB
+        entityManager.flush();
+        entityManager.detach(agentInstall);
+        deobfuscateAgentInstall(agentInstall);
+
+        return agentInstall;
+    }
+
+    private void obfuscateAgentInstall(AgentInstall ai) {
+        try {
+            String pw = ai.getSshPassword();
+            if (pw != null && pw.length() > 0) {
+                ai.setSshPassword(Obfuscator.encode(pw));
+            }
+        } catch (Exception e) {
+            ai.setSshPassword("");
+            LOG.debug("Failed to obfuscate password for agent [" + ai.getAgentName() + "]. Will be emptied.");
+        }
+    }
+
+    private void deobfuscateAgentInstall(AgentInstall ai) {
+        try {
+            String pw = ai.getSshPassword();
+            if (pw != null && pw.length() > 0) {
+                ai.setSshPassword(Obfuscator.decode(pw));
+            }
+        } catch (Exception e) {
+            ai.setSshPassword("");
+            LOG.debug("Failed to deobfuscate password for agent [" + ai.getAgentName() + "]. Will be emptied.");
+        }
+    }
+
     @ExcludeDefaultInterceptors
     public void deleteAgent(Agent agent) {
         agent = entityManager.find(Agent.class, agent.getId());
         failoverListManager.deleteServerListsForAgent(agent);
         entityManager.remove(agent);
+
+        Query q = entityManager.createNamedQuery(AgentInstall.QUERY_DELETE_BY_NAME);
+        q.setParameter("agentName", agent.getName());
+        q.executeUpdate();
+
         destroyAgentClient(agent);
         LOG.info("Removed agent: " + agent);
     }

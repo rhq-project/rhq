@@ -73,6 +73,8 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.shared.BuilderException;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
@@ -86,6 +88,7 @@ import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.storage.FakeStorageClusterSettingsManagerBean;
@@ -110,6 +113,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
     private PluginDeploymentScannerMBean pluginScannerService;
+
+    private String originalServerIdentity;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     protected EntityManager em;
@@ -532,6 +537,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                         }
                     }
                 }
+                originalServerIdentity = System.getProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY);
                 storageClientManager.init();
                 beforeMethod();
                 beforeMethod(method);
@@ -555,6 +561,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
     protected void __afterMethod(ITestResult result, Method method) throws Throwable {
         try {
             if (inContainer()) {
+                if (originalServerIdentity != null) {
+                    System.setProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY, originalServerIdentity);
+                }
+
                 afterMethod();
                 afterMethod(result, method);
             }
@@ -598,6 +608,24 @@ public abstract class AbstractEJB3Test extends Arquillian {
      */
     protected void afterMethod(ITestResult result, Method meth) throws Exception {
         // do nothing if we're not overridden
+    }
+
+    /**
+     * Safe to be used inside {@link #beforeMethod()}, {@link #afterMethod()} and tests.
+     * Sets the HA identity of the current server. Does <b>NOT</b> define the server in the database, merely sets
+     * its identity as a system property.
+     * <p/>
+     * The value is reset after each test, so tests don't influence each other.
+     */
+    protected void setServerIdentity(String name) {
+        System.setProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY, name);
+    }
+
+    /**
+     * Gets the current server identity. This is just a value of the system property, no DB row may exist for the server.
+     */
+    protected String getServerIdentity() {
+        return System.getProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY);
     }
 
     protected void startTransaction() throws Exception {
@@ -1155,4 +1183,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
         return new File(tmpdirRoot, this.getClass().getSimpleName());
     }
 
+    protected void ackDeletedPlugins() {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+        for(Server server : LookupUtil.getTopologyManager().findServersByCriteria(overlord, new ServerCriteria())) {
+            pluginMgr.acknowledgeDeletedPluginsBy(server.getId());
+        }
+    }
 }

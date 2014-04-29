@@ -35,6 +35,8 @@ public interface ResourceTypeManagerRemote {
      * @param subject
      * @param resourceTypeId
      * @param ignoreFlag
+     *
+     * @since 4.7
      */
     void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag);
 

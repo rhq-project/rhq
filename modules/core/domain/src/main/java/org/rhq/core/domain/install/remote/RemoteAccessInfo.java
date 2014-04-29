@@ -31,6 +31,8 @@ public class RemoteAccessInfo implements Serializable {
     private String password;
     private byte[] key;
     private int port = 22;
+    private String agentName;
+    private boolean rememberMe;
 
     public RemoteAccessInfo(String host, String user, byte[] key) {
         this.host = host;
@@ -90,5 +92,32 @@ public class RemoteAccessInfo implements Serializable {
 
     public void setKey(byte[] key) {
         this.key = key;
+    }
+
+    /**
+     * If known, this is the name of the agent found on the machine pointed to by this object's connection info.
+     * If null, the agent name is unknown or there is no agent on the machine.
+     * @return agent name or <code>null</code> if not known.
+     */
+    public String getAgentName() {
+        return agentName;
+    }
+
+    public void setAgentName(String agentName) {
+        this.agentName = agentName;
+    }
+
+    /**
+     * If the user wants to remember some of this access control info, this will be true.
+     * This object imposes no semantics around this flag - this is just here to allow a user
+     * to indicate his permission for the credentials to be remembered, if something supports that.
+     * @return true if the user is OK with having the connection credentials stored somewhere for later retrieval.
+     */
+    public boolean getRememberMe() {
+        return this.rememberMe;
+    }
+
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
     }
 }

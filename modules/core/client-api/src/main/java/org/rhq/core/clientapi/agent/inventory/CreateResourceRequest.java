@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -159,6 +159,6 @@ public class CreateResourceRequest implements Serializable {
     @Override
     public String toString() {
         return "CreateResourceRequest[RequestId=" + requestId + ",ParentResourceId=" + parentResourceId
-            + ",ResourceType=" + resourceTypeName + ", PluginName=" + pluginName + "Timeout=" + timeout + "]";
+            + ",ResourceType=" + resourceTypeName + ",PluginName=" + pluginName + ",Timeout=" + timeout + "]";
     }
 }

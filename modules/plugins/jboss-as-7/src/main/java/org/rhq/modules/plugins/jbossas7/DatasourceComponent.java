@@ -22,6 +22,8 @@ package org.rhq.modules.plugins.jbossas7;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -75,6 +77,10 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
     private static final String DISABLE_OPERATION = "disable";
     private static final String ALLOW_MULTIPLE_USERS_ATTRIBUTE = "allow-multiple-users";
     private static final String TRACK_STATEMENTS_ATTRIBUTE = "track-statements";
+    /**
+     * list of metrics where we can expect expresion value instead of just number (such expression has to be resolved)
+     */
+    private static final Set<String> expressionMetrics = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("max-pool-size","min-pool-size")));
 
     @Override
     public OperationResult invokeOperation(String operationName, Configuration parameters) throws Exception { // TODO still needed ? Check with plugin descriptor
@@ -397,25 +403,17 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
     }
 
     private void getRCAsMetric(MeasurementReport report, MeasurementScheduleRequest request) {
-        Operation op = new ReadAttribute(getAddress(), request.getName());
-        Result res = getASConnection().execute(op);
+        ReadMetricResult result = getMetricValue(report, request, expressionMetrics);
 
-        if (res.isSuccess()) {
-            Integer tmp = (Integer) res.getResult();
-            if (tmp == null) { // server
-                if (request.getName().equals("max-pool-size"))
-                    tmp = 20; // The default value
-                else if (request.getName().equals("min-pool-size"))
-                    tmp = 0; // The default value
-                else
-                    tmp = -1; // Fallback for unknown requests
-            }
-            Double val = Double.valueOf(tmp);
+        if (result.equals(ReadMetricResult.Null)) { // server
+            Double val = Double.valueOf(-1);
+            if (request.getName().equals("max-pool-size"))
+                val = Double.valueOf(20); // The default value
+            else if (request.getName().equals("min-pool-size"))
+                val = Double.valueOf(0); // The default value
+
             MeasurementDataNumeric data = new MeasurementDataNumeric(request, val);
             report.addData(data);
-        } else {
-            LOG.warn("Could not read [" + request.getName() + "] on " + getAddress() + ": "
-                + res.getFailureDescription());
         }
     }
 

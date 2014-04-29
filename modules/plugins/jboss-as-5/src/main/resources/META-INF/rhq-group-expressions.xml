@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<expressions xmlns="urn:xmlns:rhq-canned-groups">
+  <definition>
+    <id>Clusters</id>
+    <name>Clusters</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>JBoss AS5/6 clusters</description>
+    <expression>groupby resource.trait[MCBean|ServerConfig|*|partitionName]</expression>
+    <expression>resource.type.plugin = JBossAS5</expression>
+    <expression>resource.type.name = JBossAS Server</expression>
+  </definition>
+</expressions>

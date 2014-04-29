@@ -31,6 +31,7 @@ import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AgentCriteria;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -43,6 +44,26 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
  */
 @Local
 public interface AgentManagerLocal {
+
+    /**
+     * Persists install information on a new agent. If the agent install record doesn't exist, a new one will be created.
+     * If it looks like this agent install information already exists, it will be reused and its fields are just updated
+     * with the new data found in the given object.
+     *
+     * @param user who wants to update the data
+     * @param agentInstall
+     */
+    AgentInstall updateAgentInstall(Subject user, AgentInstall agentInstall);
+
+    /**
+     * Returns the agent install information for the named agent. If the agent doesn't exist
+     * or if there is no known agent install information for the agent, null is returned.
+     *
+     * @param user who wants to get the data
+     * @param agentName name of the agent whose install information is to be returned
+     * @return install information or null if not available
+     */
+    AgentInstall getAgentInstallByAgentName(Subject user, String agentName);
 
     /**
      * Call this method to set the agent DOWN and mark it 'backfilled'. Also, sets all of its monitored resources

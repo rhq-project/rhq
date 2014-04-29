@@ -165,15 +165,9 @@ public class PluginHandlerBean extends AbstractRestBean {
     @ApiOperation("Deletes a single plugin, optionally purging it.")
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public Response deletePlugin(
-        @ApiParam("The id of the plugin") @PathParam("id") int id,
-        @ApiParam("Whether to purge the plugin from DB.") @QueryParam("purge") @DefaultValue("false") boolean purge,
-        @Context HttpHeaders headers) throws Exception {
+        @ApiParam("The id of the plugin") @PathParam("id") int id, @Context HttpHeaders headers) throws Exception {
 
-        if (purge) {
-            pluginManager.purgePlugins(caller, Collections.singletonList(id));
-        } else {
-            pluginManager.deletePlugins(caller, Collections.singletonList(id));
-        }
+        pluginManager.deletePlugins(caller, Collections.singletonList(id));
 
         return getPluginInfo(id, headers);
     }

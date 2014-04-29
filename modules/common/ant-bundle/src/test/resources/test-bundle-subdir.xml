@@ -36,6 +36,11 @@
                     <rhq:fileset includes="template.txt"/>
                 </rhq:replace>
             </rhq:archive>
+            <rhq:archive name="subdir/test-replace2.zip" destinationDir="second.dir" exploded="false">
+                <rhq:replace>
+                    <rhq:fileset includes="template.txt"/>
+                </rhq:replace>
+            </rhq:archive>
         </rhq:deployment-unit>
 
     </rhq:bundle>

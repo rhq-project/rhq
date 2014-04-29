@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.rhq.core.util.collection.IntHashMap;
 import org.rhq.core.util.stream.StreamUtil;
@@ -814,4 +816,145 @@ public class FileUtil {
 
         return new File(cwdDriveLetter + ":" + path).isAbsolute();
     }
+
+    /**
+     * Compressed the data found in the file. The file can only be decompressed with {@link #decompressFile(File)}.
+     *
+     * @param originalFile
+     * @throws IOException
+     */
+    public static void compressFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the compressed data
+        File decompressedFile = new File(originalFile + ".d");
+        try {
+            copyFile(originalFile, decompressedFile);
+            try {
+                FileOutputStream out = new FileOutputStream(originalFile);
+                out.write(new byte[] { (byte) 0 }); // write a prefix byte so people can't easily just gunzip this
+                GZIPOutputStream zip = new GZIPOutputStream(out); // writes the compressed data into original file
+                StreamUtil.copy(new FileInputStream(decompressedFile), zip);
+            } catch (IOException e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(decompressedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                throw e;
+                }
+        } finally {
+            //            System.out.println("compress: original: " + decompressedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(decompressedFile));
+            //            System.out.println("          compress: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            decompressedFile.delete();
+        }
+    }
+
+    /**
+     * Decompresses the compressed data found in the file that was compressed with {@link #compressFile(File)}.
+     * If the file was not previously compressed, an exception is thrown.
+     *
+     * @param originalFile
+     * @throws IOException
+     */
+    public static void decompressFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the decompressed data
+        File compressedFile = new File(originalFile + ".c");
+        try {
+            copyFile(originalFile, compressedFile);
+            try {
+                FileInputStream in = new FileInputStream(compressedFile);
+                in.read(); // read our prefix byte
+                GZIPInputStream zip = new GZIPInputStream(in);
+                StreamUtil.copy(zip, new FileOutputStream(originalFile));
+            } catch (IOException e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(compressedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                throw e;
+            }
+        } finally {
+            //            System.out.println("decompre: original: " + compressedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(compressedFile));
+            //            System.out.println("          decompre: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            compressedFile.delete();
+        }
+    }
+
+    /*
+     * I was going to use this, but then decided to use the compress/decompress instead.
+     * However, this might be useful in the future. We can uncomment this if we want to use something
+     * like this. There is also a commented out test in FileUtilTest that should be uncommented if
+     * we reintroduce these two methods.
+     *
+    public static void obfuscateFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the compressed data
+        File deobfuscatedFile = new File(originalFile + ".d");
+        try {
+            copyFile(originalFile, deobfuscatedFile);
+            try {
+                byte[] unobfuscatedData;
+                String obfuscatedData;
+                unobfuscatedData = StreamUtil.slurp(new FileInputStream(deobfuscatedFile));
+                obfuscatedData = Obfuscator.encode(new String(unobfuscatedData));
+                unobfuscatedData = null; // help GC
+                FileUtil.writeFile(new ByteArrayInputStream(obfuscatedData.getBytes()), originalFile);
+                obfuscatedData = null; // help GC
+            } catch (Exception e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(deobfuscatedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                } else {
+                    throw new IOException(e);
+                }
+            }
+        } finally {
+            //            System.out.println("obfuscat: original: " + deobfuscatedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(deobfuscatedFile));
+            //            System.out.println("          obfuscat: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            deobfuscatedFile.delete();
+        }
+    }
+
+    public static void deobfuscateFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the decompressed data
+        File obfuscatedFile = new File(originalFile + ".o");
+        try {
+            copyFile(originalFile, obfuscatedFile);
+            try {
+                String unobfuscatedData;
+                byte[] obfuscatedData = StreamUtil.slurp(new FileInputStream(obfuscatedFile));
+                unobfuscatedData = Obfuscator.decode(new String(obfuscatedData));
+                obfuscatedData = null; // help GC
+                FileUtil.writeFile(new ByteArrayInputStream(unobfuscatedData.getBytes()), originalFile);
+                unobfuscatedData = null; // help GC
+            } catch (Exception e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(obfuscatedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                } else {
+                    throw new IOException(e);
+                }
+            }
+        } finally {
+            //            System.out.println("deobfusc: original: " + obfuscatedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(obfuscatedFile));
+            //            System.out.println("          deobfusc: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            obfuscatedFile.delete();
+        }
+    }
+    */
 }

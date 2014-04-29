@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -197,10 +196,10 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                     doubleValue = Double.parseDouble(measurementData.getValue().toString());
                 }
 
-                String value = MeasurementConverterClient.formatToSignificantPrecision(new double[] { doubleValue },
-                    MeasurementUnits.valueOf(from.getUnits()), true)[0];
+                String liveValue = MeasurementConverterClient.format(doubleValue,
+                    MeasurementUnits.valueOf(from.getUnits()), true, 0, 1);
 
-                sb.append(value);
+                sb.append(liveValue);
 
                 break;
             }
@@ -283,7 +282,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                             // to finish before we can query the live metrics and populate the
                             // result response
                             queryLiveMetrics(request, response);
-
                         }
                     });
 
@@ -302,26 +300,17 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     }
 
     private void queryLiveMetrics(final DSRequest request, final DSResponse response) {
+        if (enabledScheduleDefinitionIds.length == 0) {
+            prepareUI(null, request, response);
+            return; // no enabled metrics, let's save 1 round trip
+        }
 
         // actually go out and ask the agents for the data
         GWTServiceLookup.getMeasurementDataService(60000).findLiveData(resource.getId(), enabledScheduleDefinitionIds,
             new AsyncCallback<Set<MeasurementData>>() {
                 @Override
                 public void onSuccess(Set<MeasurementData> result) {
-                    if (result == null) {
-                        result = new HashSet<MeasurementData>(0);
-                    }
-                    liveMeasurementDataSet = result;
-                    response.setData(buildRecords(metricDisplaySummaries));
-                    processResponse(request.getRequestId(), response);
-
-                    new Timer() {
-
-                        @Override
-                        public void run() {
-                            BrowserUtility.graphSparkLines();
-                        }
-                    }.schedule(150);
+                    prepareUI(result, request, response);
                 }
 
                 /**
@@ -340,9 +329,30 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                 }
             });
     }
+    
+    /**
+     * Just a helper method to keep code DRY
+     */
+    private void prepareUI(Set<MeasurementData> result, DSRequest request, DSResponse response) {
+        liveMeasurementDataSet = null == result ? Collections.<MeasurementData>emptySet() : result;
+        response.setData(buildRecords(metricDisplaySummaries));
+        processResponse(request.getRequestId(), response);
+        new Timer() {
+            @Override
+            public void run() {
+                BrowserUtility.graphSparkLines();
+            }
+        }.schedule(150);
+    }
 
     private void queryMetricDisplaySummaries(int[] scheduleIds, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
+        if (enabledScheduleIds.length == 0) {
+            setMetricDisplaySummaries(Collections.<MetricDisplaySummary>emptyList());
+            countDownLatch.countDown();
+            return; // no enabled metrics, let's save 1 round trip
+        }
+        
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resource.getId(),
             scheduleIds, startTime, endTime, new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                 @Override

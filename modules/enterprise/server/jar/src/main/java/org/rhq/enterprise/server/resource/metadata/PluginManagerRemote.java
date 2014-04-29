@@ -125,11 +125,8 @@ public interface PluginManagerRemote {
     void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
-     * This method puts the plugin into a <i>deleted</i> state and removes the plugin JAR file from the file system. It
-     * does not remove the plugin from the database. This method does not purge the plugin from the database in order
-     * to support HA deployments. In a HA deployment, if server A handles the request to delete the plugin and if it
-     * purges the plugin from the database, server B might see the plugin on the file system and not in the database.
-     * Server B would then proceed to try and re-install the plugin, not knowing it was deleted.
+     * This method puts the plugin into a <i>deleted</i> state and removes the plugin JAR file from the file system and
+     * schedules its eventual deletion from the database, too.
      *
      * @param subject   The user performing the deletion
      * @param pluginIds The ids of the plugins to be deleted
@@ -137,19 +134,4 @@ public interface PluginManagerRemote {
      * @throws Exception if an error occurs
      */
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
-
-    /**
-     * Schedules a plugin to be purged. Purging a plugin permanently deletes it from the database. Purging is done
-     * asynchronously and will not happen until all resource types defined by the plugin have first been purged.
-     * Plugins must first be deleted before they can be purged. A plugin is considered a candidate for being purged if its
-     * status is set to <code>DELETED</code> and its <code>ctime</code> is set to {@link Plugin#PURGED}. This method
-     * does not flip the status of the plugins to <code>DELETED</code> since it assumes that has already been done. It
-     * only sets <code>ctime</code> to <code>PURGED</code>.
-     *
-     * @param subject   The user purging the plugin
-     * @param pluginIds The ids of the plugins to be purged
-     *
-     * @throws Exception if an error occurs
-     */
-    void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 }

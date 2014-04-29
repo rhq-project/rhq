@@ -41,7 +41,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     private static final Pattern JIRA_PATTERN = Pattern.compile("(?i)(" + JIRA_PROJECT + "\\d{1,5})");
     private static final Pattern COMMIT_PATTERN = Pattern.compile("(?i)(\\!commit|cm)[ ]*([0-9a-f]{3,40})");
     private static final Pattern ECHO_PATTERN = Pattern.compile("(?i)echo[ ]+(.+)");
-    private static final String COMMIT_LINK = "https://git.fedorahosted.org/cgit/rhq/rhq.git/commit/?id=%s";
+    private static final String COMMIT_LINK = "https://github.com/rhq-project/rhq/commit/%s";
     private static final String PTO_LINK = "https://mail.corp.redhat.com/home/ccrouch@redhat.com/JBoss%20ON%20OOO?fmt=rss&view=day&start=0day&end=0day";
     private static final DateFormat monthFormat = new SimpleDateFormat("MMM");
     private static final DateFormat dayInMonthFormat = new SimpleDateFormat("d");

@@ -69,6 +69,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
@@ -132,6 +133,7 @@ public class QueryAllTest extends AbstractEJB3Test {
         // agent/inventory stuff
         // Plugin.class.getSimpleName(), do not test this - its got a blob that may be very large
         Agent.class.getSimpleName(),
+        AgentInstall.class.getSimpleName(),
         Resource.class.getSimpleName(),
         ResourceType.class.getSimpleName(),
 

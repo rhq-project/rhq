@@ -46,7 +46,7 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
         measurementPrefs = new ConfigurationMeasurementPreferences(config);
         setDisplaySetButton(false);
         setDisplayEnableButton(true);
-        setDisplayRangeItemGrouping(true);
+        setDisplayCheckboxLabel(true);
         setWidth(650);
     }
 
@@ -169,7 +169,6 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
         simpleLastUnitsItem.setWidth(70);
 
         //set fields to previously populated values
-        PropertySimple cp = measurementPrefs.configuration.getSimple(ALERT_METRIC_RANGE_ENABLE);
         if (Boolean.valueOf(measurementPrefs.configuration.getSimple(ALERT_METRIC_RANGE_ENABLE).getStringValue())) {
             enableRangeItem.setValue(true);
             enableMeasurementRange(false);

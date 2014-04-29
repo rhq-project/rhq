@@ -76,13 +76,17 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         addFields(fields);
     }
 
+    public ArrayList<ListGridField> getListGridFields() {
+        return getListGridFields(true);
+    }
+    
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
      *
      * @return list grid fields used to display the datasource data
      */
-    public ArrayList<ListGridField> getListGridFields() {
+    public ArrayList<ListGridField> getListGridFields(boolean showResourceAncestry) {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
         ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp());
@@ -177,15 +181,17 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
             });
             fields.add(resourceNameField);
 
-            ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
-            fields.add(ancestryField);
+            if (showResourceAncestry) {
+                ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+                fields.add(ancestryField);
+                ancestryField.setWidth("25%");
+            }
 
             timestampField.setWidth(155);
             severityField.setWidth(55);
             detailField.setWidth("*");
             sourceField.setWidth(180);
             resourceNameField.setWidth("20%");
-            ancestryField.setWidth("25%");
         } else {
             timestampField.setWidth(155);
             severityField.setWidth(55);
@@ -255,7 +261,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
             highlightFilterMatches(request, records);
             response.setData(records);
             // for paging to work we have to specify size of full result set
-            response.setTotalRows(result.getTotalSize());
+            response.setTotalRows(getTotalRows(result, response, request));
             processResponse(request.getRequestId(), response);
 
             break;
@@ -293,7 +299,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
-                    response.setTotalRows(result.getTotalSize());
+                    response.setTotalRows(getTotalRows(result, response, request));
                     processResponse(request.getRequestId(), response);
                 }
             });
@@ -340,5 +346,24 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         criteria.addFilterEntityContext(entityContext);
 
         return criteria;
+    }
+    
+    /**
+     * Sub-classes can override this to add fine-grained control over the result set size. By default the
+     * total rows are set to the total result set for the query, allowing proper paging.  But some views (portlets)
+     * may want to limit results to a small set (like most recent).
+     * @param result
+     * @param response
+     * @param request
+     *
+     * @return should not exceed result.getTotalSize().
+     */
+    protected int getTotalRows(final PageList<EventComposite> result, final DSResponse response, final DSRequest request) {
+
+        return result.getTotalSize();
+    }
+    
+    protected EntityContext getEntityContext() {
+        return entityContext;
     }
 }

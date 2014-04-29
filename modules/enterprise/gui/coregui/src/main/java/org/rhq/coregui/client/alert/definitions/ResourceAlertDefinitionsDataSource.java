@@ -100,8 +100,21 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
                 boolean isAutogroup = groupAlertDefinition.getGroup().getAutoGroupParentResource() != null;
-                record.setAttribute(FIELD_PARENT, (isAutogroup ? "#Resource/AutoGroup/" : "#ResourceGroup/")
-                    + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId());
+                if (isAutogroup) {
+                    record.setAttribute(FIELD_PARENT, "#Resource/AutoGroup/"
+                        + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId()); 
+                }
+                else {
+                    boolean isAutoCluster = groupAlertDefinition.getGroup().getClusterResourceGroup() != null;
+                    if (isAutoCluster) {
+                        record.setAttribute(FIELD_PARENT,  "#ResourceGroup/AutoCluster/"
+                            + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId());
+                    }
+                    else {
+                        record.setAttribute(FIELD_PARENT, "#ResourceGroup/"
+                            + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId()); 
+                    }
+                }
                 record.setLinkText(MSG.view_alert_definition_for_group());
             }
             record.setAttribute(FIELD_READONLY, (readOnly) ? MSG.common_val_yes() : MSG.common_val_no());

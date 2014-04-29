@@ -7,6 +7,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
 
@@ -24,7 +25,10 @@ public interface PluginManagerLocal extends PluginManagerRemote {
 
     /**
      * @return A list of all plugins deployed in the server, including deleted plugins
+     * @deprecated the deleted plugins will disappear from the database on their own accord when it's safe to do so.
+     * @see #getInstalledPlugins() use <code>getInstalledPlugins</code> method instead
      */
+    @Deprecated
     List<Plugin> getPlugins();
 
     /**
@@ -35,14 +39,13 @@ public interface PluginManagerLocal extends PluginManagerRemote {
     List<Plugin> getInstalledPlugins();
 
     /**
+     * Do not use this method directly. It is a support method for
+     * {@link org.rhq.enterprise.server.core.plugin.AgentPluginScanner} and
+     * {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob}.
+     *
      * @return All plugins that have been marked deleted.
      */
     List<Plugin> findAllDeletedPlugins();
-
-    /**
-     * @return All plugins that are scheduled to be purged.
-     */
-    List<Plugin> findPluginsMarkedForPurge();
 
     /**
      * Returns a list of plugins with the specified ids. Both installed and deleted plugins will be included in the
@@ -57,24 +60,22 @@ public interface PluginManagerLocal extends PluginManagerRemote {
 
     List<PluginStats> getPluginStats(List<Integer> pluginIds);
 
+    void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    /**
+     * Not to be called outside of the PluginManagerBean implementation. Used for transaction demarcation.
+     */
     void markPluginsDeleted(Subject subject, List<Plugin> plugins) throws Exception;
 
     /**
-     * Schedules a plugin to be purged. Purging a plugin permanently deletes it from the database. Purging is done
-     * asynchronously and will not happen until all resource types defined by the plugin have first been purged. Plugins
-     * must first be deleted before they can be purged. A plugin is considered a candidate for being purged if its
-     * status is set to <code>DELETED</code> and its <code>ctime</code> is set to {@link Plugin#PURGED}. This method
-     * does not flip the status of the plugins to <code>DELETED</code> since it assumes that has already been done. It
-     * only sets <code>ctime</code> to <code>PURGED</code>.
+     * Not to be used outside of {@link org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob}. You can just use
+     * the {@link #deletePlugins(org.rhq.core.domain.auth.Subject, java.util.List)}  method and it will take care of
+     * the rest.
      *
-     * @param subject The user purging the plugin
-     * @param pluginIds The ids of the plugins to be purged
-     * @throws Exception if an error occurs
-     * @see  org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob PurgePluginsJob
-     */
-    void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception;
-
-    /**
      * @param plugin The plugin to check
      * @return true if the plugin can be purged, false otherwise. A plugin can only be purged when all resource types
      * defined by the plugin have already been purged.
@@ -122,4 +123,18 @@ public interface PluginManagerLocal extends PluginManagerRemote {
      * @return directory where the plugin dropbox is located
      */
     File getPluginDropboxDirectory();
+
+    /**
+     * The provided server acknowledges the deletion of all plugins marked as deleted by calling this method.
+     * Once all the servers in the HA cloud acknowledge the deletion of a  plugin and the plugin is made purgable
+     * (after its resource types are deleted, etc) it will be automatically purged from the database.
+     * <p/>
+     * This method is not meant for "public" consumption and is only called from
+     * {@link org.rhq.enterprise.server.core.plugin.AgentPluginScanner}.
+     *
+     * @param serverId the id of the server that wants to acknowledge that it has seen the deleted plugins
+     */
+    void acknowledgeDeletedPluginsBy(int serverId);
+
+    List<CannedGroupExpression> getCannedGroupExpressions();
 }

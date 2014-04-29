@@ -29,7 +29,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
@@ -175,10 +174,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         messageCenter = new MessageCenter();
 
         UserSessionManager.login();
-
-        // Remove loading image, which can be seen if LoginView doesn't completely cover it.
-        Element loadingPanel = DOM.getElementById("Loading-Panel");
-        loadingPanel.removeFromParent();
     }
 
     public int getRpcTimeout() {
@@ -368,7 +363,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public Canvas createContent(String viewName) {
         Canvas canvas;
 
-        if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
+        if (viewName.equals(LOGOUT_VIEW) || LoginView.isLoginView()) {
+            UserSessionManager.logout();
+            rootCanvas.hide();
+            LoginView logoutView = new LoginView();
+            canvas = logoutView;
+            logoutView.showLoginDialog();
+        } else if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
             canvas = new DashboardsView();
         } else if (viewName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
@@ -384,13 +385,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             canvas = new AdministrationView();
         } else if (viewName.equals(HelpView.VIEW_ID.getName())) {
             canvas = new HelpView();
-        } else if (viewName.equals(LOGOUT_VIEW)) {
-            UserSessionManager.logout();
-            rootCanvas.hide();
-
-            LoginView logoutView = new LoginView();
-            canvas = logoutView;
-            logoutView.showLoginDialog();
         } else if (viewName.equals(TaggedView.VIEW_ID.getName())) {
             canvas = new TaggedView();
         } else if (viewName.equals("Subsystems")) {

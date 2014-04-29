@@ -103,18 +103,15 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             report.setStartTime(System.currentTimeMillis());
             runtimeDiscover(report);
             report.setEndTime(System.currentTimeMillis());
-
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Runtime discovery scan took %d ms.",
                     (report.getEndTime() - report.getStartTime())));
             }
-
             // TODO: This is always zero for embedded because we don't populate the report.
             int numAddedRoots = report.getAddedRoots().size();
             int numNewDescendants = (report.getResourceCount() - numAddedRoots);
             log.info("Scanned " + target + " and " + numAddedRoots + " server(s) and discovered " + numNewDescendants
                 + " new descendant Resource(s).");
-
             // TODO GH: This is principally valuable only until we work out the last of the data transfer situations.
             if (log.isTraceEnabled()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
@@ -140,17 +137,20 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     }
 
     private void runtimeDiscover(InventoryReport report) throws PluginContainerException {
+        try {
+            if (this.rootResource == null) {
+                // Run a full scan for all resources in the inventory
+                Resource platform = this.inventoryManager.getPlatform();
 
-        if (this.rootResource == null) {
-            // Run a full scan for all resources in the inventory
-            Resource platform = this.inventoryManager.getPlatform();
+                // Discover platform services here
+                discoverForResource(platform, report, false);
 
-            // Discover platform services here
-            discoverForResource(platform, report, false);
-
-        } else {
-            // Run a single scan for just a resource and its descendants
-            discoverForResource(rootResource, report, false);
+            } else {
+                // Run a single scan for just a resource and its descendants
+                discoverForResource(rootResource, report, false);
+            }
+        } catch (InterruptedException e) {
+            log.info("Service discovery interrupted. This is OK and typically due to new request for service scan. Returning results collected up to this point.");
         }
 
         return;
@@ -165,7 +165,11 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
      * @throws PluginContainerException on error
      */
     private void discoverForResource(Resource parent, InventoryReport report, boolean parentReported)
-        throws PluginContainerException {
+        throws PluginContainerException, InterruptedException {
+
+        if (Thread.interrupted()) {
+            throw new InterruptedException("Job canceled, stopping service discovery and reporting partial results.");
+        }
 
         log.debug("Discovering child Resources for " + parent + "...");
 
@@ -300,6 +304,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 discoverForResource(childResource, report, parentReported);
             }
 
+        } catch (InterruptedException e) {
+            throw e; // if we're interrupted then exit out
         } catch (Throwable t) {
             report.getErrors().add(new ExceptionPackage(Severity.Severe, t));
             log.error("Error in runtime discovery", t);

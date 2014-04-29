@@ -27,8 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -43,9 +43,9 @@ import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Individually tests these situations:
- * 
+ *
  * (X, Y, Z, ? represent hashcodes; none means file doesn't exist):
- * 
+ *
  *    ORIGINAL CURRENT    NEW   What To Do...
  * a.        X       X      X   New file is installed over current*
  * b.        X       X      Y   New file is installed over current
@@ -57,7 +57,7 @@ import org.rhq.core.util.stream.StreamUtil;
  * h.        ?       ?   none   Current file deleted, backed up if different than original
  *
  * (*) means the new and current files will actually be the same content
- * 
+ *
  * @author John Mazzitelli
  */
 @Test
@@ -68,7 +68,7 @@ public class SimpleDeployerTest {
     private File tmpDir;
     private File deployDir;
     private File originalZipFile;
-    private Set<File> originalZipFiles;
+    private Map<File, File> originalZipFiles;
     private DeploymentProperties originalDeployProps;
     private FileHashcodeMap originalFileHashcodeMap;
     private String originalHashcode;
@@ -83,8 +83,8 @@ public class SimpleDeployerTest {
         this.deployDir = FileUtil.createTempDirectory("simpleDeployer", ".test", null);
         this.originalHashcode = MessageDigestGenerator.getDigestString(originalContent);
         this.originalZipFile = createZip(originalContent, tmpDir, "original.zip", originalFileName);
-        this.originalZipFiles = new HashSet<File>(1);
-        this.originalZipFiles.add(originalZipFile);
+        this.originalZipFiles = new HashMap<File, File>(1);
+        this.originalZipFiles.put(originalZipFile, null);
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
         DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, tmpDir, deployDir, null,
             null, null, null, true, null);
@@ -264,8 +264,8 @@ public class SimpleDeployerTest {
         String origFileName2 = origDirName+"/original-file2.txt";
         this.originalZipFile = createZip(new String[] { "content1", "content2" }, this.tmpDir, "original.zip",
             new String[] { origFileName1, origFileName2 });
-        this.originalZipFiles = new HashSet<File>(1);
-        this.originalZipFiles.add(originalZipFile);
+        this.originalZipFiles = new HashMap<File, File>(1);
+        this.originalZipFiles.put(originalZipFile, null);
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
         DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, tmpDir, deployDir, null,
             null, null, null, manageRootDir, null);
@@ -321,8 +321,8 @@ public class SimpleDeployerTest {
         String newFileName2 = newDirName+"/new-file2.txt";
         File newZipFile = createZip(new String[] { "newcontent1", "newcontent2" }, this.tmpDir, "new.zip",
             new String[] { newFileName1, newFileName2 });
-        HashSet<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        HashMap<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
         dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null, null,
             manageRootDir, null);
         deployer = new Deployer(dd);
@@ -407,8 +407,8 @@ public class SimpleDeployerTest {
         String newContent = "testX_X_Y";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         File newZipFile = createZip(newContent, tmpDir, "new-content.zip", originalFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -519,8 +519,8 @@ public class SimpleDeployerTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
         File newZipFile = createZip(newContent, tmpDir, "new-content.zip", originalFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -568,8 +568,8 @@ public class SimpleDeployerTest {
         String newContentZ = "testX_Y_Z_ZZZ";
         String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
         File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -631,8 +631,8 @@ public class SimpleDeployerTest {
         String newFileName = "new_filename.new";
         File newZipFile = createZip(new String[] { originalContent, newContent }, tmpDir, "new.zip", new String[] {
             originalFileName, newFileName });
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -688,8 +688,8 @@ public class SimpleDeployerTest {
         String newFileName = "new_filename.new";
         File newZipFile = createZip(new String[] { originalContent, newContent }, tmpDir, "new.zip", new String[] {
             originalFileName, newFileName });
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         File inTheWayFile = new File(this.deployDir, newFileName);
         String inTheWayContent = "this is in the way";
@@ -852,8 +852,8 @@ public class SimpleDeployerTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         String newFileName = "new_filename.new";
         File newZipFile = createZip(newContent, tmpDir, "new.zip", newFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -866,7 +866,7 @@ public class SimpleDeployerTest {
         }
 
         // The new deployment removes a file that was in the original (it also introduces a new file).
-        // There is already a current file at the original file location that is the same as the original, as you would expect. 
+        // There is already a current file at the original file location that is the same as the original, as you would expect.
         // That current file is to be deleted (since its not in the new deployment) and is not backed up since it is
         // the same as the original.
 
@@ -916,8 +916,8 @@ public class SimpleDeployerTest {
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         String newFileName = "new_filename.new";
         File newZipFile = createZip(newContent, tmpDir, "new.zip", newFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -990,8 +990,8 @@ public class SimpleDeployerTest {
         String newContentZ = "testX_Y_Z_ZZZ";
         String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
         File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         DeploymentData dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null,
             null, true, null);
@@ -1073,8 +1073,8 @@ public class SimpleDeployerTest {
         String newContentZ = "testX_Y_Z_ZZZ";
         String newHashcodeZ = MessageDigestGenerator.getDigestString(newContentZ);
         File newZipFile = createZip(newContentZ, tmpDir, "new-content.zip", originalFileName);
-        Set<File> newZipFiles = new HashSet<File>(1);
-        newZipFiles.add(newZipFile);
+        Map<File, File> newZipFiles = new HashMap<File, File>(1);
+        newZipFiles.put(newZipFile, null);
 
         File ignoredSubdir = new File(this.deployDir, "ignoreSubdir");
         File ignoredFile = new File(ignoredSubdir, "ignore-me.txt");

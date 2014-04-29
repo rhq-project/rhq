@@ -23,9 +23,7 @@
 package org.rhq.core.util.updater;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -36,13 +34,13 @@ import org.rhq.core.util.file.FileUtil;
 /**
  * Data that describes a particular deployment. In effect, this provides the
  * data needed to fully deploy something.
- * 
+ *
  * @author John Mazzitelli
  */
 public class DeploymentData {
 
     private final DeploymentProperties deploymentProps;
-    private final Set<File> zipFiles;
+    private final Map<File, File> zipFiles;
     private final Map<File, File> rawFiles;
     private final File destinationDir;
     private final File sourceDir;
@@ -83,7 +81,7 @@ public class DeploymentData {
      *                      otherwise merged with this deployment's root files. If true, this top root directory
      *                      will be managed just as any subdirectory within the deployment will be managed.
      *                      The purpose of this is to be able to write files to an existing directory that has other
-     *                      unrelated files in it that need to remain intact. e.g. the deploy/ directory of JBossAS. 
+     *                      unrelated files in it that need to remain intact. e.g. the deploy/ directory of JBossAS.
      *                      Note: regardless of this setting, all subdirectories under the root dir will be managed.
      * @param zipsExploded if not <code>null</code>, this is a map keyed on zip files whose values indicate
      *                     if the zips should be exploded (true) or remain compressed after the deployment
@@ -94,7 +92,7 @@ public class DeploymentData {
      * property.
      */
     @Deprecated
-    public DeploymentData(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles,
+    public DeploymentData(DeploymentProperties deploymentProps, Map<File, File> zipFiles, Map<File, File> rawFiles,
         File sourceDir, File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
         TemplateEngine templateEngine, Pattern ignoreRegex, boolean manageRootDir, Map<File, Boolean> zipsExploded) {
 
@@ -140,7 +138,7 @@ public class DeploymentData {
      *
      * @since 4.9.0
      */
-    public DeploymentData(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles,
+    public DeploymentData(DeploymentProperties deploymentProps, Map<File, File> zipFiles, Map<File, File> rawFiles,
         File sourceDir, File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
         TemplateEngine templateEngine, Pattern ignoreRegex, Map<File, Boolean> zipsExploded) {
 
@@ -155,7 +153,7 @@ public class DeploymentData {
         }
 
         if (zipFiles == null) {
-            zipFiles = new HashSet<File>(0);
+            zipFiles = new HashMap<File, File>(0);
         }
         if (rawFiles == null) {
             rawFiles = new HashMap<File, File>(0);
@@ -271,7 +269,7 @@ public class DeploymentData {
         return deploymentProps;
     }
 
-    public Set<File> getZipFiles() {
+    public Map<File, File> getZipFiles() {
         return zipFiles;
     }
 

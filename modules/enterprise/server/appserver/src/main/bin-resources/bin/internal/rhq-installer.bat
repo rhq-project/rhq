@@ -6,52 +6,22 @@ rem
 rem This file is used to complete the installation of the RHQ Server on a
 rem Windows platform.
 rem
-rem This script is customizable by setting the following environment variables:
-rem
-rem    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
-rem                       messages.
-rem                       If not set or set to "false", debug is turned off.
-rem
-rem    RHQ_SERVER_HOME - Defines where the Server's home install directory is.
-rem                      If not defined, it will be assumed to be the parent
-rem                      directory of the directory where this script lives.
-rem
-rem
-rem    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
-rem                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
-rem                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
-rem                    JAVA_HOME will be used.
-rem
-rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
-rem                             use. If this is set, RHQ_JAVA_HOME is ignored.
-rem                             If this is not set, then $RHQ_JAVA_HOME/bin/java
-rem                             is used. If this and RHQ_JAVA_HOME are not set,
-rem                             then $JAVA_HOME/bin/java will be used.
-rem
-rem    RHQ_SERVER_INSTALLER_JAVA_OPTS - Java VM command line options to be
-rem                         passed into the Java VM. If this is not defined
-rem                         this script will pass in a default set of options.
-rem                         If you only want to add options to the defaults,
-rem                         then you will want to use
-rem                         RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS instead.
-rem
-rem    RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS - additional Java VM command
-rem                                    line options to be passed into the VM.
-rem                                    This is added to
-rem                                    RHQ_SERVER_INSTALLER_JAVA_OPTS; it
-rem                                    is mainly used to augment the
-rem                                    default set of options. This can be
-rem                                    left unset if it is not needed.
-rem
-rem If the embedded JRE is to be used but is not available, the fallback
-rem JRE to be used will be determined by the JAVA_HOME environment variable.
-rem ===========================================================================
+rem This script is customized by the settings in rhq-server-env.bat.  The options
+rem set there will be applied to this script.  It is not recommended to edit this
+rem script directly.
+rem =============================================================================
 
 setlocal enabledelayedexpansion
 
 rem if debug variable is set, it is assumed to be on, unless its value is false
 if "%RHQ_SERVER_DEBUG%" == "false" (
    set RHQ_SERVER_DEBUG=
+)
+
+if exist "..\rhq-server-env.bat" (
+   call "..\rhq-server-env.bat" %*
+) else (
+   if defined RHQ_SERVER_DEBUG echo Failed to find rhq-server-env.bat. Continuing with current environment...
 )
 
 rem ----------------------------------------------------------------------

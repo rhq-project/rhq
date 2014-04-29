@@ -35,7 +35,7 @@ import javax.crypto.spec.SecretKeySpec;
  * as the <code>org.jboss.resource.security.SecureIdentityLoginModule</code> in JBossAS 4.2.3.
  * <p>
  * This is to ensure backwards compatibility in case we switch containers that would start
- * obfuscating the password in a different way and also to make those methods available to 
+ * obfuscating the password in a different way and also to make those methods available to
  * other code. The original methods in the SecureIdentityLoginModule are marked private.
  *
  * @author Lukas Krejci
@@ -53,7 +53,7 @@ public final class Obfuscator {
     /**
      * Encodes the secret string so that the value is not immediately readable by
      * a "casual viewer".
-     * 
+     *
      * @param secret the string to encode
      * @return encoded string
      * @throws NoSuchPaddingException
@@ -64,6 +64,11 @@ public final class Obfuscator {
      */
     public static String encode(String secret) throws NoSuchPaddingException, NoSuchAlgorithmException,
         InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+
+        if (secret == null) {
+            return null;
+        }
+
         SecretKeySpec key = new SecretKeySpec(KEY, ALGORITHM);
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);
@@ -79,7 +84,7 @@ public final class Obfuscator {
      * <p>
      * This method differs from its original <code>org.jboss.resource.security.SecureIdentityLoginModule#decode</code>
      * private method in that it returns a String whereas the original method returns a char[].
-     * 
+     *
      * @param secret the encoded (obfuscated) string
      * @return the decoded string
      * @throws NoSuchPaddingException
@@ -90,6 +95,11 @@ public final class Obfuscator {
      */
     public static String decode(String secret) throws NoSuchPaddingException, NoSuchAlgorithmException,
         InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+
+        if (secret == null) {
+            return null;
+        }
+
         SecretKeySpec key = new SecretKeySpec(KEY, ALGORITHM);
 
         BigInteger n = new BigInteger(secret, 16);
@@ -123,7 +133,7 @@ public final class Obfuscator {
      * Adapted from http://stackoverflow.com/questions/2863852/how-to-generate-a-random-string-in-java.
      * <p/>
      * The default set of validCharacters: 1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
-     * 
+     *
      * @param random
      * @param validCharacters
      * @param length

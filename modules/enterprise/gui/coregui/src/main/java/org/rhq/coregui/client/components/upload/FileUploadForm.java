@@ -43,8 +43,8 @@ import org.rhq.coregui.client.util.message.Message.Severity;
 
 /**
  * A base form widget for file upload. Uploaded files are uploaded to the server into a temp directory via
- * FileUploadServlet. 
- * 
+ * FileUploadServlet.
+ *
  * @author Jay Shaughnessy
  */
 public class FileUploadForm extends DynamicCallbackForm {
@@ -67,8 +67,16 @@ public class FileUploadForm extends DynamicCallbackForm {
 
     private List<String> uploadedFilePaths;
 
+    private String customTooltipMessage;
+    private boolean obfuscate;
+
     public FileUploadForm(String name, String version, boolean showNameLabel, boolean showUploadButton,
         Boolean isAlreadyUploaded) {
+        this(name, version, showNameLabel, showUploadButton, isAlreadyUploaded, false);
+    }
+
+    public FileUploadForm(String name, String version, boolean showNameLabel, boolean showUploadButton,
+        Boolean isAlreadyUploaded, boolean obfuscate) {
 
         super(name);
         this.name = name;
@@ -77,6 +85,8 @@ public class FileUploadForm extends DynamicCallbackForm {
         this.showUploadButton = showUploadButton;
         this.uploadResult = isAlreadyUploaded; // null if unknown, false if error during previous upload attempt, true if already uploaded before
         this.uploadInProgress = false;
+        this.customTooltipMessage = null;
+        this.obfuscate = obfuscate;
 
         setEncoding(Encoding.MULTIPART);
         setAction(GWT.getModuleBaseURL() + "/FileUploadServlet");
@@ -125,6 +135,40 @@ public class FileUploadForm extends DynamicCallbackForm {
         onDraw();
     }
 
+    public String getCustomTooltipMessage() {
+        return customTooltipMessage;
+    }
+
+    public void setCustomTooltipMessage(String tooltipMessage) {
+        this.customTooltipMessage = tooltipMessage;
+    }
+
+    /**
+     * If true, the server will be told to obfuscate the content of the file being uploaded when it saves it in order to
+     * help shield sensitive data.
+     *
+     * @return obfuscate flag
+     */
+    public boolean isObfuscate() {
+        return obfuscate;
+    }
+
+    public void setObfuscate(boolean obfuscate) {
+        this.obfuscate = obfuscate;
+        onDraw();
+    }
+
+    /**
+     * Returns true if the user selected a file. This doesn't mean the file has been uploaded,
+     * just that a file has been selected at least for potentially being uploaded.
+     *
+     * @return true if file selected, false if no file has been selected yet
+     */
+    public boolean isFileSelected() {
+        String value = fileUploadItem != null ? fileUploadItem.getValueAsString() : null;
+        return (value != null && !value.isEmpty());
+    }
+
     /**
      * Returns true if the file was successfully uploaded, false if an error occurred.
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
@@ -134,7 +178,7 @@ public class FileUploadForm extends DynamicCallbackForm {
         return uploadResult;
     }
 
-    /** 
+    /**
      * @return Error text if {@link #getUploadResult()} returns false, otherwise null
      */
     public String getUploadError() {
@@ -150,6 +194,16 @@ public class FileUploadForm extends DynamicCallbackForm {
     }
 
     @Override
+    public void reset() {
+        this.uploadError = null;
+        this.uploadInProgress = false;
+        this.uploadResult = null;
+        this.uploadedFilePaths = null;
+        changeIcon(iconGrey, (showUploadButton) ? MSG.view_upload_tooltip_1a() : MSG.view_upload_tooltip_1b());
+        super.reset();
+    }
+
+    @Override
     public void submitForm() {
         setUploadError(null);
 
@@ -159,12 +213,11 @@ public class FileUploadForm extends DynamicCallbackForm {
             return;
         }
 
-        Object value = fileUploadItem.getValue();
-        if (value == null || value.toString().length() == 0) {
+        if (!isFileSelected()) {
             String message = MSG.view_upload_prompt_1(name);
             changeIcon(iconRed, message);
             setUploadError(message);
-            // note - don't even submit this definite failure            
+            // note - don't even submit this definite failure
         } else {
             changeIcon(iconLoading, MSG.common_msg_loading());
             uploadInProgress = true;
@@ -194,10 +247,18 @@ public class FileUploadForm extends DynamicCallbackForm {
         versionField.setDefaultValue(version);
         onDrawItems.add(versionField);
 
+        HiddenItem obfuscateField = new HiddenItem("obfuscate");
+        obfuscateField.setDefaultValue(obfuscate);
+        onDrawItems.add(obfuscateField);
+
         fileUploadItem = new UploadItem("fileUploadItem", name);
         fileUploadItem.setShowTitle(showNameLabel);
         fileUploadItem.setWrapTitle(false);
         fileUploadItem.setColSpan(1);
+        if (getCustomTooltipMessage() != null) {
+            fileUploadItem.setPrompt(getCustomTooltipMessage());
+            fileUploadItem.setHoverWidth(300);
+        }
         onDrawItems.add(fileUploadItem);
 
         if (showUploadButton) {
@@ -209,8 +270,7 @@ public class FileUploadForm extends DynamicCallbackForm {
 
                 @Override
                 public void enable() {
-                    String selectedFile = fileUploadItem.getValueAsString();
-                    if (selectedFile != null && selectedFile.length() > 0) {
+                    if (isFileSelected()) {
                         super.enable();
                     }
                 }
@@ -327,13 +387,14 @@ public class FileUploadForm extends DynamicCallbackForm {
 
         try {
             files = new ArrayList<String>();
-            int begin = 0, end;
-            while (null != results && -1 != (end = results.indexOf("\n"))) {
-                String line = results.substring(begin, end);
-                if (!line.endsWith("html>")) {
-                    files.add(line);
+            if (results != null) {
+                String[] allLines = results.split("\n");
+                for (String line : allLines) {
+                    String trimmedLine = line.trim();
+                    if (!trimmedLine.endsWith("html>")) {
+                        files.add(trimmedLine);
+                    }
                 }
-                begin = end + 1;
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_results(results), e);

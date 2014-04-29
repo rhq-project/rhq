@@ -221,7 +221,8 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
             return UNKNOWN;
 
         } catch (ExecutionException e) {
-            throw new RuntimeException("Availability check failed", e.getCause());
+            availabilityFuture = null; // undefine, so in next run new (no longer failed) instance is scheduled
+            throw new RuntimeException("Availability check failed : "+e.getCause().getMessage(), e.getCause());
 
         } catch (java.util.concurrent.TimeoutException e) {
             // failed to get avail synchronously. next call to the future will return availability (we hope)

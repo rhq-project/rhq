@@ -363,7 +363,28 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
 
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
                     ResourceGroupTreeView.this.typeMap = types;
-                    loadTree(root);
+                    ResourceGroupEnhancedTreeNode rootNode = loadTree(root);
+                    ResourceGroupEnhancedTreeNode selectedNode = null;
+                    if (currentGroup != null) {
+                        if (currentGroup.getClusterKey() != null) {
+                            // a child cluster node leaf was selected
+                            selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().find(
+                                ResourceGroupEnhancedTreeNode.CLUSTER_KEY, currentGroup.getClusterKey());
+                        } else {
+                            // the top root node, representing the group itself, was selected
+                            selectedNode = (ResourceGroupEnhancedTreeNode) treeGrid.getTree().findById(
+                                String.valueOf(currentGroup.getId()));
+                        }
+                    }
+                    if (selectedNode != null) {
+                        TreeNode[] parents = treeGrid.getTree().getParents(selectedNode);
+                        treeGrid.getTree().openFolders(parents);
+                        treeGrid.getTree().openFolder(selectedNode);
+                        treeGrid.selectRecord(selectedNode);
+                    } else {
+                        treeGrid.getTree().openFolder(rootNode);
+                        treeGrid.selectRecord(rootNode);
+                    }
                 }
             });
     }
@@ -394,7 +415,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
         }
     }
 
-    private void loadTree(ClusterFlyweight root) {
+    private ResourceGroupEnhancedTreeNode loadTree(ClusterFlyweight root) {
         ClusterKey rootKey = new ClusterKey(root.getGroupId());
         ResourceGroupEnhancedTreeNode fakeRoot = new ResourceGroupEnhancedTreeNode("fakeRootNode");
         fakeRoot.setID(FAKE_ROOT_ID);
@@ -420,8 +441,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
         org.rhq.coregui.client.util.TreeUtility.printTree(tree);
 
         treeGrid.setData(tree);
-        treeGrid.getTree().openFolder(rootNode);
-        treeGrid.selectRecord(rootNode);
+        return rootNode;
     }
 
     public void loadTree(ResourceGroupEnhancedTreeNode parentNode, ClusterFlyweight parentClusterGroup,

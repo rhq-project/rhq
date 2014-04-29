@@ -96,8 +96,6 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
     private static final String FIELD_DEPLOYED = "deployed";
     private static final String FIELD_VERSION = "version";
 
-    private boolean showDeleted = false;
-
     public AgentPluginTableView() {
         super(null);
         setHeight100();
@@ -205,40 +203,6 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
                         }
                     }
                 });
-            }
-        });
-
-        addTableAction(MSG.common_button_purge(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                if (showDeleted) {
-                    return super.isEnabled(selection);
-                } else {
-                    return false; // we aren't showing deleted plugins, so there is no plugin shown that can be purged anyway
-                }
-            }
-
-            @Override
-            public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                int[] selectedIds = getSelectedIds(selections);
-                GWTServiceLookup.getPluginService().purgeAgentPlugins(selectedIds,
-                    new AsyncCallback<ArrayList<String>>() {
-                        @Override
-                        public void onSuccess(ArrayList<String> result) {
-                            Message msg = new Message(MSG.view_admin_plugins_purgedAgentPlugins(result.toString()),
-                                Severity.Info);
-                            CoreGUI.getMessageCenter().notify(msg);
-                            refresh();
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_admin_plugins_purgedAgentPluginsFailure() + " " + caught.getMessage(), caught);
-                            refreshTableInfo();
-                        }
-                    });
             }
         });
 
@@ -400,26 +364,10 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        final IButton showDeletedButton = new EnhancedIButton(MSG.view_admin_plugins_showDeleted());
-        showDeletedButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                showDeleted = !showDeleted;
-                if (showDeleted) {
-                    showDeletedButton.setTitle(MSG.view_admin_plugins_hideDeleted());
-                    getListGrid().showField(FIELD_DEPLOYED);
-                } else {
-                    showDeletedButton.setTitle(MSG.view_admin_plugins_showDeleted());
-                    getListGrid().hideField(FIELD_DEPLOYED);
-                }
-                refresh();
-            }
-        });
-
         PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(MSG.view_admin_plugins_upload(), true);
 
         addExtraWidget(scanForUpdatesButton, true);
         addExtraWidget(updateOnAgentsButton, true);
-        addExtraWidget(showDeletedButton, true);
         addExtraWidget(pluginUploadForm, true);
 
         super.configureTable();
@@ -493,12 +441,6 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             enabledField.setAlign(Alignment.CENTER);
             fields.add(enabledField);
 
-            ListGridField deployedField = new ListGridField(FIELD_DEPLOYED, MSG.view_admin_plugins_deployed());
-            deployedField.setType(ListGridFieldType.IMAGE);
-            deployedField.setAlign(Alignment.CENTER);
-            deployedField.setHidden(true);
-            fields.add(deployedField);
-
             ListGridField versionField = new ListGridField(FIELD_VERSION, MSG.common_title_version());
             versionField.setHidden(true);
             fields.add(versionField);
@@ -508,7 +450,6 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             descriptionField.setWidth("*");
             lastUpdateField.setWidth("20%");
             enabledField.setWidth(65);
-            deployedField.setWidth(75);
             versionField.setWidth(100);
 
             return fields;
@@ -516,7 +457,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
-            GWTServiceLookup.getPluginService().getAgentPlugins(showDeleted, new AsyncCallback<ArrayList<Plugin>>() {
+            GWTServiceLookup.getPluginService().getAgentPlugins(false, new AsyncCallback<ArrayList<Plugin>>() {
                 public void onSuccess(ArrayList<Plugin> result) {
                     response.setData(buildRecords(result));
                     response.setTotalRows(result.size());

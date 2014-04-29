@@ -178,7 +178,7 @@ done
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_AGENT_JAVA_OPTS" ]; then
-   RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties"
+   RHQ_AGENT_JAVA_OPTS='-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true "-Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties"'
 fi
 debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
 

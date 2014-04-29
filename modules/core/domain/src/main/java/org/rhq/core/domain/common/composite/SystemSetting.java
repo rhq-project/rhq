@@ -164,7 +164,19 @@ public enum SystemSetting {
     @Deprecated
     GUIDE_ENABLED("CAM_GUIDE_ENABLED", PropertySimpleType.STRING, true, false, true),
     @Deprecated
-    RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true)
+    RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true),
+
+    /**
+     * This is a default username that can be used to connect to a remote SSH box.
+     * Right now, it's used when remotely controlling/installing/uninstalling agents.
+     */
+    REMOTE_SSH_USERNAME_DEFAULT("REMOTE_SSH_USERNAME_DEFAULT", PropertySimpleType.STRING, false, false, true),
+
+    /**
+     * This is a default password that can be used to connect to a remote SSH box.
+     * Right now, it's used when remotely controlling/installing/uninstalling agents.
+     */
+    REMOTE_SSH_PASSWORD_DEFAULT("REMOTE_SSH_PASSWORD_DEFAULT", PropertySimpleType.PASSWORD, false, false, true)
 
     ;
 

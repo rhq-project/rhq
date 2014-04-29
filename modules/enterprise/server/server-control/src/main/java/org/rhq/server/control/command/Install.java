@@ -150,7 +150,7 @@ public class Install extends AbstractInstall {
             if (startStorage || installServer) {
                 startedStorage = true;
                 Start startCommand = new Start();
-                rValue = Math.max(rValue, startCommand.exec(new String[] { "start", "--storage" }));
+                rValue = Math.max(rValue, startCommand.exec(new String[] { "--storage" }));
             }
 
             if (installServer) {
@@ -205,10 +205,10 @@ public class Install extends AbstractInstall {
             if (!start && (startedStorage || startedServer)) {
                 Stop stopCommand = new Stop();
                 if (startedServer) {
-                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--server" }));
+                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "--server" }));
                 }
                 if (startedStorage) {
-                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--storage" }));
+                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
                 }
             }
         }

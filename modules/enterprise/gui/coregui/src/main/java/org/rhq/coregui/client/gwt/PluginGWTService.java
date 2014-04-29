@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
@@ -113,16 +114,6 @@ public interface PluginGWTService extends RemoteService {
     ArrayList<String> deleteAgentPlugins(int[] selectedPluginIds) throws RuntimeException;
 
     /**
-     * Schedules an agent plugin to be purged. Purging a plugin permanently deletes it from the database. Purging is done
-     * asynchronously and will not happen until all resource types defined by the plugin have first been purged. Plugins
-     * must first be deleted before they can be purged.
-     *
-     * @param selectedPluginIds the IDs of the plugins that are to be purged
-     * @return list of names of those plugins that were purged
-     */
-    ArrayList<String> purgeAgentPlugins(int[] selectedPluginIds) throws RuntimeException;
-
-    /**
      * Enables the server plugins with the given IDs.
      *
      * @param selectedPluginIds the IDs of the plugins that are to be enabled
@@ -144,16 +135,8 @@ public interface PluginGWTService extends RemoteService {
      * @param selectedPluginIds the IDs of the server plugins that are to be undeployed
      * @return list of names of those server plugins that were undeployed
      */
-    ArrayList<String> undeployServerPlugins(int[] selectedPluginIds) throws RuntimeException;
+    ArrayList<String> deleteServerPlugins(int[] selectedPluginIds) throws RuntimeException;
 
-    /**
-     * Purges the undeployed server plugins from the system so there is no record of them to have
-     * ever existed. This deletes all remnants of the plugin from the database.
-     *
-     * @param selectedPluginIds the IDs of the undeployed server plugins that are to be purged
-     * @return list of names of those server plugins that were purged
-     */
-    ArrayList<String> purgeServerPlugins(int[] selectedPluginIds) throws RuntimeException;
 
     /**
      * Returns the definition for the given plugin's global plugin configuration.
@@ -221,4 +204,10 @@ public interface PluginGWTService extends RemoteService {
      * @since 4.11
      */
     void updatePluginsOnAgents(long delayInMilliseconds);
+
+    /**
+     * returns canned group expressions
+     * @return
+     */
+    ArrayList<CannedGroupExpression> getCannedGroupExpressions();
 }

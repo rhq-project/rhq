@@ -37,6 +37,7 @@ import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileReverter;
@@ -193,6 +194,7 @@ public class Upgrade extends AbstractInstall {
             });
 
             // now upgrade everything
+            upgradeServerEnvFile(commandLine);
             rValue = Math.max(rValue, upgradeStorage(commandLine));
             rValue = Math.max(rValue, upgradeServer(commandLine));
             rValue = Math.max(rValue, upgradeAgent(commandLine));
@@ -216,9 +218,9 @@ public class Upgrade extends AbstractInstall {
             try {
                 if (!start) {
                     Stop stopCommand = new Stop();
-                    stopCommand.exec(new String[] { "stop", "--server" });
+                    stopCommand.exec(new String[] { "--server" });
                     if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
-                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--storage" }));
+                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
                     }
                 }
             } catch (Throwable t) {
@@ -335,7 +337,7 @@ public class Upgrade extends AbstractInstall {
             FileUtil.copyFile(oldWrapperIncFile, newWrapperIncFile);
         }
 
-        // start the server, the invoke the installer and wait for the server to be completely installed
+        // start the server, then invoke the installer and wait for the server to be completely installed
         rValue = Math.max(rValue, startRHQServerForInstallation());
         int installerStatusCode = runRHQServerInstaller();
         rValue = Math.max(rValue, installerStatusCode);
@@ -409,6 +411,39 @@ public class Upgrade extends AbstractInstall {
                         "resource-root path=\"" + oracleDriver[0].getName() + "\"");
                     FileUtil.writeFile(new ByteArrayInputStream(newXml.getBytes()), moduleXmlFile);
                     log.info("Updated module.xml [" + moduleXmlFile + "] to use the proper Oracle driver");
+                }
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * If there is an rhq-server-env.sh|bat file in the old server directory then:<pre>
+     *   1) backup the new version as rhq.server-env.sh|bat.default.
+     *   2) copy the old version to the new server so it can be applied to the upgrade.
+     * </pre>
+     * @param commandLine
+     * @throws Exception
+     */
+    private void upgradeServerEnvFile(CommandLine commandLine) throws Exception {
+        File oldServerDir = getFromServerDir(commandLine);
+        String[] envFiles = new String[] { "bin/rhq-server-env.sh", "bin/rhq-server-env.bat" };
+
+        for (String envFile : envFiles) {
+            File oldServerEnvFile = new File(oldServerDir, envFile);
+            if (oldServerEnvFile.exists()) {
+                File newServerEnvFile = new File(getBaseDir(), envFile);
+                File newServerEnvFileBackup = new File(getBaseDir(), (envFile + ".default"));
+                try {
+                    FileUtil.copyFile(newServerEnvFile, newServerEnvFileBackup);
+                    newServerEnvFile.delete();
+                    FileUtil.copyFile(oldServerEnvFile, newServerEnvFile);
+                } catch (Exception e) {
+                    // log a message about this problem, but we will let the upgrade continue
+                    log.error("Failed to update [" + oldServerEnvFile + "] to [" + newServerEnvFile
+                        + "]. Settings in + [" + oldServerEnvFile + "] + will not be applied to the upgrade. "
+                        + "You will need to manually copy the file to the new location after the upgrade.");
                 }
             }
         }
@@ -667,8 +702,7 @@ public class Upgrade extends AbstractInstall {
                         @Override
                         public void visit(File file) {
                             String filename = file.getName();
-                            if (filename.contains(".so") || filename.contains(".sl")
-                                || filename.contains(".dylib")) {
+                            if (filename.contains(".so") || filename.contains(".sl") || filename.contains(".dylib")) {
                                 file.setExecutable(true);
                             } else if (filename.endsWith(".sh")) {
                                 file.setExecutable(true);

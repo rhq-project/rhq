@@ -46,6 +46,7 @@ import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.Base64;
@@ -124,7 +125,7 @@ public class CoreServerServiceImpl implements CoreServerService {
                     Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
                         request.getPort());
                     if (agentByAddressPort != null && !agentByAddressPort.getName().equals(request.getName())) {
-                        // the agent request provided information about an authentic agent but it is trying to 
+                        // the agent request provided information about an authentic agent but it is trying to
                         // steal another agent's host/port. Thus, we will abort this request.
                         String msg = "The agent asking for registration [" + request.getName()
                             + "] is trying to register the same address/port [" + request.getAddress() + ":"
@@ -283,6 +284,35 @@ public class CoreServerServiceImpl implements CoreServerService {
         AgentRegistrationResults results = new AgentRegistrationResults();
         results.setAgentToken(agentByName.getAgentToken());
         results.setFailoverList(failoverList);
+
+        // Link this agent with its installation details.
+        // If the agent was told about its install ID, then we'll use that to update the existing row.
+        // (this happens if a remote install was performed and its SSH details were already persisted).
+        // Otherwise, this will create or update an existing AgentInstall entity without any additional data
+        // known about it other than its agent name and install location.
+        // Note that any failures in here won't abort the registration - this isn't required to have a functioning
+        // agent. Its just additional information that is useful to the user for doing things like remote start/stop.
+        try {
+            AgentInstall ai = new AgentInstall();
+            if (request.getInstallId() != null) {
+                ai.setId(Integer.valueOf(request.getInstallId()));
+            }
+            ai.setAgentName(agentByName.getName());
+            ai.setInstallLocation(request.getInstallLocation());
+            ai = agentManager.updateAgentInstall(subjectManager.getOverlord(), ai);
+
+            // We now have the persisted AgentInstall entity from the database - which may have additional information we didn't have before.
+            // If, however, we still don't have the hostname, fill that in now with the address of the agent entity.
+            // We do this now (rather than when we first updated above) because its possible the user, when remotely installing this agent,
+            // provided a different host IP to connect over SSH to (probably for NAT reasons) and that was persisted before the agent was registered.
+            // Therefore, we want to keep the user's host and not overwrite it. If, however, there is no host information at all, we will fill it in.
+            if (ai.getSshHost() == null) {
+                ai.setSshHost(agentByName.getAddress());
+                ai = agentManager.updateAgentInstall(subjectManager.getOverlord(), ai);
+            }
+        } catch (Exception e) {
+            log.warn("Could not update the install information for agent [" + agentByName.getName() + "]", e);
+        }
 
         return results;
     }
@@ -515,7 +545,7 @@ public class CoreServerServiceImpl implements CoreServerService {
                 // the agent wasn't given enough time to respond to the ping.  Let's at least try
                 // one more time, because once this ping failure is confirmed, it means the agent
                 // will be dead in the water and hang until an admin can reconfigure it (a second
-                // failure probably means it really is a configuration problem) 
+                // failure probably means it really is a configuration problem)
                 ping = sc.pingEndpoint(endpoint, 20000L);
 
                 if (!ping) {
@@ -531,6 +561,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         if (failure != null) {
+            log.warn(failure);
             throw failure;
         }
 

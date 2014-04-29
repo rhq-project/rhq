@@ -130,6 +130,8 @@ public interface BundleManagerRemote {
      * @return the new BundleFile
      * @throws Exception
      * @see #addBundleFile(Subject, int, String, String, Architecture, InputStream)
+     *
+     * @since 4.8
      */
     BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, String bundleFileUrl) throws Exception;
@@ -190,6 +192,8 @@ public interface BundleManagerRemote {
      * @param subject
      * @param bundleGroupIds
      * @param bundleIds
+     *
+     * @since 4.9
      */
     void assignBundlesToBundleGroups(Subject subject, int[] bundleGroupIds, int[] bundleIds);
 
@@ -248,6 +252,8 @@ public interface BundleManagerRemote {
      * @param bundleGroup the new bundle group name the unique bundle group name
      * @return the persisted BundleGroup
      * @throws Exception
+     *
+     * @since 4.9
      */
     BundleGroup createBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception;
 
@@ -292,6 +298,8 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did.
      * @throws Exception
+     *
+     * @since 4.9
      */
     BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int[] bundleGroupIds, String recipe)
         throws Exception;
@@ -331,6 +339,8 @@ public interface BundleManagerRemote {
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
      * @see #createBundleVersionViaFile(org.rhq.core.domain.auth.Subject, java.io.File)
+     *
+     * @since 4.10
      */
     BundleVersion createBundleVersionViaContentHandle(Subject subject, String temporaryContentHandle) throws Exception;
 
@@ -353,6 +363,8 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
+     *
+     * @since 4.9
      */
     BundleVersion createInitialBundleVersionViaFile(Subject subject, int[] bundleGroupIds, File distributionFile)
             throws Exception;
@@ -372,6 +384,8 @@ public interface BundleManagerRemote {
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
      * @see #createInitialBundleVersionViaFile(org.rhq.core.domain.auth.Subject, int[], java.io.File)
+     *
+     * @since 4.10
      */
     BundleVersion createInitialBundleVersionViaContentHandle(Subject subject, int[] bundleGroupIds,
         String temporaryContentHandle) throws Exception;
@@ -418,6 +432,8 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
+     *
+     * @since 4.9
      */
     BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int[] bundleGroupIds, byte[] fileBytes)
         throws Exception;
@@ -469,6 +485,8 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
+     *
+     * @since 4.9
      */
     BundleVersion createInitialBundleVersionViaURL(Subject subject, int[] bundleGroupIds, String distributionFileUrl)
         throws Exception;
@@ -493,6 +511,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
+     *
+     * @since 4.8
      */
     BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
         String password) throws Exception;
@@ -519,6 +539,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
+     *
+     * @since 4.9
      */
     BundleVersion createInitialBundleVersionViaURL(Subject subject, int[] bundleGroupIds, String distributionFileUrl,
         String username, String password) throws Exception;
@@ -566,6 +588,8 @@ public interface BundleManagerRemote {
      * @param subject user that must have proper permissions
      * @param ids the bundle group id
      * @throws Exception
+     *
+     * @since 4.9
      */
     void deleteBundleGroups(Subject subject, int[] ids) throws Exception;
 
@@ -603,6 +627,8 @@ public interface BundleManagerRemote {
      * @param subject
      * @param criteria
      * @return not null
+     *
+     * @since 4.9
      */
     PageList<BundleGroup> findBundleGroupsByCriteria(Subject subject, BundleGroupCriteria criteria);
 
@@ -765,6 +791,8 @@ public interface BundleManagerRemote {
      * @param subject
      * @param bundleGroupIds
      * @param bundleIds
+     *
+     * @since 4.9
      */
     void unassignBundlesFromBundleGroups(Subject subject, int[] bundleGroupIds, int[] bundleIds);
 
@@ -778,6 +806,8 @@ public interface BundleManagerRemote {
      * @param bundleGroup the updated bundle group
      * @return the updated BundleGroup
      * @throws Exception
+     *
+     * @since 4.9
      */
     BundleGroup updateBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception;
 

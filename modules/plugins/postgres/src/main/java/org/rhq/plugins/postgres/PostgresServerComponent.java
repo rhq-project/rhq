@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -58,6 +59,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -92,7 +94,17 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     public void start(ResourceContext context) throws Exception {
         this.resourceContext = context;
         buildSharedConnectionIfNeeded();
-        pooledConnectionProvider = new PostgresPooledConnectionProvider(resourceContext.getPluginConfiguration());
+        try {
+            pooledConnectionProvider = new PostgresPooledConnectionProvider(resourceContext.getPluginConfiguration());
+        } catch (SQLException e) {
+            if (e.getCause() instanceof SQLException) {
+                SQLException cause = (SQLException) e.getCause();
+                if ("28P01".equals(cause.getSQLState())) {
+                    throw new InvalidPluginConfigurationException("Invalid password");
+                }
+            }
+            throw new InvalidPluginConfigurationException("Cannot open database connection", e);
+        }
         ProcessInfo processInfo = resourceContext.getNativeProcess();
         if (processInfo != null) {
             aggregateProcessInfo = processInfo.getAggregateProcessTree();
@@ -383,18 +395,41 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             ResultSet resultSet = null;
             try {
                 jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+
+                DatabaseMetaData metaData = jdbcConnection.getMetaData();
+                int databaseMajorVersion = metaData.getDatabaseMajorVersion();
+                int databaseMinorVersion = metaData.getDatabaseMinorVersion();
+                StringBuilder sqlQuery = new StringBuilder("select ");
+                // See http://wiki.postgresql.org/wiki/What%27s_new_in_PostgreSQL_9.2#pg_stat_activity_and_pg_stat_replication.27s_definitions_have_changed
+                if (databaseMajorVersion >= 9 && databaseMinorVersion >= 2) {
+                    sqlQuery.append("pid").append(",");
+                    sqlQuery.append("usename").append(",");
+                    sqlQuery.append("query").append(",");
+                    sqlQuery.append("state").append(",");
+                    sqlQuery.append("client_addr").append(",");
+                    sqlQuery.append("client_port").append(" ");
+                } else {
+                    sqlQuery.append("procpid as pid").append(",");
+                    sqlQuery.append("usename").append(",");
+                    sqlQuery.append("current_query as query").append(",");
+                    sqlQuery.append("'' as state").append(",");
+                    sqlQuery.append("client_addr").append(",");
+                    sqlQuery.append("client_port").append(" ");
+                }
+                sqlQuery.append("from pg_stat_activity order by pid asc");
+
                 statement = jdbcConnection.createStatement();
-                resultSet = statement.executeQuery("SELECT * FROM pg_stat_activity ORDER BY current_query desc");
+                resultSet = statement.executeQuery(sqlQuery.toString());
 
                 PropertyList procList = new PropertyList("processList");
                 while (resultSet.next()) {
                     PropertyMap pm = new PropertyMap("process");
-                    pm.put(new PropertySimple("pid", resultSet.getInt("procpid")));
+                    pm.put(new PropertySimple("pid", resultSet.getInt("pid")));
                     pm.put(new PropertySimple("userName", resultSet.getString("usename")));
-                    pm.put(new PropertySimple("query", resultSet.getString("current_query")));
+                    pm.put(new PropertySimple("query", resultSet.getString("query")));
+                    pm.put(new PropertySimple("state", resultSet.getString("state")));
                     pm.put(new PropertySimple("address", resultSet.getString("client_addr")));
                     pm.put(new PropertySimple("port", resultSet.getInt("client_port")));
-
                     procList.add(pm);
                 }
 

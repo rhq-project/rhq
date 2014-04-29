@@ -102,9 +102,18 @@ public interface DiscoveryAgentService {
     InventoryReport executeServiceScanImmediately() throws PluginContainerException;
 
     /**
-     * This method asks that a service scan be performed, but it does not wait for the results of that scan.
+     * This method asks that a service scan be performed, but it does not wait for the results of that scan. The
+     * scan is not performed if a service scan is already in progress.
+     *
+     * @return true if the scan is launched, false if the scan was skipped due to a scan being in progress.
      */
-    void executeServiceScanDeferred();
+    boolean executeServiceScanDeferred();
+
+    /**
+     * This method asks that a service scan be performed, rooted at the specified Resource,
+     * but it does not wait for the results of that scan.
+     */
+    void executeServiceScanDeferred(int resourceId);
 
     /**
      * Checks the availability of all resources and returns a report on their availability statuses. This method blocks

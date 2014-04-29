@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<expressions xmlns="urn:xmlns:rhq-canned-groups">
+  <definition>
+    <id>Managed Servers in domain</id>
+    <name>Managed Servers in domain</name>
+    <createByDefault>true</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>JBoss AS7 Managed servers in server in domains</description>
+    <expression>groupby resource.resourceConfiguration[hostname]</expression>
+    <expression>resource.type.plugin = JBossAS7</expression>
+    <expression>resource.type.name = Managed Server</expression>
+  </definition>
+  <definition>
+    <id>Managed Servers in server-group</id>
+    <name>Managed Servers in server-group</name>
+    <createByDefault>true</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>JBoss AS7 Managed servers in server in server-groups</description>
+    <expression>groupby resource.resourceConfiguration[group]</expression>
+    <expression>resource.type.plugin = JBossAS7</expression>
+    <expression>resource.type.name = Managed Server</expression>
+  </definition>
+  <definition>
+    <id>Enabled deployments in server-group</id>
+    <name>Enabled deployments in server-group</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>JBoss AS7 Deployments in server-groups</description>
+    <expression>groupby resource.parent.name</expression>
+    <expression>resource.type.plugin = JBossAS7</expression>
+    <expression>resource.type.name = Deployment</expression>
+    <expression>resource.parent.type.name.contains = ServerGroup</expression>
+    <expression>resource.resourceConfiguration[enabled] = true</expression>
+  </definition>
+</expressions>

@@ -292,21 +292,9 @@ public class MeasurementConverterClient {
         return format(formatted, targetUnits);
     }
 
-    public static String scaleAndFormat(Double origin, MeasurementSchedule targetSchedule, boolean bestFit)
-        throws MeasurementConversionException {
-        MeasurementUnits targetUnits = targetSchedule.getDefinition().getUnits();
 
-        return scaleAndFormat(origin, targetUnits, bestFit, null, null);
-    }
 
-    public static String scaleAndFormat(Double origin, MeasurementUnits targetUnits, boolean bestFit)
-        throws MeasurementConversionException {
-
-        return scaleAndFormat(origin, targetUnits, bestFit, null, null);
-    }
-
-    public static String scaleAndFormat(Double origin, MeasurementUnits targetUnits, boolean bestFit,
-        Integer minimumFractionDigits, Integer maximumFractionDigits) throws MeasurementConversionException {
+    public static String scaleAndFormat(Double origin, MeasurementUnits targetUnits, boolean bestFit ) throws MeasurementConversionException {
 
         MeasurementUnits baseUnits = targetUnits.getBaseUnits();
         MeasurementNumericValueAndUnits valueAndUnits = new MeasurementNumericValueAndUnits(origin, baseUnits);
@@ -324,7 +312,7 @@ public class MeasurementConverterClient {
 
         // work-around for the various Chart descendants not properly setting their units field;      
         if (null == units) {
-            return new MeasurementNumericValueAndUnits(origin, units);
+            return new MeasurementNumericValueAndUnits(origin, null);
         }
 
         // by definition, absolutely specified units don't scale to anything

@@ -256,13 +256,14 @@ public class LinkManager {
 
     public static String getAlertDetailLink(EntityContext entityContext, int alertId) {
         String link;
-        if (GWT) {
-            String baseLink = getEntityTabLink(entityContext, "Alerts", "History");
-            link = baseLink + "/" + alertId;
-        } else {
-            link = null; // TODO
-        }
+        String baseLink = getEntityTabLink(entityContext, "Alerts", "History");
+        link = baseLink + "/" + alertId;
 
+        return link;
+    }
+
+    public static String getEventDetailLink(int resourceId, int eventId) {
+        String link = "#Resource/" + resourceId + "/Events/History/" + eventId;
         return link;
     }
 

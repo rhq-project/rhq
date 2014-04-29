@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,20 +49,17 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.FutureCallback;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
-
-import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.remoting.CannotConnectException;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -80,13 +81,10 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.server.PersistenceUtility;
-import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -102,10 +100,9 @@ import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.ResourceHandlerBean;
 import org.rhq.enterprise.server.storage.StorageClientManager;
-import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
-import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.RawDataInsertedCallback;
+import org.rhq.server.metrics.TraitsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
@@ -119,21 +116,6 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, MeasurementDataManagerRemote {
-    // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
-    private static final String TRAIT_INSERT_STATEMENT = "INSERT INTO RHQ_measurement_data_trait \n"
-        + "  SELECT ?, ?, ?  FROM RHQ_numbers n \n"
-        + "  WHERE n.i = 42 \n"
-        + "    AND NOT EXISTS \n"
-        + "      ( \n"
-        + "      SELECT 1 \n"
-        + "      FROM (SELECT dt2.value as v \n"
-        + "            FROM RHQ_measurement_data_trait dt2 \n"
-        + "      WHERE dt2.schedule_id = ? \n"
-        + "        AND dt2.time_stamp = \n"
-        + "          (SELECT max(dt3.time_stamp) FROM RHQ_measurement_data_trait dt3 WHERE dt3.schedule_id = ?))  lastValue \n"
-        + "      WHERE NOT ((? is null AND lastValue.v is not null) \n"
-        + "        OR (? is not null AND lastValue.v is null) \n"
-        + "              OR (? is not null AND lastValue.v is not null AND ? <> lastValue.v)) \n" + "      )";
 
     private final Log log = LogFactory.getLog(MeasurementDataManagerBean.class);
 
@@ -171,29 +153,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @EJB
     private SubjectManagerLocal subjectManager;
-
-    // doing a bulk delete in here, need to be in its own tx
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeTraits(long oldest) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = rhqDs.getConnection();
-            stmt = conn.prepareStatement(MeasurementDataTrait.NATIVE_QUERY_PURGE);
-            stmt.setLong(1, oldest);
-            long startTime = System.currentTimeMillis();
-            int deleted = stmt.executeUpdate();
-            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
-            MeasurementMonitor.getMBean().setPurgedMeasurementTraits(deleted);
-            return deleted;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to purge traits older than [" + oldest + "]", e);
-        } finally {
-            JDBCUtil.safeClose(conn, stmt, null);
-        }
-    }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void mergeMeasurementReport(MeasurementReport report) {
@@ -240,9 +199,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         MetricsServer metricsServer = storageClientManager.getMetricsServer();
         metricsServer.addNumericData(data, new RawDataInsertedCallback() {
 
-            private ReentrantLock lock = new ReentrantLock();
+            private final ReentrantLock lock = new ReentrantLock();
 
-            private Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
+            private final Set<MeasurementData> insertedData = new TreeSet<MeasurementData>(new Comparator<MeasurementData>() {
                 @Override
                 public int compare(MeasurementData d1, MeasurementData d2) {
                     return (d1.getTimestamp() < d2.getTimestamp()) ? -1 : ((d1.getTimestamp() == d2.getTimestamp()) ? 0 : 1);
@@ -271,46 +230,22 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         });
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void addTraitData(Set<MeasurementDataTrait> data) {
-        if ((data == null) || (data.isEmpty())) {
-            return;
-        }
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void addTraitData(final Set<MeasurementDataTrait> data) {
+        TraitsDAO dao = storageClientManager.getTraitsDAO();
+        dao.insertTraits(data, new FutureCallback<Object>() {
 
-        Connection conn = null;
-        PreparedStatement ps = null;
-        try {
-            conn = rhqDs.getConnection();
-            ps = conn.prepareStatement(TRAIT_INSERT_STATEMENT);
-
-            for (MeasurementDataTrait aData : data) {
-                // time_stamp, schedule_id, value, schedule_id, schedule_id, value, value, value, value
-                ps.setLong(1, aData.getTimestamp());
-                ps.setInt(2, aData.getScheduleId());
-                ps.setString(3, aData.getValue());
-                ps.setInt(4, aData.getScheduleId());
-                ps.setInt(5, aData.getScheduleId());
-                ps.setString(6, aData.getValue());
-                ps.setString(7, aData.getValue());
-                ps.setString(8, aData.getValue());
-                ps.setString(9, aData.getValue());
-                ps.addBatch();
+            @Override
+            public void onFailure(Throwable e) {
+                log.error("Error persisting trait data " + data.size(), e);
             }
 
-            int[] res = ps.executeBatch();
-            if (res.length != data.size()) {
-                throw new MeasurementStorageException("Failure to store measurement trait data.");
-                // It is expected that some of these batch updates didn't update anything as the previous value was the same
+            @Override
+            public void onSuccess(Object result) {
+                notifyAlertConditionCacheManager("mergeMeasurementReport",
+                        data.toArray(new MeasurementData[data.size()]));
             }
-
-            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
-        } catch (SQLException e) {
-            log.warn("Failure saving measurement trait data:\n" + ThrowableUtil.getAllMessages(e));
-        } catch (Exception e) {
-            log.error("Error persisting trait data", e);
-        } finally {
-            JDBCUtil.safeClose(conn, ps, null);
-        }
+        });
     }
 
     /**
@@ -545,50 +480,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return resMap;
     }
 
-    /**
-     * Helper to fill the name of the trait from the passed array into the MeasurementDataTrait object. The input is a
-     * tuple [MeasurementDataTrait,String name, Short displayOrder].
-     *
-     * @param  objs Tuple {@link MeasurementDataTrait},String,Short
-     *
-     * @return {@link MeasurementDataTrait} where the name property is set. Or null if the input was null.
-     */
-    private MeasurementDataTrait fillMeasurementDataTraitFromObjectArray(Object[] objs) {
-        if (objs == null) {
-            return null;
-        }
-
-        MeasurementDataTrait mdt = (MeasurementDataTrait) objs[0];
-        String name = (String) objs[1];
-
-        mdt.setName(name);
-        return mdt;
-    }
-
-    /**
-     * Return the current trait value for the passed schedule
-     *
-     * @param  scheduleId id of a MeasurementSchedule that 'points' to a Trait
-     *
-     * @return One trait or null if nothing was found in the db.
-     */
     @Nullable
     public MeasurementDataTrait getCurrentTraitForSchedule(int scheduleId) {
-        Query q = entityManager.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_SCHEDULES);
-        q.setParameter("scheduleIds", Collections.singletonList(scheduleId));
-        Object[] res;
-        try {
-            res = (Object[]) q.getSingleResult();
-            MeasurementDataTrait trait = fillMeasurementDataTraitFromObjectArray(res);
-
-            return trait;
-        } catch (NoResultException nre) {
-            if (log.isDebugEnabled()) {
-                log.debug("No current trait data for schedule with id [" + scheduleId + "] found");
-            }
-
-            return null;
-        }
+        MeasurementDataTrait trait = storageClientManager.getTraitsDAO().currentTrait(scheduleId);
+        return trait;
     }
 
     @Nullable
@@ -728,7 +623,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @return a List of MeasurementDataTrait
      */
-    @SuppressWarnings("unchecked")
     public List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId,
         DisplayType displayType) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
@@ -736,38 +630,34 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 + "] does not have permission to view traits for resource[id=" + resourceId + "]");
         }
 
-        Query query;
-        List<Object[]> qres;
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterResourceId(resourceId);
+        criteria.addFilterDisplayType(displayType);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<MeasurementSchedule> list = measurementScheduleManager.findSchedulesByCriteria(subjectManager.getOverlord(), criteria);
 
-        if (displayType == null) {
-            //         query = entityManager.createNamedQuery(MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE, new OrderingField("d.displayOrder", PageOrdering.ASC));
-        } else {
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                MeasurementDataTrait.FIND_CURRENT_FOR_RESOURCE_AND_DISPLAY_TYPE, new OrderingField("d.displayOrder",
-                    PageOrdering.ASC));
-            query.setParameter("displayType", displayType);
+        TraitsDAO dao = storageClientManager.getTraitsDAO();
+
+        List<MeasurementDataTrait> traits = dao.queryAll(list, false);
+        for (MeasurementDataTrait trait : traits) {
+            MeasurementSchedule sched = entityManager.find(MeasurementSchedule.class, trait.getScheduleId());
+            trait.setSchedule(sched);
+            trait.setName(sched.getDefinition().getName());
         }
 
-        query.setParameter("resourceId", resourceId);
-        qres = query.getResultList();
-
-        /*
-         * Now that we have everything from the query (it returns a tuple <MeasurementDataTrait,DislayName> of the
-         * definition), lets create the method output.
-         */
-        List<MeasurementDataTrait> result = new ArrayList<MeasurementDataTrait>(qres.size());
-        for (Object[] objs : qres) {
-            MeasurementDataTrait mdt = fillMeasurementDataTraitFromObjectArray(objs);
-            result.add(mdt);
-        }
+        Collections.sort(traits, new Comparator<MeasurementDataTrait>() {
+            public int compare(MeasurementDataTrait t1, MeasurementDataTrait t2) {
+                int o1 = t1.getSchedule().getDefinition().getDisplayOrder();
+                int o2 = t2.getSchedule().getDefinition().getDisplayOrder();
+                return o1 - o2;
+            }
+        });
 
         if (log.isDebugEnabled()) {
-            log.debug("getCurrentTraitsForResource(" + resourceId + ") -> result is " + result);
+            log.debug("getCurrentTraitsForResource(" + resourceId + ") -> result is " + traits);
         }
 
-        return result;
+        return traits;
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -882,7 +772,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
         // return an empty collection if no definition ids were provided
         if (definitionIds == null || definitionIds.length == 0) {
-            return Collections.<MeasurementData>emptySet();
+            return emptySet();
         }
 
         Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
@@ -892,7 +782,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         // return empty data if the agent is the dummy one
         if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
             && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
-            return Collections.<MeasurementData> emptySet();
+            return emptySet();
         }
 
         query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
@@ -928,7 +818,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
         //            Global UI Exceptions when attempting to serialize null responses.
         if (null == result) {
-            result = Collections.<MeasurementData>emptySet();
+            result = emptySet();
         }
 
         return result;
@@ -944,9 +834,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
         // return an empty collection if no definition ids were provided
         if (definitionIds == null || definitionIds.length == 0) {
-            return Collections.<MeasurementData>emptySet();
+            return emptySet();
         }
-        
+
         Set<MeasurementData> values = new HashSet<MeasurementData>();
         if (resourceIds != null) {
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS);
@@ -958,7 +848,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 if (resourceIdWithAgent.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
                     && resourceIdWithAgent.getAgent().getAgentToken()
                         .startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
-                    values.addAll(Collections.<MeasurementData> emptySet());
+                    values.addAll(Collections.<MeasurementData>emptySet());
                     continue;
                 }
 
@@ -1042,52 +932,73 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 + "] and definition[id=" + definitionId + "]");
         }
 
-        Query q = entityManager.createNamedQuery(MeasurementDataTrait.FIND_ALL_FOR_RESOURCE_AND_DEFINITION);
-        q.setParameter("resourceId", resourceId);
-        q.setParameter("definitionId", definitionId);
-        List<Object[]> queryResult = q.getResultList();
-
-        List<MeasurementDataTrait> result = new ArrayList<MeasurementDataTrait>(queryResult.size());
-
-        for (Object[] objs : queryResult) {
-            MeasurementDataTrait mdt = fillMeasurementDataTraitFromObjectArray(objs);
-            result.add(mdt);
+        // todo optimize this
+        List<MeasurementSchedule> scheds = measurementScheduleManager.
+                findSchedulesByResourceIdsAndDefinitionIds(new int[] { resourceId }, new int[] { definitionId});
+        if (scheds.isEmpty()) {
+            return emptyList();
         }
-
-        return result;
+        MeasurementSchedule sched = scheds.get(0);
+        List<MeasurementDataTrait> traits = storageClientManager.getTraitsDAO().historyFor(sched.getId());
+        return traits;
     }
 
     public PageList<MeasurementDataTrait> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        Map<String, Object> filterFields = generator.getFilterFields(criteria);
-        if (!this.authorizationManager.isInventoryManager(subject)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                "schedule.resource", subject.getId());
+        // Query everything by schedule, then load the traits from the RHQ storage
+        MeasurementScheduleCriteria scriteria = new MeasurementScheduleCriteria(criteria);
+        // Used to get trait names
+        scriteria.fetchDefinition(true);
+
+        // If the query is filtered by group id, also fetch the Resource for
+        // each schedule, so the results include the Resource names.
+        boolean filterGroup = criteria.getFilterGroupId() != null;
+        scriteria.fetchResource(filterGroup);
+        PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(
+            subjectManager.getOverlord(), scriteria);
+
+        List<MeasurementDataTrait> traits;
+        TraitsDAO traitsDAO = storageClientManager.getTraitsDAO();
+
+        // for permission checking (later)
+        Set<Integer> resources = new HashSet<Integer>();
+
+        if (criteria.isFilterMaxTimestamp()) {
+            traits = traitsDAO.queryAll(schedules, false);
+        } else {
+            traits = traitsDAO.queryAll(schedules, true);
         }
 
-        CriteriaQueryRunner<MeasurementDataTrait> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            this.entityManager);
-        PageList<MeasurementDataTrait> results = queryRunner.execute();
+        for (MeasurementSchedule schedule : schedules) {
+            int resourceId = schedule.getResource().getId();
+            resources.add(resourceId);
 
-        // Fetch the metric definition for each schedule, so the results include the trait names.
-        for (MeasurementDataTrait result : results) {
-            result.getSchedule().getDefinition().getName();
-        }
-
-        // If the query is filtered by group id, also fetch the Resource for each schedule, so the results include the
-        // Resource names.
-        if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
-            for (MeasurementDataTrait result : results) {
-                result.getSchedule().getResource().getName();
+            if (filterGroup) {
+                schedule.getResource().getName();
             }
         }
 
-        return results;
-    }
+        // Fetch the metric definition for each schedule, so the results include the trait names.
+        for (MeasurementDataTrait trait : traits) {
+            MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, trait.getScheduleId());
+            trait.setSchedule(schedule);
+            trait.setName(schedule.getDefinition().getName());
+        }
 
-    private MeasurementDataManagerUtility getConnectedUtilityInstance() {
-        return MeasurementDataManagerUtility.getInstance(rhqDs);
+        if (criteria.getSortTimestamp() == PageOrdering.ASC) {
+            Collections.reverse(traits);
+        }
+
+        for (int resourceId : resources) {
+            if (!authorizationManager.canViewResource(subject, resourceId)) {
+                throw new PermissionException("User[" + subject.getName()
+                    + "] cannot view resource[id=" + resourceId + "]");
+            }
+        }
+
+        PageList<MeasurementDataTrait> tresults = new PageList<MeasurementDataTrait>(traits, PageControl.getUnlimitedInstance());
+        tresults.setTotalSize(traits.size());
+        return tresults;
     }
 
     private void pushToAlertSubsystem(Set<MeasurementData> data) {
@@ -1102,4 +1013,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         this.measurementDataManager.mergeMeasurementReport(fakeReport);
     }
+
+    public void cleanupTraitHistory(Date after) {
+        TraitsDAO dao = storageClientManager.getTraitsDAO();
+        dao.cleanup(after);
+    }
+
 }

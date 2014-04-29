@@ -22,6 +22,8 @@
  */
 package org.rhq.core.domain.criteria;
 
+import static java.util.Collections.singletonList;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +31,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.util.PageOrdering;
@@ -51,6 +55,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     public static final String SORT_FIELD_NAME = "name";
     public static final String SORT_FIELD_DISPLAY_NAME = "displayName";
     public static final String SORT_FIELD_DATA_TYPE = "dataType";
+    public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
 
     /**
      * @deprecated Sorting by this field has never been supported. This constant has been introduced in error and will
@@ -81,6 +86,8 @@ public class MeasurementScheduleCriteria extends Criteria {
     public static final String FILTER_FIELD_RESOURCE_TYPE_ID = "resourceTypeId";
     public static final String FILTER_FIELD_AUTO_GROUP_RESOURCE_TYPE_ID = "autoGroupResourceTypeId";
     public static final String FILTER_FIELD_AUTO_GROUP_PARENT_RESOURCE_ID = "autoGroupParentResourceId";
+    public static final String FILTER_FIELD_DISPLAY_TYPE = "displayType";
+    public static final String FILTER_FIELD_DATA_TYPE = "dataType";
 
     private Boolean filterEnabled;
     private List<Integer> filterDefinitionIds; // requires overrides
@@ -90,6 +97,8 @@ public class MeasurementScheduleCriteria extends Criteria {
     private Integer filterAutoGroupResourceTypeId; // requires overrides
     private Integer filterAutoGroupParentResourceId; // requires overrides
     private Integer filterResourceTypeId; // requires overrides
+    private DisplayType filterDisplayType; // requires overrides
+    private DataType filterDataType; // requires overrides
 
     private boolean fetchBaseline;
     private boolean fetchDefinition;
@@ -98,6 +107,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     private PageOrdering sortName; // requires overrides
     private PageOrdering sortDisplayName; // requires overrides
     private PageOrdering sortDataType; // requires overrides
+    private PageOrdering sortResourceName; // overrides
 
     public MeasurementScheduleCriteria() {
         filterOverrides.put(FILTER_FIELD_DEFINITION_IDS, "definition.id IN ( ? )");
@@ -119,16 +129,45 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "    JOIN res.parentResource parent " //
             + "   WHERE parent.id = ? )");
         filterOverrides.put(FILTER_FIELD_RESOURCE_TYPE_ID, "resource.type.id = ?");
+        filterOverrides.put(FILTER_FIELD_DISPLAY_TYPE, "definition.displayType = ?");
+        filterOverrides.put(FILTER_FIELD_DATA_TYPE, "definition.dataType = ?");
 
         sortOverrides.put(SORT_FIELD_DEFINITION_ID, "definition.id");
         sortOverrides.put(SORT_FIELD_NAME, "definition.name");
         sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "definition.displayName");
         sortOverrides.put(SORT_FIELD_DATA_TYPE, "definition.dataType");
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
 
         // by default, we want to only return schedules for committed resources
         ArrayList<InventoryStatus> defaults = new ArrayList<InventoryStatus>(1);
         defaults.add(InventoryStatus.COMMITTED);
         addFilterResourceInventoryStatuses(defaults);
+    }
+
+    public MeasurementScheduleCriteria(MeasurementDataTraitCriteria criteria) {
+        this();
+        Integer def = criteria.getFilterDefinitionId();
+        if (def != null) {
+            filterDefinitionIds = singletonList(def);
+        }
+        filterEnabled = criteria.getFilterEnabled();
+        filterResourceGroupId = criteria.getFilterGroupId();
+        filterResourceId = criteria.getFilterResourceId();
+        // max timestamp filtering done by the bean
+        filterId = criteria.getFilterScheduleId();
+        sortDisplayName = criteria.getSortDisplayName();
+        sortResourceName = criteria.getSortResourceName();
+        // this is done by the bean
+        // criteria.getSortTimestamp();
+    }
+
+    public MeasurementScheduleCriteria(CallTimeDataCriteria criteria) {
+        this();
+        filterResourceGroupId = criteria.getFilterResourceGroupId();
+        filterResourceId = criteria.getFilterResourceId();
+        filterAutoGroupParentResourceId = criteria.getFilterAutoGroupParentResourceId();
+        filterAutoGroupResourceTypeId = criteria.getFilterAutoGroupResourceTypeId();
+        filterDataType = criteria.getFilterDataType();
     }
 
     @Override
@@ -166,6 +205,14 @@ public class MeasurementScheduleCriteria extends Criteria {
 
     public void addFilterResourceTypeId(Integer filterResourceTypeId) {
         this.filterResourceTypeId = filterResourceTypeId;
+    }
+
+    public void addFilterDisplayType(DisplayType filterDisplayType) {
+        this.filterDisplayType = filterDisplayType;
+    }
+
+    public void addFilterDataType(DataType filterDataType) {
+        this.filterDataType = filterDataType;
     }
 
     public void fetchBaseline(boolean fetchBaseline) {

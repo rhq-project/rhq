@@ -87,12 +87,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     private final String[] TABLES_TO_VACUUM = { "RHQ_RESOURCE", "RHQ_CONFIG", "RHQ_CONFIG_PROPERTY", "RHQ_AGENT" };
 
-    private final String[] TABLES_TO_REINDEX = { "RHQ_MEASUREMENT_DATA_NUM_1D", "RHQ_MEASUREMENT_DATA_NUM_6H",
-        "RHQ_MEASUREMENT_DATA_NUM_1H", "RHQ_MEASUREMENT_DATA_TRAIT", "RHQ_CALLTIME_DATA_KEY",
-        "RHQ_CALLTIME_DATA_VALUE", "RHQ_AVAILABILITY" };
+    private final String[] TABLES_TO_REINDEX = { "RHQ_AVAILABILITY" };
 
-    private final String[] ORA_INDEXES_TO_REBUILD = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
-        "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK" };
+    private final String[] ORA_INDEXES_TO_REBUILD = {
+        "RHQ_MEAS_BASELINE_CTIME_IDX" };
 
     private static final Log LOG = LogFactory.getLog(SystemManagerBean.class);
 
@@ -371,7 +369,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         case STORAGE_AUTOMATIC_DEPLOYMENT:
         case STORAGE_PASSWORD:
         case STORAGE_USERNAME:
-            return true;        
+            return true;
         default:
             return false;
         }

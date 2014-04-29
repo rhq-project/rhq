@@ -38,7 +38,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int totalSize = 0;
+    private int totalSize;
     private boolean isUnbounded; // Is the total size of the list known?
     private PageControl pageControl;
 
@@ -94,7 +94,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
      */
     public PageList(Collection<? extends E> collection, PageControl pageControl) {
         super(collection);
-        isUnbounded = true;
+        this.isUnbounded = true;
         this.pageControl = pageControl;
     }
 
@@ -122,6 +122,15 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         this.totalSize = totalSize;
         this.isUnbounded = false;
         this.pageControl = pageControl;
+    }
+
+    /**
+     * Pages the given collection, using the supplied page list data from an
+     * existing wrapped collection.
+     */
+    public PageList(Collection<? extends E> collection, PageList<?> results) {
+        this(collection, results.getTotalSize(), results.getPageControl());
+        this.isUnbounded = results.isUnbounded;
     }
 
     public PageControl getPageControl() {

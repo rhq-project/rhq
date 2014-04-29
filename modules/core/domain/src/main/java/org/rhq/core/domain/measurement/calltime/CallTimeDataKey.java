@@ -32,14 +32,10 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 
 /**
@@ -49,8 +45,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
  * @author Ian Springer
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = CallTimeDataKey.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataKey ctdk WHERE ctdk.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CALLTIME_DATA_KEY_ID_SEQ", sequenceName = "RHQ_CALLTIME_DATA_KEY_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_KEY")
 public class CallTimeDataKey implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -59,7 +59,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -74,7 +73,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -222,12 +220,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add events
                 createNewEvents(newResource, 0, 1000);
 
-                // add calltime/response times
-                createNewCalltimeData(newResource, 0, 1000);
-
-                // add trait data
-                createNewTraitData(newResource, 0L, 100);
-
                 getTransactionManager().commit();
             } catch (Throwable t) {
                 getTransactionManager().rollback();
@@ -245,7 +237,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             Resource res = em.find(Resource.class, newResource.getId());
 
             // check alerts
@@ -263,33 +254,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // check events
             EventSource es = res.getEventSources().iterator().next();
             assert es.getEvents().size() == 0 : "didn't purge all events";
-
-            // check calltime data
-            int calltimeScheduleId = 0;
-            for (MeasurementSchedule sched : res.getSchedules()) {
-                if (sched.getDefinition().getDataType() == DataType.CALLTIME) {
-                    calltimeScheduleId = sched.getId();
-                    break;
-                }
-            }
-            assert calltimeScheduleId > 0 : "why don't we have a calltime schedule?";
-            PageList<CallTimeDataComposite> calltimeData = LookupUtil.getCallTimeDataManager()
-                .findCallTimeDataForResource(overlord, calltimeScheduleId, 0, Long.MAX_VALUE, new PageControl());
-            assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
-
-            // check trait data
-            MeasurementSchedule traitSchedule = null;
-            for (MeasurementSchedule sched : res.getSchedules()) {
-                if (sched.getDefinition().getDataType() == DataType.TRAIT) {
-                    traitSchedule = sched;
-                    break;
-                }
-            }
-            assert traitSchedule != null : "why don't we have a trait schedule?";
-
-            List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager().findTraits(overlord,
-                res.getId(), traitSchedule.getDefinition().getId());
-            assert persistedTraits.size() == 1 : "bad purge of trait data: " + persistedTraits.size();
 
         } finally {
             getTransactionManager().rollback();
@@ -331,67 +295,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
 
         return;
-    }
-
-    private void createNewTraitData(Resource res, long timestamp, int count) {
-        MeasurementSchedule traitSchedule = null;
-        for (MeasurementSchedule sched : res.getSchedules()) {
-            if (sched.getDefinition().getDataType() == DataType.TRAIT) {
-                traitSchedule = sched;
-                break;
-            }
-        }
-        assert traitSchedule != null : "why don't we have a trait schedule?";
-
-        MeasurementDataManagerLocal mgr = LookupUtil.getMeasurementDataManager();
-
-        MeasurementScheduleRequest msr = new MeasurementScheduleRequest(traitSchedule);
-
-        Set<MeasurementDataTrait> dataset = new HashSet<MeasurementDataTrait>();
-        for (int i = 0; i < count; i++) {
-            dataset.add(new MeasurementDataTrait(timestamp + i, msr, "DataPurgeJobTestTraitValue" + i));
-        }
-        mgr.addTraitData(dataset);
-
-        List<MeasurementDataTrait> persistedTraits = mgr.findTraits(LookupUtil.getSubjectManager().getOverlord(),
-            res.getId(), traitSchedule.getDefinition().getId());
-        assert persistedTraits.size() == count : "did not persist trait data:" + persistedTraits.size() + ":"
-            + persistedTraits;
-    }
-
-    private void createNewCalltimeData(Resource res, long timestamp, int count) {
-        MeasurementSchedule calltimeSchedule = null;
-        for (MeasurementSchedule sched : res.getSchedules()) {
-            if (sched.getDefinition().getDataType() == DataType.CALLTIME) {
-                calltimeSchedule = sched;
-                break;
-            }
-        }
-        assert calltimeSchedule != null : "why don't we have a calltime schedule?";
-
-        MeasurementScheduleRequest msr = new MeasurementScheduleRequest(calltimeSchedule);
-
-        Set<CallTimeData> dataset = new HashSet<CallTimeData>();
-        CallTimeData data = new CallTimeData(msr);
-
-        for (int i = 0; i < count; i++) {
-            for (int j = 0; j < count; j++) {
-                data.addCallData("DataPurgeJobTestCalltimeData" + j, new Date(timestamp), 777);
-            }
-        }
-
-        dataset.add(data);
-
-        CallTimeDataManagerLocal mgr = LookupUtil.getCallTimeDataManager();
-        mgr.addCallTimeData(dataset);
-
-        PageList<CallTimeDataComposite> persistedData = mgr.findCallTimeDataForResource(LookupUtil.getSubjectManager()
-            .getOverlord(), calltimeSchedule.getId(), timestamp - 1L, timestamp + count + 1L, new PageControl());
-        // just a few sanity checks
-        assert persistedData.getTotalSize() == count : "did not persist all calltime data, only persisted: "
-            + persistedData.getTotalSize();
-        assert persistedData.get(0).getCount() == count : "did not persist all endpoint calltime data, only persisted: "
-            + persistedData.get(0).getCount();
     }
 
     private void createNewEvents(Resource res, long timestamp, int count) {

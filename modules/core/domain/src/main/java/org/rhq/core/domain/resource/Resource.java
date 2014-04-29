@@ -1174,7 +1174,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private Set<DriftDefinition> driftDefinitions = null;
 
     @Transient
-    private final boolean customChildResourcesCollection;
+    private boolean customChildResourcesCollection;
 
     public Resource() {
         customChildResourcesCollection = false;

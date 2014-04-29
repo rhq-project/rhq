@@ -29,19 +29,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.querybuilder.Batch;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.StatelessSession;
-
 import org.rhq.server.metrics.domain.MetricsTable;
-import org.rhq.server.metrics.migrator.DataMigrator;
 import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
 import org.rhq.server.metrics.migrator.DataMigrator.Task;
 import org.rhq.server.metrics.migrator.datasources.ExistingDataSource;
+
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.querybuilder.Batch;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import org.rhq.server.metrics.migrator.workers.MigrationQuery;
 
 /**
  * @author Stefan Negrea
@@ -52,10 +50,9 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
 
     private final Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
     private final MetricsIndexUpdateAccumulator metricsIndexAccumulator;
-    private final DataMigratorConfiguration config;
 
     public RawDataMigrator(DataMigratorConfiguration config) {
-        this.config = config;
+        super(config);
         this.metricsIndexAccumulator = new MetricsIndexUpdateAccumulator(MetricsTable.RAW, config);
     }
 
@@ -83,20 +80,6 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
         performMigration(Task.Migrate);
     }
 
-    private long getRowCount(String countQuery) {
-        StatelessSession session = getSQLSession(config);
-
-        org.hibernate.Query query = session.createSQLQuery(countQuery);
-        query.setReadOnly(true);
-        query.setTimeout(DataMigrator.SQL_TIMEOUT);
-
-        long count = Long.parseLong(query.uniqueResult().toString());
-
-        closeSQLSession(session);
-
-        return count;
-    }
-
     private Telemetry performMigration(Task task) throws Exception {
         Telemetry telemetry = new Telemetry();
         telemetry.getGeneralTimer().start();
@@ -114,7 +97,7 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
 
             String selectQuery = String.format(MigrationQuery.SELECT_RAW_DATA.toString(), table);
 
-            ExistingDataSource dataSource = getExistingDataSource(selectQuery, task, config);
+            ExistingDataSource dataSource = getExistingDataSource(selectQuery, task);
             dataSource.initialize();
 
             log.info("Start migrating raw table: " + table);
@@ -176,29 +159,6 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
 
         telemetry.getGeneralTimer().stop();
         return telemetry;
-    }
-
-    private void deleteTableData(String table) throws Exception {
-        String deleteQuery = String.format(MigrationQuery.DELETE_RAW_ENTRY.toString(), table);
-        int failureCount = 0;
-        while (failureCount < MAX_NUMBER_OF_FAILURES) {
-            try {
-                StatelessSession session = getSQLSession(config);
-                session.getTransaction().begin();
-                org.hibernate.Query nativeQuery = session.createSQLQuery(deleteQuery);
-                nativeQuery.executeUpdate();
-                session.getTransaction().commit();
-                closeSQLSession(session);
-                log.info("- " + table + " - Cleaned -");
-            } catch (Exception e) {
-                log.error("Failed to delete " + table + " data. Attempting to delete data one more time...");
-
-                failureCount++;
-                if (failureCount == MAX_NUMBER_OF_FAILURES) {
-                    throw e;
-                }
-            }
-        }
     }
 
     private void insertDataToCassandra(List<Object[]> existingData) throws Exception {

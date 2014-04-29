@@ -127,6 +127,12 @@ public class DataMigratorRunner {
     private final Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").hasOptionalArg()
         .withType(Boolean.class)
         .withDescription("Disable 24 hours aggregates table migration (default: false)").create();
+    private final Option disableTraitOption = OptionBuilder.withLongOpt("disable-trait-migration").hasOptionalArg()
+        .withType(Boolean.class)
+        .withDescription("Disable rhq_measurement_data_trait table migration (default: false)").create();
+    private final Option disableCallTimeOption = OptionBuilder.withLongOpt("disable-call-time-migration").hasOptionalArg()
+        .withType(Boolean.class)
+        .withDescription("Disable rhq_call_time table migration (default: false)").create();
     private final Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").hasOptionalArg()
         .withType(Boolean.class)
         .withDescription("Delete SQL data at the end of migration (default: false)").create();
@@ -243,6 +249,8 @@ public class DataMigratorRunner {
         options.addOption(disable1HOption);
         options.addOption(disable6HOption);
         options.addOption(disable1DOption);
+        options.addOption(disableTraitOption);
+        options.addOption(disableCallTimeOption);
         options.addOption(deleteDataOption);
         options.addOption(estimateOnlyOption);
         options.addOption(deleteOnlyOption);
@@ -325,6 +333,8 @@ public class DataMigratorRunner {
         configuration.put(disable1HOption, false);
         configuration.put(disable6HOption, false);
         configuration.put(disable1DOption, false);
+        configuration.put(disableTraitOption, false);
+        configuration.put(disableCallTimeOption, false);
         configuration.put(estimateOnlyOption, false);
         configuration.put(deleteDataOption, false);
         configuration.put(deleteOnlyOption, false);
@@ -534,6 +544,16 @@ public class DataMigratorRunner {
             configuration.put(disable1DOption, value);
         }
 
+        if (commandLine.hasOption(disableCallTimeOption.getLongOpt())) {
+            value = tryParseBoolean(commandLine.getOptionValue(disableCallTimeOption.getLongOpt()), true);
+            configuration.put(disableCallTimeOption, value);
+        }
+
+        if (commandLine.hasOption(disableTraitOption.getLongOpt())) {
+            value = tryParseBoolean(commandLine.getOptionValue(disableTraitOption.getLongOpt()), true);
+            configuration.put(disableTraitOption, value);
+        }
+
         if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
             value = tryParseBoolean(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
             configuration.put(deleteDataOption, value);
@@ -579,6 +599,8 @@ public class DataMigratorRunner {
             migrator.run1HAggregateDataMigration(!(Boolean) configuration.get(disable1HOption));
             migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
             migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
+            migrator.runTraitMigration(!(Boolean) configuration.get(disableTraitOption));
+            migrator.runCallTimeMigration(!(Boolean) configuration.get(disableCallTimeOption));
 
             System.out.println("Estimation process - starting\n");
             long estimate = migrator.estimate();

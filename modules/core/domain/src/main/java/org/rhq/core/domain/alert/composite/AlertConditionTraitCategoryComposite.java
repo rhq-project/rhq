@@ -30,14 +30,21 @@ import org.rhq.core.domain.measurement.DataType;
  */
 public class AlertConditionTraitCategoryComposite extends AlertConditionScheduleCategoryComposite {
 
-    private final String value;
+    /**
+     * This is set when calculating the cache.
+     */
+    private String value;
 
-    public AlertConditionTraitCategoryComposite(AlertCondition condition, Integer scheduleId, String value) {
+    public AlertConditionTraitCategoryComposite(AlertCondition condition, int scheduleId) {
         super(condition, scheduleId, DataType.TRAIT);
-        this.value = value;
     }
 
     public String getValue() {
         return value;
     }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
 }

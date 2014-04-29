@@ -40,7 +40,13 @@ public class MeasurementScheduleRequest implements Serializable {
      */
     public static final int NO_SCHEDULE_ID = 1;
 
+    /**
+     * Indicates that no resource ID was set.
+     */
+    public static final int NO_RESOURCE_ID = -1;
+
     private int scheduleId;
+
     private String name;
     private int interval;
     private boolean enabled;
@@ -48,7 +54,7 @@ public class MeasurementScheduleRequest implements Serializable {
     byte dataNumType;
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
-        this(schedule.getId(), schedule.getDefinition().getName(), schedule.getInterval(), schedule.isEnabled(),
+        this(schedule.getId(), schedule.getResource().getId(), schedule.getDefinition().getName(), schedule.getInterval(), schedule.isEnabled(),
             schedule.getDefinition().getDataType(), schedule.getDefinition().getRawNumericType());
     }
 
@@ -63,11 +69,17 @@ public class MeasurementScheduleRequest implements Serializable {
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
         NumericType rawNumericType) {
+        this(scheduleId, NO_RESOURCE_ID, name, interval, enabled, dataType, rawNumericType);
+    }
+
+    public MeasurementScheduleRequest(int scheduleId, int resourceId, String name, long interval, boolean enabled, DataType dataType,
+        NumericType rawNumericType) {
         this.scheduleId = scheduleId;
         if (name != null) {
             this.name = name.intern();
-        } else
+        } else {
             this.name = null;
+        }
         this.interval = (int) (interval / 1000);
         this.enabled = enabled;
         this.dataNumType = toDataNumType(dataType, rawNumericType);
@@ -187,4 +199,5 @@ public class MeasurementScheduleRequest implements Serializable {
         byte nTmp = (byte) (numericType != null ? numericType.ordinal() + 1 : 0);
         return (byte) (dTmp * 16 + nTmp);
     }
+
 }

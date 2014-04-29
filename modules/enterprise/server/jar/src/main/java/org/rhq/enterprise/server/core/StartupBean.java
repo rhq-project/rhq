@@ -49,7 +49,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.SchedulerException;
-
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
@@ -87,6 +86,7 @@ import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
+import org.rhq.enterprise.server.scheduler.jobs.TraitCleanup;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -106,7 +106,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StartupBean implements StartupLocal {
-    private Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private volatile boolean initialized = false;
 
@@ -714,6 +714,14 @@ public class StartupBean implements StartupLocal {
             schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
         } catch (Exception e) {
             log.error("Cannot schedule data purge job.", e);
+        }
+
+        // Trait Cleanup Job
+        try {
+            String cronString = "0 0 0 ? * SUN *"; // weekly
+            schedulerBean.scheduleSimpleCronJob(TraitCleanup.class, true, false, cronString);
+        } catch (Exception e) {
+            log.error("Cannot schedule trait cleanup job.", e);
         }
 
         // Server Plugin Jobs

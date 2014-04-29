@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +45,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @Local
 public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemote {
 
-    int purgeTraits(long oldest);
+    /**
+     * Remove duplicate traits after this date.
+     * Should be run once a week or so.
+     */
+    void cleanupTraitHistory(Date after);
 
     void mergeMeasurementReport(MeasurementReport report);
 
@@ -53,13 +58,11 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
     void addTraitData(Set<MeasurementDataTrait> data);
 
     /**
-     * Return the current trait value for the passed schedule
+     * Return the current trait value for the passed schedule.
      *
      * @param  scheduleId id of a MeasurementSchedule that 'points' to a Trait
-     *
-     * @return One trait
      */
-    public MeasurementDataTrait getCurrentTraitForSchedule(int scheduleId);
+    MeasurementDataTrait getCurrentTraitForSchedule(int scheduleId);
 
     /**
      * Return the current numeric value for the passed schedule
@@ -79,7 +82,7 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
      * @param  group   compatible group
      *
      * @return a Map of resource id, List of summaries for this resource
-     * 
+     *
      * @deprecated portal-war
      */
     Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForCompGroup(Subject subject,
@@ -89,7 +92,7 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
      * Get the {@link MetricDisplaySummary}s for the resources passed in, that all need to be of the same
      * {@link ResourceType}. Summaries only contain a basic selection of fields for the purpose of filling the Child
      * resource popups.
-     * 
+     *
      * @deprecated portal-war
      */
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForCompatibleResources(
@@ -111,7 +114,7 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
      * @param resourceIds    List of primary keys of the resources we are interested in
      * @param begin          begin time
      * @param end            end time
-     * 
+     *
      * @deprecated portal-war
      */
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForResourcesAndParent(
@@ -132,7 +135,7 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
      * @param resourceId the id of the resource
      * @param definitionIds the array of ids of schedule definitions
      * @param timeout the amount of time in milliseconds before timing out the request. Should be > 0. If null then default
-     * is applied. Default agent connection failures can be long.  
+     * is applied. Default agent connection failures can be long.
      *
      * @return MeasurementData for this Schedule. Not null. Returns empty set if agent connection can not be established or
      * component fails to report live data.

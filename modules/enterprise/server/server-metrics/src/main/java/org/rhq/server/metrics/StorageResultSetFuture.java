@@ -9,6 +9,7 @@ import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.QueryTimeoutException;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * @author John Sanda
@@ -19,6 +20,12 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
 
     private StorageSession session;
 
+    private static Executor direct = new Executor() {
+        public void execute(Runnable run) {
+            run.run();
+        }
+    };
+
     public StorageResultSetFuture(ResultSetFuture resultSetFuture, StorageSession session) {
         wrapperFuture = resultSetFuture;
         this.session = session;
@@ -27,6 +34,13 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
     @Override
     public void addListener(Runnable listener, Executor executor) {
         wrapperFuture.addListener(listener, executor);
+    }
+
+    /**
+     * Add a listener that runs a task in the completion thread.
+     */
+    public void addListener(Runnable listener) {
+        wrapperFuture.addListener(listener, direct);
     }
 
     @Override

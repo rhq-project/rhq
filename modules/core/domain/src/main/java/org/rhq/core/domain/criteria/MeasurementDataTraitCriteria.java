@@ -67,24 +67,6 @@ public class MeasurementDataTraitCriteria extends Criteria {
     private PageOrdering sortResourceName; // requires overrides
 
     public MeasurementDataTraitCriteria() {
-        filterOverrides.put(FILTER_FIELD_SCHEDULE_ID, "id.scheduleId = ?");
-        filterOverrides.put(FILTER_FIELD_RESOURCE_ID, "schedule.resource.id = ?");
-        filterOverrides.put(FILTER_FIELD_GROUP_ID, "schedule.resource.id IN " //
-            + "( SELECT res.id " //
-            + "    FROM Resource res " //
-            + "    JOIN res.explicitGroups grp " //
-            + "   WHERE grp.id = ? )");
-        filterOverrides.put(FILTER_FIELD_DEFINITION_ID, "schedule.definition.id = ?");
-        filterOverrides.put(FILTER_FIELD_MAX_TIMESTAMP, "id.timestamp = " //
-            + "( SELECT MAX(mdt.id.timestamp) "
-            + "    FROM MeasurementDataTrait mdt "
-            + "   WHERE mdt.id.scheduleId = " + getAlias() + ".id.scheduleId ) " //
-            + "     AND 1 = ?");
-        filterOverrides.put(FILTER_FIELD_ENABLED, "schedule.enabled = ?");
-
-        sortOverrides.put(SORT_FIELD_TIMESTAMP, "id.timestamp");
-        sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "schedule.definition.displayName");
-        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "schedule.resource.name");
     }
 
     @Override
@@ -127,17 +109,14 @@ public class MeasurementDataTraitCriteria extends Criteria {
     }
 
     public void addSortTimestamp(PageOrdering sortTimestamp) {
-        addSortField(SORT_FIELD_TIMESTAMP);
         this.sortTimestamp = sortTimestamp;
     }
 
     public void addSortName(PageOrdering sortName) {
-        addSortField(SORT_FIELD_DISPLAY_NAME);
         this.sortDisplayName = sortName;
     }
 
     public void addSortResourceName(PageOrdering sortResourceName) {
-        addSortField(SORT_FIELD_RESOURCE_NAME);
         this.sortResourceName = sortResourceName;
     }
 
@@ -155,4 +134,41 @@ public class MeasurementDataTraitCriteria extends Criteria {
     public boolean isSupportsAddFilterIds() {
         return false;
     }
+
+    Integer getFilterScheduleId() {
+        return filterScheduleId;
+    }
+
+    Integer getFilterResourceId() {
+        return filterResourceId;
+    }
+
+    public Integer getFilterGroupId() {
+        return filterGroupId;
+    }
+
+    Integer getFilterDefinitionId() {
+        return filterDefinitionId;
+    }
+
+    public boolean isFilterMaxTimestamp() {
+        return filterMaxTimestamp != null;
+    }
+
+    Boolean getFilterEnabled() {
+        return filterEnabled;
+    }
+
+    public PageOrdering getSortTimestamp() {
+        return sortTimestamp;
+    }
+
+    PageOrdering getSortDisplayName() {
+        return sortDisplayName;
+    }
+
+    PageOrdering getSortResourceName() {
+        return sortResourceName;
+    }
+
 }

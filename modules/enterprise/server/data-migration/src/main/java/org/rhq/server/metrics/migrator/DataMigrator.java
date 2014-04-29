@@ -22,16 +22,19 @@ package org.rhq.server.metrics.migrator;
 
 import javax.persistence.EntityManager;
 
-import com.datastax.driver.core.Session;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.rhq.server.metrics.CallTimeDAO;
+import org.rhq.server.metrics.TraitsDAO;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.migrator.workers.AggregateDataMigrator;
+import org.rhq.server.metrics.migrator.workers.CallTimeDataMigrator;
 import org.rhq.server.metrics.migrator.workers.CallableMigrationWorker;
 import org.rhq.server.metrics.migrator.workers.DeleteAllData;
 import org.rhq.server.metrics.migrator.workers.RawDataMigrator;
+import org.rhq.server.metrics.migrator.workers.TraitDataMigrator;
+
+import com.datastax.driver.core.Session;
 
 
 /**
@@ -75,6 +78,8 @@ public class DataMigrator {
         config.setRun1HAggregateDataMigration(true);
         config.setRun6HAggregateDataMigration(true);
         config.setRun1DAggregateDataMigration(true);
+        config.setRunCallTimeMigration(true);
+        config.setRunTraitMigration(true);
     }
 
     public void runRawDataMigration(boolean value) {
@@ -91,6 +96,14 @@ public class DataMigrator {
 
     public void run1DAggregateDataMigration(boolean value) {
         config.setRun1DAggregateDataMigration(value);
+    }
+
+    public void runTraitMigration(boolean value) {
+        config.setRunTraitMigration(value);
+    }
+
+    public void runCallTimeMigration(boolean value) {
+        config.setRunCallTimeMigration(value);
     }
 
     public void deleteDataImmediatelyAfterMigration() {
@@ -126,6 +139,14 @@ public class DataMigrator {
             retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR, config), Task.Estimate);
         }
 
+        if (config.isRunTraitMigration()) {
+            retryOnFailure(new TraitDataMigrator(TraitsDAO.TABLE, config.getTraitTTLDays(), config), Task.Estimate);
+        }
+
+        if (config.isRunCallTimeMigration()) {
+            retryOnFailure(new CallTimeDataMigrator(CallTimeDAO.TABLE, config.getCallTimeDays(), config), Task.Estimate);
+        }
+
         if (config.isDeleteAllDataAtEndOfMigration()) {
             retryOnFailure(new DeleteAllData(config), Task.Estimate);
         }
@@ -150,6 +171,14 @@ public class DataMigrator {
 
         if (config.isRun1DAggregateDataMigration()) {
             retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR, config), Task.Migrate);
+        }
+
+        if (config.isRunTraitMigration()) {
+            retryOnFailure(new TraitDataMigrator(TraitsDAO.TABLE, config.getTraitTTLDays(), config), Task.Migrate);
+        }
+
+        if (config.isRunCallTimeMigration()) {
+            retryOnFailure(new CallTimeDataMigrator(CallTimeDAO.TABLE, config.getCallTimeDays(), config), Task.Migrate);
         }
 
         if (config.isDeleteAllDataAtEndOfMigration()) {
@@ -226,6 +255,8 @@ public class DataMigrator {
         private final DatabaseType databaseType;
         private final boolean experimentalDataSource;
 
+        int TTL_DEFAULT = 180;
+
         private boolean deleteDataImmediatelyAfterMigration;
         private boolean deleteAllDataAtEndOfMigration;
 
@@ -233,6 +264,10 @@ public class DataMigrator {
         private boolean run1HAggregateDataMigration;
         private boolean run6HAggregateDataMigration;
         private boolean run1DAggregateDataMigration;
+        private boolean runTraitMigration = true;
+        private boolean runCallTimeMigration = true;
+        private int traitTTLDays = TTL_DEFAULT;
+        private int callTimeDays = TTL_DEFAULT;
 
         public DataMigratorConfiguration(EntityManager entityManager, Session session, DatabaseType databaseType,
             boolean experimentalDataSource) {
@@ -290,6 +325,38 @@ public class DataMigrator {
             run1DAggregateDataMigration = run1dAggregateDataMigration;
         }
 
+        public boolean isRunTraitMigration() {
+            return runTraitMigration;
+        }
+
+        public void setRunTraitMigration(boolean runTraitMigration) {
+            this.runTraitMigration = runTraitMigration;
+        }
+
+        public boolean isRunCallTimeMigration() {
+            return runCallTimeMigration;
+        }
+
+        public void setRunCallTimeMigration(boolean runCallTimeMigration) {
+            this.runCallTimeMigration = runCallTimeMigration;
+        }
+
+        public int getTraitTTLDays() {
+            return traitTTLDays;
+        }
+
+        public void setTraitTTLDays(int traitTTLDays) {
+            this.traitTTLDays = traitTTLDays;
+        }
+
+        public int getCallTimeDays() {
+            return callTimeDays;
+        }
+
+        public void setCallTimeDays(int callTimeDays) {
+            this.callTimeDays = callTimeDays;
+        }
+
         public EntityManager getEntityManager() {
             return entityManager;
         }
@@ -305,5 +372,7 @@ public class DataMigrator {
         public boolean isExperimentalDataSource() {
             return experimentalDataSource;
         }
+
     }
+
 }

@@ -62,9 +62,9 @@ public class MetricsDAO {
 
     private static final Set<Integer> EMPTY_SCHEDULE_IDS = Collections.emptySet();
 
-    private StorageSession storageSession;
+    private final StorageSession storageSession;
 
-    private MetricsConfiguration configuration;
+    private final MetricsConfiguration configuration;
 
     private PreparedStatement insertRawData;
     private PreparedStatement rawMetricsQuery;

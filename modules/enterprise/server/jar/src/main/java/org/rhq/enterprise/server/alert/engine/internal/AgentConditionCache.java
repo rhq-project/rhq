@@ -76,17 +76,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 class AgentConditionCache extends AbstractConditionCache {
 
-    private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache; // key: schedule ID
-    private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache; // key: schedule ID
-    private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache; // key: schedule ID
-    private Map<Integer, List<EventCacheElement>> eventsCache; // key: resource ID
-    private Map<Integer, List<DriftCacheElement>> driftCache; // key: resource ID
+    private final Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache; // key: schedule ID
+    private final Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache; // key: schedule ID
+    private final Map<Integer, List<CallTimeDataCacheElement>> callTimeCache; // key: schedule ID
+    private final Map<Integer, List<EventCacheElement>> eventsCache; // key: resource ID
+    private final Map<Integer, List<DriftCacheElement>> driftCache; // key: resource ID
 
-    private AlertConditionManagerLocal alertConditionManager;
-    private MeasurementDataManagerLocal measurementDataManager;
-    private SubjectManagerLocal subjectManager;
+    private final AlertConditionManagerLocal alertConditionManager;
+    private final MeasurementDataManagerLocal measurementDataManager;
+    private final SubjectManagerLocal subjectManager;
 
-    private int agentId;
+    private final int agentId;
 
     public AgentConditionCache(int agentId) {
         super();
@@ -261,6 +261,10 @@ class AgentConditionCache extends AbstractConditionCache {
 
             switch (alertConditionOperator) {
             case CHANGES:
+                MeasurementDataTrait trait = measurementDataManager.getCurrentTraitForSchedule(traitsComposite.getScheduleId());
+                if (trait != null) {
+                    traitsComposite.setValue(trait.getValue());
+                }
                 value = traitsComposite.getValue();
                 break;
             case REGEX:

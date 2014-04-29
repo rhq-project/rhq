@@ -51,12 +51,4 @@ public interface CallTimeDataManagerLocal extends CallTimeDataManagerRemote {
     PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context, long beginTime,
         long endTime, String destination, PageControl pageControl);
 
-    int purgeCallTimeData(Date deleteUpToTime) throws SQLException;
-
-    /*
-     * internal methods that are exposed here so as to enable finer-grained manipulation of transactional boundaries
-     */
-    void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet);
-
-    void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet);
 }

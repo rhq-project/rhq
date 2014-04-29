@@ -22,6 +22,8 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.Date;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -216,4 +218,53 @@ public class CallTimeDataCriteria extends Criteria {
     public boolean hasCustomizedSorting() {
         return true;
     }
+
+    public Integer getFilterResourceId() {
+        return filterResourceId;
+    }
+
+    public Integer getFilterResourceGroupId() {
+        return filterResourceGroupId;
+    }
+
+    public Integer getFilterAutoGroupResourceTypeId() {
+        return filterAutoGroupResourceTypeId;
+    }
+
+    public Integer getFilterAutoGroupParentResourceId() {
+        return filterAutoGroupParentResourceId;
+    }
+
+    public DataType getFilterDataType() {
+        return filterDataType;
+    }
+
+    public Long getFilterBeginTime() {
+        return filterBeginTime;
+    }
+
+    public Long getFilterEndTimeDate() {
+        return filterEndTime;
+    }
+
+    public String getFilterDestination() {
+        return filterDestination;
+    }
+
+    public Double getFilterMinimum() {
+        return filterMinimum;
+    }
+
+    public Double getFilterMaximum() {
+        return filterMaximum;
+    }
+
+    public Double getFilterTotal() {
+        return filterTotal;
+    }
+
+    public Long getFilterCount() {
+        return filterCount;
+    }
+
 }

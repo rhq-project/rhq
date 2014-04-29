@@ -262,7 +262,7 @@ public class Deployer {
 
         diskUsage.setMaxDiskUsable(usableSpace);
 
-        Map<File, File> zipFiles = this.deploymentData.getZipFiles();
+        Map<File, File> zipFiles = this.deploymentData.getZipFilesMap();
         for (File zipFile : zipFiles.keySet()) {
             ZipUtil.walkZipFile(zipFile, new ZipEntryVisitor() {
                 public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
@@ -584,7 +584,7 @@ public class Deployer {
         }
 
         // Loop through each zip and get all top-most subdirectories that the exploded zip files will have.
-        Set<File> zipFilesToAnalyze = new HashSet<File>(this.deploymentData.getZipFiles().keySet());
+        Set<File> zipFilesToAnalyze = new HashSet<File>(this.deploymentData.getZipFilesMap().keySet());
         // We only have to do this analysis for those zips that we explode - remove from the list those we won't explode
         Iterator<File> iter = zipFilesToAnalyze.iterator();
         while (iter.hasNext()) {
@@ -789,7 +789,7 @@ public class Deployer {
 
         // extract all zip files
         ExtractorZipFileVisitor visitor;
-        for (Map.Entry<File, File> zipFileEntry : this.deploymentData.getZipFiles().entrySet()) {
+        for (Map.Entry<File, File> zipFileEntry : this.deploymentData.getZipFilesMap().entrySet()) {
             File zipFile = zipFileEntry.getKey();
 
             Boolean exploded = this.deploymentData.getZipsExploded().get(zipFile);
@@ -1048,7 +1048,7 @@ public class Deployer {
 
         // perform in-memory extraction and calculate hashcodes for all zip files
         InMemoryZipFileVisitor visitor;
-        for (File zipFile : this.deploymentData.getZipFiles().keySet()) {
+        for (File zipFile : this.deploymentData.getZipFilesMap().keySet()) {
             debug("Extracting zip [", zipFile, "] in-memory to determine hashcodes for all entries");
             Pattern realizeRegex = null;
             if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {

@@ -192,8 +192,8 @@ public class DeploymentUnitType extends AbstractBundleType {
                 allArchivesExploded);
 
             try {
-                DeploymentData deploymentData = new DeploymentData(deploymentProps, allArchives, allFiles, getProject()
-                    .getBaseDir(), deployDir, allArchiveReplacePatterns, allRawFilesToReplace, templateEngine,
+                DeploymentData deploymentData = new DeploymentData(deploymentProps, getProject().getBaseDir(),
+                    deployDir, allFiles, allRawFilesToReplace, allArchives, allArchiveReplacePatterns, templateEngine,
                     this.ignorePattern, allArchivesExploded);
                 Deployer deployer = new Deployer(deploymentData);
                 DeployDifferences diffs = getProject().getDeployDifferences();

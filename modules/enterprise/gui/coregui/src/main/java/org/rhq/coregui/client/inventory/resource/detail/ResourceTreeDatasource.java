@@ -155,6 +155,7 @@ public class ResourceTreeDatasource extends DataSource {
             loadingLabel.hide();
 
         } else {
+            Log.debug(request.getCriteria().toString());
             Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
             // This fetch limits the number of resources that can be returned to protect against fetching a massive
@@ -315,20 +316,22 @@ public class ResourceTreeDatasource extends DataSource {
 
     // convenience routine to avoid code duplication
     private static void addSubCategoryNodes(List<TreeNode> allNodes, Set<String> allNodeIds, Resource resource) {
-        Resource parentResource = resource.getParentResource();
+        int parentResourceId = resource.getParentResource().getId();
         ResourceType type = resource.getResourceType();
 
         String subCategoryNodeId = null;
 
         String[] subCategories = type.getSubCategory().split("\\|");
         for (String currentSubCategory : subCategories) {
-            subCategoryNodeId = SubCategoryTreeNode.idOf(currentSubCategory, parentResource);
+            subCategoryNodeId = SubCategoryTreeNode.idOf(currentSubCategory, parentResourceId);
 
             if (!allNodeIds.contains(subCategoryNodeId)) {
-                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(currentSubCategory, parentResource);
+                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(currentSubCategory, parentResourceId);
                 allNodeIds.add(subCategoryNodeId);
                 allNodes.add(subCategoryNode);
             }
+
+            //parentResourceId = currentSubCategory.hashCode();
         }
     }
 
@@ -367,9 +370,10 @@ public class ResourceTreeDatasource extends DataSource {
                     this.parentAutoGroup = true;
 
                 } else {
-                    String subCategory = resource.getResourceType().getSubCategory();
-                    if (null != subCategory) {
-                        parentId = SubCategoryTreeNode.idOf(subCategory, parentResource);
+                    String subcategoriesString = resource.getResourceType().getSubCategory();
+                    if (null != subcategoriesString) {
+                        String[] subcategories = subcategoriesString.split("\\|");
+                        parentId = SubCategoryTreeNode.idOf(subcategories[subcategories.length - 1], parentResource);
                         this.parentSubCategory = true;
                     } else
                         parentId = ResourceTreeNode.idOf(parentResource);
@@ -420,20 +424,38 @@ public class ResourceTreeDatasource extends DataSource {
      */
     public static class SubCategoryTreeNode extends EnhancedTreeNode {
 
-        public SubCategoryTreeNode(String category, Resource parentResource) {
-            String id = idOf(category, parentResource);
+        public SubCategoryTreeNode(String subcategoryName, Resource parentResource) {
+            String id = idOf(subcategoryName, parentResource);
             setID(id);
 
             setParentID(ResourceTreeNode.idOf(parentResource));
 
             // Note, subCategory names are typically already plural, so there's no need to pluralize them.
-            setName(category);
+            setName(subcategoryName);
 
-            setAttribute(Attributes.DESCRIPTION, category);
+            setAttribute(Attributes.DESCRIPTION, subcategoryName);
         }
 
-        public static String idOf(String category, Resource parentResource) {
-            return "subcat_" + category + "_" + parentResource.getId();
+        public SubCategoryTreeNode(String subcategoryName, int parentResourceId) {
+            String id = idOf(subcategoryName, parentResourceId);
+            setID(id);
+
+            setParentID(ResourceTreeNode.idOf(parentResourceId));
+
+            // Note, subCategory names are typically already plural, so there's no need to pluralize them.
+            setName(subcategoryName);
+
+            setAttribute(Attributes.DESCRIPTION, subcategoryName);
+        }
+
+        public static String idOf(String subcategoryName, Resource parentResource) {
+            Log.debug(subcategoryName);
+            return "subcat_" + subcategoryName.hashCode() + "_" + parentResource.getId();
+        }
+
+        public static String idOf(String subcategoryName, int parentResourceId) {
+            Log.debug(subcategoryName);
+            return "subcat_" + subcategoryName.hashCode() + "_" + parentResourceId;
         }
     }
 
@@ -460,10 +482,11 @@ public class ResourceTreeDatasource extends DataSource {
 
             // parent node is either a subCategory node or a resource node
             String parentId;
-            String subcategory = this.resourceType.getSubCategory();
-            if (subcategory != null) {
+            String subcategoriesString = this.resourceType.getSubCategory();
+            if (subcategoriesString != null) {
                 //TODO: BZ 1069545 fix this
-                parentId = SubCategoryTreeNode.idOf(subcategory, this.parentResource);
+                String[] subcategories = subcategoriesString.split("\\|");
+                parentId = SubCategoryTreeNode.idOf(subcategories[subcategories.length - 1], this.parentResource);
                 this.parentSubcategory = true;
             } else {
                 parentId = ResourceTreeNode.idOf(this.parentResource);

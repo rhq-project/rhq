@@ -80,8 +80,7 @@ public class MetricsServer {
 
     private AtomicLong totalAggregationTime = new AtomicLong();
 
-    private int numAggregationWorkers = Math.min(Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers",
-        "4")), Runtime.getRuntime().availableProcessors());
+    private int numAggregationWorkers = 4;
 
     private ListeningExecutorService aggregationWorkers;
 
@@ -130,6 +129,12 @@ public class MetricsServer {
     public void init() {
         if (log.isDebugEnabled() && useAsyncAggregation) {
             log.debug("Async aggregation is enabled");
+        }
+        numAggregationWorkers = Integer.parseInt(System.getProperty("rhq.metrics.aggregation.workers", "4"));
+        // We have to have more than 1 thread, otherwise we can deadlock during aggregation task scheduling.
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=1084626 for details
+        if (numAggregationWorkers < 2) {
+            numAggregationWorkers = 2;
         }
         aggregationWorkers = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numAggregationWorkers,
             new StorageClientThreadFactory()));

@@ -378,6 +378,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         existingType.setDescription(resourceType.getDescription());
         existingType.setSingleton(resourceType.isSingleton());
         existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
+        existingType.setSubCategory(resourceType.getSubCategory());
 
         existingType = entityManager.merge(existingType);
     }

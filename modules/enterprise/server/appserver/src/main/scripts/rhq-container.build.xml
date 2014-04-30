@@ -233,15 +233,16 @@
         <unzip src="${settings.localRepository}/org/rhq/rhq-server-control/${project.version}/rhq-server-control-${project.version}.zip"
                dest="${jboss.modules.dir}"/>
 
-        <echo>Adding RHQ JDR module to ${jboss.home}/modules</echo>
+        <echo>Injecting RHQ JDR plugin to JBoss JDR module ${jboss.home}/modules</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-server-jdr/${project.version}/rhq-server-jdr-${project.version}.jar" todir="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main" />
+
         <!-- add RHQ jar resource to module.xml-->
         <replaceregexp
           file="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main/module.xml"
           match="&lt;resources&gt;"
           replace="&lt;resources&gt;&#xA;        &lt;resource-root path=&quot;rhq-server-jdr-${project.version}.jar&quot; /&gt;" />
 
-        <!-- additional dependncy module.xml-->
+        <!-- add dependency in module.xml-->
         <replaceregexp
           file="${jboss.home}/modules/system/layers/base/org/jboss/as/jdr/main/module.xml"
           match="&lt;dependencies&gt;"

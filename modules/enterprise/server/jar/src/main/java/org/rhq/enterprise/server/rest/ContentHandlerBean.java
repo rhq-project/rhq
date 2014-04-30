@@ -135,7 +135,7 @@ public class ContentHandlerBean extends AbstractRestBean {
     @PUT
     @Path("/{handle}/plugins")
     @ApiErrors({
-        @ApiError(code = 406, reason = "No name provided"),
+        @ApiError(code = 406, reason = "No name provided or invalid combination of parameters supplied"),
         @ApiError(code = 404, reason = "No content for handle found"),
         @ApiError(code = 403, reason = "Caller has not rights to upload plugins")
     })
@@ -145,7 +145,8 @@ public class ContentHandlerBean extends AbstractRestBean {
             "request that a plugin scan will be started and the plugin be registered in the system. You can also" +
             "specify a delay in milliseconds after which the plugin will be automatically pushed out to the agents." +
             "Note that a non-negative \"pushOutDelay\" only makes sense when the \"scan\" is set to true, otherwise" +
-            "no update on the agents can occur because there will be no updated plugins on the server." +
+            "no update on the agents can occur because there will be no updated plugins on the server. If a " +
+            "non-negative \"pushOutDelay\" is given together with \"scan\" set to false a 406 error is returned." +
             "The content identified by the handle is not removed. Note that this method is deprecated - use a PUT to /plugins.")
     @Deprecated
     public Response provideAsPlugin(
@@ -175,6 +176,12 @@ public class ContentHandlerBean extends AbstractRestBean {
             if (!isAllowed) {
                 log.error("An unauthorized user [" + caller + "] attempted to upload a plugin");
                 throw new PermissionException("You are not authorized to do this");
+            }
+
+            //sanity checks before we do any real work
+            if (pushOutDelay >= 0 && !startScan) {
+                throw new BadArgumentException(
+                    "Pushing changes to agents without starting a scan for changes first doesn't make sense.");
             }
 
             File dir = LookupUtil.getPluginManager().getPluginDropboxDirectory();

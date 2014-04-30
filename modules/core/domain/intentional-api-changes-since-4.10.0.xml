@@ -18,46 +18,10 @@
 
 
   <difference>
-    <className>org/rhq/core/domain/resource/ResourceType</className>
-    <differenceType>7006</differenceType> <!-- return type changed -->
-    <method>org.rhq.core.domain.resource.ResourceSubCategory getSubCategory()</method>
-    <to>java.lang.String</to>
-    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
-  </difference>
-
-
-  <difference>
     <className>org/rhq/core/domain/resource/flyweight/AutoGroupCompositeFlyweight</className>
     <differenceType>7005</differenceType> <!-- parameter type changed -->
     <method>AutoGroupCompositeFlyweight(java.lang.Double, org.rhq.core.domain.resource.flyweight.ResourceFlyweight, org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight, long)</method>
     <to>AutoGroupCompositeFlyweight(java.lang.Double, org.rhq.core.domain.resource.flyweight.ResourceFlyweight, java.lang.String, long)</to>
-    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
-  </difference>
-
-
-  <difference>
-    <className>org/rhq/core/domain/resource/flyweight/AutoGroupCompositeFlyweight</className>
-    <differenceType>7006</differenceType> <!-- return type changed -->
-    <method>org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight getSubcategory()</method>
-    <to>java.lang.String</to>
-    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
-  </difference>
-
-
-  <difference>
-    <className>org/rhq/core/domain/resource/flyweight/FlyweightCache</className>
-    <differenceType>7005</differenceType> <!-- parameter type changed -->
-    <method>org.rhq.core.domain.resource.flyweight.ResourceTypeFlyweight constructResourceType(int, java.lang.String, java.lang.String, boolean, org.rhq.core.domain.resource.ResourceCategory, java.lang.Integer)</method>
-    <to>org.rhq.core.domain.resource.flyweight.ResourceTypeFlyweight constructResourceType(int, java.lang.String, java.lang.String, boolean, org.rhq.core.domain.resource.ResourceCategory, java.lang.String)</to>
-    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
-  </difference>
-
-
-  <difference>
-    <className>org/rhq/core/domain/resource/flyweight/ResourceTypeFlyweight</className>
-    <differenceType>7006</differenceType> <!-- return type changed -->
-    <method>org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight getSubCategory()</method>
-    <to>java.lang.String</to>
     <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
   </difference>
 
@@ -76,6 +40,42 @@
     <differenceType>7005</differenceType> <!-- parameter type changed -->
     <method>AutoGroupComposite(java.lang.Double, org.rhq.core.domain.resource.Resource, org.rhq.core.domain.resource.ResourceSubCategory, long)</method>
     <to>AutoGroupComposite(java.lang.Double, org.rhq.core.domain.resource.Resource, java.lang.String, long)</to>
+    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
+  </difference>
+
+
+  <difference>
+    <className>org/rhq/core/domain/resource/flyweight/FlyweightCache</className>
+    <differenceType>7005</differenceType> <!-- parameter type changed -->
+    <method>org.rhq.core.domain.resource.flyweight.ResourceTypeFlyweight constructResourceType(int, java.lang.String, java.lang.String, boolean, org.rhq.core.domain.resource.ResourceCategory, java.lang.Integer)</method>
+    <to>org.rhq.core.domain.resource.flyweight.ResourceTypeFlyweight constructResourceType(int, java.lang.String, java.lang.String, boolean, org.rhq.core.domain.resource.ResourceCategory, java.lang.String)</to>
+    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
+  </difference>
+
+
+  <difference>
+    <className>org/rhq/core/domain/resource/ResourceType</className>
+    <differenceType>7006</differenceType> <!-- return type changed -->
+    <method>org.rhq.core.domain.resource.ResourceSubCategory getSubCategory()</method>
+    <to>java.lang.String</to>
+    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
+  </difference>
+
+
+  <difference>
+    <className>org/rhq/core/domain/resource/flyweight/AutoGroupCompositeFlyweight</className>
+    <differenceType>7006</differenceType> <!-- return type changed -->
+    <method>org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight getSubcategory()</method>
+    <to>java.lang.String</to>
+    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
+  </difference>
+
+
+  <difference>
+    <className>org/rhq/core/domain/resource/flyweight/ResourceTypeFlyweight</className>
+    <differenceType>7006</differenceType> <!-- return type changed -->
+    <method>org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight getSubCategory()</method>
+    <to>java.lang.String</to>
     <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
   </difference>
 

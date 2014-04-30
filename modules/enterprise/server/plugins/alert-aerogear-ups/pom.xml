@@ -36,7 +36,7 @@
   <artifactId>alert-ups</artifactId>
   <version>4.11.0-SNAPSHOT</version>
 
-  <name>RHQ Enterprise Server IRC Alert Plugin</name>
+  <name>RHQ Aerogear-UPS Alert Plugin</name>
 
   <dependencies>
 
@@ -176,7 +176,7 @@
     <profile>
       <id>overrides</id>
       <activation>
-        <activeByDefault />
+        <activeByDefault >true</activeByDefault>
       </activation>
       <build>
         <plugins>

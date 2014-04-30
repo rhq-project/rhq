@@ -41,6 +41,12 @@
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-jdr</artifactId>
       <scope>provided</scope> <!-- by as -->
+      <exclusions>
+        <exclusion>
+          <groupId>xalan</groupId>
+          <artifactId>serializer</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>xalan</groupId>

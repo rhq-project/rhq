@@ -23,14 +23,17 @@
 
 package org.rhq.server.jdr;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.jboss.as.jdr.commands.JdrCommand;
-import org.jboss.as.jdr.commands.RHQFilesCollector;
-import org.jboss.as.jdr.commands.RHQGetStatusCommand;
+import org.jboss.as.jdr.commands.RHQCollectFiles;
+import org.jboss.as.jdr.commands.RHQStatusCommand;
 import org.jboss.as.jdr.plugins.JdrPlugin;
 import org.jboss.as.jdr.plugins.PluginId;
+import org.jboss.as.jdr.util.Sanitizer;
+import org.jboss.as.jdr.util.Sanitizers;
+import org.jboss.as.jdr.util.Utils;
 
 /**
  * Plugin to retrieve data from RHQ and add it to the JDR report
@@ -39,17 +42,17 @@ import org.jboss.as.jdr.plugins.PluginId;
 public class RHQPlugin implements JdrPlugin {
 
     private final PluginId pluginId = new PluginId("RHQ", 1, 0, null);
+
     @Override
     public List<JdrCommand> getCommands() throws Exception {
-
-        List<JdrCommand> commands = new ArrayList<JdrCommand>(4);
-        commands.add(new RHQGetStatusCommand());
-        commands.add(new RHQFilesCollector("bin","rhq-server.properties")); // TODO sanitize *.password=* entries
-        commands.add(new RHQFilesCollector("logs","rhq-storage.log"));
-        commands.add(new RHQFilesCollector("logs","server.log"));
-
-        return commands;
-
+        Sanitizer passwordSanitizer = Sanitizers.pattern("password=.*", "password=*****");
+        return Arrays.asList(
+            new RHQStatusCommand(),
+            new RHQCollectFiles("bin/rhq-server.properties").sanitizer(passwordSanitizer),
+            new RHQCollectFiles("logs/server.log").limit(50 * Utils.ONE_MB),
+            new RHQCollectFiles("logs/server.log*").omit("logs/server.log"),
+            new RHQCollectFiles("logs/rhq-storage.log")
+        );
     }
 
     @Override

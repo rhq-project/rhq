@@ -329,7 +329,7 @@ public class ConfigurationUtility {
 
                 if (propertyDefinitionList.isReadOnly()) {
                     if (null != currentPropertyList && !currentPropertyList.getList().isEmpty()) {
-                        if (!currentPropertyList.getList().equals(propertyList.getList())) {
+                        if (!currentPropertyList.equals(propertyList)) {
                             errorMessages.add("ReadOnly property '" + propertyDefinitionList.getName()
                                 + "' has a value " + propertyList.getList() + " different than the current value "
                                 + currentPropertyList.getList() + "]. It is not allowed to change.");

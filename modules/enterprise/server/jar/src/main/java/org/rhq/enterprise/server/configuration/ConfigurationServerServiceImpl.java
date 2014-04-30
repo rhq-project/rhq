@@ -26,6 +26,7 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -34,6 +35,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ConfigurationServerServiceImpl implements ConfigurationServerService {
     private static final Log LOG = LogFactory.getLog(ConfigurationServerServiceImpl.class);
 
+    @Override
     public void completeConfigurationUpdate(ConfigurationUpdateResponse response) {
         /*
          * Would be nice to get the resource name, but it is not in the response, so we could bring back the log message
@@ -62,6 +64,7 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         configurationManager.checkForCompletedGroupResourceConfigurationUpdate(configUpdateId);
     }
 
+    @Override
     public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -78,5 +81,17 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
 
         Configuration configuration = update.getConfiguration().deepCopy(false); // clone the config, zeroing out ids
         configurationManager.setResourceConfiguration(resourceId, configuration); // now set it as the current config on the Resource
+    }
+
+    @Override
+    public Configuration persistUpdatedPluginConfiguration(int resourceId, Configuration pluginConfiguration) {
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        Subject overlord = subjectManager.getOverlord();
+        PluginConfigurationUpdate update = configurationManager.upgradePluginConfiguration(overlord, resourceId,
+            pluginConfiguration);
+
+        return update.getResource().getPluginConfiguration();
     }
 }

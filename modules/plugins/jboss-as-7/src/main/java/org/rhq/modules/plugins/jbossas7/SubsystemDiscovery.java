@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -118,6 +120,15 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             log.info("total path: [" + path + "]");
         }
 
+        // If the subsystem has a built-in version string, parse it out such that
+        // we can discover new versions of the same logical resource without creating
+        // a new resource, but rather just updating the version.
+        // The matched format is name-VERSION.ext.  Version must minimally be in major.minor format.  Simpler versions,
+        // like a single digit, are too possibly part of the actual name.  myapp-1.war and myapp-2.wat could easily be
+        // different apps (albeit poorly named).  But myapp-1.0.war and myapp-2.0.war are pretty clearly versions of
+        // the same app.  The goal was to handle maven-style versioning.
+        Pattern p = Pattern.compile("^(.*?)-([0-9]+\\.[0-9].*)(\\..*)$");
+
         if (lookForChildren) {
             // Looking for multiple resource of type 'childType'
 
@@ -141,26 +152,35 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                     // There may be multiple children of the given type
                     for (String val : subsystems) {
 
-                        String newPath = cpath + "=" + val;
-                        Configuration config2 = context.getDefaultPluginConfiguration();
-
-                        String resKey;
-
-                        if (path == null || path.isEmpty())
-                            resKey = newPath;
-                        else {
-                            if (path.startsWith(","))
-                                path = path.substring(1);
-                            resKey = path + "," + cpath + "=" + val;
+                        Matcher m = p.matcher(val);
+                        String version = null;
+                        String name = val;
+                        if (m.matches()) {
+                            name = m.group(1) + m.group(3);
+                            version = m.group(2);
                         }
 
-                        PropertySimple pathProp = new PropertySimple("path", resKey);
+                        Configuration config2 = context.getDefaultPluginConfiguration();
+                        String resKey;
+                        PropertySimple pathProp;
+
+                        if (path == null || path.isEmpty()) {
+                            resKey = cpath + "=" + name;
+                            pathProp = new PropertySimple("path", cpath + "=" + val);
+
+                        } else {
+                            if (path.startsWith(","))
+                                path = path.substring(1);
+                            resKey = path + "," + cpath + "=" + name;
+                            pathProp = new PropertySimple("path", path + "," + cpath + "=" + val);
+                        }
+
                         config2.put(pathProp);
 
                         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // DataType
                             resKey, // Key
-                            val, // Name
-                            null, // Version
+                            name, // Name
+                            version, // Version
                             context.getResourceType().getDescription(), // subsystem.description
                             config2, null);
                         details.add(detail);
@@ -169,22 +189,32 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             }
         } else {
             // Single subsystem
+            Matcher m = p.matcher(path);
+            String version = null;
+            String resKey = path;
+            if (m.matches()) {
+                resKey = m.group(1) + m.group(3);
+                version = m.group(2);
+            }
+
             path += "," + confPath;
-            if (path.startsWith(","))
+            resKey += "," + confPath;
+            if (path.startsWith(",")) {
                 path = path.substring(1);
+                resKey = resKey.substring(1);
+            }
             Result result = connection.execute(new ReadResource(new Address(path)));
             if (result.isSuccess()) {
 
-                String resKey = path;
                 String name = resKey.substring(resKey.lastIndexOf("=") + 1);
                 Configuration config2 = context.getDefaultPluginConfiguration();
                 PropertySimple pathProp = new PropertySimple("path", path);
                 config2.put(pathProp);
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // DataType
-                    path, // Key
+                    resKey, // Key
                     name, // Name
-                    null, // Version
+                    version, // Version
                     context.getResourceType().getDescription(), // Description
                     config2, null);
                 details.add(detail);

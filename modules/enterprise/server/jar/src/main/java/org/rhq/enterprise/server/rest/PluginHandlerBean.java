@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.rest;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -138,7 +139,7 @@ public class PluginHandlerBean extends AbstractRestBean {
         return withMediaType(Response.ok(PluginRest.from(plugins.get(0))), headers).build();
     }
 
-    @POST
+    @PUT
     @Path("{id}")
     @ApiOperation("Updates the enablement of a plugin.")
     public Response updatePluginState(
@@ -167,21 +168,38 @@ public class PluginHandlerBean extends AbstractRestBean {
         return getPluginInfo(id, headers);
     }
 
-    @PUT
+    @POST
     @Path("/")
     @ApiOperation("Puts the plugin provided using a content handle into a dropbox and scans the dropbox for changes. " +
         "In another words, this can result in more than just the provided plugin to become registered in the server " +
-        "if there were some unregistered plugins waiting in the dropbox directory. The content identified by the handle" +
+        "if there were some unregistered plugins waiting in the dropbox directory. The content identified by the handle " +
         "is NOT deleted afterwards.")
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public Response register(
     @ApiParam("The handle retrieved from upload") @QueryParam("handle") String handle,
     @ApiParam("Name of the plugin file") @QueryParam("name") String name,
-    @Context HttpHeaders headers) throws Exception {
+    @Context HttpHeaders headers, @Context UriInfo uriInfo) throws Exception {
 
         List<Plugin> newOnes = pluginManager.deployUsingContentHandle(caller, name, handle);
 
-        return withMediaType(Response.ok(PluginRest.list(newOnes)), headers).build();
+        Plugin myPlugin = null;
+        for (Plugin p : newOnes) {
+            if (p.getPath().equals(name)) {
+                myPlugin = p;
+                break;
+            }
+        }
+
+        if (myPlugin == null) {
+            //this may happen and is actually not an error... it just means that the plugin most possibly already
+            //was installed..
+            return withMediaType(Response.ok(PluginRest.list(newOnes)), headers).build();
+        } else {
+            URI myPluginUri = uriInfo.getBaseUri().resolve(uriInfo.getPath())
+                .resolve(Integer.toString(myPlugin.getId()));
+
+            return withMediaType(Response.created(myPluginUri), headers).entity(PluginRest.list(newOnes)).build();
+        }
     }
 
     @POST

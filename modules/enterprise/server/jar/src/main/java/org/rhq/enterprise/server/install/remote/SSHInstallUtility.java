@@ -35,6 +35,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.UserInfo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -77,6 +78,76 @@ public class SSHInstallUtility {
         }
     }
 
+    static class SSHConfiguration {
+        public static enum StrictHostKeyChecking {
+            yes, no, ask
+        };
+
+        private StrictHostKeyChecking strictHostKeyChecking = StrictHostKeyChecking.ask;
+        private String knownHostsFile = null;
+
+        public SSHConfiguration() {
+        }
+
+        public StrictHostKeyChecking getStrictHostKeyChecking() {
+            return strictHostKeyChecking;
+        }
+
+        public void setStrictHostKeyChecking(StrictHostKeyChecking strictHostKeyChecking) {
+            this.strictHostKeyChecking = strictHostKeyChecking;
+        }
+
+        public String getKnownHostsFile() {
+            return knownHostsFile;
+        }
+
+        public void setKnownHostsFile(String knownHostsFile) {
+            this.knownHostsFile = knownHostsFile;
+        }
+    }
+
+    private class SSHUserInfo implements UserInfo {
+
+        @Override
+        public void showMessage(String msg) {
+            //System.out.println(msg);
+        }
+
+        @Override
+        public boolean promptYesNo(String ques) {
+            // this is asking either to add the fingerprint for an unknown host or, more troubling, to replace
+            // a known host's fingerprint. If we were told to authorize this host, then accept both.
+            // If we need to do separate processing for either conditions, we can see which question it is via:
+            //   ques.matches("(?s).*authenticity of host.*can't be established.*Are you sure you want to continue connecting.*")
+            // and
+            //   ques.matches("(?s).*NASTY.*")
+            if (accessInfo.isHostAuthorized()) {
+                return true;
+            }
+            throw new SecurityException(ques);
+        }
+
+        @Override
+        public boolean promptPassword(String arg0) {
+            return false;
+        }
+
+        @Override
+        public boolean promptPassphrase(String arg0) {
+            return false;
+        }
+
+        @Override
+        public String getPassword() {
+            return null;
+        }
+
+        @Override
+        public String getPassphrase() {
+            return null;
+        }
+    };
+
     public static final String AGENT_STATUS_NOT_INSTALLED = "Agent Not Installed";
 
     private static final String RHQ_AGENT_LATEST_VERSION_PROP = "rhq-agent.latest.version";
@@ -89,17 +160,24 @@ public class SSHInstallUtility {
 
     private final RemoteAccessInfo accessInfo;
     private final Credentials defaultCredentials;
+    private final SSHConfiguration sshConfiguration;
 
     private Session session;
 
-    public SSHInstallUtility(RemoteAccessInfo accessInfo, Credentials defaultCredentials) {
+    public SSHInstallUtility(RemoteAccessInfo accessInfo, Credentials defaultCredentials, SSHConfiguration sshConfig) {
         this.accessInfo = accessInfo;
         this.defaultCredentials = defaultCredentials;
+
+        if (sshConfig == null) {
+            sshConfig = new SSHConfiguration();
+        }
+        this.sshConfiguration = sshConfig;
+
         connect();
     }
 
     public SSHInstallUtility(RemoteAccessInfo accessInfo) {
-        this(accessInfo, null);
+        this(accessInfo, null, null);
     }
 
     public RemoteAccessInfo getRemoteAccessInfo() {
@@ -109,6 +187,10 @@ public class SSHInstallUtility {
     public void connect() {
         try {
             JSch jsch = new JSch();
+
+            if (sshConfiguration.getKnownHostsFile() != null) {
+                jsch.setKnownHosts(sshConfiguration.getKnownHostsFile());
+            }
 
             //if (accessInfo.getKey() != null) {
             //    jsch.addIdentity(...);
@@ -122,9 +204,13 @@ public class SSHInstallUtility {
                 session.setPassword(credentials.getPassword());
             }
 
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
+            if (sshConfiguration.getStrictHostKeyChecking() != null) {
+                Properties config = new Properties();
+                config.put("StrictHostKeyChecking", sshConfiguration.getStrictHostKeyChecking().name());
+                session.setConfig(config);
+            }
+
+            session.setUserInfo(new SSHUserInfo());
 
             session.connect(CONNECTION_TIMEOUT); // making a connection with timeout.
         } catch (JSchException e) {

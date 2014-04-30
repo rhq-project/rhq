@@ -22,6 +22,8 @@
  */
 package org.rhq.coregui.server.gwt;
 
+import javax.ejb.EJBException;
+
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
@@ -111,5 +113,19 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
+    }
+
+    @Override
+    protected RuntimeException getExceptionToThrowToClient(Throwable t) throws RuntimeException {
+        // if the SSH connection failed because of a bad or missing SSH key fingerprint, a SecurityException will be thrown.
+        // We want that SecurityException sent back as-is to the GWT UI.
+        if (t instanceof SecurityException) {
+            return (SecurityException) t;
+        } else if (t instanceof EJBException) {
+            if (t.getCause() instanceof SecurityException) {
+                return (SecurityException) t.getCause();
+            }
+        }
+        return getExceptionToThrowToClient(t);
     }
 }

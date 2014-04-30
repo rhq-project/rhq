@@ -23,6 +23,7 @@
 package org.rhq.enterprise.server.install.remote;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -41,6 +42,7 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Installs, starts and stops remote agents via SSH.
@@ -312,7 +314,18 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             creds = new SSHInstallUtility.Credentials(username, password);
         }
 
-        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo, creds);
+        SSHInstallUtility.SSHConfiguration sshConfig = new SSHInstallUtility.SSHConfiguration();
+
+        File dataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File knownHosts = new File(dataDir, "rhq_known_hosts");
+        try {
+            knownHosts.createNewFile(); // make sure it exists - this creates an empty one if there isn't one yet
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot create a known_hosts file for SSH communication - aborting");
+        }
+        sshConfig.setKnownHostsFile(knownHosts.getAbsolutePath());
+
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo, creds, sshConfig);
         return sshUtil;
     }
 

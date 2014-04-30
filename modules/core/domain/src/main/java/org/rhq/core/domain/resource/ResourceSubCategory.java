@@ -36,6 +36,9 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     private static final long serialVersionUID = 1L;
 
     @Deprecated
+    public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "";
+
+    @Deprecated
     private int id;
     @Deprecated
     private String name;
@@ -141,6 +144,15 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     @Deprecated
     void onUpdate() {
         this.mtime = System.currentTimeMillis();
+    }
+
+    @Deprecated
+    public ResourceType getResourceType() {
+        return null;
+    }
+
+    @Deprecated
+    public void setResourceType(ResourceType notused) {
     }
 
     @Deprecated

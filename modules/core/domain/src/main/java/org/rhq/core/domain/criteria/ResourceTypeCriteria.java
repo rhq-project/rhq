@@ -161,7 +161,7 @@ public class ResourceTypeCriteria extends Criteria {
     /**
      * If set to true this is equivalent to asking only for top level resource types. In other words,
      * those types whose parent will be the platform.
-     * 
+     *
      * @param filterParentResourceTypesEmpty
      */
     public void addFilterParentResourceTypesEmpty(boolean filterParentResourceTypesEmpty) {
@@ -237,5 +237,13 @@ public class ResourceTypeCriteria extends Criteria {
     public void addSortPluginName(PageOrdering sortPluginName) {
         addSortField("pluginName");
         this.sortPluginName = sortPluginName;
+    }
+
+    @Deprecated
+    public void fetchSubCategories(boolean notused) {
+    }
+
+    @Deprecated
+    public void fetchSubCategory(boolean notused) {
     }
 }

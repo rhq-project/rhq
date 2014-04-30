@@ -33,18 +33,26 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 /**
  * Persistent component used to send alert notifications via Aerogear
  * Unified Push Server
+ *
+ * @author Heiko W. Rupp
  */
 public class UpsAlertComponent implements ServerPluginComponent {
 
     private final Log log = LogFactory.getLog(UpsAlertComponent.class);
 
     String targetHost;
+    String masterSecret;
+    String pushId;
+    int port;
 
     public void initialize(ServerPluginContext context) throws Exception {
         Configuration preferences = context.getPluginConfiguration();
 
-
         targetHost = preferences.getSimpleValue("server");
+        masterSecret = preferences.getSimpleValue("masterSecret");
+        pushId = preferences.getSimpleValue("pushId");
+        String tmp = preferences.getSimpleValue("port","8080");
+        port = Short.valueOf(tmp);
     }
 
 

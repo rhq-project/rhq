@@ -34,9 +34,10 @@ import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 
 /**
- * Sends an alert notification via IRC.
+ * Sends an alert notification via Aerogear Unified Push Server.
  *
- * @author Justin Harris
+ * @author Heiko Rupp
+ * @author Matze Wessendorf
  */
 @SuppressWarnings("unused")
 public class UpsSender extends AlertSender<UpsAlertComponent> {
@@ -44,13 +45,14 @@ public class UpsSender extends AlertSender<UpsAlertComponent> {
     private final Log log = LogFactory.getLog(UpsSender.class);
 
     public UpsSender() {
+        // Disable those extensions as they prevent SSL usage in most cases
+        // where self-signed certs are in play.
+        // TODO revisit
         System.setProperty("jsse.enableSNIExtension", "false");
     }
 
     @Override
     public SenderResult send(Alert alert) {
-        String channel = this.alertParameters.getSimpleValue("channel", null);
-        String server = preferences.getSimpleValue("server", "-not set-");
 
         StringBuilder b = new StringBuilder();
          b.append("Alert on");
@@ -62,14 +64,17 @@ public class UpsSender extends AlertSender<UpsAlertComponent> {
 
 
         UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-                        .pushApplicationId("b0a1b452-b749-4dc3-b789-bf2cefd28398")
-                        .masterSecret("45b65fc9-2947-4735-ad73-b18e4518b406")
+                        .pushApplicationId(pluginComponent.pushId)
+                        .masterSecret(pluginComponent.masterSecret)
                         .alert(b.toString()) // TODO nicer max 160 chars
                         .sound("default") // iOS specific
                         .build();
 
-
-        SenderClient sender = new SenderClient("https://" +  pluginComponent.targetHost);
+        String rootServerURL = "https://" + pluginComponent.targetHost;
+        if (pluginComponent.port!=80) {
+            rootServerURL += ":" + pluginComponent.port;
+        }
+        SenderClient sender = new SenderClient(rootServerURL);
 
         final SenderResult[] result = new SenderResult[1];
         sender.send(unifiedMessage, new MessageResponseCallback() {

@@ -42,9 +42,11 @@
 
     <!-- Global preferences -->
     <serverplugin:plugin-configuration>
-        <c:simple-property name="server" type="string" description="UPS server to connect to." default="summit-pushee.rhcloud.com" />
-        <c:simple-property name="port" type="integer" default="8080" required="false" description="Port number on the ups server"/>
-        <c:simple-property name="pushId" type="string" default="b0a1b452-b749-4dc3-b789-bf2cefd28398" description="Id of the push app you use"/>
+        <c:simple-property name="server" type="string" description="UPS server to connect to."  />
+        <c:simple-property name="port" type="integer" default="8080" required="false" description="Port number on the ups server (default 8080)"/>
+        <c:simple-property name="pushId" type="string" description="Id of the push app you use"/>
+        <c:simple-property name="masterSecret" type="password" description="Master secret for the push sender"/>
+
     </serverplugin:plugin-configuration>
 
     <!-- How does this sender show up in drop downs etc -->

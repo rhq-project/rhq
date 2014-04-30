@@ -32,7 +32,7 @@
          <version>${project.version}</version>
          <type>ejb</type>
       </dependency>
-      
+
    </dependencies>
   <modules>
     <module>disk</module>
@@ -41,6 +41,7 @@
     <module>jboss-software</module>
     <module>alert-email</module>
     <module>alert-irc</module>
+    <module>alert-agerogear-ups</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
     <module>alert-operations</module>

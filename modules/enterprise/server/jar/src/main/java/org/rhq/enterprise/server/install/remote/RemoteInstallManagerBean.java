@@ -38,6 +38,7 @@ import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -102,6 +103,20 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             agentManager.updateAgentInstall(subject, ai);
         } catch (Exception e) {
             // TODO: I don't think we want to abort this - we don't technically need the install info persisted, user can manually give it again
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void checkSSHConnection(Subject subject, RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException {
+        SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
+        try {
+            if (!sshUtil.isConnected()) {
+                throw new IllegalStateException("Is not connected to [" + remoteAccessInfo.getHost() + ":"
+                    + remoteAccessInfo.getPort() + "]");
+            }
+        } finally {
+            sshUtil.disconnect();
         }
     }
 

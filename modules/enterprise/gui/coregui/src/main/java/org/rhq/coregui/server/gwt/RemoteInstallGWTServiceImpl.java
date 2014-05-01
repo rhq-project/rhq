@@ -41,6 +41,14 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private RemoteInstallManagerLocal remoteInstallManager = LookupUtil.getRemoteInstallManager();
 
+    public void checkSSHConnection(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException {
+        try {
+            remoteInstallManager.checkSSHConnection(getSessionSubject(), remoteAccessInfo);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath)
         throws SSHSecurityException, RuntimeException {
         try {
@@ -132,6 +140,6 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 return (SSHSecurityException) t.getCause();
             }
         }
-        return getExceptionToThrowToClient(t);
+        return super.getExceptionToThrowToClient(t);
     }
 }

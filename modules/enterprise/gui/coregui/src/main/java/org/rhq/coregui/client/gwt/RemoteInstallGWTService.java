@@ -37,6 +37,8 @@ import org.rhq.core.domain.install.remote.SSHSecurityException;
  */
 public interface RemoteInstallGWTService extends RemoteService {
 
+    void checkSSHConnection(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException;
+
     boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
         RuntimeException;
 

@@ -28,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 
 /**
  * Provides an interface to remotely install an RHQ Agent over SSH.
@@ -36,6 +37,17 @@ import org.rhq.core.domain.install.remote.RemoteAccessInfo;
  */
 @Remote
 public interface RemoteInstallManagerRemote {
+
+    /**
+     * Performs a fast connection check. This will make an SSH connection to see if it can successfully be made.
+     * If it can, this method just returns. Any errors will cause an exception to be thrown.
+     *
+     * @param subject the RHQ user making the request
+     * @param remoteAccessInfo the remote machine information and remote user SSH credentials
+     * @throws SSHSecurityException if the connection failed to be made due to things like the remote host is unknown.
+     */
+    void checkSSHConnection(Subject subject, RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException;
+
     /**
      * Checks to see if an agent is installed in the given directory.
      *

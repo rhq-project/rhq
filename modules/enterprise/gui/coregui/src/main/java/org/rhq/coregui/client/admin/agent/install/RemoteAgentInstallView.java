@@ -446,6 +446,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             new Message(msg, Message.Severity.Info, EnumSet.of(Message.Option.BackgroundJobResult)));
     }
 
+    private void setAgentStatusText(String msg) {
+        if (agentStatusText != null && agentStatusText.isDrawn()) {
+            agentStatusText.setValue(msg);
+        }
+    }
+
     private FileUploadForm createAgentConfigXmlUploadForm() {
         final FileUploadForm uploadForm = new FileUploadForm("agent-configuration.xml", "1", false, true, null, true);
         uploadForm.setCustomTooltipMessage(MSG.view_remoteAgentInstall_promptAgentConfigXml());
@@ -512,7 +518,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                         err = MSG.view_remoteAgentInstall_error_3(parentPath);
                     }
                     displayError(err, null);
-                    agentStatusText.setValue(MSG.view_remoteAgentInstall_agentStatusDefault());
+                    setAgentStatusText(MSG.view_remoteAgentInstall_agentStatusDefault());
                     doneProcessing();
                 }
             }
@@ -523,12 +529,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         disableButtons(true);
         remoteInstallService.agentStatus(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
-                agentStatusText.setValue(caught.getMessage());
+                setAgentStatusText(caught.getMessage());
                 doneProcessing();
             }
 
             public void onSuccess(String result) {
-                agentStatusText.setValue(result);
+                setAgentStatusText(result);
                 doneProcessing();
             }
         });
@@ -603,7 +609,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void reallyInstallAgent() {
         disableButtons(true);
-        agentStatusText.setValue(MSG.view_remoteAgentInstall_installingPleaseWait());
+        setAgentStatusText(MSG.view_remoteAgentInstall_installingPleaseWait());
         SC.ask(MSG.view_remoteAgentInstall_overwriteAgentTitle(), MSG.view_remoteAgentInstall_overwriteAgentQuestion(),
             new BooleanCallback() {
                 @Override
@@ -614,7 +620,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                         new AsyncCallback<AgentInstallInfo>() {
                             public void onFailure(Throwable caught) {
                                 displayError(MSG.view_remoteAgentInstall_error_4(), caught);
-                                agentStatusText.setValue(MSG.view_remoteAgentInstall_error_4());
+                                setAgentStatusText(MSG.view_remoteAgentInstall_error_4());
 
                                 if (agentConfigXmlUploadForm != null) {
                                     agentConfigXmlUploadForm.reset();
@@ -626,19 +632,22 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                             }
 
                             public void onSuccess(AgentInstallInfo result) {
-                                installButton.setDisabled(true); // don't re-enable install - install was successful, no need to do it again
+                                // if the install button isn't created, user must have navigated away, so skip the UI stuff
+                                if (installButton.isCreated()) {
+                                    installButton.setDisabled(true); // don't re-enable install - install was successful, no need to do it again
 
-                                displayMessage(MSG.view_remoteAgentInstall_success());
-                                agentStatusText.setValue(MSG.view_remoteAgentInstall_success());
+                                    displayMessage(MSG.view_remoteAgentInstall_success());
+                                    setAgentStatusText(MSG.view_remoteAgentInstall_success());
 
-                                if (!result.isConfirmedAgentConnection()) {
-                                    displayError(MSG.view_remoteAgentInstall_error_cannotPingAgent(
-                                        result.getAgentAddress(), String.valueOf(result.getAgentPort())));
+                                    if (!result.isConfirmedAgentConnection()) {
+                                        displayError(MSG.view_remoteAgentInstall_error_cannotPingAgent(
+                                            result.getAgentAddress(), String.valueOf(result.getAgentPort())));
+                                    }
+
+                                    buildInstallInfoCanvas(agentInfoLayout, result);
+                                    agentInfoLayout.markForRedraw();
+                                    agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
                                 }
-
-                                buildInstallInfoCanvas(agentInfoLayout, result);
-                                agentInfoLayout.markForRedraw();
-                                agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
 
                                 // tell the success handler
                                 invokeSuccessHandler(Type.INSTALL);
@@ -654,20 +663,20 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         remoteInstallService.uninstallAgent(getRemoteAccessInfo(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
                 displayError(MSG.view_remoteAgentInstall_error_7(), caught);
-                agentStatusText.setValue(MSG.view_remoteAgentInstall_error_7());
+                setAgentStatusText(MSG.view_remoteAgentInstall_error_7());
                 doneProcessing();
             }
 
             public void onSuccess(String result) {
                 if (result != null) {
-                    agentStatusText.setValue(MSG.view_remoteAgentInstall_uninstallSuccess());
+                    setAgentStatusText(MSG.view_remoteAgentInstall_uninstallSuccess());
                     displayMessage(MSG.view_remoteAgentInstall_uninstallAgentResults(result));
                     agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
 
                     // tell the success handler
                     invokeSuccessHandler(Type.UNINSTALL);
                 } else {
-                    agentStatusText.setValue(MSG.view_remoteAgentInstall_error_7());
+                    setAgentStatusText(MSG.view_remoteAgentInstall_error_7());
                     doneProcessing();
                 }
             }
@@ -788,16 +797,28 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         return steps.toArray(new ListGridRecord[steps.size()]);
     }
 
+    private void disableCanvas(Canvas obj, boolean disabled) {
+        if (obj.isCreated()) {
+            obj.setDisabled(disabled);
+        }
+    }
+
+    private void disableCanvasItem(CanvasItem obj, boolean disabled) {
+        if (obj.isDrawn()) {
+            obj.setDisabled(disabled);
+        }
+    }
+
     private void disableButtons(boolean disabled) {
-        installButton.setDisabled(disabled);
-        uninstallButton.setDisabled(disabled);
-        startButton.setDisabled(disabled);
-        stopButton.setDisabled(disabled);
-        buttonsForm.setDisabled(disabled);
-        statusCheckButton.setDisabled(disabled);
+        disableCanvas(installButton, disabled);
+        disableCanvas(uninstallButton, disabled);
+        disableCanvas(startButton, disabled);
+        disableCanvas(stopButton, disabled);
+        disableCanvas(buttonsForm, disabled);
+        disableCanvasItem(statusCheckButton, disabled);
         // we only want to mess with this if we are in "install" mode
         if (showInstallButton) {
-            findAgentInstallPathButton.setDisabled(disabled);
+            disableCanvasItem(findAgentInstallPathButton, disabled);
         }
     }
 

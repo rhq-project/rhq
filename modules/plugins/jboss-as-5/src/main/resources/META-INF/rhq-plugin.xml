@@ -895,14 +895,6 @@
     description="JBoss Application Server (AS), Enterprise Application Platform (EAP), Enterprise SOA Platform (SOA-P), or Enterprise Web Platform (EWP) 5.x or 6.x instance"
     supportsManualAdd="true">
 
-    <subcategories>
-      <subcategory name="Resources" description="Different types of Resources">
-        <subcategory name="Datasources" description="Different types of Datasources" />
-        <subcategory name="Connection Factories" description="Different types of Connection Factories" />
-      </subcategory>
-      <subcategory name="Applications" description="Different types of Applications (WARs, EARs, etc.)" />
-    </subcategories>
-
     <plugin-configuration>
       <c:group name="connectionInfo">
         <c:simple-property name="namingURL" displayName="Naming Provider URL"
@@ -1298,7 +1290,7 @@
     <!-- =================================== ManagedComponent Resource types =================================== -->
 
     <service name="No Tx Datasource" class="DatasourceOrConnectionFactoryComponent" discovery="ManagedComponentDiscoveryComponent"
-      createDeletePolicy="both" subCategory="Datasources" description="No Transaction Datasources deployed in the instance of JBoss AS">
+      createDeletePolicy="both" subCategory="Resources|Datasources" description="No Transaction Datasources deployed in the instance of JBoss AS">
 
       <plugin-configuration>
         <c:simple-property name="componentType" default="DataSource" readOnly="true" />
@@ -1343,7 +1335,7 @@
     </service>
 
     <service name="Local Tx Datasource" class="DatasourceOrConnectionFactoryComponent" discovery="ManagedComponentDiscoveryComponent"
-      createDeletePolicy="both" subCategory="Datasources" description="Local Transaction Datasources deployed in the instance of JBoss AS">
+      createDeletePolicy="both" subCategory="Resources|Datasources" description="Local Transaction Datasources deployed in the instance of JBoss AS">
 
       <plugin-configuration>
         <c:simple-property name="componentType" default="DataSource" readOnly="true" />
@@ -1389,7 +1381,7 @@
     </service>
 
     <service name="XA Datasource" class="DatasourceOrConnectionFactoryComponent" discovery="ManagedComponentDiscoveryComponent"
-      createDeletePolicy="both" subCategory="Datasources" description="XA Datasources deployed in the instance of JBoss AS">
+      createDeletePolicy="both" subCategory="Resources|Datasources" description="XA Datasources deployed in the instance of JBoss AS">
 
       <plugin-configuration>
         <c:simple-property name="componentType" default="DataSource" readOnly="true" />
@@ -1479,7 +1471,7 @@
     </service>
 
     <service name="No Tx ConnectionFactory" description="A ConnectionFactory that does not take part in JTA transactions."
-      class="DatasourceOrConnectionFactoryComponent" createDeletePolicy="both" subCategory="Connection Factories"
+      class="DatasourceOrConnectionFactoryComponent" createDeletePolicy="both" subCategory="Resources|Connection Factories"
       discovery="ManagedComponentDiscoveryComponent">
 
       <plugin-configuration>
@@ -1524,7 +1516,7 @@
     </service>
 
     <service name="Tx ConnectionFactory" description="A ConnectionFactory that takes part in JTA transactions."
-      class="TxConnectionFactoryComponent" createDeletePolicy="both" subCategory="Connection Factories" discovery="ManagedComponentDiscoveryComponent">
+      class="TxConnectionFactoryComponent" createDeletePolicy="both" subCategory="Resources|Connection Factories" discovery="ManagedComponentDiscoveryComponent">
 
       <plugin-configuration>
         <c:simple-property name="componentType" default="ConnectionFactory" readOnly="true" />

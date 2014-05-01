@@ -1039,11 +1039,6 @@
           class="HostControllerComponent"
           description="Domain controller (delegate) for this host">
 
-    <subcategories>
-      <subcategory name="Server Configuration" description="Server Configuration"/>
-      <subcategory name="Subsystems" description="Subsystems"/>
-    </subcategories>
-
     <plugin-configuration>
       <c:simple-property name="hostname" default="localhost" required="true" description="Host name of the domain API"/>
       <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
@@ -1364,11 +1359,6 @@
           class="StandaloneASComponent"
           description="Standalone AS7 server"
           supportsManualAdd="true">
-
-    <subcategories>
-      <subcategory name="Server Configuration" description="Server Configuration"/>
-      <subcategory name="Subsystems" description="Subsystems"/>
-    </subcategories>
 
     <plugin-configuration>
       <c:simple-property name="hostname" default="localhost" required="true"/>
@@ -1832,11 +1822,6 @@
     <runs-inside>
       <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
     </runs-inside>
-
-    <subcategories>
-      <subcategory name="Server Configuration" description="Server Configuration"/>
-      <subcategory name="Subsystems" description="Subsystems"/>
-    </subcategories>
 
     <plugin-configuration>
       <c:simple-property name="path" readOnly="true"/>
@@ -5307,11 +5292,6 @@
     <runs-inside>
       <parent-resource-type name="JBossAS7 Host Controller" plugin="&pluginName;"/>
     </runs-inside>
-
-    <subcategories>
-      <subcategory name="Server Configuration" description="Server Configuration"/>
-      <subcategory name="Subsystems" description="Subsystems"/>
-    </subcategories>
 
     <plugin-configuration>
       <c:simple-property name="path" default="profile" readOnly="true"/>

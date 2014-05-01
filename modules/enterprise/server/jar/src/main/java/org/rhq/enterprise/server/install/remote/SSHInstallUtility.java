@@ -45,6 +45,7 @@ import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -124,7 +125,7 @@ public class SSHInstallUtility {
             if (accessInfo.isHostAuthorized()) {
                 return true;
             }
-            throw new SecurityException(ques);
+            throw new SSHSecurityException(ques);
         }
 
         @Override

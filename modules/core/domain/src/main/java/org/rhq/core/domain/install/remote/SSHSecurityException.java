@@ -19,14 +19,25 @@
 package org.rhq.core.domain.install.remote;
 
 /**
- * Indicates if things like the SSH handshake is missing data (e.g. a password or passphrase).
+ * Indicates if things like the SSH key fingerprints are unknown or unauthenticated.
  *
  * @author John Mazzitelli
  */
-public class SSHAccessException extends RuntimeException {
+public class SSHSecurityException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    public SSHAccessException(String message) {
+    public SSHSecurityException() {
+    }
+
+    public SSHSecurityException(String message) {
         super(message);
+    }
+
+    public SSHSecurityException(Throwable cause) {
+        super(cause);
+    }
+
+    public SSHSecurityException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

@@ -2,9 +2,7 @@ package org.rhq.core.db.upgrade;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import mazz.i18n.Logger;
 
@@ -23,66 +21,27 @@ public class SubcategoryUpgradeTask implements DatabaseUpgradeTask {
 
     @Override
     public void execute(DatabaseType databaseType, Connection connection) throws SQLException {
-        String sql = "SELECT id, name, resource_type_id FROM  rhq_resource_subcat";
+        String sql = "SELECT RHQ_RESOURCE_TYPE.id, RHQ_RESOURCE_SUBCAT.name"
+                   + " FROM RHQ_RESOURCE_TYPE "
+                   + " LEFT JOIN RHQ_RESOURCE_SUBCAT "
+                   + " ON RHQ_RESOURCE_TYPE.subcategory_id = RHQ_RESOURCE_SUBCAT.id;";
 
         log.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, sql);
         List<Object[]> results = databaseType.executeSelectSql(connection, sql);
 
-        Integer primaryId;
-        Integer duplicateId;
-        Integer resourceTypeId;
-        String name = null;
-        Map<String, Object[]> primaryNameMap = new HashMap<String, Object[]>();
-
+        Integer rowId;
+        String subcategoryName;
         for (Object[] row : results) {
-            name = (String) row[1];
-            if (!primaryNameMap.containsKey(name)) {
-                primaryNameMap.put(name, row);
-                primaryId = databaseType.getInteger(row[0]);
+            rowId = (Integer) row[0];
+            subcategoryName = (String) row[1];
 
-                if (row[2] != null) {
-                    resourceTypeId = databaseType.getInteger(row[2]);
-
-                    //Create the linking entry to link resource to it's proper subcategories
-                    log.debug(DbUtilsI18NResourceKeys.MESSAGE,
-                        "Create subcategory to parent resource entry for resource type [id= " + resourceTypeId
-                            + "] with subcategory [id= " + primaryId + "]");
-                    String insert = "INSERT INTO rhq_resource_type_subcat ( RESOURCE_TYPE_ID,  RESOURCE_SUBCAT_ID) values"
-                        + " ( " + resourceTypeId + " , " + primaryId + " )";
-                    log.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, insert);
-                    databaseType.executeSql(connection, insert);
-                }
-            } else {
-                duplicateId = databaseType.getInteger(row[0]);
-                primaryId = databaseType.getInteger(primaryNameMap.get(name)[0]);
-
-                if (row[2] != null) {
-                    resourceTypeId = databaseType.getInteger(row[2]);
-
-                    //Create the linking entry to link resource to it's proper subcategories
-                    log.debug(DbUtilsI18NResourceKeys.MESSAGE,
-                        "Create subcategory to parent resource entry for resource type [id= " + resourceTypeId
-                            + "] with subcategory [id= " + primaryId + "]");
-                    String insert = "INSERT INTO rhq_resource_type_subcat ( RESOURCE_TYPE_ID,  RESOURCE_SUBCAT_ID) values"
-                        + " ( " + resourceTypeId + " , " + primaryId + " )";
-                    log.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, insert);
-                    databaseType.executeSql(connection, insert);
-                }
-
-                //Make resources that were pointing to the duplicate subcategory to this other subcategory
-                log.debug(DbUtilsI18NResourceKeys.MESSAGE, "Replacing subcategory [id= " + duplicateId + "] with [id= "
-                    + primaryId + "]");
-                String update = "UPDATE rhq_resource_type SET subcategory = " + primaryId + " WHERE subcategory = "
-                    + duplicateId;
+            if (subcategoryName != null && !subcategoryName.isEmpty()) {
+                log.debug(DbUtilsI18NResourceKeys.MESSAGE, "Updating resource [id= " + rowId
+                    + "] to have subcategory " + subcategoryName);
+                String update = "UPDATE RHQ_RESOURCE_TYPE SET SUBCATEGORY = '" + subcategoryName + "' WHERE id = "
+                    + rowId;
                 log.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, update);
                 databaseType.executeSql(connection, update);
-
-                //delete duplicate subcategory
-                log.debug(DbUtilsI18NResourceKeys.MESSAGE, "Delete subcategory [id= " + duplicateId
-                    + "] because it is duplicated.");
-                String delete = "DELETE from rhq_resource_subcat WHERE id = " + duplicateId;
-                log.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, delete);
-                databaseType.executeSql(connection, delete);
             }
         }
     }

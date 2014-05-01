@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -47,6 +46,8 @@ import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
@@ -62,6 +63,7 @@ import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
@@ -115,6 +117,9 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private String rhqAgentEnvSh = null;
 
     private final AbsolutePathValidator absPathValidator = new AbsolutePathValidator();
+
+    // if the user has explicitly authorized the unknown host
+    private boolean hostAuthorized = false;
 
     public static enum Type {
         INSTALL, UNINSTALL, START, STOP;
@@ -187,6 +192,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         host.setPrompt(MSG.view_remoteAgentInstall_promptHost());
         host.setHoverWidth(300);
         host.setEndRow(true);
+        host.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                hostAuthorized = false; // if the host changes, we need to make sure the user authorizes it if needed
+            }
+        });
 
         TextItem port = new TextItem("port", MSG.common_title_port());
         port.setRequired(false);
@@ -237,7 +248,21 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         }
         findAgentInstallPathButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                findAgentInstallPath();
+                // we only want to validate host
+                if (connectionForm.getValueAsString("host") == null
+                    || connectionForm.getValueAsString("host").trim().isEmpty()) {
+                    final HashMap<String, String> errors = new HashMap<String, String>(1);
+                    errors.put("host", CoreGUI.getSmartGwtMessages().validator_requiredField());
+                    connectionForm.setErrors(errors, true);
+                    return;
+                }
+
+                new CheckSSHConnectionCallback() {
+                    @Override
+                    protected void doActualWork() {
+                        findAgentInstallPath();
+                    }
+                }.execute();
             }
         });
 
@@ -256,7 +281,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         statusCheckButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
-                    agentStatusCheck();
+                    new CheckSSHConnectionCallback() {
+                        @Override
+                        protected void doActualWork() {
+                            agentStatusCheck();
+                        }
+                    }.execute();
                 }
             }
         });
@@ -306,7 +336,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                 absPathValidator.setPerformCheck(true);
                 try {
                     if (connectionForm.validate()) {
-                        installAgent();
+                        new CheckSSHConnectionCallback() {
+                            @Override
+                            protected void doActualWork() {
+                                installAgent();
+                            }
+                        }.execute();
                     }
                 } finally {
                     absPathValidator.setPerformCheck(false);
@@ -321,7 +356,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                 absPathValidator.setPerformCheck(true);
                 try {
                     if (connectionForm.validate()) {
-                        uninstallAgent();
+                        new CheckSSHConnectionCallback() {
+                            @Override
+                            protected void doActualWork() {
+                                uninstallAgent();
+                            }
+                        }.execute();
                     }
                 } finally {
                     absPathValidator.setPerformCheck(false);
@@ -334,7 +374,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         startButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
-                    startAgent();
+                    new CheckSSHConnectionCallback() {
+                        @Override
+                        protected void doActualWork() {
+                            startAgent();
+                        }
+                    }.execute();
                 }
             }
         });
@@ -344,7 +389,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         stopButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
-                    stopAgent();
+                    new CheckSSHConnectionCallback() {
+                        @Override
+                        protected void doActualWork() {
+                            stopAgent();
+                        }
+                    }.execute();
                 }
             }
         });
@@ -371,6 +421,15 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         return buttonsForm;
     }
 
+    /**
+     * Call this method when we know all processing (including all async calls) are done
+     * and we are ready for the user to interact with the page again.
+     */
+    private void doneProcessing() {
+        disableButtons(false);
+        hostAuthorized = false; // if the ssh fingerprint changes under us this forces the user to re-authorize again
+    }
+
     private void displayError(String msg) {
         displayError(msg, null);
     }
@@ -385,6 +444,12 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private void displayMessage(String msg) {
         CoreGUI.getMessageCenter().notify(
             new Message(msg, Message.Severity.Info, EnumSet.of(Message.Option.BackgroundJobResult)));
+    }
+
+    private void setAgentStatusText(String msg) {
+        if (agentStatusText != null && agentStatusText.isDrawn()) {
+            agentStatusText.setValue(msg);
+        }
     }
 
     private FileUploadForm createAgentConfigXmlUploadForm() {
@@ -431,54 +496,46 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     }
 
     private void findAgentInstallPath() {
-        final Map<String, String> errors = new HashMap<String, String>(2);
-        if (connectionForm.getValueAsString("host") == null
-            || connectionForm.getValueAsString("host").trim().isEmpty()) {
-            errors.put("host", CoreGUI.getSmartGwtMessages().validator_requiredField());
-        }
-        connectionForm.setErrors(errors, true);
-        if (errors.isEmpty()) {
-            disableButtons(true);
+        disableButtons(true);
 
-            final String parentPath = getAgentInstallPath();
+        final String parentPath = getAgentInstallPath();
 
-            remoteInstallService.findAgentInstallPath(getRemoteAccessInfo(), parentPath, new AsyncCallback<String>() {
-                public void onFailure(Throwable caught) {
-                    disableButtons(false);
-                    displayError(MSG.view_remoteAgentInstall_error_1(), caught);
-                }
+        remoteInstallService.findAgentInstallPath(getRemoteAccessInfo(), parentPath, new AsyncCallback<String>() {
+            public void onFailure(Throwable caught) {
+                displayError(MSG.view_remoteAgentInstall_error_1(), caught);
+                doneProcessing();
+            }
 
-                public void onSuccess(String result) {
-                    disableButtons(false);
-                    if (result != null) {
-                        agentInstallPath.setValue(result);
-                        agentStatusCheck();
+            public void onSuccess(String result) {
+                if (result != null) {
+                    agentInstallPath.setValue(result);
+                    agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
+                } else {
+                    String err;
+                    if (parentPath == null || parentPath.length() == 0) {
+                        err = MSG.view_remoteAgentInstall_error_2();
                     } else {
-                        String err;
-                        if (parentPath == null || parentPath.length() == 0) {
-                            err = MSG.view_remoteAgentInstall_error_2();
-                        } else {
-                            err = MSG.view_remoteAgentInstall_error_3(parentPath);
-                        }
-                        displayError(err, null);
-                        agentStatusText.setValue(MSG.view_remoteAgentInstall_agentStatusDefault());
+                        err = MSG.view_remoteAgentInstall_error_3(parentPath);
                     }
+                    displayError(err, null);
+                    setAgentStatusText(MSG.view_remoteAgentInstall_agentStatusDefault());
+                    doneProcessing();
                 }
-            });
-        }
+            }
+        });
     }
 
     private void agentStatusCheck() {
         disableButtons(true);
         remoteInstallService.agentStatus(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
-                disableButtons(false);
-                agentStatusText.setValue(caught.getMessage());
+                setAgentStatusText(caught.getMessage());
+                doneProcessing();
             }
 
             public void onSuccess(String result) {
-                disableButtons(false);
-                agentStatusText.setValue(result);
+                setAgentStatusText(result);
+                doneProcessing();
             }
         });
     }
@@ -552,7 +609,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
     private void reallyInstallAgent() {
         disableButtons(true);
-        agentStatusText.setValue(MSG.view_remoteAgentInstall_installingPleaseWait());
+        setAgentStatusText(MSG.view_remoteAgentInstall_installingPleaseWait());
         SC.ask(MSG.view_remoteAgentInstall_overwriteAgentTitle(), MSG.view_remoteAgentInstall_overwriteAgentQuestion(),
             new BooleanCallback() {
                 @Override
@@ -562,9 +619,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                     remoteInstallService.installAgent(getRemoteAccessInfo(), customData,
                         new AsyncCallback<AgentInstallInfo>() {
                             public void onFailure(Throwable caught) {
-                                disableButtons(false);
                                 displayError(MSG.view_remoteAgentInstall_error_4(), caught);
-                                agentStatusText.setValue(MSG.view_remoteAgentInstall_error_4());
+                                setAgentStatusText(MSG.view_remoteAgentInstall_error_4());
 
                                 if (agentConfigXmlUploadForm != null) {
                                     agentConfigXmlUploadForm.reset();
@@ -572,23 +628,26 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
                                 if (rhqAgentEnvUploadForm != null) {
                                     rhqAgentEnvUploadForm.reset();
                                 }
+                                doneProcessing();
                             }
 
                             public void onSuccess(AgentInstallInfo result) {
-                                disableButtons(false);
-                                installButton.setDisabled(true); // don't re-enable install - install was successful, no need to do it again
+                                // if the install button isn't created, user must have navigated away, so skip the UI stuff
+                                if (installButton.isCreated()) {
+                                    installButton.setDisabled(true); // don't re-enable install - install was successful, no need to do it again
 
-                                displayMessage(MSG.view_remoteAgentInstall_success());
-                                agentStatusText.setValue(MSG.view_remoteAgentInstall_success());
+                                    displayMessage(MSG.view_remoteAgentInstall_success());
+                                    setAgentStatusText(MSG.view_remoteAgentInstall_success());
 
-                                if (!result.isConfirmedAgentConnection()) {
-                                    displayError(MSG.view_remoteAgentInstall_error_cannotPingAgent(
-                                        result.getAgentAddress(), String.valueOf(result.getAgentPort())));
+                                    if (!result.isConfirmedAgentConnection()) {
+                                        displayError(MSG.view_remoteAgentInstall_error_cannotPingAgent(
+                                            result.getAgentAddress(), String.valueOf(result.getAgentPort())));
+                                    }
+
+                                    buildInstallInfoCanvas(agentInfoLayout, result);
+                                    agentInfoLayout.markForRedraw();
+                                    agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
                                 }
-
-                                buildInstallInfoCanvas(agentInfoLayout, result);
-                                agentInfoLayout.markForRedraw();
-                                agentStatusCheck();
 
                                 // tell the success handler
                                 invokeSuccessHandler(Type.INSTALL);
@@ -603,22 +662,22 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
 
         remoteInstallService.uninstallAgent(getRemoteAccessInfo(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
-                disableButtons(false);
                 displayError(MSG.view_remoteAgentInstall_error_7(), caught);
-                agentStatusText.setValue(MSG.view_remoteAgentInstall_error_7());
+                setAgentStatusText(MSG.view_remoteAgentInstall_error_7());
+                doneProcessing();
             }
 
             public void onSuccess(String result) {
-                disableButtons(false);
                 if (result != null) {
-                    agentStatusText.setValue(MSG.view_remoteAgentInstall_uninstallSuccess());
+                    setAgentStatusText(MSG.view_remoteAgentInstall_uninstallSuccess());
                     displayMessage(MSG.view_remoteAgentInstall_uninstallAgentResults(result));
-                    agentStatusCheck();
+                    agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
 
                     // tell the success handler
                     invokeSuccessHandler(Type.UNINSTALL);
                 } else {
-                    agentStatusText.setValue(MSG.view_remoteAgentInstall_error_7());
+                    setAgentStatusText(MSG.view_remoteAgentInstall_error_7());
+                    doneProcessing();
                 }
             }
         });
@@ -628,14 +687,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         disableButtons(true);
         remoteInstallService.startAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
-                disableButtons(false);
                 displayError(MSG.view_remoteAgentInstall_error_5(), caught);
+                doneProcessing();
             }
 
             public void onSuccess(String result) {
-                disableButtons(false);
                 displayMessage(MSG.view_remoteAgentInstall_startAgentResults(result));
-                agentStatusCheck();
+                agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
 
                 // tell the success handler
                 invokeSuccessHandler(Type.START);
@@ -647,14 +705,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         disableButtons(true);
         remoteInstallService.stopAgent(getRemoteAccessInfo(), getAgentInstallPath(), new AsyncCallback<String>() {
             public void onFailure(Throwable caught) {
-                disableButtons(false);
                 displayError(MSG.view_remoteAgentInstall_error_6(), caught);
+                doneProcessing();
             }
 
             public void onSuccess(String result) {
-                disableButtons(false);
                 displayMessage(MSG.view_remoteAgentInstall_stopAgentResults(result));
-                agentStatusCheck();
+                agentStatusCheck(); // we are relying on this to call doneProcessing(), we shouldn't do it here
 
                 // tell the success handler
                 invokeSuccessHandler(Type.STOP);
@@ -740,16 +797,28 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         return steps.toArray(new ListGridRecord[steps.size()]);
     }
 
+    private void disableCanvas(Canvas obj, boolean disabled) {
+        if (obj.isCreated()) {
+            obj.setDisabled(disabled);
+        }
+    }
+
+    private void disableCanvasItem(CanvasItem obj, boolean disabled) {
+        if (obj.isDrawn()) {
+            obj.setDisabled(disabled);
+        }
+    }
+
     private void disableButtons(boolean disabled) {
-        installButton.setDisabled(disabled);
-        uninstallButton.setDisabled(disabled);
-        startButton.setDisabled(disabled);
-        stopButton.setDisabled(disabled);
-        buttonsForm.setDisabled(disabled);
-        statusCheckButton.setDisabled(disabled);
+        disableCanvas(installButton, disabled);
+        disableCanvas(uninstallButton, disabled);
+        disableCanvas(startButton, disabled);
+        disableCanvas(stopButton, disabled);
+        disableCanvas(buttonsForm, disabled);
+        disableCanvasItem(statusCheckButton, disabled);
         // we only want to mess with this if we are in "install" mode
         if (showInstallButton) {
-            findAgentInstallPathButton.setDisabled(disabled);
+            disableCanvasItem(findAgentInstallPathButton, disabled);
         }
     }
 
@@ -776,6 +845,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         boolean rememberme = Boolean.parseBoolean(connectionForm.getValueAsString("rememberme"));
         info.setRememberMe(rememberme);
 
+        info.setHostAuthorized(hostAuthorized);
+
         return info;
     }
 
@@ -793,6 +864,48 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         }
         public boolean condition(Object value) {
             return (this.performCheck == false) || ((value != null) && (value.toString().startsWith("/")));
+        }
+    }
+
+    // all our remote SSH work should be wrapped in this callback so we can check the SSH
+    // connection first. This provides a way to notify the user if the host key fingerprint
+    // is unknown or has changed.
+    private abstract class CheckSSHConnectionCallback implements AsyncCallback<Void> {
+        protected abstract void doActualWork();
+
+        public void execute() {
+            disableButtons(true);
+            remoteInstallService.checkSSHConnection(getRemoteAccessInfo(), this);
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            disableButtons(false);
+            doActualWork();
+        }
+
+        @Override
+        public void onFailure(Throwable caught) {
+            disableButtons(false);
+
+            // if this failure was because the SSH connection wanted to ask a security question
+            // (one of two things - either the host fingerprint is not known and we should add it
+            // or the host fingerprint has changed and we should change it), then ask the question
+            // (which jsch has provided us and we put in the SSHSecurityException) and if the user
+            // answers "yes" then do the work as we originally were asked to do.
+            if (caught instanceof SSHSecurityException) {
+                SC.ask(caught.getMessage(), new BooleanCallback() {
+                    @Override
+                    public void execute(Boolean value) {
+                        if (value != null && value.booleanValue()) {
+                            hostAuthorized = true; // the user has just authorized the host
+                            doActualWork();
+                        }
+                    }
+                });
+            } else {
+                displayError(MSG.view_remoteAgentInstall_error_connError(), caught);
+            }
         }
     }
 

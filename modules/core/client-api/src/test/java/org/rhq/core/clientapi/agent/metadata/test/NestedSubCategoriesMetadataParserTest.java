@@ -42,9 +42,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
  /**
@@ -75,33 +72,6 @@ public class NestedSubCategoriesMetadataParserTest {
              t.printStackTrace();
              throw new RuntimeException(t);
          }
-     }
-
-     @Test
-     public void parseSingleSubCategory() {
-         List<ServerDescriptor> servers = pluginDescriptor.getServers();
-         ServerDescriptor server0 = servers.get(0);
-         ResourceDescriptor.Subcategories subCategoriesDescriptor = server0.getSubcategories();
-         assert subCategoriesDescriptor != null : "No subcategories element: " + server0.getName();
-
-         List<SubCategoryDescriptor> subCategoryDescriptors = subCategoriesDescriptor.getSubcategory();
-
-         assert subCategoryDescriptors != null : "No subcategory elements: " + server0.getName();
-         assert !subCategoryDescriptors.isEmpty() : "No subcategory elements: " + server0.getName();
-
-         ResourceSubCategory subCat;
-
-         ResourceType resType = new ResourceType("testResType", "myplugin", ResourceCategory.SERVER, null);
-        //TODO: Re-enable Subcategory
-        /*subCat = SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptors.get(0), resType);
-
-        assert subCat != null : "Null subcategory received from parser";
-        assert subCat.getName().equals("applications") : "Name not read correctly";
-        assert subCat.getDisplayName().equals("Apps") : "Display name not read correctly";
-        assert subCat.getDescription().equals("The apps.") : "Description not read correctly";*/
-         // getSubCategory is no longer responsible for setting resourcetype information, that is done in PluginMetadataParser
-         //assert subCat.getResourceType().equals(resType) : "ResourceType not set correctly";
-
      }
 
      @Test

@@ -89,7 +89,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager; // self-reference
 
-    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag) {
@@ -104,7 +103,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return;
     }
 
-    @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag) {
         ResourceType resourceType = getResourceTypeById(subject, resourceTypeId);
@@ -121,25 +119,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return;
     }
 
-    @Override
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void setResourceTypeUninventoryMissingFlag(Subject subject, int resourceTypeId,
-        boolean uninventoryMissingFlag) {
-        ResourceType resourceType = getResourceTypeById(subject, resourceTypeId);
-
-        // don't bother to do anything if the type's flag is already set to the value the caller wants
-        if (resourceType.isUninventoryMissing() == uninventoryMissingFlag) {
-            return;
-        }
-
-        log.info("Changing uninventoryMissing flag to [" + uninventoryMissingFlag + "] for resource type ["
-            + resourceType.getName() + "] with id=[" + resourceTypeId + "]");
-
-        resourceType.setUninventoryMissing(uninventoryMissingFlag);
-        return;
-    }
-
-    @Override
     public ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException {
         // this operation does not need to be secured; types are data side-effects of authorized resources
         ResourceType resourceType = entityManager.find(ResourceType.class, id);
@@ -151,13 +130,11 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     }
 
     // remote
-    @Override
     public ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin) {
         return getResourceTypeByNameAndPlugin(name, plugin);
     }
 
     // local
-    @Override
     public ResourceType getResourceTypeByNameAndPlugin(String name, String plugin) {
         try {
             Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
@@ -169,7 +146,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         }
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getChildResourceTypes(Subject subject, ResourceType parent) {
         Query query = null;
@@ -181,7 +157,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getChildResourceTypesByCategory(Subject subject, Resource parentResource,
         ResourceCategory category) {
@@ -204,7 +179,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getUtilizedChildResourceTypesByCategory(Subject subject, Resource parentResource,
         ResourceCategory category) {
@@ -234,7 +208,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
      *
      * @see    ResourceCategory
      */
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getAllResourceTypesByCategory(Subject subject, ResourceCategory category) {
         Query query;
@@ -250,7 +223,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return res;
     }
 
-    @Override
     public List<String> getUtilizedResourceTypeNamesByCategory(Subject subject, ResourceCategory category,
         String nameFilter, String pluginName) {
 
@@ -264,7 +236,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return typeNames;
     }
 
-    @Override
     public List<ResourceType> getUtilizedResourceTypesByCategory(Subject subject, ResourceCategory category,
         String nameFilter) {
         List<ResourceType> types = getUtilizeTypes_helper(subject, category, nameFilter, null);
@@ -300,7 +271,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
      *
      * @return List of ResourceTypes. If nothing is found, then this list is empty
      */
-    @Override
     @SuppressWarnings("unchecked")
     public Map<Integer, SortedSet<ResourceType>> getChildResourceTypesForResourceTypes(List<ResourceType> types) {
         // nothing to do
@@ -384,7 +354,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return result;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject, String pluginName) {
         Query query = null;
@@ -400,7 +369,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group, boolean recursive) {
         final String queryName = recursive ? ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP
@@ -419,7 +387,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return map;
     }
 
-    @Override
     public boolean ensureResourceType(Subject subject, Integer resourceTypeId, Integer[] resourceIds)
         throws ResourceTypeNotFoundException {
         Set<Integer> uniqueIds = new HashSet<Integer>();
@@ -434,7 +401,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
      * Return which facets are available for the passed return type. This is e.g. used to determine which tabs (Monitor,
      * Inventory, ...) can be displayed for a resource of a certain type
      */
-    @Override
     @SuppressWarnings("unchecked")
     public ResourceFacets getResourceFacets(int resourceTypeId) {
         ResourceFacets cachedFacet = ResourceFacetsCache.getSingleton().getResourceFacets(resourceTypeId);
@@ -452,7 +418,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return facets.get(0);
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public void reloadResourceFacetsCache() {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_RESOURCE_FACETS);
@@ -462,7 +427,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         ResourceFacetsCache.getSingleton().reload(facets);
     }
 
-    @Override
     public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
         Query templateCountQuery = entityManager.createNamedQuery(ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES);
 
@@ -515,7 +479,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         type.setSubCategory(null);
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getResourceTypesByPlugin(String pluginName) {
         final String queryName = ResourceType.QUERY_FIND_BY_PLUGIN;
@@ -527,7 +490,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<Integer> getResourceTypeIdsByPlugin(String plugin) {
         return entityManager.createNamedQuery(ResourceType.QUERY_FIND_IDS_BY_PLUGIN).setParameter("plugin", plugin)
@@ -536,11 +498,10 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     @Override
     public Integer getResourceTypeCountByPlugin(String plugin) {
-        return (Integer) entityManager.createNamedQuery(ResourceType.QUERY_FIND_COUNT_BY_PLUGIN)
-            .setParameter("plugin", plugin).getSingleResult();
+        return (Integer) entityManager.createNamedQuery(ResourceType.QUERY_FIND_COUNT_BY_PLUGIN).setParameter("plugin",
+            plugin).getSingleResult();
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -548,7 +509,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return queryRunner.execute();
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<String> getDuplicateTypeNames() {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_DUPLICATE_TYPE_NAMES);
@@ -556,7 +516,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    @Override
     public LinkedHashMap<Integer, String> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId) {
         List<ResourceType> types = getAllResourceTypeDescendants(subject, resourceTypeId);
         excludeThoseWithoutOperations(types);
@@ -578,7 +537,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         }
     }
 
-    @Override
     public List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId) {
         Set<ResourceType> uniqueTypes = new HashSet<ResourceType>();
         Stack<ResourceType> toProcess = new Stack<ResourceType>();
@@ -615,7 +573,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         return results;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public List<ResourceType> getAllResourceTypeDescendants(Subject subject, int resourceTypeId) {
         ResourceType first = entityManager.find(ResourceType.class, resourceTypeId);

@@ -528,15 +528,6 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The process scans should have been deleted", 0, processScans.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
-        "RemoveTypes" })
-    public void deleteSubcategories() {
-        /*List<?> subcategories = getEntityManager()
-            .createQuery("from ResourceSubCategory r where r.name = :name1 or r.name = :name2 or r.name = :name3")
-            .setParameter("name1", "ServerC.Category1").setParameter("name2", "ServerC.Category2")
-            .setParameter("name3", "ServerC.NestedCategory1").getResultList();
-        assertEquals("The subcategories should have been deleted", 0, subcategories.size());*/
-    }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
         "RemoveTypes" })

@@ -309,25 +309,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/operation/operation3-2.xml");
         testClassesJar.addAsResource("test/metadata/operation/update3-v1_0.xml");
         testClassesJar.addAsResource("test/metadata/operation/update3-v2_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/illegal-subcat-1.xml");
-        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-2children.xml");
-        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-grandchild.xml");
         testClassesJar.addAsResource("test/metadata/resource/nested-subcat-services-v1_0.xml");
         testClassesJar.addAsResource("test/metadata/resource/nested-subcat-services-v2_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-v1_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-v1_1.xml");
-        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-services-v3_0.xml");
         testClassesJar.addAsResource("test/metadata/resource/no-subcat.xml");
-        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v1_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v1_1.xml");
-        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v2_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v3_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/services-v1_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/services-v2_0.xml");
-        testClassesJar.addAsResource("test/metadata/resource/test-subcategories.xml");
-        testClassesJar.addAsResource("test/metadata/resource/test-subcategories2.xml");
-        testClassesJar.addAsResource("test/metadata/resource/test-subcategories3.xml");
-        testClassesJar.addAsResource("test/metadata/resource/two-subcat.xml");
+        testClassesJar.addAsResource("test/metadata/resource/old-subcat.xml");
         testClassesJar.addAsResource("test/metadata/resource/undefined-child-subcat-1.xml");
         testClassesJar.addAsResource("test/metadata/resource-type/duplicateResourceType.xml");
         testClassesJar.addAsResource("test/metadata/resource-type/update2-v1_0.xml");
@@ -382,7 +368,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.setApplicationXML("application.xml");
 
         // add additional 3rd party dependent jars needed to support test classes
-        Collection thirdPartyDeps = new ArrayList();
+        Collection<String> thirdPartyDeps = new ArrayList<String>();
         thirdPartyDeps.add("joda-time:joda-time");
         thirdPartyDeps.add("org.jboss.shrinkwrap:shrinkwrap-impl-base");
         thirdPartyDeps.add("org.liquibase:liquibase-core");

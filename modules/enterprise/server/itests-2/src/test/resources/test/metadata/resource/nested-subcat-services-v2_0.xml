@@ -4,16 +4,12 @@
         xmlns="urn:xmlns:rhq-plugin">
   
    <server name="testServer1">
-      <subcategories>
-         <subcategory name="parent" displayName="Parent" description="The parent.">
-              <subcategory name="applications2" displayName="Apps2" description="The apps2."/>
-         </subcategory>
-      </subcategories>
-
-      <service name="testService2" subCategory="applications2"/>
-      <service name="testApp1" subCategory="applications2"/>
-
+      <service name="testService2" subCategory="application|applications2"/>
+      <service name="testApp1" subCategory="application|applications2"/>
    </server>
-
+   
+   <server name="testServer2">
+   </server>
+   
 </plugin>
    

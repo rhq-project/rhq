@@ -30,5 +30,6 @@ package org.rhq.core.clientapi.agent.metadata;
  *
  * @author Charles Crouch
  */
+@Deprecated
 public class SubCategoriesMetadataParser {
 }

@@ -3,7 +3,6 @@
         xmlns="urn:xmlns:rhq-plugin">
   
    <server name="testServer1">
-    
    </server>
 
 </plugin>

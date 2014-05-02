@@ -237,6 +237,7 @@ public class AvailabilityProxy implements AvailabilityFacet, Callable<Availabili
         switch (type) {
         case UP:
         case DOWN:
+        case DEAD:
             break;
         default:
             if (LOG.isDebugEnabled()) {

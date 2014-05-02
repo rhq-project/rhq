@@ -36,6 +36,7 @@ import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.IgnoreResourceTypesView;
 import org.rhq.coregui.client.admin.templates.MetricTemplateTypeView;
+import org.rhq.coregui.client.admin.templates.UninventoryDeadResourceTypesView;
 import org.rhq.coregui.client.admin.topology.AffinityGroupTableView;
 import org.rhq.coregui.client.admin.topology.AgentTableView;
 import org.rhq.coregui.client.admin.topology.PartitionEventTableView;
@@ -209,6 +210,14 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         });
         ignoreResourceTypesItem.setRefreshRequired(true); // we always need a new page
 
+        NavigationItem uninventoryDeadResourceTypesItem = new NavigationItem(UninventoryDeadResourceTypesView.VIEW_ID,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new UninventoryDeadResourceTypesView();
+                }
+            });
+        uninventoryDeadResourceTypesItem.setRefreshRequired(true); // we always need a new page
+
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new DownloadsView();
@@ -228,7 +237,8 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
-            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, downloadsItem, agentPluginsItem,
+            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, uninventoryDeadResourceTypesItem,
+            downloadsItem, agentPluginsItem,
             serverPluginsItem);
     }
 

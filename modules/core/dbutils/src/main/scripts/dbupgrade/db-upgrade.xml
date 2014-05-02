@@ -2334,6 +2334,19 @@
 
 <!-- RHQ 4.11.0 uses DB Schema 2.146 -->
 
+            <schemaSpec version="2.147">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_DEAD" columnType="BOOLEAN"/>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Set uninventoryDead flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET UNINVENTORY_DEAD = false
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Set ignored flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET UNINVENTORY_DEAD = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_DEAD" nullable="false" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

@@ -52,7 +52,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
-import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 
 /**
  * A manager that provides methods for creating, reading, updating, and deleting {@link Resource}s.
@@ -94,6 +93,15 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
      *         its children's IDs
      */
     List<Integer> uninventoryResource(Subject user, int resourceId);
+
+    /**
+     * Internal use only. use with care, avoids authz checking overhead.
+     *
+     * @param resourceId
+     * @return true if uninventoryDead was enabled on the type and the resource was uninventoried, or if the resource
+     * was not found. Otherwise false.
+     */
+    boolean uninventoryDeadResourceInNewTransaction(int resourceId);
 
     /**
      * Internal use only. use with care, avoids authz checking overhead.

@@ -29,7 +29,17 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
+    }
 
+    @Override
+    public void setResourceTypeUninventoryDeadFlag(int resourceTypeId, boolean uninventoryDeadFlag)
+        throws RuntimeException {
+        try {
+            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
+            typeManager.setResourceTypeUninventoryDeadFlag(getSessionSubject(), resourceTypeId, uninventoryDeadFlag);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
 
     @Override

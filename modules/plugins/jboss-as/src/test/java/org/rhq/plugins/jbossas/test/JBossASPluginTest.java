@@ -37,8 +37,9 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.communications.command.annotation.LimitedConcurrency;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -58,7 +59,7 @@ public class JBossASPluginTest {
     private static final String PLUGIN_NAME = "JBossAS";
 
     private MockConfigurationServerService configurationCallback = new MockConfigurationServerService();
-    
+
     @BeforeSuite
     public void start() {
         try {
@@ -325,7 +326,14 @@ public class JBossASPluginTest {
                Configuration resourceConfiguration)
       {
          // TODO Auto-generated method stub
-         
+
       }
+
+        @Override
+        @LimitedConcurrency("rhq.server.concurrency-limit.configuration-update")
+        public Configuration persistUpdatedPluginConfiguration(int resourceId, Configuration pluginConfiguration) {
+            // TODO Auto-generated method stub
+            return null;
+        }
     }
 }

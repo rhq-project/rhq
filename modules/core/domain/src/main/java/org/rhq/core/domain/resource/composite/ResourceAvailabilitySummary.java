@@ -84,6 +84,9 @@ public class ResourceAvailabilitySummary implements Serializable {
                 }
                 break;
             }
+            default:
+                // Only stored avail types are relevant, DEAD, for example, is never stored
+                break;
             }
 
             if (avail.getEndTime() == null) {

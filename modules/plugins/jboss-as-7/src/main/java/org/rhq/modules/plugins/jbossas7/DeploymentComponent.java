@@ -87,8 +87,14 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
     public AvailabilityType getAvailability() {
         Operation op = new ReadAttribute(getAddress(), "enabled");
         Result res = getASConnection().execute(op);
-        if (!res.isSuccess())
+        if (!res.isSuccess()) {
+            if (res.getFailureDescription() != null && res.getFailureDescription().toLowerCase().contains("not found")) {
+                getLog().warn("DEAD DEAD DEAD: " + getPath());
+                return AvailabilityType.DEAD;
+            }
+
             return AvailabilityType.DOWN;
+        }
 
         if (res.getResult() == null || !(Boolean) (res.getResult()))
             return AvailabilityType.DOWN;
@@ -284,7 +290,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             // No content -> check for server group
             if (path.startsWith(("server-group="))) {
                 // Server group has no content of its own - use the domain deployment
-                String name = (String) path.substring(path.lastIndexOf("=") + 1);
+                String name = path.substring(path.lastIndexOf("=") + 1);
                 op = new ReadResource(new Address("deployment", name));
                 result = getASConnection().execute(op);
                 if (result.isSuccess()) {

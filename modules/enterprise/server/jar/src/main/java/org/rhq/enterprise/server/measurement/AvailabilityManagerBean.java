@@ -350,6 +350,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 case DISABLED:
                     ++disabled;
                     break;
+                default:
+                    // Only stored avail types are relevant, DEAD, for example, is never stored
+                    break;
                 }
             }
         }
@@ -552,6 +555,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     case UNKNOWN:
                         hasUnknownPeriods = true;
                         break;
+                    default:
+                        // Only stored avail types are relevant, DEAD, for example, is never stored
+                        break;
                     }
 
                     // if the period has been all green,  then set it to UP, otherwise, be pessimistic if there is any
@@ -606,6 +612,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 case UNKNOWN:
                 default:
                     hasUnknownPeriods = true;
+                    // Only stored avail types are relevant, DEAD, for example, is never stored
                 }
 
                 // move to the previous availability record
@@ -957,6 +964,25 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
             AvailabilityType latestType = latest.getAvailabilityType();
             AvailabilityType reportedType = reported.getAvailabilityType();
+
+            // If the reported type is DEAD and this type is enabled for automatic uninventory, then
+            // uninventory the resource and continue with the next reported avail. Otherwise, convert to
+            // DOWN and process as usual.
+            if (AvailabilityType.DEAD == reportedType) {
+                // the reported.getResource() gives us only a resource with an id. Nothing else, so we call a
+                // dedicated SLSB method to do this work.
+                boolean uninventoried = resourceManager.uninventoryDeadResourceInNewTransaction(resourceId);
+                if (uninventoried) {
+                    continue;
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Type not enabled for DEAD cleanup, converting DEAD to DOWN AvailabilityType for resource: "
+                            + reported.getResource());
+                    }
+                    reported.setAvailabilityType(AvailabilityType.DOWN);
+                    reportedType = AvailabilityType.DOWN;
+                }
+            }
 
             // If the current avail is DISABLED, and this report is not trying to re-enable the resource,
             // Then ignore the reported avail.

@@ -26,14 +26,12 @@ import java.util.SortedSet;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -43,19 +41,8 @@ import org.rhq.core.domain.util.PageList;
  * @author Ian Springer
  */
 @Local
-public interface ResourceTypeManagerLocal {
+public interface ResourceTypeManagerLocal extends ResourceTypeManagerRemote {
     // TODO: Add a getResourceTypeByResourceId method.
-
-    /**
-     * Given a specific resource type ID, this will indicate if that type (and resources of that type)
-     * are to be ignored or not. If the type is to be ignored (ignoreFlag == true), then all resources
-     * that are already in inventory of that type will be uninventoried.
-     * 
-     * @param subject user making the request
-     * @param resourceTypeId the type to change
-     * @param ignoreFlag true if the type (and resources of that type) are to be ignored.
-     */
-    void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag);
 
     /**
      * All this does is set the resource type's ignore flag to the given boolean value.
@@ -69,12 +56,16 @@ public interface ResourceTypeManagerLocal {
      */
     void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag);
 
-    ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException;
-
     /**
-     * @return the resource type by name and plugin or null if the type is not found
+     * All this does is set the resource type's uninventoryDead flag to the given boolean value.
+     *
+     * DO NOT USE THIS - THIS IS FOR INTERNAL USE ONLY.
+     *
+     * @param subject
+     * @param resourceTypeId
+     * @param uninventoryDeadFlag
      */
-    ResourceType getResourceTypeByNameAndPlugin(String name, String plugin);
+    void setResourceTypeUninventoryDeadFlag(Subject subject, int resourceTypeId, boolean uninventoryDeadFlag);
 
     /**
      * Gets the list of resource types that are children of the specified resource type and that are viewable by the
@@ -158,18 +149,17 @@ public interface ResourceTypeManagerLocal {
 
     Integer getResourceTypeCountByPlugin(String plugin);
 
-    PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria);
-
     List<String> getDuplicateTypeNames();
 
-    ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
+    ResourceType getResourceTypeByNameAndPlugin(String name, String plugin);
 
     HashMap<Integer, String> getResourceTypeDescendantsWithOperations(Subject subject, int resourceTypeId);
 
     List<ResourceType> getAllResourceTypeAncestors(Subject subject, int resourceTypeId);
 
+    @Deprecated
     /**
-     * 
+     *
      * @param subject subject of the caller
      * @param resourceTypeId resource type to begin with
      * @return list of all {@link org.rhq.core.domain.resource.ResourceType}s of all descendants

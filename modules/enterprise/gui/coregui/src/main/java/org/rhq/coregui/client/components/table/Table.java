@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.components.table;
 
 import java.util.ArrayList;
@@ -425,7 +426,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             topExtraWidgets.hide();
             contents.addMember(topExtraWidgets);
 
-
             // Title
             this.titleCanvas = new HTMLFlow();
             updateTitleCanvas(this.titleString);
@@ -584,20 +584,21 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             if (null == tableAction.getValueMap()) {
                 // button action
                 IButton button = new EnhancedIButton(tableAction.getTitle());
+                button.setTooltip(tableAction.getTooltip());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
                 button.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         disableAllFooterControls();
-                        if (tableAction.confirmMessage != null) {
-                            String message = tableAction.confirmMessage.replaceAll("\\#",
+                        if (tableAction.getConfirmMessage() != null) {
+                            String message = tableAction.getConfirmMessage().replaceAll("\\#",
                                 String.valueOf(listGrid.getSelectedRecords().length));
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
-                                    if(null == confirmed){
+                                    if (null == confirmed) {
                                         refreshTableInfo();
-                                    }else  if (confirmed) {
+                                    } else if (confirmed) {
                                         refreshTableInfo();
                                         tableAction.action.executeAction(listGrid.getSelectedRecords(), null);
                                     } else {
@@ -630,6 +631,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 }
 
                 IMenuButton menuButton = new IMenuButton(tableAction.getTitle());
+                menuButton.setTooltip(tableAction.getTooltip());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
                 menuButton.setAutoFit(true); // this makes it pretty tight, but maybe better than the default, which is pretty wide
@@ -998,8 +1000,18 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * completion. Failure to do so may leave the widgets disabled.
      */
     public void addTableAction(String title, String confirmation, Map<String, Object> valueMap, TableAction tableAction) {
+        TableActionInfo info = new TableActionInfo.TableActionInfoBuilder(title, tableAction)
+                .setConfirmMessage(confirmation).setValueMap(valueMap).createTableActionInfo();
+        tableActions.add(info);
+    }
 
-        TableActionInfo info = new TableActionInfo(title, confirmation, valueMap, tableAction);
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
+    public void addTableAction(TableActionInfo info) {
         tableActions.add(info);
     }
 
@@ -1066,8 +1078,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * Add any widgets to the top of the table for filtering, etc...
      * @param widget
      */
-    public void addTopWidget(Canvas widget ) {
-            this.extraWidgetsAtTop.add(widget);
+    public void addTopWidget(Canvas widget) {
+        this.extraWidgetsAtTop.add(widget);
     }
 
     /**
@@ -1228,9 +1240,9 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 tmpItems[items.length] = hiddenItem;
                 items = tmpItems;
             }
-//            for (FormItem item : items) {
-//                Log.debug(" ********     Form Items sent: " + item.getName() + ": " + item.getValue());
-//            }
+            //            for (FormItem item : items) {
+            //                Log.debug(" ********     Form Items sent: " + item.getName() + ": " + item.getValue());
+            //            }
 
             super.setItems(items);
         }
@@ -1281,13 +1293,16 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
     public static class TableActionInfo {
         private String title;
+        private String tooltip;
         private String confirmMessage;
         private Map<String, Object> valueMap;
         private TableAction action;
         private Canvas actionCanvas;
 
-        protected TableActionInfo(String title, String confirmMessage, Map<String, Object> valueMap, TableAction action) {
+        private TableActionInfo(String title, String tooltip, String confirmMessage, Map<String, Object> valueMap,
+            TableAction action) {
             this.title = title;
+            this.tooltip = tooltip;
             this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
@@ -1301,20 +1316,16 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             return confirmMessage;
         }
 
+        public String getTooltip() {
+            return tooltip;
+        }
+
         public Map<String, Object> getValueMap() {
             return valueMap;
         }
 
         public void setValueMap(Map<String, Object> valueMap) {
             this.valueMap = valueMap;
-        }
-
-        public Canvas getActionCanvas() {
-            return actionCanvas;
-        }
-
-        public void setActionCanvas(Canvas actionCanvas) {
-            this.actionCanvas = actionCanvas;
         }
 
         public TableAction getAction() {
@@ -1325,6 +1336,37 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             this.action = action;
         }
 
+        public static class TableActionInfoBuilder {
+            private String title;
+            private String tooltip;
+            private String confirmMessage;
+            private Map<String, Object> valueMap;
+            private TableAction action;
+
+            public TableActionInfoBuilder(String title, TableAction action) {
+                this.title = title;
+                this.action = action;
+            }
+
+            public TableActionInfoBuilder setTooltip(String tooltip) {
+                this.tooltip = tooltip;
+                return this;
+            }
+
+            public TableActionInfoBuilder setConfirmMessage(String confirmMessage) {
+                this.confirmMessage = confirmMessage;
+                return this;
+            }
+
+            public TableActionInfoBuilder setValueMap(Map<String, Object> valueMap) {
+                this.valueMap = valueMap;
+                return this;
+            }
+
+            public TableActionInfo createTableActionInfo() {
+                return new TableActionInfo(title, tooltip, confirmMessage, valueMap, action);
+            }
+        }
     }
 
     public boolean isShowFooterRefresh() {

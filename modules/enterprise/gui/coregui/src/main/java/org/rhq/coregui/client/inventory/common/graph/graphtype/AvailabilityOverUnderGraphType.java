@@ -115,7 +115,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             return MSG.common_status_avail_disabled();
         case UNKNOWN:
         default:
-            // Only stored avail types are relevant, DEAD, for example, is never stored
+            // Only stored avail types are relevant, MISSING, for example, is never stored
             return MSG.common_status_avail_unknown();
         }
     }
@@ -133,7 +133,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             return MSG.common_status_avail_group_mixed();
         case DOWN:
         default:
-            // Only stored avail types are relevant, DEAD, for example, is never stored
+            // Only stored avail types are relevant, MISSING, for example, is never stored
             return MSG.common_status_avail_down();
         }
     }

@@ -351,7 +351,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     ++disabled;
                     break;
                 default:
-                    // Only stored avail types are relevant, DEAD, for example, is never stored
+                    // Only stored avail types are relevant, MISSING, for example, is never stored
                     break;
                 }
             }
@@ -556,7 +556,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         hasUnknownPeriods = true;
                         break;
                     default:
-                        // Only stored avail types are relevant, DEAD, for example, is never stored
+                        // Only stored avail types are relevant, MISSING, for example, is never stored
                         break;
                     }
 
@@ -612,7 +612,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 case UNKNOWN:
                 default:
                     hasUnknownPeriods = true;
-                    // Only stored avail types are relevant, DEAD, for example, is never stored
+                    // Only stored avail types are relevant, MISSING, for example, is never stored
                 }
 
                 // move to the previous availability record
@@ -965,18 +965,18 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             AvailabilityType latestType = latest.getAvailabilityType();
             AvailabilityType reportedType = reported.getAvailabilityType();
 
-            // If the reported type is DEAD and this type is enabled for automatic uninventory, then
+            // If the reported type is MISSING and this type is enabled for automatic uninventory, then
             // uninventory the resource and continue with the next reported avail. Otherwise, convert to
             // DOWN and process as usual.
-            if (AvailabilityType.DEAD == reportedType) {
+            if (AvailabilityType.MISSING == reportedType) {
                 // the reported.getResource() gives us only a resource with an id. Nothing else, so we call a
                 // dedicated SLSB method to do this work.
-                boolean uninventoried = resourceManager.uninventoryDeadResourceInNewTransaction(resourceId);
+                boolean uninventoried = resourceManager.uninventoryMissingResourceInNewTransaction(resourceId);
                 if (uninventoried) {
                     continue;
                 } else {
                     if (log.isDebugEnabled()) {
-                        log.debug("Type not enabled for DEAD cleanup, converting DEAD to DOWN AvailabilityType for resource: "
+                        log.debug("Type not enabled for automatic uninventory of MISSING resources. Converting MISSING to DOWN AvailabilityType for resource: "
                             + reported.getResource());
                     }
                     reported.setAvailabilityType(AvailabilityType.DOWN);

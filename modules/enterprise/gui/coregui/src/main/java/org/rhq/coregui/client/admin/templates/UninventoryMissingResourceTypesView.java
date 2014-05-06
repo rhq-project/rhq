@@ -51,19 +51,19 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
- * Allows a user to set the "uninventory dead resources" option on specific resource types.
+ * Allows a user to set the "uninventory missing resources" option on specific resource types.
  *
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class UninventoryDeadResourceTypesView extends ResourceTypeTreeView {
+public class UninventoryMissingResourceTypesView extends ResourceTypeTreeView {
 
-    public static final ViewName VIEW_ID = new ViewName("UninventoryDeadResourceTypes",
-        MSG.view_adminConfig_uninventoryDeadResourceTypes(), IconEnum.SERVICES);
+    public static final ViewName VIEW_ID = new ViewName("UninventoryMissingResourceTypes",
+        MSG.view_adminConfig_uninventoryMissingResourceTypes(), IconEnum.SERVICES);
     public static final String VIEW_PATH = ResourceTypeTreeView.VIEW_PATH + VIEW_ID;
     private static final String ATTR_ENABLED = "enabled";
 
-    public UninventoryDeadResourceTypesView() {
+    public UninventoryMissingResourceTypesView() {
         super();
     }
 
@@ -79,7 +79,7 @@ public class UninventoryDeadResourceTypesView extends ResourceTypeTreeView {
 
     @Override
     protected TitleBar getTitleBar() {
-        return new TitleBar(MSG.view_adminConfig_uninventoryDeadResourceTypes(),
+        return new TitleBar(MSG.view_adminConfig_uninventoryMissingResourceTypes(),
             ImageManager.getResourceIcon(ResourceCategory.SERVICE));
     }
 
@@ -103,27 +103,27 @@ public class UninventoryDeadResourceTypesView extends ResourceTypeTreeView {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (!permissions.contains(Permission.MANAGE_INVENTORY)) {
-                    SC.warn(MSG.view_adminConfig_uninventoryDeadResourceTypes_noperm());
+                    SC.warn(MSG.view_adminConfig_uninventoryMissingResourceTypes_noperm());
                     return;
                 }
 
-                String msg = type.isUninventoryDead() ? MSG
-                    .view_adminConfig_uninventoryDeadResourceTypes_confirmOff(type.getName()) : MSG
-                    .view_adminConfig_uninventoryDeadResourceTypes_confirmOn(type.getName());
+                String msg = type.isUninventoryMissing() ? MSG
+                    .view_adminConfig_uninventoryMissingResourceTypes_confirmOff(type.getName()) : MSG
+                    .view_adminConfig_uninventoryMissingResourceTypes_confirmOn(type.getName());
 
                 SC.ask(MSG.common_msg_areYouSure(), msg, new BooleanCallback() {
                     public void execute(Boolean value) {
                         if (Boolean.TRUE.equals(value)) {
                             // call server to flip flag on type
-                            GWTServiceLookup.getResourceTypeGWTService().setResourceTypeUninventoryDeadFlag(
-                                type.getId(), !type.isUninventoryDead(), new AsyncCallback<Void>() {
+                            GWTServiceLookup.getResourceTypeGWTService().setResourceTypeUninventoryMissingFlag(
+                                type.getId(), !type.isUninventoryMissing(), new AsyncCallback<Void>() {
                                     public void onSuccess(Void result) {
                                         // this type reference is inside our cache so make sure we update it
-                                        type.setUninventoryDead(!type.isUninventoryDead());
+                                        type.setUninventoryMissing(!type.isUninventoryMissing());
 
-                                        String msg = type.isUninventoryDead() ? MSG
-                                            .view_adminConfig_uninventoryDeadResourceTypes_successOn(type.getName())
-                                            : MSG.view_adminConfig_uninventoryDeadResourceTypes_successOff(type
+                                        String msg = type.isUninventoryMissing() ? MSG
+                                            .view_adminConfig_uninventoryMissingResourceTypes_successOn(type.getName())
+                                            : MSG.view_adminConfig_uninventoryMissingResourceTypes_successOff(type
                                                 .getName());
                                         CoreGUI.getMessageCenter().notify(new Message(msg));
 
@@ -134,7 +134,7 @@ public class UninventoryDeadResourceTypesView extends ResourceTypeTreeView {
 
                                     public void onFailure(Throwable caught) {
                                         CoreGUI.getErrorHandler().handleError(
-                                            MSG.view_adminConfig_uninventoryDeadResourceTypes_failure(), caught);
+                                            MSG.view_adminConfig_uninventoryMissingResourceTypes_failure(), caught);
                                     }
                                 });
                         }
@@ -163,7 +163,7 @@ public class UninventoryDeadResourceTypesView extends ResourceTypeTreeView {
         public static class GridRecord extends ResourceTypeListGridRecord {
             public GridRecord(ResourceTypeTemplateCountComposite composite) {
                 super(composite);
-                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(composite.getType().isUninventoryDead()));
+                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(composite.getType().isUninventoryMissing()));
             }
         }
 
@@ -175,7 +175,7 @@ public class UninventoryDeadResourceTypesView extends ResourceTypeTreeView {
         public static class TreeNode extends ResourceTypeTreeNode {
             public TreeNode(ResourceTypeTemplateCountComposite composite, String plugin) {
                 super(composite, plugin);
-                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(composite.getType().isUninventoryDead()));
+                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(composite.getType().isUninventoryMissing()));
             }
 
             @Override

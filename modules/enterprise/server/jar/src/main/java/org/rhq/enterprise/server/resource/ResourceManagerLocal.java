@@ -98,10 +98,10 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
      * Internal use only. use with care, avoids authz checking overhead.
      *
      * @param resourceId
-     * @return true if uninventoryDead was enabled on the type and the resource was uninventoried, or if the resource
+     * @return true if uninventoryMissing was enabled on the type and the resource was uninventoried, or if the resource
      * was not found. Otherwise false.
      */
-    boolean uninventoryDeadResourceInNewTransaction(int resourceId);
+    boolean uninventoryMissingResourceInNewTransaction(int resourceId);
 
     /**
      * Internal use only. use with care, avoids authz checking overhead.

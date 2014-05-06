@@ -343,8 +343,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "IGNORED")
     private boolean ignored;
 
-    @Column(name = "UNINVENTORY_DEAD")
-    private boolean uninventoryDead;
+    @Column(name = "UNINVENTORY_MISSING")
+    private boolean uninventoryMissing;
 
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
@@ -596,12 +596,12 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.ignored = ignored;
     }
 
-    public boolean isUninventoryDead() {
-        return uninventoryDead;
+    public boolean isUninventoryMissing() {
+        return uninventoryMissing;
     }
 
-    public void setUninventoryDead(boolean uninventoryDead) {
-        this.uninventoryDead = uninventoryDead;
+    public void setUninventoryMissing(boolean uninventoryMissing) {
+        this.uninventoryMissing = uninventoryMissing;
     }
 
     @PreUpdate

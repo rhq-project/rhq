@@ -123,18 +123,19 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void setResourceTypeUninventoryDeadFlag(Subject subject, int resourceTypeId, boolean uninventoryDeadFlag) {
+    public void setResourceTypeUninventoryMissingFlag(Subject subject, int resourceTypeId,
+        boolean uninventoryMissingFlag) {
         ResourceType resourceType = getResourceTypeById(subject, resourceTypeId);
 
         // don't bother to do anything if the type's flag is already set to the value the caller wants
-        if (resourceType.isUninventoryDead() == uninventoryDeadFlag) {
+        if (resourceType.isUninventoryMissing() == uninventoryMissingFlag) {
             return;
         }
 
-        log.info("Changing uninventoryDead flag to [" + uninventoryDeadFlag + "] for resource type ["
+        log.info("Changing uninventoryMissing flag to [" + uninventoryMissingFlag + "] for resource type ["
             + resourceType.getName() + "] with id=[" + resourceTypeId + "]");
 
-        resourceType.setUninventoryDead(uninventoryDeadFlag);
+        resourceType.setUninventoryMissing(uninventoryMissingFlag);
         return;
     }
 

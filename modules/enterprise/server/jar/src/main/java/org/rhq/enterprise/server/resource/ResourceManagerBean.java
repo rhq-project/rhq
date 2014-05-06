@@ -335,18 +335,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public boolean uninventoryDeadResourceInNewTransaction(int resourceId) {
+    public boolean uninventoryMissingResourceInNewTransaction(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             return true;
         }
 
         ResourceType type = resource.getResourceType();
-        if (type.isUninventoryDead()) {
+        if (type.isUninventoryMissing()) {
             // no need to start the new transaction here, we're already in a new transaction and have
             // only pulled a couple of things into the hibernate cache. So don't call through the facade.
             uninventoryResourceInNewTransaction(resourceId);
-            log.info("Automatic uninventory of DEAD resource: " + resource);
+            log.info("Automatic uninventory of MISSING resource: " + resource);
             return true;
         }
 
@@ -2625,8 +2625,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     .getCurrentAvailability().getAvailabilityType();
             }
 
-            // make sure we don't somehow leak a DEAD avail
-            foundAvail = (AvailabilityType.DEAD == foundAvail) ? AvailabilityType.DOWN : foundAvail;
+            // make sure we don't somehow leak/persist a MISSING avail
+            foundAvail = (AvailabilityType.MISSING == foundAvail) ? AvailabilityType.DOWN : foundAvail;
             results.setAvailabilityType(foundAvail);
 
         } catch (Exception e) {

@@ -17,6 +17,9 @@ public interface ResourceTypeGWTService extends RemoteService {
 
     void setResourceTypeIgnoreFlag(int resourceTypeId, boolean ignoreFlag) throws RuntimeException;
 
+    void setResourceTypeUninventoryMissingFlag(int resourceTypeId, boolean uninventoryMissingFlag)
+        throws RuntimeException;
+
     PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) throws RuntimeException;
 
     ArrayList<ResourceType> getResourceTypesForResourceAncestors(int resourceId) throws RuntimeException;

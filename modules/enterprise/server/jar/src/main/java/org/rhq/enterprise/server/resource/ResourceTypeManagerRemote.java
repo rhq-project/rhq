@@ -32,9 +32,13 @@ import org.rhq.core.domain.util.PageList;
 public interface ResourceTypeManagerRemote {
 
     /**
-     * @param subject
-     * @param resourceTypeId
-     * @param ignoreFlag
+     * Given a specific resource type ID, this will indicate if that type (and resources of that type)
+     * are to be ignored or not. If the type is to be ignored (ignoreFlag == true), then all resources
+     * that are already in inventory of that type will be uninventoried.
+     *
+     * @param subject user making the request
+     * @param resourceTypeId the type to change
+     * @param ignoreFlag true if the type (and resources of that type) are to be ignored.
      *
      * @since 4.7
      */
@@ -52,7 +56,7 @@ public interface ResourceTypeManagerRemote {
      * @param subject
      * @param name
      * @param plugin
-     * @return null if not found
+     * @return the resource type by name and plugin or null if the type is not found
      */
     ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
 

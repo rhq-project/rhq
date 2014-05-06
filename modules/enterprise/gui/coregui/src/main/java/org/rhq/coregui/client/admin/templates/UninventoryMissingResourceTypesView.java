@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2014, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -48,22 +48,22 @@ import org.rhq.coregui.client.PermissionsLoader;
 import org.rhq.coregui.client.components.TitleBar;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.coregui.client.util.message.Message;
 
 /**
- * Allows a user to ignore or unignore specific resource types.
+ * Allows a user to set the "uninventory missing resources" option on specific resource types.
  *
+ * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class IgnoreResourceTypesView extends ResourceTypeTreeView {
+public class UninventoryMissingResourceTypesView extends ResourceTypeTreeView {
 
-    public static final ViewName VIEW_ID = new ViewName("IgnoreResourceTypes",
-        MSG.view_adminConfig_ignoreResourceTypes(), IconEnum.SERVICES);
+    public static final ViewName VIEW_ID = new ViewName("UninventoryMissingResourceTypes",
+        MSG.view_adminConfig_uninventoryMissingResourceTypes(), IconEnum.SERVICES);
     public static final String VIEW_PATH = ResourceTypeTreeView.VIEW_PATH + VIEW_ID;
     private static final String ATTR_ENABLED = "enabled";
 
-    public IgnoreResourceTypesView() {
+    public UninventoryMissingResourceTypesView() {
         super();
     }
 
@@ -79,7 +79,7 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
 
     @Override
     protected TitleBar getTitleBar() {
-        return new TitleBar(MSG.view_adminConfig_ignoreResourceTypes(),
+        return new TitleBar(MSG.view_adminConfig_uninventoryMissingResourceTypes(),
             ImageManager.getResourceIcon(ResourceCategory.SERVICE));
     }
 
@@ -103,45 +103,40 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (!permissions.contains(Permission.MANAGE_INVENTORY)) {
-                    SC.warn(MSG.view_adminConfig_ignoreResourceTypes_noperm());
+                    SC.warn(MSG.view_adminConfig_uninventoryMissingResourceTypes_noperm());
                     return;
                 }
 
-                final boolean newIgnoreFlag = !type.isIgnored();
-                String msg = newIgnoreFlag ? MSG.view_adminConfig_ignoreResourceTypes_confirmIgnore(type.getName())
-                    : MSG.view_adminConfig_ignoreResourceTypes_confirmUnignore(type.getName());
+                String msg = type.isUninventoryMissing() ? MSG
+                    .view_adminConfig_uninventoryMissingResourceTypes_confirmOff(type.getName()) : MSG
+                    .view_adminConfig_uninventoryMissingResourceTypes_confirmOn(type.getName());
+
                 SC.ask(MSG.common_msg_areYouSure(), msg, new BooleanCallback() {
                     public void execute(Boolean value) {
                         if (Boolean.TRUE.equals(value)) {
-                            // call server to flip ignore flag on type
-                            // if we are going to ignore a type, then increase the timeout since this might take a while if there are lots of resources of the type
-                            ResourceTypeGWTServiceAsync service;
-                            if (newIgnoreFlag) {
-                                service = GWTServiceLookup.getResourceTypeGWTService(300000); // arbitrarily picking 5m
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_adminConfig_ignoreResourceTypes_pleaseWait()));
-                            } else {
-                                service = GWTServiceLookup.getResourceTypeGWTService();
-                            }
-                            service.setResourceTypeIgnoreFlag(type.getId(), newIgnoreFlag, new AsyncCallback<Void>() {
-                                public void onSuccess(Void result) {
-                                    type.setIgnored(newIgnoreFlag); // this type reference is inside our cache so make sure we update it
+                            // call server to flip flag on type
+                            GWTServiceLookup.getResourceTypeGWTService().setResourceTypeUninventoryMissingFlag(
+                                type.getId(), !type.isUninventoryMissing(), new AsyncCallback<Void>() {
+                                    public void onSuccess(Void result) {
+                                        // this type reference is inside our cache so make sure we update it
+                                        type.setUninventoryMissing(!type.isUninventoryMissing());
 
-                                    String msg = newIgnoreFlag ? MSG
-                                        .view_adminConfig_ignoreResourceTypes_successIgnore(type.getName()) : MSG
-                                        .view_adminConfig_ignoreResourceTypes_successUnignore(type.getName());
-                                    CoreGUI.getMessageCenter().notify(new Message(msg));
+                                        String msg = type.isUninventoryMissing() ? MSG
+                                            .view_adminConfig_uninventoryMissingResourceTypes_successOn(type.getName())
+                                            : MSG.view_adminConfig_uninventoryMissingResourceTypes_successOff(type
+                                                .getName());
+                                        CoreGUI.getMessageCenter().notify(new Message(msg));
 
-                                    // refresh the listgrid
-                                    // (note: try as I might, could not figure out how to get the 1 listgrid to refresh, so do all of them here)
-                                    CoreGUI.refresh();
-                                }
+                                        // refresh the listgrid
+                                        // (note: try as I might, could not figure out how to get the 1 listgrid to refresh, so do all of them here)
+                                        CoreGUI.refresh();
+                                    }
 
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_adminConfig_ignoreResourceTypes_failure(), caught);
-                                }
-                            });
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_adminConfig_uninventoryMissingResourceTypes_failure(), caught);
+                                    }
+                                });
                         }
                     }
                 });
@@ -168,7 +163,7 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
         public static class GridRecord extends ResourceTypeListGridRecord {
             public GridRecord(ResourceTypeTemplateCountComposite composite) {
                 super(composite);
-                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(!composite.getType().isIgnored()));
+                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(composite.getType().isUninventoryMissing()));
             }
         }
 
@@ -180,7 +175,7 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
         public static class TreeNode extends ResourceTypeTreeNode {
             public TreeNode(ResourceTypeTemplateCountComposite composite, String plugin) {
                 super(composite, plugin);
-                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(!composite.getType().isIgnored()));
+                setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(composite.getType().isUninventoryMissing()));
             }
 
             @Override

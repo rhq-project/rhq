@@ -334,6 +334,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean uninventoryMissingResourceInNewTransaction(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            return true;
+        }
+
+        ResourceType type = resource.getResourceType();
+        if (type.isUninventoryMissing()) {
+            // no need to start the new transaction here, we're already in a new transaction and have
+            // only pulled a couple of things into the hibernate cache. So don't call through the facade.
+            uninventoryResourceInNewTransaction(resourceId);
+            log.info("Automatic uninventory of MISSING resource: " + resource);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> uninventoryResourceInNewTransaction(int resourceId) {
@@ -2605,6 +2625,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     .getCurrentAvailability().getAvailabilityType();
             }
 
+            // make sure we don't somehow leak/persist a MISSING avail
+            foundAvail = (AvailabilityType.MISSING == foundAvail) ? AvailabilityType.DOWN : foundAvail;
             results.setAvailabilityType(foundAvail);
 
         } catch (Exception e) {

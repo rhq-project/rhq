@@ -29,7 +29,18 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
+    }
 
+    @Override
+    public void setResourceTypeUninventoryMissingFlag(int resourceTypeId, boolean uninventoryMissingFlag)
+        throws RuntimeException {
+        try {
+            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
+            typeManager.setResourceTypeUninventoryMissingFlag(getSessionSubject(), resourceTypeId,
+                uninventoryMissingFlag);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
 
     @Override

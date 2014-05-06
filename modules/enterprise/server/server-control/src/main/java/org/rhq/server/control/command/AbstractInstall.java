@@ -40,12 +40,9 @@ import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.exec.DefaultExecuteResultHandler;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
 
 import org.jboss.as.controller.client.ModelControllerClient;
+
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.PropertiesFileUpdate;
@@ -55,8 +52,8 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
-import org.rhq.server.control.util.ExecutorAssist;
 import org.rhq.server.control.RHQPosixParser;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * Common code for commands that perform installs. Basically shared code for Install and Upgrade commands.
@@ -131,29 +128,6 @@ public abstract class AbstractInstall extends ControlCommand {
         } else {
             return true;
         }
-    }
-
-    protected void waitForProcessToStop(String pid) throws Exception {
-
-        if (isWindows() || pid == null) {
-            // For the moment we have no better way to just wait some time
-            Thread.sleep(10 * 1000L);
-        } else {
-            int tries = 5;
-            while (tries > 0) {
-                log.debug(".");
-                if (!isUnixPidRunning(pid)) {
-                    break;
-                }
-                Thread.sleep(2 * 1000L);
-                tries--;
-            }
-            if (tries == 0) {
-                throw new RHQControlException("Process [" + pid
-                    + "] did not finish yet. Terminate it manually and retry.");
-            }
-        }
-
     }
 
     protected void waitForRHQServerToInitialize() throws Exception {

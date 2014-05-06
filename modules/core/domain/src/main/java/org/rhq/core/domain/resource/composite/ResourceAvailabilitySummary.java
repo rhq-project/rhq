@@ -85,7 +85,7 @@ public class ResourceAvailabilitySummary implements Serializable {
                 break;
             }
             default:
-                // Only stored avail types are relevant, DEAD, for example, is never stored
+                // Only stored avail types are relevant, MISSING, for example, is never stored
                 break;
             }
 

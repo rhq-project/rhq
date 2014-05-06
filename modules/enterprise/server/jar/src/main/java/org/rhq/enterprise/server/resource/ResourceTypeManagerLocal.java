@@ -57,15 +57,15 @@ public interface ResourceTypeManagerLocal extends ResourceTypeManagerRemote {
     void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag);
 
     /**
-     * All this does is set the resource type's uninventoryDead flag to the given boolean value.
+     * All this does is set the resource type's uninventoryMissing flag to the given boolean value.
      *
      * DO NOT USE THIS - THIS IS FOR INTERNAL USE ONLY.
      *
      * @param subject
      * @param resourceTypeId
-     * @param uninventoryDeadFlag
+     * @param uninventoryMissingFlag
      */
-    void setResourceTypeUninventoryDeadFlag(Subject subject, int resourceTypeId, boolean uninventoryDeadFlag);
+    void setResourceTypeUninventoryMissingFlag(Subject subject, int resourceTypeId, boolean uninventoryMissingFlag);
 
     /**
      * Gets the list of resource types that are children of the specified resource type and that are viewable by the

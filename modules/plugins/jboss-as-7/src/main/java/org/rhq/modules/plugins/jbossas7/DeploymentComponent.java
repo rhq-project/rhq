@@ -89,8 +89,8 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
             if (res.getFailureDescription() != null && res.getFailureDescription().toLowerCase().contains("not found")) {
-                getLog().warn("DEAD DEAD DEAD: " + getPath());
-                return AvailabilityType.DEAD;
+                getLog().debug("Reporting MISSING resource: " + getPath());
+                return AvailabilityType.MISSING;
             }
 
             return AvailabilityType.DOWN;

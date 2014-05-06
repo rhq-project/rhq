@@ -41,7 +41,7 @@ public enum AvailabilityType {
     DISABLED,
     /** Resource is not just DOWN but is physically gone.  This is used to trigger automatic uninventory. It is
      *  converted to, or treated like DOWN other than for the purpose of automatic uninventory. */
-    DEAD;
+    MISSING;
 
     /**
      * A Java bean style getter to allow us to access the enum name from JSPs or Facelets (e.g.

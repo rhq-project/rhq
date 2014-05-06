@@ -403,7 +403,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     /**
-     * Resources must report UP, DOWN or DEAD, If current is UNKNOWN, return previously set avail, otherwise current.
+     * Resources must report UP, DOWN or MISSING, If current is UNKNOWN, return previously set avail, otherwise current.
      */
     private AvailabilityType translate(AvailabilityType current, AvailabilityType previousType) {
         return current == UNKNOWN ? previousType : current;

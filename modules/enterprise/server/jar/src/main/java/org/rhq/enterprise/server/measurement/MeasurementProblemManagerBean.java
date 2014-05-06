@@ -56,6 +56,7 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
     @SuppressWarnings("unchecked")
     public PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc) {
         pc.initDefaultOrderingField("COUNT(DISTINCT alert.id)", PageOrdering.DESC);
+        pc.addDefaultOrderingField("LENGTH(res.ancestry)");
         pc.addDefaultOrderingField("res.name");
 
         Query queryCount;

@@ -85,7 +85,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType, LENGTH(res.ancestry)"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -97,7 +97,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType, LENGTH(res.ancestry)"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "

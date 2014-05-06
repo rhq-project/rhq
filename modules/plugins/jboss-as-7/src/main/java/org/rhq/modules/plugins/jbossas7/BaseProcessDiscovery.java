@@ -220,7 +220,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         String key = createKeyForLocalResource(serverPluginConfig);
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
         String description = buildDefaultResourceDescription(hostPort, productType);
         String version = getVersion(homeDir, productType);
 
@@ -428,7 +428,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract String getLogFileName();
 
-    protected abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType);
+    protected abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType, String serverName);
 
     protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
 
@@ -458,7 +459,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         managementHostPort.host = hostname;
         managementHostPort.port = port;
         String key = createKeyForRemoteResource(hostname + ":" + port);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
         String version = productInfo.getProductVersion();
         String description = buildDefaultResourceDescription(hostPort, productType);
 
@@ -484,7 +485,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         boolean hasLocalResourcePrefix = currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX);
         boolean hasRemoteResourcePrefix = currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX);
         if (!hasLocalResourcePrefix && !hasRemoteResourcePrefix) {
-            // Resource key in wrong format 
+            // Resource key in wrong format
             upgraded = true;
             if (new File(currentResourceKey).isDirectory()) {
                 // Old key format for a local resource (key is base dir)

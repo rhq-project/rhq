@@ -25,12 +25,10 @@ import java.util.Properties;
 import javax.ejb.Local;
 
 import org.jetbrains.annotations.NotNull;
-
 import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -43,7 +41,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
  * @author John Mazzitelli
  */
 @Local
-public interface AgentManagerLocal {
+public interface AgentManagerLocal extends AgentManagerRemote {
 
     /**
      * Persists install information on a new agent. If the agent install record doesn't exist, a new one will be created.
@@ -356,15 +354,4 @@ public interface AgentManagerLocal {
      * @return The updated request object.
      */
     public PingRequest handlePingRequest(PingRequest request);
-
-    /**
-     * Fetches the agents based on provided criteria.
-     *
-     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
-     *
-     * @param subject caller
-     * @param criteria the criteria
-     * @return list of agents
-     */
-    PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria);
 }

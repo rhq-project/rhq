@@ -164,4 +164,22 @@ public interface MeasurementDataManagerRemote {
      */
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numPoints);
+
+    /**
+     * Get the aggregate values of the numerical values for a given group and metric
+     * definition.
+     *
+     * @param subject      the user requesting the aggregate
+     * @param groupId      the id of the {@link ResourceGroup} for which this aggregate is being requested
+     * @param definitionId the id of the {@link MeasurementDefinition} for the metric
+     *
+     * @param startTime in millis
+     * @param endTime  in millis
+     *
+     * @return MeasurementAggregate aggregate data
+     *
+     * @throws MeasurementException if aggregate cannot be found
+     */
+    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
+
 }

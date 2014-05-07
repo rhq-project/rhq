@@ -28,6 +28,7 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
+import org.rhq.enterprise.server.core.AgentManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.drift.DriftManagerRemote;
 import org.rhq.enterprise.server.drift.DriftTemplateManagerRemote;
@@ -40,6 +41,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
+import org.rhq.enterprise.server.plugin.ServerPluginsRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -60,6 +62,10 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
  * @author Greg Hinkle
  */
 public enum RhqManager {
+    /**
+     * @since 4.12
+     */
+    AgentManager(AgentManagerRemote.class, "${AgentManager}"), //
     AlertManager(AlertManagerRemote.class, "${AlertManager}"), //
     AlertDefinitionManager(AlertDefinitionManagerRemote.class, "${AlertDefinitionManager}"), //
     AvailabilityManager(AvailabilityManagerRemote.class, "${AvailabilityManager}"), //
@@ -79,18 +85,20 @@ public enum RhqManager {
     MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class, "${MeasurementDefinitionManager}"), //
     MeasurementScheduleManager(MeasurementScheduleManagerRemote.class, "${MeasurementScheduleManager}"), //
     OperationManager(OperationManagerRemote.class, "${OperationManager}"), //
-
     /**
      * @since 4.11
      */
     PluginManager(PluginManagerRemote.class, "${PluginManagerRemote}"), //
-
     ResourceManager(ResourceManagerRemote.class, "${ResourceManager}"), //
     ResourceFactoryManager(ResourceFactoryManagerRemote.class, "${ResourceFactoryManager}"), //
     ResourceGroupManager(ResourceGroupManagerRemote.class, "${ResourceGroupManager}"), //
     ResourceTypeManager(ResourceTypeManagerRemote.class, "${ResourceTypeManager}"), //
     RoleManager(RoleManagerRemote.class, "${RoleManager}"), //
     SavedSearchManager(SavedSearchManagerRemote.class, "${SavedSearchManager}"), //
+    /**
+     * @since 4.12
+     */
+    ServerPluginManager(ServerPluginsRemote.class, "${ServerPluginManager}"), //
     StorageNodeManager(StorageNodeManagerRemote.class, "${StorageNodeManager}"), //
     SubjectManager(SubjectManagerRemote.class, "${SubjectManager}"), //
     SupportManager(SupportManagerRemote.class, "${SupportManager}"), //

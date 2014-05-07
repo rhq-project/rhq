@@ -34,6 +34,7 @@ import org.rhq.core.domain.util.PageList;
  * @author Lukas Krejci
  * @since 4.11
  */
+
 @Remote
 public interface PluginManagerRemote {
 
@@ -118,10 +119,19 @@ public interface PluginManagerRemote {
      */
     List<Plugin> deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception;
 
+    /**
+     * Returns a list of plugins by criteria.
+     */
     PageList<Plugin> findPluginsByCriteria(Subject subject, PluginCriteria criteria);
 
+    /**
+     * Enables plugins by ID.
+     */
     void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
+    /**
+     * Disables plugins by ID.
+     */
     void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
@@ -134,4 +144,5 @@ public interface PluginManagerRemote {
      * @throws Exception if an error occurs
      */
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
 }

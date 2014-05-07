@@ -510,7 +510,7 @@ public abstract class ControlCommand {
         }
 
         log.debug("unix pid [" + pid + "] " + ((isRunning) ? "is" : "is NOT") + " running");
-        return true;
+        return isRunning;
     }
 
     protected boolean isStorageRunning() throws IOException {

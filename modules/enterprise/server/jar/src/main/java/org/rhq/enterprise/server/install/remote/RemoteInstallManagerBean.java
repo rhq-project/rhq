@@ -23,6 +23,7 @@
 package org.rhq.enterprise.server.install.remote;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -37,10 +38,12 @@ import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Installs, starts and stops remote agents via SSH.
@@ -105,6 +108,20 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void checkSSHConnection(Subject subject, RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException {
+        SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
+        try {
+            if (!sshUtil.isConnected()) {
+                throw new IllegalStateException("Is not connected to [" + remoteAccessInfo.getHost() + ":"
+                    + remoteAccessInfo.getPort() + "]");
+            }
+        } finally {
+            sshUtil.disconnect();
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo, String agentInstallPath) {
         SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
         try {
@@ -122,7 +139,7 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath) {
-        CustomAgentInstallData data = new CustomAgentInstallData(parentPath, false, null, null);
+        CustomAgentInstallData data = new CustomAgentInstallData(parentPath, false);
         return installAgent(subject, remoteAccessInfo, data);
     }
 
@@ -168,11 +185,11 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             }
 
             // we know the uploaded files had to have their contents obfuscated, we need to deobfuscate them
-            if (customData.getAgentConfigurationXml() != null) {
-                deobfuscateFile(new File(customData.getAgentConfigurationXml()));
+            if (customData.getAgentConfigurationXmlFile() != null) {
+                deobfuscateFile(new File(customData.getAgentConfigurationXmlFile()));
             }
-            if (customData.getRhqAgentEnv() != null) {
-                deobfuscateFile(new File(customData.getRhqAgentEnv()));
+            if (customData.getRhqAgentEnvFile() != null) {
+                deobfuscateFile(new File(customData.getRhqAgentEnvFile()));
             }
 
             // before we install, let's create a AgentInstall and pass its ID
@@ -188,18 +205,19 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
             SSHInstallUtility sshUtil = getSSHConnection(remoteAccessInfo);
             try {
-                return sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+                AgentInstallInfo info = sshUtil.installAgent(customData, String.valueOf(ai.getId()));
+                return info;
             } finally {
                 sshUtil.disconnect();
             }
         } finally {
             // don't leave these around - whether we succeeded or failed, its a one-time-chance with these.
             // we want to delete them in case they have some sensitive info
-            if (customData.getAgentConfigurationXml() != null) {
-                new File(customData.getAgentConfigurationXml()).delete();
+            if (customData.getAgentConfigurationXmlFile() != null) {
+                new File(customData.getAgentConfigurationXmlFile()).delete();
             }
-            if (customData.getRhqAgentEnv() != null) {
-                new File(customData.getRhqAgentEnv()).delete();
+            if (customData.getRhqAgentEnvFile() != null) {
+                new File(customData.getRhqAgentEnvFile()).delete();
             }
         }
     }
@@ -311,7 +329,18 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
             creds = new SSHInstallUtility.Credentials(username, password);
         }
 
-        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo, creds);
+        SSHInstallUtility.SSHConfiguration sshConfig = new SSHInstallUtility.SSHConfiguration();
+
+        File dataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File knownHosts = new File(dataDir, "rhq_known_hosts");
+        try {
+            knownHosts.createNewFile(); // make sure it exists - this creates an empty one if there isn't one yet
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot create a known_hosts file for SSH communication - aborting");
+        }
+        sshConfig.setKnownHostsFile(knownHosts.getAbsolutePath());
+
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo, creds, sshConfig);
         return sshUtil;
     }
 

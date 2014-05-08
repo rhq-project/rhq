@@ -70,7 +70,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "SELECT res.id FROM Resource res " + //
             "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.pluginConfigurationDefinition pluginConfDef " + // 
-            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
+            " WHERE simple.name = :arg1 " + //
             "   AND simple.stringValue = :arg2 " + //
             "   AND simple.configuration = pluginConf " + //
             "   AND simpleDef.configurationDefinition = pluginConfDef " + //
@@ -81,7 +81,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "SELECT res.id FROM Resource res " + //
             "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + // 
-            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
+            " WHERE simple.name = :arg1 " + //
             "   AND simple.stringValue LIKE :arg2 ESCAPE '" + escapeChar + "'" + //
             "   AND simple.configuration = conf " + //
             "   AND simpleDef.configurationDefinition = confDef " + //
@@ -103,7 +103,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "  SELECT simple.stringValue FROM Resource res " + //
             "    JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "    JOIN res.resourceType.resourceConfigurationDefinition confDef " + //
-            "   WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
+            "   WHERE simple.name = :arg1 " + //
             "     AND simple.configuration = conf " + //
             "     AND simpleDef.configurationDefinition = confDef " + //
             "     AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " + //
@@ -112,7 +112,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "  SELECT res.id FROM Resource res " + //
             "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + //
-            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
+            " WHERE simple.name = :arg1 " + //
             "   AND simple.stringValue = :arg2 " + //
             "     AND simple.configuration = conf " + //
             "     AND simpleDef.configurationDefinition = confDef " + //
@@ -150,7 +150,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "SELECT res.id FROM Resource res " + //
             "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple, PropertyDefinition simpleDef  " + //
             "  JOIN res.resourceType.pluginConfigurationDefinition pluginConfDef " + // 
-            " WHERE simple.name LIKE :arg1 ESCAPE '" + escapeChar + "'" + //
+            " WHERE simple.name = :arg1 " + //
             "   AND simple.stringValue IS NULL " + //
             "   AND simple.configuration = pluginConf " + //
             "   AND simpleDef.configurationDefinition = pluginConfDef " + //
@@ -807,6 +807,16 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
             @Override
             public String[] getExpressions() {
                 return new String[] { "memberof = foo", "memberof = foo" };
+            }
+        });
+    }
+
+    @Test(expectedExceptions = InvalidExpressionException.class, expectedExceptionsMessageRegExp = "Unrecognized.*")
+    public void doNotAllowEmptyProperty() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[] { "resource.greatGreatGrandParent.resourceConfiguration[] = 1" };
             }
         });
     }

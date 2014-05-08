@@ -20,8 +20,11 @@ package org.rhq.enterprise.server.resource.group.definition;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -33,12 +36,14 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.server.PersistenceUtility;
@@ -161,10 +166,17 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         return newGroupDefinition;
     }
 
+    public GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition)
+        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
+        ResourceGroupUpdateException {
+        // whenever DG is updated from UI or remotely we detach it from cannedExpression
+        return updateGroupDefinition(subject, groupDefinition, true);
+    }
+    
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     // required for the recalculation thread (same like calculateGroupMembership) this fixes BZ 976265
-    public GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition)
+    private GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition, boolean detachFromCannedExpression)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
         ResourceGroupUpdateException {
 
@@ -214,9 +226,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         attachedGroupDefinition.setRecursive(groupDefinition.isRecursive());
         attachedGroupDefinition.setExpression(groupDefinition.getExpression());
         attachedGroupDefinition.setRecalculationInterval(groupDefinition.getRecalculationInterval());
-
+        if (detachFromCannedExpression) {
+            attachedGroupDefinition.setCannedExpression(null);
+        }
         return attachedGroupDefinition;
     }
+    
 
     // return boolean indicating whether the name of this group definition is changing
     private boolean validate(GroupDefinition definition, Integer id) throws GroupDefinitionException,
@@ -539,5 +554,100 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         return dynaGroupName.substring(0, oldGroupNameIndexStart) + //
             newGroupDefinitionName + //
             dynaGroupName.substring(oldGroupNameIndexStart + oldGroupNameLength);
+    }
+
+    private void updateGroupProperties(GroupDefinition gd, CannedGroupExpression cge) {
+        gd.setName(cge.getName());
+        gd.setDescription(cge.getDescription());
+        gd.setExpression(StringUtils.join(cge.getExpression(), "\n"));
+        gd.setRecalculationInterval(cge.getRecalcInMinutes() * 60 * 1000L);
+        gd.setRecursive(cge.isRecursive());
+        gd.setCannedExpression(cge.getGroupDefinitionReferenceKey());
+    }
+    
+    private GroupDefinition getByName(String name) {
+        Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);
+        query.setParameter("name", name);
+
+        try {
+            GroupDefinition found = (GroupDefinition) query.getSingleResult();
+            return found;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    private void updateDefinitionByCannedExpresssion(CannedGroupExpression cge) {
+        Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_CANNED_EXPR_NAME);
+        query.setParameter("cannedExpression", cge.getGroupDefinitionReferenceKey());
+        @SuppressWarnings("unchecked")
+        List<GroupDefinition> result = query.getResultList();
+        if (cge.isCreateByDefault()) {
+            // let's deploy dyna-group
+            if (result.isEmpty()) {
+                GroupDefinition sameName = getByName(cge.getName());
+                if (sameName != null) {
+                    log.info("Not creating DynaGroup based on ["+cge.getPlugin()+"] "+cge+" DynaGroup with same name already exists");
+                    return;
+                }
+                log.info("Creating dynaGroup based on ["+cge.getPlugin()+"] "+cge);
+                GroupDefinition gd = new GroupDefinition(cge.getName());
+                updateGroupProperties(gd, cge);
+                try {
+                    createGroupDefinition(subjectManager.getOverlord(), gd);
+                } catch (Exception ex) {
+                   log.error(ex);
+                }
+            }
+            else {
+                log.info("Updating dynaGroup based on ["+cge.getPlugin()+"] "+cge);
+                GroupDefinition gd = result.get(0);
+                updateGroupProperties(gd, cge);
+                try {
+                    updateGroupDefinition(subjectManager.getOverlord(), gd, false);
+                } catch (Exception ex) {
+                   log.error(ex);
+                }
+            }
+        } else {
+            if (!result.isEmpty()) {
+                // this might be upgrade
+                // we'd like to delete referenced groupDefinition
+                log.info("Purging "+result.get(0)+" because CannedExpression was upgraded in plugin with createByDefault=false");
+                try {
+                    removeGroupDefinition(subjectManager.getOverlord(), result.get(0).getId());
+                } catch (Exception ex) {
+                   log.error(ex);
+                }
+            }
+        }
+    }
+
+    public void updateGroupsByCannedExpressions(String plugin, List<CannedGroupExpression> expressions) {
+        if (expressions == null) {
+            expressions = Collections.emptyList();
+        }
+        // create or update dyna groups based on our expressions
+        for (CannedGroupExpression cge : expressions) {
+            updateDefinitionByCannedExpresssion(cge);
+        }
+        Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_LIKE_EXPR_NAME);
+        query.setParameter("cannedExpression", plugin+":%"); // include separator ':' !
+        @SuppressWarnings("unchecked")
+        List<GroupDefinition> result = query.getResultList();
+        Map<String,CannedGroupExpression> map = new HashMap<String, CannedGroupExpression>();
+        for (CannedGroupExpression e : expressions) {
+            map.put(e.getGroupDefinitionReferenceKey(), e);
+        }
+        for (GroupDefinition gd : result) {
+            if (!map.containsKey(gd.getCannedExpression())) {
+                log.info("Purging "+gd+" because base CannedExpression does not exist anymore");
+                try {
+                    removeGroupDefinition(subjectManager.getOverlord(), gd.getId());
+                } catch (Exception ex) {
+                   log.error(ex);
+                }
+            }
+        }
     }
 }

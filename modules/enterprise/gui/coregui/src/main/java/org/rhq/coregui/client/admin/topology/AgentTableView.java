@@ -193,8 +193,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                             RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.START);
                             PopupWindow window = new PopupWindow(remoteAgentView);
                             window.setTitle(MSG.view_adminTopology_agent_start());
-                            window.setHeight(300);
-                            window.setWidth(800);
+                            window.setHeight(350);
+                            window.setWidth(850);
                             window.show();
                             refreshTableInfo();
                         }
@@ -234,8 +234,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                             RemoteAgentInstallView remoteAgentView = new RemoteAgentInstallView(ai, Type.STOP);
                             PopupWindow window = new PopupWindow(remoteAgentView);
                             window.setTitle(MSG.view_adminTopology_agent_stop());
-                            window.setHeight(300);
-                            window.setWidth(800);
+                            window.setHeight(350);
+                            window.setWidth(850);
                             window.show();
                             refreshTableInfo();
                         }
@@ -289,8 +289,8 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
                                             final PopupWindow window = new PopupWindow(remoteAgentView);
                                             window.setTitle(MSG.view_adminTopology_agent_uninstall());
-                                            window.setHeight(300);
-                                            window.setWidth(800);
+                                            window.setHeight(350);
+                                            window.setWidth(850);
                                             window.show();
 
                                             remoteAgentView

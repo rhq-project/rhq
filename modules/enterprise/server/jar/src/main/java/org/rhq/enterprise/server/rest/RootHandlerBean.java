@@ -60,6 +60,7 @@ public class RootHandlerBean extends AbstractRestBean  {
             "favoriteResources","user/favorites/resource",
             "operationHistory","operation/history",
             "reports","reports",
+            "plugins","plugins",
             "self",""
     };
 

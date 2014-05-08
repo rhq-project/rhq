@@ -33,6 +33,7 @@ public class RemoteAccessInfo implements Serializable {
     private int port = 22;
     private String agentName;
     private boolean rememberMe;
+    private boolean hostAuthorized = false;
 
     public RemoteAccessInfo(String host, String user, byte[] key) {
         this.host = host;
@@ -119,5 +120,22 @@ public class RemoteAccessInfo implements Serializable {
 
     public void setRememberMe(boolean rememberMe) {
         this.rememberMe = rememberMe;
+    }
+
+    /**
+     * If the host to be connected to is not known, but it is authorized, this will be true.
+     * Otherwise, an unknown host (that is, a host with an unknown SSH key fingerprint) will fail to be connected to.
+     *
+     * If the host is already known, but the known fingerprint is different than the real fingerprint, then
+     * this must be true in order to connect to it. Otherwise, the connection attempt will fail.
+     *
+     * @return flag to indicate if the host is authorized
+     */
+    public boolean isHostAuthorized() {
+        return hostAuthorized;
+    }
+
+    public void setHostAuthorized(boolean hostAuthorized) {
+        this.hostAuthorized = hostAuthorized;
     }
 }

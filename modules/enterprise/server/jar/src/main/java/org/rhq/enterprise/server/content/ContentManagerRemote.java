@@ -242,6 +242,8 @@ public interface ContentManagerRemote {
      * Creates a temporary file for fragmented content upload.
      *
      * @return a temporary file handle
+     *
+     * @since 4.10
      */
     String createTemporaryContentHandle();
 
@@ -255,6 +257,8 @@ public interface ContentManagerRemote {
      * @param fragment fragment bytes
      * @param off the offset
      * @param len
+     *
+     * @since 4.10
      */
     void uploadContentFragment(String temporaryContentHandle, byte[] fragment, int off, int len);
 
@@ -282,6 +286,8 @@ public interface ContentManagerRemote {
      * @return the package version
      *
      * @see ContentManagerRemote#createPackageVersionWithDisplayVersion(org.rhq.core.domain.auth.Subject, String, int, String, String, Integer, byte[])
+     *
+     * @since 4.10
      */
     PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
         String version, String displayVersion, Integer architectureId, String temporaryContentHandle);

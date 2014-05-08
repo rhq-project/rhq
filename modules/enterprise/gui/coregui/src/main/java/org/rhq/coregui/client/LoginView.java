@@ -122,6 +122,7 @@ public class LoginView extends Canvas {
     private static final String ERROR_FEEDBACK_DIV_ID = "errorFeedback";
     private static final String HTML_ID = "htmlId";
     private String errorMessage;
+    private static volatile boolean isLoginView = true;
     
     private ProductInfo productInfo;
 
@@ -146,7 +147,7 @@ public class LoginView extends Canvas {
                 redirectTo(LOGIN_VIEW);
                 return;
             }
-            
+            isLoginView = true;
             loginShowing = true;
             form = new DynamicForm();
             form.setMargin(25);
@@ -673,12 +674,15 @@ public class LoginView extends Canvas {
     }-*/;
     
     public static boolean isLoginView() {
-        return com.google.gwt.user.client.Window.Location.getHref().contains(LOGIN_VIEW);
+        return isLoginView && com.google.gwt.user.client.Window.Location.getHref().contains(LOGIN_VIEW);
     }
     
     public static void redirectTo(String path) {
         if (path != null && !("/coregui/" + path).equals(com.google.gwt.user.client.Window.Location.getPath())) {
-            com.google.gwt.user.client.Window.Location.replace(GWT.getHostPageBaseURL() + path
+            if (path.isEmpty()) {
+                isLoginView = false;
+            }
+            com.google.gwt.user.client.Window.Location.assign(GWT.getHostPageBaseURL() + path
                 + com.google.gwt.user.client.Window.Location.getQueryString()
                 + com.google.gwt.user.client.Window.Location.getHash());
         }

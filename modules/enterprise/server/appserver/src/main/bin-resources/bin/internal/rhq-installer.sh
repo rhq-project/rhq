@@ -6,17 +6,10 @@
 # This file is used to complete the installation of the RHQ Server on a
 # UNIX platform.
 #
-# This script is customized by the settings in rhq-server-env.bat.  The options
+# This script is customized by the settings in rhq-server-env.sh.  The options
 # set there will be applied to this script.  It is not recommended to edit this
 # script directly.
 # =============================================================================
-
-if [ -f "../rhq-server-env.sh" ]; then
-   . "../rhq-server-env.sh" $*
-else
-   echo "Failed to find rhq-server-env.bat. This file should exist in the bin directory."
-   exit 1
-fi
 
 debug_msg ()
 {
@@ -25,6 +18,12 @@ debug_msg ()
       echo $1
    fi
 }
+
+if [ -f "../rhq-server-env.sh" ]; then
+   . "../rhq-server-env.sh" $*
+else
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
+fi
 
 # ----------------------------------------------------------------------
 # Determine what specific platform we are running on.

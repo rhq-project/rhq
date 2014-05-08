@@ -307,31 +307,12 @@ public class ConfigurationUtility {
         {
             if (propertyDefinition instanceof PropertyDefinitionSimple) {
                 PropertySimple propertySimple = parentPropertyMap.getSimple(propertyDefinition.getName());
-                // make sure required properties have a value
-                if (propertyDefinition.isRequired() && (propertySimple.getStringValue() == null)) {
-                    errorMessages.add("Required property '" + propertyDefinition.getName() + "' has a null value in "
-                        + parentPropertyMap + ".");
-                    propertySimple.setStringValue("");
-                }
-                // make sure readOnly properties are not being changed
-                if (propertyDefinition.isReadOnly() && null != currentParentPropertyMap) {
-                    PropertySimple currentPropertySimple = currentParentPropertyMap.getSimple(propertyDefinition
-                        .getName());
-                    if (null != currentPropertySimple) {
-                        String currentValue = currentPropertySimple.getStringValue();
-                        // if there is no current value allow an initial value to be set for the readOnly property.
-                        if (!(null == currentValue || currentValue.trim().isEmpty() || propertySimple.getStringValue()
-                            .equals(currentValue))) {
-
-                            errorMessages.add("ReadOnly property '" + propertyDefinition.getName() + "' has a value ["
-                                + propertySimple.getStringValue() + "] different than the current value ["
-                                + currentValue + "]. It is not allowed to change.");
-                        }
-                    }
-                }
+                PropertySimple currentPropertySimple = (null == currentParentPropertyMap) ? null
+                    : currentParentPropertyMap.getSimple(propertyDefinition.getName());
+                validatePropertySimple(propertyDefinition, propertySimple, currentPropertySimple, errorMessages);
             }
 
-            // If the property is a Map, recurse into it and validate its child properties.
+            // If the property is a Map, validate it and recurse into it, validating its child properties.
             else if (propertyDefinition instanceof PropertyDefinitionMap) {
                 PropertyMap propertyMap = parentPropertyMap.getMap(propertyDefinition.getName());
                 PropertyMap currentPropertyMap = (null == currentParentPropertyMap) ? null : currentParentPropertyMap
@@ -339,23 +320,33 @@ public class ConfigurationUtility {
                 PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
                 validatePropertyMap(propertyMap, currentPropertyMap, propertyDefinitionMap, errorMessages);
 
+                // If the property is a List, validate each list member
             } else if (propertyDefinition instanceof PropertyDefinitionList) {
                 PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
-                PropertyDefinition listMemberPropertyDefinition = propertyDefinitionList.getMemberDefinition();
+                PropertyList propertyList = parentPropertyMap.getList(propertyDefinition.getName());
+                PropertyList currentPropertyList = (null == currentParentPropertyMap) ? null : currentParentPropertyMap
+                    .getList(propertyDefinition.getName());
 
-                // If the property is a List of Maps, iterate the list, and recurse into each Map and validate its child
-                // properties.
-                if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
-                    PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) listMemberPropertyDefinition;
-                    PropertyList propertyList = parentPropertyMap.getList(propertyDefinition.getName());
-                    PropertyList currentPropertyList = (null == currentParentPropertyMap) ? null
-                        : currentParentPropertyMap.getList(propertyDefinition.getName());
-                    validatePropertyListSize(propertyList, propertyDefinitionList, errorMessages);
-                    for (int i = 0, size = propertyList.getList().size(); (i < size); ++i) {
-                        PropertyMap propertyMap = (PropertyMap) propertyList.getList().get(i);
-                        PropertyMap currentPropertyMap = (null == currentPropertyList) ? null
-                            : (PropertyMap) currentPropertyList.getList().get(i);
-                        validatePropertyMap(propertyMap, currentPropertyMap, propertyDefinitionMap, errorMessages);
+                if (propertyDefinitionList.isReadOnly()) {
+                    if (null != currentPropertyList && !currentPropertyList.getList().isEmpty()) {
+                        if (!currentPropertyList.equals(propertyList)) {
+                            errorMessages.add("ReadOnly property '" + propertyDefinitionList.getName()
+                                + "' has a value " + propertyList.getList() + " different than the current value "
+                                + currentPropertyList.getList() + "]. It is not allowed to change.");
+                        }
+                    }
+                }
+
+                validatePropertyListSize(propertyList, propertyDefinitionList, errorMessages);
+
+                PropertyDefinition listMemberPropertyDefinition = propertyDefinitionList.getMemberDefinition();
+                for (Property property : propertyList.getList()) {
+                    if (listMemberPropertyDefinition instanceof PropertyDefinitionSimple) {
+                        validatePropertySimple(listMemberPropertyDefinition, (PropertySimple) property, null,
+                            errorMessages);
+                    } else if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
+                        validatePropertyMap((PropertyMap) property, null,
+                            (PropertyDefinitionMap) listMemberPropertyDefinition, errorMessages);
                     }
                 }
             }
@@ -372,8 +363,40 @@ public class ConfigurationUtility {
         }
     }
 
+    private static void validatePropertySimple(PropertyDefinition propertyDefinition, PropertySimple propertySimple,
+        PropertySimple currentPropertySimple, List<String> errorMessages) {
+
+        // make sure required properties have a value
+        if (propertyDefinition.isRequired() && (propertySimple.getStringValue() == null)) {
+            errorMessages.add("Required property '" + propertyDefinition.getName() + "' has a null value.");
+            propertySimple.setStringValue("");
+        }
+        // make sure readOnly properties are not being changed
+        if (propertyDefinition.isReadOnly() && null != currentPropertySimple) {
+            String currentValue = currentPropertySimple.getStringValue();
+            // if there is no current value allow an initial value to be set for the readOnly property.
+            if (!(null == currentValue || currentValue.trim().isEmpty() || propertySimple.getStringValue().equals(
+                currentValue))) {
+
+                errorMessages.add("ReadOnly property '" + propertyDefinition.getName() + "' has a value ["
+                    + propertySimple.getStringValue() + "] different than the current value [" + currentValue
+                    + "]. It is not allowed to change.");
+            }
+        }
+    }
+
     private static void validatePropertyMap(AbstractPropertyMap propertyMap, AbstractPropertyMap currentPropertyMap,
         PropertyDefinitionMap propertyDefinitionMap, List<String> errorMessages) {
+        // if the entire map is read-only then the new map must match the current map if the current map is non-empty
+        if (propertyDefinitionMap.isReadOnly() && null != currentPropertyMap && !currentPropertyMap.getMap().isEmpty()) {
+            if (!propertyMap.getMap().equals(currentPropertyMap.getMap())) {
+                errorMessages.add("ReadOnly property '" + propertyDefinitionMap.getName() + "' has a value "
+                    + propertyMap.getMap() + " different than the current value " + currentPropertyMap.getMap()
+                    + "]. It is not allowed to change.");
+                return;
+            }
+        }
+
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             validateProperty(childPropertyDefinition, propertyMap, currentPropertyMap, errorMessages);

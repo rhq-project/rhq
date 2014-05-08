@@ -1,8 +1,11 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,6 +28,10 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDetail;
+import org.quartz.ObjectAlreadyExistsException;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 
 import org.jboss.ejb3.annotation.TransactionTimeout;
 
@@ -34,24 +41,40 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.PluginCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.CannedGroupAddition;
+import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.core.plugin.PluginAdditionsReader;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QuartzUtil;
 
 @Stateless
-public class PluginManagerBean implements PluginManagerLocal {
+public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemote {
 
     private final Log log = LogFactory.getLog(PluginManagerBean.class);
 
@@ -79,6 +102,15 @@ public class PluginManagerBean implements PluginManagerLocal {
     @EJB
     private SubjectManagerLocal subjectMgr;
 
+    @EJB
+    private ContentManagerLocal contentManager;
+
+    @EJB
+    private AgentManagerLocal agentManager;
+
+    @EJB
+    private SchedulerLocal scheduler;
+
     @Override
     public Plugin getPlugin(String name) {
         Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
@@ -94,23 +126,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
-    public void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception {
-        for (Integer id : pluginIds) {
-            Plugin plugin = entityManager.find(Plugin.class, id);
-            plugin.setCtime(Plugin.PURGED);
-            log.info("Scheduling plugin [" + plugin + "] to be purged from the database.");
-        }
-    }
-
-    @Override
     public boolean isReadyForPurge(Plugin plugin) {
-        if (!isMarkedForPurge(plugin.getId())) {
-            if (log.isDebugEnabled()) {
-                log.debug(plugin + " is not ready to be purged. It has not been marked for purge.");
-            }
-            return false;
-        }
-
         int resourceTypeCount = getResourceTypeCount(plugin);
         if (resourceTypeCount > 0) {
             if (log.isDebugEnabled()) {
@@ -120,12 +136,23 @@ public class PluginManagerBean implements PluginManagerLocal {
             return false;
         }
 
-        return true;
-    }
+        //check that all the servers have acked the deletion
+        Plugin inDbPlugin = entityManager.find(Plugin.class, plugin.getId());
 
-    private boolean isMarkedForPurge(int pluginId) {
-        Plugin plugin = entityManager.find(Plugin.class, pluginId);
-        return plugin.getStatus() == PluginStatusType.DELETED && plugin.getCtime() == Plugin.PURGED;
+        @SuppressWarnings("unchecked")
+        List<Server> allServers = entityManager.createNamedQuery(Server.QUERY_FIND_ALL).getResultList();
+
+        for (Server s : allServers) {
+            if (!inDbPlugin.getServersAcknowledgedDelete().contains(s)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(plugin + " is not ready to be purged. Server " + s +
+                        " has not acknowledged it knows about its deletion.");
+                }
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private int getResourceTypeCount(Plugin plugin) {
@@ -144,7 +171,15 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @Override
     public void purgePlugins(List<Plugin> plugins) {
-        entityManager.createNamedQuery(Plugin.PURGE_PLUGINS).setParameter("plugins", plugins).executeUpdate();
+        for(Plugin p : plugins) {
+            Plugin inDb = entityManager.find(Plugin.class, p.getId());
+            inDb.getServersAcknowledgedDelete().clear();
+            entityManager.remove(inDb);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("The following plugins were purged from the database: " + plugins);
+        }
     }
 
     @Override
@@ -162,11 +197,6 @@ public class PluginManagerBean implements PluginManagerLocal {
     @Override
     public List<Plugin> findAllDeletedPlugins() {
         return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_DELETED).getResultList();
-    }
-
-    @Override
-    public List<Plugin> findPluginsMarkedForPurge() {
-        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_TO_PURGE).getResultList();
     }
 
     @SuppressWarnings("unchecked")
@@ -323,6 +353,10 @@ public class PluginManagerBean implements PluginManagerLocal {
                 "Failed to uninventory all resources of deleted plugins. This should fix itself automatically when the PurgeResourceTypsJob executes.",
                 t);
         }
+        GroupDefinitionManagerLocal groupDefMgr = LookupUtil.getGroupDefinitionManager();
+        for (Plugin plugin : plugins) {
+            groupDefMgr.updateGroupsByCannedExpressions(plugin.getName(), null);
+        }
     }
 
     private void deleteResourcesForPlugin(Subject subject, Plugin plugin) throws Exception {
@@ -444,7 +478,10 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         if (isDeleted(plugin)) {
             String msg = "A deleted version of " + plugin + " already exists in the database. The plugin cannot be "
-                + "installed until the deleted version is purged from the database.";
+                + "installed until the deleted version is purged from the database (which should happen a couple of" +
+                " minutes after all servers acknowledged the plugin was deleted). Especially, the plugin won't be" +
+                " purged if ANY of the servers in the HA cloud have been down at the point in time the plugin was" +
+                " deleted and haven't gone back up yet.";
             log.warn(msg);
             throw new IllegalStateException(msg);
         }
@@ -549,6 +586,111 @@ public class PluginManagerBean implements PluginManagerLocal {
         return typesUpdated;
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void update(Subject subject) throws Exception {
+        PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
+        scanner.scanAndRegister();
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public String schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception {
+        JobDetail jobDetail = UpdatePluginsOnAgentsJob.getJobDetail();
+        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, delayInMilliseconds);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+
+            return jobDetail.getName();
+        } catch (ObjectAlreadyExistsException e) {
+            //well, there already is a plugin update job scheduled, so let's just not add another one.
+            log.debug("A request to update plugins on agents seems to already be scheduled." +
+                " Ignoring the current request with the error message: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public boolean isPluginUpdateOnAgentsFinished(Subject subject, String handle) {
+        try {
+            return scheduler.getJobDetail(handle, UpdatePluginsOnAgentsJob.class.getName()) == null;
+        } catch (SchedulerException e) {
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to retrieve job details while checking for active plugin update schedule, code: " + e.getErrorCode(), e);
+            } else {
+                log.warn("Failed to retrieve job details while checking for active plugin update schedule, code: " + e.getErrorCode() + ", message: " + e.getMessage());
+            }
+
+            return false;
+        }
+    }
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public List<Plugin> deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception {
+        File base = getPluginDropboxDirectory();
+
+        File targetFile = new File(base, pluginJarName);
+        FileOutputStream out = new FileOutputStream(targetFile);
+        ByteArrayInputStream in = new ByteArrayInputStream(pluginJarBytes);
+
+        StreamUtil.copy(in, out, true);
+        return updateAndDetectChanges(subject);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public List<Plugin> deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception {
+        File pluginJar = contentManager.getTemporaryContentFile(handle);
+        File base = getPluginDropboxDirectory();
+
+        FileUtil.copyFile(pluginJar, new File(base, pluginJarName));
+
+        return updateAndDetectChanges(subject);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<Plugin> findPluginsByCriteria(Subject subject, PluginCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        CriteriaQueryRunner<Plugin> queryRunner = new CriteriaQueryRunner<Plugin>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
+    }
+
+    private List<Plugin> updateAndDetectChanges(Subject subject) throws Exception {
+        List<Plugin> before = getPlugins();
+
+        update(subject);
+
+        List<Plugin> after = getPlugins();
+
+        for (Plugin p : before) {
+            after.remove(p);
+        }
+
+        return after;
+    }
+
+    public void acknowledgeDeletedPluginsBy(int serverId) {
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_UNACKED_DELETED_PLUGINS);
+        q.setParameter("serverId", serverId);
+
+        @SuppressWarnings("unchecked")
+        List<Plugin> plugins = (List<Plugin>) q.getResultList();
+
+        Server server = entityManager.find(Server.class, serverId);
+
+        for (Plugin p : plugins) {
+            p.getServersAcknowledgedDelete().add(server);
+            entityManager.merge(p);
+        }
+    }
+
     private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {
         // this method is here because we need a way to update the plugin's information
         // without blowing away the content data. Because we do not want to load the
@@ -626,5 +768,33 @@ public class PluginManagerBean implements PluginManagerLocal {
      */
     private PluginMetadataManager getPluginMetadataManager() {
         return LookupUtil.getPluginDeploymentScanner().getPluginMetadataManager();
+    }
+
+    /**
+     * gets canned expressions from all plugins by direct reading and parsing additional descriptors;
+     */
+    public List<CannedGroupExpression> getCannedGroupExpressions() {
+        ArrayList<CannedGroupExpression> list = new ArrayList<CannedGroupExpression>();
+        String pluginDir = LookupUtil.getPluginDeploymentScanner().getAgentPluginDir();
+        long now = System.currentTimeMillis();
+        log.debug("Reading canned expressions from all agent plugin jars");
+        for (Plugin plugin : this.getInstalledPlugins()) {
+            if (plugin.getDeployment().equals(PluginDeploymentType.AGENT)) {
+                File pluginFile = new File(pluginDir, plugin.getPath());
+                try {
+                    URL pluginUrl = pluginFile.toURI().toURL();
+                    CannedGroupAddition addition = PluginAdditionsReader.getCannedGroupsAddition(pluginUrl, plugin.getName());
+                    if (addition != null) {
+                        list.addAll(addition.getExpressions());
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to parse plugin addition found in plugin [" + pluginFile.getAbsolutePath() + "]",e);
+                }
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Reading "+list.size()+" canned expressions from all plugins took "+(System.currentTimeMillis()-now)+"ms");
+        }
+        return list;
     }
 }

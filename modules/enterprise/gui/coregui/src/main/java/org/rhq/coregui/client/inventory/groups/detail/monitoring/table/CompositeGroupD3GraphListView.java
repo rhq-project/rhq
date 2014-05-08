@@ -396,7 +396,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
             for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
                 if(null != multiLineGraphData.getMeasurementData() && multiLineGraphData.getMeasurementData().size() > 0){
                     sb.append("{ \"key\": \"");
-                    sb.append(multiLineGraphData.getResourceName());
+                    sb.append(multiLineGraphData.getResourceNameEscaped());
                     sb.append("\",\"value\" : ");
                     sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
                     sb.append("},");
@@ -493,6 +493,10 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
         public String getResourceName() {
             return resourceName;
+        }
+
+        public String getResourceNameEscaped() {
+            return resourceName.replace('"', '\'');
         }
 
         public int getResourceId() {

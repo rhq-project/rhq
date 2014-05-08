@@ -64,7 +64,12 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     @Override
     protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
-        JBossProductType productType) {
+        JBossProductType productType, String serverName) {
+        if (serverName != null && !serverName.trim().isEmpty()) {
+            return String.format("%s (%s %s:%d)", productType.SHORT_NAME, serverName, managementHostPort.host,
+                managementHostPort.port);
+        }
+
         return String.format("%s (%s:%d)", productType.SHORT_NAME, managementHostPort.host, managementHostPort.port);
     }
 

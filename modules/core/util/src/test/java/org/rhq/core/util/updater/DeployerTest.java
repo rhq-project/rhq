@@ -32,6 +32,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -81,7 +84,7 @@ public class DeployerTest {
      *       dir4
      *          file4
      *    file0
-     * 
+     *
      * updater-test2.zip
      *    dir1
      *       file1
@@ -94,10 +97,10 @@ public class DeployerTest {
      *       dir4
      *          file4
      *    fileA
-     * 
+     *
      * updater-testA.txt
      * updater-testB.txt
-     * 
+     *
      * We need to test these cases (X, Y, Z, ? represent hashcodes; none means file doesn't exist):
      *    ORIGINAL CURRENT    NEW   What To Do...
      * a.        X       X      X   New file is installed over current*
@@ -133,11 +136,11 @@ public class DeployerTest {
      *    dir2/fileC (added from updater-test2.zip)
      *    dir3/dir4/file4
      *    --file0-- (this is deleted, its no longer in our deployment zip)
-     *    fileA (added from updater-test2.zip) 
+     *    fileA (added from updater-test2.zip)
      *    --/ABSOLUTE/updater-testA.txt-- (should be deleted, no longer in our deployment, but it was changed from original, so its backed up)
      *    /ABSOLUTE/updater-testB.txt (added from our deployment, own current copy is backed up)
      *    --dir1/file999-- (should be deleted, not in our deployment - but is backed up)
-     *    
+     *
      * This means after the update the following will tested:
      * 1) deleted updater-testA.txt (h.)
      * 2) added updater-testB.txt, backed up our (absolute file) current (f.)
@@ -150,7 +153,7 @@ public class DeployerTest {
      * 8) dir1/file2 is brought back again (g.)
      * 9) dir1/file999 is backed up and deleted (h.)
      * 10) dir2/file3 is the same (a.)
-     * 
+     *
      * We need to do the following afterwards in order to test b, d and e:
      *    - change updater-testB.txt
      *    - change the source updater-testB.txt
@@ -164,7 +167,7 @@ public class DeployerTest {
      *    fileA
      *    /ABSOLUTE/updater-testA.txt (added from our deployment)
      *    /ABSOLUTE/updater-testB.txt (changed - own current copy is backed up)
-     * 
+     *
      * This means after the update the following will be tested:
      * 11) updater-testB.txt is the changed source, backed up our current (e.)
      *
@@ -185,7 +188,7 @@ public class DeployerTest {
      * This means after the update the following will be tested:
      * 12) updater-testA.txt is the changed source (d.)
      * 13) updater-testB.txt is the changed source (b.)
-     * 
+     *
      * This does not test ignoring files on update nor does it test realizing files
      */
     public void testUpdateDeployZipsAndRawFiles() throws Exception {
@@ -202,7 +205,7 @@ public class DeployerTest {
 
     /**
      * This is the base test used for both
-     * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore. 
+     * testUpdateDeployZipsAndRawFiles and testUpdateDeployZipsAndRawFilesWithRealizeAndIgnore.
      */
     private void baseUpdateTest(boolean realize, boolean ignore) throws Exception {
         DeployDifferences diff;
@@ -236,10 +239,11 @@ public class DeployerTest {
             File ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
             fileToIgnore = new File(ignoreDir, "some-log.log");
             StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
-            String fileToIgnorePath = ignoreDir.getName() + "/" + fileToIgnore.getName(); // yes, use /, even if we are on windows 
+            String fileToIgnorePath = ignoreDir.getName() + "/" + fileToIgnore.getName(); // yes, use /, even if we are on windows
 
             File testZipFile1 = new File("target/test-classes/updater-test1.zip");
             File testZipFile2 = new File("target/test-classes/updater-test2.zip");
+            File testZipFile4 = new File("target/test-classes/updater-test4.zip");
             File testRawFileA = new File("target/test-classes/updater-testA.txt");
             File testRawFileB = new File("target/test-classes/updater-testB.txt");
             StreamUtil.copy(new ByteArrayInputStream("B1prime".getBytes()), new FileOutputStream(testRawFileBChange1));
@@ -248,23 +252,29 @@ public class DeployerTest {
             File updaterAabsolute = new File(tmpDir2, "updater-testA.txt");
             File updaterBabsolute = new File(tmpDir2, "updater-testB.txt");
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(1, "testbundle2", "1.0.test", null);
-            Set<File> zipFiles = new HashSet<File>(1);
-            zipFiles.add(testZipFile1);
+            DeploymentProperties deploymentProps = new DeploymentProperties(1, "testbundle2", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            Map<File, Boolean> explodedZipFiles = new HashMap<File, Boolean>(1);
+            zipFiles.put(testZipFile1, null);
+            zipFiles.put(testZipFile4, tmpDir2);
+            explodedZipFiles.put(testZipFile4, Boolean.FALSE);
             Map<File, File> rawFiles = new HashMap<File, File>(1);
             rawFiles.put(testRawFileA, updaterAabsolute); // raw file to absolute path
             File destDir = tmpDir;
-            Map<File, Pattern> filesToRealizeRegex1 = new HashMap<File, Pattern>(1);
+            Map<File, Pattern> filesToRealizeRegex1 = new HashMap<File, Pattern>(2);
             filesToRealizeRegex1.put(testZipFile1, realizeRegex);
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir,
-                filesToRealizeRegex1, null, templateEngine, ignoreRegex, true, null);
+            filesToRealizeRegex1.put(testZipFile4, realizeRegex);
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                filesToRealizeRegex1, templateEngine, ignoreRegex, explodedZipFiles);
             Deployer deployer = new Deployer(dd);
             diff = new DeployDifferences();
 
             DeploymentDiskUsage diskUsage = deployer.estimateDiskUsage();
             assert diskUsage.getMaxDiskUsable() > 0L;
             assert diskUsage.getDiskUsage() > 0L;
-            assert diskUsage.getFileCount() == 6 : "should have been 5 files in zip and 1 raw file";
+            assert diskUsage.getFileCount() == 11 : "should have been 10 files in zips and 1 raw file (found "
+                + diskUsage.getFileCount() + ")";
 
             deployer.deploy(diff);
 
@@ -272,7 +282,10 @@ public class DeployerTest {
             assert !fileToIgnore.exists() : "should have removed this file since we are managing the root dir";
             assert !fileToIgnore.getParentFile().exists() : "should have removed this file since we are managing the root dir";
             assert diff.getIgnoredFiles().size() == 0 : "this was an initial deploy - nothing to ignore (ignore is only for updates)";
-            assert diff.getAddedFiles().size() == 6 : diff;
+            assert diff.getAddedFiles().size() == 7 : diff;
+            String zipFile4Path = FileUtil.useForwardSlash(new File(tmpDir2, testZipFile4.getName()).getPath());
+            assert diff.getAddedFiles().contains(zipFile4Path) : diff;
+
             assert diff.getDeletedFiles().size() == 1 : diff;
             assert diff.getDeletedFiles().contains(fileToIgnorePath) : "should have deleted this unknown file" + diff;
             assert diff.getChangedFiles().size() == 0 : diff;
@@ -285,7 +298,7 @@ public class DeployerTest {
                 ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
                 fileToIgnore = new File(ignoreDir, "some-log.log");
                 StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
-                fileToIgnorePath = ignoreDir.getName() + "/" + fileToIgnore.getName(); // yes, use /, even if we are on windows 
+                fileToIgnorePath = ignoreDir.getName() + "/" + fileToIgnore.getName(); // yes, use /, even if we are on windows
             }
 
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file1)));
@@ -294,16 +307,34 @@ public class DeployerTest {
             assert new File(tmpDir, file2).delete() : "could not delete file2 for test";
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file999)));
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, fileB)));
+            File tmpZipFile4 = new File(zipFile4Path + ".tmp");
+            FileUtil.copyFile(new File(zipFile4Path), tmpZipFile4);
+            ZipInputStream zin = new ZipInputStream(new FileInputStream(tmpZipFile4));
+            ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(zipFile4Path));
+            byte[] buffer = new byte[1024];
+            ZipEntry entry;
+            while (null != (entry = zin.getNextEntry())) {
+                entry.setComment("X");
+                zout.putNextEntry(entry);
+                for (int read = zin.read(buffer); read > -1; read = zin.read(buffer)) {
+                    zout.write(buffer, 0, read);
+                }
+                zout.closeEntry();
+            }
+            zout.close();
+            zin.close();
+            tmpZipFile4.delete();
 
-            deploymentProps = new DeploymentProperties(2, "testbundle2", "2.0.test", null);
-            zipFiles = new HashSet<File>(1);
-            zipFiles.add(testZipFile2);
+            deploymentProps = new DeploymentProperties(2, "testbundle2", "2.0.test", null,
+                DestinationComplianceMode.full);
+            zipFiles = new HashMap<File, File>(1);
+            zipFiles.put(testZipFile2, null);
             rawFiles = new HashMap<File, File>(1);
             rawFiles.put(testRawFileB, updaterBabsolute); // raw file to absolute path
             Map<File, Pattern> filesToRealizeRegex2 = new HashMap<File, Pattern>(1);
             filesToRealizeRegex2.put(testZipFile2, realizeRegex);
-            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir, filesToRealizeRegex2, null,
-                templateEngine, ignoreRegex, true, null);
+            dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles, filesToRealizeRegex2,
+                templateEngine, ignoreRegex, null);
             deployer = new Deployer(dd);
             diff = new DeployDifferences();
             deployer.deploy(diff); // this is an upgrade
@@ -398,14 +429,16 @@ public class DeployerTest {
             assert diff.getAddedFiles().contains(file2) : diff;
             assert diff.getAddedFiles().contains(fileC) : diff;
             assert diff.getAddedFiles().contains(fileA) : diff;
-            assert diff.getDeletedFiles().size() == 3 : diff;
+            assert diff.getDeletedFiles().size() == 4 : diff;
             assert diff.getDeletedFiles().contains(file0) : diff;
             assert diff.getDeletedFiles().contains(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
             assert diff.getDeletedFiles().contains(file999) : diff;
+            assert diff.getDeletedFiles().contains(zipFile4Path) : diff;
             assert diff.getChangedFiles().size() == 2 : diff;
             assert diff.getChangedFiles().contains(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
             assert diff.getChangedFiles().contains(fileB) : diff;
-            assert diff.getBackedUpFiles().size() == 4 : diff;
+            assert diff.getBackedUpFiles().size() == 5 : diff;
+            assert diff.getBackedUpFiles().containsKey(zipFile4Path) : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().get(diff.convertPath(updaterAabsolute.getAbsolutePath()))
                 .equals(diff.convertPath(updaterAabsoluteBackupTo2)) : diff;
@@ -424,14 +457,15 @@ public class DeployerTest {
             }
 
             StreamUtil.copy(new ByteArrayInputStream("Y".getBytes()), new FileOutputStream(updaterBabsolute));
-            deploymentProps = new DeploymentProperties(3, "testbundle2", "3.0.test", null);
-            zipFiles = new HashSet<File>(1);
-            zipFiles.add(testZipFile2);
+            deploymentProps = new DeploymentProperties(3, "testbundle2", "3.0.test", null,
+                DestinationComplianceMode.full);
+            zipFiles = new HashMap<File, File>(1);
+            zipFiles.put(testZipFile2, null);
             rawFiles = new HashMap<File, File>(2);
             rawFiles.put(testRawFileA, updaterAabsolute); // source raw file to absolute path
             rawFiles.put(testRawFileBChange1, updaterBabsolute); // source raw file to absolute path
-            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir, filesToRealizeRegex2, null,
-                templateEngine, ignoreRegex, true, null);
+            dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles, filesToRealizeRegex2,
+                templateEngine, ignoreRegex, null);
             deployer = new Deployer(dd);
             diff = new DeployDifferences();
             deployer.deploy(diff);
@@ -464,14 +498,15 @@ public class DeployerTest {
 
             StreamUtil.copy(new ByteArrayInputStream("Aprime".getBytes()), new FileOutputStream(updaterAabsolute));
 
-            deploymentProps = new DeploymentProperties(4, "testbundle2", "4.0.test", null);
-            zipFiles = new HashSet<File>(1);
-            zipFiles.add(testZipFile2);
+            deploymentProps = new DeploymentProperties(4, "testbundle2", "4.0.test", null,
+                DestinationComplianceMode.full);
+            zipFiles = new HashMap<File, File>(1);
+            zipFiles.put(testZipFile2, null);
             rawFiles = new HashMap<File, File>(2);
             rawFiles.put(testRawFileAChange, updaterAabsolute); // source raw file to absolute path
             rawFiles.put(testRawFileBChange2, updaterBabsolute); // source raw file to absolute path
-            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir, filesToRealizeRegex2, null,
-                templateEngine, ignoreRegex, true, null);
+            dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles, filesToRealizeRegex2,
+                templateEngine, ignoreRegex, null);
             deployer = new Deployer(dd);
             diff = new DeployDifferences();
             deployer.deploy(diff);
@@ -527,8 +562,9 @@ public class DeployerTest {
 
             Pattern filesToRealizeRegex = Pattern.compile(".*rawB.txt");
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle2", "2.0.test", null);
-            Set<File> zipFiles = null;
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle2", "2.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>();
             rawFiles.put(testRawFileA, new File("rawA.txt")); // we will _not_ realize this one
             rawFiles.put(testRawFileB, rawFileDestination); // we will realize this one
@@ -536,8 +572,8 @@ public class DeployerTest {
             Pattern ignoreRegex = null;
             Set<File> realizeRawFiles1 = new HashSet<File>(1);
             realizeRawFiles1.add(testRawFileB);
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir, null,
-                realizeRawFiles1, templateEngine, ignoreRegex, true, null);
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, realizeRawFiles1,
+                zipFiles, null, templateEngine, ignoreRegex, null);
             Deployer deployer = new Deployer(dd);
             DeployDifferences diff = new DeployDifferences();
             FileHashcodeMap map = deployer.deploy(diff);
@@ -576,10 +612,11 @@ public class DeployerTest {
             Pattern filesToRealizeRegex = Pattern
                 .compile("(fileA)|(dir1.fileB)|(fileAAA)|(dir100.fileBBB)|(dir100.rawB.txt)");
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle2", "2.0.test", null);
-            Set<File> zipFiles = new HashSet<File>(2);
-            zipFiles.add(testZipFile1);
-            zipFiles.add(testZipFile2);
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle2", "2.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(2);
+            zipFiles.put(testZipFile1, null);
+            zipFiles.put(testZipFile2, null);
             Map<File, File> rawFiles = new HashMap<File, File>();
             rawFiles.put(testRawFileA, new File("dirA/rawA.txt")); // we will _not_ realize this one
             rawFiles.put(testRawFileB, new File("dir100/rawB.txt")); // we will realize this one
@@ -590,8 +627,8 @@ public class DeployerTest {
             realizeRawFiles1.add(testZipFile1);
             realizeRawFiles1.add(testZipFile2);
             realizeRawFiles1.add(testRawFileB);
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir, null,
-                realizeRawFiles1, templateEngine, ignoreRegex, true, null);
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, realizeRawFiles1,
+                zipFiles, null, templateEngine, ignoreRegex, null);
             Deployer deployer = new Deployer(dd);
             DeployDifferences listener = new DeployDifferences();
             deployer.deploy(listener);
@@ -678,9 +715,10 @@ public class DeployerTest {
             File testZipFile1 = new File("target/test-classes/updater-test2.zip");
             Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = new HashSet<File>(1);
-            zipFiles.add(testZipFile1);
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            zipFiles.put(testZipFile1, null);
             Map<File, File> rawFiles = null;
             File destDir = tmpDir;
             Pattern ignoreRegex = null;
@@ -688,8 +726,8 @@ public class DeployerTest {
             Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
             realizeRegex1.put(testZipFile1, filesToRealizeRegex);
 
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDir, destDir, realizeRegex1,
-                null, templateEngine, ignoreRegex, true, null);
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                realizeRegex1, templateEngine, ignoreRegex, null);
             Deployer deployer = new Deployer(dd);
             DeployDifferences listener = new DeployDifferences();
             deployer.deploy(listener);
@@ -737,4 +775,93 @@ public class DeployerTest {
             FileUtil.purge(tmpDir, true);
         }
     }
+
+    public void testInitialDeployOneZipAbsoluteDestDir() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+        File tmpAlternateDir = FileUtil.createTempDirectory("testDeployerTestAlternate", ".dir", null);
+        try {
+            File testZipFile1 = new File("target/test-classes/updater-test2.zip");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
+
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            zipFiles.put(testZipFile1, tmpAlternateDir);
+            Map<File, Boolean> zipsExploded = new HashMap<File, Boolean>(1);
+            zipsExploded.put(testZipFile1, Boolean.FALSE);
+            Map<File, File> rawFiles = null;
+            File destDir = tmpDir;
+            Pattern ignoreRegex = null;
+
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                realizeRegex1, templateEngine, ignoreRegex, zipsExploded);
+            Deployer deployer = new Deployer(dd);
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
+
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
+            assert map.size() == 0 : map;
+
+            map = FileHashcodeMap.generateFileHashcodeMap(tmpAlternateDir, null, null);
+            assert map.size() == 1 : map;
+            assert listener.getAddedFiles().size() == 1 : listener;
+            String f = testZipFile1.getName();
+            assert map.containsKey(f) : map;
+            File deployedZipFile = new File(tmpAlternateDir, f);
+            assert deployedZipFile.exists();
+            assert MessageDigestGenerator.getDigestString(deployedZipFile).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(deployedZipFile.getPath())) : listener;
+
+        } finally {
+            FileUtil.purge(tmpDir, true);
+            FileUtil.purge(tmpAlternateDir, true);
+        }
+    }
+
+    public void testInitialDeployOneZipRelativeDestDir() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+
+        try {
+            File testZipFile1 = new File("target/test-classes/updater-test2.zip");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
+
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            String relativeAlternatePath = "relative/deploy/directory";
+            File relativeAlternateDir = new File(tmpDir, relativeAlternatePath);
+            zipFiles.put(testZipFile1, relativeAlternateDir);
+            Map<File, Boolean> zipsExploded = new HashMap<File, Boolean>(1);
+            zipsExploded.put(testZipFile1, Boolean.FALSE);
+            Map<File, File> rawFiles = null;
+            File destDir = tmpDir;
+            Pattern ignoreRegex = null;
+
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                realizeRegex1, templateEngine, ignoreRegex, zipsExploded);
+            Deployer deployer = new Deployer(dd);
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
+
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
+            assert map.size() == 1 : map;
+            assert listener.getAddedFiles().size() == 1 : listener;
+            String f = "relative" + fileSeparator + "deploy" + fileSeparator + "directory" + fileSeparator
+                + testZipFile1.getName();
+            assert map.containsKey(f) : map;
+            assert new File(tmpDir, f).exists();
+            assert MessageDigestGenerator.getDigestString(new File(tmpDir, f)).equals(map.get(f));
+            File deployedZipFile = new File(tmpDir, f);
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(deployedZipFile.getPath())) : listener;
+        } finally {
+            FileUtil.purge(tmpDir, true);
+        }
+    }
+
 }

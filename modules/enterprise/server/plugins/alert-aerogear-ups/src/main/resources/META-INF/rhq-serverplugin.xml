@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2014 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License, version 2, as
+  ~ published by the Free Software Foundation, and/or the GNU Lesser
+  ~ General Public License, version 2.1, also as published by the Free
+  ~ Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License and the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ and the GNU Lesser General Public License along with this program;
+  ~ if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+  -->
+
+<alert-plugin
+        name="alert-ups"
+        displayName="Alert:UPS"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertUps"
+        description="Alert sender plugin that sends alert notifications via Aerogear UPS"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications via Aerogear Unified Push Server
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs -->
+    <serverplugin:plugin-component class="UpsAlertComponent" />
+
+    <!-- Global preferences -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="server" type="string" description="UPS server to connect to."  />
+        <c:simple-property name="port" type="integer" default="8080" required="false" description="Port number on the ups server (default 8080)"/>
+        <c:simple-property name="pushId" type="string" description="Id of the push app you use"/>
+        <c:simple-property name="masterSecret" type="password" description="Master secret for the push sender"/>
+
+    </serverplugin:plugin-configuration>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Aerogear-UPS</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>UpsSender</plugin-class>
+
+
+    <!-- User configuration per alert -->
+<!--
+    <alert-configuration>
+    </alert-configuration>
+-->
+</alert-plugin>

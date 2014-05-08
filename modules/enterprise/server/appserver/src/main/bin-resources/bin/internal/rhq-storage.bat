@@ -15,16 +15,15 @@ rem ============================================================================
 
 setlocal enabledelayedexpansion
 
-if exist "..\rhq-server-env.bat" (
-   call "..\rhq-server-env.bat" %*
-) else (
-   echo Failed to find rhq-server-env.bat. This file should exist in the bin directory.
-   exit /B 1
-)
-
 rem if debug variable is set, it is assumed to be on, unless its value is false
 if "%RHQ_STORAGE_DEBUG%" == "false" (
    set RHQ_STORAGE_DEBUG=
+)
+
+if exist "..\rhq-server-env.bat" (
+   call "..\rhq-server-env.bat" %*
+) else (
+   if defined RHQ_STORAGE_DEBUG echo Failed to find rhq-server-env.bat. Continuing with current environment...
 )
 
 rem ----------------------------------------------------------------------

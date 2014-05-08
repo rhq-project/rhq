@@ -23,21 +23,37 @@ import static java.util.Arrays.asList;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.ejb.EJBException;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
+import org.rhq.enterprise.server.test.TestAgentClient;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import junit.framework.Assert;
 
 /**
  * Unit tests for {@link PluginManagerBean}.
@@ -52,6 +68,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     private SubjectManagerLocal subjectMgr;
     private PluginManagerLocal pluginMgr;
+    private AgentManagerLocal agentMgr;
+    private TestServerCommunicationsService agentServiceContainer;
+    private boolean updatePluginsCalled;
+    private CountDownLatch pluginUpdateProgressWaiter;
+    private CountDownLatch pluginUpdateFinishWaiter;
+
+    private Agent agent;
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -59,8 +82,57 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
+        agentMgr = LookupUtil.getAgentManager();
 
-        getPluginScannerService().startDeployment();
+        TopologyManagerLocal topMgr = LookupUtil.getTopologyManager();
+        Server svr = topMgr.findServersByCriteria(subjectMgr.getOverlord(), new ServerCriteria()).get(0);
+
+        agent = new Agent();
+        agent.setAddress("kachny");
+        agent.setAgentToken("1234");
+        agent.setName("kachny");
+        agent.setPort(1234);
+        agent.setRemoteEndpoint("kachny");
+        agent.setServer(svr);
+        agentMgr.createAgent(agent);
+
+        preparePluginScannerService().startDeployment();
+
+        prepareScheduler();
+
+        pluginUpdateProgressWaiter = new CountDownLatch(1);
+
+        updatePluginsCalled = false;
+
+        agentServiceContainer = prepareForTestAgents(new TestServerCommunicationsService() {
+            @Override
+            public AgentClient getKnownAgentClient(Agent agent) {
+                AgentClient ret = new TestAgentClient(agent, this) {
+                    @Override
+                    public void updatePlugins() {
+                        updatePluginsCalled = true;
+                        pluginUpdateProgressWaiter.countDown();
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            //ignored
+                        } finally {
+                            if (pluginUpdateFinishWaiter != null) {
+                                try {
+                                    pluginUpdateFinishWaiter.await();
+                                } catch (InterruptedException e) {
+                                    //ignored
+                                }
+                            }
+                        }
+                    }
+                };
+
+                agentClients.put(agent, ret);
+
+                return ret;
+            }
+        });
     }
 
     @Override
@@ -68,6 +140,9 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
 
         unpreparePluginScannerService();
+        unprepareScheduler();
+
+        agentMgr.deleteAgent(agent);
 
         super.afterMethod();
     }
@@ -82,7 +157,6 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             System.out.println("Purging plugins " + plugins + "...");
             for (Plugin plugin : plugins) {
                 pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
-                pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin.getId()));
             }
             new PurgeResourceTypesJob().execute(null);
             new PurgePluginsJob().execute(null);
@@ -201,7 +275,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         } catch (EJBException ee) {
             if (ee.getCause() == null || !(ee.getCause() instanceof IllegalArgumentException)) {
                 fail("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins, got: "
-                                + ee);
+                    + ee);
             }
 
         } catch (Throwable t) {
@@ -230,14 +304,37 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         InventoryManagerLocal inventoryManager = LookupUtil.getInventoryManager();
 
         Plugin plugin = getDeletedPlugin(PLUGIN_1);
+        if (plugin == null) {
+            //ok so there's no delete plugin like that. Let's check that there's no installed plugin either
+            plugin = pluginMgr.getPlugin(PLUGIN_1);
+            if (plugin != null) {
+                fail(PLUGIN_1 + "should have been deleted in PluginManagerBeanTest#deletePlugins()");
+            }
+
+            //So there's no such plugin at all. This means that some other test intertwined between this test and
+            //deletePlugins.
+            //
+            //Because tests are configured to clean up after themselves (mainly in the afterClassWork() method)
+            //it may happen that the plugin we marked for deletion in deletePlugins has actually been deleted
+            //by the clean up methods.
+            //
+            //The point of this test is in that case fulfilled anyway because by the plugin disappearing,
+            //we proved that at some point in time between deletePlugins and this test it was indeed purgeable.
+            return;
+        }
+
         List<ResourceType> resourceTypes = resourceTypeManager.getResourceTypesByPlugin(plugin.getName());
         List<ResourceType> deletedTypes = inventoryManager.getDeletedTypes();
 
-        assertTrue("All of the resource types declared in " + plugin + " should have already been deleted",
-            deletedTypes.containsAll(resourceTypes));
+        boolean resourceTypesPurged = resourceTypes.isEmpty() && deletedTypes.isEmpty();
 
-        assertFalse("A plugin is not ready to be purged until all of its resource types have already been purged "
-            + "and until the plugin itself has been marked for purge", pluginMgr.isReadyForPurge(plugin));
+        //ack the plugins as deleted so that the only remaining condition for their
+        //purge-ability is the disappearance of their resource types.
+        ackDeletedPlugins();
+
+        assertTrue("A plugin is not ready to be purged until all of its resource types have already been purged "
+                + "and until the plugin itself has been acked for deletion by all servers",
+            resourceTypesPurged == pluginMgr.isReadyForPurge(plugin));
     }
 
     private Plugin getDeletedPlugin(String name) {
@@ -271,28 +368,46 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin3.getId()));
         inventoryManager.purgeDeletedResourceType(resourceType);
         inventoryManager.purgeDeletedResourceType(resourceTypeIgnored);
-        pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin3.getId()));
+
+        ackDeletedPlugins();
 
         assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been purged "
-            + "and the plugin has been marked for purge", pluginMgr.isReadyForPurge(plugin3));
-    }
-
-    @Test(enabled = false, dependsOnMethods = { "deletePlugins" })
-    public void purgePlugins() throws Exception {
-        Plugin plugin1 = getPlugin(PLUGIN_1,
-            "Deleting a plugin should not remove it from the database");
-        Plugin plugin2 = getPlugin(PLUGIN_2,
-            "Deleting a plugin should not remove it from the database");
-
-        pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
-
-        assertEquals("Failed to purge plugins from the database", 1, pluginMgr.getPlugins().size());
+            + "and the servers acked its deletion", pluginMgr.isReadyForPurge(plugin3));
     }
 
     // this needs to be the last test executed in the class, it does cleanup
     @Test(priority = 10, alwaysRun = true, dependsOnMethods = { "pluginPurgeCheckShouldUseExactMatchesInQuery" })
     public void afterClassWorkTest() throws Exception {
         afterClassWork();
+    }
+
+    @Test
+    public void testScheduleUpdateOnAgents() throws Exception {
+        Subject overlord = subjectMgr.getOverlord();
+        pluginMgr.schedulePluginUpdateOnAgents(overlord, 0);
+        pluginUpdateProgressWaiter.await();
+        Assert.assertTrue(updatePluginsCalled);
+    }
+
+    @Test
+    public void testUpdateNotDoneUntilAgentReturns() throws Exception {
+        pluginUpdateFinishWaiter = new CountDownLatch(1);
+
+        Subject overlord = subjectMgr.getOverlord();
+        String handle = pluginMgr.schedulePluginUpdateOnAgents(overlord, 0);
+
+        pluginUpdateProgressWaiter.await();
+
+        boolean finished = pluginMgr.isPluginUpdateOnAgentsFinished(subjectMgr.getOverlord(), handle);
+
+        Assert.assertEquals(false, finished);
+
+        pluginUpdateFinishWaiter.countDown();
+        Thread.sleep(5000); //wait just a bit so that the request can bubble from the fake agent to the database
+
+        finished = pluginMgr.isPluginUpdateOnAgentsFinished(subjectMgr.getOverlord(), handle);
+
+        Assert.assertEquals(true, finished);
     }
 
     private Plugin getPlugin(String name) {

@@ -44,6 +44,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Session;
@@ -548,7 +549,17 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     @Override
     public String getDriftFileBits(String hash) {
         // TODO add security
-        return new String(getDriftFileAsByteArray(hash), Charset.defaultCharset());
+        try {
+            JPADriftFileBits content = (JPADriftFileBits) entityManager.createNamedQuery(
+                JPADriftFileBits.QUERY_FIND_BY_ID).setParameter("hashId", hash).getSingleResult();
+            if (content.getDataSize() == null || content.getDataSize() < 1) {
+                return null;
+            }
+            return IOUtils.toString(content.getBlob().getBinaryStream(), Charset.defaultCharset().name());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override

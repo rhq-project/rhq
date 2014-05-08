@@ -79,8 +79,6 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
     private static final String FIELD_DEPLOYED = "deployed";
     private static final String FIELD_VERSION = "version";
 
-    private boolean showUndeployed = false;
-
     public ServerPluginTableView() {
         super(null);
         setHeight100();
@@ -116,7 +114,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
                                 caught);
                             refreshTableInfo();
                         }
-                    });
+                    }
+                );
             }
         });
 
@@ -143,10 +142,12 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
                                     public void onFailure(Throwable caught) {
                                         CoreGUI.getErrorHandler().handleError(
                                             MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                + caught.getMessage(), caught);
+                                                + caught.getMessage(), caught
+                                        );
                                         refreshTableInfo();
                                     }
-                                });
+                                }
+                            );
                         } else {
                             refreshTableInfo();
                         }
@@ -155,7 +156,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(MSG.view_admin_plugins_undeploy(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+        addTableAction(MSG.common_button_delete(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
             Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
@@ -164,7 +165,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
                     public void execute(Boolean confirmed) {
                         if (confirmed) {
                             int[] selectedIds = getSelectedIds(selections);
-                            GWTServiceLookup.getPluginService().undeployServerPlugins(selectedIds,
+                            GWTServiceLookup.getPluginService().deleteServerPlugins(selectedIds,
                                 new AsyncCallback<ArrayList<String>>() {
                                     @Override
                                     public void onSuccess(ArrayList<String> result) {
@@ -178,49 +179,17 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
                                     public void onFailure(Throwable caught) {
                                         CoreGUI.getErrorHandler().handleError(
                                             MSG.view_admin_plugins_undeployedServerPluginsFailure() + " "
-                                                + caught.getMessage(), caught);
+                                                + caught.getMessage(), caught
+                                        );
                                         refreshTableInfo();
                                     }
-                                });
+                                }
+                            );
                         } else {
                             refreshTableInfo();
                         }
                     }
                 });
-            }
-        });
-
-        addTableAction(MSG.common_button_purge(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                if (showUndeployed) {
-                    return super.isEnabled(selection);
-                } else {
-                    return false; // we aren't showing undeployed plugins, so there is no plugin shown that can be purged anyway
-                }
-            }
-
-            public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                int[] selectedIds = getSelectedIds(selections);
-                GWTServiceLookup.getPluginService().purgeServerPlugins(selectedIds,
-                    new AsyncCallback<ArrayList<String>>() {
-                        @Override
-                        public void onSuccess(ArrayList<String> result) {
-                            Message msg = new Message(MSG.view_admin_plugins_purgedServerPlugins(result.toString()),
-                                Severity.Info);
-                            CoreGUI.getMessageCenter().notify(msg);
-                            refresh();
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler()
-                                .handleError(
-                                    MSG.view_admin_plugins_purgedServerPluginsFailure() + " " + caught.getMessage(),
-                                    caught);
-                            refreshTableInfo();
-                        }
-                    });
             }
         });
 
@@ -269,26 +238,10 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        final IButton showUndeployedButton = new EnhancedIButton(MSG.view_admin_plugins_showUndeployed());
-        showUndeployedButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                showUndeployed = !showUndeployed;
-                if (showUndeployed) {
-                    showUndeployedButton.setTitle(MSG.view_admin_plugins_hideUndeployed());
-                    getListGrid().showField(FIELD_DEPLOYED);
-                } else {
-                    showUndeployedButton.setTitle(MSG.view_admin_plugins_showUndeployed());
-                    getListGrid().hideField(FIELD_DEPLOYED);
-                }
-                refresh();
-            }
-        });
-
         PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(MSG.view_admin_plugins_upload(), true);
 
         addExtraWidget(scanForUpdatesButton, true);
         addExtraWidget(restartMasterPCButton, true);
-        addExtraWidget(showUndeployedButton, true);
         addExtraWidget(pluginUploadForm, true);
 
         super.configureTable();
@@ -362,12 +315,6 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             enabledField.setAlign(Alignment.CENTER);
             fields.add(enabledField);
 
-            ListGridField deployedField = new ListGridField(FIELD_DEPLOYED, MSG.view_admin_plugins_deployed());
-            deployedField.setType(ListGridFieldType.IMAGE);
-            deployedField.setAlign(Alignment.CENTER);
-            deployedField.setHidden(true);
-            fields.add(deployedField);
-
             ListGridField versionField = new ListGridField(FIELD_VERSION, MSG.common_title_version());
             versionField.setHidden(true);
             fields.add(versionField);
@@ -377,7 +324,6 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             descriptionField.setWidth("*");
             lastUpdateField.setWidth("20%");
             enabledField.setWidth(65);
-            deployedField.setWidth(75);
             versionField.setWidth(100);
 
             return fields;
@@ -385,7 +331,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
-            GWTServiceLookup.getPluginService().getServerPlugins(showUndeployed,
+            GWTServiceLookup.getPluginService().getServerPlugins(false,
                 new AsyncCallback<ArrayList<ServerPlugin>>() {
                     public void onSuccess(ArrayList<ServerPlugin> result) {
                         response.setData(buildRecords(result));

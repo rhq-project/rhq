@@ -31,19 +31,31 @@ public class CustomAgentInstallData implements Serializable {
 
     private String parentPath;
     private boolean overwriteExistingAgent;
-    private String agentConfigurationXml;
-    private String rhqAgentEnv;
+    private String agentConfigurationXmlFile;
+    private String rhqAgentEnvFile; // all access (getter/setter) and this field is private for now - we don't support this yet
 
     public CustomAgentInstallData() {
         // needed for GWT
     }
 
-    public CustomAgentInstallData(String parentPath, boolean overwriteExistingAgent, String agentConfigurationXml,
-        String rhqAgentEnv) {
+    public CustomAgentInstallData(String parentPath, boolean overwriteExistingAgent) {
+        this(parentPath, overwriteExistingAgent, null, null);
+    }
+
+    public CustomAgentInstallData(String parentPath, boolean overwriteExistingAgent, String agentConfigurationXmlFile) {
+        this(parentPath, overwriteExistingAgent, agentConfigurationXmlFile, null);
+    }
+
+    /**
+     * Allows the caller to set both a custom agent config XML file and a custom env file.
+     * <b>SETTING CUSTOM ENV FILE IS UNSUPPORTED. This constructor is private to prohibit anyone from calling it.<b>
+     */
+    private CustomAgentInstallData(String parentPath, boolean overwriteExistingAgent, String agentConfigurationXmlFile,
+        String rhqAgentEnvFile) {
         this.parentPath = parentPath;
         this.overwriteExistingAgent = overwriteExistingAgent;
-        this.agentConfigurationXml = agentConfigurationXml;
-        this.rhqAgentEnv = rhqAgentEnv;
+        this.agentConfigurationXmlFile = agentConfigurationXmlFile;
+        this.rhqAgentEnvFile = rhqAgentEnvFile;
     }
 
     /**
@@ -78,25 +90,41 @@ public class CustomAgentInstallData implements Serializable {
      *
      * @return config file as seen on the server's file system, or null if no custom config file is to be used
      */
-    public String getAgentConfigurationXml() {
-        return agentConfigurationXml;
+    public String getAgentConfigurationXmlFile() {
+        return agentConfigurationXmlFile;
     }
 
-    public void setAgentConfigurationXml(String agentConfigurationXml) {
-        this.agentConfigurationXml = agentConfigurationXml;
+    /**
+     * If you are setting this value, you must ensure its a file path that the server can see. You can obtain
+     * this if you, for example, are the GUI and you uploaded the file and the server told you where it stored the file.
+     *
+     * @param agentConfigurationXmlFile
+     */
+    public void setAgentConfigurationXmlFile(String agentConfigurationXmlFile) {
+        this.agentConfigurationXmlFile = agentConfigurationXmlFile;
     }
 
     /**
      * If not null, this is a file path as seen from the server where an rhq-agent-env.sh file has been uploaded.
      * The server will take this file and configure the remote agent install with it.
      *
+     * <b>THIS FEATURE IS CURRENTLY UNSUPPORTED</b>
+     *
      * @return env script file as seen on the server's file system, or null if no custom env script file is to be used
      */
-    public String getRhqAgentEnv() {
-        return rhqAgentEnv;
+    public String getRhqAgentEnvFile() {
+        return rhqAgentEnvFile;
     }
 
-    public void setRhqAgentEnv(String rhqAgentEnv) {
-        this.rhqAgentEnv = rhqAgentEnv;
+    /**
+     * If you are setting this value, you must ensure its a file path that the server can see. You can obtain
+     * this if you, for example, are the GUI and you uploaded the file and the server told you where it stored the file.
+     *
+     * <b>THIS FEATURE IS CURRENTLY UNSUPPORTED. This method is private to prohibit anyone setting it.</b>
+     *
+     * @param rhqAgentEnvFile
+     */
+    private void setRhqAgentEnvFile(String rhqAgentEnvFile) {
+        this.rhqAgentEnvFile = rhqAgentEnvFile;
     }
 }

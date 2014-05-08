@@ -622,6 +622,7 @@ public class AntLauncherTest {
             createZip(new String[] { "one", "two" }, subdir, "test.zip", new String[] { "one.txt", "two.txt" });
             createZip(new String[] { "3", "4" }, subdir, "test-explode.zip", new String[] { "three.txt", "four.txt" });
             createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace.zip", new String[] { "template.txt" }); // will be exploded then recompressed
+            createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace2.zip", new String[] { "template.txt" }); // will be exploded then recompressed
             File recipeFile = new File(antBasedir, "deploy.xml");
             FileUtil.copyFile(new File(ANT_BASEDIR, origRecipeFile), recipeFile);
 
@@ -637,13 +638,14 @@ public class AntLauncherTest {
             assert project != null;
             Set<String> bundleFiles = project.getBundleFileNames();
             assert bundleFiles != null;
-            assert bundleFiles.size() == 6 : bundleFiles;
+            assert bundleFiles.size() == 7 : bundleFiles;
             assert bundleFiles.contains("subdir/test0.txt") : bundleFiles;
             assert bundleFiles.contains("subdir/test1.txt") : bundleFiles;
             assert bundleFiles.contains("subdir/test2.txt") : bundleFiles;
             assert bundleFiles.contains("subdir/test.zip") : bundleFiles;
             assert bundleFiles.contains("subdir/test-explode.zip") : bundleFiles;
             assert bundleFiles.contains("subdir/test-replace.zip") : bundleFiles;
+            assert bundleFiles.contains("subdir/test-replace2.zip") : bundleFiles;
 
             assert new File(DEPLOY_DIR, "subdir/test0.txt").exists() : "missing raw file from default destination location";
             assert new File(DEPLOY_DIR, "another/foo.txt").exists() : "missing raw file from the destinationFile";
@@ -652,6 +654,7 @@ public class AntLauncherTest {
             assert !new File(DEPLOY_DIR, "subdir/test2.txt").exists() : "should not be here because destinationFile was specified";
             assert new File(DEPLOY_DIR, "subdir/test.zip").exists() : "missing unexploded zip file";
             assert new File(DEPLOY_DIR, "subdir/test-replace.zip").exists() : "missing unexploded zip file";
+            assert new File(DEPLOY_DIR, "second.dir/test-replace2.zip").exists() : "missing unexploded second zip file";
             assert !new File(DEPLOY_DIR, "subdir/test-explode.zip").exists() : "should have been exploded";
 
             // test that the file in the zip is realized
@@ -668,6 +671,21 @@ public class AntLauncherTest {
                 }
             });
             assert templateVarValue[0] != null && templateVarValue[0].equals("alpha-omega") : templateVarValue[0];
+
+            // test that the file in the second zip is realized
+            final String[] templateVarValue2 = new String[] { null };
+            ZipUtil.walkZipFile(new File(DEPLOY_DIR, "second.dir/test-replace2.zip"), new ZipUtil.ZipEntryVisitor() {
+                @Override
+                public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                    if (entry.getName().equals("template.txt")) {
+                        Properties props = new Properties();
+                        props.load(stream);
+                        templateVarValue2[0] = props.getProperty("X");
+                    }
+                    return true;
+                }
+            });
+            assert templateVarValue2[0] != null && templateVarValue2[0].equals("alpha-omega") : templateVarValue2[0];
 
         } finally {
             FileUtil.purge(antBasedir, true);

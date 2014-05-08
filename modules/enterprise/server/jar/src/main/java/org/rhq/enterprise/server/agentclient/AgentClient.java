@@ -71,6 +71,12 @@ public interface AgentClient {
     boolean ping(long timeoutMillis);
 
     /**
+     * Makes the agent download the plugin updates from the server and make its plugin container use them.
+     * @since 4.11
+     */
+    void updatePlugins();
+
+    /**
      * Returns <code>true</code> if this client can communicate with the agent and the agent Services are
      * available. For a simple communication check see {@link #ping(long)}. This will return <code>
      * false</code> if, for any reason, the agent cannot be pinged (which could mean the agent is down, or a network

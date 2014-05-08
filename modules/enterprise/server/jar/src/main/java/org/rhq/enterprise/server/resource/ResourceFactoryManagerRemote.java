@@ -106,6 +106,8 @@ public interface ResourceFactoryManagerRemote {
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#createTemporaryContentHandle()
      * @see org.rhq.enterprise.server.content.ContentManagerRemote#uploadContentFragment(String, byte[], int, int)
      * @see #createPackageBackedResource(org.rhq.core.domain.auth.Subject, int, int, String, org.rhq.core.domain.configuration.Configuration, String, String, Integer, org.rhq.core.domain.configuration.Configuration, byte[], Integer)
+     *
+     * @since 4.10
      */
     CreateResourceHistory createPackageBackedResourceViaContentHandle(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName, Configuration pluginConfiguration, String packageName,

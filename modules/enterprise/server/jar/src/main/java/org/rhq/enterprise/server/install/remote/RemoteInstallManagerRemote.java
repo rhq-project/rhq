@@ -28,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 
 /**
  * Provides an interface to remotely install an RHQ Agent over SSH.
@@ -36,6 +37,17 @@ import org.rhq.core.domain.install.remote.RemoteAccessInfo;
  */
 @Remote
 public interface RemoteInstallManagerRemote {
+
+    /**
+     * Performs a fast connection check. This will make an SSH connection to see if it can successfully be made.
+     * If it can, this method just returns. Any errors will cause an exception to be thrown.
+     *
+     * @param subject the RHQ user making the request
+     * @param remoteAccessInfo the remote machine information and remote user SSH credentials
+     * @throws SSHSecurityException if the connection failed to be made due to things like the remote host is unknown.
+     */
+    void checkSSHConnection(Subject subject, RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException;
+
     /**
      * Checks to see if an agent is installed in the given directory.
      *
@@ -58,12 +70,16 @@ public interface RemoteInstallManagerRemote {
      * @param customData contains custom install details such as where the agent install directory will be
      *
      * @return info containing the results of the installation
+     * @since 4.11
      */
     AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData);
 
     /**
-     *  @see #installAgent(Subject, RemoteAccessInfo, String, CustomAgentInstallData)
-     *  @deprecated
+     * @param subject
+     * @param remoteAccessInfo
+     * @param parentPath
+     * @return info containing the results of the installation
+     * @deprecated use {@link #installAgent(Subject, RemoteAccessInfo, CustomAgentInstallData)}
      */
     @Deprecated
     AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
@@ -78,6 +94,7 @@ public interface RemoteInstallManagerRemote {
      * @param remoteAccessInfo the remote machine information and remote user SSH credentials including the name of the agent.
      * @return the results of the uninstall - this will be null if there was no install
      *         information for the given agent (and thus nothing was uninstalled).
+     * @since 4.11
      */
     String uninstallAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
 

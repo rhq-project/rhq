@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.11.0-SNAPSHOT</version>
+      <version>4.12.0-SNAPSHOT</version>
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
@@ -32,7 +32,7 @@
          <version>${project.version}</version>
          <type>ejb</type>
       </dependency>
-      
+
    </dependencies>
   <modules>
     <module>disk</module>
@@ -41,6 +41,7 @@
     <module>jboss-software</module>
     <module>alert-email</module>
     <module>alert-irc</module>
+    <module>alert-aerogear-ups</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
     <module>alert-operations</module>

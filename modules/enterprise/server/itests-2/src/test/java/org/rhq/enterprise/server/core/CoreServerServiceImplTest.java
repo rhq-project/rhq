@@ -105,10 +105,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(groups = { "core.agent.registration" })
 public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String TEST_AGENT_NAME_PREFIX = "CoreServerServiceImplTest.Agent";
-    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
     private AgentVersion agentVersion;
     private Server server;
-    private String oldServerNamePropertyValue = null;
 
     private static final int A_PORT = 11111;
     private static final String A_HOST = "hostA";
@@ -156,9 +154,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     @Override
     protected void beforeMethod() throws Exception {
         // mock the name of our server via the sysprop (in production, this is normally set in rhq-server.properties)
-        oldServerNamePropertyValue = System.getProperty(RHQ_SERVER_NAME_PROPERTY);
-        String newServerNamePropertyValue = "CoreServerServiceImplTest.Server";
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, newServerNamePropertyValue);
+        setServerIdentity("CoreServerServiceImplTest.Server");
 
         // mock up our core server MBean that provides information about where the jboss home dir is
         DummyCoreServer mbean = new DummyCoreServer();
@@ -200,7 +196,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         // mock our server
         server = new Server();
-        server.setName(newServerNamePropertyValue);
+        server.setName(getServerIdentity());
         server.setAddress("CoreServerServiceImplTest.localhost");
         server.setPort(12345);
 
@@ -222,11 +218,6 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         unprepareCustomServerService(CoreServerMBean.OBJECT_NAME);
 
         unprepareForTestAgents();
-
-        // in case this was set before our tests, put it back the way it was
-        if (oldServerNamePropertyValue != null) {
-            System.setProperty(RHQ_SERVER_NAME_PROPERTY, oldServerNamePropertyValue);
-        }
     }
 
     @Test

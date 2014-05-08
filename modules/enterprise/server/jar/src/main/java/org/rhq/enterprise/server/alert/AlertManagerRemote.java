@@ -46,7 +46,6 @@ public interface AlertManagerRemote {
      */
     int deleteAlerts(Subject subject, int[] alertIds);
 
-    // TODO (jshaughn) Should this be deprecated, seems an odd method to expose.
     /**
      * Requires Manage Settings permission.
      *

@@ -12,7 +12,7 @@
 # the platform's bootup sequence or as a foreground console process.
 # Run this script without any command line options for the syntax help.
 #
-# This script is customized by the settings in rhq-server-env.bat.  The options
+# This script is customized by the settings in rhq-server-env.sh.  The options
 # set there will be applied to this script.  It is not recommended to edit this
 # script directly.
 #
@@ -22,11 +22,22 @@
 # This script calls standalone.sh when starting the underlying JBossAS server.
 # =============================================================================
 
+# ----------------------------------------------------------------------
+# Dumps a message iff debug mode is enabled
+# ----------------------------------------------------------------------
+
+debug_msg ()
+{
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+      echo $1
+   fi
+}
+
 if [ -f "../rhq-server-env.sh" ]; then
    . "../rhq-server-env.sh" $*
 else
-   echo "Failed to find rhq-server-env.bat. This file should exist in the bin directory."
-   exit 1
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
 fi
 
 # ----------------------------------------------------------------------
@@ -55,18 +66,6 @@ fi
 #RHQ_SERVER_ADDITIONAL_JAVA_OPTS="$RHQ_SERVER_ADDITIONAL_JAVA_OPTS -agentlib:jprofilerti=port=8849 -Xbootclasspath/a:$JPROFILER_HOME/bin/agent.jar"
 #export PATH="$PATH:$JPROFILER_HOME/bin"
 #export LD_LIBRARY_PATH="$JPROFILER_HOME/bin/linux-x64"
-
-# ----------------------------------------------------------------------
-# Dumps a message iff debug mode is enabled
-# ----------------------------------------------------------------------
-
-debug_msg ()
-{
-   # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
-      echo $1
-   fi
-}
 
 # ----------------------------------------------------------------------
 # Sets _SERVER_STATUS, _SERVER_RUNNING and _SERVER_PID based on the
@@ -118,7 +117,7 @@ orange () { sed "/$1/s//`printf "\033[33m$1\033[0m"`/"; }
 
 add_colors () {
     # find out if terminal support colors
-    _COLORS_NUM=$(tput colors 2> /dev/null)
+    _COLORS_NUM=`tput colors 2> /dev/null`
     if [ $? = 0 ] && [ $_COLORS_NUM -gt 2 ]; then
         (sh --version | grep bash) 1> /dev/null 2>&1
         _IS_BASH=$?
@@ -528,10 +527,10 @@ case "$1" in
             RHQ_SERVER_STOP_DELAY=5
         fi
         waited_seconds=0
-        max_wait_seconds=$(expr $RHQ_SERVER_STOP_DELAY \* 60)
+        max_wait_seconds=`expr $RHQ_SERVER_STOP_DELAY \* 60`
         while [ "$_SERVER_RUNNING" -eq "1"  ] && [ $waited_seconds -lt $max_wait_seconds ]; do
-            sleep 2s
-            waited_seconds=$(expr $waited_seconds + 2)
+            sleep 2
+            waited_seconds=`expr $waited_seconds + 2`
             check_status "stopping..."
         done
 

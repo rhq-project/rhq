@@ -43,9 +43,9 @@ import org.rhq.core.util.stream.StreamUtil;
  * raw files at absolute paths, rather than using zip files.
  *
  * Individually tests these situations for raw, absolute path files:
- * 
+ *
  * (X, Y, Z, ? represent hashcodes; none means file doesn't exist):
- * 
+ *
  *    ORIGINAL CURRENT    NEW   What To Do...
  * a.        X       X      X   New file is installed over current*
  * b.        X       X      Y   New file is installed over current
@@ -57,7 +57,7 @@ import org.rhq.core.util.stream.StreamUtil;
  * h.        ?       ?   none   Current file deleted, backed up if different than original
  *
  * (*) means the new and current files will actually be the same content
- * 
+ *
  * @author John Mazzitelli
  */
 @Test
@@ -92,8 +92,8 @@ public class SimpleDeployerRawFileTest {
         this.sourceRawFiles = new HashMap<File, File>(1);
         this.sourceRawFiles.put(sourceRawFile, new File(extDir, originalFileName)); // note we name it different than the source file
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
-        DeploymentData dd = new DeploymentData(originalDeployProps, null, sourceRawFiles, tmpDir, deployDir, null,
-            null, null, null, true, null);
+        DeploymentData dd = new DeploymentData(originalDeployProps, null, sourceRawFiles, tmpDir,
+            deployDir, null, null, null, null, true, null);
         Deployer deployer = new Deployer(dd);
         this.originalFileHashcodeMap = deployer.deploy(null);
         this.currentFile = sourceRawFiles.get(sourceRawFile);
@@ -645,7 +645,7 @@ public class SimpleDeployerRawFileTest {
         }
 
         // The new deployment removes a file that was in the original (it also introduces a new file).
-        // There is already a current file at the original file location that is the same as the original, as you would expect. 
+        // There is already a current file at the original file location that is the same as the original, as you would expect.
         // That current file is to be deleted (since its not in the new deployment) and is not backed up since it is
         // the same as the original.
 

@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.11.0-SNAPSHOT</version>
+  <version>4.12.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -117,7 +117,7 @@
     <freemarker.version>2.3.18</freemarker.version>
 
     <el.version>1.0</el.version>
-    <ems.version>1.3.4-rhq</ems.version>
+    <ems.version>1.3.5-rhq</ems.version>
 
     <getopt.version>1.0.13.redhat-4</getopt.version>
 

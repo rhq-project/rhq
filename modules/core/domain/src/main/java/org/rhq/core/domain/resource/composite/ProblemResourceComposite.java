@@ -43,6 +43,7 @@ public class ProblemResourceComposite implements Serializable {
     private String ancestry;
     private long numAlerts;
     private AvailabilityType availabilityType;
+    private int ancestryLength;
 
     /** Private no args contstructor for JAXB serialization. */
     @SuppressWarnings("unused")
@@ -50,13 +51,14 @@ public class ProblemResourceComposite implements Serializable {
     }
 
     public ProblemResourceComposite(int resourceId, int resourceTypeId, String resourceName, String ancestry,
-        long numAlerts, AvailabilityType availabilityType) {
+        long numAlerts, AvailabilityType availabilityType, int ancestryLength) {
         this.resourceId = resourceId;
         this.resourceTypeId = resourceTypeId;
         this.resourceName = resourceName;
         this.ancestry = ancestry;
         this.numAlerts = numAlerts;
         this.availabilityType = availabilityType; // pull explicitly because lazy-loaded by default
+        this.ancestryLength = ancestryLength;
     }
 
     public int getResourceId() {

@@ -50,7 +50,7 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
 
     public ResourceGroupDefinitionCriteria() {
 
-    }
+    }    
 
     @Override
     public Class<GroupDefinition> getPersistentClass() {

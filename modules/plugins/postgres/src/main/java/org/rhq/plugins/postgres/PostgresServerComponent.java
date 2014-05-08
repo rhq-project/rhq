@@ -46,7 +46,6 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -82,6 +81,8 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     ConnectionPoolingSupport, ConfigurationFacet, MeasurementFacet, OperationFacet, CreateChildResourceFacet {
 
     private static final Log LOG = LogFactory.getLog(PostgresServerComponent.class);
+
+    private static final String METRIC_RUNTIME_PREFIX = "Runtime.";
 
     static final String DEFAULT_CONFIG_FILE_NAME = "postgresql.conf";
 
@@ -204,34 +205,6 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             config.put(prop);
         }
 
-        // Runtime settings (session params) - obtained via SQL.
-        Connection jdbcConnection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
-            statement = jdbcConnection.createStatement();
-            resultSet = statement.executeQuery("show all");
-
-            PropertyMap runtimeSettings = new PropertyMap("runtimeSettings");
-            PropertyDefinitionMap mapDef = configDef.getPropertyDefinitionMap("runtimeSettings");
-            config.put(runtimeSettings);
-            while (resultSet.next()) {
-                String name = resultSet.getString("name");
-                String setting = resultSet.getString("setting");
-
-                PropertyDefinitionSimple pd = mapDef.getPropertyDefinitionSimple(name);
-
-                if ((pd != null) && (pd.getType() == PropertySimpleType.BOOLEAN)) {
-                    runtimeSettings.put(new PropertySimple(name, "on".equalsIgnoreCase(setting)));
-                } else if (setting != null) {
-                    runtimeSettings.put(new PropertySimple(name, setting));
-                }
-            }
-        } finally {
-            DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
-        }
-
         return config;
     }
 
@@ -246,12 +219,6 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                     // configuration file
                     String value = getPostgresParameterValue(prop, pd);
                     parameters.put(prop.getName(), value);
-                } else {
-                    // session param
-                    if (!pd.isReadOnly()) {
-                        // TODO: Update param using SQL SET command. Probably should do a SHOW ALL at the top of this method,
-                        //       and then only call SET on params that have changed. (ips, 10/4/07)
-                    }
                 }
             }
 
@@ -276,22 +243,26 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
      */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
 
+        Map<String, MeasurementScheduleRequest> runtimePropertiesRequests = new HashMap<String, MeasurementScheduleRequest>(
+            metrics.size());
+
         for (MeasurementScheduleRequest request : metrics) {
-            String property = request.getName();
-            if (property.startsWith("Process.")) {
+            String metricName = request.getName();
+            if (metricName.startsWith("Process.")) {
                 if (aggregateProcessInfo != null) {
                     aggregateProcessInfo.refresh();
 
                     //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
 
-                    Object val = lookupAttributeProperty(aggregateProcessInfo, property.substring("Process.".length()));
+                    Object val = lookupAttributeProperty(aggregateProcessInfo,
+                        metricName.substring("Process.".length()));
                     if (val != null && val instanceof Number) {
                         //                        aggregateProcessInfo.getAggregateMemory().Cpu().getTotal()
                         report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
                     }
                 }
-            } else if (property.startsWith("Database")) {
-                if (property.endsWith("startTime")) {
+            } else if (metricName.startsWith("Database")) {
+                if (metricName.endsWith("startTime")) {
                     // db start time
                     Connection jdbcConnection = null;
                     Statement statement = null;
@@ -305,12 +276,12 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                         }
                     } catch (SQLException e) {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Can not collect property: " + property + ": " + e.getLocalizedMessage());
+                            LOG.debug("Can not collect metric: " + metricName + ": " + e.getLocalizedMessage());
                         }
                     } finally {
                         DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
                     }
-                } else if (property.endsWith("backends")) {
+                } else if (metricName.endsWith("backends")) {
                     // number of connected backends
                     Connection jdbcConnection = null;
                     Statement statement = null;
@@ -324,12 +295,49 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                         }
                     } catch (SQLException e) {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Can not collect property: " + property + ": " + e.getLocalizedMessage());
+                            LOG.debug("Can not collect metricName: " + metricName + ": " + e.getLocalizedMessage());
                         }
                     } finally {
                         DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
                     }
                 }
+            } else if (metricName.startsWith(METRIC_RUNTIME_PREFIX)) {
+                runtimePropertiesRequests.put(metricName.substring(METRIC_RUNTIME_PREFIX.length()), request);
+            }
+        }
+
+        if (!runtimePropertiesRequests.isEmpty()) {
+            Connection jdbcConnection = null;
+            Statement statement = null;
+            ResultSet resultSet = null;
+            try {
+                jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+                statement = jdbcConnection.createStatement();
+                resultSet = statement.executeQuery("show all");
+
+                while (resultSet.next()) {
+                    String runtimeProperty = resultSet.getString("name");
+                    if (!runtimePropertiesRequests.containsKey(runtimeProperty)) {
+                        continue;
+                    }
+                    String setting = resultSet.getString("setting");
+                    MeasurementScheduleRequest request = runtimePropertiesRequests.get(runtimeProperty);
+                    switch (request.getDataType()) {
+                    case TRAIT:
+                        report.addData(new MeasurementDataTrait(request, setting));
+                        break;
+                    default:
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Unsupported metric data type: " + request.getName() + ", "
+                                + request.getDataType());
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                LOG.debug("Can not collect metrics: " + runtimePropertiesRequests.keySet() + ": "
+                    + e.getLocalizedMessage());
+            } finally {
+                DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
             }
         }
     }

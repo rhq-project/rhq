@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-core-parent</artifactId>
-        <version>4.11.0-SNAPSHOT</version>
+        <version>4.12.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -17,7 +17,7 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.144</db.schema.version>
+        <db.schema.version>2.147</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.server-name>${rhq.test.ds.server-name}</rhq.ds.server-name>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>

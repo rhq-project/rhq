@@ -208,6 +208,13 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        LEFT JOIN p.scheduledJobsConfiguration AS jobsConfig " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
+    // finds all installed - ignores those plugins marked as deleted
+    // this query does not load the content blob or plugin or schedule configurations
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_DELETED, query = "" //
+        + " SELECT p " //
+        + "   FROM ServerPlugin AS p " //
+        + "   WHERE p.status = 'DELETED' "), //
+
     // returns all installed plugins, both enabled and disabled
     // this is faster than QUERY_FIND_ALL_INSTALLED because it doesn't join configs
     @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS, query = "" //
@@ -242,7 +249,13 @@ import org.rhq.core.domain.configuration.Configuration;
     @NamedQuery(name = ServerPlugin.UPDATE_PLUGIN_ENABLED_BY_ID, query = "" //
         + "UPDATE ServerPlugin p " //
         + "   SET p.enabled = :enabled " //
-        + " WHERE p.id = :id)")
+        + " WHERE p.id = :id)"),
+
+    @NamedQuery(
+        name = ServerPlugin.QUERY_UNACKED_DELETED_PLUGINS,
+        query = "SELECT p FROM ServerPlugin p WHERE p.status = 'DELETED' AND :serverId NOT MEMBER OF p.serversAcknowledgedDelete"
+    )
+
 
 })
 @Entity
@@ -257,10 +270,12 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
     public static final String QUERY_FIND_ALL = "ServerPlugin.findAll";
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
+    public static final String QUERY_FIND_DELETED = "ServerPlugin.findDeleted";
     public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
     public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";
     public static final String QUERY_GET_CONFIG_MTIMES = "ServerPlugin.getConfigMTimes";
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "ServerPlugin.updatePluginEnabledById";
+    public static final String QUERY_UNACKED_DELETED_PLUGINS = "ServerPlugin.unackedDeletedPlugins";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)

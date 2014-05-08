@@ -27,6 +27,7 @@
         <column name="RES_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
         <column name="BUNDLE_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG"/>
         <column name="IGNORED" type="BOOLEAN" default="FALSE" required="TRUE"/>
+        <column name="UNINVENTORY_MISSING" type="BOOLEAN" default="FALSE" required="TRUE"/>
 
         <index name="RHQ_RES_TYPE_IDX_PLG_NAME" unique="true">
             <field ref="NAME"/>
@@ -147,12 +148,12 @@
         <column name="CALC_INTERVAL" type="LONG"/>
         <column name="RECURSIVE" type="BOOLEAN"/>
         <column name="EXPRESSION" type="VARCHAR2" size="1000"/>
+        <column name="CANNED_EXPRESSION" type="VARCHAR2" size="100"/>
 
         <index name="RHQ_GROUP_DEF_NAME" unique="true">
             <field ref="NAME"/>
         </index>
     </table>
-
     <table name="RHQ_RESOURCE_GROUP">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>

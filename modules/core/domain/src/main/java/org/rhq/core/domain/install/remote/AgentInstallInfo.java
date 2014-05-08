@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Provides information on a new agent installation.
+ *
+ * @author John Mazzitelli
  * @author Greg Hinkle
  */
 public class AgentInstallInfo implements Serializable {
@@ -30,14 +33,15 @@ public class AgentInstallInfo implements Serializable {
 
     private String serverAddress;
     private String agentAddress;
+    private int agentPort;
 
     private String path;
     private String owner;
     private String version;
 
-    public List<AgentInstallStep> steps = new ArrayList<AgentInstallStep>();
-
+    private List<AgentInstallStep> steps = new ArrayList<AgentInstallStep>();
     private String customAgentConfigFile = null;
+    private Boolean confirmedAgentConnection = null;
 
     public static final String SETUP_PROP = "rhq.agent.configuration-setup-flag";
 
@@ -101,6 +105,14 @@ public class AgentInstallInfo implements Serializable {
         this.agentAddress = agentAddress;
     }
 
+    public int getAgentPort() {
+        return agentPort;
+    }
+
+    public void setAgentPort(int agentPort) {
+        this.agentPort = agentPort;
+    }
+
     public void addStep(AgentInstallStep step) {
         steps.add(step);
     }
@@ -115,6 +127,21 @@ public class AgentInstallInfo implements Serializable {
 
     public void setCustomAgentConfigurationFile(String file) {
         this.customAgentConfigFile = file;
+    }
+
+    /**
+     * If true, then the agent was at least pinged and it appears up.
+     * If false, then a connection to the agent failed and it appears to be down or perhaps behind a firewall.
+     * If null, then no connection attempt was made to the agent - the agent status is unknown.
+     *
+     * @return flag to indicate if a connection to the agent was successfully made
+     */
+    public Boolean isConfirmedAgentConnection() {
+        return confirmedAgentConnection;
+    }
+
+    public void setConfirmedAgentConnection(Boolean flag) {
+        this.confirmedAgentConnection = flag;
     }
 
     public String getConfigurationStartString() {

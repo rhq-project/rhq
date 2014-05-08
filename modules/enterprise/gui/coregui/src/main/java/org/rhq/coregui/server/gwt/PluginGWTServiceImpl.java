@@ -29,6 +29,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.AbstractPlugin;
+import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -54,6 +55,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
 
     private PluginManagerLocal pluginManager = LookupUtil.getPluginManager();
     private ServerPluginsLocal serverPluginManager = LookupUtil.getServerPlugins();
+    
 
     @Override
     public void restartMasterPluginContainer() throws RuntimeException {
@@ -216,55 +218,6 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     }
 
     @Override
-    public ArrayList<String> purgeAgentPlugins(int[] selectedPluginIds) throws RuntimeException {
-        List<Plugin> allSelectedPlugins;
-        List<String> pluginsToDelete;
-
-        try {
-            allSelectedPlugins = getSelectedAgentPlugins(selectedPluginIds);
-
-            if (allSelectedPlugins.isEmpty()) {
-                log.debug("No agent plugins were selected. Nothing to purge.");
-                return new ArrayList<String>(0);
-            }
-
-            pluginsToDelete = new ArrayList<String>();
-            for (Plugin plugin : allSelectedPlugins) {
-                if (plugin.getStatus() != PluginStatusType.DELETED) {
-                    pluginsToDelete.add(plugin.getDisplayName());
-                }
-            }
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-
-        if (!pluginsToDelete.isEmpty()) {
-            throw new RuntimeException(
-                "Agent plugins must be deleted before they can be purged. The following plugins must first be deleted: "
-                    + pluginsToDelete + ". No plugins were purged.");
-        }
-
-        try {
-            ArrayList<String> pluginNames = new ArrayList<String>();
-            for (Plugin plugin : allSelectedPlugins) {
-                pluginNames.add(plugin.getDisplayName());
-            }
-
-            pluginManager.markPluginsForPurge(getSessionSubject(), getIds(allSelectedPlugins));
-
-            log.info("Preparing to purge agent plugins: " + pluginNames
-                + ". This may take a few minutes since all type definitions from the plugins must "
-                + "first be purged from the system. The plugins will still be visible until they have "
-                + "been purged. Please note that you must not re-install the plugin while the purge is running, "
-                + "as this is going to fail. Wait for re-add until the purge is done.");
-
-            return pluginNames;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public ArrayList<String> enableServerPlugins(int[] selectedPluginIds) throws RuntimeException {
         try {
             List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins(selectedPluginIds);
@@ -339,7 +292,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     }
 
     @Override
-    public ArrayList<String> undeployServerPlugins(int[] selectedPluginIds) throws RuntimeException {
+    public ArrayList<String> deleteServerPlugins(int[] selectedPluginIds) throws RuntimeException {
         try {
             List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins(selectedPluginIds);
             ArrayList<String> selectedPluginNames = new ArrayList<String>();
@@ -356,31 +309,8 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
                 return selectedPluginNames;
             }
 
-            serverPluginManager.undeployServerPlugins(getSessionSubject(), getIds(pluginsToUndeploy));
+            serverPluginManager.deleteServerPlugins(getSessionSubject(), getIds(pluginsToUndeploy));
             log.info("Undeployed server plugins: " + selectedPluginNames);
-            return selectedPluginNames;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public ArrayList<String> purgeServerPlugins(int[] selectedPluginIds) throws RuntimeException {
-        try {
-            List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins(selectedPluginIds);
-            ArrayList<String> selectedPluginNames = new ArrayList<String>();
-
-            for (ServerPlugin selectedPlugin : allSelectedPlugins) {
-                selectedPluginNames.add(selectedPlugin.getDisplayName());
-            }
-
-            if (selectedPluginNames.isEmpty()) {
-                log.debug("No server plugins were selected. Nothing to purge");
-                return selectedPluginNames;
-            }
-
-            serverPluginManager.purgeServerPlugins(getSessionSubject(), getIds(allSelectedPlugins));
-            log.info("Purged server plugins: " + selectedPluginNames);
             return selectedPluginNames;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -519,6 +449,15 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
         }
     }
 
+    @Override
+    public void updatePluginsOnAgents(long delayInMilliseconds) {
+        try {
+            pluginManager.schedulePluginUpdateOnAgents(getSessionSubject(), delayInMilliseconds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     private List<Plugin> getSelectedAgentPlugins(int[] selectedPluginIds) {
         if (selectedPluginIds == null || selectedPluginIds.length == 0) {
             return new ArrayList<Plugin>(0);
@@ -551,5 +490,10 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
             ids.add(plugin.getId());
         }
         return ids;
+    }
+
+    @Override
+    public ArrayList<CannedGroupExpression> getCannedGroupExpressions() {
+        return new ArrayList<CannedGroupExpression>(pluginManager.getCannedGroupExpressions());
     }
 }

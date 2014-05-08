@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<expressions xmlns="urn:xmlns:rhq-canned-groups">
+  <definition>
+    <id>Clusters</id>
+    <name>Clusters</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>JBoss AS4 clusters</description>
+    <expression>groupby resource.trait[partitionName]</expression>
+    <expression>resource.type.plugin = JBossAS</expression>
+    <expression>resource.type.name = JBossAS Server</expression>
+  </definition>
+  <definition>
+    <id>Clustered EARs</id>
+    <name>Clustered EARs</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>Clustered EARs on JBoss AS4</description>
+    <expression>groupby resource.parent.trait[partitionName]</expression>
+    <expression>groupby resource.name</expression>
+    <expression>resource.type.plugin = JBossAS</expression>
+    <expression>resource.type.name = Enterprise Application (EAR)</expression>
+  </definition>
+  <definition>
+    <id>Unique versions</id>
+    <name>Unique versions</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>Unique versions of JBoss AS4</description>
+    <expression>groupby resource.trait[jboss.system:type=Server:VersionName]</expression>
+    <expression>resource.type.plugin = JBossAS</expression>
+    <expression>resource.type.name = JBossAS Server</expression>
+  </definition>
+  <definition>
+    <id>hosting app</id>
+    <name>All hosting any version of "my" app</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>All hosting any version of "my" app</description>
+    <expression>resource.type.plugin = JBossAS</expression>
+    <expression>resource.type.name = JBossAS Server</expression>
+    <expression>resource.child.name.contains = my</expression>
+  </definition>
+  <definition>
+    <id>All non-secured</id>
+    <name>All non-secured</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>All non-secured JBossAS4 servers</description>
+    <expression>empty resource.pluginConfiguration[principal]</expression>
+    <expression>resource.type.plugin = JBossAS</expression>
+    <expression>resource.type.name = JBossAS Server</expression>
+  </definition>
+</expressions>

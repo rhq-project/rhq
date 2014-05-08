@@ -23,8 +23,6 @@
 
 package org.rhq.core.util.updater;
 
-import static org.testng.Assert.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -78,10 +76,8 @@ public class DeployerCanonicalPathTest {
     public void testInitialDeployRawFilesWithCanonicalPaths() throws Exception {
         File tmpDirDest = FileUtil.createTempDirectory("DeployerCanonicalPathTest", ".dest", null);
         File tmpDirSrc = FileUtil.createTempDirectory("DeployerCanonicalPathTest", ".src", null);
-        File rawFileRelativeDest = new File(
-            "dir-does-not-existA/../rawA.txt"); // relative to "tmpDirDest" that we just created above
-        File rawFileRelativeDest2 = new File(
-            "dir-does-not-existA/../../rawA.txt"); // relative to "tmpDirDest" but it takes us above it
+        File rawFileRelativeDest = new File("dir-does-not-existA/../rawA.txt"); // relative to "tmpDirDest" that we just created above
+        File rawFileRelativeDest2 = new File("dir-does-not-existA/../../rawA.txt"); // relative to "tmpDirDest" but it takes us above it
         File rawFileAbsoluteDest = new File(System.getProperty("java.io.tmpdir"), "dir-does-not-existB/../rawB.txt");
 
         try {
@@ -93,8 +89,9 @@ public class DeployerCanonicalPathTest {
             FileUtil.copyFile(new File("target/test-classes/updater-testA.txt"), testRawFileA2);
             FileUtil.copyFile(new File("target/test-classes/updater-testB.txt"), testRawFileB);
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = null;
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            HashMap<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>(3);
             rawFiles.put(testRawFileA, rawFileRelativeDest); // we will realize this one ...
             rawFiles.put(testRawFileA2, rawFileRelativeDest2); // and this one ...
@@ -105,18 +102,18 @@ public class DeployerCanonicalPathTest {
             realizeRawFiles.add(testRawFileA);
             realizeRawFiles.add(testRawFileA2);
             realizeRawFiles.add(testRawFileB);
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDirSrc, destDir, null,
-                realizeRawFiles, templateEngine, ignoreRegex, true, null);
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDirSrc, destDir, rawFiles, realizeRawFiles,
+                zipFiles, null, templateEngine, ignoreRegex, null);
             Deployer deployer = new Deployer(dd);
             DeployDifferences diff = new DeployDifferences();
             FileHashcodeMap map = deployer.deploy(diff);
             System.out.println("map-->\n" + map);
             System.out.println("diff->\n" + diff);
 
-            String rawFileRelativeDestAbsolute = FileUtil.normalizePath(new File(tmpDirDest, rawFileRelativeDest.getPath()))
-                .getAbsolutePath();
-            String rawFileRelativeDestAbsolute2 = FileUtil.normalizePath(new File(tmpDirDest, rawFileRelativeDest2.getPath()))
-                .getAbsolutePath();
+            String rawFileRelativeDestAbsolute = FileUtil.normalizePath(
+                new File(tmpDirDest, rawFileRelativeDest.getPath())).getAbsolutePath();
+            String rawFileRelativeDestAbsolute2 = FileUtil.normalizePath(
+                new File(tmpDirDest, rawFileRelativeDest2.getPath())).getAbsolutePath();
             String rawFileAbsoluteDestAbsolute = FileUtil.normalizePath(rawFileAbsoluteDest).getAbsolutePath();
 
             assert map.size() == 3 : map;
@@ -130,15 +127,13 @@ public class DeployerCanonicalPathTest {
             // rawFileRelativeDestAbsolute2 should be treated just like an absolute, external file
             assert MessageDigestGenerator.getDigestString(new File(rawFileRelativeDestAbsolute2)).equals(
                 map.get(rawFileRelativeDestAbsolute2));
-            assert !MessageDigestGenerator.getDigestString(testRawFileA)
-                .equals(map.get("rawA.txt")) : "should have different hash, we realize this one!";
+            assert !MessageDigestGenerator.getDigestString(testRawFileA).equals(map.get("rawA.txt")) : "should have different hash, we realize this one!";
 
             assert map.containsKey(rawFileAbsoluteDestAbsolute) : map;
             assert new File(rawFileAbsoluteDestAbsolute).exists();
             assert MessageDigestGenerator.getDigestString(new File(rawFileAbsoluteDestAbsolute)).equals(
                 map.get(rawFileAbsoluteDestAbsolute));
-            assert !MessageDigestGenerator.getDigestString(testRawFileB)
-                .equals(map.get(rawFileAbsoluteDestAbsolute)) : "should have different hash, we realized this one";
+            assert !MessageDigestGenerator.getDigestString(testRawFileB).equals(map.get(rawFileAbsoluteDestAbsolute)) : "should have different hash, we realized this one";
 
             assert diff.getAddedFiles().size() == 3 : diff;
             assert diff.getAddedFiles().contains(diff.convertPath("rawA.txt")) : diff;
@@ -158,10 +153,8 @@ public class DeployerCanonicalPathTest {
     public void testUpdateDeployRawFileWithRelativePath() throws Exception {
         File tmpDirDest = FileUtil.createTempDirectory("DeployerCanonicalPathTest", ".dest", null);
         File tmpDirSrc = FileUtil.createTempDirectory("DeployerCanonicalPathTest", ".src", null);
-        File rawFileRelativeDest = new File(
-            "dir-does-not-existA/../rawA.txt"); // relative to "tmpDirDest" that we just created above
-        File rawFileRelativeDest2 = new File(
-            "dir-does-not-existA/../../rawA.txt"); // relative to "tmpDirDest" but it takes us above it
+        File rawFileRelativeDest = new File("dir-does-not-existA/../rawA.txt"); // relative to "tmpDirDest" that we just created above
+        File rawFileRelativeDest2 = new File("dir-does-not-existA/../../rawA.txt"); // relative to "tmpDirDest" but it takes us above it
         File rawFileAbsoluteDest = new File(System.getProperty("java.io.tmpdir"), "dir-does-not-existB/../rawB.txt");
 
         try {
@@ -173,16 +166,17 @@ public class DeployerCanonicalPathTest {
             FileUtil.copyFile(new File("target/test-classes/updater-testA.txt"), testRawFileA2);
             FileUtil.copyFile(new File("target/test-classes/updater-testB.txt"), testRawFileB);
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = null;
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            HashMap<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>(3);
             rawFiles.put(testRawFileA, rawFileRelativeDest);
             rawFiles.put(testRawFileA2, rawFileRelativeDest2);
             rawFiles.put(testRawFileB, rawFileAbsoluteDest);
             File destDir = tmpDirDest;
             Pattern ignoreRegex = null;
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDirSrc, destDir, null, null,
-                templateEngine, ignoreRegex, true, null);
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDirSrc, destDir, rawFiles, null, zipFiles, null,
+                templateEngine, ignoreRegex, null);
             Deployer deployer = new Deployer(dd);
             DeployDifferences diff = new DeployDifferences();
             FileHashcodeMap map = deployer.deploy(diff);
@@ -192,24 +186,20 @@ public class DeployerCanonicalPathTest {
 
             // make sure the first raw file is in the dest dir
             String f = rawFileRelativeDest.getPath();
-            File destFile = new File(tmpDirDest, f)
-                .getCanonicalFile(); // notice f is assumed relative to tmpDirDest, must convert to canonical path
+            File destFile = new File(tmpDirDest, f).getCanonicalFile(); // notice f is assumed relative to tmpDirDest, must convert to canonical path
             assert destFile.exists() : destFile;
-            FileUtil.writeFile(new ByteArrayInputStream("modifiedR".getBytes()),
-                destFile); // change the file so we back it up during update
+            FileUtil.writeFile(new ByteArrayInputStream("modifiedR".getBytes()), destFile); // change the file so we back it up during update
 
             // make sure the second raw file, though specified originally as a relative file, is in the external location
             f = rawFileRelativeDest2.getPath();
             destFile = new File(tmpDirDest, f).getCanonicalFile(); // must convert to canonical path
             assert destFile.exists() : destFile;
-            FileUtil.writeFile(new ByteArrayInputStream("modifiedR2".getBytes()),
-                destFile); // change the file so we back it up during update
+            FileUtil.writeFile(new ByteArrayInputStream("modifiedR2".getBytes()), destFile); // change the file so we back it up during update
 
             // make sure the third raw file is in the external location
             destFile = rawFileAbsoluteDest.getCanonicalFile(); // must convert to canonical path
             assert destFile.exists() : destFile;
-            FileUtil.writeFile(new ByteArrayInputStream("modifiedA".getBytes()),
-                destFile); // change the file so we back it up during update
+            FileUtil.writeFile(new ByteArrayInputStream("modifiedA".getBytes()), destFile); // change the file so we back it up during update
 
             // UPDATE
             // alter the src files so we backup our changed files
@@ -217,19 +207,20 @@ public class DeployerCanonicalPathTest {
             FileUtil.writeFile(new ByteArrayInputStream("src.modifiedR2".getBytes()), testRawFileA2);
             FileUtil.writeFile(new ByteArrayInputStream("src.modifiedA".getBytes()), testRawFileB);
 
-            deploymentProps = new DeploymentProperties(1, "testbundle", "2.0.test", null);
-            dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, tmpDirSrc, destDir, null, null,
-                templateEngine, ignoreRegex, true, null);
+            deploymentProps = new DeploymentProperties(1, "testbundle", "2.0.test", null,
+                DestinationComplianceMode.full);
+            dd = new DeploymentData(deploymentProps, tmpDirSrc, destDir, rawFiles, null, zipFiles, null,
+                templateEngine, ignoreRegex, null);
             deployer = new Deployer(dd);
             diff = new DeployDifferences();
             map = deployer.deploy(diff);
             System.out.println("map-->\n" + map);
             System.out.println("diff->\n" + diff);
 
-            String rawFileRelativeDestAbsolute = FileUtil.normalizePath(new File(tmpDirDest, rawFileRelativeDest.getPath()))
-                .getAbsolutePath();
-            String rawFileRelativeDestAbsolute2 = FileUtil.normalizePath(new File(tmpDirDest, rawFileRelativeDest2.getPath()))
-                .getAbsolutePath();
+            String rawFileRelativeDestAbsolute = FileUtil.normalizePath(
+                new File(tmpDirDest, rawFileRelativeDest.getPath())).getAbsolutePath();
+            String rawFileRelativeDestAbsolute2 = FileUtil.normalizePath(
+                new File(tmpDirDest, rawFileRelativeDest2.getPath())).getAbsolutePath();
             String rawFileAbsoluteDestAbsolute = FileUtil.normalizePath(rawFileAbsoluteDest).getAbsolutePath();
 
             assert new String(StreamUtil.slurp(new FileInputStream(new File(rawFileRelativeDestAbsolute))))
@@ -325,15 +316,16 @@ public class DeployerCanonicalPathTest {
             FileUtil.copyFile(new File("target/test-classes/updater-testA.txt"), testRawFileA2);
             FileUtil.copyFile(new File("target/test-classes/updater-testB.txt"), testRawFileB);
 
-            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null);
-            Set<File> zipFiles = null;
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            HashMap<File, File> zipFiles = null;
             Map<File, File> rawFiles = new HashMap<File, File>(3);
             rawFiles.put(testRawFileA, testRawFileADest);
             rawFiles.put(testRawFileA2, testRawFileA2Dest);
             rawFiles.put(testRawFileB, testRawFileBDest);
 
-            DeploymentData dd = new DeploymentData(deploymentProps, zipFiles, rawFiles, src, destination, null, null,
-                templateEngine, null, true, null);
+            DeploymentData dd = new DeploymentData(deploymentProps, src, destination, rawFiles, null, zipFiles, null,
+                templateEngine, null, null);
             Deployer deployer = new Deployer(dd);
             DeployDifferences diff = new DeployDifferences();
             FileHashcodeMap map = deployer.deploy(diff);
@@ -348,10 +340,8 @@ public class DeployerCanonicalPathTest {
 
             //the symlink target, being the destination of the deployment should have the .rhqdeployments directory
             //specified. No other files should exist there though.
-            assert symlinkTarget.resolve(".rhqdeployments").toFile()
-                .exists() : "Could not find .rhqdeployments on the expected location";
-            assert symlinkTarget.toFile().listFiles().length ==
-                1 : "The target of the symlink should have no other files than .rhqdeployments";
+            assert symlinkTarget.resolve(".rhqdeployments").toFile().exists() : "Could not find .rhqdeployments on the expected location";
+            assert symlinkTarget.toFile().listFiles().length == 1 : "The target of the symlink should have no other files than .rhqdeployments";
         } finally {
             FileUtil.purge(root.toFile(), true);
             FileUtil.purge(symlinkTarget.toFile(), true);

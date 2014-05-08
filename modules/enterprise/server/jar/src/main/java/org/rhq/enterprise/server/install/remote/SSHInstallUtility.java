@@ -26,6 +26,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Properties;
 
 import com.jcraft.jsch.Channel;
@@ -33,6 +35,7 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.UserInfo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,6 +45,7 @@ import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -75,6 +79,76 @@ public class SSHInstallUtility {
         }
     }
 
+    static class SSHConfiguration {
+        public static enum StrictHostKeyChecking {
+            yes, no, ask
+        };
+
+        private StrictHostKeyChecking strictHostKeyChecking = StrictHostKeyChecking.ask;
+        private String knownHostsFile = null;
+
+        public SSHConfiguration() {
+        }
+
+        public StrictHostKeyChecking getStrictHostKeyChecking() {
+            return strictHostKeyChecking;
+        }
+
+        public void setStrictHostKeyChecking(StrictHostKeyChecking strictHostKeyChecking) {
+            this.strictHostKeyChecking = strictHostKeyChecking;
+        }
+
+        public String getKnownHostsFile() {
+            return knownHostsFile;
+        }
+
+        public void setKnownHostsFile(String knownHostsFile) {
+            this.knownHostsFile = knownHostsFile;
+        }
+    }
+
+    private class SSHUserInfo implements UserInfo {
+
+        @Override
+        public void showMessage(String msg) {
+            //System.out.println(msg);
+        }
+
+        @Override
+        public boolean promptYesNo(String ques) {
+            // this is asking either to add the fingerprint for an unknown host or, more troubling, to replace
+            // a known host's fingerprint. If we were told to authorize this host, then accept both.
+            // If we need to do separate processing for either conditions, we can see which question it is via:
+            //   ques.matches("(?s).*authenticity of host.*can't be established.*Are you sure you want to continue connecting.*")
+            // and
+            //   ques.matches("(?s).*NASTY.*")
+            if (accessInfo.isHostAuthorized()) {
+                return true;
+            }
+            throw new SSHSecurityException(ques);
+        }
+
+        @Override
+        public boolean promptPassword(String arg0) {
+            return false;
+        }
+
+        @Override
+        public boolean promptPassphrase(String arg0) {
+            return false;
+        }
+
+        @Override
+        public String getPassword() {
+            return null;
+        }
+
+        @Override
+        public String getPassphrase() {
+            return null;
+        }
+    };
+
     public static final String AGENT_STATUS_NOT_INSTALLED = "Agent Not Installed";
 
     private static final String RHQ_AGENT_LATEST_VERSION_PROP = "rhq-agent.latest.version";
@@ -87,17 +161,24 @@ public class SSHInstallUtility {
 
     private final RemoteAccessInfo accessInfo;
     private final Credentials defaultCredentials;
+    private final SSHConfiguration sshConfiguration;
 
     private Session session;
 
-    public SSHInstallUtility(RemoteAccessInfo accessInfo, Credentials defaultCredentials) {
+    public SSHInstallUtility(RemoteAccessInfo accessInfo, Credentials defaultCredentials, SSHConfiguration sshConfig) {
         this.accessInfo = accessInfo;
         this.defaultCredentials = defaultCredentials;
+
+        if (sshConfig == null) {
+            sshConfig = new SSHConfiguration();
+        }
+        this.sshConfiguration = sshConfig;
+
         connect();
     }
 
     public SSHInstallUtility(RemoteAccessInfo accessInfo) {
-        this(accessInfo, null);
+        this(accessInfo, null, null);
     }
 
     public RemoteAccessInfo getRemoteAccessInfo() {
@@ -107,6 +188,10 @@ public class SSHInstallUtility {
     public void connect() {
         try {
             JSch jsch = new JSch();
+
+            if (sshConfiguration.getKnownHostsFile() != null) {
+                jsch.setKnownHosts(sshConfiguration.getKnownHostsFile());
+            }
 
             //if (accessInfo.getKey() != null) {
             //    jsch.addIdentity(...);
@@ -120,9 +205,13 @@ public class SSHInstallUtility {
                 session.setPassword(credentials.getPassword());
             }
 
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
+            if (sshConfiguration.getStrictHostKeyChecking() != null) {
+                Properties config = new Properties();
+                config.put("StrictHostKeyChecking", sshConfiguration.getStrictHostKeyChecking().name());
+                session.setConfig(config);
+            }
+
+            session.setUserInfo(new SSHUserInfo());
 
             session.connect(CONNECTION_TIMEOUT); // making a connection with timeout.
         } catch (JSchException e) {
@@ -175,16 +264,16 @@ public class SSHInstallUtility {
         }
 
         // confirm that we still have the custom files the user was supposed to have file uploaded
-        if (customData.getAgentConfigurationXml() != null) {
-            if (!new File(customData.getAgentConfigurationXml()).exists()) {
+        if (customData.getAgentConfigurationXmlFile() != null) {
+            if (!new File(customData.getAgentConfigurationXmlFile()).exists()) {
                 throw new RuntimeException("Unable to find custom agent config file at ["
-                    + customData.getAgentConfigurationXml() + "]");
+                    + customData.getAgentConfigurationXmlFile() + "]");
             }
         }
-        if (customData.getRhqAgentEnv() != null) {
-            if (!new File(customData.getRhqAgentEnv()).exists()) {
+        if (customData.getRhqAgentEnvFile() != null) {
+            if (!new File(customData.getRhqAgentEnvFile()).exists()) {
                 throw new RuntimeException("Unable to find custom agent environment script file at ["
-                    + customData.getRhqAgentEnv() + "]");
+                    + customData.getRhqAgentEnvFile() + "]");
             }
         }
 
@@ -219,14 +308,15 @@ public class SSHInstallUtility {
         executeCommand("cd '" + parentPath + "' ; " + "java -jar '" + parentPath + "/" + agentFile + "' '--install="
             + parentPath + "'", "Install Agent", info);
 
-        if (customData.getAgentConfigurationXml() != null) {
+        String agentConfigXmlFilename = parentPath + "/rhq-agent/conf/agent-configuration.xml";
+
+        if (customData.getAgentConfigurationXmlFile() != null) {
             log.info("Copying custom agent configuration file...");
-            String destFilename = parentPath + "/rhq-agent/conf/agent-configuration.xml";
             start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXml(), destFilename);
-            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXml()
-                + "' -> '" + destFilename + "'", "Remote copy the agent configuration file", 0, fileSent ? "Success"
-                : "Failed", getTimeDiff(start));
+            fileSent = SSHFileSend.sendFile(session, customData.getAgentConfigurationXmlFile(), agentConfigXmlFilename);
+            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getAgentConfigurationXmlFile()
+                + "' -> '" + agentConfigXmlFilename + "'", "Remote copy the agent configuration file", 0,
+                fileSent ? "Success" : "Failed", getTimeDiff(start));
             info.addStep(step);
             if (!fileSent) {
                 return info; // abort and return what we did - no sense continuing if the custom config file failed to copy
@@ -237,12 +327,26 @@ public class SSHInstallUtility {
             info.setCustomAgentConfigurationFile("agent-configuration.xml");
         }
 
-        if (customData.getRhqAgentEnv() != null) {
+        // try to see if we can figure out what the port will be that the agent will bind to
+        // this will use awk to find a line in the agent config xml that matches this:
+        //    <entry key="rhq.communications.connector.bind-port" value="16163" />
+        // where we use " as the field separator and the port number will be the fourth field.
+        String agentPortAwkCommand = "awk '-F\"' '/key.*=.*" + AgentInstallInfo.AGENT_PORT_PROP + "/ {print $4}' "
+            + "'" + agentConfigXmlFilename + "'";
+        String portStr = executeCommand(agentPortAwkCommand, "Determine the agent's bind port", info);
+        try {
+            int port = Integer.parseInt(portStr.trim());
+            info.setAgentPort(port);
+        } catch (NumberFormatException nfe) {
+            info.setAgentPort(0); // indicate that we don't know it
+        }
+
+        if (customData.getRhqAgentEnvFile() != null) {
             log.info("Copying custom agent environment script...");
             String destFilename = parentPath + "/rhq-agent/bin/rhq-agent-env.sh";
             start = System.currentTimeMillis();
-            fileSent = SSHFileSend.sendFile(session, customData.getRhqAgentEnv(), destFilename);
-            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getRhqAgentEnv()
+            fileSent = SSHFileSend.sendFile(session, customData.getRhqAgentEnvFile(), destFilename);
+            AgentInstallStep step = new AgentInstallStep("ssh copy '" + customData.getRhqAgentEnvFile()
                 + "' -> '" + destFilename + "'", "Remote copy the agent environment script file", 0,
                 fileSent ? "Success" : "Failed", getTimeDiff(start));
             info.addStep(step);
@@ -250,6 +354,24 @@ public class SSHInstallUtility {
                 return info; // abort and return what we did - no sense continuing if the custom env script file failed to copy
             }
             log.info("Custom agent environment script copied.");
+        }
+
+        // Do a quick check to see if there is something already listening on the agent's port.
+        start = System.currentTimeMillis();
+        Boolean squatterCheck = checkAgentConnection(info, 1);
+        if (squatterCheck != null) { // if this is null, we weren't even able to check
+            if (squatterCheck.booleanValue()) {
+                AgentInstallStep step = new AgentInstallStep("ping " + info.getAgentAddress() + ":"
+                    + info.getAgentPort(), "See if anything has already taken the agent port", 1,
+                    "Port already in use", getTimeDiff(start));
+                info.addStep(step);
+                return info; // abort, don't install an agent if something is already squatting on its port
+            } else {
+                AgentInstallStep step = new AgentInstallStep("ping " + info.getAgentAddress() + ":"
+                    + info.getAgentPort(), "See if anything has already taken the agent port", 0, "Port free",
+                    getTimeDiff(start));
+                info.addStep(step);
+            }
         }
 
         log.info("Will start new agent @ [" + accessInfo.getHost() + "] pointing to server @ [" + serverAddress + "]");
@@ -269,7 +391,52 @@ public class SSHInstallUtility {
         String startCommand = envCmd1 + " ; " + envCmd2 + " ; nohup '" + agentScript + "' " + startStringArgs + " &";
         executeCommand(startCommand, "Start New Agent", info);
 
+        // see if we can confirm the agent connection now
+        Boolean pingResults = checkAgentConnection(info, 5);
+        if (pingResults == null) {
+            log.warn("Just installed an agent at [" + info.getAgentAddress()
+                + "] but could not determine its port. No validation check will be made.");
+        } else if (!pingResults.booleanValue()) {
+            log.warn("Just installed an agent at [" + info.getAgentAddress()
+                + "] but could not ping its port. Something might be bad with the install or it is behind a firewall.");
+        }
+
         return info;
+    }
+
+    /**
+     * Checks if the agent's host/port can be connected to via a TCP socket.
+     * This will set the given info's "ConfirmedAgentConnection" attribute as well as return it.
+     *
+     * @param info information on the agent endpoint; its confirmed-agent-connection flag will be set
+     * @param retries number of times to try to connect before aborting (it will set the flag to false and return false when it aborts)
+     * @return the flag to indicate if the agent endpoint was able to be successfully connected to (could be null
+     *         if the agent port was not known and thus the connection attempt was never made).
+     */
+    private Boolean checkAgentConnection(AgentInstallInfo info, int retries) {
+        // If we know the port the agent is going to listen to, see if we can ping it.
+        // If we don't know the port, then just skip this test and set the confirm connection flag to null.
+        if (info.getAgentPort() > 0) {
+            info.setConfirmedAgentConnection(false);
+            for (int attempt = 0; attempt < retries && !info.isConfirmedAgentConnection(); attempt++) {
+                Socket ping = new Socket();
+                try {
+                    ping.connect(new InetSocketAddress(info.getAgentAddress(), info.getAgentPort()), 5000);
+                    info.setConfirmedAgentConnection(ping.isConnected());
+                } catch (Exception e) {
+                    info.setConfirmedAgentConnection(false);
+                } finally {
+                    try {
+                        ping.close();
+                    } catch (Exception ignore) {
+                    }
+                }
+            }
+        } else {
+            info.setConfirmedAgentConnection(null); // indicates we didn't try to ping the agent
+        }
+
+        return info.isConfirmedAgentConnection();
     }
 
     public String uninstallAgent(String doomedPath) {
@@ -287,7 +454,9 @@ public class SSHInstallUtility {
             String results = executeCommand("rm -rf '" + theRealDoomedPath + "'", "Uninstall Agent");
             return results;
         } else {
-            throw new IllegalArgumentException("There does not appear to be an agent installed here: " + doomedPath);
+            log.warn("Asked to uninstall an agent from [" + accessInfo.getHost() + ":" + doomedPath
+                + "] but there does not appear to be an agent there. Skipping the attempt to remove any files.");
+            return "There does not appear to be an agent installed here: " + accessInfo.getHost() + ":" + doomedPath;
         }
     }
 
@@ -405,7 +574,7 @@ public class SSHInstallUtility {
         return result;
     }
 
-    private String executeCommand(String command) {
+    private String executeCommand(String command) throws ExecuteException {
         ChannelExec channel = null;
         int exitStatus = -1;
 

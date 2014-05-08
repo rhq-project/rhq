@@ -54,7 +54,7 @@ import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * This deploys a bundle of files within a zip archive to a managed directory.
- * 
+ *
  * This follows rpm-like rules when updating a deployment and files already exist
  * in previous deployments that need to be re-installed in an updated deployment.
  * The rules are as follows, where the first three columns represent a file's
@@ -73,14 +73,14 @@ import org.rhq.core.util.stream.StreamUtil;
  * (*) denotes that the current file could have been left as-is. If, in the future, we can
  * provide Java with a way to change file permissions or ownership, we would want to
  * copy the new file over the current file and perform the chown/chmod.
- * 
+ *
  * Here you can see that there is only one non-trivial case where the new file is <b>not</b> installed, and that
  * is when the original file and the new file have the same hashcode (i.e. was not changed) but
  * the current version of that file was changed (in the trivial case, where there is no new file, nothing is
  * installed and the current file is uninstalled). In this case, since the original file and the new
  * file are identical, the file with the modifications made to the original version (called the "current" version)
  * is presumed to still be valid for the new version, thus we leave the current, modified file in place.
- * 
+ *
  * In the case where there is ambiguity as to what the right thing to do is, the current file is
  * backed up prior to being overwritten with the new file. This can occur in two cases: the first
  * is when the current file is a modified version of the original and the new file is different
@@ -91,8 +91,8 @@ import org.rhq.core.util.stream.StreamUtil;
  * the backup subdirectory called {@link DeploymentsMetadata#BACKUP_DIR}. If a file
  * that needs to be backed up is referred to via an absolute path (that is, outside the destination
  * directory), it will be copied to the {@link DeploymentsMetadata#EXT_BACKUP_DIR} directory found
- * in the metadata directory. 
- * 
+ * in the metadata directory.
+ *
  * @author John Mazzitelli
  */
 public class Deployer {
@@ -103,7 +103,7 @@ public class Deployer {
 
     /**
      * Constructors that prepares this object to deploy content to a destination on the local file system.
-     *  
+     *
      * @param deploymentData the data needed to know what to do for this deployment
      */
     public Deployer(DeploymentData deploymentData) {
@@ -123,7 +123,7 @@ public class Deployer {
         return deploymentData;
     }
 
-    /** 
+    /**
      * @return <code>true</code> if the deployer is to install the deployment data in a directory
      *         that already has a managed deployment in it. <code>false</code> if there is currently
      *         no managed deployments in the destination directory.
@@ -134,7 +134,7 @@ public class Deployer {
 
     /**
      * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, false)}.
-     * @see #deploy(DeployDifferences, boolean) 
+     * @see #deploy(DeployDifferences, boolean)
      */
     public FileHashcodeMap deploy(DeployDifferences diff) throws Exception {
         return deploy(diff, false, false);
@@ -142,7 +142,7 @@ public class Deployer {
 
     /**
      * Convienence method that is equivalent to {@link #deploy(DeployDifferences, boolean) deploy(diff, true)}.
-     * @see #deploy(DeployDifferences, boolean) 
+     * @see #deploy(DeployDifferences, boolean)
      */
     public FileHashcodeMap dryRun(DeployDifferences diff) throws Exception {
         return deploy(diff, false, true);
@@ -151,15 +151,15 @@ public class Deployer {
     /**
      * Deploys all files to their destinations. Everything this method has to do is determined
      * by the data passed into this object's constructor.
-     * 
+     *
      * This method allows one to ask for a dry run to be performed; meaning don't actually change
      * the file system, just populate the <code>diff</code> object with what would have been done.
-     * 
+     *
      * The caller can ask that an existing deployment directory be cleaned (i.e. wiped from the file system)
      * before the new deployment is laid down. This is useful if there are ignored files/directories
      * that would be left alone as-is, had a clean not been requested. Note that the <code>clean</code>
      * parameter is ignored if a dry run is being requested.
-     * 
+     *
      * @param diff this method will populate this object with information about what
      *             changed on the file system due to this deployment
      * @param clean if <code>true</code>, the caller is telling this method to first wipe clean
@@ -193,11 +193,11 @@ public class Deployer {
      * This will first perform a deploy (e.g. {@link #deploy(DeployDifferences, boolean, boolean) deploy(diff, clean, dryRun)})
      * and then, if there are backup files from the previous deployment, those backup files will be restored to their
      * original locations.
-     * 
+     *
      * This is useful when you want to "undeploy" something where "undeploy" infers you want to go back to
      * how the file system looked previously to a subsequent deployment (the one this method is being told
      * to "redeploy"), including manual changes that were made over top the previous deployment.
-     * 
+     *
      * For example, suppose you deployed deployment ID #1 and then the user manually changed some files
      * within that #1 deployment. Later on, you deploy deployment ID #2 (which will not only deploy
      * #2's files but will also backup the files that were manually changed within deployment #1).
@@ -262,8 +262,8 @@ public class Deployer {
 
         diskUsage.setMaxDiskUsable(usableSpace);
 
-        Set<File> zipFiles = this.deploymentData.getZipFiles();
-        for (File zipFile : zipFiles) {
+        Map<File, File> zipFiles = this.deploymentData.getZipFilesMap();
+        for (File zipFile : zipFiles.keySet()) {
             ZipUtil.walkZipFile(zipFile, new ZipEntryVisitor() {
                 public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
                     if (!entry.isDirectory()) {
@@ -290,10 +290,10 @@ public class Deployer {
      * and compare it to the amount of estimated disk space is currently usable. If there does not appear to be
      * enough usable disk space to fit the deployment, this method will thrown an exception. Otherwise, this
      * method will simply return normally.
-     * 
+     *
      * This can be used to fail-fast a deployment - there is no need to process the deployment if there is not
      * enough disk space to start with.
-     * 
+     *
      * @throws Exception if there does not appear to be enough disk space to store the deployment content
      */
     public void checkDiskUsage() throws Exception {
@@ -328,7 +328,7 @@ public class Deployer {
             File dir = this.deploymentData.getDestinationDir();
             backupAndPurgeDirectory(diff, dir, dryRun, null);
         }
-        break;
+            break;
         case filesAndDirectories: {
             // We are not to manage files in the root deployment directory. However, we always manage
             // subdirectories that the bundle wants to deploy. So look in subdirectories that our bundles
@@ -341,7 +341,7 @@ public class Deployer {
                 backupAndPurgeDirectory(diff, dir, dryRun, managedSubdir.getPath() + File.separatorChar);
             }
         }
-        break;
+            break;
         default:
             throw new IllegalStateException("Unsupported destination compliance mode.");
         }
@@ -368,8 +368,7 @@ public class Deployer {
         //       * if a current file is ignored in the latest rescan
         //       * if a file is realized on the filesystem before its stored on the file system
         //       * if a current file is backed up
-        boolean reportNewRootFilesAsNew =
-            this.deploymentData.getDeploymentProps().getDestinationCompliance() == DestinationComplianceMode.full;
+        boolean reportNewRootFilesAsNew = this.deploymentData.getDeploymentProps().getDestinationCompliance() == DestinationComplianceMode.full;
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
 
         // we need fill original files with directory entries
@@ -528,7 +527,7 @@ public class Deployer {
                 if (deleted) {
                     debug("Deleted obsolete file [", doomedFile, "]. dryRun=", dryRun);
                 } else {
-                    // TODO: what should we do? is it a major failure if we can't remove obsolete files?                
+                    // TODO: what should we do? is it a major failure if we can't remove obsolete files?
                     debug("Failed to delete obsolete file [", doomedFile, "]");
                     if (diff != null) {
                         diff.addError(fileToDeletePath, "File [" + doomedFile.getAbsolutePath() + "] did not delete");
@@ -559,7 +558,7 @@ public class Deployer {
      * @param original
      */
     private void putDirectoryEntries(FileHashcodeMap map) {
-        Map<String,String> missingDirs = new HashMap<String,String>();
+        Map<String, String> missingDirs = new HashMap<String, String>();
         for (Iterator<String> it = map.keySet().iterator(); it.hasNext();) {
             File keyFile = new File(it.next());
             if (!keyFile.isAbsolute()) {
@@ -585,7 +584,7 @@ public class Deployer {
         }
 
         // Loop through each zip and get all top-most subdirectories that the exploded zip files will have.
-        Set<File> zipFilesToAnalyze = new HashSet<File>(this.deploymentData.getZipFiles());
+        Set<File> zipFilesToAnalyze = new HashSet<File>(this.deploymentData.getZipFilesMap().keySet());
         // We only have to do this analysis for those zips that we explode - remove from the list those we won't explode
         Iterator<File> iter = zipFilesToAnalyze.iterator();
         while (iter.hasNext()) {
@@ -713,13 +712,12 @@ public class Deployer {
                 } else {
                     if (fileToBackup.isDirectory()) {
                         bakFile.mkdir();
-                    }
-                    else {
+                    } else {
                         FileUtil.copyFile(fileToBackup, bakFile);
                     }
                     deleted = fileToBackup.delete();
                     if (deleted == false) {
-                        // TODO: what should we do? is it a major failure if we can't remove files here?                
+                        // TODO: what should we do? is it a major failure if we can't remove files here?
                         debug("Failed to delete file [", fileToBackup, "] but it is backed up");
                         if (diff != null) {
                             diff.addError(fileToBackupPath, "File [" + fileToBackup.getAbsolutePath()
@@ -730,8 +728,7 @@ public class Deployer {
             } else {
                 if (fileToBackup.isDirectory()) {
                     bakFile.mkdir();
-                }
-                else {
+                } else {
                     FileUtil.copyFile(fileToBackup, bakFile);
                 }
             }
@@ -783,7 +780,7 @@ public class Deployer {
     private FileHashcodeMap extractZipAndRawFiles(Map<String, String> currentFilesToLeaveAlone, DeployDifferences diff,
         boolean dryRun) throws Exception {
 
-        // NOTE: right now, this only adds to the "realized" set of files is diff, no need to track "added" or "changed" here
+        // NOTE: right now, this only adds "diffs" to the "realized" file set, no need to track "added" or "changed" here
         FileHashcodeMap newFileHashCodeMap = new FileHashcodeMap();
 
         // get information about the source dir - will be needed if we were told to not explode a zip
@@ -792,7 +789,9 @@ public class Deployer {
 
         // extract all zip files
         ExtractorZipFileVisitor visitor;
-        for (File zipFile : this.deploymentData.getZipFiles()) {
+        for (Map.Entry<File, File> zipFileEntry : this.deploymentData.getZipFilesMap().entrySet()) {
+            File zipFile = zipFileEntry.getKey();
+
             Boolean exploded = this.deploymentData.getZipsExploded().get(zipFile);
             if (exploded == null) {
                 exploded = Boolean.TRUE; // the default is to explode the archive
@@ -807,22 +806,40 @@ public class Deployer {
 
             if (exploded.booleanValue()) {
                 // EXPLODED
+
                 visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
                     this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
                 ZipUtil.walkZipFile(zipFile, visitor);
                 newFileHashCodeMap.putAll(visitor.getFileHashcodeMap()); // exploded into individual files
+
             } else {
                 // COMPRESSED
 
-                // Note: there is a requirement that all zip files must be located in the sourceDir - this is why. We need
-                // the path of the zip relative to the source dir so we can copy it to the same relative location
-                // under the destination dir. Without doing this, if the zip is in a subdirectory, we won't know where to
-                // put it under the destination dir. 
-                String zipRelativePath = zipFile.getAbsolutePath().substring(sourceDirLength);
-                if (zipRelativePath.startsWith("/") || zipRelativePath.startsWith("\\")) {
-                    zipRelativePath = zipRelativePath.substring(1);
+                File destinationDir = zipFileEntry.getValue();
+                File compressedFile = null;
+                String zipPath = null;
+
+                if (null == destinationDir) {
+                    // Note: there is a requirement that all zip files must be located in the sourceDir - this is why. We
+                    // need the path of the zip relative to the source dir so we can copy it to the same relative location
+                    // under the destination dir. Without doing this, if the zip is in a subdirectory, we won't know where to
+                    // put it under the destination dir.
+                    String zipRelativePath = zipFile.getAbsolutePath().substring(sourceDirLength);
+                    if (zipRelativePath.startsWith("/") || zipRelativePath.startsWith("\\")) {
+                        zipRelativePath = zipRelativePath.substring(1);
+                    }
+                    compressedFile = new File(this.deploymentData.getDestinationDir(), zipRelativePath);
+                    zipPath = zipRelativePath;
+
+                } else {
+                    if (destinationDir.isAbsolute()) {
+                        compressedFile = new File(destinationDir, zipFile.getName());
+                        zipPath = compressedFile.getPath();
+                    } else {
+                        zipPath = new File(destinationDir, zipFile.getName()).getPath();
+                        compressedFile = new File(this.deploymentData.getDestinationDir(), zipPath);
+                    }
                 }
-                File compressedFile = new File(this.deploymentData.getDestinationDir(), zipRelativePath);
 
                 if (this.deploymentData.getTemplateEngine() != null && realizeRegex != null) {
                     // we need to explode it to perform the realization of templatized variables
@@ -852,7 +869,7 @@ public class Deployer {
                     // use source zip for hash - should be the same as the would-be compressed file since we aren't realizing files in it
                     compressedFileHashcode = hashcodeGenerator.calcDigestString(zipFile);
                 }
-                newFileHashCodeMap.put(zipRelativePath, compressedFileHashcode);
+                newFileHashCodeMap.put(zipPath, compressedFileHashcode);
             }
         }
 
@@ -956,12 +973,12 @@ public class Deployer {
      * Create a zip file by adding all the files found in the file hashcode map. The
      * relative paths found in the map's key set are relative to the rootDir directory.
      * The files are stored in the given zipFile.
-     * 
+     *
      * @param zipFile where to zip up all the files
      * @param rootDir all relative file paths are relative to this root directory
      * @param fileHashcodeMap the key set tells us all the files that need to be zipped up
      *
-     * @throws Exception 
+     * @throws Exception
      */
     private void createZipFile(File zipFile, File rootDir, FileHashcodeMap fileHashcodeMap) throws Exception {
         if (zipFile.getParentFile() != null) {
@@ -1022,16 +1039,16 @@ public class Deployer {
     /**
      * Performs in-memory-only calculations to determine where new files would go and what
      * their new hashcodes would be.
-     * 
+     *
      * @return map of file/hashcodes if there were to be written to disk
      * @throws Exception
      */
     private FileHashcodeMap getNewDeploymentFileHashcodeMap() throws Exception {
         FileHashcodeMap fileHashcodeMap = new FileHashcodeMap();
 
-        // perform in-memory extraction and calculate hashcodes for all zip files 
+        // perform in-memory extraction and calculate hashcodes for all zip files
         InMemoryZipFileVisitor visitor;
-        for (File zipFile : this.deploymentData.getZipFiles()) {
+        for (File zipFile : this.deploymentData.getZipFilesMap().keySet()) {
             debug("Extracting zip [", zipFile, "] in-memory to determine hashcodes for all entries");
             Pattern realizeRegex = null;
             if (this.deploymentData.getZipEntriesToRealizeRegex() != null) {
@@ -1098,13 +1115,13 @@ public class Deployer {
     /**
      * Takes all backup files found in a previous deployment and restores those files to their
      * original locations.
-     * 
+     *
      * This method is usually called after a {@link #deploy(DeployDifferences, boolean)} has been completed
      * because it would be at that time when the previous deployment's information has been persisted
      * and is available. Rarely will you ever want to restore backup files without first deploying
      * content.
      *
-     * @param prevDeploymentId the previous deployment ID which contains the backup files 
+     * @param prevDeploymentId the previous deployment ID which contains the backup files
      * @param map the map containing filenames/hashcodes that will be adjusted to reflect the restored file hashcodes
      * @param diff used to store information about the restored files
      * @param dryRun if <code>true</code>, don't really restore the files, but log the files that would

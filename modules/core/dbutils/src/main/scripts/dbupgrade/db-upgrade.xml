@@ -2076,6 +2076,7 @@
             </schemaSpec>
 
 <!-- RHQ 4.7.0 uses DB Schema 2.133 -->
+<!-- RHQ 4.8.0 uses DB Schema 2.133 -->
 
             <schemaSpec version="2.134">
               <!-- Make sure existing storage nodes are storing IP addresses and not hostnames -->
@@ -2286,10 +2287,15 @@
             <schemaSpec version="2.142">
                 <schema-javaTask className="SystemSettingsPasswordObfuscationTask" />
             </schemaSpec>
+
+<!-- JON 3.2.0 uses DB Schema 2.142 -->
+
             <schemaSpec version="2.143">
               <schema-alterColumn table="RHQ_RAW_CONFIG" column="config_ID" nullable="true"/>
             </schemaSpec>
-            
+
+<!-- RHQ 4.10.0 uses DB Schema 2.143 -->
+
             <schemaSpec version="2.144">
                 <!-- RHQ_AGENT_INSTALL -->
                 <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
@@ -2307,6 +2313,38 @@
                 <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_PORT" columnType="INTEGER" />
                 <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_USERNAME" columnType="VARCHAR2" precision="255" />
                 <schema-addColumn   table="RHQ_AGENT_INSTALL" column="SSH_PASSWORD" columnType="VARCHAR2" precision="4000" />
+            </schemaSpec>
+
+            <schemaSpec version="2.145">
+                <schema-addColumn   table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" columnType="VARCHAR2" precision="100" />
+                <schema-alterColumn table="RHQ_GROUP_DEF" column="CANNED_EXPRESSION" nullable="true"/>
+            </schemaSpec>
+
+            <schemaSpec version="2.146">
+                <schema-directSQL>
+                    <statement desc="Create new RHQ_PLUGIN_SERVER_ACK_DELETE table">
+                        CREATE TABLE RHQ_PLUGIN_SERVER_ACK_DELETE (
+                        PLUGIN_ID INTEGER NOT NULL REFERENCES RHQ_PLUGIN,
+                        SERVER_ID INTEGER NOT NULL REFERENCES RHQ_SERVER,
+                        CONSTRAINT RHQ_P_S_ACK_DELETE_PK PRIMARY KEY (PLUGIN_ID, SERVER_ID)
+                        )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+<!-- RHQ 4.11.0 uses DB Schema 2.146 -->
+
+            <schemaSpec version="2.147">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_MISSING" columnType="BOOLEAN"/>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Set uninventoryDead flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET UNINVENTORY_MISSING = false
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Set ignored flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET UNINVENTORY_MISSING = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_MISSING" nullable="false" />
             </schemaSpec>
 
         </dbupgrade>

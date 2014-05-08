@@ -1579,7 +1579,7 @@
              discovery="SubsystemDiscovery"
              description="Mod_cluster support"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Web">
 
       <runs-inside>
         <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -1978,7 +1978,7 @@
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Web">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=webservices"/>
@@ -2059,7 +2059,7 @@
               discovery="SubsystemDiscovery"
               description="JacORB subsystem configuration"
               singleton="true"
-              subCategory="Subsystems">
+              subCategory="Subsystems|Container">
 
       <plugin-configuration>
         <c:simple-property name="path" default="subsystem=jacorb" readOnly="true"/>
@@ -2152,7 +2152,7 @@
              discovery="SubsystemDiscovery"
              description="The configuration of the JPA subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Container">
 
       <plugin-configuration>
         <c:simple-property name="path" default="subsystem=jpa" readOnly="true"/>
@@ -2169,7 +2169,7 @@
              discovery="SubsystemDiscovery"
              description="The configuration of the EE subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Container">
 
       <plugin-configuration>
         <c:simple-property name="path" default="subsystem=ee" readOnly="true"/>
@@ -2371,7 +2371,7 @@
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Core">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=jgroups"/>
@@ -2408,7 +2408,7 @@
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Connector">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=mail"/>
@@ -2486,7 +2486,7 @@
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Web">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
@@ -2710,7 +2710,7 @@
              discovery="SubsystemDiscovery"
              description="The Java EE Connector Architecture (JCA) subsystem providing general configuration for resource adapters"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Connector">
 
       <plugin-configuration>
         <c:simple-property name="path" default="subsystem=jca" readOnly="true"/>
@@ -2891,7 +2891,7 @@
              class="BaseComponent"
              description="The configuration of the JMX subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Core">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=jmx"/>
@@ -2923,7 +2923,7 @@
              class="BaseComponent"
              description="Configuration of the resource adapters subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Connector">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
@@ -3084,7 +3084,7 @@
              class="BaseComponent"
              description="The configuration of the ejb3 subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Container">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=ejb3"/>
@@ -3294,7 +3294,7 @@
              discovery="SubsystemDiscovery"
              class="TemplatedSubResourcesComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Core">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=threads"/>
@@ -5105,7 +5105,7 @@
              discovery="SubsystemDiscovery"
              class="LoggerComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Core">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=logging"/>
@@ -5304,7 +5304,7 @@
                discovery="ModClusterDiscoveryComponent"
                description="Mod_cluster support"
                singleton="true"
-               subCategory="Subsystems">
+               subCategory="Subsystems|Web">
 
         <plugin-configuration>
           <c:simple-property name="path" default="subsystem=modcluster" readOnly="true"/>
@@ -5451,7 +5451,7 @@
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Web">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
@@ -5671,7 +5671,7 @@
              discovery="SubsystemDiscovery"
              description="The Java EE Connector Architecture (JCA) subsystem providing general configuration for resource adapters"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Connector">
 
       <plugin-configuration>
         <c:simple-property name="path" default="subsystem=jca" readOnly="true"/>
@@ -5810,7 +5810,7 @@
              class="BaseComponent"
              description="Configuration of the resource adapters subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Connector">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
@@ -5920,7 +5920,7 @@
              class="BaseComponent"
              description="The configuration of the ejb3 subsystem."
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Container">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=ejb3"/>
@@ -6128,7 +6128,7 @@
              discovery="SubsystemDiscovery"
              class="TemplatedSubResourcesComponent"
              singleton="true"
-             subCategory="Subsystems">
+             subCategory="Subsystems|Core">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="subsystem=threads"/>
@@ -7483,7 +7483,7 @@
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Web">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -7722,7 +7722,7 @@
            class="BaseComponent"
            singleton="true"
            description="General settings of the JCA engine. Not necessarily for end-users"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -7751,7 +7751,7 @@
            class="DatasourceComponent"
            singleton="true"
            description="Datasources subsystem for Standalone servers."
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -7820,7 +7820,7 @@
            class="DatasourceComponent"
            singleton="true"
            description="Datasources subsystem for profile."
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -7868,7 +7868,7 @@
            class="DatasourceComponent"
            singleton="true"
            description="Datasources subsystem for Managed servers."
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
@@ -7996,7 +7996,7 @@
            discovery="SubsystemDiscovery"
            class="LoggerComponent"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Core">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -8392,7 +8392,7 @@
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Web">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -8547,7 +8547,7 @@
            class="TransactionsComponent"
            singleton="true"
            description="The transactions subsystem."
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -8670,7 +8670,7 @@
            class="TransactionsComponent"
            singleton="true"
            description="The transactions subsystem."
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -8727,7 +8727,7 @@
            class="TransactionsComponent"
            singleton="true"
            description="The transactions subsystem."
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="Managed Server" plugin="&pluginName;"/>
@@ -10338,7 +10338,7 @@
            discovery="SubsystemDiscovery"
            description="Management of the deployment scanner"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Core">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -10382,7 +10382,7 @@
            discovery="SubsystemDiscovery"
            description="JacORB subsystem configuration"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -10448,7 +10448,7 @@
            discovery="SubsystemDiscovery"
            description="JBoss Diagnostic Reporter (JDR) Subsystem."
            singleton="true"
-           subCategory="Subsystems|Weird|Subsystems">
+           subCategory="Subsystems">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -10476,7 +10476,7 @@
            discovery="SubsystemDiscovery"
            description="The Java EE Connector Architecture (JCA) subsystem providing general configuration for resource adapters"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -10636,7 +10636,7 @@
            discovery="SubsystemDiscovery"
            description="The configuration of the JPA subsystem."
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -10704,7 +10704,7 @@
            discovery="SubsystemDiscovery"
            description="The configuration of the EE subsystem."
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -11089,7 +11089,7 @@
            discovery="SubsystemDiscovery"
            class="TemplatedSubResourcesComponent"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Core">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -11162,7 +11162,7 @@
            class="BaseComponent"
            description="The configuration of the ejb3 subsystem."
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Container">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -11384,7 +11384,7 @@
            class="BaseComponent"
            description="The configuration of the JMX subsystem."
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Core">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -11423,7 +11423,7 @@
            class="BaseComponent"
            description="Configuration of the resource adapters subsystem."
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
@@ -11749,7 +11749,7 @@
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Core">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>
@@ -11870,7 +11870,7 @@
            discovery="SubsystemDiscovery"
            class="BaseComponent"
            singleton="true"
-           subCategory="Subsystems">
+           subCategory="Subsystems|Connector">
 
     <runs-inside>
       <parent-resource-type name="Profile" plugin="&pluginName;"/>

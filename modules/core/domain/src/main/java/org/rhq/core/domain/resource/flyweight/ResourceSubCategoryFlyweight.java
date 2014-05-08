@@ -25,10 +25,14 @@ package org.rhq.core.domain.resource.flyweight;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.resource.ResourceType;
+
 /**
- * Flyweight representation of a resource sub category. Only id, name and parent are preserved.
+ * Deprecated due to a simpler but more powerful subcategory design.
+ * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
  *
- * @author Lukas Krejci
+ * This class is no longer in use because subcategories are now just an attribute
+ * on {@link ResourceType}.
  */
 @Deprecated
 public class ResourceSubCategoryFlyweight implements Serializable {
@@ -64,10 +68,5 @@ public class ResourceSubCategoryFlyweight implements Serializable {
 
     @Deprecated
     public void setParentSubCategory(ResourceSubCategoryFlyweight parentSubCategory) {
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return true;
     }
 }

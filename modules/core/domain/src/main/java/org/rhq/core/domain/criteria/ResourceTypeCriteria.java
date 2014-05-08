@@ -239,10 +239,18 @@ public class ResourceTypeCriteria extends Criteria {
         this.sortPluginName = sortPluginName;
     }
 
+    /**
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+     */
     @Deprecated
     public void fetchSubCategories(boolean notused) {
     }
 
+    /**
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+     */
     @Deprecated
     public void fetchSubCategory(boolean notused) {
     }

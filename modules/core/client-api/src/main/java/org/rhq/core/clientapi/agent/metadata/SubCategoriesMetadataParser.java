@@ -24,9 +24,11 @@ package org.rhq.core.clientapi.agent.metadata;
 
 
 /**
- * Parser responsible for translating the subcategories section of the rhq-plugin.xml descriptor into domain objects.
- * Also has methods which deal with translating the subcategory="blah" attribute on Platform/Server/Service ojbects into
- * an actual ResourceSubCategory object
+ * Deprecated due to a simpler but more powerful subcategory design.
+ * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+ *
+ * Subcategory element no longer needed to predefine subcategories for
+ * a parent resource.
  *
  * @author Charles Crouch
  */

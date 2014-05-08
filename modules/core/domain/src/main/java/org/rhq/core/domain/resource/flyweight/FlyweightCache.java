@@ -56,6 +56,10 @@ public class FlyweightCache {
         return resourceTypes;
     }
 
+    /**
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+     */
     @Deprecated
     public Map<Integer, ResourceSubCategoryFlyweight> getSubCategories() {
         return null;
@@ -140,10 +144,8 @@ public class FlyweightCache {
     }
 
     /**
-     * @see #constructSubCategory(int, String, Integer, String)
-     *
-     * @param original
-     * @return a fully initialized resource sub category flyweight
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
      */
     @Deprecated
     public ResourceSubCategoryFlyweight constructSubCategory(ResourceSubCategory original) {
@@ -151,18 +153,8 @@ public class FlyweightCache {
     }
 
     /**
-     * An existing sub category is first looked up in this cache. If there already is a flyweight
-     * instance in this cache, its properties are updated with the provided values, otherwise a new instance
-     * is put in this cache.
-     * <p>
-     * If parent sub category id is not null but a corresponding flyweight doesn't exist in this cache yet,
-     * a new instance is put in this cache initialized with the parent id and name.
-     *
-     * @param id
-     * @param name
-     * @param parentSubCategoryId
-     * @param parentSubCategoryName
-     * @return a fully initialized resource sub category flyweight
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
      */
     @Deprecated
     public ResourceSubCategoryFlyweight constructSubCategory(int id, String name, Integer parentSubCategoryId,

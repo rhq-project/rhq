@@ -23,38 +23,23 @@
 package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Class representing a sub category, where a sub category is meant to group similar Resource types together.
+ * Deprecated due to a simpler but more powerful subcategory design.
+ * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+ *
+ * This class is no longer in use because subcategories are now just an attribute
+ * on {@link ResourceType}.
  */
 @Deprecated
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     @Deprecated
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "";
-
-    @Deprecated
-    private int id;
-    @Deprecated
-    private String name;
-    @Deprecated
-    private String displayName;
-    @Deprecated
-    private String description;
-    @Deprecated
-    private Long ctime;
-    @Deprecated
-    private Long mtime;
-    @Deprecated
-    private List<ResourceSubCategory> childSubCategories = new ArrayList<ResourceSubCategory>();
-    @Deprecated
-    private ResourceSubCategory parentSubCategory;
-
 
     /* no-arg constructor required by EJB spec */
     @Deprecated
@@ -64,11 +49,6 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     @Deprecated
     public ResourceSubCategory(String name) {
         assert name != null;
-
-        // Initialize empty ordered lists...
-        this.childSubCategories = new ArrayList<ResourceSubCategory>();
-        this.name = name;
-        this.mtime = this.ctime = System.currentTimeMillis();
     }
 
     @Deprecated
@@ -88,62 +68,48 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
 
     @Deprecated
     public int getId() {
-        return this.id;
+        return 0;
     }
 
     @Deprecated
     public void setId(int id) {
-        this.id = id;
     }
 
     @Deprecated
     public String getName() {
-        return this.name;
+        return null;
     }
 
     @Deprecated
     public void setName(String name) {
-        this.name = name;
     }
 
     @Deprecated
     public String getDisplayName() {
-        return this.displayName;
+        return null;
     }
 
     @Deprecated
     public void setDisplayName(String displayName) {
-        this.displayName = displayName;
     }
 
     @Deprecated
     public String getDescription() {
-        return this.description;
+        return null;
     }
 
     @Deprecated
     public void setDescription(String description) {
-        this.description = description;
     }
 
     @Deprecated
     public long getCtime() {
-        return this.ctime;
-    }
-
-    @Deprecated
-    void onPersist() {
-        this.mtime = this.ctime = System.currentTimeMillis();
+        return 0;
     }
 
     @Deprecated
     public long getMtime() {
-        return this.mtime;
-    }
-
-    @Deprecated
-    void onUpdate() {
-        this.mtime = System.currentTimeMillis();
+        return 0;
     }
 
     @Deprecated
@@ -157,76 +123,36 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
 
     @Deprecated
     public void update(ResourceSubCategory newSubCategory) {
-        this.displayName = newSubCategory.getDisplayName();
-        this.description = newSubCategory.getDescription();
     }
 
     @Deprecated
     public void removeChildSubCategory(ResourceSubCategory oldChildSubCategory) {
-        oldChildSubCategory.parentSubCategory = null;
-        this.childSubCategories.remove(oldChildSubCategory);
     }
 
     @Deprecated
     public void addChildSubCategory(ResourceSubCategory childSubCategory) {
-        childSubCategory.setParentSubCategory(this);
-        this.childSubCategories.add(childSubCategory);
     }
 
     @Deprecated
     public List<ResourceSubCategory> getChildSubCategories() {
-        return childSubCategories;
+        return null;
     }
 
     @Deprecated
     public void setChildSubCategories(List<ResourceSubCategory> childSubCategories) {
-        if (childSubCategories != null) {
-            this.childSubCategories = childSubCategories;
-        }
     }
 
     @Deprecated
     public void setParentSubCategory(ResourceSubCategory parentSubCategory) {
-        this.parentSubCategory = parentSubCategory;
     }
 
     @Deprecated
     public ResourceSubCategory getParentSubCategory() {
-        return parentSubCategory;
+        return null;
     }
 
     @Deprecated
     public int compareTo(ResourceSubCategory that) {
-        return this.name.compareTo(that.getName());
+        return 0;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof ResourceSubCategory)) {
-            return false;
-        }
-
-        ResourceSubCategory that = (ResourceSubCategory) o;
-
-        if (!name.equals(that.getName())) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.getName().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ResourceSubCategory[id=" + id + ", name=" + name + "]";
-    }
-
 }

@@ -46,6 +46,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerRemote;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
@@ -78,6 +79,12 @@ public enum RhqManager {
     MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class, "${MeasurementDefinitionManager}"), //
     MeasurementScheduleManager(MeasurementScheduleManagerRemote.class, "${MeasurementScheduleManager}"), //
     OperationManager(OperationManagerRemote.class, "${OperationManager}"), //
+
+    /**
+     * @since 4.11
+     */
+    PluginManager(PluginManagerRemote.class, "${PluginManagerRemote}"), //
+
     ResourceManager(ResourceManagerRemote.class, "${ResourceManager}"), //
     ResourceFactoryManager(ResourceFactoryManagerRemote.class, "${ResourceFactoryManager}"), //
     ResourceGroupManager(ResourceGroupManagerRemote.class, "${ResourceGroupManager}"), //

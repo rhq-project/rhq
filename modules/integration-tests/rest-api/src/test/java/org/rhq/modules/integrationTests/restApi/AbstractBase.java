@@ -54,13 +54,16 @@ public abstract class AbstractBase {
     int _platformId ;
     int _platformTypeId;
 
-    @Before
-    public void setUp() throws Exception {
-
+    protected static void setupRestAssured() {
         RestAssured.baseURI = "http://" + System.getProperty("rest.server","localhost")  ;
         RestAssured.port = 7080;
         RestAssured.basePath = "/rest/";
         RestAssured.authentication = basic("rhqadmin","rhqadmin");
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        setupRestAssured();
 
         Resource resource = new Resource();
         resource.setResourceName(REST_TEST_DUMMY);

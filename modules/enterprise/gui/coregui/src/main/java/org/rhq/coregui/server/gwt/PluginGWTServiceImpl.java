@@ -449,6 +449,15 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
         }
     }
 
+    @Override
+    public void updatePluginsOnAgents(long delayInMilliseconds) {
+        try {
+            pluginManager.schedulePluginUpdateOnAgents(getSessionSubject(), delayInMilliseconds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     private List<Plugin> getSelectedAgentPlugins(int[] selectedPluginIds) {
         if (selectedPluginIds == null || selectedPluginIds.length == 0) {
             return new ArrayList<Plugin>(0);

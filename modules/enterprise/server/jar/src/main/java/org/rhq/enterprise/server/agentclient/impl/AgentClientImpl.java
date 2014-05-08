@@ -28,6 +28,7 @@ import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
+import org.rhq.core.clientapi.agent.lifecycle.PluginContainerLifecycle;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.agent.ping.PingAgentService;
@@ -126,6 +127,12 @@ public class AgentClientImpl implements AgentClient {
         // If we find that this method is called when we can't afford to lose messages
         // currently queued or in-flight, think about passing in true here instead.
         this.sender.stopSending(false);
+    }
+
+    @Override
+    public void updatePlugins() {
+        PluginContainerLifecycle lifecycle = clientRemotePojoFactory.getRemotePojo(PluginContainerLifecycle.class);
+        lifecycle.updatePlugins();
     }
 
     @Override

@@ -75,6 +75,7 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.jboss.util.file.FilenameSuffixFilter;
 
+import org.rhq.core.clientapi.agent.lifecycle.PluginContainerLifecycle;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
@@ -1770,7 +1771,7 @@ public class AgentMain {
      *
      * @return <code>true</code> if the plugin container is started, <code>false</code> if it did not start
      */
-    public boolean startPluginContainer(long wait_for_registration) {
+    public boolean startPluginContainer(final long wait_for_registration) {
         PluginContainer plugin_container = PluginContainer.getInstance();
 
         if (plugin_container.isStarted()) {
@@ -1881,6 +1882,9 @@ public class AgentMain {
 
         try {
             LOG.debug(AgentI18NResourceKeys.CREATING_PLUGIN_CONTAINER_SERVER_SERVICES);
+
+            //make the service container understand the requests for plugin container lifecycle events.
+            getServiceContainer().addRemotePojo(new PluginContainerLifecycleListener(this), PluginContainerLifecycle.class);
 
             // Get remote pojo's for server access and make them accessible in the configuration object
             ClientRemotePojoFactory factory = m_clientSender.getClientRemotePojoFactory();

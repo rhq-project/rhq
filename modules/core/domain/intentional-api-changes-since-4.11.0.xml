@@ -30,6 +30,22 @@
 
   <difference>
     <className>org/rhq/core/domain/resource/ResourceType</className>
+    <differenceType>6011</differenceType><!-- removed constant field -->
+    <field>QUERY_FIND_BY_SUBCATEGORY</field>
+    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
+  </difference>
+
+
+  <difference>
+    <className>org/rhq/core/domain/resource/composite/ProblemResourceComposite</className>
+    <differenceType>7004</differenceType><!-- number of args changed -->
+    <method>ProblemResourceComposite(int, int, java.lang.String, java.lang.String, long, org.rhq.core.domain.measurement.AvailabilityType)</method>
+    <justification>TODO: add reason here</justification>
+  </difference>
+
+
+  <difference>
+    <className>org/rhq/core/domain/resource/ResourceType</className>
     <differenceType>7005</differenceType> <!-- parameter type changed -->
     <method>void setSubCategory(org.rhq.core.domain.resource.ResourceSubCategory)</method>
     <to>void setSubCategory(java.lang.String)</to>

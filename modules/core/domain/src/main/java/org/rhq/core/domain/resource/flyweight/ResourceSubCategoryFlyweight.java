@@ -33,74 +33,41 @@ import java.io.Serializable;
 @Deprecated
 public class ResourceSubCategoryFlyweight implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
-    @Deprecated
-    private int id;
-    @Deprecated
-    private String name;
-    @Deprecated
-    private ResourceSubCategoryFlyweight parentSubCategory;
+    private static final long serialVersionUID = 2L;
 
     @Deprecated
     public ResourceSubCategoryFlyweight() {
-
     }
 
     @Deprecated
     public int getId() {
-        return id;
+        return 0;
     }
 
     @Deprecated
     public void setId(int id) {
-        this.id = id;
     }
 
     @Deprecated
     public String getName() {
-        return name;
+        return null;
     }
 
     @Deprecated
     public void setName(String name) {
-        this.name = name;
     }
 
     @Deprecated
     public ResourceSubCategoryFlyweight getParentSubCategory() {
-        return parentSubCategory;
+        return null;
     }
 
     @Deprecated
     public void setParentSubCategory(ResourceSubCategoryFlyweight parentSubCategory) {
-        this.parentSubCategory = parentSubCategory;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof ResourceSubCategoryFlyweight)) {
-            return false;
-        }
-
-        ResourceSubCategoryFlyweight that = (ResourceSubCategoryFlyweight) o;
-
-        if (!name.equals(that.getName())) {
-            return false;
-        }
-
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result;
-        result = name.hashCode();
-
-        return result;
     }
 }

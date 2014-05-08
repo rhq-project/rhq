@@ -34,7 +34,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
  */
 public class ResourceTypeFlyweight implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private int id;
     private String name;

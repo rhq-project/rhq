@@ -43,7 +43,7 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
  */
 public class AutoGroupCompositeFlyweight implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Double availability;
     private ResourceTypeFlyweight resourceType;

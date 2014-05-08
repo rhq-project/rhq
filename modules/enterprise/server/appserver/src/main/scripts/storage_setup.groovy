@@ -47,11 +47,6 @@ dataRootDir = properties['rhq.dev.data.dir'] ?: "${properties['rhq.rootDir']}/rh
 defaultJmxPort = 7299
 
 defaultServerBasedir = properties["rhq.containerServerDir"]
-log.info "DEFAULT SERVER BASEDIR = $defaultServerBasedir"
-
-defaultServerBasedir = "dev-container/rhq-server/"
-log.info "DEFAULT SERVER BASEDIR = $defaultServerBasedir"
-
 
 seeds = calculateSeeds()
 

@@ -37,7 +37,7 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public class AutoGroupComposite implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Double availability;
     private ResourceType resourceType;

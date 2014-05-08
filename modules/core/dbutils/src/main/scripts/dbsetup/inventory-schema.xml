@@ -18,7 +18,7 @@
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
         <column name="DELETED" type="BOOLEAN" default="FALSE" required="TRUE"/>
-        <column name="SUBCATEGORY" type="VARCHAR2" size="1000"/>
+        <column name="SUBCATEGORY" type="VARCHAR2" size="4000"/>
 
         <column name="PLUGIN_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
         <column name="RES_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>

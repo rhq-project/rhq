@@ -165,8 +165,6 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type " //
         + " WHERE rg.id = :groupId AND res.resourceType.deleted = false AND res.inventoryStatus = 'COMMITTED' " //
         + " GROUP BY type.id, type.name "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
-        + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
         + "FROM ResourceType rt " + "LEFT JOIN FETCH rt.operationDefinitions def "
         + "LEFT JOIN FETCH def.parametersConfigurationDefinition psDef "
@@ -252,7 +250,7 @@ import org.rhq.core.domain.util.Summary;
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Serializable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
 
     public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
 
@@ -277,7 +275,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     /** find child resource types for the resource type passed in :resourceType */
     public static final String FIND_CHILDREN_BY_PARENT = "ResourceType.findChildrenByParent";
     public static final String FIND_ALL_TEMPLATE_COUNT_COMPOSITES = "ResourceType.findAllTemplateCountComposites";
-    public static final String QUERY_FIND_BY_SUBCATEGORY = "ResourceType.findBySubCategory";
     public static final String QUERY_FIND_UTILIZED_BY_CATEGORY = "ResourceType.findUtilizedByCategory";
     public static final String QUERY_FIND_UTILIZED_BY_CATEGORY_admin = "ResourceType.findUtilizedByCategory_admin";
     public static final String QUERY_FIND_BY_RESOURCE_GROUP = "ResourceType.findByResourceGroup";

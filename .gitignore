@@ -1,23 +1,26 @@
+#
+# Specific files and directories must start with a slash
+# See http://git-scm.com/docs/gitignore
+#
+/dev-container/
+/rhq-data/
+/modules/enterprise/gui/portal-war/build/classes/
+/modules/enterprise/gui/coregui/build/classes/
+#eclipse specific
+/modules/enterprise/gui/coregui/.externalToolBuilders/
+/modules/enterprise/gui/content_http-war/build/classes/
+#created by rhq-enterprise-server's unit tests
+/modules/enterprise/server/jar/transaction.log
+
+#
+# Files and directories to ignore at any level in the tree
+#
 target/
 test-output/
 eclipse-classes/
 logs/
 antlr-generated/
 gwt-tmp/
-dev-container/
-rhq-data/
-rhq-agent/
-dev-agent/
-dev-cli/
-modules/enterprise/gui/portal-war/build/classes/
-modules/enterprise/gui/coregui/build/classes/
-#eclipse specific
-modules/enterprise/gui/coregui/.externalToolBuilders/
-modules/enterprise/gui/content_http-war/build/classes/
-
-#created by rhq-enterprise-server's unit tests
-modules/enterprise/server/jar/transaction.log
-
 .idea/
 .metadata/
 *cache.html
@@ -33,6 +36,5 @@ modules/enterprise/server/jar/transaction.log
 .wtpmodules
 *~
 *.DS_Store
-
 #these are created by the python script engine during the tests
 cachedir/

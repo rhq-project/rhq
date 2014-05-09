@@ -9087,6 +9087,8 @@
         </results>
       </operation>
 
+      &datasourceMetrics;
+	  
       <resource-configuration>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception"/>
         <c:simple-property name="allocation-retry-wait-millis" required="false" type="long" readOnly="true" description="The allocation retry wait millis element specifies the amount of time, in milliseconds, to wait between retrying to allocate a connection"/>
@@ -9209,6 +9211,8 @@
           <c:simple-property name="operationResult" description="Test if a connection can be obtained"/>
         </results>
       </operation>
+	  
+      &datasourceMetrics;
 
       <resource-configuration>
         <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception"/>

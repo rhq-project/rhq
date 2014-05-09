@@ -214,7 +214,7 @@ public class ServerInstallUtil {
         CoreJBossASClient client = new CoreJBossASClient(mcc);
 
         // we do not want our RHQ Server to support hot deployments via the scanner
-        client.setAppServerDefaultDeploymentScanEnabled(false);
+        client.setAppServerDefaultDeploymentScanEnabled(true);
         LOG.info("Deployment scanner turned off.");
     }
 

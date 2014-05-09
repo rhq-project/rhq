@@ -21,6 +21,10 @@
         <rhq.rootDir>../../../..</rhq.rootDir>
 
         <rhq.dev.data.dir>${rhq.rootDir}/rhq-data</rhq.dev.data.dir>
+        <jgroups.initial.version>3.2.7.Final</jgroups.initial.version>
+        <jgroups.patch.version>3.2.10.Final</jgroups.patch.version>
+        <keycloak.version>1.0-beta-1-SNAPSHOT</keycloak.version>
+        <keycloak.unzip.location>${basedir}/target/keycloak-war-dist-all-${keycloak.version}</keycloak.unzip.location>
     </properties>
 
     <dependencies>
@@ -171,6 +175,10 @@
                                     <property name="jsf-impl.version"              value="${jsf-impl.version}" />
                                     <property name="quartz.version"                value="${quartz.version}" />
                                     <property name="xercesImpl.version"            value="${xercesImpl.version}" />
+                                    
+                                    <property name="keycloak.zip"                  location="${settings.localRepository}/org/keycloak/keycloak-war-dist-all/${keycloak.version}/keycloak-war-dist-all-${keycloak.version}.zip" />
+                                    <property name="keycloak.version"              value="${keycloak.version}" />
+
 
                                     <!-- dev DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                                     <property name="rhq.dev.ds.connection-url"          value="${rhq.dev.ds.connection-url}" />

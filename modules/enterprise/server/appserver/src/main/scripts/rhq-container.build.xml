@@ -114,7 +114,8 @@
 
     <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
         <echo>*** Database type is ${rhq.server.database.type-mapping}</echo>
-        <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
+        <property name="jboss.home"                           location="${project.build.outputDirectory}/jbossas" />
+        <property name="keycloak.home"                        location="${project.build.outputDirectory}/keycloak-war-dist-all-${keycloak.version}" />
 
         <!-- TODO: if JBossAS has a marker file that we can check to see if server is running, we can use it here -->
         <!--
@@ -201,10 +202,10 @@
 
         <echo>Unzipping vanilla JBoss dist zipfile found at ${jboss.zip}</echo>
         <condition property="jboss.uptodate">
-            <and>
-                <uptodate srcfile="${jboss.zip}" targetfile="${jboss.home}" />
-                <available file="${jboss.home}/jboss-modules.jar" type="file" />
-            </and>
+          <and>
+            <uptodate srcfile="${jboss.zip}" targetfile="${jboss.home}" />
+            <available file="${jboss.home}/jboss-modules.jar" type="file" />
+          </and>
         </condition>
 
         <antcall target="unzip-jboss" />
@@ -290,6 +291,29 @@
     </dependencies>
 </module>
 ]]></echo>
+
+        <property name="jboss.deployment.dir" location="${jboss.home}/standalone/deployments" />
+        <echo>*** Preparing Keycloak Auth Server ***</echo>
+
+        <echo>Unzipping vanilla Keycloak dist zipfile found at ${keycloak.zip}</echo>
+        <condition property="keycloak.uptodate">
+            <uptodate srcfile="${keycloak.zip}" targetfile="${keycloak.home}" />
+        </condition>
+        <antcall target="unzip-keycloak" />
+
+        <echo>*** Deploying the Keycloak ***</echo>
+        <condition property="keycloak.deployed">
+            <and>
+                <uptodate srcfile="${keycloak.zip}" targetfile="${keycloak.home}" />
+                <available file="${jboss.deployment.dir}/keycloak-ds.xml" type="file" />
+                <!-- TODO .deployed? -->
+                <available file="${jboss.deployment.dir}/auth-server.war.dodeploy" type="file" />
+                <available file="${jboss.deployment.dir}/auth-server.war" type="dir" />
+            </and>
+        </condition>
+        <antcall target="deploy-keycloak" />
+        <delete dir="${keycloak.home}" />
+
 
       <echo>Adding DataStax Java Cassandra Driver module to ${jboss.modules.dir}</echo>
       <copy file="${settings.localRepository}/com/datastax/cassandra/cassandra-driver-core/${cassandra.driver.version}/cassandra-driver-core-${cassandra.driver.version}.jar"
@@ -1069,6 +1093,26 @@ ${comment}rhq.storage.verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empt
         <available property="zip.is.dir" file="${basedir}/target/jboss-as-${jboss.version}" />
         <antcall target="move-as"/>
         <antcall target="move-eap"/>
+    </target>
+
+    <target name="unzip-keycloak" unless="keycloak.uptodate">
+        <echo>Unzipping Keycloak zip file found at ${keycloak.zip}</echo>
+        <delete dir="${keycloak.home}" />
+        <unzip src="${keycloak.zip}" dest="${project.build.outputDirectory}" />
+    </target>
+
+    <target name="deploy-keycloak" unless="keycloak.deployed">
+        <echo>Adding keycloak adapter module to ${jboss.modules.dir} ...</echo>
+        <unzip src="${keycloak.home}/adapters/keycloak-eap6-adapter-dist-${keycloak.version}.zip"
+               dest="${jboss.home}" />
+
+        <echo>Deploying keycloak.war and the datasource ...</echo>
+        <copy todir="${jboss.deployment.dir}">
+          <fileset dir="${keycloak.home}/deployments/"/>
+        </copy>
+        <replace file="${jboss.deployment.dir}/keycloak-ds.xml" token="jdbc:h2:${jboss.server.data.dir}/keycloak;AUTO_SERVER=TRUE" value="${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}"/>
+        <replace file="${jboss.deployment.dir}/keycloak-ds.xml" token="&lt;driver>h2&lt;/driver>" value="&lt;driver>postgres&lt;/driver>"/>
+        <replaceregexp file="${jboss.deployment.dir}/keycloak-ds.xml" flags="gis" match='&lt;user-name>.*/password>' replace='&lt;security-domain>RHQDSSecurityDomain&lt;/security-domain>' />
     </target>
 
     <!-- depending on the inner file of the zip, we need to move different files in place -->

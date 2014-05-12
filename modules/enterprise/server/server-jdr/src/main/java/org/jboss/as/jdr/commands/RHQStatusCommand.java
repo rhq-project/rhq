@@ -51,7 +51,7 @@ public class RHQStatusCommand extends JdrCommand {
         String token = FileUtils.readFileToString(keyFile);
 
         try {
-            Socket socket = new Socket(InetAddress.getLoopbackAddress(), 7079);
+            Socket socket = new Socket(InetAddress.getByName(null), 7079);
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             out.println(token);
             this.env.getZip().add(socket.getInputStream(), RHQ_SERVER_STATE_JSON);

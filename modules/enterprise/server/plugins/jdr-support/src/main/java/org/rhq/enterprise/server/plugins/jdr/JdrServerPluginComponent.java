@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.plugins.jdr;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -49,27 +50,55 @@ public class JdrServerPluginComponent implements ServerPluginComponent {
     private static final int LISTEN = 7079;
     private static final int SOCK_TIMEOUT = 5 * 1000;
     private static final String TOKEN_FILE_NAME = "jdr-token";
+    private static final int TOKEN_SIZE = UUID.randomUUID().toString().length();
+    private static final Object lock = new Object();
     private Thread serverThread;
     private ServerSocket server;
 
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
-        accessToken = UUID.randomUUID();
-        File dataDir = new File(System.getProperty("jboss.server.data.dir"));
-        if (!dataDir.exists() || !dataDir.canWrite()) {
-            log.error("Failed to initialize, jboss.server.data.dir="+dataDir+" does not exist or not writable");
-        }
-        writeAccessToken(new File(dataDir,TOKEN_FILE_NAME));
+        setAccessToken();
         log.debug("Plugin initialized");
     }
 
-    private void writeAccessToken(File file) {
+    private void setAccessToken() {
+        synchronized (lock) {
+            accessToken = UUID.randomUUID();
+            writeAccessToken();
+        }
+    }
+
+    private String getAccessToken() {
+        synchronized (lock) {
+            return accessToken.toString();
+        }
+    }
+
+    private void writeAccessToken() {
+        File dataDir = new File(System.getProperty("jboss.server.data.dir"));
+        if (!dataDir.exists() || !dataDir.canWrite()) {
+            log.error("Failed to write access token, jboss.server.data.dir="+dataDir+" does not exist or not writable");
+            return;
+        }
+        File file = new File(dataDir,TOKEN_FILE_NAME);
+
         try {
             PrintWriter pw = new PrintWriter(file);
             pw.println(accessToken);
             pw.close();
+            file.setWritable(true, true);
+            file.setReadable(true, true);
+            file.setExecutable(false, false);
+            boolean isWindows = (File.separatorChar == '\\');
+            if (!isWindows) {
+                try {
+                    Runtime.getRuntime().exec("chmod 600 "+file.getAbsolutePath());
+                } catch (IOException e) {
+                    log.error("Unable to set file permissions", e);
+                }
+            }
         } catch (FileNotFoundException fnfe) {
-            log.error("Failed to initialize, jboss.server.data.dir="+file.getParent()+" does not exist or not writable");
+            log.error("Failed to write acces token, jboss.server.data.dir="+file.getParent()+" does not exist or not writable");
         }
     }
 
@@ -77,7 +106,7 @@ public class JdrServerPluginComponent implements ServerPluginComponent {
     public void start() {
 
         try {
-            server = new ServerSocket(LISTEN, 1, InetAddress.getLoopbackAddress());
+            server = new ServerSocket(LISTEN, 1, InetAddress.getByName(null));
             serverThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -89,15 +118,26 @@ public class JdrServerPluginComponent implements ServerPluginComponent {
                             log.debug("Connection successfull");
                             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                             BufferedReader in = new BufferedReader(new InputStreamReader( socket.getInputStream()));
-                            String inputLine;
+                            String inputLine = null;
                             try {
-                                while ((inputLine = in.readLine()) != null) {
-                                     if (inputLine.equals(accessToken.toString())) {
-                                         log.debug("Client authorized");
-                                         out.println(getSystemInfo());
-                                         log.debug("SystemInfo returned");
+                                char[] buffer = new char[TOKEN_SIZE];
+                                int read = in.read(buffer);
+                                if (read == TOKEN_SIZE) {
+                                    inputLine = new String(buffer);
+                                    if (inputLine.equals(getAccessToken())) {
+                                        log.debug("Client authorized");
+                                        out.println(getSystemInfo());
+                                        log.debug("SystemInfo returned");
+                                        setAccessToken(); // regenerate
                                      }
-                                     break;
+                                    else {
+                                        log.debug("Invalid token recieved");
+                                        out.println("Bye!");
+                                    }
+                                }
+                                else {
+                                    log.debug("Invalid token recieved");
+                                    out.println("Bye!");
                                 }
                             } catch (SocketTimeoutException ex) {
                                 log.debug("Client timed out to send token");

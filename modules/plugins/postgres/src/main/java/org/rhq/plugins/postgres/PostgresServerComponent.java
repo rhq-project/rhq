@@ -21,6 +21,8 @@ package org.rhq.plugins.postgres;
 
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.core.domain.resource.CreateResourceStatus.FAILURE;
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -53,7 +55,6 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -454,7 +455,12 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
 
     public CreateResourceReport createResource(CreateResourceReport report) {
         Configuration userConfig = report.getResourceConfiguration();
-        String user = userConfig.getSimpleValue("user", null);
+
+        String user = userConfig.getSimpleValue("user");
+        if (user == null || user.trim().isEmpty()) {
+            report.setStatus(FAILURE);
+            report.setErrorMessage("User name is missing");
+        }
 
         Connection jdbcConnection = null;
         Statement statement = null;
@@ -465,9 +471,18 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             // NOTE: Postgres doesn't seem to indicate the expect count of 1 row updated but this work
             // Postgres returns 0 for DDL that does not return rows
             statement.executeUpdate(sql);
+
+            String resourceName = report.getUserSpecifiedResourceName();
+            if (resourceName == null || resourceName.trim().isEmpty()) {
+                resourceName = user;
+            }
+
+            report.setStatus(SUCCESS);
+            report.setResourceName(resourceName);
             report.setResourceKey(user);
-            report.setStatus(CreateResourceStatus.SUCCESS);
+
         } catch (SQLException e) {
+            report.setStatus(FAILURE);
             report.setException(e);
         } finally {
             DatabasePluginUtil.safeClose(jdbcConnection, statement);

@@ -121,7 +121,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     private RootCanvas rootCanvas;
     private MenuBarView menuBarView;
-    private Footer footer;
     private int rpcTimeout;
     private ProductInfo productInfo;
 
@@ -258,7 +257,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         messageCenterWindowKey.setKeyName("M");
         Page.registerKey(messageCenterWindowKey, new KeyCallback() {
             public void execute(String keyName) {
-                footer.getMessageCenter().showMessageCenterWindow();
+                menuBarView.getMessageCenter().showMessageCenterWindow();
             }
         });
 
@@ -307,17 +306,17 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         if (rootCanvas == null) {
             menuBarView = new MenuBarView();
             menuBarView.setWidth("100%");
-            footer = new Footer();
+            menuBarView.setExtraSpace(0);
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
             canvas.setWidth100();
             canvas.setHeight100();
+            canvas.setZIndex(0);
 
             rootCanvas = new RootCanvas();
             rootCanvas.setOverflow(Overflow.HIDDEN);
 
             rootCanvas.addMember(menuBarView);
-            rootCanvas.addMember(footer);
             rootCanvas.addMember(canvas);
 
             rootCanvas.draw();
@@ -478,7 +477,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     public void reset() {
         messageCenter.reset();
-        footer.reset();
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {
@@ -536,7 +534,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
             // clear any message when navigating to a new view (not refreshing), the user is probably no longer interested
             if (!viewPath.isRefresh()) {
-                coreGUI.footer.getMessageBar().clearMessage(true);
+                coreGUI.menuBarView.getMessageBar().clearMessage(true);
             }
 
             if (viewPath.isEnd()) {

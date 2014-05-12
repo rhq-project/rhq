@@ -62,34 +62,34 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     public static final ViewName VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     // view IDs for Resources section
-    private static final ViewName RESOURCES_SECTION_VIEW_ID = new ViewName("Resources", MSG.common_title_resources());
+    public static final ViewName RESOURCES_SECTION_VIEW_ID = new ViewName("Resources", MSG.common_title_resources());
 
-    private static final ViewName PAGE_ALL_RESOURCES = new ViewName("AllResources", MSG.view_inventory_allResources(),
+    public static final ViewName PAGE_ALL_RESOURCES = new ViewName("AllResources", MSG.view_inventory_allResources(),
         IconEnum.ALL_RESOURCES);
-    private static final ViewName PAGE_PLATFORMS = new ViewName("Platforms", MSG.view_inventory_platforms(),
+    public static final ViewName PAGE_PLATFORMS = new ViewName("Platforms", MSG.view_inventory_platforms(),
         IconEnum.PLATFORMS);
-    private static final ViewName PAGE_SERVERS_TOP = new ViewName("ServersTop", MSG.view_inventory_serversTop(),
+    public static final ViewName PAGE_SERVERS_TOP = new ViewName("ServersTop", MSG.view_inventory_serversTop(),
         IconEnum.SERVERS);
-    private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(), IconEnum.SERVERS);
-    private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services(),
+    public static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(), IconEnum.SERVERS);
+    public static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services(),
         IconEnum.SERVICES);
-    private static final ViewName PAGE_IGNORED_RESOURCES = new ViewName("IgnoredResources",
+    public static final ViewName PAGE_IGNORED_RESOURCES = new ViewName("IgnoredResources",
         MSG.view_inventory_ignoredResources(), IconEnum.ALL_RESOURCES);
-    private static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers",
+    public static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers",
         MSG.view_inventory_unavailableServers(), IconEnum.UNAVAILABLE_SERVERS);
 
     // view IDs for Groups section
-    private static final ViewName GROUPS_SECTION_VIEW_ID = new ViewName("Groups", MSG.view_inventory_groups());
+    public static final ViewName GROUPS_SECTION_VIEW_ID = new ViewName("Groups", MSG.view_inventory_groups());
 
-    private static final ViewName PAGE_DYNAGROUP_DEFINITIONS = new ViewName("DynagroupDefinitions",
+    public static final ViewName PAGE_DYNAGROUP_DEFINITIONS = new ViewName("DynagroupDefinitions",
         MSG.view_inventory_dynagroupDefs(), IconEnum.DYNAGROUPS);
-    private static final ViewName PAGE_ALL_GROUPS = new ViewName("AllGroups", MSG.view_inventory_allGroups(),
+    public static final ViewName PAGE_ALL_GROUPS = new ViewName("AllGroups", MSG.view_inventory_allGroups(),
         IconEnum.ALL_GROUPS);
-    private static final ViewName PAGE_COMPATIBLE_GROUPS = new ViewName("CompatibleGroups",
+    public static final ViewName PAGE_COMPATIBLE_GROUPS = new ViewName("CompatibleGroups",
         MSG.common_title_compatibleGroups(), IconEnum.COMPATIBLE_GROUPS);
-    private static final ViewName PAGE_MIXED_GROUPS = new ViewName("MixedGroups", MSG.common_title_mixedGroups(),
+    public static final ViewName PAGE_MIXED_GROUPS = new ViewName("MixedGroups", MSG.common_title_mixedGroups(),
         IconEnum.MIXED_GROUPS);
-    private static final ViewName PAGE_PROBLEM_GROUPS = new ViewName("ProblemGroups",
+    public static final ViewName PAGE_PROBLEM_GROUPS = new ViewName("ProblemGroups",
         MSG.view_inventory_problemGroups(), IconEnum.PROBLEM_GROUPS);
 
     private Set<Permission> globalPermissions;

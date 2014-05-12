@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -49,6 +50,8 @@ import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.coregui.client.menu.MenuBarView;
+import org.rhq.coregui.client.util.message.MessageBar;
 
 /**
  * @author Greg Hinkle
@@ -58,20 +61,24 @@ import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository.Typ
 public class FavoritesButton extends IMenuButton {
 
     private Messages MSG = CoreGUI.getMessages();
+    final Menu favoriteResourcesMenu;
+    final Menu favoriteGroupsMenu;
+    final Menu recentlyViewedMenu;
+    final Menu favoritesMenu;
 
     public FavoritesButton() {
         super(CoreGUI.getMessages().favorites());
 
         // this is the main menu - the "favorites" button shown in the UI the user initially clicks 
-        final Menu favoritesMenu = new Menu();
+        favoritesMenu = new Menu();
         favoritesMenu.setSubmenuDirection("left");
         setMenu(favoritesMenu);
         setAutoFit(true);
 
         // these are the child menus directly under the main favorites button 
-        final Menu favoriteResourcesMenu = new Menu();
-        final Menu favoriteGroupsMenu = new Menu();
-        final Menu recentlyViewedMenu = new Menu();
+        favoriteResourcesMenu = new Menu();
+        favoriteGroupsMenu = new Menu();
+        recentlyViewedMenu = new Menu();
         favoriteResourcesMenu.setSubmenuDirection("left");
         favoriteResourcesMenu.setAutoWidth();
         favoriteGroupsMenu.setSubmenuDirection("left");
@@ -91,75 +98,78 @@ public class FavoritesButton extends IMenuButton {
         recentlyViewedMenu.setEmptyMessage(MSG.common_val_none());
 
         favoritesMenu.setItems(favoriteResourcesMenuItem, favoriteGroupsMenuItem, recentlyViewedMenuItem);
-
         addClickHandler(new ClickHandler() {
 
             public void onClick(ClickEvent clickEvent) {
                 // Cancel the click event. We'll call show() on the menu ourselves only if we're able to load the
                 // favorite Resources successfully.
                 clickEvent.cancel();
+                    showMenu();
+                }
+            });
+    }
 
-                final Set<Integer> favoriteResourceIds = UserSessionManager.getUserPreferences().getFavoriteResources();
-                final Set<Integer> favoriteGroupIds = UserSessionManager.getUserPreferences()
-                    .getFavoriteResourceGroups();
-                final List<Integer> recentResourceIds = UserSessionManager.getUserPreferences().getRecentResources();
-                final List<Integer> recentGroupIds = UserSessionManager.getUserPreferences().getRecentResourceGroups();
+    public void showMenu() {
+        setLeft(DOM.getElementById(MenuBarView.BTN_FAV_ID).getAbsoluteLeft());
+        final Set<Integer> favoriteResourceIds = UserSessionManager.getUserPreferences().getFavoriteResources();
+        final Set<Integer> favoriteGroupIds = UserSessionManager.getUserPreferences()
+            .getFavoriteResourceGroups();
+        final List<Integer> recentResourceIds = UserSessionManager.getUserPreferences().getRecentResources();
+        final List<Integer> recentGroupIds = UserSessionManager.getUserPreferences().getRecentResourceGroups();
 
-                // if we have no menu items at all, then show the empty menu now
-                if (favoriteGroupIds.isEmpty() && favoriteResourceIds.isEmpty() && recentResourceIds.isEmpty()
-                    && recentGroupIds.isEmpty()) {
-                    favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
-                    return;
+        // if we have no menu items at all, then show the empty menu now
+        if (favoriteGroupIds.isEmpty() && favoriteResourceIds.isEmpty() && recentResourceIds.isEmpty()
+            && recentGroupIds.isEmpty()) {
+            favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
+            return;
+        }
+
+        // keep a list of all the ids we need to pull from the db. combine favs and recents to minimize
+        // db round trips.
+        Set<Integer> resourceIds = new HashSet<Integer>();
+        Set<Integer> groupIds = new HashSet<Integer>();
+
+        resourceIds.addAll(favoriteResourceIds);
+        resourceIds.addAll(recentResourceIds);
+        groupIds.addAll(favoriteGroupIds);
+        groupIds.addAll(recentGroupIds);
+
+        fetchFavorites(resourceIds, groupIds, new AsyncCallback<Favorites>() {
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
+            }
+
+            public void onSuccess(final Favorites favorites) {
+                // For Ancestry we need all the resource types and ancestry resource types loaded
+                HashSet<Integer> typesSet = new HashSet<Integer>();
+                HashSet<String> ancestries = new HashSet<String>();
+                for (Resource resource : favorites.resources) {
+                    typesSet.add(resource.getResourceType().getId());
+                    ancestries.add(resource.getAncestry());
                 }
 
-                // keep a list of all the ids we need to pull from the db. combine favs and recents to minimize
-                // db round trips.
-                Set<Integer> resourceIds = new HashSet<Integer>();
-                Set<Integer> groupIds = new HashSet<Integer>();
+                // In addition to the types of the result resources, get the types of their ancestry
+                typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
-                resourceIds.addAll(favoriteResourceIds);
-                resourceIds.addAll(recentResourceIds);
-                groupIds.addAll(favoriteGroupIds);
-                groupIds.addAll(recentGroupIds);
+                ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+                typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
+                    new TypesLoadedCallback() {
+                        @Override
+                        public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                            // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                            AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
-                fetchFavorites(resourceIds, groupIds, new AsyncCallback<Favorites>() {
+                            // generate the menus
+                            buildFavoriteResourcesMenu(favorites, favoriteResourcesMenu, favoriteResourceIds,
+                                typesWrapper);
+                            buildFavoriteGroupsMenu(favorites, favoriteGroupsMenu, favoriteGroupIds);
+                            buildRecentlyViewedMenu(favorites, recentlyViewedMenu, recentResourceIds,
+                                recentGroupIds, typesWrapper);
 
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_dashboard_favorites_error1(), caught);
-                    }
-
-                    public void onSuccess(final Favorites favorites) {
-                        // For Ancestry we need all the resource types and ancestry resource types loaded
-                        HashSet<Integer> typesSet = new HashSet<Integer>();
-                        HashSet<String> ancestries = new HashSet<String>();
-                        for (Resource resource : favorites.resources) {
-                            typesSet.add(resource.getResourceType().getId());
-                            ancestries.add(resource.getAncestry());
+                            favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
                         }
-
-                        // In addition to the types of the result resources, get the types of their ancestry
-                        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
-
-                        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
-                        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
-                            new TypesLoadedCallback() {
-                                @Override
-                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
-                                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
-
-                                    // generate the menus
-                                    buildFavoriteResourcesMenu(favorites, favoriteResourcesMenu, favoriteResourceIds,
-                                        typesWrapper);
-                                    buildFavoriteGroupsMenu(favorites, favoriteGroupsMenu, favoriteGroupIds);
-                                    buildRecentlyViewedMenu(favorites, recentlyViewedMenu, recentResourceIds,
-                                        recentGroupIds, typesWrapper);
-
-                                    favoritesMenu.showNextTo(FavoritesButton.this, "bottom");
-                                }
-                            });
-                    }
-                });
+                    });
             }
         });
     }

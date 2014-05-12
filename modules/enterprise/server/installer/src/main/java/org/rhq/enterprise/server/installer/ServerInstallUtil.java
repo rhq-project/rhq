@@ -592,7 +592,7 @@ public class ServerInstallUtil {
                 "${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
                 RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
-                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", true, props);
             noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
         } else {
             LOG.info("Postgres datasource [" + RHQ_DATASOURCE_NAME_NOTX + "] already exists");
@@ -638,7 +638,7 @@ public class ServerInstallUtil {
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
                 RHQ_DS_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
-                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", true, props);
         } else {
             LOG.info("Oracle datasource [" + RHQ_DATASOURCE_NAME_NOTX + "] already exists");
         }

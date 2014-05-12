@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,20 +13,25 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.coregui.client.inventory.resource.detail;
 
+import static org.rhq.coregui.client.components.form.DateFilterItem.adjustTimeToEndOfDay;
+import static org.rhq.coregui.client.components.form.DateFilterItem.adjustTimeToStartOfDay;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DateRange;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
@@ -36,8 +41,6 @@ import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -54,11 +57,14 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.components.form.DateFilterItem;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.RPCDataSource;
+import org.rhq.coregui.client.util.async.Command;
+import org.rhq.coregui.client.util.async.CountDownLatch;
 
 /**
  * @author John Mazzitelli
@@ -70,7 +76,8 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
     public static final String CHILD_DELETED_ICON = ImageManager.getChildDeleteIcon();
 
     private final ResourceComposite resourceComposite;
-    private FormItem dateRangeItem;
+    private DateFilterItem startDateFilter;
+    private DateFilterItem endDateFilter;
 
     public ChildHistoryView(ResourceComposite resourceComposite) {
         super(VIEW_ID.getTitle());
@@ -80,19 +87,15 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
 
     @Override
     protected void configureTableFilters() {
-        dateRangeItem = new SpinnerItem("filterDateRange", MSG.view_resource_inventory_childhistory_filterTitle());
-        dateRangeItem.setValue(30);
-
-        /* smartgwt has a bad bug that prohibits us from using this - its getValue throws exception
-        dateRangeItem = new DateRangeItem("filterDateRange", MSG.common_title_dateRange());
-        dateRangeItem.setAllowRelativeDates(true);
-        DateRange dateRange = new DateRange();
-        dateRange.setRelativeStartDate(new RelativeDate("-1m"));
-        dateRange.setRelativeEndDate(RelativeDate.TODAY);
-        dateRangeItem.setValue(dateRange);
-        */
-
-        setFilterFormItems(dateRangeItem);
+        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
+        Date date = new Date();
+        endDateFilter.setValue(date);
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
+        CalendarUtil.addMonthsToDate(date, -1);
+        startDateFilter.setValue(date);
+        if (isShowFilterForm()) {
+            setFilterFormItems(startDateFilter, endDateFilter);
+        }
     }
 
     @Override
@@ -262,52 +265,70 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
-
-            long now = System.currentTimeMillis();
-            DateRange beginEndRange = null;
-            if (dateRangeItem != null) {
-                beginEndRange = new DateRange();
-                beginEndRange.setStartDate(new Date(now
-                    - (1000L * 60 * 60 * 24 * Integer.parseInt(dateRangeItem.getValue().toString())))); // user entered # of days
-                beginEndRange.setEndDate(new Date(now));
+            Date startDate, endDate;
+            try {
+                startDate = startDateFilter.getValueAsDate();
+                endDate = endDateFilter.getValueAsDate();
+            } catch (Exception e) {
+                // Value parsed is not a date
+                processResults(request, response, Collections.emptyList());
+                return;
             }
-            final Long beginDate = (beginEndRange != null) ? beginEndRange.getStartDate().getTime() : now
-                - (1000L * 60 * 60 * 24 * 30);
-            final Long endDate = (beginEndRange != null) ? beginEndRange.getEndDate().getTime() : now;
-            final PageControl pc1 = PageControl.getUnlimitedInstance();
-            final PageControl pc2 = PageControl.getUnlimitedInstance();
+
+            if (startDate == null || endDate == null) {
+                processResults(request, response, Collections.emptyList());
+                return;
+            }
+
+            long start = adjustTimeToStartOfDay(startDate).getTime();
+            long end = adjustTimeToEndOfDay(endDate).getTime();
+
+            final List<Object> fullList = new ArrayList<Object>();
+
+            final CountDownLatch latch = CountDownLatch.create(2, new Command() {
+                @Override
+                public void execute() {
+                    processResults(request, response, fullList);
+                }
+            });
 
             GWTServiceLookup.getResourceService().findCreateChildResourceHistory(
-                resourceComposite.getResource().getId(), beginDate, endDate, pc1,
+                resourceComposite.getResource().getId(), start, end, PageControl.getUnlimitedInstance(),
                 new AsyncCallback<PageList<CreateResourceHistory>>() {
                     @Override
                     public void onSuccess(final PageList<CreateResourceHistory> createList) {
-                        GWTServiceLookup.getResourceService().findDeleteChildResourceHistory(
-                            resourceComposite.getResource().getId(), beginDate, endDate, pc2,
-                            new AsyncCallback<PageList<DeleteResourceHistory>>() {
-                                @Override
-                                public void onSuccess(final PageList<DeleteResourceHistory> deleteList) {
-                                    ArrayList<Object> fullList = new ArrayList<Object>();
-                                    fullList.addAll(createList);
-                                    fullList.addAll(deleteList);
-                                    ListGridRecord[] records = buildRecords(fullList);
-                                    response.setData(records);
-                                    processResponse(request.getRequestId(), response);
-                                }
-
-                                @Override
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler()
-                                        .handleError("Failed to load child delete history", caught);
-                                }
-                            });
+                        fullList.addAll(createList);
+                        latch.countDown();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError("Failed to load child create history", caught);
+                        latch.countDown();
                     }
                 });
+
+            GWTServiceLookup.getResourceService().findDeleteChildResourceHistory(
+                resourceComposite.getResource().getId(), start, end, PageControl.getUnlimitedInstance(),
+                new AsyncCallback<PageList<DeleteResourceHistory>>() {
+                    @Override
+                    public void onSuccess(final PageList<DeleteResourceHistory> deleteList) {
+                        fullList.addAll(deleteList);
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load child delete history", caught);
+                        latch.countDown();
+                    }
+                });
+        }
+
+        private void processResults(DSRequest request, DSResponse response, List<Object> fullList) {
+            ListGridRecord[] records = buildRecords(fullList);
+            response.setData(records);
+            processResponse(request.getRequestId(), response);
         }
 
         @Override

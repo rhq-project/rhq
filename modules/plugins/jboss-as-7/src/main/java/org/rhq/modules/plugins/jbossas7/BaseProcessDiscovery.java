@@ -433,6 +433,18 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
 
+    /**
+     * Deprecated due to changes requiring a server name to build resource name. If no name
+     * is provided then the information is omitted from the resource name.
+     *
+     *  Please see [BZ 1080552] for more details.
+     */
+    @Deprecated
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType) {
+        return buildDefaultResourceName(hostPort, managementHostPort, productType, null);
+    }
+
     // Manually add a (remote) AS7 instance.
     @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,

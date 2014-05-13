@@ -43,22 +43,31 @@ public class ProblemResourceComposite implements Serializable {
     private String ancestry;
     private long numAlerts;
     private AvailabilityType availabilityType;
-    private int ancestryLength;
+    private Integer ancestryLength;
 
-    /** Private no args contstructor for JAXB serialization. */
+    /** Private no args constructor for JAXB serialization. */
     @SuppressWarnings("unused")
     private ProblemResourceComposite() {
     }
 
     public ProblemResourceComposite(int resourceId, int resourceTypeId, String resourceName, String ancestry,
-        long numAlerts, AvailabilityType availabilityType, int ancestryLength) {
+        long numAlerts, AvailabilityType availabilityType) {
+        this(resourceId, resourceTypeId, resourceName, ancestry, numAlerts, availabilityType, ((null == ancestry) ? 0
+            : ancestry.length()));
+    }
+
+    /**
+     * This constructor is typically used only to support some predefined queries.
+     */
+    public ProblemResourceComposite(int resourceId, int resourceTypeId, String resourceName, String ancestry,
+        long numAlerts, AvailabilityType availabilityType, Integer ancestryLength) {
         this.resourceId = resourceId;
         this.resourceTypeId = resourceTypeId;
         this.resourceName = resourceName;
         this.ancestry = ancestry;
         this.numAlerts = numAlerts;
         this.availabilityType = availabilityType; // pull explicitly because lazy-loaded by default
-        this.ancestryLength = ancestryLength;
+        this.ancestryLength = (null == ancestryLength) ? 0 : ancestry.length();
     }
 
     public int getResourceId() {

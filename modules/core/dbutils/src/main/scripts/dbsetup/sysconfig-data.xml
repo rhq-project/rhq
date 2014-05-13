@@ -153,6 +153,9 @@
 
       <data ID="64" PROPERTY_KEY="STORAGE_PASSWORD" PROPERTY_VALUE="UNSET" DEFAULT_PROPERTY_VALUE="UNSET" FREAD_ONLY="TRUE"/>
 
+      <!-- Flag that protects user without any assigned role to log in to web UI -->
+      <data ID="65" PROPERTY_KEY="ENABLE_LOGIN_WITHOUT_ROLES" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" />
+
     </table>
 
 </dbsetup>

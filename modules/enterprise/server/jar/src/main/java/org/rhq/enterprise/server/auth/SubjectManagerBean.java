@@ -132,7 +132,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
         for (Timer existingTimer : timers) {
-            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            if (log.isDebugEnabled()) {
+                log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            }
             try {
                 existingTimer.cancel();
             } catch (Exception e) {
@@ -373,8 +375,17 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             }
 
             // fetch the roles
-            subject.getRoles().size();
-
+            int rolesNumber = subject.getRoles().size();
+            
+            if (rolesNumber == 0) {
+                if (systemManager.isLoginWithoutRolesEnabled()) {
+                    if (log.isInfoEnabled()) {
+                        log.info("Letting in user [" + subject.getName() + "]  without any assigned roles.");
+                    }
+                } else {
+                    throw new LoginException("There are no preconfigured roles for user [" + subject.getName() + "]");
+                }
+            }
         } else {
             // There is no subject in the database yet.
             // If LDAP authentication is enabled and we cannot find the subject,
@@ -441,8 +452,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             //if user has principal then bail as LDAP processing not required
             boolean userHasPrincipal = isUserWithPrincipal(subject.getName());
-            log.debug("Processing subject '" + subject.getName() + "' for LDAP check, userHasPrincipal:"
-                + userHasPrincipal);
+            if (log.isDebugEnabled()) {
+                log.debug("Processing subject '" + subject.getName() + "' for LDAP check, userHasPrincipal:"
+                    + userHasPrincipal);
+            }
 
             //if user has principal then return as non-ldap user
             if (userHasPrincipal) {
@@ -489,18 +502,24 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             String msg = "Located existing ldap account with different case for ["
                                 + ldapSubject.getName() + "]. "
                                 + "Attempting to authenticate with that account instead.";
-                            log.info(msg);
+                            if (log.isInfoEnabled()) {
+                                log.info(msg);
+                            }
                             logout(subject.getSessionId().intValue());
                             subject = login(ldapSubject.getName(), subjectPassword);
                             Integer sessionId = subject.getSessionId();
-                            log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
-                                + "]");
+                            if (log.isDebugEnabled()) {
+                                log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
+                                    + "]");
+                            }
                         } else {//then this is a registration request. insert overlord registration and login
                             //we've verified that this user has valid session, requires registration and that ldap is configured.
                             Subject superuser = getOverlord();
 
                             // create the subject, but don't add a principal since LDAP will handle authentication
-                            log.debug("registering new LDAP-authenticated subject [" + subject.getName() + "]");
+                            if (log.isDebugEnabled()) {
+                                log.debug("registering new LDAP-authenticated subject [" + subject.getName() + "]");
+                            }
                             createSubject(superuser, subject);
                             subject.setFactive(true);
 
@@ -526,9 +545,20 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     if (isLdapAuthorizationEnabled()) {
                         List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
                             .getName()));
-                        log.debug("Updating LDAP authorization data for user [" + subject.getName()
-                            + "] with LDAP groups [" + groupNames + "]...");
-                        ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
+                        if (groupNames.isEmpty()) {
+                            if (systemManager.isLoginWithoutRolesEnabled()) {
+                                if (log.isInfoEnabled()) {
+                                    log.info("Letting in user [" + subject.getName() + "]  without any assigned roles.");
+                                }
+                            } else {
+                                throw new LoginException(
+                                    "You are authenticated for LDAP, but there are no preconfigured roles for you.");
+                            }
+                        } else if (log.isDebugEnabled()) {
+                            log.debug("Updating LDAP authorization data for user [" + subject.getName()
+                                + "] with LDAP groups " + groupNames + "...");
+                            ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
+                        }
                     }
                 } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail
                     throw new LoginException("You are authenticated for LDAP, but LDAP is not configured.");

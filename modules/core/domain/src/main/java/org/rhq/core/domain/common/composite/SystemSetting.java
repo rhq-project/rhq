@@ -25,6 +25,9 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 public enum SystemSetting {
     /** Base URL for the application - (i think this is only used for alert emails) */
     BASE_URL("CAM_BASE_URL", PropertySimpleType.STRING, false, true, true),
+    
+    /** Is user without any assigned role allowed to see the web UI */
+    LOGIN_WITHOUT_ROLES_ENABLED("ENABLE_LOGIN_WITHOUT_ROLES", PropertySimpleType.BOOLEAN, false, true, true),
 
     /** how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it */
     AGENT_MAX_QUIET_TIME_ALLOWED("AGENT_MAX_QUIET_TIME_ALLOWED", PropertySimpleType.LONG, false, true, true),

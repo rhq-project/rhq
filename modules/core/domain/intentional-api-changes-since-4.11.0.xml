@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+    <className>org/rhq/core/domain/resource/composite/ProblemResourceComposite</className>
+    <differenceType>7004</differenceType>
+    <!-- num argments changed -->
+    <method>ProblemResourceComposite(*)</method>
+    <justification>
+      This class is not exposed remotely.
+    </justification>
+  </difference>
+</differences>

@@ -2298,7 +2298,7 @@
 
             <schemaSpec version="2.144">
                 <!-- RHQ_AGENT_INSTALL -->
-                <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_AGENT_INSTALL_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_AGENT_INSTALL">
                         CREATE TABLE RHQ_AGENT_INSTALL ( ID INTEGER PRIMARY KEY )
@@ -2345,6 +2345,15 @@
                     </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_MISSING" nullable="false" />
+            </schemaSpec>
+
+            <schemaSpec version="2.148">
+                <schema-directSQL>
+                    <statement desc="Setting the flag that protects user without any assigned roles to log in to false (false = not allowed to login)">
+                        INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                        VALUES (65, 'ENABLE_LOGIN_WITHOUT_ROLES', 'false', 'false')
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
         </dbupgrade>

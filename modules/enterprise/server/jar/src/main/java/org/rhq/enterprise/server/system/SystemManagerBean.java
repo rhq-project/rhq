@@ -806,6 +806,19 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             return false; // paranoid catch-all
         }
     }
+    
+    @Override
+    public boolean isLoginWithoutRolesEnabled() {
+        try {
+            String setting = getUnmaskedSystemSettings(true).get(SystemSetting.LOGIN_WITHOUT_ROLES_ENABLED);
+            if (setting == null) {
+                setting = "false";
+            }
+            return Boolean.valueOf(setting);
+        } catch (Exception t) {
+            return false; // paranoid catch-all
+        }
+    }
 
     @Override
     public boolean isExperimentalFeaturesEnabled() {

@@ -161,9 +161,16 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         if (groupUsePosix == null) {
             groupUsePosix = Boolean.toString(false);//default to false
         }
+        
         boolean usePosixGroups = Boolean.valueOf(groupUsePosix);
         String userAttribute = getUserAttribute(options, userName, usePosixGroups);
         Set<String> ldapSet = new HashSet<String>();
+        
+        if (groupFilter.trim().isEmpty() || groupMember.trim().isEmpty()) {
+            log.warn("The ldap group filter defined is invalid. Group Filter: " + groupFilter + ", Group Member: "
+                + groupMember);
+            return ldapSet;
+        }
 
         if (userAttribute != null && userAttribute.trim().length() > 0) {
             //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations

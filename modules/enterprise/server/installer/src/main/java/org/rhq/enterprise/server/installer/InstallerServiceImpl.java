@@ -1075,7 +1075,7 @@ public class InstallerServiceImpl implements InstallerService {
                 // don't bother trying again
                 boolean differentValues = false;
                 String hostStr = fallbackProps.get("jboss.bind.address.management");
-                if (hostStr != null && !hostStr.equals(host)) {
+                if (hostStr != null && hostStr.length() > 0 && !hostStr.equals(host)) {
                     host = hostStr;
                     differentValues = true;
                 }

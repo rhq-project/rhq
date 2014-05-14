@@ -49,8 +49,10 @@ import org.rhq.coregui.client.dashboard.DashboardContainer;
 import org.rhq.coregui.client.dashboard.DashboardView;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
@@ -213,25 +215,30 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
 
         // right Column(approx 60%. As larger more room to display table and N rows.)
         if (groupKeyNameMap.containsKey(GroupAlertsPortlet.KEY)) {//alerts top right if available
-            DashboardPortlet alerts = new DashboardPortlet(GroupAlertsPortlet.NAME, GroupAlertsPortlet.KEY, 220);
+            DashboardPortlet alerts = new DashboardPortlet(GroupAlertsPortlet.NAME, GroupAlertsPortlet.KEY, 210);
             dashboard.addPortlet(alerts, colRight, rowRight++);
             groupKeyNameMap.remove(GroupAlertsPortlet.KEY);
         }
+        if (groupKeyNameMap.containsKey(GroupEventsPortlet.KEY)) {//events if available
+            DashboardPortlet events = new DashboardPortlet(GroupEventsPortlet.NAME, GroupEventsPortlet.KEY, 210);
+            dashboard.addPortlet(events, colRight, rowRight++);
+            groupKeyNameMap.remove(GroupEventsPortlet.KEY);
+        }
         if (groupKeyNameMap.containsKey(GroupOperationsPortlet.KEY)) {//operations if available
-            DashboardPortlet ops = new DashboardPortlet(GroupOperationsPortlet.NAME, GroupOperationsPortlet.KEY, 220);
+            DashboardPortlet ops = new DashboardPortlet(GroupOperationsPortlet.NAME, GroupOperationsPortlet.KEY, 210);
             dashboard.addPortlet(ops, colRight, rowRight++);
             groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
         }
         if (groupKeyNameMap.containsKey(GroupConfigurationUpdatesPortlet.KEY)) {//operations if available
             DashboardPortlet ops = new DashboardPortlet(GroupConfigurationUpdatesPortlet.NAME,
-                GroupConfigurationUpdatesPortlet.KEY, 220);
+                GroupConfigurationUpdatesPortlet.KEY, 210);
             dashboard.addPortlet(ops, colRight, rowRight++);
             groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
         }
 
         //Fill out left column(typically smaller portlets) then alternate cols with remaining
         displayLeft = false;
-        updateDashboardWithPortlets(groupKeyNameMap, dashboard, 100);
+        updateDashboardWithPortlets(groupKeyNameMap, dashboard, 105);
         return dashboard;
     }
 

@@ -40,7 +40,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.exec.DefaultExecutor;
@@ -74,6 +73,17 @@ public abstract class ControlCommand {
     private File binDir; // where the internal startup scripts are
 
     private PropertiesConfiguration rhqctlConfig = null; // the (optional) settings found in rhqctl.properties
+
+    private static final int WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS;
+    static {
+        int propInt;
+        try {
+            propInt = Integer.parseInt(System.getProperty("rhqctl.wait-for-process-to-stop-timeout-secs", "30"));
+        } catch (Exception e) {
+            propInt = 30;
+        }
+        WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS = propInt;
+    }
 
     private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
 
@@ -429,26 +439,26 @@ public abstract class ControlCommand {
     }
 
     protected void waitForProcessToStop(String pid) throws Exception {
-
-        if (isWindows() || pid==null) {
+        if (isWindows() || pid == null) {
             // For the moment we have no better way to just wait some time
-            Thread.sleep(10*1000L);
+            Thread.sleep(WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS * 1000L);
         } else {
-            int tries = 5;
-            while (tries > 0) {
-                log.debug(".");
+            final int maxTries = 5;
+            int tries = 1;
+            while (tries <= maxTries) {
+                log.debug("Waiting for pid [" + pid + "] to stop. Try #" + tries);
                 if (!isUnixPidRunning(pid)) {
                     break;
                 }
-                Thread.sleep(2*1000L);
-                tries--;
+                Thread.sleep((WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS / maxTries) * 1000L);
+                tries++;
             }
-            if (tries==0) {
-                throw new RHQControlException("Process [" + pid + "] did not finish yet. Terminate it manually and retry.");
+            if (tries > maxTries) {
+                throw new RHQControlException("Process [" + pid
+                    + "] did not finish yet. Terminate it manually and retry.");
+                }
             }
         }
-
-    }
 
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
@@ -470,19 +480,23 @@ public abstract class ControlCommand {
             .addArgument("-0")
             .addArgument(pid);
 
+        boolean isRunning = true; // assume it is running
         try {
             int code = executor.execute(commandLine);
-            if (code!=0) {
-                return false;
+            if (code != 0) {
+                isRunning = false;
             }
         } catch (ExecuteException ee ) {
-            if (ee.getExitValue()==1) {
+            log.debug("kill -0 for pid [" + pid + "] threw exception with exit value [" + ee.getExitValue() + "]");
+            if (ee.getExitValue() == 1) {
                 // return code 1 means process does not exist
-                return false;
+                isRunning = false;
             }
         } catch (IOException e) {
-            log.error("Checking for running process failed: " + e.getMessage());
+            log.error("Checking for running process failed. Will assume it is running. Error: " + e.getMessage());
         }
+
+        log.debug("unix pid [" + pid + "] " + ((isRunning) ? "is" : "is NOT") + " running");
         return true;
     }
 

@@ -200,10 +200,18 @@ public class Install extends AbstractInstall {
             if (!start && (startedStorage || startedServer)) {
                 Stop stopCommand = new Stop();
                 if (startedServer) {
-                    stopCommand.exec(new String[] { "stop", "--server" });
+                    try {
+                        stopCommand.exec(new String[] { "stop", "--server" });
+                    } catch (Exception e) {
+                        log.warn("Could not stop the server - it may still be running.");
+                    }
                 }
                 if (startedStorage) {
-                    stopCommand.exec(new String[] { "stop", "--storage" });
+                    try {
+                        stopCommand.exec(new String[] { "stop", "--storage" });
+                    } catch (Exception e) {
+                        log.warn("Could not stop the storage node - it may still be running.");
+                    }
                 }
             }
         }

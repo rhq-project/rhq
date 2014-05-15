@@ -1087,10 +1087,6 @@ ${comment}rhq.storage.verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empt
         <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
                   name="cassandra.properties"/>
       </loadproperties>
-        <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
-        <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">
-rhq.server.agent-update.nonstrict-version-check=true
-</echo>
 
 <!-- We must use forward slashes when writing paths to a properties files. Properties.load()
      treats the values as Java Strings so backslashes will be parsed as escapes. -->

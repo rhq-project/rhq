@@ -210,7 +210,6 @@ public class CoreServer implements CoreServerMBean {
                         + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
             }
             ProductInfo productInfo = new ProductInfo();
-            // TODO: Using reflection below might be nicer.
             productInfo.setBuildNumber(props.getProperty("buildNumber"));
             productInfo.setFullName(props.getProperty("fullName"));
             productInfo.setHelpDocRoot(props.getProperty("helpDocRoot"));
@@ -221,6 +220,7 @@ public class CoreServer implements CoreServerMBean {
             productInfo.setUrlDomain(props.getProperty("urlDomain"));
             productInfo.setUrl(props.getProperty("url"));
             productInfo.setVersion(props.getProperty("version"));
+            productInfo.setSupportedAgentVersions(props.getProperty("supportedAgentVersions"));
 
             HashMap<String, String> helpViewContent = new HashMap<String, String>();
 

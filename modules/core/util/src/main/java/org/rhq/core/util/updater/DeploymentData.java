@@ -167,7 +167,7 @@ public class DeploymentData {
             rawFiles = new HashMap<File, File>(0);
         }
         if ((zipFiles.size() == 0) && (rawFiles.size() == 0)) {
-            throw new IllegalArgumentException("zipFiles/rawFiles are empty - nothing to do");
+            throw new IllegalArgumentException("No archives or raw files specified - nothing to do");
         }
         if (zipsExploded == null) {
             zipsExploded = new HashMap<File, Boolean>(0);
@@ -177,7 +177,7 @@ public class DeploymentData {
         this.zipFiles = zipFiles;
         this.rawFiles = rawFiles;
 
-        //specifically do NOT resolve symlinks here. This must to be the last thing one needs to do before deploying
+        //specifically do NOT resolve symlinks here. This must be the last thing one needs to do before deploying
         //the files. The problem is that we use the destination dir as root for the paths of the individual files to
         //lay down. If the destinationDir uses symlinks and the individual paths of the files were relative
         // including ..'s, it could happen that the files would be laid down on a different place than expected.
@@ -186,7 +186,7 @@ public class DeploymentData {
         //file = ../conf/some.properties
         //One expects the file to end up in /opt/my/conf/some.properties
         //but if we canonicalized the destination dir upfront, we'd end up with /tmp/conf/some.properties.
-        this.destinationDir = destinationDir.getAbsoluteFile();
+        this.destinationDir = FileUtil.normalizePath(destinationDir.getAbsoluteFile());
 
         this.sourceDir = sourceDir;
         this.ignoreRegex = ignoreRegex;
@@ -203,67 +203,87 @@ public class DeploymentData {
             this.templateEngine = templateEngine;
         }
 
-        // We need to "normalize" all raw file paths that have ".." in them to ensure everything works properly.
-        // Note that any pathname that is relative but have ".." paths that end up taking the file
-        // above the destination directory needs to be normalized and will end up being an absolute path
-        // (so all log messages will indicate the full absolute path and if the file
-        // needs to be backed up it will be backed up as if it was an external file that was specified with an absolute path).
-        // If the relative path has ".." but does not take the file above the destination directory will simply have its ".."
+        // We need to "normalize" all file paths (raw and zip) that have ".." in them to ensure everything works properly.
+        // Note that any pathnames that are relative but have ".." paths that end up taking the file
+        // above the destination directory need to be normalized and will end up being an absolute path
+        // (so all log messages will indicate the full absolute path and if the file needs to be backed up it will be
+        // backed up as if it was an external file that was specified with an absolute path). If the relative path has
+        // ".." but does not take the file above the destination directory it will simply have its ".."
         // normalized out but will still be a relative path (relative to destination directory) (we can't make it absolute
         // otherwise Deployer's update will run into errors while backing up and scanning for deleted files).
         // See BZs 917085 and 917765.
         for (Map.Entry<File, File> entry : this.rawFiles.entrySet()) {
             File rawFile = entry.getValue();
-            String rawFilePath = rawFile.getPath();
-
-            boolean doubledot = rawFilePath.replace('\\', '/').matches(".*((/\\.\\.)|(\\.\\./)).*"); // finds "/.." or "../" in the string
-
-            if (doubledot) {
-                File fileToNormalize;
-
-                if (rawFile.isAbsolute()) {
-                    fileToNormalize = rawFile;
-                } else {
-                    boolean isWindows = (File.separatorChar == '\\');
-                    if (isWindows) {
-                        // of course, Windows has to make it enormously difficult to do this right...
-
-                        // determine if the windows rawFile relative path specified a drive (e.g. C:foobar.txt)
-                        StringBuilder rawFilePathBuilder = new StringBuilder(rawFilePath);
-                        String rawFileDriveLetter = FileUtil.stripDriveLetter(rawFilePathBuilder); // rawFilePathBuilder now has drive letter stripped
-
-                        // determine what, if any, drive letter is specified in the destination directory
-                        StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destinationDir.getAbsolutePath());
-                        String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
-
-                        // figure out what the absolute, normalized path is for the raw file
-                        if ((destDirDriveLetter == null || rawFileDriveLetter == null)
-                            || rawFileDriveLetter.equals(destDirDriveLetter)) {
-                            fileToNormalize = new File(this.destinationDir, rawFilePathBuilder.toString());
-                        } else {
-                            throw new IllegalArgumentException("Cannot normalize relative path [" + rawFilePath
-                                + "]; its drive letter is different than the destination directory ["
-                                + this.destinationDir.getAbsolutePath() + "]");
-                        }
-                    } else {
-                        fileToNormalize = new File(this.destinationDir, rawFilePath);
-                    }
-                }
-
-                fileToNormalize = getNormalizedFile(fileToNormalize);
-
-                if (isPathUnderBaseDir(this.destinationDir, fileToNormalize)) {
-                    // we can keep rawFile path relative, but we need to normalize out the ".." paths
-                    String baseDir = this.destinationDir.getAbsolutePath();
-                    String absRawFilePath = fileToNormalize.getAbsolutePath();
-                    String relativePath = absRawFilePath.substring(baseDir.length() + 1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
-                    entry.setValue(new File(relativePath));
-                } else {
-                    // raw file path has ".." such that the file is really above destination dir - use an absolute, canonical path
-                    entry.setValue(fileToNormalize);
-                }
+            if (null != rawFile) {
+                String rawFilePath = rawFile.getPath();
+                entry.setValue(getSafeFile(rawFile, rawFilePath));
             }
         }
+
+        for (Map.Entry<File, File> entry : this.zipFiles.entrySet()) {
+            File zipFile = entry.getValue();
+            if (null != zipFile) {
+                String zipFilePath = zipFile.getPath();
+                entry.setValue(getSafeFile(zipFile, zipFilePath));
+            }
+        }
+    }
+
+    private File getSafeFile(File file, String filePath) {
+        // finds "/.." or "../" in the string
+        boolean doubledot = filePath.replace('\\', '/').matches(".*((/\\.\\.)|(\\.\\./)).*");
+        boolean isWindows = (File.separatorChar == '\\');
+
+        if (doubledot) {
+            File fileToNormalize;
+
+            if (file.isAbsolute()) {
+                fileToNormalize = file;
+
+            } else {
+                if (isWindows) {
+                    // of course, Windows has to make it enormously difficult to do this right...
+
+                    // determine if the windows file relative path specified a drive (e.g. C:\foobar.txt)
+                    StringBuilder filePathBuilder = new StringBuilder(filePath);
+                    String fileDriveLetter = FileUtil.stripDriveLetter(filePathBuilder); // filePathBuilder now has drive letter stripped
+
+                    // determine what, if any, drive letter is specified in the destination directory
+                    StringBuilder destDirAbsPathBuilder = new StringBuilder(destinationDir.getAbsolutePath());
+                    String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
+
+                    // figure out what the absolute, normalized path is for the file
+                    if ((destDirDriveLetter == null || fileDriveLetter == null)
+                        || fileDriveLetter.equals(destDirDriveLetter)) {
+                        fileToNormalize = new File(destinationDir, filePathBuilder.toString());
+                    } else {
+                        throw new IllegalArgumentException("Cannot normalize relative path [" + filePath
+                            + "]; its drive letter is different than the destination directory ["
+                            + destinationDir.getAbsolutePath() + "]");
+                    }
+                } else {
+                    fileToNormalize = new File(destinationDir, filePath);
+                }
+            }
+
+            fileToNormalize = getNormalizedFile(fileToNormalize);
+
+            if (isPathUnderBaseDir(destinationDir, fileToNormalize)) {
+                // we can keep file path relative, but we need to normalize out the ".." paths
+                String baseDir = destinationDir.getAbsolutePath();
+                String absFilePath = fileToNormalize.getAbsolutePath();
+                String relativePath = absFilePath.substring(baseDir.length() + 1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
+                return new File(relativePath);
+            } else {
+                // file path has ".." such that the file is really above destination dir - use an absolute, canonical path
+                return fileToNormalize;
+            }
+        } else if (isWindows && file != null && file.isAbsolute()) {
+            // make sure drive letter is normalized
+            return getNormalizedFile(file);
+        }
+
+        return file;
     }
 
     private static File getNormalizedFile(File fileToNormalize) {

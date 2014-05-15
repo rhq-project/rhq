@@ -804,26 +804,44 @@ public class Deployer {
                 realizeRegex = this.deploymentData.getZipEntriesToRealizeRegex().get(zipFile);
             }
 
+            // Note: there is a requirement that all zip files must be located in the sourceDir - this is why. We
+            // need the path of the zip relative to the source dir so we can copy it to the same relative location
+            // under the destination dir. Without doing this, if the zip is in a subdirectory, we won't know where to
+            // put it under the destination dir.
+
+            File destinationDir = this.deploymentData.getDestinationDir();
+            File zipDestinationDir = zipFileEntry.getValue();
+
+            if (null != zipDestinationDir) {
+                // reset the destinationDir to the specified override.  Note that the override is already a safe path,
+                // preprocessed to remove ".." in DeploymentData.init().
+                destinationDir = zipDestinationDir.isAbsolute() ? zipDestinationDir : new File(destinationDir,
+                    zipDestinationDir.getPath());
+            }
+
             if (exploded.booleanValue()) {
                 // EXPLODED
 
-                visitor = new ExtractorZipFileVisitor(this.deploymentData.getDestinationDir(), realizeRegex,
+                visitor = new ExtractorZipFileVisitor(destinationDir, realizeRegex,
                     this.deploymentData.getTemplateEngine(), currentFilesToLeaveAlone.keySet(), diff, dryRun);
                 ZipUtil.walkZipFile(zipFile, visitor);
-                newFileHashCodeMap.putAll(visitor.getFileHashcodeMap()); // exploded into individual files
+                // exploded into individual files
+                if (null == zipDestinationDir) {
+                    newFileHashCodeMap.putAll(visitor.getFileHashcodeMap());
+                } else {
+                    FileHashcodeMap visitorMap = visitor.getFileHashcodeMap();
+                    for (String file : visitorMap.keySet()) {
+                        newFileHashCodeMap.put(new File(destinationDir, file).getAbsolutePath(), visitorMap.get(file));
+                    }
+                }
 
             } else {
                 // COMPRESSED
 
-                File destinationDir = zipFileEntry.getValue();
                 File compressedFile = null;
                 String zipPath = null;
 
-                if (null == destinationDir) {
-                    // Note: there is a requirement that all zip files must be located in the sourceDir - this is why. We
-                    // need the path of the zip relative to the source dir so we can copy it to the same relative location
-                    // under the destination dir. Without doing this, if the zip is in a subdirectory, we won't know where to
-                    // put it under the destination dir.
+                if (null == zipDestinationDir) {
                     String zipRelativePath = zipFile.getAbsolutePath().substring(sourceDirLength);
                     if (zipRelativePath.startsWith("/") || zipRelativePath.startsWith("\\")) {
                         zipRelativePath = zipRelativePath.substring(1);
@@ -832,13 +850,8 @@ public class Deployer {
                     zipPath = zipRelativePath;
 
                 } else {
-                    if (destinationDir.isAbsolute()) {
-                        compressedFile = new File(destinationDir, zipFile.getName());
-                        zipPath = compressedFile.getPath();
-                    } else {
-                        zipPath = new File(destinationDir, zipFile.getName()).getPath();
-                        compressedFile = new File(this.deploymentData.getDestinationDir(), zipPath);
-                    }
+                    compressedFile = new File(destinationDir, zipFile.getName());
+                    zipPath = compressedFile.getAbsolutePath();
                 }
 
                 if (this.deploymentData.getTemplateEngine() != null && realizeRegex != null) {

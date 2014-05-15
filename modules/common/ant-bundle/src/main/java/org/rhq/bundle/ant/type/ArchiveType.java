@@ -46,11 +46,6 @@ public class ArchiveType extends AbstractFileType {
 
     // Pass in a String, rather than a File, since we don't want Ant to resolve the path relative to basedir if it's relative.
     public void setDestinationDir(String destinationDir) {
-        if (this.exploded != null && Boolean.TRUE.equals(exploded)) {
-            throw new BuildException("'destinationDir' requires 'exploded=false', it has been set to 'true'.");
-        }
-
-        this.exploded = Boolean.FALSE.toString();
         this.destinationDir = new File(destinationDir);
     }
 

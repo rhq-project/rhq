@@ -277,6 +277,10 @@ public class FileUtilTest {
         assert FileUtil.stripDriveLetter(str).equals("C");
         assert str.toString().equals("");
 
+        str = new StringBuilder("c:");
+        assert FileUtil.stripDriveLetter(str).equals("C");
+        assert str.toString().equals("");
+
         str = new StringBuilder("C:\\");
         assert FileUtil.stripDriveLetter(str).equals("C");
         assert str.toString().equals("\\");
@@ -306,7 +310,7 @@ public class FileUtilTest {
             StringBuilder lowerPath = new StringBuilder(lowerLetter + ':' + testPath);
             StringBuilder upperPath = new StringBuilder(upperLetter + ':' + testPath);
 
-            assert FileUtil.stripDriveLetter(lowerPath).equals(lowerLetter);
+            assert FileUtil.stripDriveLetter(lowerPath).equals(lowerLetter.toUpperCase());
             assert lowerPath.toString().equals(testPath);
             assert FileUtil.stripDriveLetter(upperPath).equals(upperLetter);
             assert upperPath.toString().equals(testPath);
@@ -493,6 +497,7 @@ public class FileUtilTest {
             checkNormalization("\\\\server\\..\\bar", "\\\\server\\..\\bar");
             checkNormalization(null, "\\\\server\\share\\..\\bar");
             checkNormalization("C:\\bar", "C:\\foo\\..\\bar");
+            checkNormalization("C:\\bar", "c:\\foo\\..\\bar"); // make sure drive letter is normalized to upcase
             checkNormalization(null, "C:\\..\\bar");
 
             checkNormalization("\\foo", "/foo//");

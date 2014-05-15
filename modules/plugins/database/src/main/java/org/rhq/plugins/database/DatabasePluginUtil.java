@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -357,8 +357,18 @@ public class DatabasePluginUtil {
         for (Object p : parameters) {
             if (p instanceof String) {
                 statement.setString(i++, (String) p);
-            } else if (p instanceof Number) {
-                statement.setDouble(i++, ((Number) p).doubleValue());
+            } else if (p instanceof Byte) {
+                statement.setByte(i++, (Byte) p);
+            } else if (p instanceof Short) {
+                statement.setShort(i++, (Short) p);
+            } else if (p instanceof Integer) {
+                statement.setInt(i++, (Integer) p);
+            } else if (p instanceof Long) {
+                statement.setLong(i++, (Long) p);
+            } else if (p instanceof Float) {
+                statement.setFloat(i++, (Float) p);
+            } else if (p instanceof Double) {
+                statement.setDouble(i++, (Double) p);
             } else {
                 statement.setObject(i++, p);
             }

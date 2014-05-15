@@ -2356,7 +2356,7 @@
                 </schema-directSQL>
             </schemaSpec>
 
-	        <schemaSpec version="2.148">
+	        <schemaSpec version="2.149">
               <schema-addColumn   table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY" columnType="VARCHAR2" precision="4000" />
               <schema-javaTask className="SubcategoryUpgradeTask" />
               <schema-deleteColumn table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY_ID" />

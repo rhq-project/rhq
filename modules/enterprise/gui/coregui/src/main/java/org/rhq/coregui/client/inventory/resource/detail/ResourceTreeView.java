@@ -138,7 +138,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         treeGrid.setShowRollOver(false);
         treeGrid.setSortField("name");
         treeGrid.setShowHeader(false);
-        // disable what the tree grid may do, defer to loadingLabel to handle all of our cases 
+        // disable what the tree grid may do, defer to loadingLabel to handle all of our cases
         treeGrid.setLoadingDataMessage(null);
 
         treeGrid.setLeaveScrollbarGap(false);
@@ -437,7 +437,6 @@ public class ResourceTreeView extends EnhancedVLayout {
                             type.getId(),
                             EnumSet.of(ResourceTypeRepository.MetadataType.operations,
                                 ResourceTypeRepository.MetadataType.children,
-                                ResourceTypeRepository.MetadataType.subCategory,
                                 ResourceTypeRepository.MetadataType.pluginConfigurationDefinition,
                                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
                                 ResourceTypeRepository.MetadataType.measurements),
@@ -719,7 +718,7 @@ public class ResourceTreeView extends EnhancedVLayout {
      */
     public void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node, boolean treeOnly) {
         // There are two cases to handle here:
-        // 1) The refresh node is an ancestor of the currently selected node. 
+        // 1) The refresh node is an ancestor of the currently selected node.
         //    - We must re-navigate to the selected node because otherwise it will be lost as part of the subtree
         //      being refreshed.
         // 2) The refresh node is not an ancestor of the current selected node (it is the node, is a descendant, or
@@ -792,7 +791,7 @@ public class ResourceTreeView extends EnhancedVLayout {
 
         if (treeGrid != null && treeGrid.getTree() != null && (treeGrid.getTree().findById(selectedNodeId)) != null) {
             // This is the case where the tree was previously loaded and we get fired to look at a different
-            // node in the same tree and just have to switch the selection            
+            // node in the same tree and just have to switch the selection
             updateSelection(isRefresh);
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
@@ -852,7 +851,7 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                         setRootResource(root);
 
-                        // seed datasource with initial resource list and which ancestor resources are locked 
+                        // seed datasource with initial resource list and which ancestor resources are locked
                         ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData, treeGrid,
                             loadingLabel);
                         treeGrid.setDataSource(dataSource);
@@ -888,8 +887,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                             updateSelection();
                         }
                     } else {
-                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,
-                            EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
+                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage, null,
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                                 public void onResourceTypeLoaded(List<Resource> result) {

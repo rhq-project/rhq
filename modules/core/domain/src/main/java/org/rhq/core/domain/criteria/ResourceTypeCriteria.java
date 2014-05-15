@@ -60,7 +60,6 @@ public class ResourceTypeCriteria extends Criteria {
     private Set<ResourceCategory> filterCategories; // needs overrides
     private Boolean filterParentResourceTypesEmpty; // needs overrides
 
-    private boolean fetchSubCategory;
     private boolean fetchChildResourceTypes;
     private boolean fetchParentResourceTypes;
     private boolean fetchPluginConfigurationDefinition;
@@ -70,7 +69,6 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchOperationDefinitions;
     private boolean fetchProcessScans;
     private boolean fetchPackageTypes;
-    private boolean fetchSubCategories;
     private boolean fetchProductVersions;
     private boolean fetchBundleType;
     private boolean fetchResources;
@@ -163,15 +161,11 @@ public class ResourceTypeCriteria extends Criteria {
     /**
      * If set to true this is equivalent to asking only for top level resource types. In other words,
      * those types whose parent will be the platform.
-     * 
+     *
      * @param filterParentResourceTypesEmpty
      */
     public void addFilterParentResourceTypesEmpty(boolean filterParentResourceTypesEmpty) {
         this.filterParentResourceTypesEmpty = filterParentResourceTypesEmpty;
-    }
-
-    public void fetchSubCategory(boolean fetchSubCategory) {
-        this.fetchSubCategory = fetchSubCategory;
     }
 
     public void fetchChildResourceTypes(boolean fetchChildResourceTypes) {
@@ -210,10 +204,6 @@ public class ResourceTypeCriteria extends Criteria {
         this.fetchPackageTypes = fetchPackageTypes;
     }
 
-    public void fetchSubCategories(boolean fetchSubCategories) {
-        this.fetchSubCategories = fetchSubCategories;
-    }
-
     public void fetchProductVersions(boolean fetchProductVersions) {
         this.fetchProductVersions = fetchProductVersions;
     }
@@ -247,5 +237,21 @@ public class ResourceTypeCriteria extends Criteria {
     public void addSortPluginName(PageOrdering sortPluginName) {
         addSortField("pluginName");
         this.sortPluginName = sortPluginName;
+    }
+
+    /**
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+     */
+    @Deprecated
+    public void fetchSubCategories(boolean notused) {
+    }
+
+    /**
+     * Deprecated due to a simpler but more powerful subcategory design.
+     * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+     */
+    @Deprecated
+    public void fetchSubCategory(boolean notused) {
     }
 }

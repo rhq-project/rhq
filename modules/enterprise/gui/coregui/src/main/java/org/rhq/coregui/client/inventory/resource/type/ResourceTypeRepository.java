@@ -67,7 +67,7 @@ public class ResourceTypeRepository {
      * @author Jay Shaughnessy
      */
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates(
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, parentTypes, processScans, productVersions, driftDefinitionTemplates(
             true), bundleConfiguration;
 
         private boolean isFetchAlways;
@@ -288,9 +288,6 @@ public class ResourceTypeRepository {
             case resourceConfigurationDefinition:
                 criteria.fetchResourceConfigurationDefinition(true);
                 break;
-            case subCategory:
-                criteria.fetchSubCategory(true);
-                break;
             case driftDefinitionTemplates:
                 criteria.fetchDriftDefinitionTemplates(true);
                 break;
@@ -409,9 +406,6 @@ public class ResourceTypeRepository {
                                 case resourceConfigurationDefinition:
                                     cachedType.setResourceConfigurationDefinition(type
                                         .getResourceConfigurationDefinition());
-                                    break;
-                                case subCategory:
-                                    cachedType.setSubCategory(type.getSubCategory());
                                     break;
                                 case driftDefinitionTemplates:
                                     cachedType.setDriftDefinitionTemplates(type.getDriftDefinitionTemplates());

@@ -36,7 +36,6 @@ import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.flyweight.MembersAvailabilityHint;
 import org.rhq.core.domain.resource.flyweight.MembersCategoryHint;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
-import org.rhq.core.domain.resource.flyweight.ResourceSubCategoryFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceTypeFlyweight;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -107,7 +106,6 @@ public class ResourceTreeModelUIBean {
             }
         }
         ResourceTreeNode root = new ResourceTreeNode(found);
-        long start = System.currentTimeMillis();
         load(root);
         return root;
     }
@@ -121,16 +119,12 @@ public class ResourceTreeModelUIBean {
                 if (res.getResourceType().getSubCategory() != null) {
                     // These are children that have subcategories
                     // Split them by if they are a sub-sub category or just a category
-                    ResourceSubCategoryFlyweight categoryKey = res.getResourceType().getSubCategory()
-                        .getParentSubCategory();
-                    if (categoryKey == null) {
-                        categoryKey = res.getResourceType().getSubCategory();
-                    }
+                    String categoryKey = res.getResourceType().getSubCategory();
                     addToList(children, categoryKey, res);
                 } else {
                     // These are children without categories of the parent resource
                     // - Add them into groupings by their resource type
-                    addToList(children, res.getResourceType(), res);
+                    addToList(children, res.getResourceType().getName(), res);
                 }
 
             }
@@ -148,9 +142,8 @@ public class ResourceTreeModelUIBean {
                 avail = avail / resources.size();
 
                 Object nodeData = null;
-                if (key instanceof ResourceSubCategoryFlyweight) {
-                    nodeData = new AutoGroupCompositeFlyweight(avail, parentResource,
-                        (ResourceSubCategoryFlyweight) key, resources.size());
+                if (key instanceof String) {
+                    nodeData = new AutoGroupCompositeFlyweight(avail, parentResource, (String) key, resources.size());
                 } else if (key instanceof ResourceTypeFlyweight) {
                     ResourceTypeFlyweight typeKey = (ResourceTypeFlyweight) key;
 
@@ -186,8 +179,9 @@ public class ResourceTreeModelUIBean {
                     if (compositeParent.getSubcategory() != null) {
                         // parent is a sub category
                         if (res.getResourceType().getSubCategory() != null
-                            && compositeParent.getSubcategory().equals(
-                                res.getResourceType().getSubCategory().getParentSubCategory())
+                        //BZ1069545 This functionality is no longer needed since portal-war is no longer needed.
+                        //&& compositeParent.getSubcategory().equals(
+                        //    res.getResourceType().getSubCategory().getParentSubCategory())
                             && compositeParent.getParentResource().equals(res.getParentResource())) {
 
                             // A subSubCategory in a subcategory
@@ -209,7 +203,7 @@ public class ResourceTreeModelUIBean {
                     }
 
                     if (process) {
-                        //amend the overall category of all the members of the auto group.                
+                        //amend the overall category of all the members of the auto group.
                         switch (membersCategory) {
                         case NONE: //this is the first child, so let's use its category as a starting point
                             membersCategory = MembersCategoryHint.fromResourceCategory(res.getResourceType()
@@ -260,9 +254,9 @@ public class ResourceTreeModelUIBean {
                     avail = avail / resources.size();
 
                     Object nodeData = null;
-                    if (key instanceof ResourceSubCategoryFlyweight) {
+                    if (key instanceof String) {
                         nodeData = new AutoGroupCompositeFlyweight(avail, compositeParent.getParentResource(),
-                            (ResourceSubCategoryFlyweight) key, resources.size());
+                            (String) key, resources.size());
                     } else if (key instanceof ResourceTypeFlyweight) {
                         ResourceTypeFlyweight typeKey = (ResourceTypeFlyweight) key;
                         if (typeKey.isSingleton()) {

@@ -25,14 +25,6 @@
           discovery="CassandraNodeDiscoveryComponent"
           class="CassandraNodeComponent">
 
-    <subcategories>
-      <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
-      <subcategory name="Server Request Metrics" description="Server Request Metrics"/>
-      <subcategory name="Internal Server Metrics" description="Internal Server Metrics"/>
-      <subcategory name="Database Management Services" description="Database Management Services"/>
-      <subcategory name="Network Services" description="Network Services"/>
-    </subcategories>
-
     <plugin-configuration>
       <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi"
                          description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>

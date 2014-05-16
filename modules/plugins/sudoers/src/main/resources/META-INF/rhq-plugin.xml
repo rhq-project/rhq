@@ -12,7 +12,7 @@
    <depends plugin="Augeas"/>
 
    <service name="Sudoers"
-            description="The static table lookup for host names"
+            description="Configuration for system-wide sudo access"
             discovery="SudoersDiscoveryComponent"
             class="SudoersComponent"
             singleton="true">

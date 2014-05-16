@@ -20,6 +20,13 @@
 
 <differences>
   <difference>
+    <className>org/rhq/core/domain/resource/ResourceSubCategory</className>
+    <differenceType>6003</differenceType> <!-- Value of compile-time constant has changed -->
+    <field>QUERY_FIND_BY_NAME_AND_PLUGIN</field>
+    <justification>Change due to subcategory updates. https://bugzilla.redhat.com/show_bug.cgi?id=1069545</justification>
+  </difference>
+
+  <difference>
     <className>org/rhq/core/domain/resource/composite/ProblemResourceComposite</className>
     <differenceType>7012</differenceType>
     <method>ProblemResourceComposite(int, int, java.lang.String, java.lang.String, long, org.rhq.core.domain.measurement.AvailabilityType, java.lang.Integer)</method>

@@ -87,10 +87,8 @@ User <b id="subject"></b> made this request.
 <p>Last: <span id="familyName"></span></p>
 
 
-
-
-<script>
-    var keycloak = Keycloak('keycloak.json');
+<script type="text/javascript" language="javascript">
+    var keycloak = Keycloak('js/keycloak.json');
 
     var loadData = function () {
         document.getElementById('subject').innerText = keycloak.subject;
@@ -102,6 +100,7 @@ User <b id="subject"></b> made this request.
             document.getElementById('name').innerText = keycloak.idToken.name;
             document.getElementById('givenName').innerText = keycloak.idToken.given_name;
             document.getElementById('familyName').innerText = keycloak.idToken.family_name;
+            window.alert(keycloak.idToken);
         } else {
             keycloak.loadUserProfile(function() {
                 document.getElementById('profileType').innerText = 'Account Service';
@@ -110,6 +109,7 @@ User <b id="subject"></b> made this request.
                 document.getElementById('name').innerText = keycloak.profile.firstName + ' ' + keycloak.profile.lastName;
                 document.getElementById('givenName').innerText = keycloak.profile.firstName;
                 document.getElementById('familyName').innerText = keycloak.profile.lastName;
+                window.alert(keycloak.profile);
             }, function() {
                 document.getElementById('profileType').innerText = 'Failed to retrieve user details. Please enable claims or account role';
             });

@@ -52,12 +52,13 @@
         {
             "name": "coregui",
             "enabled": true,
+            "publicClient": true,
             "adminUrl": "http://localhost:7080/coregui",
             "baseUrl": "http://localhost:7080/coregui",
             "redirectUris": [
                 "http://localhost:7080/coregui/*"
             ],
-            "secret": "password"
+            "_secret": "password"
         }
     ],
     "applicationRoleMappings": {

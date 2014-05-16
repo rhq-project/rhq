@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,9 +36,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
@@ -56,10 +56,48 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *     subsystem with a fixes path within AS7 (perhaps below another resource in the
  *     tree.</li>
  * </ul>
+ * This subclass adds logic for discovering different versions of the same logical resource,
+ * by stripping version info out of the path, removing it from the resourceName and setting it
+ * as the resourceVersion.
  *
  * @author Heiko W. Rupp
+ * @author Jay Shaughnessy
  */
-public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent<?>> {
+public class VersionedSubsystemDiscovery extends SubsystemDiscovery {
+
+    /* The matched format is name-VERSION.ext.  Version must minimally be in major.minor format.  Simpler versions,
+     * like a single digit, are too possibly part of the actual name.  myapp-1.war and myapp-2.war could easily be
+     * different apps (albeit poorly named).  But myapp-1.0.war and myapp-2.0.war are pretty clearly versions of
+     * the same app.  The goal was to handle maven-style versioning.
+     */
+    static private final String PATTERN_DEFAULT = "^(.*?)-([0-9]+\\.[0-9].*)(\\..*)$";
+    static private final String PATTERN_PROP = "rhq.as7.VersionedSubsystemDiscovery.pattern";
+    static private final Matcher MATCHER;
+
+    static {
+        Matcher m = null;
+        try {
+            String override = System.getProperty(PATTERN_PROP);
+            if (null != override) {
+                Pattern p = Pattern.compile(override);
+                m = p.matcher("");
+                if (m.groupCount() != 3) {
+                    String msg = "Pattern supplied by system property [" + PATTERN_PROP
+                        + "] is invalid. Expected [3] matching groups but found [" + m.groupCount()
+                        + "]. Will use default pattern [" + PATTERN_DEFAULT + "].";
+                    m = null;
+                    LogFactory.getLog(VersionedSubsystemDiscovery.class).error(msg);
+                }
+            }
+        } catch (Exception e) {
+            String msg = "Pattern supplied by system property [" + PATTERN_PROP
+                + "] is invalid. Will use default pattern [" + PATTERN_DEFAULT + "].";
+            m = null;
+            LogFactory.getLog(VersionedSubsystemDiscovery.class).error(msg, e);
+        }
+
+        MATCHER = (null != m) ? m : Pattern.compile(PATTERN_DEFAULT).matcher("");
+    }
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -118,6 +156,10 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             log.info("total path: [" + path + "]");
         }
 
+        // If the subsystem has a built-in version string, parse it out such that
+        // we can discover new versions of the same logical resource without creating
+        // a new resource, but rather just updating the version.
+
         if (lookForChildren) {
             // Looking for multiple resource of type 'childType'
 
@@ -141,26 +183,35 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                     // There may be multiple children of the given type
                     for (String val : subsystems) {
 
-                        String newPath = cpath + "=" + val;
-                        Configuration config2 = context.getDefaultPluginConfiguration();
-
-                        String resKey;
-
-                        if (path == null || path.isEmpty())
-                            resKey = newPath;
-                        else {
-                            if (path.startsWith(","))
-                                path = path.substring(1);
-                            resKey = path + "," + cpath + "=" + val;
+                        MATCHER.reset(val);
+                        String version = null;
+                        String name = val;
+                        if (MATCHER.matches()) {
+                            name = MATCHER.group(1) + MATCHER.group(3);
+                            version = MATCHER.group(2);
                         }
 
-                        PropertySimple pathProp = new PropertySimple("path", resKey);
+                        Configuration config2 = context.getDefaultPluginConfiguration();
+                        String resKey;
+                        PropertySimple pathProp;
+
+                        if (path == null || path.isEmpty()) {
+                            resKey = cpath + "=" + name;
+                            pathProp = new PropertySimple("path", cpath + "=" + val);
+
+                        } else {
+                            if (path.startsWith(","))
+                                path = path.substring(1);
+                            resKey = path + "," + cpath + "=" + name;
+                            pathProp = new PropertySimple("path", path + "," + cpath + "=" + val);
+                        }
+
                         config2.put(pathProp);
 
                         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // DataType
                             resKey, // Key
-                            val, // Name
-                            null, // Version
+                            name, // Name
+                            version, // Version
                             context.getResourceType().getDescription(), // subsystem.description
                             config2, null);
                         details.add(detail);
@@ -169,22 +220,32 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             }
         } else {
             // Single subsystem
+            MATCHER.reset(path);
+            String version = null;
+            String resKey = path;
+            if (MATCHER.matches()) {
+                resKey = MATCHER.group(1) + MATCHER.group(3);
+                version = MATCHER.group(2);
+            }
+
             path += "," + confPath;
-            if (path.startsWith(","))
+            resKey += "," + confPath;
+            if (path.startsWith(",")) {
                 path = path.substring(1);
+                resKey = resKey.substring(1);
+            }
             Result result = connection.execute(new ReadResource(new Address(path)));
             if (result.isSuccess()) {
 
-                String resKey = path;
                 String name = resKey.substring(resKey.lastIndexOf("=") + 1);
                 Configuration config2 = context.getDefaultPluginConfiguration();
                 PropertySimple pathProp = new PropertySimple("path", path);
                 config2.put(pathProp);
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // DataType
-                    path, // Key
+                    resKey, // Key
                     name, // Name
-                    null, // Version
+                    version, // Version
                     context.getResourceType().getDescription(), // Description
                     config2, null);
                 details.add(detail);
@@ -193,49 +254,4 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
         return details;
     }
-
-    /**
-     * The as7 plugin and the JDG/Infinispan Server plugin both have a subsystem=infinispan. We need to decide
-     * which one to 'activate' depending on the type, plugin and the detected parent.
-     * Rules are:<ul>
-     *     <li>If the parent is a host controller or such, there is no jdg available</li>
-     *     <li>If parent is eap/as7, use the type from the as7 plugin</li>
-     *     <li>If parent is a jdg server, use the type from the jdg plugin.</li>
-     * </ul>
-     *
-     *
-     * @param context The parent's resource component
-     * @param confPath The subsystem that got fed into discovery. Directly return is not subsystem=infinispan
-     * @return True if this subsystem should be skipped.
-     */
-    protected boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
-
-        // If this is not subsystem=infinispan, we should not skip it at all
-        if (!"subsystem=infinispan".equals(confPath))
-            return false;
-
-        ResourceType ourType = context.getResourceType();
-        boolean ourPluginTypeIsJdg = ourType.getPlugin().equals("JDG")
-            || (ourType.getPlugin().equals("InfinispanServer"));
-
-        String productType = context.getParentResourceComponent().pluginConfiguration.getSimpleValue("productType",
-            "AS7");
-        boolean isJdgProduct = "JDG".equals(productType) || "ISPN".equals(productType);
-
-        if (ourPluginTypeIsJdg && isJdgProduct) {
-            log.debug("Ours is JDG and product is JDG/InfinispanServer");
-            return false;
-        }
-
-        if (!ourPluginTypeIsJdg && !isJdgProduct) {
-            if (log.isDebugEnabled()) {
-                log.debug("Ours is not JDG (" + ourType.toString() + ") and product is not JDG/InfinispanServer ("
-                    + productType + ")");
-            }
-            return false;
-        }
-
-        return true;
-    }
-
 }

@@ -41,7 +41,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 /**
  * @author Thomas Segismont
  */
-public class WebRuntimeDiscoveryComponent extends SubsystemDiscovery {
+public class WebRuntimeDiscoveryComponent extends VersionedSubsystemDiscovery {
     private static final Log LOG = LogFactory.getLog(WebRuntimeDiscoveryComponent.class);
 
     private static final String CONTEXT_ROOT_ATTRIBUTE = "context-root";

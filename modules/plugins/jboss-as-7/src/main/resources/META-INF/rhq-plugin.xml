@@ -1899,7 +1899,7 @@
 
     <service name="ManagedServerDeployment"
              class="DeploymentComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedSubsystemDiscovery"
              createDeletePolicy="neither"
              description="Deployed package on a managed server. Go to server groups to manipulate it">
 
@@ -8917,7 +8917,7 @@
 
   <service name="Deployment"
            class="DeploymentComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            createDeletePolicy="both"
            creationDataType="content">
 
@@ -8980,7 +8980,7 @@
 
   <service name="Subdeployment"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources associated with a child deployment packaged inside another deployment; for example a war packaged inside an ear.">
 
     <runs-inside>
@@ -9046,7 +9046,7 @@
 
   <service name="Datasources Runtime"
            class="DatasourceComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources exposed by data sources included in this deployment."
            singleton="true">
 
@@ -9181,7 +9181,7 @@
 
     <service name="Datasource Runtime"
              class="DatasourceComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedSubsystemDiscovery"
              description="A JDBC data-source configuration">
 
       <runs-inside>
@@ -9294,7 +9294,7 @@
 
   <service name="Messaging Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources exposed by messaging resources included in this deployment."
            singleton="true">
 
@@ -9894,7 +9894,7 @@
 
   <service name="EJB3 Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources exposed by EJBs components included in this deployment."
            singleton="true">
 
@@ -10093,7 +10093,7 @@
 
   <service name="Webservices Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources exposed by web service components in the deployment."
            singleton="true">
 
@@ -10138,7 +10138,7 @@
 
   <service name="JPA Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="The configuration of the JPA subsystem."
            singleton="true">
 

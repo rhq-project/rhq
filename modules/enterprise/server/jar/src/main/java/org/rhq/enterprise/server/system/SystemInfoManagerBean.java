@@ -1,7 +1,10 @@
 package org.rhq.enterprise.server.system;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -16,6 +19,7 @@ import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.composite.SystemSetting;
@@ -24,11 +28,14 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
@@ -46,6 +53,8 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
     @EJB ResourceManagerLocal resourceManager;
     @EJB AlertManagerLocal alertManager;
     @EJB AlertDefinitionManagerLocal alertDefinitionManager;
+    @EJB StorageNodeManagerLocal storageNodeManager;
+    @EJB AgentManagerLocal agentManger;
 
 
     @Override
@@ -62,6 +71,7 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
         result.put("BuildNumber", productInfo.getBuildNumber());
         result.put("FullName", productInfo.getFullName());
         result.put("Name", productInfo.getName());
+        result.put("Version", productInfo.getVersion());
 
         ModelControllerClient mcc = null;
         try {
@@ -86,14 +96,28 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
                 || key.toLowerCase().contains("passw")
                 || key.equals(SystemSetting.HELP_PASSWORD.getInternalName())
                 || key.equals(SystemSetting.STORAGE_PASSWORD.getInternalName())) {
-                if (detail.getValue()==null)
-                    result.put(key,"- null -");
-                else
-                    result.put(key,"- non null -");
+                if (detail.getValue()==null) {
+                    result.put(key, "- null -");
+                }
+                else {
+                    result.put(key, "- non null -");
+                }
             }
-            else
-                result.put(key,detail.getValue());
+            else {
+                result.put(key, detail.getValue());
+            }
         }
+
+        List<StorageNodeLoadComposite> loadComposites = storageNodeManager.getStorageNodeComposites(caller);
+        for (StorageNodeLoadComposite loadComposite : loadComposites) {
+            result.put("Storage_Node " + loadComposite.getStorageNode().getAddress(), loadComposite.toString());
+        }
+
+        List<Agent> agents = agentManger.getAllAgents();
+        for (Agent agent : agents) {
+            result.put("Agent " + agent.getName(), agent.toString());
+        }
+
 
         // system stats
         result.putAll(getStats(caller));
@@ -106,14 +130,17 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
         Map<String,String> infoMap = getSystemInformation(caller);
 
         StringBuilder builder = new StringBuilder("\n");
-        for (Map.Entry<String,String> entry : infoMap.entrySet()) {
-            builder.append(entry.getKey());
+        SortedSet<String> keys = new TreeSet<String>(infoMap.keySet());
+        for (String key : keys) {
+            String value = infoMap.get(key);
+            builder.append(key);
             builder.append(": [");
-            builder.append(entry.getValue());
+            builder.append(value);
             builder.append("]\n");
         }
         log.info("SystemInformation: ********" + builder.toString() + "********");
     }
+
 
     private Map<String,String> getStats(Subject caller) {
 

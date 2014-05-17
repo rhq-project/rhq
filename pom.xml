@@ -419,6 +419,11 @@
       </dependency>
       <dependency>
         <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-jdr</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
         <artifactId>jboss-as-naming</artifactId>
         <version>${jboss.version}</version>
       </dependency>

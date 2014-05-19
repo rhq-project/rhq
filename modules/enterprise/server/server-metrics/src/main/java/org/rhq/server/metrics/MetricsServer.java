@@ -638,7 +638,8 @@ public class MetricsServer {
             }
             if (metric.getMin() < min) {
                 min = metric.getMin();
-            } else if (metric.getMax() > max) {
+            }
+            if (metric.getMax() > max) {
                 max = metric.getMax();
             }
             mean.add(metric.getAvg());

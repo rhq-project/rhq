@@ -66,6 +66,8 @@ public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
+    private static final double THRESHOLD = 0.00001d;
+
     private DateTimeService dateTimeService = new DateTimeService();
 
     private MetricsDAO dao;
@@ -174,15 +176,16 @@ public class MetricsServer {
         Iterable<AggregateNumericMetric> metrics = null;
         if (dateTimeService.isIn1HourDataRange(begin)) {
             metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets);
         } else if (dateTimeService.isIn6HourDataRnage(begin)) {
             metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.SIX_HOUR);
         } else if (dateTimeService.isIn24HourDataRnage(begin)) {
             metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.TWENTY_FOUR_HOUR);
         } else {
             throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
         }
-
-        return createComposites(metrics, beginTime, endTime, numberOfBuckets);
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
@@ -202,15 +205,16 @@ public class MetricsServer {
         Iterable<AggregateNumericMetric> metrics = null;
         if (dateTimeService.isIn1HourDataRange(begin)) {
             metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets);
         } else if (dateTimeService.isIn6HourDataRnage(begin)) {
             metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.SIX_HOUR);
         } else if (dateTimeService.isIn24HourDataRnage(begin)) {
             metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
+            return createComposites(metrics, beginTime, endTime, numberOfBuckets, MetricsTable.TWENTY_FOUR_HOUR);
         } else {
             throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
         }
-
-        return createComposites(metrics, beginTime, endTime, numberOfBuckets);
     }
 
     public AggregateNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
@@ -348,6 +352,76 @@ public class MetricsServer {
         }
         return data;
 
+    }
+
+    private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
+        long beginTime, long endTime, int numberOfBuckets, MetricsTable type) {
+
+        Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
+        for (AggregateNumericMetric metric : metrics) {
+            // see https://bugzilla.redhat.com/show_bug.cgi?id=1015706 for details
+            if (metric.getMax() < metric.getAvg() && Math.abs(metric.getMax() - metric.getAvg()) > THRESHOLD) {
+                log.warn(metric + " is invalid. The max value for an aggregate metric should not be larger than " +
+                    "its average. The max will be set to the average.");
+                metric.setMax(metric.getAvg());
+                updateMaxWithNewTTL(metric, type);
+            }
+            buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
+        }
+
+        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
+        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
+            Buckets.Bucket bucket = buckets.get(i);
+            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
+                bucket.getMax(), bucket.getMin()));
+        }
+        return data;
+    }
+
+    private void updateMaxWithNewTTL(AggregateNumericMetric metric, MetricsTable type) {
+        int newTTL;
+
+        switch (type) {
+            case ONE_HOUR:
+                newTTL = calculateNewTTL(MetricsTable.ONE_HOUR.getTTLinMilliseconds(), metric.getTimestamp());
+                updateMax(metric, MetricsTable.ONE_HOUR, newTTL);
+                break;
+            case SIX_HOUR:
+                newTTL = calculateNewTTL(MetricsTable.SIX_HOUR.getTTLinMilliseconds(), metric.getTimestamp());
+                updateMax(metric, MetricsTable.SIX_HOUR, newTTL);
+                break;
+           case TWENTY_FOUR_HOUR:
+               newTTL = calculateNewTTL(MetricsTable.TWENTY_FOUR_HOUR.getTTLinMilliseconds(), metric.getTimestamp());
+               updateMax(metric, MetricsTable.TWENTY_FOUR_HOUR, newTTL);
+               break;
+           default: // raw
+               throw new IllegalArgumentException("This method should only be called for aggregate metrics");
+        }
+    }
+
+    private int calculateNewTTL(long originalTTLMillis, long timestamp) {
+        return new Duration(originalTTLMillis - (System.currentTimeMillis() - timestamp)).toStandardSeconds()
+            .getSeconds();
+    }
+
+    private void updateMax(final AggregateNumericMetric metric, MetricsTable table, int ttl) {
+        StorageSession session = dao.getStorageSession();
+        StorageResultSetFuture future = session.executeAsync(
+            "INSERT INTO " + table + " (schedule_id, time, type, value) " +
+            "VALUES (" + metric.getScheduleId() + ", " + metric.getTimestamp() + ", " + AggregateType.MAX.ordinal() +
+                ", " + metric.getMax() + ") " +
+            "USING TTL " + ttl);
+        Futures.addCallback(future, new FutureCallback<ResultSet>() {
+            @Override
+            public void onSuccess(ResultSet result) {
+                log.info("Successfully updated the max value for " + metric);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("Failed to update the max value for " + metric, t);
+            }
+        });
     }
 
     public void addNumericData(final Set<MeasurementDataNumeric> dataSet,
@@ -686,7 +760,8 @@ public class MetricsServer {
             }
             if (metric.getMin() < min) {
                 min = metric.getMin();
-            } else if (metric.getMax() > max) {
+            }
+            if (metric.getMax() > max) {
                 max = metric.getMax();
             }
             mean.add(metric.getAvg());

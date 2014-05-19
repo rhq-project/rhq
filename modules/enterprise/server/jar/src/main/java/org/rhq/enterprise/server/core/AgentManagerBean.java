@@ -595,19 +595,48 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     private void updateLastAvailabilityPing(String agentName, long now) {
         /*
-         * since we already know we have to update the agent row with the last avail ping time, might as well 
-         * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
+         * There are two cases here: The agent is backfilled (rare) or not backfilled (typical).
+         * If not backfilled just update the ping time.  If it is backfilled then request a full avail report
+         * from the agent (which is clearly up, since it is pinging).  The report will ensure the backfill
+         * status gets cleared.  Note that this takes care of the unusual case of BZ 1094540.
          */
         String updateStatement = "" //
             + "UPDATE Agent " //
-            + "   SET lastAvailabilityPing = :now, backFilled = FALSE " //
-            + " WHERE name = :agentName ";
+            + "   SET lastAvailabilityPing = :now " //
+            + " WHERE name = :agentName AND backFilled = FALSE ";
 
         Query query = entityManager.createQuery(updateStatement);
         query.setParameter("now", now);
         query.setParameter("agentName", agentName);
 
-        query.executeUpdate();
+        int numUpdates = query.executeUpdate();
+        if (0 == numUpdates) {
+            // the agent doesn't exist (just ignore this ping) or it is backfilled, try to ask for a full report
+            Agent agent = null;
+
+            try {
+                agent = getAgentByName(agentName);
+                if (null != agent) {
+                    AgentClient client = getAgentClient(agent);
+                    client.getDiscoveryAgentService().requestFullAvailabilityReport();
+
+                    // since the agent exists and is up and has been asked for a full report, update the ping time 
+                    updateStatement = "" //
+                        + "UPDATE Agent " //
+                        + "   SET lastAvailabilityPing = :now " //
+                        + " WHERE name = :agentName ";
+
+                    query = entityManager.createQuery(updateStatement);
+                    query.setParameter("now", now);
+                    query.setParameter("agentName", agentName);
+                    query.executeUpdate();
+                }
+
+            } catch (NoResultException e) {
+                log.debug("Failed to request full availability report for [" + agent + "] : " + e);
+                agent = null;
+            }
+        }
     }
 
     @ExcludeDefaultInterceptors

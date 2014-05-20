@@ -236,14 +236,30 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                 }
             }
 
-            if (expectedClass.isAssignableFrom(determinedClass)) {
-                if (determinedClass.equals(BundleDestinationBaseDirectory.class)) {
-                    return expectedClass.cast(new BundleDestinationBaseDirectory(name, valueContext, valueName,
-                        description));
-                } else if (determinedClass.equals(BundleDestinationLocation.class)) {
-                    return expectedClass.cast(new BundleDestinationLocation(name, expression, description));
-                }
+
+            //this would be the preferred impl, but GWT thinks otherwise :(
+            //if (expectedClass.isAssignableFrom(determinedClass)) {
+            //    if (determinedClass.equals(BundleDestinationBaseDirectory.class)) {
+            //        return expectedClass.cast(new BundleDestinationBaseDirectory(name, valueContext, valueName,
+            //            description));
+            //    } else if (determinedClass.equals(BundleDestinationLocation.class)) {
+            //        return expectedClass.cast(new BundleDestinationLocation(name, expression, description));
+            //    }
+            //}
+
+            if (determinedClass.equals(BundleDestinationBaseDirectory.class) && (expectedClass.equals(
+                BundleDestinationBaseDirectory.class) || expectedClass.equals(BundleDestinationDefinition.class))) {
+                @SuppressWarnings("unchecked")
+                T ret = (T) new BundleDestinationBaseDirectory(name, valueContext, valueName, description);
+                return ret;
+            } else if (determinedClass.equals(BundleDestinationLocation.class) && (expectedClass.equals(
+                BundleDestinationLocation.class) || expectedClass.equals(BundleDestinationDefinition.class))) {
+
+                @SuppressWarnings("unchecked")
+                T ret = (T) new BundleDestinationLocation(name, expression, description);
+                return ret;
             }
+
             return null;
         }
 

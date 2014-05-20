@@ -798,7 +798,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         long now = System.currentTimeMillis();
 
         if (request.isRequestUpdateAvailability()) {
-            updateLastAvailabilityPing(request.getAgentName(), now);
+            request.setReplyAgentIsBackfilled(updateLastAvailabilityPing(request.getAgentName(), now));
             request.setReplyUpdateAvailability(true);
         }
 
@@ -809,16 +809,31 @@ public class AgentManagerBean implements AgentManagerLocal {
         return request;
     }
 
-    private void updateLastAvailabilityPing(String agentName, long now) {
+    /**
+     * @return true if the agent is currently backfilled, false otherwise
+     */
+    private boolean updateLastAvailabilityPing(String agentName, long now) {
         /*
-         * since we already know we have to update the agent row with the last avail ping time, might as well
-         * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
-         */
+          * There are two cases here: The agent is backfilled (rare) or not backfilled (typical).
+          * In both cases update the ping time.  If it is backfilled then reflect that fact
+          * in the response so the agent can correct the situation. Note that this takes care of
+          * the unusual case of BZ 1094540.
+          */
         Query query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING);
         query.setParameter("now", now);
         query.setParameter("agentName", agentName);
 
-        query.executeUpdate();
+        int numUpdates = query.executeUpdate();
+        if (0 == numUpdates) {
+            query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING_FORCE);
+            query.setParameter("now", now);
+            query.setParameter("agentName", agentName);
+            query.executeUpdate();
+
+            return true;
+        }
+
+        return false;
     }
 
     @ExcludeDefaultInterceptors

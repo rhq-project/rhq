@@ -521,49 +521,87 @@
         </xs:annotation>
         <xs:complexType>
            <xs:sequence>
-              <xs:element name="destination-base-dir" maxOccurs="unbounded" minOccurs="1">
-                  <xs:complexType>
-                       <xs:annotation>
-                           <xs:documentation>
-                              Defines where a bundle can be deployed under the resource.
-                              You must define one destination base directory, but may define more.
-                              Each destination base directory's value is obtained from a particular context
-                              (e.g. in the resource's plugin configuration or its resource configuration).
-                              Within that context, the base directory value is obtained by looking up the named value in the given context.
-                              For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
-                              then the destination base directory value is obtained by getting the "install.dir" property value
-                              found in the resource's plugin configuration.
-                           </xs:documentation>
-                       </xs:annotation>
-                       <xs:sequence>
-                          <xs:element name="value-context">
-                              <xs:simpleType>
-                                  <xs:restriction base="xs:string">
-                                      <xs:enumeration value="pluginConfiguration"></xs:enumeration>
-                                      <xs:enumeration value="resourceConfiguration"></xs:enumeration>
-                                      <xs:enumeration value="measurementTrait"></xs:enumeration>
-                                      <xs:enumeration value="fileSystem"></xs:enumeration>
-                                  </xs:restriction>
-                              </xs:simpleType>
-                          </xs:element>
-                          <xs:element name="value-name" type="xs:string"></xs:element>
-                      </xs:sequence>
-                      <xs:attribute name="name" type="xs:string" use="required">
+              <xs:choice minOccurs="1" maxOccurs="unbounded">
+                  <xs:element name="destination-base-dir">
+                      <xs:complexType>
                           <xs:annotation>
                               <xs:documentation>
-                                  The name given to identify this particular destination base directory.
+                                  Defines where a bundle can be deployed under the resource.
+                                  You must define one destination base directory, but may define more.
+                                  Each destination base directory's value is obtained from a particular context
+                                  (e.g. in the resource's plugin configuration or its resource configuration).
+                                  Within that context, the base directory value is obtained by looking up the named value in the given context.
+                                  For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
+                                  then the destination base directory value is obtained by getting the "install.dir" property value
+                                  found in the resource's plugin configuration.
                               </xs:documentation>
                           </xs:annotation>
-                      </xs:attribute>
-                      <xs:attribute name="description" type="xs:string" use="optional">
-                          <xs:annotation>
-                              <xs:documentation>
-                                  An explanation to the user to describe what this destination location is. 
-                              </xs:documentation>
-                          </xs:annotation>
-                      </xs:attribute>
-                  </xs:complexType>
-              </xs:element>
+                          <xs:sequence>
+                              <xs:element name="value-context">
+                                  <xs:simpleType>
+                                      <xs:restriction base="xs:string">
+                                          <xs:enumeration value="pluginConfiguration"></xs:enumeration>
+                                          <xs:enumeration value="resourceConfiguration"></xs:enumeration>
+                                          <xs:enumeration value="measurementTrait"></xs:enumeration>
+                                          <xs:enumeration value="fileSystem"></xs:enumeration>
+                                      </xs:restriction>
+                                  </xs:simpleType>
+                              </xs:element>
+                              <xs:element name="value-name" type="xs:string"></xs:element>
+                          </xs:sequence>
+                          <xs:attribute name="name" type="xs:string" use="required">
+                              <xs:annotation>
+                                  <xs:documentation>
+                                      The name given to identify this particular destination base directory.
+                                  </xs:documentation>
+                              </xs:annotation>
+                          </xs:attribute>
+                          <xs:attribute name="description" type="xs:string" use="optional">
+                              <xs:annotation>
+                                  <xs:documentation>
+                                      An explanation to the user to describe what this destination location is.
+                                  </xs:documentation>
+                              </xs:annotation>
+                          </xs:attribute>
+                      </xs:complexType>
+                  </xs:element>
+                  <xs:element name="destination-location">
+                      <xs:complexType>
+                          <xs:attribute name="name" type="xs:string" use="required">
+                              <xs:annotation>
+                                  <xs:documentation>The name of the destination location</xs:documentation>
+                              </xs:annotation>
+                          </xs:attribute>
+                          <xs:attribute name="description" type="xs:string" use="optional">
+                              <xs:annotation>
+                                  <xs:documentation>
+                                      An explanation to the user to describe what this destination location is.
+                                  </xs:documentation>
+                              </xs:annotation>
+                          </xs:attribute>
+                          <xs:attribute name="expression" type="xs:string" use="required">
+                              <xs:annotation>
+                                  <xs:documentation>
+                                      The expression specifying the location of the destination.
+                                      You can reference the values from the plugin or resource configuration
+                                      or a value of a trait using the ${} notation.
+
+                                      E.g. expression="http://${pluginConfiguration.host}/webapp" would replace
+                                      the ${} section with the value of the "host" property from the plugin configuration.
+                                      The escape character in expression is the backslash, i.e. \${} would be
+                                      interpreted as literal "${}".
+
+                                      The names of properties are free form, so in case the name of the property
+                                      contains a closing curly brace "}", you can quote the name of the property in
+                                      double quotes, with blackslash as the escape char.
+                                      E.g. expression='http://${pluginConfiguration."crazy\"Name{}"}/webapp' reads the
+                                      value of property called 'crazy"Name{}' from the plugin configuration.
+                                  </xs:documentation>
+                              </xs:annotation>
+                          </xs:attribute>
+                      </xs:complexType>
+                  </xs:element>
+              </xs:choice>
           </xs:sequence>
        </xs:complexType>
    </xs:element>

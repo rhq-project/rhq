@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -498,6 +499,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
+    @Deprecated
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
         int bundleTypeId, int[] bundleGroupIds, String bundleVersionName, String bundleVersionDescription,
         String version, String recipe) throws Exception {
@@ -517,14 +519,37 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             bundle = bundles.get(0);
         }
 
+        //this portion is basically copied createBundleVersion, which is now deprecated and left to rot.
+        if (null == bundleVersionName || "".equals(bundleVersionName.trim())) {
+            throw new IllegalArgumentException("Invalid bundleVersionName: " + bundleVersionName);
+        }
+
+        checkCreateBundleVersionAuthz(subject, bundle.getId());
+
+        // parse the recipe (validation occurs here) and get the config def and list of files
+        BundleType bundleType = bundle.getBundleType();
+        RecipeParseResults results;
+
+        try {
+            results = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+                .parseRecipe(bundleType.getName(), recipe);
+        } catch (Exception e) {
+            // ensure that we throw a runtime exception to force a rollback
+            throw new RuntimeException("Failed to parse recipe", e);
+        }
+
         // now create the bundle version with the bundle we either found or created
-        BundleVersion bv = createBundleVersion(subject, bundle.getId(), bundleVersionName, bundleVersionDescription,
-            version, recipe);
-        return bv;
+        return createBundleVersionInternal(bundle, bundleVersionName, version, bundleVersionDescription,
+            recipe, results.getConfigurationDefinition());
     }
 
+    /**
+     * @deprecated since 4.12, see
+     * {@link BundleManagerLocal#createBundleVersion(org.rhq.core.domain.auth.Subject, int, String, String, String, String)}
+     */
     @Override
     @SuppressWarnings("unchecked")
+    @Deprecated
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
         String version, String recipe) throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -550,13 +575,21 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new RuntimeException("Failed to parse recipe", e);
         }
 
+        return createBundleVersionInternal(bundle, name, version, description, recipe,
+            results.getConfigurationDefinition());
+    }
+
+    @Override
+    public BundleVersion createBundleVersionInternal(Bundle bundle, String name, String version, String description,
+        String recipe, ConfigurationDefinition configurationDefinition) throws Exception {
         // ensure we have a version
         version = getVersion(version, bundle);
         ComparableVersion comparableVersion = new ComparableVersion(version);
 
         Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_VERSION_INFO_BY_BUNDLE_ID);
         q.setParameter("bundleId", bundle.getId());
-        List<Object[]> list = q.getResultList();
+        @SuppressWarnings("unchecked")
+        List<Object[]> list = (List<Object[]>) q.getResultList();
         int versionOrder = list.size();
         boolean needToUpdateOrder = false;
         // find out where in the order of versions this new version should be placed (e.g. 2.0 is after 1.0).
@@ -565,10 +598,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // starting at the current highest version is the most efficient (we'll break the for loop after 1 iteration).
         for (Object[] bv : list) {
             ComparableVersion bvv = new ComparableVersion(bv[0].toString());
-            int comparision = comparableVersion.compareTo(bvv);
-            if (comparision == 0) {
+            int comparison = comparableVersion.compareTo(bvv);
+            if (comparison == 0) {
                 throw new RuntimeException("Cannot create bundle with version [" + version + "], it already exists");
-            } else if (comparision < 0) {
+            } else if (comparison < 0) {
                 versionOrder = ((Number) bv[1]).intValue();
                 needToUpdateOrder = true;
             } else {
@@ -589,7 +622,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleVersion bundleVersion = new BundleVersion(name, version, bundle, recipe);
         bundleVersion.setVersionOrder(versionOrder);
         bundleVersion.setDescription(description);
-        bundleVersion.setConfigurationDefinition(results.getConfigurationDefinition());
+        bundleVersion.setConfigurationDefinition(configurationDefinition);
 
         entityManager.persist(bundleVersion);
         return bundleVersion;
@@ -833,6 +866,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private BundleVersion createBundleVersionViaDistributionInfo(Subject subject, BundleDistributionInfo info,
         boolean mustBeInitialVersion, int[] initialBundleGroupIds) throws Exception {
 
+        // !!!! NEW BEHAVIOR SINCE 4.12 - we fail the bundle version creation when we cannot determine the set
+        // of the files the bundle version should be comprised of.
+        if (info.getBundleFiles() == null && info.getRecipeParseResults().getBundleFileNames() == null) {
+            throw new IllegalArgumentException("Cannot create a bundle version without files determined by the recipe" +
+                " or provided explicitly during bundle version creation.");
+        }
+
         BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());
         String bundleName = info.getRecipeParseResults().getBundleMetadata().getBundleName();
         String bundleDescription = info.getRecipeParseResults().getBundleMetadata().getDescription();
@@ -867,8 +907,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         // now create the bundle version with the bundle we either found or created
-        BundleVersion bundleVersion = bundleManager.createBundleVersion(subjectManager.getOverlord(), bundle.getId(),
-            name, description, version, recipe);
+        BundleVersion bundleVersion = bundleManager.createBundleVersionInternal(bundle, name, version, description, recipe,
+            info.getRecipeParseResults().getConfigurationDefinition());
 
         // now that we have the bundle version we can actually create the bundle files that were provided in
         // the bundle distribution
@@ -1616,12 +1656,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
 
-        // parse the recipe (validation occurs here) and get the config def and list of files
-        BundleType bundleType = bundleVersion.getBundle().getBundleType();
-        RecipeParseResults parseResults = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
-            .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
+        Set<String> result = null;
 
-        Set<String> result = parseResults.getBundleFileNames();
+        //new in 4.12 - we no longer throw an exception on failure to parse
+        try {
+            // parse the recipe (validation occurs here) and get the config def and list of files
+            BundleType bundleType = bundleVersion.getBundle().getBundleType();
+            RecipeParseResults parseResults = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+                .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
+
+            result = parseResults.getBundleFileNames();
+        } catch (Exception e) {
+            log.debug("Failed to parse the recipe of bundle version " + bundleVersionId +
+                " while trying to get the list of bundle file names: " + e.getMessage());
+        }
+
+        if (result == null) {
+            return Collections.emptySet();
+        }
 
         if (withoutBundleFileOnly) {
             List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
@@ -1656,27 +1708,36 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
 
         // parse the recipe (validation occurs here) and get the config def and list of files
-        BundleType bundleType = bundleVersion.getBundle().getBundleType();
-        RecipeParseResults parseResults = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
-            .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
+        try {
+            BundleType bundleType = bundleVersion.getBundle().getBundleType();
+            RecipeParseResults parseResults = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+                .parseRecipe(bundleType.getName(), bundleVersion.getRecipe());
 
-        Set<String> filenames = parseResults.getBundleFileNames();
-        HashMap<String, Boolean> result = new HashMap<String, Boolean>(filenames.size());
+            Set<String> filenames = parseResults.getBundleFileNames();
+            HashMap<String, Boolean> result = new HashMap<String, Boolean>(filenames == null ? 0 : filenames.size());
 
-        List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
-        for (String filename : filenames) {
-            boolean found = false;
-            for (BundleFile bundleFile : bundleFiles) {
-                String name = bundleFile.getPackageVersion().getGeneralPackage().getName();
-                if (name.equals(filename)) {
-                    found = true;
-                    break;
+            if (filenames != null && !filenames.isEmpty()) {
+                List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
+                for (String filename : filenames) {
+                    boolean found = false;
+                    for (BundleFile bundleFile : bundleFiles) {
+                        String name = bundleFile.getPackageVersion().getGeneralPackage().getName();
+                        if (name.equals(filename)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    result.put(filename, found);
                 }
             }
-            result.put(filename, found);
-        }
 
-        return result;
+            return result;
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to obtain the bundle files of a bundle version: " + bundleVersionId);
+            }
+            return new HashMap<String, Boolean>(0);
+        }
     }
 
     @Override

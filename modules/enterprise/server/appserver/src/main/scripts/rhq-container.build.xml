@@ -1111,9 +1111,12 @@ ${comment}rhq.storage.verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empt
           <fileset dir="${keycloak.home}/deployments/"/>
         </copy>
         <!--<replace file="${jboss.deployment.dir}/keycloak-ds.xml" token="jdbc:h2:${jboss.server.data.dir}/keycloak;AUTO_SERVER=TRUE" value="${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/keycloak}"/>-->
-        <replace file="${jboss.deployment.dir}/keycloak-ds.xml" token="jdbc:h2:${jboss.server.data.dir}/keycloak;AUTO_SERVER=TRUE" value="jdbc:postgres://127.0.0.1:5432/keycloak"/>
+        <replace file="${jboss.deployment.dir}/keycloak-ds.xml" token="jdbc:h2:${jboss.server.data.dir}/keycloak;AUTO_SERVER=TRUE" value="jdbc:postgresql://127.0.0.1:5432/keycloak"/>
         <replace file="${jboss.deployment.dir}/keycloak-ds.xml" token="&lt;driver>h2&lt;/driver>" value="&lt;driver>postgres&lt;/driver>"/>
         <replaceregexp file="${jboss.deployment.dir}/keycloak-ds.xml" flags="gis" match='&lt;user-name>.*/password>' replace='&lt;security-domain>RHQDSSecurityDomain&lt;/security-domain>' />
+        <!-- 
+        <replace file="${jboss.deployment.dir}/keycloak-ds.xml" token=">sa&lt;" value=">${default.rhq.server.database.user-name}&lt;"/>
+        -->
     </target>
 
     <!-- depending on the inner file of the zip, we need to move different files in place -->

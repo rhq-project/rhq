@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.print.attribute.standard.Destination;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -608,17 +610,29 @@ public class PluginMetadataParser {
 
             BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
             if (bundleTarget != null) {
-                List<DestinationBaseDir> destBaseDirs = bundleTarget.getDestinationBaseDir();
-                if (destBaseDirs != null && destBaseDirs.size() > 0) {
+                List<Object> destDefs = bundleTarget.getDestinationBaseDirOrDestinationLocation();
+                if (destDefs != null && destDefs.size() > 0) {
                     Configuration c = new Configuration();
                     ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
-                    for (DestinationBaseDir destBaseDir : destBaseDirs) {
-                        String name = destBaseDir.getName();
-                        String valueContext = destBaseDir.getValueContext();
-                        String valueName = destBaseDir.getValueName();
-                        String description = destBaseDir.getDescription();
-                        bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
-                            description);
+                    for (Object destDef : destDefs) {
+                        if (destDef instanceof DestinationBaseDir) {
+                            DestinationBaseDir destBaseDir = (DestinationBaseDir) destDef;
+                            String name = destBaseDir.getName();
+                            String valueContext = destBaseDir.getValueContext();
+                            String valueName = destBaseDir.getValueName();
+                            String description = destBaseDir.getDescription();
+                            bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
+                                description);
+                        } else if (destDef instanceof BundleTargetDescriptor.DestinationLocation) {
+                            BundleTargetDescriptor.DestinationLocation loc =
+                                (BundleTargetDescriptor.DestinationLocation) destDef;
+
+                            String name = loc.getName();
+                            String description = loc.getDescription();
+                            String expression = loc.getExpression();
+
+                            bundleConfiguration.addBundleDestinationLocation(name, expression, description);
+                        }
                     }
                     resourceType.setResourceTypeBundleConfiguration(bundleConfiguration);
                 }

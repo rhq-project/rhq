@@ -197,12 +197,13 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         if (absoluteDestDir != null) {
                             deployRequest.setDestinationTarget(absoluteDestDir.toURI());
                         } else {
-                            String connectionString = getConnectionString(request);
+                            String connectionString = getConnectionString(resourceDeployment);
                             if (connectionString != null) {
                                 deployRequest.setDestinationTarget(URI.create(connectionString));
                             }
 
-                            transferReferencedConfiguration(deployRequest);
+                            deployRequest.setReferencedConfiguration(
+                                createReferencedConfigurationFromResource(resourceDeployment));
                         }
 
                         // get the bundle facet object that will process the bundle and call it to start the deployment
@@ -237,13 +238,13 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         return response;
     }
 
-    private void transferReferencedConfiguration(BundleDeployRequest deployRequest) {
-        ResourceContainer rc = im.getResourceContainer(deployRequest.getResourceDeployment().getResource());
+    private Configuration createReferencedConfigurationFromResource(BundleResourceDeployment resourceDeployment) {
+        ResourceContainer rc = im.getResourceContainer(resourceDeployment.getResource());
 
         Set<ResourceTypeBundleConfiguration.BundleDestinationSpecification> specs = rc.getResource().getResourceType()
             .getResourceTypeBundleConfiguration().getBundleDestinationSpecifications();
 
-        String specName = deployRequest.getResourceDeployment().getBundleDeployment().getDestination()
+        String specName = resourceDeployment.getBundleDeployment().getDestination()
             .getDestinationSpecificationName();
 
         for (ResourceTypeBundleConfiguration.BundleDestinationSpecification spec : specs) {
@@ -254,7 +255,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 Resource resource = rc.getResource();
 
                 Configuration transferred = new Configuration();
-                deployRequest.setReferencedConfiguration(transferred);
 
                 Configuration pluginConfiguration = resource.getPluginConfiguration();
                 Configuration resourceConfiguration = InventoryManager.getResourceConfiguration(resource);
@@ -350,14 +350,16 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     }
                 }
 
-                break; //the for-loop
+                return transferred;
             }
         }
+
+        return null;
     }
 
-    private String getConnectionString(BundleScheduleRequest request) {
-        ResourceContainer rc = im.getResourceContainer(request.getBundleResourceDeployment().getResource());
-        BundleDestination dest = request.getBundleResourceDeployment().getBundleDeployment().getDestination();
+    private String getConnectionString(BundleResourceDeployment resourceDeployment) {
+        ResourceContainer rc = im.getResourceContainer(resourceDeployment.getResource());
+        BundleDestination dest = resourceDeployment.getBundleDeployment().getDestination();
         ResourceType type = rc.getResource().getResourceType();
         String specName = dest.getDestinationSpecificationName();
         String relativeDeployDir = dest.getDeployDir();
@@ -420,12 +422,22 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 + resourceDeployment.getResource() + "]";
             auditDeployment(resourceDeployment, AUDIT_PURGE_STARTED, bundleDeployment.getName(), deploymentMessage);
 
-            File absoluteDestDir = getAbsoluteDestinationDir(request.getLiveBundleResourceDeployment());
-
             org.rhq.core.pluginapi.bundle.BundlePurgeRequest purgeRequest = new org.rhq.core.pluginapi.bundle.BundlePurgeRequest();
             purgeRequest.setBundleManagerProvider(this);
             purgeRequest.setLiveResourceDeployment(resourceDeployment);
-            purgeRequest.setAbsoluteDestinationDirectory(absoluteDestDir);
+
+            File absoluteDestDir = getAbsoluteDestinationDir(request.getLiveBundleResourceDeployment());
+            if (absoluteDestDir != null) {
+                purgeRequest.setDestinationTarget(absoluteDestDir.toURI());
+            } else {
+                String connectionString = getConnectionString(request.getLiveBundleResourceDeployment());
+                if (connectionString != null) {
+                    purgeRequest.setDestinationTarget(URI.create(connectionString));
+                }
+
+                purgeRequest.setReferencedConfiguration(
+                    createReferencedConfigurationFromResource(request.getLiveBundleResourceDeployment()));
+            }
 
             // get the bundle facet object that will process the bundle and call it to start the purge
             int facetMethodTimeout =

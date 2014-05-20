@@ -626,6 +626,7 @@
                                                       <xs:element name="list-property-ref" type="rhq:BundleConfigPropertyReference"/>
                                                       <xs:element name="simple-property-ref" type="rhq:BundleConfigPropertyReference"/>
                                                       <xs:element name="trait-ref" type="rhq:BundleTraitReference" />
+                                                      <xs:element name="all" type="rhq:BundleConfigFullCopy"/>
                                                   </xs:choice>
                                               </xs:sequence>
                                           </xs:complexType>
@@ -1297,5 +1298,24 @@
        <xs:complexContent>
            <xs:extension base="rhq:BundleConfigReference" />
        </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="BundleConfigFullCopy">
+       <xs:attribute name="of" use="required">
+           <xs:simpleType>
+               <xs:restriction base="xs:string">
+                   <xs:enumeration value="pluginConfiguration"/>
+                   <xs:enumeration value="resourceConfiguration"/>
+                   <xs:enumeration value="traits"/>
+               </xs:restriction>
+           </xs:simpleType>
+       </xs:attribute>
+       <xs:attribute name="prefix" default="" use="optional" type="xs:string">
+           <xs:annotation>
+               <xs:documentation>
+                   The properties from the copied configuration will have their names prefixed by this string.
+               </xs:documentation>
+           </xs:annotation>
+       </xs:attribute>
    </xs:complexType>
 </xs:schema>

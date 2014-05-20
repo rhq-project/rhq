@@ -289,16 +289,16 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                             continue;
                         }
 
-                        BundleDestinationDefinition.PropertyRef.Type refType =
-                            BundleDestinationDefinition.PropertyRef.Type.valueOf(type);
+                        BundleDestinationDefinition.ConfigRef.Type refType =
+                            BundleDestinationDefinition.ConfigRef.Type.valueOf(type);
 
                         String context = ref.getSimpleValue(BUNDLE_DEST_DEF_REF_CONTEXT_NAME, null);
                         if (context == null) {
                             continue;
                         }
 
-                        BundleDestinationDefinition.PropertyRef.Context refContext =
-                            BundleDestinationDefinition.PropertyRef.Context.valueOf(context);
+                        BundleDestinationDefinition.ConfigRef.Context refContext =
+                            BundleDestinationDefinition.ConfigRef.Context.valueOf(context);
 
                         String refName = ref.getSimpleValue(BUNDLE_DEST_DEF_REF_NAME_NAME, null);
                         if (name == null) {
@@ -458,7 +458,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private final String connectionString;
-        private final List<PropertyRef> referencedConfiguration;
+        private final List<ConfigRef> referencedConfiguration;
 
         public static Builder builder() {
             return new Builder(null);
@@ -469,7 +469,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         }
 
         public BundleDestinationDefinition(String name, String connectionString, String description,
-            List<PropertyRef> refs) {
+            List<ConfigRef> refs) {
             super(name, description);
 
             this.connectionString = connectionString;
@@ -483,7 +483,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             PropertyList list = new PropertyList(BUNDLE_DEST_DEFINITION_REF_LIST_NAME);
             map.put(list);
 
-            for (PropertyRef ref : referencedConfiguration) {
+            for (ConfigRef ref : referencedConfiguration) {
                 PropertyMap refMap = new PropertyMap(BUNDLE_DEST_DEFINITION_REF_LIST_MEMBER_NAME);
                 refMap.put(new PropertySimple(BUNDLE_DEST_DEF_REF_TYPE_NAME, ref.getType().name()));
                 refMap.put(new PropertySimple(BUNDLE_DEST_DEF_REF_CONTEXT_NAME, ref.getContext().name()));
@@ -497,7 +497,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             return connectionString;
         }
 
-        public List<PropertyRef> getReferencedConfiguration() {
+        public List<ConfigRef> getReferencedConfiguration() {
             return referencedConfiguration;
         }
 
@@ -507,9 +507,9 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                 referencedConfiguration + ", description=" + getDescription();
         }
 
-        public static final class PropertyRef {
+        public static final class ConfigRef {
             public enum Type {
-                MAP, LIST, SIMPLE
+                MAP, LIST, SIMPLE, FULL
             }
 
             public enum Context {
@@ -521,8 +521,8 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             private final Type type;
             private final Context context;
 
-            public PropertyRef(String targetName, String name, Type type, Context context) {
-                if (name == null) {
+            public ConfigRef(String targetName, String name, Type type, Context context) {
+                if (type != Type.FULL && name == null) {
                     throw new IllegalArgumentException("name == null");
                 }
 
@@ -573,7 +573,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             private String connString;
             private String name;
             private String description;
-            private final List<PropertyRef> refs = new ArrayList<PropertyRef>();
+            private final List<ConfigRef> refs = new ArrayList<ConfigRef>();
 
             private Builder(ResourceTypeBundleConfiguration targetConfig) {
                 this.targetConfig = targetConfig;
@@ -594,51 +594,66 @@ public class ResourceTypeBundleConfiguration implements Serializable {
                 return this;
             }
 
-            public Builder addPropertyReference(PropertyRef.Type type, PropertyRef.Context context, String name,
+            public Builder addPropertyReference(ConfigRef.Type type, ConfigRef.Context context, String name,
                 String targetName) {
 
-                refs.add(new PropertyRef(targetName, name, type, context));
+                refs.add(new ConfigRef(targetName, name, type, context));
                 return this;
             }
 
             public Builder addPluginConfigurationSimplePropertyReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.SIMPLE,
-                    PropertyRef.Context.PLUGIN_CONFIGURATION));
+                refs.add(new ConfigRef(targetName, name, ConfigRef.Type.SIMPLE,
+                    ConfigRef.Context.PLUGIN_CONFIGURATION));
                 return this;
             }
 
             public Builder addPluginConfigurationListPropertyReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.LIST,
-                    PropertyRef.Context.PLUGIN_CONFIGURATION));
+                refs.add(new ConfigRef(targetName, name, ConfigRef.Type.LIST,
+                    ConfigRef.Context.PLUGIN_CONFIGURATION));
                 return this;
             }
 
             public Builder addPluginConfigurationMapPropertyReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.MAP,
-                    PropertyRef.Context.PLUGIN_CONFIGURATION));
+                refs.add(new ConfigRef(targetName, name, ConfigRef.Type.MAP,
+                    ConfigRef.Context.PLUGIN_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addFullPluginConfigurationReference(String prefix) {
+                refs.add(new ConfigRef(prefix, null, ConfigRef.Type.FULL, ConfigRef.Context.PLUGIN_CONFIGURATION));
                 return this;
             }
 
             public Builder addResourceConfigurationSimplePropertyReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.SIMPLE,
-                    PropertyRef.Context.RESOURCE_CONFIGURATION));
+                refs.add(new ConfigRef(targetName, name, ConfigRef.Type.SIMPLE,
+                    ConfigRef.Context.RESOURCE_CONFIGURATION));
                 return this;
             }
 
             public Builder addResourceConfigurationListPropertyReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.LIST,
-                    PropertyRef.Context.RESOURCE_CONFIGURATION));
+                refs.add(new ConfigRef(targetName, name, ConfigRef.Type.LIST,
+                    ConfigRef.Context.RESOURCE_CONFIGURATION));
                 return this;
             }
 
             public Builder addResourceConfigurationMapPropertyReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.MAP,
-                    PropertyRef.Context.RESOURCE_CONFIGURATION));
+                refs.add(new ConfigRef(targetName, name, ConfigRef.Type.MAP,
+                    ConfigRef.Context.RESOURCE_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addFullResourceConfigurationReference(String prefix) {
+                refs.add(new ConfigRef(null, prefix, ConfigRef.Type.FULL, ConfigRef.Context.RESOURCE_CONFIGURATION));
                 return this;
             }
 
             public Builder addMeasurementTraitReference(String name, String targetName) {
-                refs.add(new PropertyRef(targetName, name, null, PropertyRef.Context.MEASUREMENT_TRAIT));
+                refs.add(new ConfigRef(targetName, name, null, ConfigRef.Context.MEASUREMENT_TRAIT));
+                return this;
+            }
+
+            public Builder addFullMeasurementTraitsReference(String prefix) {
+                refs.add(new ConfigRef(null, prefix, ConfigRef.Type.FULL, ConfigRef.Context.MEASUREMENT_TRAIT));
                 return this;
             }
 

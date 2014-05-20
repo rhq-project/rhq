@@ -37,10 +37,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
+import org.rhq.core.clientapi.descriptor.plugin.BundleConfigFullCopy;
 import org.rhq.core.clientapi.descriptor.plugin.BundleConfigPropertyReference;
-import org.rhq.core.clientapi.descriptor.plugin.BundleConfigReference;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTraitReference;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryCallbacksType;
 import org.rhq.core.clientapi.descriptor.plugin.DiscoveryTypeCallbackType;
@@ -633,7 +634,7 @@ public class PluginMetadataParser {
                                 .createDestinationDefinitionBuilder(def.getName());
                             bld.withDescription(def.getDescription()).withConnectionString(def.getConnection());
 
-                            for (JAXBElement<? extends BundleConfigReference> ref : def.getReferencedConfiguration()
+                            for (JAXBElement<?> ref : def.getReferencedConfiguration()
                                 .getMapPropertyRefOrListPropertyRefOrSimplePropertyRef()) {
 
                                 String tagName = ref.getName().getLocalPart();
@@ -665,8 +666,17 @@ public class PluginMetadataParser {
                                             r.getTargetName());
                                     }
                                 } else if ("trait-ref".equals(tagName)) {
-                                    bld.addMeasurementTraitReference(ref.getValue().getName(),
-                                        ref.getValue().getTargetName());
+                                    BundleTraitReference r = (BundleTraitReference) ref.getValue();
+                                    bld.addMeasurementTraitReference(r.getName(), r.getTargetName());
+                                } else if ("all".equals(tagName)) {
+                                    BundleConfigFullCopy r = (BundleConfigFullCopy) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getOf())) {
+                                        bld.addFullPluginConfigurationReference(r.getPrefix());
+                                    } else if ("resourceConfiguration".equals(r.getOf())) {
+                                        bld.addFullResourceConfigurationReference(r.getPrefix());
+                                    } else if ("traits".equals(r.getOf())) {
+                                        bld.addFullMeasurementTraitsReference(r.getPrefix());
+                                    }
                                 }
                             }
 

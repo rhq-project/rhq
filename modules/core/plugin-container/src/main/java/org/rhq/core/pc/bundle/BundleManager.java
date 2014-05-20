@@ -53,10 +53,13 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -237,7 +240,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private void transferReferencedConfiguration(BundleDeployRequest deployRequest) {
         ResourceContainer rc = im.getResourceContainer(deployRequest.getResourceDeployment().getResource());
 
-        Set<ResourceTypeBundleConfiguration.BundleDestinationSpecification> specs =rc.getResource().getResourceType()
+        Set<ResourceTypeBundleConfiguration.BundleDestinationSpecification> specs = rc.getResource().getResourceType()
             .getResourceTypeBundleConfiguration().getBundleDestinationSpecifications();
 
         String specName = deployRequest.getResourceDeployment().getBundleDeployment().getDestination()
@@ -251,11 +254,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 Resource resource = rc.getResource();
 
                 Configuration transferred = new Configuration();
+                deployRequest.setReferencedConfiguration(transferred);
 
                 Configuration pluginConfiguration = resource.getPluginConfiguration();
                 Configuration resourceConfiguration = InventoryManager.getResourceConfiguration(resource);
 
-                for (ResourceTypeBundleConfiguration.BundleDestinationDefinition.PropertyRef refProp :
+                for (ResourceTypeBundleConfiguration.BundleDestinationDefinition.ConfigRef refProp :
                     def.getReferencedConfiguration()) {
 
                     switch (refProp.getContext()) {
@@ -279,6 +283,15 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
                             transferred.put(simple);
                             break;
+                        case FULL:
+                            for (Property p : pluginConfiguration.getProperties()) {
+                                Property copy = p.deepCopy(false);
+                                if (refProp.getTargetName() != null) {
+                                    copy.setName(refProp.getTargetName() + copy.getName());
+                                }
+                                transferred.put(copy);
+                            }
+                            break;
                         }
                         break;
                     case RESOURCE_CONFIGURATION:
@@ -301,13 +314,38 @@ public class BundleManager extends AgentService implements BundleAgentService, B
 
                             transferred.put(simple);
                             break;
+                        case FULL:
+                            for (Property p : resourceConfiguration.getProperties()) {
+                                Property copy = p.deepCopy(false);
+                                if (refProp.getTargetName() != null) {
+                                    copy.setName(refProp.getTargetName() + copy.getName());
+                                }
+                                transferred.put(copy);
+                            }
+                            break;
                         }
                         break;
                     case MEASUREMENT_TRAIT:
-                        String value = mm.getTraitValue(im.getResourceContainer(resource), refProp.getName());
-                        PropertySimple simple = new PropertySimple(refProp.getTargetName(), value);
+                        if (refProp.getType() ==
+                            ResourceTypeBundleConfiguration.BundleDestinationDefinition.ConfigRef.Type.FULL) {
+                            Set<MeasurementScheduleRequest> schedules = rc.getMeasurementSchedule();
+                            for (MeasurementScheduleRequest schedule : schedules) {
+                                if (schedule.getDataType() != DataType.TRAIT) {
+                                    String value = mm.getTraitValue(rc, schedule.getName());
+                                    String name = schedule.getName();
+                                    if (refProp.getTargetName() != null) {
+                                        name = refProp.getTargetName() + name;
+                                    }
+                                    PropertySimple prop = new PropertySimple(name, value);
+                                    transferred.put(prop);
+                                }
+                            }
+                        } else {
+                            String value = mm.getTraitValue(rc, refProp.getName());
+                            PropertySimple simple = new PropertySimple(refProp.getTargetName(), value);
 
-                        transferred.put(simple);
+                            transferred.put(simple);
+                        }
                         break;
                     }
                 }

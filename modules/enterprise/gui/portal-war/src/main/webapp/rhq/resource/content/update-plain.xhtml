@@ -114,7 +114,7 @@
                                                  value="DEPLOY SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"
                                                  rendered="${ResourceUIBean.permissions.content}"/>
 
-                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                        <ui:include src="/rhq/resource/include/pagination-plain.xhtml">
                            <ui:param name="paginationDataTableName" value="resourceUpdatePackageVersionsDataTable"/>
                            <ui:param name="paginationDataModel" value="#{resourceUpdatePackageVersionsDataModel}"/>
                            <ui:param name="paginationPageControl" value="#{PageControl.ResourceUpdatePackageVersionsList}"/>

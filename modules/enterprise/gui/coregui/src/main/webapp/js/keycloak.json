@@ -5,8 +5,5 @@
     "auth-server-url": "http://localhost:7080/auth",
     "ssl-not-required": true,
     "expose-token": true,
-    "public-client" : true,
-    "_credentials": {
-        "secret": "password"
-    }
+    "public-client" : true
 }

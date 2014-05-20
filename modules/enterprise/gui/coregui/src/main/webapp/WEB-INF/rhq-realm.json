@@ -57,8 +57,7 @@
             "baseUrl": "http://localhost:7080/coregui",
             "redirectUris": [
                 "http://localhost:7080/coregui/*"
-            ],
-            "_secret": "password"
+            ]
         }
     ],
     "applicationRoleMappings": {

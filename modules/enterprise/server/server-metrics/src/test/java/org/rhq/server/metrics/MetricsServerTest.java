@@ -841,6 +841,45 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void find6HourDataCompositesHavingInvalidMax() throws Exception {
+        DateTime beginTime = now().minusDays(30);
+        DateTime endTime = now();
+
+        Buckets buckets = new Buckets(beginTime, endTime);
+        DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
+        DateTime bucket59Time = new DateTime(buckets.get(59).getStartTime());
+
+        int scheduleId = 123;
+        List<AggregateNumericMetric> metrics = asList(
+            new AggregateNumericMetric(scheduleId, 3.0, 1.0, 2.9, bucket0Time.getMillis()),
+            new AggregateNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket0Time.plusHours(1).getMillis())
+        );
+        for (AggregateNumericMetric metric : metrics) {
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
+
+        List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
+            scheduleId, beginTime.getMillis(), endTime.getMillis(), 60));
+
+        assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
+
+        MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(
+            buckets.get(0).getStartTime(), divide(3.0 + 5.0, 2), 6.0, 1.0);
+
+        assertPropertiesMatch("The data for bucket 0 does not match expected values", expectedBucket0,
+            actualData.get(0), TEST_PRECISION);
+
+        // make sure the max for the invalid metric was updated
+        List<AggregateNumericMetric> updatedMetrics = Lists.newArrayList(dao.findSixHourMetrics(scheduleId,
+            bucket0Time.getMillis(), bucket0Time.plusSeconds(10).getMillis()));
+
+        assertEquals(updatedMetrics.size(), 1, "Expected to get back 1 updated metric");
+        assertEquals(updatedMetrics.get(0).getMax(), 3.0, "Failed to update the max for invalid metric");
+    }
+
+    @Test
     public void find1HourDatCompositesForGroup() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();

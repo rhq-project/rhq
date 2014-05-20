@@ -143,6 +143,10 @@ public class MetricsDAO {
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
     }
 
+    public StorageSession getStorageSession() {
+        return storageSession;
+    }
+
     public StorageResultSetFuture insertRawData(MeasurementDataNumeric data) {
         BoundStatement statement = insertRawData.bind(data.getScheduleId(), new Date(data.getTimestamp()),
             data.getValue());

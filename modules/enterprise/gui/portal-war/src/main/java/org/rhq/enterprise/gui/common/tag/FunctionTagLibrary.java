@@ -367,11 +367,14 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
             throw new IllegalArgumentException("No availability icon for size " + size);
         }
         if (type == null) {
-            return (size == 16) ? "/images/icons/availability_grey_16.png" : "/images/icons/availability_grey_24.png";
+            return (size == 16) ? "/portal/images/icons/availability_grey_16.png"
+                : "/portal/images/icons/availability_grey_24.png";
         } else if (type == AvailabilityType.UP) {
-            return (size == 16) ? "/images/icons/availability_green_16.png" : "/images/icons/availability_green_24.png";
+            return (size == 16) ? "/portal/images/icons/availability_green_16.png"
+                : "/portal/images/icons/availability_green_24.png";
         } else if (type == AvailabilityType.DOWN) {
-            return (size == 16) ? "/images/icons/availability_red_16.png" : "/images/icons/availability_red_24.png";
+            return (size == 16) ? "/portal/images/icons/availability_red_16.png"
+                : "/portal/images/icons/availability_red_24.png";
         } else {
             throw new IllegalArgumentException("No icon for AvailabilityType[" + type + "]");
         }
@@ -380,11 +383,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static String getAlertPriorityURL(AlertPriority priority) {
         switch (priority) {
         case HIGH:
-            return "/images/icons/Flag_red_16.png";
+            return "/portal/images/icons/Flag_red_16.png";
         case MEDIUM:
-            return "/images/icons/Flag_yellow_16.png";
+            return "/portal/images/icons/Flag_yellow_16.png";
         case LOW:
-            return "/images/icons/Flag_blue_16.png";
+            return "/portal/images/icons/Flag_blue_16.png";
         default:
             throw new IllegalArgumentException("No icon for AlertPriority[" + priority + "]");
         }
@@ -393,11 +396,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static String getResourceConfigStatusURL(ConfigurationUpdateStatus status) {
         switch (status) {
         case SUCCESS:
-            return "/images/icons/Configure_ok_16.png";
+            return "/portal/images/icons/Configure_ok_16.png";
         case FAILURE:
-            return "/images/icons/Configure_failed_16.png";
+            return "/portal/images/icons/Configure_failed_16.png";
         case INPROGRESS:
-            return "/images/icons/Configure_16.png";
+            return "/portal/images/icons/Configure_16.png";
         default:
             throw new IllegalArgumentException("No icon for ConfigurationUpdateStatus[" + status + "]");
         }
@@ -406,13 +409,13 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static String getOperationStatusURL(OperationRequestStatus status) {
         switch (status) {
         case SUCCESS:
-            return "/images/icons/Operation_ok_16.png";
+            return "/portal/images/icons/Operation_ok_16.png";
         case FAILURE:
-            return "/images/icons/Operation_failed_16.png";
+            return "/portal/images/icons/Operation_failed_16.png";
         case INPROGRESS:
-            return "/images/icons/Operation_16.png";
+            return "/portal/images/icons/Operation_16.png";
         case CANCELED:
-            return "/images/icons/Operation_cancel_16.png";
+            return "/portal/images/icons/Operation_cancel_16.png";
         default:
             throw new IllegalArgumentException("No icon for OperationRequestStatus[" + status + "]");
         }
@@ -441,7 +444,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         }
 
         String additional = (grouped ? "_multi" : "");
-        return "/images/icons/Events_" + color + additional + "_16.png";
+        return "/portal/images/icons/Events_" + color + additional + "_16.png";
     }
 
     public static String getAlertSenderConfigurationPreview(AlertNotification alertNotification) {

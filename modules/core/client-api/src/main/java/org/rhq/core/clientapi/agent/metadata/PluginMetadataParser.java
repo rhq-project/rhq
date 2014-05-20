@@ -31,12 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.print.attribute.standard.Destination;
+import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
+import org.rhq.core.clientapi.descriptor.plugin.BundleConfigPropertyReference;
+import org.rhq.core.clientapi.descriptor.plugin.BundleConfigReference;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
@@ -610,7 +612,7 @@ public class PluginMetadataParser {
 
             BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
             if (bundleTarget != null) {
-                List<Object> destDefs = bundleTarget.getDestinationBaseDirOrDestinationLocation();
+                List<Object> destDefs = bundleTarget.getDestinationBaseDirOrDestinationDefinition();
                 if (destDefs != null && destDefs.size() > 0) {
                     Configuration c = new Configuration();
                     ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
@@ -623,15 +625,52 @@ public class PluginMetadataParser {
                             String description = destBaseDir.getDescription();
                             bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
                                 description);
-                        } else if (destDef instanceof BundleTargetDescriptor.DestinationLocation) {
-                            BundleTargetDescriptor.DestinationLocation loc =
-                                (BundleTargetDescriptor.DestinationLocation) destDef;
+                        } else if (destDef instanceof BundleTargetDescriptor.DestinationDefinition) {
+                            BundleTargetDescriptor.DestinationDefinition def =
+                                (BundleTargetDescriptor.DestinationDefinition) destDef;
 
-                            String name = loc.getName();
-                            String description = loc.getDescription();
-                            String expression = loc.getExpression();
+                            ResourceTypeBundleConfiguration.BundleDestinationDefinition.Builder bld = bundleConfiguration
+                                .createDestinationDefinitionBuilder(def.getName());
+                            bld.withDescription(def.getDescription()).withConnectionString(def.getConnection());
 
-                            bundleConfiguration.addBundleDestinationLocation(name, expression, description);
+                            for (JAXBElement<? extends BundleConfigReference> ref : def.getReferencedConfiguration()
+                                .getMapPropertyRefOrListPropertyRefOrSimplePropertyRef()) {
+
+                                String tagName = ref.getName().getLocalPart();
+                                if ("simple-property-ref".equals(tagName)) {
+                                    BundleConfigPropertyReference r = (BundleConfigPropertyReference) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getContext())) {
+                                        bld.addPluginConfigurationSimplePropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    } else if ("resourceConfiguration".equals(r.getContext())) {
+                                        bld.addResourceConfigurationSimplePropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    }
+                                } else if ("list-property-ref".equals(tagName)) {
+                                    BundleConfigPropertyReference r = (BundleConfigPropertyReference) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getContext())) {
+                                        bld.addPluginConfigurationListPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    } else if ("resourceConfiguration".equals(r.getContext())) {
+                                        bld.addResourceConfigurationListPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    }
+                                } else if ("map-property-ref".equals(tagName)) {
+                                    BundleConfigPropertyReference r = (BundleConfigPropertyReference) ref.getValue();
+                                    if ("pluginConfiguration".equals(r.getContext())) {
+                                        bld.addPluginConfigurationMapPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    } else if ("resourceConfiguration".equals(r.getContext())) {
+                                        bld.addResourceConfigurationMapPropertyReference(r.getName(),
+                                            r.getTargetName());
+                                    }
+                                } else if ("trait-ref".equals(tagName)) {
+                                    bld.addMeasurementTraitReference(ref.getValue().getName(),
+                                        ref.getValue().getTargetName());
+                                }
+                            }
+
+                            bld.build();
                         }
                     }
                     resourceType.setResourceTypeBundleConfiguration(bundleConfiguration);

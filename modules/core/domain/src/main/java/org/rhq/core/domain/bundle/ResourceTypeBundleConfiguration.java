@@ -20,6 +20,7 @@
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,7 +57,15 @@ public class ResourceTypeBundleConfiguration implements Serializable {
     private static final String BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME = "valueName";
     private static final String BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME = "description";
 
-    private static final String BUNDLE_DEST_LOCATION_EXPRESSION_NAME = "expression";
+    private static final String BUNDLE_DEST_DEFINITION_CONNECTION_NAME = "connection";
+    private static final String BUNDLE_DEST_DEFINITION_REF_LIST_NAME = "refs";
+    private static final String BUNDLE_DEST_DEFINITION_REF_LIST_MEMBER_NAME = "ref";
+
+    private static final String BUNDLE_DEST_DEF_REF_TARGET_NAME_NAME = "targetName";
+    private static final String BUNDLE_DEST_DEF_REF_NAME_NAME = "name";
+    private static final String BUNDLE_DEST_DEF_REF_CONTEXT_NAME = "context";
+    private static final String BUNDLE_DEST_DEF_REF_TYPE_NAME = "type";
+
 
     // this is the actual bundle configuration - see ResourceType.bundleConfiguration
     private Configuration bundleConfiguration;
@@ -71,7 +80,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
 
     /**
      * Returns the actual, raw configuration. Callers should rarely want to use this - use the more
-     * strongly typed methods such as {@link #getBundleDestinationDefinitions()}.
+     * strongly typed methods such as {@link #getBundleDestinationSpecifications()}.
      *
      * @return the raw bundle configuration object
      */
@@ -79,18 +88,24 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         return this.bundleConfiguration;
     }
 
+    /**
+     * @deprecated Do not use this method, instead use the provided type-safe modification methods provided
+     *             in this class.
+     */
+    @Deprecated
     public void setBundleConfiguration(Configuration bundleConfiguration) {
         this.bundleConfiguration = bundleConfiguration;
     }
 
     /**
-     * A generic method to obtain all types of bundle destination definitions.
-     * If this bundle configuration doesn't have any definitions, null is returned (though this
+     * A generic method to obtain all types of bundle destination specifications.
+     * If this bundle configuration doesn't have any specifications, null is returned (though this
      * should never happen if the bundle configuration has been fully prepared for a resource type).
-     * @return of bundle destination definitions that can be targets for bundle deployments
+     *
+     * @return of bundle destination specifications that can be targets for bundle deployments
      */
-    public Set<BundleDestinationDefinition> getBundleDestinationDefinitions() {
-        return getBundleDestinationDefinitionsOfType(BundleDestinationDefinition.class);
+    public Set<BundleDestinationSpecification> getBundleDestinationSpecifications() {
+        return getBundleDestinationSpecificationsOfType(BundleDestinationSpecification.class);
     }
 
     /**
@@ -99,11 +114,12 @@ public class ResourceTypeBundleConfiguration implements Serializable {
      * should never happen if the bundle configuration has been fully prepared for a resource type).
      *
      * @return the set of destination base directories that can be targets for bundle deployments
-     * @deprecated use the {@link #getBundleDestinationDefinitions()} in preference to this legacy method
+     *
+     * @deprecated use the {@link #getBundleDestinationSpecifications()} in preference to this legacy method
      */
     @Deprecated
     public Set<BundleDestinationBaseDirectory> getBundleDestinationBaseDirectories() {
-        return getBundleDestinationDefinitionsOfType(BundleDestinationBaseDirectory.class);
+        return getBundleDestinationSpecificationsOfType(BundleDestinationBaseDirectory.class);
     }
 
     /**
@@ -120,24 +136,26 @@ public class ResourceTypeBundleConfiguration implements Serializable {
     public void addBundleDestinationBaseDirectory(String name, String valueContext, String valueName,
         String description) {
         // we create this just to make sure the context and value are valid. An exception will be thrown if they are not.
-        addBundleDestinationDefinition(new BundleDestinationBaseDirectory(name, valueContext, valueName,
+        addBundleDestinationSpecification(new BundleDestinationBaseDirectory(name, valueContext, valueName,
             description));
 
     }
 
     /**
-     * Adds a destination location that can be used as a target for a bundle deployment.
+     * Creates a new destination definition builder initialized with the provided name that will add
+     * the built destination definition into this bundle configuration instance automatically.
      *
-     * @param name         the name of this bundle destination location (must not be <code>null</code>)
-     * @param expression   the expression of the value
-     * @param description  optional explanation for what this destination location is
+     * @param name        the name of this bundle destination location (must not be <code>null</code>)
      */
-    public void addBundleDestinationLocation(String name, String expression, String description) {
-        // we create this just to make sure the context and value are valid. An exception will be thrown if they are not.
-        addBundleDestinationDefinition(new BundleDestinationLocation(name, expression, description));
+    public BundleDestinationDefinition.Builder createDestinationDefinitionBuilder(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("name == null");
+        }
+
+        return BundleDestinationDefinition.builderAddingTo(this).withName(name);
     }
 
-    private void addBundleDestinationDefinition(BundleDestinationDefinition def) {
+    private void addBundleDestinationSpecification(BundleDestinationSpecification def) {
         if (this.bundleConfiguration == null) {
             throw new NullPointerException("bundleConfiguration == null");
         }
@@ -154,7 +172,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         propertyList.add(map);
     }
 
-    private <T extends BundleDestinationDefinition> Set<T> getBundleDestinationDefinitionsOfType(Class<T> type) {
+    private <T extends BundleDestinationSpecification> Set<T> getBundleDestinationSpecificationsOfType(Class<T> type) {
         if (this.bundleConfiguration == null) {
             return null;
         }
@@ -172,7 +190,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         Set<T> retVal = new HashSet<T>(list.size());
         for (Property listItem : list) {
             PropertyMap map = (PropertyMap) listItem;
-            T item = BundleDestinationDefinition.from(map, type);
+            T item = BundleDestinationSpecification.from(map, type);
             retVal.add(item);
         }
 
@@ -203,13 +221,13 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         return true;
     }
 
-    public static abstract class BundleDestinationDefinition implements Serializable {
+    public static abstract class BundleDestinationSpecification implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private final String name;
         private final String description;
 
-        private BundleDestinationDefinition(String name, String description) {
+        private BundleDestinationSpecification(String name, String description) {
             if (name == null) {
                 throw new NullPointerException("name == null");
             }
@@ -218,20 +236,19 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             this.description = description;
         }
 
-        private static <T extends BundleDestinationDefinition> T from(PropertyMap map, Class<T> expectedClass) {
+        private static <T extends BundleDestinationSpecification> T from(PropertyMap map, Class<T> expectedClass) {
             String name = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_NAME_NAME, null);
             String valueContext = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_CONTEXT_NAME, null);
-            String valueName = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME, null);
             String description = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME, null);
-            String expression = map.getSimpleValue(BUNDLE_DEST_LOCATION_EXPRESSION_NAME, null);
+            String connection = map.getSimpleValue(BUNDLE_DEST_DEFINITION_CONNECTION_NAME, null);
 
             Class<?> determinedClass = Object.class;
             if (valueContext == null) {
-                if (expression != null) {
-                    determinedClass = BundleDestinationLocation.class;
+                if (connection != null) {
+                    determinedClass = BundleDestinationDefinition.class;
                 }
             } else {
-                if (expression == null) {
+                if (connection == null) {
                     determinedClass = BundleDestinationBaseDirectory.class;
                 }
             }
@@ -240,23 +257,61 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             //this would be the preferred impl, but GWT thinks otherwise :(
             //if (expectedClass.isAssignableFrom(determinedClass)) {
             //    if (determinedClass.equals(BundleDestinationBaseDirectory.class)) {
-            //        return expectedClass.cast(new BundleDestinationBaseDirectory(name, valueContext, valueName,
-            //            description));
+            //        return expectedClass.cast(new BundleDestinationBaseDirectory(...);
             //    } else if (determinedClass.equals(BundleDestinationLocation.class)) {
-            //        return expectedClass.cast(new BundleDestinationLocation(name, expression, description));
+            //        return expectedClass.cast(new BundleDestinationLocation(...));
             //    }
             //}
 
             if (determinedClass.equals(BundleDestinationBaseDirectory.class) && (expectedClass.equals(
-                BundleDestinationBaseDirectory.class) || expectedClass.equals(BundleDestinationDefinition.class))) {
+                BundleDestinationBaseDirectory.class) || expectedClass.equals(BundleDestinationSpecification.class))) {
+
+                String valueName = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME, null);
+
                 @SuppressWarnings("unchecked")
                 T ret = (T) new BundleDestinationBaseDirectory(name, valueContext, valueName, description);
                 return ret;
-            } else if (determinedClass.equals(BundleDestinationLocation.class) && (expectedClass.equals(
-                BundleDestinationLocation.class) || expectedClass.equals(BundleDestinationDefinition.class))) {
+            } else if (determinedClass.equals(BundleDestinationDefinition.class) && (expectedClass.equals(
+                BundleDestinationDefinition.class) || expectedClass.equals(BundleDestinationSpecification.class))) {
+
+                BundleDestinationDefinition.Builder bld = BundleDestinationDefinition.builder().withName(name)
+                    .withConnectionString(connection).withDescription(description);
+
+                PropertyList refs = map.getList(BUNDLE_DEST_DEFINITION_REF_LIST_NAME);
+
+                if (refs != null) {
+                    for (Property p : refs.getList()) {
+                        PropertyMap ref = (PropertyMap) p;
+
+                        String type = ref.getSimpleValue(BUNDLE_DEST_DEF_REF_TYPE_NAME, null);
+                        if (type == null) {
+                            continue;
+                        }
+
+                        BundleDestinationDefinition.PropertyRef.Type refType =
+                            BundleDestinationDefinition.PropertyRef.Type.valueOf(type);
+
+                        String context = ref.getSimpleValue(BUNDLE_DEST_DEF_REF_CONTEXT_NAME, null);
+                        if (context == null) {
+                            continue;
+                        }
+
+                        BundleDestinationDefinition.PropertyRef.Context refContext =
+                            BundleDestinationDefinition.PropertyRef.Context.valueOf(context);
+
+                        String refName = ref.getSimpleValue(BUNDLE_DEST_DEF_REF_NAME_NAME, null);
+                        if (name == null) {
+                            continue;
+                        }
+
+                        String refTargetName = ref.getSimpleValue(BUNDLE_DEST_DEF_REF_TARGET_NAME_NAME, refName);
+
+                        bld.addPropertyReference(refType, refContext, refName, refTargetName);
+                    }
+                }
 
                 @SuppressWarnings("unchecked")
-                T ret = (T) new BundleDestinationLocation(name, expression, description);
+                T ret = (T) bld.build();
                 return ret;
             }
 
@@ -290,11 +345,11 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof BundleDestinationDefinition)) {
+            if (!(o instanceof BundleDestinationSpecification)) {
                 return false;
             }
 
-            BundleDestinationDefinition that = (BundleDestinationDefinition) o;
+            BundleDestinationSpecification that = (BundleDestinationSpecification) o;
 
             if (!name.equals(that.name)) {
                 return false;
@@ -312,7 +367,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
     /**
      * Defines where bundles can be deployed on a resource that is of our resource type.
      */
-    public static class BundleDestinationBaseDirectory extends BundleDestinationDefinition {
+    public static class BundleDestinationBaseDirectory extends BundleDestinationSpecification {
         private static final long serialVersionUID = 2L;
 
         /**
@@ -323,18 +378,26 @@ public class ResourceTypeBundleConfiguration implements Serializable {
          * to this Java representation.
          */
         public enum Context {
-            /** the value is to be found in the resource's plugin configuration */
+            /**
+             * the value is to be found in the resource's plugin configuration
+             */
             pluginConfiguration,
 
-            /** the value is to be found in the resource's resource configuration */
+            /**
+             * the value is to be found in the resource's resource configuration
+             */
             resourceConfiguration,
 
-            /** the value is to be found as a measurement trait */
+            /**
+             * the value is to be found as a measurement trait
+             */
             measurementTrait,
 
-            /** the value is a hardcoded location on the file system - usually the root "/" directory */
+            /**
+             * the value is a hardcoded location on the file system - usually the root "/" directory
+             */
             fileSystem
-        };
+        }
 
         private final Context valueContext;
         private final String valueName;
@@ -385,32 +448,210 @@ public class ResourceTypeBundleConfiguration implements Serializable {
     }
 
     /**
-     * Bundle destination location is another way of specifying the target location of a destination.
-     * It is a generic expression that can be evaluated and can express anything, not just a filesystem location
-     * as with the destination base directory.
+     * Bundle destination definition is another way of specifying the target location of a destination.
+     * It has a generic "connection" string, which is an expression for specifying the location of the target
+     * (which might not be filesystem based as with destination base dirs) and also allows for passing parts
+     * of the configurations of the resources being deployed to to the bundle handler.
      */
-    public static final class BundleDestinationLocation extends BundleDestinationDefinition {
+    public static final class BundleDestinationDefinition extends BundleDestinationSpecification {
         private static final long serialVersionUID = 1L;
 
-        private final String expression;
+        private final String connectionString;
+        private final List<PropertyRef> referencedConfiguration;
 
-        public BundleDestinationLocation(String name, String expression, String description) {
+        public static Builder builder() {
+            return new Builder(null);
+        }
+
+        public static Builder builderAddingTo(ResourceTypeBundleConfiguration bundleConfig) {
+            return new Builder(bundleConfig);
+        }
+
+        public BundleDestinationDefinition(String name, String connectionString, String description,
+            List<PropertyRef> refs) {
             super(name, description);
-            if (expression == null) {
+            if (connectionString == null) {
                 throw new IllegalArgumentException("expression == null");
             }
 
-            this.expression = expression;
+            this.connectionString = connectionString;
+            this.referencedConfiguration = refs;
         }
 
-        public String getExpression() {
-            return expression;
+        @Override
+        protected void fillPropertyMap(PropertyMap map) {
+            super.fillPropertyMap(map);
+            map.put(new PropertySimple(BUNDLE_DEST_DEFINITION_CONNECTION_NAME, connectionString));
+            PropertyList list = new PropertyList(BUNDLE_DEST_DEFINITION_REF_LIST_NAME);
+            map.put(list);
+
+            for (PropertyRef ref : referencedConfiguration) {
+                PropertyMap refMap = new PropertyMap(BUNDLE_DEST_DEFINITION_REF_LIST_MEMBER_NAME);
+                refMap.put(new PropertySimple(BUNDLE_DEST_DEF_REF_TYPE_NAME, ref.getType().name()));
+                refMap.put(new PropertySimple(BUNDLE_DEST_DEF_REF_CONTEXT_NAME, ref.getContext().name()));
+                refMap.put(new PropertySimple(BUNDLE_DEST_DEF_REF_NAME_NAME, ref.getName()));
+                refMap.put(new PropertySimple(BUNDLE_DEST_DEF_REF_TARGET_NAME_NAME, ref.getTargetName()));
+                list.add(refMap);
+            }
+        }
+
+        public String getConnectionString() {
+            return connectionString;
+        }
+
+        public List<PropertyRef> getReferencedConfiguration() {
+            return referencedConfiguration;
         }
 
         @Override
         public String toString() {
-            return "BundleDestinationLocation[name=" + getName() + ", expression=" + expression + ", description=" +
-                getDescription();
+            return "BundleDestinationLocation[name=" + getName() + ", conn=" + connectionString + ", refs=" +
+                referencedConfiguration + ", description=" + getDescription();
+        }
+
+        public static final class PropertyRef {
+            public enum Type {
+                MAP, LIST, SIMPLE
+            }
+
+            public enum Context {
+                PLUGIN_CONFIGURATION, RESOURCE_CONFIGURATION, MEASUREMENT_TRAIT
+            }
+
+            private final String targetName;
+            private final String name;
+            private final Type type;
+            private final Context context;
+
+            public PropertyRef(String targetName, String name, Type type, Context context) {
+                if (name == null) {
+                    throw new IllegalArgumentException("name == null");
+                }
+
+                if (type == null) {
+                    throw new IllegalArgumentException("type == null");
+                }
+
+                if (context == null) {
+                    throw new IllegalArgumentException("context == null");
+                }
+
+                this.targetName = targetName == null ? name : targetName;
+                this.name = name;
+                this.type = type;
+                this.context = context;
+            }
+
+            public String getTargetName() {
+                return targetName;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public Type getType() {
+                return type;
+            }
+
+            public Context getContext() {
+                return context;
+            }
+
+            @Override
+            public String toString() {
+                final StringBuilder sb = new StringBuilder("PropertyRef[");
+                sb.append("context=").append(context);
+                sb.append(", name='").append(name).append('\'');
+                sb.append(", targetName='").append(targetName).append('\'');
+                sb.append(", type=").append(type);
+                sb.append(']');
+                return sb.toString();
+            }
+        }
+
+        public static final class Builder {
+            private final ResourceTypeBundleConfiguration targetConfig;
+            private String connString;
+            private String name;
+            private String description;
+            private final List<PropertyRef> refs = new ArrayList<PropertyRef>();
+
+            private Builder(ResourceTypeBundleConfiguration targetConfig) {
+                this.targetConfig = targetConfig;
+            }
+
+            public Builder withName(String name) {
+                this.name = name;
+                return this;
+            }
+
+            public Builder withDescription(String description) {
+                this.description = description;
+                return this;
+            }
+
+            public Builder withConnectionString(String connString) {
+                this.connString = connString;
+                return this;
+            }
+
+            public Builder addPropertyReference(PropertyRef.Type type, PropertyRef.Context context, String name,
+                String targetName) {
+
+                refs.add(new PropertyRef(targetName, name, type, context));
+                return this;
+            }
+
+            public Builder addPluginConfigurationSimplePropertyReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.SIMPLE,
+                    PropertyRef.Context.PLUGIN_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addPluginConfigurationListPropertyReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.LIST,
+                    PropertyRef.Context.PLUGIN_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addPluginConfigurationMapPropertyReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.MAP,
+                    PropertyRef.Context.PLUGIN_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addResourceConfigurationSimplePropertyReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.SIMPLE,
+                    PropertyRef.Context.RESOURCE_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addResourceConfigurationListPropertyReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.LIST,
+                    PropertyRef.Context.RESOURCE_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addResourceConfigurationMapPropertyReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, PropertyRef.Type.MAP,
+                    PropertyRef.Context.RESOURCE_CONFIGURATION));
+                return this;
+            }
+
+            public Builder addMeasurementTraitReference(String name, String targetName) {
+                refs.add(new PropertyRef(targetName, name, null, PropertyRef.Context.MEASUREMENT_TRAIT));
+                return this;
+            }
+
+            public BundleDestinationDefinition build() {
+                BundleDestinationDefinition ret = new BundleDestinationDefinition(name, connString, description, refs);
+                if (targetConfig != null) {
+                    targetConfig.addBundleDestinationSpecification(ret);
+                }
+
+                return ret;
+            }
         }
     }
 }

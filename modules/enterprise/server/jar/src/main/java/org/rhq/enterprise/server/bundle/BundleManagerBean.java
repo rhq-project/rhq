@@ -1163,6 +1163,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         bdc.fetchBundleVersion(true);
         bdc.fetchResourceDeployments(true);
         bdc.fetchDestination(true);
+        bdc.fetchConfiguration(true);
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, bdc);
         if (1 != liveDeployments.size()) {
             throw new IllegalArgumentException("No live deployment to purge is found for destinationId ["

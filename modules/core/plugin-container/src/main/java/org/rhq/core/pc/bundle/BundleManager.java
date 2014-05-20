@@ -191,15 +191,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         deployRequest.setRevert(request.isRevert());
 
                         File absoluteDestDir = getAbsoluteDestinationDir(request.getBundleResourceDeployment());
-                        String connectionString = null;
                         if (absoluteDestDir != null) {
                             deployRequest.setDestinationTarget(absoluteDestDir.toURI());
                         } else {
-                            connectionString = getConnectionString(request);
+                            String connectionString = getConnectionString(request);
                             if (connectionString != null) {
                                 deployRequest.setDestinationTarget(URI.create(connectionString));
-                            } else {
-                                throw new IllegalArgumentException("Could not determine the deployment target.");
                             }
 
                             transferReferencedConfiguration(deployRequest);
@@ -238,9 +235,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     }
 
     private void transferReferencedConfiguration(BundleDeployRequest deployRequest) {
-        Set<ResourceTypeBundleConfiguration.BundleDestinationSpecification> specs = deployRequest
-            .getResourceDeployment().getResource().getResourceType().getResourceTypeBundleConfiguration()
-            .getBundleDestinationSpecifications();
+        ResourceContainer rc = im.getResourceContainer(deployRequest.getResourceDeployment().getResource());
+
+        Set<ResourceTypeBundleConfiguration.BundleDestinationSpecification> specs =rc.getResource().getResourceType()
+            .getResourceTypeBundleConfiguration().getBundleDestinationSpecifications();
 
         String specName = deployRequest.getResourceDeployment().getBundleDeployment().getDestination()
             .getDestinationSpecificationName();
@@ -250,7 +248,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 ResourceTypeBundleConfiguration.BundleDestinationDefinition def =
                     (ResourceTypeBundleConfiguration.BundleDestinationDefinition) spec;
 
-                Resource resource = deployRequest.getResourceDeployment().getResource();
+                Resource resource = rc.getResource();
 
                 Configuration transferred = new Configuration();
 
@@ -322,7 +320,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private String getConnectionString(BundleScheduleRequest request) {
         ResourceContainer rc = im.getResourceContainer(request.getBundleResourceDeployment().getResource());
         BundleDestination dest = request.getBundleResourceDeployment().getBundleDeployment().getDestination();
-        ResourceType type = request.getBundleResourceDeployment().getResource().getResourceType();
+        ResourceType type = rc.getResource().getResourceType();
         String specName = dest.getDestinationSpecificationName();
         String relativeDeployDir = dest.getDeployDir();
 
@@ -339,6 +337,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                     (ResourceTypeBundleConfiguration.BundleDestinationDefinition) spec;
 
                 String rawConnectionString = def.getConnectionString();
+
+                if (rawConnectionString == null) {
+                    return null;
+                }
 
                 TokenReplacingReader trr = new TokenReplacingReader(new StringReader(rawConnectionString), props);
                 try {

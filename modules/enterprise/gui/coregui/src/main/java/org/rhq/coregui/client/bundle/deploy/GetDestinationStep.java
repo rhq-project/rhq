@@ -76,7 +76,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     private SingleCompatibleResourceGroupSelector selector;
     private BundleDestination destination = new BundleDestination();
     private boolean createInProgress = false;
-    private RadioGroupItem destBaseDirItem;
+    private RadioGroupItem destSpecItem;
 
     public GetDestinationStep(BundleDeployWizard wizard) {
         this.wizard = wizard;
@@ -124,30 +124,29 @@ public class GetDestinationStep extends AbstractWizardStep {
             final TextItem deployDirTextItem = new TextItem("deployDir",
                 MSG.view_bundle_deployWizard_getDest_deployDir());
             deployDirTextItem.setWidth(300);
-            deployDirTextItem.setRequired(true);
+            deployDirTextItem.setRequired(false);
             deployDirTextItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
+                    if (value != null) {
+                        destination.setDeployDir(value.toString());
                     }
-                    destination.setDeployDir(value.toString());
                 }
             });
             FormUtility.addContextualHelp(deployDirTextItem, MSG.view_bundle_deployWizard_getDest_deployDir_help());
 
-            this.destBaseDirItem = new RadioGroupItem("destBaseDir",
+            this.destSpecItem = new RadioGroupItem("destSpec",
                 MSG.view_bundle_deployWizard_getDest_destBaseDirName());
-            this.destBaseDirItem.setWidth(300);
-            this.destBaseDirItem.setRequired(true);
-            this.destBaseDirItem.setDisabled(true);
-            this.destBaseDirItem.addChangedHandler(new ChangedHandler() {
+            this.destSpecItem.setWidth(300);
+            this.destSpecItem.setRequired(true);
+            this.destSpecItem.setDisabled(true);
+            this.destSpecItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();
                     if (value != null && value.toString().length() > 0) {
-                        destination.setDestinationBaseDirectoryName(value.toString());
+                        destination.setDestinationSpecificationName(value.toString());
                     } else {
-                        destination.setDestinationBaseDirectoryName(null);
+                        destination.setDestinationSpecificationName(null);
                     }
                 }
             });
@@ -186,7 +185,7 @@ public class GetDestinationStep extends AbstractWizardStep {
             FormUtility.addContextualHelp(this.selector, MSG.view_bundle_deployWizard_getDest_group_help(),
                 newGroupIcon);
 
-            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, this.selector, this.destBaseDirItem,
+            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, this.selector, this.destSpecItem,
                 deployDirTextItem);
             CanvasItem ci1 = new CanvasItem();
             ci1.setShowTitle(false);
@@ -235,7 +234,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
         bundleServer.createBundleDestination(wizard.getBundleId(), destination.getName(), destination.getDescription(),
-            destination.getDestinationBaseDirectoryName(), destination.getDeployDir(), selectedGroup, //
+            destination.getDestinationSpecificationName(), destination.getDeployDir(), selectedGroup, //
             new AsyncCallback<BundleDestination>() {
                 public void onSuccess(BundleDestination result) {
                     wizard.setDestination(result);
@@ -260,9 +259,9 @@ public class GetDestinationStep extends AbstractWizardStep {
 
     private void groupSelectionChanged(Integer selectedGroupId) {
         // new group is, or is in the process of being, selected so forget what the base location was before
-        destination.setDestinationBaseDirectoryName(null);
-        destBaseDirItem.clearValue();
-        destBaseDirItem.setValueMap((String[]) null);
+        destination.setDestinationSpecificationName(null);
+        destSpecItem.clearValue();
+        destSpecItem.setValueMap((String[]) null);
 
         // this will be null if there is no true group actually selected (e.g. user is typing a partial name to search)
         if (selectedGroupId != null) {
@@ -288,23 +287,23 @@ public class GetDestinationStep extends AbstractWizardStep {
                                         defaultSelectedItem = spec.getName();
                                     }
                                 }
-                                destBaseDirItem.setValueMap(menuItems);
-                                destBaseDirItem.setValue(defaultSelectedItem);
-                                destination.setDestinationBaseDirectoryName(defaultSelectedItem);
+                                destSpecItem.setValueMap(menuItems);
+                                destSpecItem.setValue(defaultSelectedItem);
+                                destination.setDestinationSpecificationName(defaultSelectedItem);
                             }
                         }
 
-                        destBaseDirItem.setDisabled(menuItems == null);
+                        destSpecItem.setDisabled(menuItems == null);
                     }
 
                     public void onFailure(Throwable caught) {
-                        destBaseDirItem.setDisabled(true);
+                        destSpecItem.setDisabled(true);
                         CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_noBundleConfig(),
                             caught);
                     }
                 });
         } else {
-            destBaseDirItem.setDisabled(true);
+            destSpecItem.setDisabled(true);
         }
     }
 

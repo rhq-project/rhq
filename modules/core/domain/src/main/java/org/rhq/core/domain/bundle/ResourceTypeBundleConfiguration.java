@@ -191,7 +191,9 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         for (Property listItem : list) {
             PropertyMap map = (PropertyMap) listItem;
             T item = BundleDestinationSpecification.from(map, type);
-            retVal.add(item);
+            if (item != null) {
+                retVal.add(item);
+            }
         }
 
         return retVal;
@@ -241,14 +243,15 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             String valueContext = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_CONTEXT_NAME, null);
             String description = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME, null);
             String connection = map.getSimpleValue(BUNDLE_DEST_DEFINITION_CONNECTION_NAME, null);
+            PropertyList refs = map.getList(BUNDLE_DEST_DEFINITION_REF_LIST_NAME);
 
             Class<?> determinedClass = Object.class;
             if (valueContext == null) {
-                if (connection != null) {
+                if (connection != null || refs != null) {
                     determinedClass = BundleDestinationDefinition.class;
                 }
             } else {
-                if (connection == null) {
+                if (connection == null && refs == null) {
                     determinedClass = BundleDestinationBaseDirectory.class;
                 }
             }
@@ -276,8 +279,6 @@ public class ResourceTypeBundleConfiguration implements Serializable {
 
                 BundleDestinationDefinition.Builder bld = BundleDestinationDefinition.builder().withName(name)
                     .withConnectionString(connection).withDescription(description);
-
-                PropertyList refs = map.getList(BUNDLE_DEST_DEFINITION_REF_LIST_NAME);
 
                 if (refs != null) {
                     for (Property p : refs.getList()) {

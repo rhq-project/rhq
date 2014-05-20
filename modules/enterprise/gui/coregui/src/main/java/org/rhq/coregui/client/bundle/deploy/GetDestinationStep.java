@@ -46,7 +46,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
-import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationSpecification;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.coregui.client.CoreGUI;
@@ -272,20 +272,20 @@ public class GetDestinationStep extends AbstractWizardStep {
                         // populate the base location drop down with all the possible dest base directories
                         LinkedHashMap<String, String> menuItems = null;
                         if (result != null) {
-                            Set<BundleDestinationBaseDirectory> baseDirs;
-                            baseDirs = result.getBundleDestinationBaseDirectories();
-                            if (baseDirs != null && baseDirs.size() > 0) {
+                            Set<BundleDestinationSpecification> destSpecs;
+                            destSpecs = result.getBundleDestinationSpecifications();
+                            if (destSpecs != null && destSpecs.size() > 0) {
                                 String defaultSelectedItem = null;
-                                menuItems = new LinkedHashMap<String, String>(baseDirs.size());
-                                for (BundleDestinationBaseDirectory baseDir : baseDirs) {
-                                    if (baseDir.getDescription() != null) {
-                                        menuItems.put(baseDir.getName(),
-                                            "<b>" + baseDir.getName() + "</b>: " + baseDir.getDescription());
+                                menuItems = new LinkedHashMap<String, String>(destSpecs.size());
+                                for (BundleDestinationSpecification spec : destSpecs) {
+                                    if (spec.getDescription() != null) {
+                                        menuItems.put(spec.getName(),
+                                            "<b>" + spec.getName() + "</b>: " + spec.getDescription());
                                     } else {
-                                        menuItems.put(baseDir.getName(), baseDir.getName());
+                                        menuItems.put(spec.getName(), spec.getName());
                                     }
                                     if (defaultSelectedItem == null) {
-                                        defaultSelectedItem = baseDir.getName();
+                                        defaultSelectedItem = spec.getName();
                                     }
                                 }
                                 destBaseDirItem.setValueMap(menuItems);

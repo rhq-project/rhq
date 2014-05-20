@@ -470,9 +470,6 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         public BundleDestinationDefinition(String name, String connectionString, String description,
             List<PropertyRef> refs) {
             super(name, description);
-            if (connectionString == null) {
-                throw new IllegalArgumentException("expression == null");
-            }
 
             this.connectionString = connectionString;
             this.referencedConfiguration = refs;

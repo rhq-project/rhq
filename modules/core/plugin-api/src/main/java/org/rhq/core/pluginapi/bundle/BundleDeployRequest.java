@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageVersion;
 
 /**
@@ -44,6 +45,7 @@ public class BundleDeployRequest implements Serializable {
     private boolean isCleanDeployment = false;
     private boolean isRevert = false;
     private URI destinationTarget;
+    private Configuration referencedConfiguration;
 
     public BundleDeployRequest() {
     }
@@ -172,6 +174,25 @@ public class BundleDeployRequest implements Serializable {
 
     public void setRevert(boolean isRevert) {
         this.isRevert = isRevert;
+    }
+
+    /**
+     * The destination specification can pass over some info to the bundle handler by using references to configuration
+     * or metric data. A destination using this approach should usually be dedicated to a single bundle handler (as of
+     * now, there is no enforcement/validation in place that would ensure that only a bundle handler a destination spec
+     * is dedicated for will be used to install data to the destination).
+     *
+     * @return a configuration object containing data from the resource that is required by the bundle handler.
+     */
+    public Configuration getReferencedConfiguration() {
+        return referencedConfiguration;
+    }
+
+    /**
+     * @see #getReferencedConfiguration()
+     */
+    public void setReferencedConfiguration(Configuration referencedConfiguration) {
+        this.referencedConfiguration = referencedConfiguration;
     }
 
     @Override

@@ -208,6 +208,8 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      * Create the EJB Timer to schedule a check for a single availability duration condition match.
      * @param cacheElement
      * @param resource
+     * @param startTime the start time (the Availability startTime (an agent time)) of the duration check
      */
-    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource);
+    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource,
+        long startTime);
 }

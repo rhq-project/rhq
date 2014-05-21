@@ -154,7 +154,7 @@ public class UserSessionManager {
 
                     if (sessionIdString.startsWith("booting")) {
                         // "booting" is the string we get back from SessionAccessServlet if StartupBean hasn't finished
-                        new LoginView().showLoginDialog(MSG.view_core_serverInitializing());
+//                        new LoginView().showLoginDialog(MSG.view_core_serverInitializing());
                         return;
                     }
 
@@ -183,7 +183,7 @@ public class UserSessionManager {
                             sessionState = State.IS_LOGGED_OUT;
                             scheduleLogoutServerSide(sessionId);
 
-                            new LoginView().showLoginDialog();
+//                            new LoginView().showLoginDialog();
                             return;
                         }
 
@@ -254,7 +254,7 @@ public class UserSessionManager {
                                 //we've lost crucial information, probably in a browser refresh. Send them back through login
                                 Log.trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
                                 sessionState = State.IS_LOGGED_OUT;
-                                new LoginView().showLoginDialog();
+//                                new LoginView().showLoginDialog();
                                 return;
                             }
 
@@ -268,7 +268,7 @@ public class UserSessionManager {
                                         Log.debug("Failed to complete ldap processing for subject: "
                                             + caught.getMessage());
                                         //TODO: pass message to login dialog.
-                                        new LoginView().showLoginDialog();
+//                                        new LoginView().showLoginDialog();
                                         return;
                                     }
 
@@ -293,7 +293,6 @@ public class UserSessionManager {
                                             new LoginView().showRegistrationDialog(subject.getName(),
                                                 String.valueOf(processedSubject.getSessionId()), password, callback);
                                         }
-
                                         return;
                                     }
 
@@ -310,7 +309,7 @@ public class UserSessionManager {
                                             caught);
                                         Log.info("Failed to load user's subject");
                                         //TODO: pass message to login ui.
-                                        new LoginView().showLoginDialog();
+//                                        new LoginView().showLoginDialog();
                                         return;
                                     }
 
@@ -347,7 +346,7 @@ public class UserSessionManager {
                     } else {
                         //invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
-                        new LoginView().showLoginDialog();
+//                        new LoginView().showLoginDialog();
                         return;
                     }
                 }

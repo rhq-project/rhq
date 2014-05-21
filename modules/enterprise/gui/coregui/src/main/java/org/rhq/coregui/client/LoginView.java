@@ -563,10 +563,10 @@ public class LoginView extends Canvas {
         }
     }
 
-    private void login(final String username, final String password) {
-
-        loginButton.setDisabled(true);
-
+    public void login(final String username, final String password) {
+        if (loginButton != null) {
+            loginButton.setDisabled(true);
+        }
         try {
             RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, "/portal/j_security_check.do");
             requestBuilder.setHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -580,8 +580,12 @@ public class LoginView extends Canvas {
                 public void onResponseReceived(Request request, Response response) {
                     int statusCode = response.getStatusCode();
                     if (statusCode == 200) {
-                        window.destroy();
-                        fakeForm.setVisible(false);
+                        if (window != null) {
+                            window.destroy();
+                        }
+                        if (fakeForm != null) {
+                            fakeForm.setVisible(false);
+                        }
                         loginShowing = false;
                         UserSessionManager.login(username, password);
                         setLoginError(null);

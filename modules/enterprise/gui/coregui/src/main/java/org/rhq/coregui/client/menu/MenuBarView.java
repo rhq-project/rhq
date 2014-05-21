@@ -250,6 +250,39 @@ public class MenuBarView extends EnhancedVLayout {
     public MessageBar getMessageBar() {
         return messageBar;
     }
+    private Canvas getActionsSection() {
+        HLayout layout = new HLayout();
+        layout.setMargin(10);
+        layout.setAlign(Alignment.RIGHT);
+
+        userLabel = new Label(UserSessionManager.getSessionSubject().getName());
+        userLabel.setAutoWidth();
+        userLabel.setWrap(false);
+
+        Label lineLabel1 = new Label(" | ");
+        lineLabel1.setWidth("12px");
+        lineLabel1.setAlign(Alignment.CENTER);
+        String contents = "<a href='#' onclick='keycloak.logout()' style='white-space: nowrap'>"
+            + LOGOUT_VIEW_ID.getTitle() + "</a>";
+//        String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "' style='white-space: nowrap'>"
+//            + LOGOUT_VIEW_ID.getTitle() + "</a>";
+        Label logoutLink = new Label(contents);
+        logoutLink.setAutoWidth();
+        
+        Label lineLabel2 = new Label(" | ");
+        lineLabel2.setWidth("12px");
+        lineLabel2.setAlign(Alignment.CENTER);
+        
+        contents = "<a href='#' onclick='keycloak.accountManagement()' style='white-space: nowrap'>Manage Account</a>";
+        Label managementAccountLink = new Label(contents);
+        managementAccountLink.setAutoWidth();
+
+        layout.addMember(userLabel);
+        layout.addMember(lineLabel1);
+        layout.addMember(managementAccountLink);
+        layout.addMember(lineLabel2);
+        layout.addMember(logoutLink);
+    }
 
     public MessageCenterView getMessageCenter() {
         return messageCenter;

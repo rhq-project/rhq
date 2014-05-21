@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -51,6 +52,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
 
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";
+    private static final String DOMAIN_HOST_TRAIT = "domain-host-name";
 
     @Override
     protected AS7Mode getMode() {
@@ -64,7 +66,11 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             String requestName = request.getName();
             if (requestName.equals(DOMAIN_CONFIG_TRAIT) || requestName.equals(HOST_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
-            } else {
+            } else if (requestName.equals(DOMAIN_HOST_TRAIT)) {
+                MeasurementDataTrait data = new MeasurementDataTrait(request, findASDomainHostName());
+                report.addData(data);
+            }
+            else {
                 leftovers.add(request); // handled below
             }
         }
@@ -85,7 +91,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             return runCliCommand(parameters);
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
-            String domainHost = pluginConfiguration.getSimpleValue("domainHost", "");
+            String domainHost = getASHostName();
             if (domainHost.isEmpty()) {
                 OperationResult result = new OperationResult();
                 result.setErrorMessage("No domain host found - can not continue");
@@ -235,17 +241,13 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     @NotNull
     @Override
     protected Address getEnvironmentAddress() {
-        return new Address("host=" + getHostName() + ",core-service=host-environment");
+        return new Address("host=" + getASHostName() + ",core-service=host-environment");
     }
 
     @NotNull
     @Override
     protected Address getHostAddress() {
-        return new Address("host=" + getHostName());
-    }
-
-    private String getHostName() {
-        return context.getPluginConfiguration().getSimpleValue("domainHost", "master");
+        return new Address("host=" + getASHostName());
     }
 
     @NotNull

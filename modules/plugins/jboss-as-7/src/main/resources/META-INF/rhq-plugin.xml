@@ -1050,7 +1050,7 @@
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this host controller" displayName="Log Directory" readOnly="true" required="false"/>
-      <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
+      <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain (Deprecated, use 'name' trait)"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
       &startScriptPluginConfigGroup;
@@ -1108,6 +1108,8 @@
             description="The name of the domain configuration file this host controller is using"/>
     <metric property="host-config-file" displayName="Host Config File" dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host configuration file this host controller is using"/>
+    <metric property="domain-host-name" displayName="Domain Host Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
+            description="The name of the host in domain this host controller is using"/>
 
     <event name="logEntry" description="an entry in a log file"/>
 

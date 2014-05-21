@@ -261,7 +261,7 @@ public class AgentMain {
     /**
      * Lock held when the m_clientSender needs to be created and destroyed.
      */
-     private final Object m_init = new Object();
+    private final Object m_init = new Object();
 
     /**
      * The time (as reported by <code>System.currentTimeMillis()</code>) when the agent was {@link #start() started}.
@@ -1884,7 +1884,8 @@ public class AgentMain {
             LOG.debug(AgentI18NResourceKeys.CREATING_PLUGIN_CONTAINER_SERVER_SERVICES);
 
             //make the service container understand the requests for plugin container lifecycle events.
-            getServiceContainer().addRemotePojo(new PluginContainerLifecycleListener(this), PluginContainerLifecycle.class);
+            getServiceContainer().addRemotePojo(new PluginContainerLifecycleListener(this),
+                PluginContainerLifecycle.class);
 
             // Get remote pojo's for server access and make them accessible in the configuration object
             ClientRemotePojoFactory factory = m_clientSender.getClientRemotePojoFactory();
@@ -3786,6 +3787,18 @@ public class AgentMain {
 
                 // take this opportunity to check the agent-server clock sync
                 serverClockNotification(request.getReplyServerTimestamp());
+
+                // If the server thinks we are down, we need to do some things to get this agent in sync
+                // with the server. Anything we do in here should be very fast.
+                boolean serverThinksWeAreDown = request.isReplyAgentIsBackfilled();
+                if (serverThinksWeAreDown) {
+                    LOG.warn(AgentI18NResourceKeys.SERVER_THINKS_AGENT_IS_DOWN);
+                    PluginContainer pluginContainer = PluginContainer.getInstance();
+                    if (pluginContainer.isStarted()) {
+                        // tell the plugin container to send a full avail report up so the server knows we are UP
+                        pluginContainer.getInventoryManager().requestFullAvailabilityReport();
+                    }
+                }
 
             } catch (Throwable t) {
                 // If the ping fails, typically do to a CannotConnectException, and we're not using autodiscovery,

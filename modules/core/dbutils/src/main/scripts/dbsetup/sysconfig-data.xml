@@ -156,7 +156,7 @@
       <!-- Flag that protects user without any assigned role to log in to web UI -->
       <data ID="65" PROPERTY_KEY="ENABLE_LOGIN_WITHOUT_ROLES" PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false" />
 
-      <data ID="66" PROPERTY_KEY="METRICS_CACHE_ACTIVATION_TIME" FREAD_ONLY="FALSE"/> 
+      <data ID="66" PROPERTY_KEY="METRICS_CACHE_ACTIVATION_TIME" DEFAULT_PROPERTY_VALUE="-1" FREAD_ONLY="FALSE"/>
     </table>
 
 </dbsetup>

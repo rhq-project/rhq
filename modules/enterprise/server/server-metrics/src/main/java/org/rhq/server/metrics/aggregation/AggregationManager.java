@@ -53,7 +53,7 @@ public class AggregationManager {
 
     private Semaphore permits;
 
-    private Long cacheActivationTime;
+    private long cacheActivationTime;
 
     public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
         DateTime startTime, int batchSize, int parallelism, int cacheBatchSize) {
@@ -82,7 +82,7 @@ public class AggregationManager {
      *
      * @param cacheActivationTime The time to reactivate metrics_cache
      */
-    public void setCacheActivationTime(Long cacheActivationTime) {
+    public void setCacheActivationTime(long cacheActivationTime) {
         this.cacheActivationTime = cacheActivationTime;
     }
 
@@ -199,7 +199,7 @@ public class AggregationManager {
     }
 
     private boolean isCacheActive() {
-        return cacheActivationTime == null || startTime.getMillis() >= cacheActivationTime;
+        return startTime.getMillis() >= cacheActivationTime;
     }
 
 }

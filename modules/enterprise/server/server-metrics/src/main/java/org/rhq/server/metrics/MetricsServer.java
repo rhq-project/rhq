@@ -88,7 +88,7 @@ public class MetricsServer {
 
     private int cacheBatchSize = Integer.parseInt(System.getProperty("rhq.metrics.cache.batch-size", "5"));
 
-    private Long cacheActivationTime;
+    private long cacheActivationTime;
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -130,7 +130,7 @@ public class MetricsServer {
         return aggregationWorkers;
     }
 
-    public void setCacheActivationTime(Long cacheActivationTime) {
+    public void setCacheActivationTime(long cacheActivationTime) {
         this.cacheActivationTime = cacheActivationTime;
     }
 

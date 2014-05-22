@@ -228,7 +228,7 @@
                dest="${jboss.modules.dir}" />
 
         <echo>Adding installer module to ${jboss.modules.dir} ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-installer-util/${project.version}/rhq-installer-util-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/rhq-installer-util/${rhq-installer-util.version}/rhq-installer-util-${rhq-installer-util.version}.zip"
                dest="${jboss.modules.dir}" />
 
         <echo>Adding Cassandra installer module to ${jboss.modules.dir}...</echo>
@@ -240,7 +240,7 @@
              dest="${jboss.modules.dir}"/>
 
         <echo>Adding RHQ Server Control module to ${jboss.modules.dir}...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-server-control/${project.version}/rhq-server-control-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/rhq-server-control/${rhq-server-control.version}/rhq-server-control-${rhq-server-control.version}.zip"
                dest="${jboss.modules.dir}"/>
 
         <echo>Injecting RHQ JDR plugin to JBoss JDR module ${jboss.home}/modules</echo>

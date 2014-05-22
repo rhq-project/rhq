@@ -134,7 +134,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-server-metrics</artifactId>
-      <version>${project.parent.version}</version>
+      <version>${rhq-server-metrics.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.hyperic</groupId>

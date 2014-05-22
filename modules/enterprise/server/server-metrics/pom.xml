@@ -36,7 +36,7 @@
   </parent>
 
   <artifactId>rhq-server-metrics</artifactId>
-  <version>4.9.0.JON320GA</version>
+  <version>4.9.0.JON320GA-redhat-1</version>
   <name>RHQ Server Metrics</name>
 
   <properties>

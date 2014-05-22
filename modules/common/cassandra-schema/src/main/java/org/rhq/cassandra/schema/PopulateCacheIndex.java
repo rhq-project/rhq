@@ -188,15 +188,16 @@ public class PopulateCacheIndex implements Step {
         initPreparedStatements();
 
         Date mostRecent1HourTimeSlice = findMostRecentRawDataSinceLastShutdown();
-        Date mostRecent6HourTimeSlice = get6HourTimeSlice(mostRecent1HourTimeSlice).toDate();
-        Date mostRecent24HourTimeSlice = get24HourTimeSlice(mostRecent1HourTimeSlice).toDate();
-        Date day = mostRecent24HourTimeSlice;
 
         try {
             if (mostRecent1HourTimeSlice == null) {
                 log.info("The " + CACHE_INDEX_TABLE + " table will not be updated. No raw data was found.");
             } else {
                 log.debug("The most recent hour with raw data is " + mostRecent1HourTimeSlice);
+
+                Date mostRecent6HourTimeSlice = get6HourTimeSlice(mostRecent1HourTimeSlice).toDate();
+                Date mostRecent24HourTimeSlice = get24HourTimeSlice(mostRecent1HourTimeSlice).toDate();
+                Date day = mostRecent24HourTimeSlice;
 
                 updateCacheIndex(fetchRawIndexEntries(mostRecent1HourTimeSlice), Bucket.RAW, day,
                     current1HourTimeSlice().toDate());

@@ -2367,11 +2367,11 @@
             <schema-directSQL>
               <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">
                 INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', null, null, false)
+                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, false)
               </statement>
               <statement targetDBVendor="oracle" desc="Adding metrics cache table activation time">
                 INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
-                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', null, null, 0)
+                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, 0)
               </statement>
             </schema-directSQL>
           </schemaSpec>

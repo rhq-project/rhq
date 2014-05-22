@@ -556,7 +556,7 @@ public class StorageClientManager implements StorageClientManagerMBean{
         metricsServer.init();
     }
 
-    private Long getCacheActivationTime() {
+    private long getCacheActivationTime() {
         SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
         return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
     }

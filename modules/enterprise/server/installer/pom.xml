@@ -12,6 +12,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-installer-util</artifactId>
+    <version>4.9.0.JON320GA</version>
     <packaging>jar</packaging>
 
     <name>RHQ Enterprise Installer Utility</name>
@@ -39,14 +40,14 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-dbutils</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-dbutils.version}</version>
         </dependency>
 
         <dependency>
             <!-- need this solely for SecurityUtils -->
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-comm</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-comm.version}</version>
         </dependency>
 
         <dependency>
@@ -58,7 +59,7 @@
       <dependency>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-cassandra-schema</artifactId>
-        <version>${project.version}</version>
+        <version>${rhq-cassandra-schema.version}</version>
       </dependency>
 
         <dependency>
@@ -190,12 +191,12 @@
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-util</artifactId>
-                                  <version>${project.version}</version>
+                                  <version>${rhq-cassandra-util.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-ccm-core</artifactId>
-                                  <version>${project.version}</version>
+                                  <version>${rhq-cassandra-ccm-core.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                 <groupId>joda-time</groupId>

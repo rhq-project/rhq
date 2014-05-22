@@ -18,7 +18,6 @@
         <resource-root path="rhq-cassandra-schema-${project.version}.jar"/>
         <resource-root path="rhq-cassandra-util-${project.version}.jar"/>
         <resource-root path="joda-time-2.1.jar"/>
-        <resource-root path="guava-14.0.1.jar"/>
     </resources>
 
     <dependencies>

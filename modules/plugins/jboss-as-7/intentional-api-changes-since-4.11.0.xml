@@ -1,0 +1,21 @@
+<differences>
+   <difference>
+        <className>org/rhq/modules/plugins/jbossas7/BaseProcessDiscovery</className>
+        <differenceType>7013</differenceType>
+        <method>java.lang.String buildDefaultResourceName(org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.JBossProductType, java.lang.String)</method>
+        <justification>Functionality enhancements due to [BZ 1080552]</justification>
+   </difference>
+
+   <difference>
+        <className>org/rhq/modules/plugins/jbossas7/HostControllerDiscovery</className>
+        <differenceType>7004</differenceType>
+        <method> java.lang.String buildDefaultResourceName(org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.JBossProductType)</method>
+        <justification>Functionality enhancements due to [BZ 1080552], old method is still present but deprecated.</justification>
+   </difference>
+   <difference>
+        <className>org/rhq/modules/plugins/jbossas7/StandaloneASDiscovery</className>
+        <differenceType>7004</differenceType>
+        <method> java.lang.String buildDefaultResourceName(org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.helper.HostPort, org.rhq.modules.plugins.jbossas7.JBossProductType)</method>
+        <justification>Functionality enhancements due to [BZ 1080552], old method is still present but deprecated.</justification>
+   </difference>
+</differences>

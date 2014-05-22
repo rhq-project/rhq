@@ -6,5 +6,4 @@
     <field>steps</field>
     <justification>Data field only used internally for installing remote agents - should never have been public in the first place. It was a typo.</justification>
   </difference>
-
 </differences>

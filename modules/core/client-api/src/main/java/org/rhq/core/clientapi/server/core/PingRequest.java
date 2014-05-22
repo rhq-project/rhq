@@ -24,7 +24,7 @@ import java.io.Serializable;
 
 /**
  * A simple POJO for requesting actions or data from the ping.
- * 
+ *
  * @author Jay Shaughnessy
  */
 public class PingRequest implements Serializable {
@@ -36,6 +36,7 @@ public class PingRequest implements Serializable {
 
     private boolean replyUpdateAvailability;
     private Long replyServerTimestamp;
+    private boolean replyAgentIsBackfilled;
 
     public PingRequest(String agentName) {
         this(agentName, true, true);
@@ -74,4 +75,13 @@ public class PingRequest implements Serializable {
     public void setReplyServerTimestamp(Long replyServerTimestamp) {
         this.replyServerTimestamp = replyServerTimestamp;
     }
+
+    public boolean isReplyAgentIsBackfilled() {
+        return replyAgentIsBackfilled;
+    }
+
+    public void setReplyAgentIsBackfilled(boolean replyAgentIsBackfilled) {
+        this.replyAgentIsBackfilled = replyAgentIsBackfilled;
+    }
+
 }

@@ -157,6 +157,14 @@ public enum SystemSetting {
      */
     STORAGE_PASSWORD("STORAGE_PASSWORD", PropertySimpleType.PASSWORD, true, true, false),
 
+    /**
+     * Setting this property deactivates the metrics_cache table. Data will not be pulled from metrics_cache until
+     * the time specified by this property has been reached. This applies to both past and current data. There are two
+     * use cases for this - 1) data migration during upgrade and 2) cache partition resizing (i.e., number of schedules
+     * stored per partition)
+     */
+    METRICS_CACHE_ACTIVATION_TIME("METRICS_CACHE_ACTIVATION_TIME", PropertySimpleType.LONG, false, false, true),
+
     //these seem to be unused yet still present in the database...
     @Deprecated
     HELP_USER("CAM_HELP_USER", PropertySimpleType.STRING, true, false, true),

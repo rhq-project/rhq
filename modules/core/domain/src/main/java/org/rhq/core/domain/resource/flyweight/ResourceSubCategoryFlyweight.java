@@ -25,71 +25,48 @@ package org.rhq.core.domain.resource.flyweight;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.resource.ResourceType;
+
 /**
- * Flyweight representation of a resource sub category. Only id, name and parent are preserved.
- * 
- * @author Lukas Krejci
+ * Deprecated due to a simpler but more powerful subcategory design.
+ * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+ *
+ * This class is no longer in use because subcategories are now just an attribute
+ * on {@link ResourceType}.
  */
+@Deprecated
 public class ResourceSubCategoryFlyweight implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    private int id;
-    private String name;
-    private ResourceSubCategoryFlyweight parentSubCategory;
-
+    @Deprecated
     public ResourceSubCategoryFlyweight() {
-
     }
 
+    @Deprecated
     public int getId() {
-        return id;
+        return 0;
     }
 
+    @Deprecated
     public void setId(int id) {
-        this.id = id;
     }
 
+    @Deprecated
     public String getName() {
-        return name;
+        return null;
     }
 
+    @Deprecated
     public void setName(String name) {
-        this.name = name;
     }
 
+    @Deprecated
     public ResourceSubCategoryFlyweight getParentSubCategory() {
-        return parentSubCategory;
+        return null;
     }
 
+    @Deprecated
     public void setParentSubCategory(ResourceSubCategoryFlyweight parentSubCategory) {
-        this.parentSubCategory = parentSubCategory;
     }
-    
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof ResourceSubCategoryFlyweight)) {
-            return false;
-        }
-
-        ResourceSubCategoryFlyweight that = (ResourceSubCategoryFlyweight) o;
-
-        if (!name.equals(that.getName())) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result;
-        result = name.hashCode();
-
-        return result;
-    }    
 }

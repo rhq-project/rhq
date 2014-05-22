@@ -105,7 +105,6 @@ import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
@@ -1728,11 +1727,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         List<AutoGroupComposite> resourceAutoGroups = query.getResultList();
 
         for (AutoGroupComposite composite : resourceAutoGroups) {
-            ResourceSubCategory sc = composite.getResourceType().getSubCategory();
-            if (sc != null) {
-                sc.getId();
-            }
-
             if (authorizationManager.isInventoryManager(user)) {
                 query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN);
             } else {
@@ -1756,66 +1750,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             composite.setResources(results);
         }
 
-        List<AutoGroupComposite> fullComposites = new ArrayList<AutoGroupComposite>();
-
-        calculateSubcategorySummary(parentResource, parentResource.getResourceType().getChildSubCategories(),
-            resourceAutoGroups, 0, fullComposites);
-        fullComposites.addAll(resourceAutoGroups);
-
-        return fullComposites;
+        return resourceAutoGroups;
     }
 
     public List<AutoGroupComposite> findChildrenAutoGroups(Subject user, int parentResourceId) {
         return findChildrenAutoGroups(user, parentResourceId, (int[]) null);
-    }
-
-    private void calculateSubcategorySummary(Resource parentResource, List<ResourceSubCategory> subcategories,
-        List<AutoGroupComposite> resourceAutoGroups, int depth, List<AutoGroupComposite> fullComposites) {
-
-        for (ResourceSubCategory subCategory : subcategories) {
-            List<AutoGroupComposite> matches = new ArrayList<AutoGroupComposite>();
-            for (AutoGroupComposite ac : resourceAutoGroups) {
-                ResourceSubCategory searchCategory = ac.getResourceType().getSubCategory();
-
-                while (searchCategory != null) {
-                    if (subCategory.equals(searchCategory)) {
-                        matches.add(ac);
-                    }
-
-                    searchCategory = searchCategory.getParentSubCategory();
-                }
-            }
-
-            if (matches.size() > 0) {
-                int count = 0;
-                double avail = 0;
-                for (AutoGroupComposite mac : matches) {
-                    count += mac.getMemberCount();
-                    avail += ((mac.getAvailability() == null) ? 0d : mac.getAvailability()) * mac.getMemberCount();
-                }
-
-                avail = avail / count;
-
-                AutoGroupComposite categoryComposite = new AutoGroupComposite(avail, parentResource, subCategory, count);
-                categoryComposite.setDepth(depth);
-                fullComposites.add(categoryComposite);
-            }
-
-            if (subCategory.getChildSubCategories() != null) {
-                calculateSubcategorySummary(parentResource, subCategory.getChildSubCategories(), resourceAutoGroups,
-                    depth + 1, fullComposites);
-            }
-
-            // We matched all descendants above, but only list children directly as the child sub categories will already
-            // be listed above and will show matches as necessary
-            for (AutoGroupComposite match : matches) {
-                if (match.getResourceType().getSubCategory().equals(subCategory)) {
-                    match.setDepth(depth + 1);
-                    fullComposites.add(match);
-                    resourceAutoGroups.remove(match);
-                }
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -2371,13 +2310,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             + "           parent.id, parent.name, " //
             + "           currentAvail.availabilityType, " //
             + "           type.id, type.name, type.plugin, type.singleton, type.category, " //
-            + "           subCategory.id, subCategory.name, " //
-            + "           parentSubCategory.id, parentSubCategory.name " //
+            + "           type.subCategory" //
             + "      FROM Resource res " //
             + "      JOIN res.currentAvailability currentAvail " //
             + "      JOIN res.resourceType type " //
-            + " LEFT JOIN type.subCategory subCategory " //
-            + " LEFT JOIN subCategory.parentSubCategory parentSubCategory " //
             + " LEFT JOIN res.parentResource parent " //
             + "     WHERE res.inventoryStatus = :inventoryStatus " //
             + "       AND res.agent.id = :agentId";
@@ -2443,21 +2379,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             Boolean typeSingleton = (Boolean) prefetched[i++];
             ResourceCategory typeCategory = (ResourceCategory) prefetched[i++];
 
-            Integer subCategoryId = (Integer) prefetched[i++];
-            String subCategoryName = (String) prefetched[i++];
-
-            Integer parentSubCategoryId = (Integer) prefetched[i++];
-            String parentSubCategoryName = (String) prefetched[i++];
-
-            if (subCategoryId != null) {
-                //we don't need the reference to the sub category here. We need it just in the cache.
-                flyweightCache.constructSubCategory(subCategoryId, subCategoryName, parentSubCategoryId,
-                    parentSubCategoryName);
-            }
+            String subCategory = (String) prefetched[i++];
 
             //we don't need the resource type reference here, only in the cache
-            flyweightCache.constructResourceType(typeId, typeName, typePlugin, typeSingleton, typeCategory,
-                subCategoryId);
+            flyweightCache
+                .constructResourceType(typeId, typeName, typePlugin, typeSingleton, typeCategory, subCategory);
 
             ResourceFlyweight resourceFlyweight = flyweightCache.constructResource(resourceId, resourceName,
                 resourceUuid, resourceKey, parentId, typeId, availType);
@@ -2479,14 +2405,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             + "           parent.id, parent.name, " //
             + "           currentAvail.availabilityType, " //
             + "           type.id, type.name, type.plugin, type.singleton, type.category, " //
-            + "           subCategory.id, subCategory.name, " //
-            + "           parentSubCategory.id, parentSubCategory.name " //
+            + "           type.subCategory "
             + "      FROM Resource res " //
             + "      JOIN res.implicitGroups g " //
             + "      JOIN res.currentAvailability currentAvail " //
             + "      JOIN res.resourceType type " //
-            + " LEFT JOIN type.subCategory subCategory " //
-            + " LEFT JOIN subCategory.parentSubCategory parentSubCategory " //
             + " LEFT JOIN res.parentResource parent " //
             + "     WHERE res.inventoryStatus = :inventoryStatus " //
             + "       AND g.id = :groupId";

@@ -96,8 +96,8 @@ public class DeleteContentRunner implements Runnable {
                     packageTypeNames.add(packageTypeName);
                     
                     try {
-                        contentManager.executeResourcePackageDiscoveryImmediately(request.getRequestId(),
-                            individualResponse.getKey().getName());
+                        contentManager.executeResourcePackageDiscoveryImmediately(request.getResourceId(),
+                            packageTypeName);
                     } catch (Throwable throwable) {
                         log.error("Error executing content discovery", throwable);
                     }

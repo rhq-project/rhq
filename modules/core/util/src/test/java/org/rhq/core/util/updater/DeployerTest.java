@@ -832,7 +832,7 @@ public class DeployerTest {
                 DestinationComplianceMode.full);
             Map<File, File> zipFiles = new HashMap<File, File>(1);
             String relativeAlternatePath = "relative/deploy/directory";
-            File relativeAlternateDir = new File(tmpDir, relativeAlternatePath);
+            File relativeAlternateDir = new File(relativeAlternatePath);
             zipFiles.put(testZipFile1, relativeAlternateDir);
             Map<File, Boolean> zipsExploded = new HashMap<File, Boolean>(1);
             zipsExploded.put(testZipFile1, Boolean.FALSE);
@@ -861,6 +861,251 @@ public class DeployerTest {
             assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(deployedZipFile.getPath())) : listener;
         } finally {
             FileUtil.purge(tmpDir, true);
+        }
+    }
+
+    public void testInitialDeployOneZipExplodedAbsoluteDestDir() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+        File tmpAlternateDir = FileUtil.createTempDirectory("testDeployerTestAlternate", ".dir", null);
+        try {
+            File testZipFile1 = new File("target/test-classes/updater-test2.zip");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
+
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            zipFiles.put(testZipFile1, tmpAlternateDir);
+            Map<File, Boolean> zipsExploded = new HashMap<File, Boolean>(1);
+            zipsExploded.put(testZipFile1, Boolean.TRUE);
+            Map<File, File> rawFiles = null;
+            File destDir = tmpDir;
+            Pattern ignoreRegex = null;
+
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                realizeRegex1, templateEngine, ignoreRegex, zipsExploded);
+            Deployer deployer = new Deployer(dd);
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
+
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
+            assert map.size() == 0 : map;
+
+            map = FileHashcodeMap.generateFileHashcodeMap(tmpAlternateDir, null, null);
+            assert map.size() == 7 : map;
+            assert listener.getAddedFiles().size() == 7 : listener;
+            String f = "dir1" + fileSeparator + "file1";
+            assert map.containsKey(f) : map;
+            File file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir1" + fileSeparator + "file2";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir2" + fileSeparator + "file3";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir3" + fileSeparator + "dir4" + fileSeparator + "file4";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "fileA";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir1" + fileSeparator + "fileB";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir2" + fileSeparator + "fileC";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+
+        } finally {
+            FileUtil.purge(tmpDir, true);
+            FileUtil.purge(tmpAlternateDir, true);
+        }
+    }
+
+    public void testInitialDeployOneZipExplodedRelativeDestDir() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+
+        try {
+            File testZipFile1 = new File("target/test-classes/updater-test2.zip");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
+
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            String relativeAlternatePath = "relative/deploy/directory";
+            File relativeAlternateDir = new File(relativeAlternatePath);
+            zipFiles.put(testZipFile1, relativeAlternateDir);
+            Map<File, Boolean> zipsExploded = new HashMap<File, Boolean>(1);
+            zipsExploded.put(testZipFile1, Boolean.TRUE);
+            Map<File, File> rawFiles = null;
+            File destDir = tmpDir;
+            Pattern ignoreRegex = null;
+
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                realizeRegex1, templateEngine, ignoreRegex, zipsExploded);
+            Deployer deployer = new Deployer(dd);
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
+
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
+            assert map.size() == 7 : map;
+            assert listener.getAddedFiles().size() == 7 : listener;
+            String p = "relative" + fileSeparator + "deploy" + fileSeparator + "directory" + fileSeparator;
+            String f = p + "dir1" + fileSeparator + "file1";
+            assert map.containsKey(f) : map;
+            File file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = p + "dir1" + fileSeparator + "file2";
+            assert map.containsKey(f) : map;
+            file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = p + "dir2" + fileSeparator + "file3";
+            assert map.containsKey(f) : map;
+            file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = p + "dir3" + fileSeparator + "dir4" + fileSeparator + "file4";
+            assert map.containsKey(f) : map;
+            file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = p + "fileA";
+            assert map.containsKey(f) : map;
+            file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = p + "dir1" + fileSeparator + "fileB";
+            assert map.containsKey(f) : map;
+            file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = p + "dir2" + fileSeparator + "fileC";
+            assert map.containsKey(f) : map;
+            file = new File(tmpDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+
+        } finally {
+            FileUtil.purge(tmpDir, true);
+        }
+    }
+
+    public void testInitialDeployOneZipExplodedRelativeDestDirAbove() throws Exception {
+        File tmpDir = FileUtil.createTempDirectory("testDeployerTest", ".dir", null);
+        File tmpAlternateDir = FileUtil.createTempDirectory("testDeployerTestAlternate", ".dir", null);
+        try {
+            File testZipFile1 = new File("target/test-classes/updater-test2.zip");
+            Pattern filesToRealizeRegex = Pattern.compile("(fileA)|(dir1.fileB)"); // '.' in place of file separator to support running test on windows & unix
+
+            DeploymentProperties deploymentProps = new DeploymentProperties(0, "testbundle", "1.0.test", null,
+                DestinationComplianceMode.full);
+            Map<File, File> zipFiles = new HashMap<File, File>(1);
+            String relativeAlternatePath = "../" + tmpAlternateDir.getName();
+            File relativeAlternateDir = new File(relativeAlternatePath);
+            zipFiles.put(testZipFile1, relativeAlternateDir);
+            zipFiles.put(testZipFile1, tmpAlternateDir);
+            Map<File, Boolean> zipsExploded = new HashMap<File, Boolean>(1);
+            zipsExploded.put(testZipFile1, Boolean.TRUE);
+            Map<File, File> rawFiles = null;
+            File destDir = tmpDir;
+            Pattern ignoreRegex = null;
+
+            Map<File, Pattern> realizeRegex1 = new HashMap<File, Pattern>(1);
+            realizeRegex1.put(testZipFile1, filesToRealizeRegex);
+
+            DeploymentData dd = new DeploymentData(deploymentProps, tmpDir, destDir, rawFiles, null, zipFiles,
+                realizeRegex1, templateEngine, ignoreRegex, zipsExploded);
+            Deployer deployer = new Deployer(dd);
+            DeployDifferences listener = new DeployDifferences();
+            deployer.deploy(listener);
+
+            FileHashcodeMap map = FileHashcodeMap.generateFileHashcodeMap(destDir, null, null);
+            assert map.size() == 0 : map;
+
+            map = FileHashcodeMap.generateFileHashcodeMap(tmpAlternateDir, null, null);
+            assert map.size() == 7 : map;
+            assert listener.getAddedFiles().size() == 7 : listener;
+            String f = "dir1" + fileSeparator + "file1";
+            assert map.containsKey(f) : map;
+            File file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir1" + fileSeparator + "file2";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir2" + fileSeparator + "file3";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir3" + fileSeparator + "dir4" + fileSeparator + "file4";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "fileA";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir1" + fileSeparator + "fileB";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+            f = "dir2" + fileSeparator + "fileC";
+            assert map.containsKey(f) : map;
+            file = new File(tmpAlternateDir, f);
+            assert file.exists();
+            assert MessageDigestGenerator.getDigestString(file).equals(map.get(f));
+            assert listener.getAddedFiles().contains(FileUtil.useForwardSlash(file.getPath())) : listener;
+
+        } finally {
+            FileUtil.purge(tmpDir, true);
+            FileUtil.purge(tmpAlternateDir, true);
         }
     }
 

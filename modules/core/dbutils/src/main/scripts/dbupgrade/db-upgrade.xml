@@ -2298,7 +2298,7 @@
 
             <schemaSpec version="2.144">
                 <!-- RHQ_AGENT_INSTALL -->
-                <schema-createSequence name="RHQ_AGENT_INSTALL_ID_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_AGENT_INSTALL_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_AGENT_INSTALL">
                         CREATE TABLE RHQ_AGENT_INSTALL ( ID INTEGER PRIMARY KEY )
@@ -2356,6 +2356,26 @@
                 </schema-directSQL>
             </schemaSpec>
 
+	        <schemaSpec version="2.149">
+              <schema-addColumn   table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY" columnType="VARCHAR2" precision="4000" />
+              <schema-javaTask className="SubcategoryUpgradeTask" />
+              <schema-deleteColumn table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY_ID" />
+              <schema-dropTable table="RHQ_RESOURCE_SUBCAT"/>
+            </schemaSpec>
+
+          <schemaSpec version="2.150">
+            <schema-directSQL>
+              <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">
+                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', null, null, false)
+              </statement>
+              <statement targetDBVendor="oracle" desc="Adding metrics cache table activation time">
+                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', null, null, 0)
+              </statement>
+            </schema-directSQL>
+          </schemaSpec>
+       
         </dbupgrade>
     </target>
 </project>

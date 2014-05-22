@@ -34,14 +34,14 @@ import org.rhq.core.domain.resource.ResourceCategory;
  */
 public class ResourceTypeFlyweight implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private int id;
     private String name;
     private String plugin;
     private boolean singleton;
     private ResourceCategory category;
-    private ResourceSubCategoryFlyweight subCategory;
+    private String subCategory;
 
     public ResourceTypeFlyweight() {
 
@@ -79,11 +79,11 @@ public class ResourceTypeFlyweight implements Serializable {
         this.category = resourceCategory;
     }
 
-    public ResourceSubCategoryFlyweight getSubCategory() {
+    public String getSubCategory() {
         return subCategory;
     }
 
-    public void setSubCategory(ResourceSubCategoryFlyweight subCategory) {
+    public void setSubCategory(String subCategory) {
         this.subCategory = subCategory;
     }
 

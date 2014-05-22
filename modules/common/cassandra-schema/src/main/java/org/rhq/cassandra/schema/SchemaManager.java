@@ -27,6 +27,7 @@ package org.rhq.cassandra.schema;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.ConsoleAppender;
@@ -40,6 +41,8 @@ import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
  * @author John Sanda
  */
 public class SchemaManager {
+
+    public static final String RELATIONAL_DB_CONNECTION_FACTORY_PROP = "relational_db_connection_factory";
 
     /**
      * The username that RHQ will use to connect to the storage cluster.
@@ -92,14 +95,31 @@ public class SchemaManager {
     }
 
     /**
-     * Install and update the storage cluster schema.
+     * Install and update the storage cluster schema. Note that this method should only be used for new installations
+     * such as may be the case in development and test environments. It does <strong>not</strong> provide access to
+     * the RHQ relational database which some upgrade steps may need. See {@link PopulateCacheIndex} for details.
      *
      * @throws Exception
      */
     public void install() throws Exception {
         VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
-        version.install();
+        version.install(new Properties());
     }
+
+    /**
+     * Install and update the storage cluster schema.
+     *
+     * @param factory Creates new JDBC connections to the RHQ relational database
+     * @throws Exception
+     */
+    public void install(DBConnectionFactory factory) throws Exception {
+        Properties properties = new Properties();
+        properties.put(RELATIONAL_DB_CONNECTION_FACTORY_PROP, factory);
+
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort, sessionManager);
+        version.install(properties);
+    }
+
 
     /**
      * Check the existing storage cluster schema version to ensure it is compatible with the

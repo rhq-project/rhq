@@ -150,7 +150,11 @@ import org.rhq.core.domain.cloud.Server;
         + "  WHERE id = :agentId "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_PING, query = "" //
         + " UPDATE Agent a " //
-        + "    SET lastAvailabilityPing = :now, backFilled = FALSE " //
+        + "    SET lastAvailabilityPing = :now " //
+        + "  WHERE name = :agentName AND backfilled = FALSE "), //
+    @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_PING_FORCE, query = "" //
+        + " UPDATE Agent a " //
+        + "    SET lastAvailabilityPing = :now " //
         + "  WHERE name = :agentName ") //
 
 })
@@ -191,6 +195,7 @@ public class Agent implements Serializable {
 
     public static final String QUERY_UPDATE_LAST_AVAIL_REPORT = "Agent.updateLastAvailReport";
     public static final String QUERY_UPDATE_LAST_AVAIL_PING = "Agent.updateLastAvailPing";
+    public static final String QUERY_UPDATE_LAST_AVAIL_PING_FORCE = "Agent.updateLastAvailPingForce";
 
     // this value is set, when authorized user wants to reset the token
     public static final String SECURITY_TOKEN_RESET = "@#$reset$#@";

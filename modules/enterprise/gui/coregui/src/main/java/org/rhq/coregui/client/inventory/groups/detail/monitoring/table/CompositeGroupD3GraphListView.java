@@ -56,6 +56,7 @@ import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * This composite graph view has different graph types and data structures for
@@ -68,7 +69,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
     static protected final Messages MSG = CoreGUI.getMessages();
     // The d3 color palette onlys supports 20 colors so we limit to this
-    private static final int MAX_NUMBER_OF_LINES_IN_GRAPH = 20;
+    private static final int MAX_NUMBER_OF_LINES_IN_GRAPH = 50;
     // string labels
     private final String chartTitleMinLabel = MSG.chart_title_min_label();
     private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
@@ -142,6 +143,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                         for (Iterator<Resource> resourceIterator = fullSetOfChildResources.iterator(); resourceIterator.hasNext(); ) {
                             Resource nextChildResource = resourceIterator.next();
                             if(i >= MAX_NUMBER_OF_LINES_IN_GRAPH){
+                                CoreGUI.getMessageCenter().notify(new Message( MSG.chart_warning_max_composite_graphs_limit_exceeded()+" "+String.valueOf( MAX_NUMBER_OF_LINES_IN_GRAPH ), Message.Severity.Warning));
                                 break;
                             }
                             childResources.add(nextChildResource);

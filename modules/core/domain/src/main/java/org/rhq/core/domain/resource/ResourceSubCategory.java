@@ -23,288 +23,136 @@
 package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
- * Class representing a sub category, where a sub category is meant to group similar Resource types together.
+ * Deprecated due to a simpler but more powerful subcategory design.
+ * Please see https://bugzilla.redhat.com/show_bug.cgi?id=1069545
+ *
+ * This class is no longer in use because subcategories are now just an attribute
+ * on {@link ResourceType}.
  */
-@Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SUBCAT_ID_SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
-@Table(name = "RHQ_RESOURCE_SUBCAT")
-@NamedQueries( { @NamedQuery(name = ResourceSubCategory.QUERY_FIND_BY_NAME_AND_PLUGIN, query = "SELECT rsc FROM ResourceSubCategory AS rsc WHERE rsc.name = :name AND rsc.resourceType.plugin = :plugin") })
+@Deprecated
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceSubCategory.findByNameAndPlugin";
-
-    @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
-    @Id
-    private int id;
-
-    @Column(name = "NAME")
-    private String name;
-
-    @Column(name = "DISPLAY_NAME")
-    private String displayName;
-
-    @Column(name = "DESCRIPTION")
-    private String description;
-
-    @Column(name = "CTIME")
-    private Long ctime;
-
-    @Column(name = "MTIME")
-    private Long mtime;
-
-    @OneToMany(mappedBy = "parentSubCategory", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST,
-        CascadeType.REMOVE })
-    @OrderBy
-    private List<ResourceSubCategory> childSubCategories = new ArrayList<ResourceSubCategory>();
-
-    @JoinColumn(name = "PARENT_SUBCATEGORY_ID")
-    @ManyToOne
-    private ResourceSubCategory parentSubCategory;
-
-    /**
-     * A subcategory is associated with the type of resource it was defined in This is nullable since child
-     * subcategories don't want to be directly associated with a resourceType, rather they can obtain their type through
-     * their parent
-     */
-    @JoinColumn(name = "RESOURCE_TYPE_ID", updatable = false)
-    @ManyToOne
-    private ResourceType resourceType;
+    @Deprecated
+    public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "";
 
     /* no-arg constructor required by EJB spec */
+    @Deprecated
     public ResourceSubCategory() {
     }
 
+    @Deprecated
     public ResourceSubCategory(String name) {
         assert name != null;
-
-        // Initialize empty ordered lists...
-        this.childSubCategories = new ArrayList<ResourceSubCategory>();
-
-        this.name = name;
-
-        this.mtime = this.ctime = System.currentTimeMillis();
     }
 
-    /**
-     * Returns the resource types that belong to this subcategory; the Set of types is sorted by name.
-     *
-     * @return the resource types that belong to this subcategory; the Set of types is sorted by name
-     */
-    @NotNull
+    @Deprecated
     public Set<ResourceType> findTaggedResourceTypes() {
-        ResourceType parentResourceType = findParentResourceType();
-        Set<ResourceType> taggedResourceTypes = new TreeSet<ResourceType>();
-        findTaggedResourceTypes(parentResourceType, taggedResourceTypes);
-        return taggedResourceTypes;
+        return new HashSet<ResourceType>();
     }
 
-    private void findTaggedResourceTypes(ResourceType parentResourceType, Collection<ResourceType> taggedResourceTypes) {
-        Set<ResourceType> childResourceTypes = parentResourceType.getChildResourceTypes();
-        for (ResourceType childResourceType : childResourceTypes) {
-            if (this.equals(childResourceType.getSubCategory())) {
-                taggedResourceTypes.add(childResourceType);
-            }
-            // check children if their parents are tagged
-            findTaggedResourceTypes(childResourceType, taggedResourceTypes);
-        }
-    }
-
-    @NotNull
+    @Deprecated
     public ResourceType findParentResourceType() {
-        ResourceSubCategory subCategory = this;
-        while (subCategory != null && subCategory.getResourceType() == null)
-            subCategory = subCategory.getParentSubCategory();
-        if (subCategory == null)
-            throw new IllegalStateException(this + " has no parent resource type.");
-        return subCategory.getResourceType();
+        return null;
     }
 
+    @Deprecated
     public boolean isCreatable() {
-        for (ResourceType taggedResourceType : findTaggedResourceTypes()) {
-            // if any resourceType is creatable then this subCategory is
-            if (taggedResourceType.isCreatable()) {
-                return true;
-            }
-        }
-
         return false;
     }
 
+    @Deprecated
     public int getId() {
-        return this.id;
+        return 0;
     }
 
+    @Deprecated
     public void setId(int id) {
-        this.id = id;
     }
 
+    @Deprecated
     public String getName() {
-        return this.name;
+        return null;
     }
 
+    @Deprecated
     public void setName(String name) {
-        this.name = name;
     }
 
+    @Deprecated
     public String getDisplayName() {
-        return this.displayName;
+        return null;
     }
 
+    @Deprecated
     public void setDisplayName(String displayName) {
-        this.displayName = displayName;
     }
 
+    @Deprecated
     public String getDescription() {
-        return this.description;
+        return null;
     }
 
+    @Deprecated
     public void setDescription(String description) {
-        this.description = description;
     }
 
+    @Deprecated
     public long getCtime() {
-        return this.ctime;
+        return 0;
     }
 
-    @PrePersist
-    void onPersist() {
-        this.mtime = this.ctime = System.currentTimeMillis();
-    }
-
+    @Deprecated
     public long getMtime() {
-        return this.mtime;
+        return 0;
     }
 
-    @PreUpdate
-    void onUpdate() {
-        this.mtime = System.currentTimeMillis();
-    }
-
-    /**
-     * Updates the contents of this definition with values from the specified new definition. The intention is for this
-     * to be used as a merge between this attached instance and a detached instance. The name and resourceType will NOT
-     * be updated as part of this call; they are used as identifiers and should already be the same if this merge is
-     * being performed.
-     *
-     * @param newSubCategory contains new data to merge into this definition; cannot be <code>null</code>
-     */
-    public void update(@NotNull ResourceSubCategory newSubCategory) {
-        this.displayName = newSubCategory.getDisplayName();
-        this.description = newSubCategory.getDescription();
-    }
-
-    /**
-     * Removes the given ResourceSubCategory as a child of this ResourceSubCategory
-     */
-    public void removeChildSubCategory(ResourceSubCategory oldChildSubCategory) {
-        oldChildSubCategory.parentSubCategory = null;
-        this.childSubCategories.remove(oldChildSubCategory);
-    }
-
-    /**
-     * add a child ResourceSubCategory to this instance
-     */
-    public void addChildSubCategory(ResourceSubCategory childSubCategory) {
-        childSubCategory.setParentSubCategory(this);
-        this.childSubCategories.add(childSubCategory);
-    }
-
-    public List<ResourceSubCategory> getChildSubCategories() {
-        return childSubCategories;
-    }
-
-    public void setChildSubCategories(List<ResourceSubCategory> childSubCategories) {
-        if (childSubCategories != null) {
-            this.childSubCategories = childSubCategories;
-        }
-    }
-
-    public void setParentSubCategory(ResourceSubCategory parentSubCategory) {
-        this.parentSubCategory = parentSubCategory;
-    }
-
-    /**
-     * Returns this subcategory's parent subcategory, or null if this subcategory has no parent.
-     *
-     * @return this subcategory's parent subcategory, or null if this subcategory has no parent
-     */
-    public ResourceSubCategory getParentSubCategory() {
-        return parentSubCategory;
-    }
-
+    @Deprecated
     public ResourceType getResourceType() {
-        return resourceType;
+        return null;
     }
 
-    public void setResourceType(ResourceType resourceType) {
-        this.resourceType = resourceType;
+    @Deprecated
+    public void setResourceType(ResourceType notused) {
     }
 
+    @Deprecated
+    public void update(ResourceSubCategory newSubCategory) {
+    }
+
+    @Deprecated
+    public void removeChildSubCategory(ResourceSubCategory oldChildSubCategory) {
+    }
+
+    @Deprecated
+    public void addChildSubCategory(ResourceSubCategory childSubCategory) {
+    }
+
+    @Deprecated
+    public List<ResourceSubCategory> getChildSubCategories() {
+        return null;
+    }
+
+    @Deprecated
+    public void setChildSubCategories(List<ResourceSubCategory> childSubCategories) {
+    }
+
+    @Deprecated
+    public void setParentSubCategory(ResourceSubCategory parentSubCategory) {
+    }
+
+    @Deprecated
+    public ResourceSubCategory getParentSubCategory() {
+        return null;
+    }
+
+    @Deprecated
     public int compareTo(ResourceSubCategory that) {
-        return this.name.compareTo(that.getName());
+        return 0;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof ResourceSubCategory)) {
-            return false;
-        }
-
-        ResourceSubCategory that = (ResourceSubCategory) o;
-
-        if (!name.equals(that.getName())) {
-            return false;
-            //if (plugin != null ? !plugin.equals(that.plugin) : that.plugin != null) return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result;
-        result = name.hashCode();
-
-        //result = 31 * result + (plugin != null ? plugin.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "ResourceSubCategory[id=" + id + ", name=" + name + "]";
-    }
-
 }

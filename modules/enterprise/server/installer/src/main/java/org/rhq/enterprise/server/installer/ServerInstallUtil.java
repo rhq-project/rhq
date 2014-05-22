@@ -589,7 +589,7 @@ public class ServerInstallUtil {
             props.put("char.encoding", "UTF-8");
 
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
-                "${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
+                "${rhq.server.database.connection-url:jdbc:postgresql://127.0.0.1:5432/rhq}", JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
                 RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", true, props);

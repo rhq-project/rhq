@@ -25,8 +25,6 @@
 
 package org.rhq.cassandra.schema;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import com.datastax.driver.core.ResultSet;
@@ -143,7 +141,7 @@ abstract class AbstractManager {
      */
     protected boolean userExists() {
         try {
-            ResultSet resultSet = executeManagementQuery(Query.USER_EXISTS, "username", username);
+            ResultSet resultSet = execute("SELECT * FROM system_auth.users WHERE name = '" + username + "'");
             return !resultSet.all().isEmpty();
         } catch (Exception e) {
             log.error(e);
@@ -158,9 +156,11 @@ abstract class AbstractManager {
      */
     protected boolean schemaExists() {
         try {
-            ResultSet resultSet = executeManagementQuery(Query.SCHEMA_EXISTS);
+            ResultSet resultSet = execute("SELECT * FROM system.schema_keyspaces WHERE keyspace_name = 'rhq'");
             if (!resultSet.all().isEmpty()) {
-                resultSet = executeManagementQuery(Query.VERSION_COLUMNFAMILY_EXISTS);
+                resultSet = execute(
+                    "SELECT * FROM system.schema_columnfamilies " +
+                    "WHERE keyspace_name='rhq' AND columnfamily_name='schema_version'");
                 return !resultSet.all().isEmpty();
             }
             return false;
@@ -180,7 +180,7 @@ abstract class AbstractManager {
     protected int getInstalledSchemaVersion() {
         int maxVersion = 0;
         try {
-            ResultSet resultSet = executeManagementQuery(Query.VERSION);
+            ResultSet resultSet = execute("SELECT version FROM rhq.schema_version");
             for (Row row : resultSet.all()) {
                 if (maxVersion < row.getInt(0)) {
                     maxVersion = row.getInt(0);
@@ -220,7 +220,8 @@ abstract class AbstractManager {
     protected int queryReplicationFactor() {
         int replicationFactor = 1;
         try {
-            ResultSet resultSet = executeManagementQuery(Query.REPLICATION_FACTOR);
+            ResultSet resultSet = execute(
+                "SELECT strategy_options FROM system.schema_keyspaces where keyspace_name='rhq'");
             Row row = resultSet.one();
 
             String replicationFactorString = "replication_factor\"";
@@ -239,49 +240,13 @@ abstract class AbstractManager {
     }
 
     /**
-     * Execute a named management query.
-     *
-     * @param query named management query
-     * @return result
-     */
-    protected ResultSet executeManagementQuery(Query query) {
-        return executeManagementQuery(query, null);
-    }
-
-    /**
-     * Execute a named management query with the given property (name,value).
-     *
-     * @param query named management query
-     * @param propertyName property name
-     * @param propertyValue property value.
-     * @return
-     */
-    protected ResultSet executeManagementQuery(Query query, String propertyName, String propertyValue) {
-        Properties properties = new Properties();
-        properties.put(propertyName, propertyValue);
-        return executeManagementQuery(query, properties);
-    }
-
-    /**
-     * Execute a named management query with the given properties.
-     *
-     * @param query named management query
-     * @param properties properties
-     * @return
-     */
-    protected ResultSet executeManagementQuery(Query query, Properties properties) {
-        String queryString = managementTasks.getNamedStep(query.toString(), properties);
-        return execute(queryString);
-    }
-
-    /**
      * Execute all the queries in an update file as returned by @link {@link UpdateFile#getOrderedSteps()}.
      *
      * @param updateFile update file
      * @return list of result sets, one for each executed query.
      */
-    protected List<ResultSet> execute(UpdateFile updateFile) {
-        return execute(updateFile, null);
+    protected void execute(UpdateFile updateFile) {
+        execute(updateFile, null);
     }
 
     /**
@@ -293,10 +258,10 @@ abstract class AbstractManager {
      * @param propertyValue property value
      * @return list of result sets, one for each executed query.
      */
-    protected List<ResultSet> execute(UpdateFile updateFile, String propertyName, String propertyValue) {
+    protected void execute(UpdateFile updateFile, String propertyName, String propertyValue) {
         Properties properties = new Properties();
         properties.put(propertyName, propertyValue);
-        return execute(updateFile, properties);
+        execute(updateFile, properties);
     }
 
     /**
@@ -307,32 +272,16 @@ abstract class AbstractManager {
      * @param properties properties
      * @return list of result sets, one for each executed query.
      */
-    protected List<ResultSet> execute(UpdateFile updateFile, Properties properties) {
-        List<ResultSet> results = new ArrayList<ResultSet>();
-
+    protected void execute(UpdateFile updateFile, Properties properties) {
         log.info("Applying update file: " + updateFile);
-        for (String step : updateFile.getOrderedSteps(properties)) {
-            if (step.toUpperCase().contains("CREATE USER")) {
-                // the task file must not contain plain text passwords, so assume it needs to be decoded
-                step = replaceEncodedPassword(step);
-                log.debug("Statement: \n" + step);
-            } else {
-                log.info("Statement: \n" + step);
-            }
-            results.add(execute(step));
+        for (Step step : updateFile.getOrderedSteps()) {
+            log.debug(step);
+            step.bind(properties);
+            step.setSession(sessionManager.getSession());
+            step.execute();
         }
+
         log.info("Applied update file: " + updateFile);
-
-        return results;
-    }
-
-    private String replaceEncodedPassword(String step) {
-        int firstQuoteIndex = step.indexOf("'");
-        int lastQuoteIndex = step.lastIndexOf("'");
-        String encodedPassword = step.substring(++firstQuoteIndex, lastQuoteIndex);
-        String decodedPassword = PicketBoxObfuscator.decode(encodedPassword);
-        String decodedStep = step.replace(encodedPassword, decodedPassword);
-        return decodedStep;
     }
 
     /**
@@ -342,7 +291,6 @@ abstract class AbstractManager {
      * @return result for the query
      */
     protected ResultSet execute(String query) {
-//        return session.execute(query);
         return sessionManager.getSession().execute(query);
     }
 

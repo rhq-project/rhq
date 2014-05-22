@@ -42,7 +42,6 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
@@ -69,7 +68,7 @@ public class ResourceTreeDatasource extends DataSource {
     private List<Resource> initialData;
     private List<Resource> lockedData;
     // the encompassing grid. It's unfortunate to have the DS know about the encompassing TreeGrid
-    // but we have a situation in which a new AG node needs to be able to access its parent TreeNode by ID. 
+    // but we have a situation in which a new AG node needs to be able to access its parent TreeNode by ID.
     private TreeGrid treeGrid;
     private Label loadingLabel;
 
@@ -156,6 +155,7 @@ public class ResourceTreeDatasource extends DataSource {
             loadingLabel.hide();
 
         } else {
+            Log.debug(request.getCriteria().toString());
             Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
             // This fetch limits the number of resources that can be returned to protect against fetching a massive
@@ -187,8 +187,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
             result,
-            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
-                ResourceTypeRepository.MetadataType.subCategory),
+            EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                 public void onResourceTypeLoaded(List<Resource> result) {
@@ -317,21 +316,33 @@ public class ResourceTreeDatasource extends DataSource {
 
     // convenience routine to avoid code duplication
     private static void addSubCategoryNodes(List<TreeNode> allNodes, Set<String> allNodeIds, Resource resource) {
-        Resource parentResource = resource.getParentResource();
+        int parentResourceId = resource.getParentResource().getId();
         ResourceType type = resource.getResourceType();
-        ResourceSubCategory subCategory = type.getSubCategory();
-        String subCategoryNodeId = null;
-        int insertAt = allNodes.size();
 
-        do {
-            subCategoryNodeId = SubCategoryTreeNode.idOf(subCategory, parentResource);
+        String subCategoryNodeId = null;
+        String treeParentId = ResourceTreeNode.idOf(parentResourceId);
+
+        String[] subcategoryNames = type.getSubCategory().split("\\|");
+        String subcategoryAncestry = null;
+        for (String subcategoryName : subcategoryNames) {
+            if (subcategoryAncestry == null) {
+                subcategoryAncestry = subcategoryName;
+            } else {
+                subcategoryAncestry = subcategoryAncestry + "|" + subcategoryName;
+            }
+
+            subCategoryNodeId = SubCategoryTreeNode.idOf(subcategoryAncestry, parentResourceId);
 
             if (!allNodeIds.contains(subCategoryNodeId)) {
-                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subCategory, parentResource);
+                SubCategoryTreeNode subCategoryNode = new SubCategoryTreeNode(subcategoryName, subcategoryAncestry,
+                    parentResourceId, treeParentId);
+
                 allNodeIds.add(subCategoryNodeId);
-                allNodes.add(insertAt, subCategoryNode);
+                allNodes.add(subCategoryNode);
             }
-        } while ((subCategory = subCategory.getParentSubCategory()) != null);
+
+            treeParentId = subCategoryNodeId;
+        }
     }
 
     public static class ResourceTreeNode extends EnhancedTreeNode {
@@ -343,8 +354,8 @@ public class ResourceTreeDatasource extends DataSource {
         /**
          * The parentID will be set to the parent resource at construction.  It can be changed
          * later (prior to tree linkage) if the resource node should logically be set to an
-         * autogroup or subcategory parent. 
-         * 
+         * autogroup or subcategory parent.
+         *
          * @param resource The resource must have, minimally, id, name, description set. And, if parent is not null,
          * parentResource.id must be set as well. Also, resourceType.childresourceTypes.
          * @param isLocked
@@ -369,9 +380,9 @@ public class ResourceTreeDatasource extends DataSource {
                     this.parentAutoGroup = true;
 
                 } else {
-                    ResourceSubCategory subCategory = resource.getResourceType().getSubCategory();
-                    if (null != subCategory) {
-                        parentId = SubCategoryTreeNode.idOf(subCategory, parentResource);
+                    String subcategory = resource.getResourceType().getSubCategory();
+                    if (null != subcategory) {
+                        parentId = SubCategoryTreeNode.idOf(subcategory, parentResource.getId());
                         this.parentSubCategory = true;
                     } else
                         parentId = ResourceTreeNode.idOf(parentResource);
@@ -422,24 +433,22 @@ public class ResourceTreeDatasource extends DataSource {
      */
     public static class SubCategoryTreeNode extends EnhancedTreeNode {
 
-        public SubCategoryTreeNode(ResourceSubCategory category, Resource parentResource) {
-            String id = idOf(category, parentResource);
+        public SubCategoryTreeNode(String subcategoryName, String subcategoryAncestry, int parentResourceId,
+            String parentTreeId) {
+
+            String id = idOf(subcategoryAncestry, parentResourceId);
             setID(id);
 
-            ResourceSubCategory parentCategory = category.getParentSubCategory();
-            String parentId = (parentCategory != null) ? SubCategoryTreeNode.idOf(parentCategory, parentResource)
-                : ResourceTreeNode.idOf(parentResource);
-            setParentID(parentId);
+            setParentID(parentTreeId);
 
             // Note, subCategory names are typically already plural, so there's no need to pluralize them.
-            String name = category.getDisplayName();
-            setName(name);
+            setName(subcategoryName);
 
-            setAttribute(Attributes.DESCRIPTION, category.getDescription());
+            setAttribute(Attributes.DESCRIPTION, subcategoryName);
         }
 
-        public static String idOf(ResourceSubCategory category, Resource parentResource) {
-            return "subcat_" + category.getId() + "_" + parentResource.getId();
+        public static String idOf(String subcategoryName, int parentResourceId) {
+            return "subcat_" + subcategoryName.hashCode() + "_" + parentResourceId;
         }
     }
 
@@ -466,9 +475,9 @@ public class ResourceTreeDatasource extends DataSource {
 
             // parent node is either a subCategory node or a resource node
             String parentId;
-            ResourceSubCategory subcategory = this.resourceType.getSubCategory();
+            String subcategory = this.resourceType.getSubCategory();
             if (subcategory != null) {
-                parentId = SubCategoryTreeNode.idOf(subcategory, this.parentResource);
+                parentId = SubCategoryTreeNode.idOf(subcategory, this.parentResource.getId());
                 this.parentSubcategory = true;
             } else {
                 parentId = ResourceTreeNode.idOf(this.parentResource);

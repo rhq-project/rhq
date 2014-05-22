@@ -713,9 +713,6 @@
       <service name="User" discovery="PostgresUserDiscoveryComponent" class="PostgresUserComponent"
                createDeletePolicy="both" creationDataType="configuration"
                description="A User in the Postgres System">
-         <plugin-configuration>
-            <c:simple-property name="userName" required="true"/>
-         </plugin-configuration>
 
          <metric property="total" displayName="Total User Connections" displayType="summary"
                  description="The total number of user connections in the system, whether actively querying or idle"/>
@@ -729,11 +726,16 @@
             <c:simple-property name="password" type="password"/>
 
             <c:group name="privileges" displayName="Privileges">
-               <c:simple-property name="inheritRights" displayName="Inherit Rights" type="boolean" description="Inherit rights from parent roles"/>
-               <c:simple-property name="superuser" displayName="Super User" type="boolean" description="Is a super user" default="false"/>
-               <c:simple-property name="canCreateDatabaseObjects" displayName="Can Create Database Types" type="boolean" default="false"/>
-               <c:simple-property name="canCreateRoles" displayName="Can Create Roles" type="boolean" default="false"/>
-               <c:simple-property name="canModifyCatalogDirectly" displayName="Can Modify Catalog Directly" type="boolean" default="false"/>
+               <c:simple-property name="inheritRights" displayName="Inherit Rights" type="boolean" default="true"
+                   description="Inherit rights from parent roles."/>
+               <c:simple-property name="superuser" displayName="Super User" type="boolean" default="false"
+                   description="Is a super user."/>
+               <c:simple-property name="canCreateDatabaseObjects" displayName="Can Create Database Types" type="boolean" default="false"
+                   description="Implied for a super user."/>
+               <c:simple-property name="canCreateRoles" displayName="Can Create Roles" type="boolean" default="false"
+                   description="Implied for a super user."/>
+               <c:simple-property name="canModifyCatalogDirectly" displayName="Can Update System Catalogs Directly" type="boolean" default="false"
+                   description="Even a superuser cannot update system catalogs unless this property is true. False is implied for a non super user."/>
                <c:simple-property name="connectionLimit" displayName="User connection limit" type="integer" default="-1"/>
             </c:group>
          </resource-configuration>

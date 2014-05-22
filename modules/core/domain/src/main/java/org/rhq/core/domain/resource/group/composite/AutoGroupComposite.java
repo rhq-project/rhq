@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -38,11 +37,11 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public class AutoGroupComposite implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Double availability;
     private ResourceType resourceType;
-    private ResourceSubCategory subcategory;
+    private String subcategory;
     private long memberCount;
     private int depth;
     private boolean mainResource;
@@ -89,13 +88,13 @@ public class AutoGroupComposite implements Serializable {
         }
     }
 
-    public AutoGroupComposite(Double availability, Resource parentResource, ResourceSubCategory subcategory,
+    public AutoGroupComposite(Double availability, Resource parentResource, String subcategory,
         long memberCount) {
         this.availability = availability;
         this.parentResource = parentResource;
         this.subcategory = subcategory;
         this.memberCount = memberCount;
-        this.name = this.subcategory.getName();
+        this.name = this.subcategory;
     }
 
     public Double getAvailability() {
@@ -114,7 +113,7 @@ public class AutoGroupComposite implements Serializable {
         this.resources = resources;
     }
 
-    public ResourceSubCategory getSubcategory() {
+    public String getSubcategory() {
         return subcategory;
     }
 

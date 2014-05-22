@@ -28,7 +28,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-server-metrics</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-server-metrics.version}</version>
     </dependency>
 
     <dependency>
@@ -147,7 +147,7 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-server-metrics</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-server-metrics.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>

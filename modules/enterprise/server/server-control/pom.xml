@@ -11,6 +11,7 @@
   </parent>
 
   <artifactId>rhq-server-control</artifactId>
+  <version>4.9.0.JON320GA</version>
   <name>RHQ Server Control</name>
   <packaging>jar</packaging>
 
@@ -29,13 +30,13 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-installer-util</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-installer-util.version}</version>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-cassandra-installer</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-cassandra-installer.version}</version>
     </dependency>
 
     <dependency>
@@ -119,12 +120,12 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-installer-util</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-installer-util.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-cassandra-installer</artifactId>
-                  <version>${project.version}</version>
+                  <version>${rhq-cassandra-installer.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.rhq</groupId>

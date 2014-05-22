@@ -245,11 +245,22 @@ public class PopulateCacheIndex implements Step {
         log.info("Preparing to update " + CACHE_INDEX_TABLE + " for " + rows.size() + " schedules from the " +
             bucket.text() + " bucket");
 
+        // We need collectionTimeSlice != insertTimeSlice to make sure that data is pulled
+        // from the historical tables during aggregation. The METRICS_CACHE_ACTIVATION_TIME
+        // sys config property is set to the start of the next day to indicate that the
+        // cache table should not be used until then. There is an edge case though that can
+        // occur if the data for which updates are being made does not get aggregated until
+        // after METRICS_CACHE_ACTIVATION_TIME has passed. This could happen if the server
+        // is shutdown for a while after upgrading. We therefore need to use a different
+        // value for the insertTimeSlice column to ensure the data gets pulled from the
+        // historical tables during aggregation.
+        Date insertTimeSlice = new Date(timeSlice.getTime() + 100);
+
         for (Row row : rows) {
             permits.acquire();
             int scheduleId = row.getInt(0);
             BoundStatement statement = updateCacheIndex.bind(ImmutableSet.of(scheduleId), bucket.text(), day,
-                CACHE_INDEX_PARTITION, timeSlice, startId(scheduleId), timeSlice);
+                CACHE_INDEX_PARTITION, timeSlice, startId(scheduleId), insertTimeSlice);
             ResultSetFuture future = session.executeAsync(statement);
             Futures.addCallback(future, new CacheIndexUpdatedCallback(bucket, scheduleId, timeSlice, updatesFinished),
                 tasks);

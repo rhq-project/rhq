@@ -354,7 +354,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             op = new Operation("read-resource", getAddress());
             res = getASConnection().execute(op);
         }
+        includeOOBMessages(res, configuration);
+        return configuration;
+    }
 
+    protected static void includeOOBMessages(Result res, Configuration configuration) {
         if (res.isReloadRequired()) {
             PropertySimple oobMessage = new PropertySimple("__OOB",
                 "The server needs a reload for the latest changes to come effective.");
@@ -365,7 +369,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 "The server needs a restart for the latest changes to come effective.");
             configuration.put(oobMessage);
         }
-        return configuration;
     }
 
     @Override

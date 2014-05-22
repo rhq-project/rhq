@@ -40,6 +40,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -236,6 +237,14 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             report.setException(res.getRhqThrowable());
         }
         return report;
+    }
+
+    public boolean isDomainController() {
+        Result res = getASConnection().execute(new ReadAttribute(new Address("/"), "process-type"));
+        if (res.isSuccess()) {
+            return res.getResult().toString().equals("Domain Controller");
+        }
+        return false;
     }
 
     @NotNull

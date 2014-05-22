@@ -1314,9 +1314,10 @@
 
     <service name="DomainDeployment"
              class="DomainDeploymentComponent"
-             discovery="SubsystemDiscovery"
+             discovery="DomainDeploymentDiscovery"
              createDeletePolicy="both"
              creationDataType="content">
+
       <plugin-configuration>
         <c:simple-property name="path" default="deployment" readOnly="true"/>
       </plugin-configuration>
@@ -1327,14 +1328,28 @@
             <c:property-options>
               <c:option value="__all" name="All"/>
             </c:property-options>
-            <c:option-source target="resource" expression="type=ServerGroup"/>
+            <c:option-source target="resource" expression="type=ServerGroup" expressionScope="baseResource"/>
           </c:simple-property>
           <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
           <c:simple-property name="runtime-name" required="false" displayName="Runtime name"
-                             description="The name under which the deployment should be known in the runtime (managed servers on the selected server group). Defaults to the deployment name."/>
+                             description="The context name under which the deployment should be known in the runtime (managed servers on the selected server group). Defaults to the deployment name."/>
         </parameters>
         <results>
           <c:simple-property name="operationResult" description="Outcome of the deploy to server group operation"/>
+        </results>
+      </operation>
+
+      <operation name="restart" displayName="Restart in Server-Group" description="Restarts this deployment in one or all assigned server group(s)">
+        <parameters>
+          <c:simple-property name="server-group" required="true" description="Select Server-Group assigned with this deployment" type="string">
+            <c:property-options>
+              <c:option value="__all" name="All assigned"/>
+            </c:property-options>
+            <c:option-source target="resource" expression="type=ServerGroup" expressionScope="baseResource"/>
+          </c:simple-property>
+        </parameters>
+        <results>
+          <c:simple-property name="operationResult" description="Outcome of the restart in server group operation"/>
         </results>
       </operation>
 
@@ -1350,6 +1365,15 @@
         <c:simple-property name="name" readOnly="true"/>
         <c:simple-property name="runtime-name" readOnly="true"/>
         <c:simple-property name="content" readOnly="true"/>
+        <c:list-property name="*1" displayName="Assigned to">
+          <c:map-property name="*">
+            <c:simple-property name="server-group" type="string" description="Server group to assign to">
+              <c:option-source target="resource" expression="type=ServerGroup" expressionScope="baseResource"/>
+            </c:simple-property>
+            <c:simple-property name="runtime-name" type="string" required="false" description="The context name under which the deployment should be known in the runtime (managed servers on the selected server group). Defaults to the deployment name. This value applies to new assignment only, it cannot be changed on existing one, so it's change will be ignored." />
+            <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
+          </c:map-property>
+        </c:list-property>
       </resource-configuration>
     </service>
 
@@ -8969,8 +8993,6 @@
            creationDataType="content">
 
     <runs-inside>
-      <parent-resource-type name="ServerGroup" plugin="&pluginName;"/>
-      <!-- TODO -->
       <parent-resource-type name="JBossAS7 Standalone Server" plugin="&pluginName;"/>
     </runs-inside>
 

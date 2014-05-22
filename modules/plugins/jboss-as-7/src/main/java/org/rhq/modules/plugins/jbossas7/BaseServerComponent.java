@@ -61,6 +61,7 @@ import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.PluginContainerProperties;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -114,7 +115,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             this.availabilityCollector = resourceContext.getAvailabilityContext().createAvailabilityCollectorRunnable(
                     new AvailabilityFacet() {
                         public AvailabilityType getAvailability() {
-                            return getAvailabilityNow();
+                            return getAvailabilityNow(serverPluginConfig.getAvailabilityCheckPeriod());
                         }
                     }, availCheckMillis);
             this.availabilityCollector.start();
@@ -137,7 +138,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (this.availabilityCollector != null) {
             ret = this.availabilityCollector.getLastKnownAvailability();
         } else {
-            ret = getAvailabilityNow();
+            ret = getAvailabilityNow(PluginContainerProperties.getAvailabilityFacetTimeoutSeconds());
         }
 
         if (ret == AvailabilityType.DOWN) {
@@ -147,10 +148,10 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return ret;
     }
 
-    private AvailabilityType getAvailabilityNow() {
+    private AvailabilityType getAvailabilityNow(int timeoutSec) {
         AvailabilityType availabilityType;
         try {
-            readAttribute("launch-type");
+            readAttribute("launch-type", timeoutSec);
             availabilityType = AvailabilityType.UP;
         } catch (Exception e) {
             availabilityType = AvailabilityType.DOWN;

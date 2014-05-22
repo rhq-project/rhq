@@ -9,6 +9,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.PluginContainerProperties;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -27,7 +28,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
         // Domain deployments have no 'enabled' attribute
 
         Operation op = new ReadResource(getAddress());
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, PluginContainerProperties.getAvailabilityFacetTimeoutSeconds());
 
         return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }

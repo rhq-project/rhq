@@ -39,6 +39,7 @@ import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.PluginContainerProperties;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -73,11 +74,12 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
             log.error("Avail check period config prop was not a valid number. Cause: " + e);
         }
         if (availabilityCheckPeriod != null) {
-            long availCheckMillis = availabilityCheckPeriod * 1000L;
+            final long availCheckMillis = availabilityCheckPeriod * 1000L;
+            final int availCheckSeconds = availabilityCheckPeriod;
             this.availabilityCollector = hostControllerComponentResourceContext.getAvailabilityContext()
                 .createAvailabilityCollectorRunnable(new AvailabilityFacet() {
                     public AvailabilityType getAvailability() {
-                        return getAvailabilityNow();
+                        return getAvailabilityNow(availCheckSeconds);
                     }
                 }, availCheckMillis);
             this.availabilityCollector.start();
@@ -106,11 +108,11 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         if (this.availabilityCollector != null) {
             return this.availabilityCollector.getLastKnownAvailability();
         } else {
-            return getAvailabilityNow();
+            return getAvailabilityNow(PluginContainerProperties.getAvailabilityFacetTimeoutSeconds());
         }
     }
 
-    private AvailabilityType getAvailabilityNow() {
+    private AvailabilityType getAvailabilityNow(int timeoutSec) {
         if (context.getResourceType().getName().equals(MANAGED_SERVER_TYPE_NAME)) {
             Address theAddress = new Address();
             String host = pluginConfiguration.getSimpleValue("domainHost", "local");
@@ -119,7 +121,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
             Operation getStatus = new ReadAttribute(theAddress, "status");
             Result result;
             try {
-                result = getASConnection().execute(getStatus);
+                result = getASConnection().execute(getStatus, timeoutSec);
             } catch (Exception e) {
                 log.warn(e.getMessage());
                 return AvailabilityType.DOWN;

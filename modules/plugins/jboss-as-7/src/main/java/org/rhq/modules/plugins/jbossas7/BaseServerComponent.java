@@ -22,6 +22,8 @@ package org.rhq.modules.plugins.jbossas7;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -125,7 +127,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         try {
             readAttribute(getHostAddress(), "name");
             availabilityType = UP;
-        } 
+        }
         catch (ResultFailedException e) {
             log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
             setASHostName(findASDomainHostName());
@@ -211,7 +213,18 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 + getResourceDescription(), e);
         }
         if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
-            runtimeProductName = JBossProductType.AS.PRODUCT_NAME;
+            String releaseVersionNumber;
+            try {
+                releaseVersionNumber = readAttribute(getHostAddress(), "release-version");
+            } catch (Exception e) {
+                throw new InvalidPluginConfigurationException("Failed to validate product type for "
+                    + getResourceDescription(), e);
+            }
+            if (releaseVersionNumber.startsWith("8.")) {
+                runtimeProductName = WILDFLY8.PRODUCT_NAME;
+            } else {
+                runtimeProductName = AS.PRODUCT_NAME;
+            }
         }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
             throw new InvalidPluginConfigurationException(
@@ -799,8 +812,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     /**
-     * reads <host name= attribute from host.xml file
-     * @param hostXmlFile
+     * Reads <host name= attribute from host.xml file.
+     *
      * @return name attribute from host.xml file
      */
     protected String findASDomainHostName() {

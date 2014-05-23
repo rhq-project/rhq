@@ -334,18 +334,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public boolean uninventoryMissingResourceInNewTransaction(int resourceId) {
+    public boolean handleMissingResourceInNewTransaction(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             return true;
         }
 
         ResourceType type = resource.getResourceType();
-        if (type.isUninventoryMissing()) {
+        switch (type.getMissingPolicy()) {
+        case DOWN:
+            return false;
+        case UNINVENTORY:
             // no need to start the new transaction here, we're already in a new transaction and have
             // only pulled a couple of things into the hibernate cache. So don't call through the facade.
             uninventoryResourceInNewTransaction(resourceId);
             log.info("Automatic uninventory of MISSING resource: " + resource);
+            return true;
+        case IGNORE:
+            LookupUtil.getDiscoveryBoss().ignoreResources(subjectManager.getOverlord(), new int[] { resourceId });
+            log.info("Automatic ignore of MISSING resource: " + resource);
             return true;
         }
 
@@ -2405,8 +2412,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             + "           parent.id, parent.name, " //
             + "           currentAvail.availabilityType, " //
             + "           type.id, type.name, type.plugin, type.singleton, type.category, " //
-            + "           type.subCategory "
-            + "      FROM Resource res " //
+            + "           type.subCategory " + "      FROM Resource res " //
             + "      JOIN res.implicitGroups g " //
             + "      JOIN res.currentAvailability currentAvail " //
             + "      JOIN res.resourceType type " //

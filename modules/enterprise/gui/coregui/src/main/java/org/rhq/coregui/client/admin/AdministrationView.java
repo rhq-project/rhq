@@ -36,7 +36,7 @@ import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.IgnoreResourceTypesView;
 import org.rhq.coregui.client.admin.templates.MetricTemplateTypeView;
-import org.rhq.coregui.client.admin.templates.UninventoryMissingResourceTypesView;
+import org.rhq.coregui.client.admin.templates.MissingPolicyResourceTypesView;
 import org.rhq.coregui.client.admin.topology.AffinityGroupTableView;
 import org.rhq.coregui.client.admin.topology.AgentTableView;
 import org.rhq.coregui.client.admin.topology.PartitionEventTableView;
@@ -210,14 +210,14 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         });
         ignoreResourceTypesItem.setRefreshRequired(true); // we always need a new page
 
-        NavigationItem uninventoryMissingResourceTypesItem = new NavigationItem(
-            UninventoryMissingResourceTypesView.VIEW_ID,
+        NavigationItem missingResourcePolicyItem = new NavigationItem(
+            MissingPolicyResourceTypesView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new UninventoryMissingResourceTypesView();
+                    return new MissingPolicyResourceTypesView();
                 }
             });
-        uninventoryMissingResourceTypesItem.setRefreshRequired(true); // we always need a new page
+        missingResourcePolicyItem.setRefreshRequired(true); // we always need a new page
 
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
@@ -238,7 +238,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
-            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, uninventoryMissingResourceTypesItem,
+            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, missingResourcePolicyItem,
             downloadsItem, agentPluginsItem,
             serverPluginsItem);
     }

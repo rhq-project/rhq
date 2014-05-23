@@ -341,6 +341,7 @@ public class PluginMetadataParser {
         }
 
         serverResourceType.setSupportsManualAdd(serverDescriptor.isSupportsManualAdd());
+        serverResourceType.setSupportsMissingAvailabilityType(serverDescriptor.isSupportsMissingAvailabilityType());
 
         // now see if we are using the Injection extension model
         // if so, we need to inject the new resource type as a child to the parent plugin's types
@@ -437,6 +438,8 @@ public class PluginMetadataParser {
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
                 .getCreateDeletePolicy()));
             serviceResourceType.setSingleton(serviceDescriptor.isSingleton());
+            serviceResourceType.setSupportsMissingAvailabilityType(serviceDescriptor
+                .isSupportsMissingAvailabilityType());
 
             String discoveryClass;
             if (serviceDescriptor.getDiscovery() != null) {
@@ -461,6 +464,7 @@ public class PluginMetadataParser {
         }
 
         serviceResourceType.setSupportsManualAdd(serviceDescriptor.isSupportsManualAdd());
+        serviceResourceType.setSupportsMissingAvailabilityType(serviceDescriptor.isSupportsMissingAvailabilityType());
 
         // now see if we are using the Injection extension model
         // if so, we need to inject the new resource type as a child to the parent plugin's types

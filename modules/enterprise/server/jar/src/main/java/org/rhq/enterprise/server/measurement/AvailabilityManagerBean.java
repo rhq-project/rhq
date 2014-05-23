@@ -971,7 +971,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             if (AvailabilityType.MISSING == reportedType) {
                 // the reported.getResource() gives us only a resource with an id. Nothing else, so we call a
                 // dedicated SLSB method to do this work.
-                boolean uninventoried = resourceManager.uninventoryMissingResourceInNewTransaction(resourceId);
+                boolean uninventoried = resourceManager.handleMissingResourceInNewTransaction(resourceId);
                 if (uninventoried) {
                     continue;
                 } else {

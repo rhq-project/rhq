@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,20 +13,24 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.platform;
 
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.plugins.platform.ProcessComponentConfig.createProcessComponentConfig;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +48,6 @@ import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.core.system.SystemInfo;
-import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * Monitors a generic process.
@@ -53,178 +56,320 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author John Mazzitelli
  */
 public class ProcessComponent implements ResourceComponent, MeasurementFacet {
+    private static final Log LOG = LogFactory.getLog(ProcessComponent.class);
 
-    private static final Log log = LogFactory.getLog(ProcessComponent.class);
-
-    private enum Type {
-        pidFile, piql
-    }
+    private static final String PROCESS_METRIC_PREFIX = "Process.";
 
     private ResourceContext resourceContext;
+    private ProcessComponentConfig processComponentConfig;
     private ProcessInfo process;
 
-    private Type type;
-    private String pidFile;
-    private String piql;
-    private boolean fullProcessTree;
-
     @Override
-    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext resourceContext) throws Exception {
         this.resourceContext = resourceContext;
-
-        try {
-            Configuration config = this.resourceContext.getPluginConfiguration();
-            this.type = Type.valueOf(config.getSimpleValue("type", "pidFile"));
-            this.pidFile = config.getSimpleValue("pidFile", null);
-            this.piql = config.getSimpleValue("piql", null);
-            this.fullProcessTree = config.getSimple("fullProcessTree").getBooleanValue();
-        } catch (Exception e) {
-            throw new InvalidPluginConfigurationException(e);
-        }
-
-        // validate the plugin config some more
-        if (this.type == Type.pidFile && (this.pidFile == null || this.pidFile.length() == 0)) {
-            throw new InvalidPluginConfigurationException("Missing pidfile");
-        }
-        if (this.type == Type.piql && (this.piql == null || this.piql.length() == 0)) {
-            throw new InvalidPluginConfigurationException("Missing process query");
-        }
+        processComponentConfig = createProcessComponentConfig(resourceContext.getPluginConfiguration());
     }
 
     @Override
     public void stop() {
+        resourceContext = null;
+        processComponentConfig = null;
+        process = null;
+
     }
 
     @Override
     public AvailabilityType getAvailability() {
         try {
-            // Get a fresh snapshot of the process
-            ProcessInfoSnapshot processInfoSnapshot = (this.process == null) ? null : this.process.freshSnapshot();
-            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
-                this.process = getProcessForConfiguration();
-                // Safe to get prior snapshot here, we've just recreated the process info instance
-                processInfoSnapshot = (this.process == null) ? null : this.process.priorSnaphot();
-            }
-            return processInfoSnapshot.isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
+            ProcessInfoSnapshot snapshot = getFreshSnapshot();
+            return (snapshot != null && snapshot.isRunning()) ? UP : DOWN;
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("failed to get process info: " + ThrowableUtil.getAllMessages(e));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to get process info", e);
             }
-            return AvailabilityType.DOWN;
+            return DOWN;
         }
     }
 
-    private ProcessInfo getProcessForConfiguration() throws Exception {
-        SystemInfo sysInfo = this.resourceContext.getSystemInformation();
-        return getProcessForConfiguration(this.type, this.pidFile, this.piql, this.fullProcessTree, sysInfo);
+    private ProcessInfoSnapshot getFreshSnapshot() throws Exception {
+        ProcessInfoSnapshot snapshot = (process == null) ? null : process.freshSnapshot();
+        if (snapshot == null || !snapshot.isRunning()) {
+            process = findProcess(processComponentConfig, resourceContext.getSystemInformation());
+            // Safe to get prior snapshot here, we've just recreated the process info instance
+            snapshot = (process == null) ? null : process.priorSnaphot();
+        }
+        return snapshot;
     }
 
-    protected static ProcessInfo getProcessForConfiguration(Configuration config, SystemInfo systemInfo)
+    static ProcessInfo findProcess(ProcessComponentConfig processComponentConfig, SystemInfo systemInfo)
         throws Exception {
 
-        Type type = Type.valueOf(config.getSimpleValue("type", "pidFile"));
-        String pidFile = config.getSimpleValue("pidFile", null);
-        String piql = config.getSimpleValue("piql", null);
-        boolean fullProcessTree = config.getSimple("fullProcessTree").getBooleanValue();
+        long pid;
+        switch (processComponentConfig.getType()) {
+        case pidFile:
+            pid = getPidFromPidFile(processComponentConfig);
+            break;
+        case piql:
+            pid = getPidFromPiqlExpression(processComponentConfig, systemInfo);
+            break;
+        default:
+            throw new InvalidPluginConfigurationException("Unknown type: " + processComponentConfig.getType());
+        }
 
-        return getProcessForConfiguration(type, pidFile, piql, fullProcessTree, systemInfo);
+        if (processComponentConfig.isFullProcessTree()) {
+            return new AggregateProcessInfo(pid);
+        } else {
+            return new ProcessInfo(pid);
+        }
     }
 
-    private static ProcessInfo getProcessForConfiguration(Type type, String pidFile, String piql,
-        boolean fullProcessTree, SystemInfo systemInfo) throws Exception {
-
-        long pid;
-
-        if (type == Type.pidFile) {
-            File file = new File(pidFile);
-            if (file.canRead()) {
-                FileInputStream fis = new FileInputStream(file);
+    private static long getPidFromPidFile(ProcessComponentConfig processComponentConfig) throws IOException {
+        File file = new File(processComponentConfig.getPidFile());
+        if (file.canRead()) {
+            FileInputStream fis = new FileInputStream(file);
+            try {
+                BufferedReader r = new BufferedReader(new InputStreamReader(fis));
+                return Long.parseLong(r.readLine());
+            } finally {
                 try {
-                    BufferedReader r = new BufferedReader(new InputStreamReader(fis));
-                    pid = Long.parseLong(r.readLine());
-                } finally {
-                    try {
-                        fis.close();
-                    } catch (Exception ignore) {
-                    }
+                    fis.close();
+                } catch (Exception ignore) {
                 }
-            } else {
-                throw new FileNotFoundException("pidfile [" + pidFile
-                    + "] does not exist or is not allowed to be read. full path=" + file.getAbsolutePath());
-            }
-        } else if (type == Type.piql) {
-            List<ProcessInfo> processes = systemInfo.getProcesses(piql);
-            if (processes != null && processes.size() == 1) {
-                pid = processes.get(0).getPid();
-            } else {
-                throw new Exception("process query [" + piql + "] did not return a single process: " + processes);
             }
         } else {
-            throw new InvalidPluginConfigurationException("Invalid type [" + type + "]");
+            throw new FileNotFoundException("pidfile [" + processComponentConfig.getPidFile()
+                + "] does not exist or is not allowed to be read. full path=" + file.getAbsolutePath());
         }
+    }
 
-        ProcessInfo processInfo;
-        if (fullProcessTree) {
-            processInfo = new AggregateProcessInfo(pid);
+    private static long getPidFromPiqlExpression(ProcessComponentConfig processComponentConfig, SystemInfo systemInfo)
+        throws Exception {
+        List<ProcessInfo> processes = systemInfo.getProcesses(processComponentConfig.getPiql());
+        if (processes != null && processes.size() == 1) {
+            return processes.get(0).getPid();
         } else {
-            processInfo = new ProcessInfo(pid);
+            throw new Exception("process query [" + processComponentConfig.getPiql()
+                + "] did not return a single process: " + processes);
         }
-        return processInfo;
     }
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        if (this.process != null) {
-            this.process.refresh();
-            for (MeasurementScheduleRequest request : metrics) {
-                String propertyName = request.getName();
-                if (propertyName.startsWith("Process.")) {
-                    propertyName = convertPropertyName(propertyName, this.process);
-                    Object val = lookupAttributeProperty(this.process, propertyName.substring("Process.".length()));
-                    if (val != null && val instanceof Number) {
-                        report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
-                    }
-                }
-            }
-        }
-        return;
-    }
-
-    private String convertPropertyName(String propertyName, ProcessInfo theProcess) {
-        // if its an aggregate process info, the bean property name is different
-        if (theProcess instanceof AggregateProcessInfo) {
-            propertyName = propertyName.replace(".cpu.", ".aggregateCpu.");
-            propertyName = propertyName.replace(".memory.", ".aggregateMemory.");
-            propertyName = propertyName.replace(".fileDescriptor.", ".aggregateFileDescriptor.");
-        }
-        return propertyName;
-    }
-
-    private Object lookupAttributeProperty(Object value, String property) {
-        String[] ps = property.split("\\.", 2);
-
-        String searchProperty = ps[0];
-
-        // Try to use reflection
+        ProcessInfoSnapshot snapshot;
         try {
-            PropertyDescriptor[] pds = Introspector.getBeanInfo(value.getClass()).getPropertyDescriptors();
-            for (PropertyDescriptor pd : pds) {
-                if (pd.getName().equals(searchProperty)) {
-                    value = pd.getReadMethod().invoke(value);
-                    break;
-                }
+            snapshot = getFreshSnapshot();
+            if (snapshot == null || !snapshot.isRunning()) {
+                return;
             }
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Unable to read property [" + property + "]; measurement attribute [" + searchProperty
-                    + "] not found on [" + this.resourceContext.getResourceKey() + "]. Cause: " + e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to get process info", e);
+            }
+            return;
+        }
+        for (MeasurementScheduleRequest request : metrics) {
+            String propertyName = request.getName();
+            if (!propertyName.startsWith(PROCESS_METRIC_PREFIX)) {
+                continue;
+            }
+            propertyName = propertyName.substring(PROCESS_METRIC_PREFIX.length());
+            StringTokenizer propertyTokenizer = new StringTokenizer(propertyName, ".");
+            if (!propertyTokenizer.hasMoreTokens()) {
+                continue;
+            }
+            String category = propertyTokenizer.nextToken();
+            if (!propertyTokenizer.hasMoreTokens()) {
+                continue;
+            }
+            String subcategory = propertyTokenizer.nextToken();
+            if (category.equals("cpu")) {
+                CpuMetricGatherer cpuMetricGatherer;
+                if (processComponentConfig.isFullProcessTree()) {
+                    cpuMetricGatherer = new AggregateProcessCpuMetricGatherer((AggregateProcessInfo) process);
+                } else {
+                    cpuMetricGatherer = new ProcessCpuMetricGatherer(snapshot);
+                }
+                addCpuMetric(subcategory, report, request, cpuMetricGatherer);
+            } else if (category.equals("memory")) {
+                MemoryMetricGatherer memoryMetricGatherer;
+                if (processComponentConfig.isFullProcessTree()) {
+                    memoryMetricGatherer = new AggregateProcessMemoryMetricGatherer((AggregateProcessInfo) process);
+                } else {
+                    memoryMetricGatherer = new ProcessMemoryMetricGatherer(snapshot);
+                }
+                addMemoryMetric(subcategory, report, request, memoryMetricGatherer);
+            } else if (category.equals("fileDescriptor")) {
+                FileDescriptorMetricGatherer fileDescriptorMetricGatherer;
+                if (processComponentConfig.isFullProcessTree()) {
+                    fileDescriptorMetricGatherer = new AggregateProcessFileDescriptorMetricGatherer(
+                        (AggregateProcessInfo) process);
+                } else {
+                    fileDescriptorMetricGatherer = new ProcessFileDescriptorMetricGatherer(snapshot);
+                }
+                addFileDescriptorMetric(subcategory, report, request, fileDescriptorMetricGatherer);
             }
         }
+    }
 
-        if (ps.length > 1) {
-            value = lookupAttributeProperty(value, ps[1]);
+    private void addCpuMetric(String element, MeasurementReport report, MeasurementScheduleRequest request,
+        CpuMetricGatherer cpuMetricGatherer) {
+        if (element.equals("user")) {
+            report.addData(new MeasurementDataNumeric(request, cpuMetricGatherer.getUser()));
+        } else if (element.equals("sys")) {
+            report.addData(new MeasurementDataNumeric(request, cpuMetricGatherer.getSys()));
+        } else if (element.equals("percent")) {
+            report.addData(new MeasurementDataNumeric(request, cpuMetricGatherer.getPercent()));
+        }
+    }
+
+    private void addMemoryMetric(String element, MeasurementReport report, MeasurementScheduleRequest request,
+        MemoryMetricGatherer memoryMetricGatherer) {
+        if (element.equals("resident")) {
+            report.addData(new MeasurementDataNumeric(request, memoryMetricGatherer.getResident()));
+        } else if (element.equals("size")) {
+            report.addData(new MeasurementDataNumeric(request, memoryMetricGatherer.getSize()));
+        }
+    }
+
+    private void addFileDescriptorMetric(String element, MeasurementReport report, MeasurementScheduleRequest request,
+        FileDescriptorMetricGatherer fileDescriptorMetricGatherer) {
+        if (element.equals("total")) {
+            report.addData(new MeasurementDataNumeric(request, fileDescriptorMetricGatherer.getTotal()));
+        }
+    }
+
+    /**
+     * @deprecated since RHQ4.12. It should not have been exposed.
+     */
+    @Deprecated
+    protected static ProcessInfo getProcessForConfiguration(Configuration pluginConfig, SystemInfo systemInfo)
+        throws Exception {
+        return findProcess(createProcessComponentConfig(pluginConfig), systemInfo);
+    }
+
+    private interface CpuMetricGatherer {
+        Double getUser();
+
+        Double getSys();
+
+        Double getPercent();
+    }
+
+    private static class ProcessCpuMetricGatherer implements CpuMetricGatherer {
+        ProcessInfoSnapshot snapshot;
+
+        ProcessCpuMetricGatherer(ProcessInfoSnapshot snapshot) {
+            this.snapshot = snapshot;
         }
 
-        return value;
+        @Override
+        public Double getUser() {
+            return (double) snapshot.getCpu().getUser();
+        }
+
+        @Override
+        public Double getSys() {
+            return (double) snapshot.getCpu().getSys();
+        }
+
+        @Override
+        public Double getPercent() {
+            return snapshot.getCpu().getPercent();
+        }
+    }
+
+    private static class AggregateProcessCpuMetricGatherer implements CpuMetricGatherer {
+        AggregateProcessInfo aggregateProcessInfo;
+
+        AggregateProcessCpuMetricGatherer(AggregateProcessInfo aggregateProcessInfo) {
+            this.aggregateProcessInfo = aggregateProcessInfo;
+        }
+
+        @Override
+        public Double getUser() {
+            return (double) aggregateProcessInfo.getAggregateCpu().getUser();
+        }
+
+        @Override
+        public Double getSys() {
+            return (double) aggregateProcessInfo.getAggregateCpu().getSys();
+        }
+
+        @Override
+        public Double getPercent() {
+            return aggregateProcessInfo.getAggregateCpu().getPercent();
+        }
+    }
+
+    private interface MemoryMetricGatherer {
+        Double getResident();
+
+        Double getSize();
+    }
+
+    private static class ProcessMemoryMetricGatherer implements MemoryMetricGatherer {
+        ProcessInfoSnapshot snapshot;
+
+        ProcessMemoryMetricGatherer(ProcessInfoSnapshot snapshot) {
+            this.snapshot = snapshot;
+        }
+
+        @Override
+        public Double getResident() {
+            return (double) snapshot.getMemory().getResident();
+        }
+
+        @Override
+        public Double getSize() {
+            return (double) snapshot.getMemory().getSize();
+        }
+    }
+
+    private static class AggregateProcessMemoryMetricGatherer implements MemoryMetricGatherer {
+        AggregateProcessInfo aggregateProcessInfo;
+
+        AggregateProcessMemoryMetricGatherer(AggregateProcessInfo aggregateProcessInfo) {
+            this.aggregateProcessInfo = aggregateProcessInfo;
+        }
+
+        @Override
+        public Double getResident() {
+            return (double) aggregateProcessInfo.getAggregateMemory().getResident();
+        }
+
+        @Override
+        public Double getSize() {
+            return (double) aggregateProcessInfo.getAggregateMemory().getSize();
+        }
+    }
+
+    private interface FileDescriptorMetricGatherer {
+        Double getTotal();
+    }
+
+    private static class ProcessFileDescriptorMetricGatherer implements FileDescriptorMetricGatherer {
+        ProcessInfoSnapshot snapshot;
+
+        ProcessFileDescriptorMetricGatherer(ProcessInfoSnapshot snapshot) {
+            this.snapshot = snapshot;
+        }
+
+        @Override
+        public Double getTotal() {
+            return (double) snapshot.getFileDescriptor().getTotal();
+        }
+    }
+
+    private static class AggregateProcessFileDescriptorMetricGatherer implements FileDescriptorMetricGatherer {
+        AggregateProcessInfo aggregateProcessInfo;
+
+        AggregateProcessFileDescriptorMetricGatherer(AggregateProcessInfo aggregateProcessInfo) {
+            this.aggregateProcessInfo = aggregateProcessInfo;
+        }
+
+        @Override
+        public Double getTotal() {
+            return (double) aggregateProcessInfo.getAggregateFileDescriptor().getTotal();
+        }
     }
 }

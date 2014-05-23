@@ -358,7 +358,7 @@ public class MenuBarView extends EnhancedVLayout {
                         if (subMenuIndex == 0) { // when first is separator we skip divider line
                             item.append("<li class='dropdown-header'>"+subItem.getTitle()+"</li>");
                         } else {
-                            item.append("<li class='divider'><li class='dropdown-header'>"+subItem.getTitle()+"</li></li>");
+                            item.append("<li class='divider'></li><li class='dropdown-header'>"+subItem.getTitle()+"</li>");
                         }
                     }
                     else {

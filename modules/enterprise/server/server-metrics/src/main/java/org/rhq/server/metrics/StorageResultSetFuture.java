@@ -7,6 +7,7 @@ import java.util.concurrent.TimeoutException;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryTimeoutException;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -54,6 +55,9 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
     public ResultSet get() {
         try {
             return wrapperFuture.getUninterruptibly();
+        } catch (QueryTimeoutException e) {
+            session.handleTimeout();
+            throw e;
         } catch (NoHostAvailableException e) {
             session.handleNoHostAvailable(e);
             throw e;
@@ -67,6 +71,9 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
     public ResultSet get(long timeout, TimeUnit unit) throws TimeoutException {
         try {
             return wrapperFuture.getUninterruptibly(timeout, unit);
+        } catch (QueryTimeoutException e) {
+            session.handleTimeout();
+            throw e;
         } catch (NoHostAvailableException e) {
             session.handleNoHostAvailable(e);
             throw e;

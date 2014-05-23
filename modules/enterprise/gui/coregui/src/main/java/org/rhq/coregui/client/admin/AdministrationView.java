@@ -68,9 +68,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources",
+    public static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources",
         MSG.view_adminContent_contentSources(), IconEnum.CONTENT);
-    private static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG.common_title_repositories(),
+    public static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG.common_title_repositories(),
         IconEnum.CONTENT);
 
     public AdministrationView() {

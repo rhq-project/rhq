@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
@@ -49,6 +51,7 @@ import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.coregui.client.menu.MenuBarView;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message.Severity;
 
@@ -109,6 +112,10 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             Log.error("Cannot show message center window", e);
         }
     }
+    private void updateMsgCenterButtonContent() {
+        Element btn = DOM.getElementById(MenuBarView.BTN_MSG_CENTER_ID);
+        btn.setInnerHTML(MenuBarView.MSG_CENTER_BTN_CONTENT+String.valueOf(CoreGUI.getMessageCenter().getMessages().size()));
+    }
 
     @Override
     public void onMessage(final Message message) {
@@ -118,6 +125,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                 if (window != null) {
                     window.blink();
                 }
+                updateMsgCenterButtonContent();
             }
         } catch (Throwable e) {
             Log.error("Cannot process message", e);
@@ -225,6 +233,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                         CoreGUI.getMessageCenter().getMessages().remove(doomed);
                     }
                     refresh();
+                    updateMsgCenterButtonContent();
                 } catch (Throwable e) {
                     Log.error("Cannot delete messages", e);
                 }
@@ -238,6 +247,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                 try {
                     CoreGUI.getMessageCenter().getMessages().clear();
                     refresh();
+                    updateMsgCenterButtonContent();
                 } catch (Throwable e) {
                     Log.error("Cannot delete all messages", e);
                 }

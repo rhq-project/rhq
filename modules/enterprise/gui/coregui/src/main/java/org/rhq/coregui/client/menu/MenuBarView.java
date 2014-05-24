@@ -49,7 +49,7 @@ import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.IgnoreResourceTypesView;
 import org.rhq.coregui.client.admin.templates.MetricTemplateTypeView;
-import org.rhq.coregui.client.admin.templates.UninventoryMissingResourceTypesView;
+import org.rhq.coregui.client.admin.templates.MissingPolicyResourceTypesView;
 import org.rhq.coregui.client.admin.topology.AffinityGroupTableView;
 import org.rhq.coregui.client.admin.topology.AgentTableView;
 import org.rhq.coregui.client.admin.topology.PartitionEventTableView;
@@ -150,7 +150,7 @@ public class MenuBarView extends EnhancedVLayout {
                         new MenuItem(DriftDefinitionTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(MetricTemplateTypeView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(IgnoreResourceTypesView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
-                        new MenuItem(UninventoryMissingResourceTypesView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
+                        new MenuItem(MissingPolicyResourceTypesView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(DownloadsView.VIEW_ID, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(AgentPluginTableView.VIEW_ID, Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID),
                         new MenuItem(ServerPluginTableView.VIEW_ID, Permission.MANAGE_SETTINGS, AdministrationView.VIEW_ID,AdministrationView.SECTION_CONFIGURATION_VIEW_ID)

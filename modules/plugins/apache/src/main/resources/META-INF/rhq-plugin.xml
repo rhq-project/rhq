@@ -816,25 +816,17 @@
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
+ -->
          
-         <service name="Location" class="ApacheLocationComponent" createDeletePolicy="both">
+         <service name="Location" class="ApacheLocationComponent"  discovery="ApacheLocationDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
-                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+                <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
+                                   description="Does the name of this location denote a regular expression?"/>
             </plugin-configuration>
             <resource-configuration>
-                <c:simple-property name="regexp" type="boolean" default="false"/>
-                &Order;
-                &Allow;
-                &Deny;
-                &AddDefaultCharset;
-                &DefaultType;
-                &DirectoryIndex;
-                &ErrorDocuments;
-                &UseCanonicalName;
-                &UseCanonicalPhysicalPort;
+                <c:simple-property name="regexp" type="boolean" default="false"/>                
             </resource-configuration>
          </service>
- -->
 
       </service>
       <service name="Mod JK" description="Management of mod_jk"

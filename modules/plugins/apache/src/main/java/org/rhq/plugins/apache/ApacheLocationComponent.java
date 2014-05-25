@@ -43,6 +43,8 @@ import org.rhq.plugins.platform.PlatformComponent;
 public class ApacheLocationComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet,
     DeleteResourceFacet {
 
+    public static final String REGEXP_PROP = "regexp";
+
     ResourceContext<ApacheServerComponent> resourceContext;
 
     public void start(ResourceContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException,

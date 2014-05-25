@@ -488,6 +488,36 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     /**
+     * Returns a directive corresponding to this component in the Apache directive tree.
+     *
+     * @param tree
+     * @return
+     * @throws IllegalStateException if none or more than one directives found
+     */
+    public ApacheDirective getDirective() {
+        ApacheDirectiveTree tree = resourceContext.getParentResourceComponent().parseFullConfiguration();
+        String resourceKey = resourceContext.getResourceKey();
+
+        int snmpIdx = getWwwServiceIndex();
+
+        if (snmpIdx < 1) {
+            throw new IllegalStateException("Could not determine the index of the virtual host [" + resourceKey
+                + "] in the runtime configuration. This is very strange.");
+        }
+
+        if (snmpIdx == 1) {
+            return tree.getRootNode();
+        }
+
+        final List<ApacheDirective> allVhosts  = tree.search("/<VirtualHost");       
+        
+        //transform the SNMP index into the index of the vhost
+        int idx = allVhosts.size() - snmpIdx + 1;
+
+        return allVhosts.get(idx);
+    }
+
+    /**
      * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
      */
     public void finishConfigurationUpdate(ConfigurationUpdateReport report) {

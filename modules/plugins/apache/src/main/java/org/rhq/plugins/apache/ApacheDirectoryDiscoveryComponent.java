@@ -39,12 +39,15 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.util.StringUtil;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
 /**
  * Discovery component for Apache discovery directives.
- * 
+ *
  * @author Lukas Krejci
  */
 public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
@@ -61,8 +64,42 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
 
-        if (!context.getParentResourceComponent().isAugeasEnabled())
+        if (!context.getParentResourceComponent().isAugeasEnabled()) {
+            ApacheDirective vhost = context.getParentResourceComponent().getDirective();
+            ApacheDirectiveTree tree = new ApacheDirectiveTree();
+            tree.setRootNode(vhost);
+            final List<ApacheDirective> allDirectories  = tree.search("/"+DIRECTORY_DIRECTIVE);
+            ResourceType resourceType = context.getResourceType();
+            for (ApacheDirective apacheDirective : allDirectories) {
+                String directoryParam;
+                boolean isRegexp;
+                List<String> params = apacheDirective.getValues();
+                if (params.size() > 1 && StringUtil.isNotBlank(params.get(1))) {
+                    directoryParam = params.get(1);
+                    isRegexp = true;
+                } else {
+                    directoryParam = params.get(0);
+                    isRegexp = false;
+                }
+                
+                Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
+                pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
+                String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
+
+                int index = 1; 
+                for (DiscoveredResourceDetails detail : discoveredResources) {
+                    if(detail.getResourceName().endsWith(resourceName))
+                        index++;
+                }
+                StringBuilder resourceKey = new StringBuilder();
+                resourceKey.append(apacheDirective.getName()).append("|").append(directoryParam).append("|").append(index).append(";");
+                discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey.toString(), resourceName, null,
+                    null, pluginConfiguration, null));
+
+            }
             return discoveredResources;
+        }
+
 
         AugeasComponent comp = context.getParentResourceComponent().getAugeas();
         AugeasTree tree = null;
@@ -71,7 +108,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
         } catch (AugeasException e) {
             //we depend on Augeas to do anything useful with directories.
-            //give up, if Augeas isn't there.            
+            //give up, if Augeas isn't there.
             comp.close();
             return discoveredResources;
         }

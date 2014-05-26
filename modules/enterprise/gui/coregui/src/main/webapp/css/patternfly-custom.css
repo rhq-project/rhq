@@ -186,6 +186,11 @@ padding: 0;
   color: #f6f6f6 !important;
   text-decoration: none !important;
 }
+
+.navbar-btn-group > a {
+  color: #f6f6f6 !important;
+}
+
 .navbar-btn-item:visited {
   color: #f6f6f6 !important;
   text-decoration: none !important;

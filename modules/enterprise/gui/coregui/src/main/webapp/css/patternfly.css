@@ -276,7 +276,7 @@ html {
 body {
   font-family: "Open Sans", Helvetica, Arial, sans-serif;
   font-size: 12px;
-  line-height: 1.66666667;
+  /* RHQ disabled line-height: 1.66666667; */
   color: #333333;
   background-color: #ffffff;
 }
@@ -305,9 +305,11 @@ a:focus {
 figure {
   margin: 0;
 }
+/* RHQ disabled
 img {
   vertical-align: middle;
 }
+*/
 .img-responsive,
 .thumbnail > img,
 .thumbnail a > img,
@@ -8246,9 +8248,11 @@ fieldset[disabled] .form-control {
   -webkit-box-shadow: none;
   box-shadow: none;
 }
+/* RHQ disabled
 label {
-  font-weight: 600;
+font-weight: 600;
 }
+*/
 @font-face {
   font-family: 'PatternFlyIcons-webfont';
   src: url('../fonts/PatternFlyIcons-webfont.eot');

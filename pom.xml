@@ -375,7 +375,7 @@
     <rhq-cassandra-plugin.version>${rhq.pom.version}</rhq-cassandra-plugin.version>
     <rhq-cobbler-plugin.version>${rhq.pom.version}</rhq-cobbler-plugin.version>
     <rhq-cron-plugin.version>${rhq.pom.version}</rhq-cron-plugin.version>
-    <rhq-database-plugin.version>${rhq.pom.version}</rhq-database-plugin.version>
+    <rhq-database-plugin.version>${rhq.pom.version}-redhat-1</rhq-database-plugin.version>
     <rhq-filetemplate-bundle-plugin.version>${rhq.pom.version}</rhq-filetemplate-bundle-plugin.version>
     <rhq-grub-plugin.version>${rhq.pom.version}</rhq-grub-plugin.version>
     <hadoop-plugin.version>${rhq.pom.version}</hadoop-plugin.version>
@@ -401,7 +401,7 @@
     <rhq-platform-plugin.version>${rhq.pom.version}-redhat-1</rhq-platform-plugin.version>
     <rhq-plugins-parent.version>${rhq.pom.version}</rhq-plugins-parent.version>
     <rhq-postfix-plugin.version>${rhq.pom.version}</rhq-postfix-plugin.version>
-    <rhq-postgres-plugin.version>${rhq.pom.version}</rhq-postgres-plugin.version>
+    <rhq-postgres-plugin.version>${rhq.pom.version}-redhat-1</rhq-postgres-plugin.version>
     <rhq-agent-plugin.version>${rhq.pom.version}</rhq-agent-plugin.version>
     <rhq-rhqserver-plugin.version>${rhq.pom.version}</rhq-rhqserver-plugin.version>
     <rhq-rhqstorage-plugin.version>${rhq.pom.version}</rhq-rhqstorage-plugin.version>

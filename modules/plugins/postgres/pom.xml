@@ -10,7 +10,7 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-postgres-plugin</artifactId>
-   <version>4.9.0.JON320GA</version>
+   <version>4.9.0.JON320GA-redhat-1</version>
    <packaging>jar</packaging>
 
    <name>RHQ Postgres Plugin</name>

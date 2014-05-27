@@ -32,7 +32,7 @@
                               <pathelement location="../apache/target/rhq-apache-plugin-${project.version}.jar" />
                               <pathelement location="../augeas/target/rhq-augeas-plugin-${project.version}.jar" />
                               <pathelement location="../samba/target/rhq-samba-plugin-${project.version}.jar" />
-                              <pathelement location="../database/target/rhq-database-plugin-${project.version}.jar" />
+                              <pathelement location="../database/target/rhq-database-plugin-${rhq-database-plugin.version}.jar" />
                               <pathelement location="../grub/target/rhq-grub-plugin-${project.version}.jar" />
                               <pathelement location="../hadoop/target/hadoop-plugin-${project.version}.jar" />
                               <!--<pathelement location="../hardware/target/rhq-hardware-plugin-${project.version}.jar" />-->
@@ -52,7 +52,7 @@
                               <pathelement location="../oracle/target/rhq-oracle-plugin-${project.version}.jar" />
                               <pathelement location="../perftest/target/rhq-perftest-plugin-${project.version}.jar" />
                               <pathelement location="../platform/target/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
-                              <pathelement location="../postgres/target/rhq-postgres-plugin-${project.version}.jar" />
+                              <pathelement location="../postgres/target/rhq-postgres-plugin-${rhq-postgres-plugin.version}.jar" />
                               <pathelement location="../rhq-agent/target/rhq-agent-plugin-${project.version}.jar" />
                               <pathelement location="../snmptrapd/target/rhq-snmptrapd-plugin-${project.version}.jar" />
                               <pathelement location="../sshd/target/rhq-sshd-plugin-${project.version}.jar" />

@@ -812,13 +812,13 @@
                                         <artifactItem>
                                             <groupId>${project.groupId}</groupId>
                                             <artifactId>rhq-database-plugin</artifactId>
-                                            <version>${project.version}</version>
+                                            <version>${rhq-database-plugin.version}</version>
                                         </artifactItem>
 
                                         <artifactItem>
                                             <groupId>${project.groupId}</groupId>
                                             <artifactId>rhq-postgres-plugin</artifactId>
-                                            <version>${project.version}</version>
+                                            <version>${rhq-postgres-plugin.version}</version>
                                         </artifactItem>
 
                                         <artifactItem>

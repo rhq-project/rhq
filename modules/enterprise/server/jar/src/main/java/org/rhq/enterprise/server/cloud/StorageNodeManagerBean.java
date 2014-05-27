@@ -166,26 +166,27 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void linkResource(Resource resource) {
-        Configuration pluginConfig = resource.getPluginConfiguration();
+        Configuration pluginConfig = configurationManager.getPluginConfiguration(resource.getId());
         String address = pluginConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
 
         if (log.isInfoEnabled()) {
             log.info("Linking " + resource + " to storage node at " + address);
         }
         try {
-            StorageNode storageNode = findStorageNodeByAddress(address);
+            StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(address);
             if (storageNode == null) {
                 if (InetAddresses.isInetAddress(address)) {
                     String hostName = InetAddresses.forString(address).getHostName();
                     log.info("Did not find storage node with address [" + address + "]. Searching by hostname ["
                         + hostName + "]");
-                    storageNode = findStorageNodeByAddress(hostName);
+                    storageNode = storageNodeManager.findStorageNodeByAddress(hostName);
                 } else {
                     String ipAddress = InetAddress.getByName(address).getHostAddress();
                     log.info("Did not find storage node with address [" + address + "] Searching by IP address ["
                         + ipAddress + "]");
-                    storageNode = findStorageNodeByAddress(ipAddress);
+                    storageNode = storageNodeManager.findStorageNodeByAddress(ipAddress);
                 }
             }
 
@@ -206,7 +207,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 }
                 if (clusterSettings.getAutomaticDeployment()) {
                     log.info("Deploying " + storageNode);
-                    deployStorageNode(subjectManager.getOverlord(), storageNode);
+                    storageNodeManager.deployStorageNode(subjectManager.getOverlord(), storageNode);
                 } else {
                     log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the "
                         + "cluster until it is deployed.");
@@ -219,6 +220,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings) {
         Configuration pluginConfig = resource.getPluginConfiguration();
 

@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.coregui.client.components.table.Table;
 import org.rhq.coregui.client.dashboard.AutoRefreshUtil;
@@ -46,16 +47,14 @@ import org.rhq.coregui.client.inventory.common.graph.Refreshable;
  */
 public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource> implements AutoRefresh, Refreshable {
 
-    private final int groupId;
-    private final boolean isAutogroup;
+    EntityContext context;
     protected final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     protected Timer refreshTimer;
 
-    public GroupMeasurementTableView(ResourceGroupComposite groupComposite, int groupId) {
+    public GroupMeasurementTableView(ResourceGroupComposite groupComposite) {
         super();
-        this.groupId = groupId;
-        this.isAutogroup = groupComposite.getResourceGroup().getAutoGroupParentResource() != null;
-        setDataSource(new GroupMetricsTableDataSource(groupComposite, groupId));
+        this.context = EntityContext.forGroup(groupComposite.getResourceGroup());
+        setDataSource(new GroupMetricsTableDataSource(groupComposite));
         //disable fields used when is full screen
         setShowFooterRefresh(false);
         setTitle(MSG.common_title_numeric_metrics());
@@ -107,7 +106,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
                 ChartViewWindow window = new ChartViewWindow("", title);
                 int defId = record.getAttributeAsInt(GroupMetricsTableDataSource.FIELD_METRIC_DEF_ID);
 
-                CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(groupId, defId, isAutogroup);
+                CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(context, defId);
                 window.addItem(graph);
                 graph.populateData();
                 window.show();

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.coregui.client.gwt.MeasurementChartsGWTService;
@@ -37,14 +38,14 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
 
     @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
-        throws RuntimeException {
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context,
+        String viewName) throws RuntimeException {
         try {
             if (viewName == null) {
                 viewName = DEFAULT_VIEW_NAME;
             }
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
-                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, viewName));
+                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), context, viewName));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup1");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -52,8 +53,8 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     }
 
     @Override
-    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, int[] defIds,
-        long begin, long end, boolean enabledOnly) throws RuntimeException {
+    public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context,
+        int[] defIds, long begin, long end, boolean enabledOnly) throws RuntimeException {
         Long now = System.currentTimeMillis();
         if (now < end) {
             // we can't foretell the future (this may be caused by different timezone on client's)
@@ -61,7 +62,7 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
         }
         try {
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(
-                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, defIds, begin,
+                chartsManager.getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), context, defIds, begin,
                     end, enabledOnly));
             return SerialUtility.prepare(list, "MeasurementCharts.getMetricDisplaySummariesForCompatibleGroup2");
         } catch (Throwable t) {

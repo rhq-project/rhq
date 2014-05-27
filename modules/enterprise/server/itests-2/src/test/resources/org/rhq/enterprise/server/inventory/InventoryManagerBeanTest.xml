@@ -15,6 +15,8 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
+                       missing_policy="DOWN"
+                       supports_missing="0"
                        singleton="0"
                        plugin="TestPlugin1"
                        deleted="0"/>
@@ -24,6 +26,8 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
+                       missing_policy="DOWN"
+                       supports_missing="0"
                        singleton="0"
                        plugin="TestPlugin1"
                        deleted="0"/>
@@ -33,6 +37,8 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
+                       missing_policy="DOWN"
+                       supports_missing="0"
                        singleton="0"
                        plugin="TestPlugin1"
                        deleted="0"/>
@@ -42,6 +48,8 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
+                       missing_policy="DOWN"
+                       supports_missing="0"
                        singleton="0"
                        plugin="TestPlugin1"
                        deleted="0"/>
@@ -51,6 +59,8 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
+                       missing_policy="DOWN"
+                       supports_missing="0"
                        singleton="0"
                        plugin="TestPlugin1"
                        deleted="0"/>
@@ -60,6 +70,8 @@
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
+                       missing_policy="DOWN"
+                       supports_missing="0"
                        singleton="0"
                        plugin="TestPlugin1"
                        deleted="0"/>

@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.discovery.DiscoveryBossBean.PostMergeAction;
 
 /**
  * The boss interface to the discovery subsystem.
@@ -71,9 +72,12 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @param resourceBatch
      * @param agent
+     * @param postMergeActions a series of actions to perform on newly committed resources.
+     *
      * @throws InvalidInventoryReportException
      */
-    void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent)
+    void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent,
+        Map<Resource, Set<PostMergeAction>> postMergeActions)
         throws InvalidInventoryReportException;
 
     /**

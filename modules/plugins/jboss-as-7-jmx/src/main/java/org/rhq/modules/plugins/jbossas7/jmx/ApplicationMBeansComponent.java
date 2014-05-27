@@ -21,6 +21,8 @@ package org.rhq.modules.plugins.jbossas7.jmx;
 
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansDiscoveryComponent.PluginConfigProps.BEANS_QUERY_STRING;
+import static org.rhq.modules.plugins.jbossas7.jmx.ApplicationMBeansDiscoveryComponent.loadEmsConnection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,21 +44,22 @@ import org.rhq.plugins.jmx.JMXComponent;
 public class ApplicationMBeansComponent implements JMXComponent<BaseComponent<?>> {
     private static final Log LOG = LogFactory.getLog(ApplicationMBeansComponent.class);
 
-    private Configuration pluginConfiguration;
+    private ResourceContext resourceContext;
+    private Configuration pluginConfig;
     private EmsConnection emsConnection;
     private String beansQueryString;
 
     @Override
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        pluginConfiguration = resourceContext.getPluginConfiguration();
-        beansQueryString = pluginConfiguration
-            .getSimpleValue(ApplicationMBeansDiscoveryComponent.PluginConfigProps.BEANS_QUERY_STRING);
-        emsConnection = ApplicationMBeansDiscoveryComponent.loadEmsConnection(pluginConfiguration);
+        this.resourceContext = resourceContext;
+        pluginConfig = resourceContext.getPluginConfiguration();
+        beansQueryString = pluginConfig.getSimpleValue(BEANS_QUERY_STRING);
+        emsConnection = loadEmsConnection(pluginConfig, resourceContext.getTemporaryDirectory());
     }
 
     @Override
     public void stop() {
-        pluginConfiguration = null;
+        pluginConfig = null;
         if (emsConnection != null) {
             emsConnection.close();
         }
@@ -66,7 +69,7 @@ public class ApplicationMBeansComponent implements JMXComponent<BaseComponent<?>
     public EmsConnection getEmsConnection() {
         synchronized (this) {
             if (emsConnection == null || !emsConnection.getConnectionProvider().isConnected()) {
-                emsConnection = ApplicationMBeansDiscoveryComponent.loadEmsConnection(pluginConfiguration);
+                emsConnection = loadEmsConnection(pluginConfig, resourceContext.getTemporaryDirectory());
             }
         }
         return emsConnection;

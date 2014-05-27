@@ -847,7 +847,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
-            throw new ResultFailedException("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
+            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
+                throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
+                    + getAddress().getPath() + "] - response: " + res);
+            }
+            throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }
         return (T) res.getResult();

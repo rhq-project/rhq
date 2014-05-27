@@ -20,7 +20,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-database-plugin</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-database-plugin.version}</version>
          <scope>provided</scope>
       </dependency>
 

@@ -665,11 +665,6 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             }
 
             properties.setProperty(Context.PROVIDER_URL, providerUrl);
-
-            // Follow referrals automatically
-            properties.setProperty(Context.REFERRAL, "ignore"); //BZ:582471- active directory query change
-
-            //            properties = getProperties(properties);
         }
         return properties;
     }
@@ -680,6 +675,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
      * appropriately.
      *
      * @return properties that are to be used when connecting to LDAP server
+     * @deprecated use {@link #populateProperties(SystemSettings)} instead
      */
     @Deprecated
     private Properties getProperties(Properties systemConfig) {
@@ -707,10 +703,6 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
         }
 
         env.setProperty(Context.PROVIDER_URL, providerUrl);
-
-        // Follow referrals automatically
-        env.setProperty(Context.REFERRAL, "ignore"); //BZ:582471- active directory query change
-
         return env;
     }
 

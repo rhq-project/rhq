@@ -54,6 +54,7 @@
                         <artifactItem>
                            <groupId>gnu-getopt</groupId>
                            <artifactId>getopt</artifactId>
+                           <version>${getopt.version}</version>
                         </artifactItem>
 
                      </artifactItems>

@@ -130,6 +130,7 @@
                 <artifactItem>
                   <groupId>org.rhq</groupId>
                   <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                  <version>${rhq-jboss-as-dmr-client.version}</version>
                 </artifactItem>
               </artifactItems>
             </configuration>

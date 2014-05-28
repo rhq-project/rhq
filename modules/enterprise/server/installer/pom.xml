@@ -141,22 +141,27 @@
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-domain</artifactId>
+                                    <version>${rhq-core-domain.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-util</artifactId>
+                                    <version>${rhq-core-util.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-dbutils</artifactId>
+                                    <version>${rhq-core-dbutils.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-enterprise-comm</artifactId>
+                                    <version>${rhq-enterprise-comm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                                    <version>${rhq-jboss-as-dmr-client.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>ant</groupId>
@@ -173,6 +178,7 @@
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-schema</artifactId>
+                                  <version>${rhq-cassandra-schema.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>

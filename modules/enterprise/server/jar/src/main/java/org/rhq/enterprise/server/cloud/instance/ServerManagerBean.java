@@ -247,9 +247,16 @@ public class ServerManagerBean implements ServerManagerLocal {
                 // This will prevent a running CloudManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
 
+                log.info("Notified communication layer of server operation mode " + serverMode);
+
                 lastEstablishedServerMode = serverMode;
                 serverMode = determineServerOperationMode(server.hasStatus(Server.Status.MANUAL_MAINTENANCE_MODE),
                     storageClientManager.isClusterAvailable(), OperationMode.NORMAL);
+
+                if (serverMode == OperationMode.MAINTENANCE) {
+                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer()
+                        .addCommandListener(getMaintenanceModeListener());
+                }
             }
 
             // If this server just transitioned from INSTALLED to NORMAL operation mode then it

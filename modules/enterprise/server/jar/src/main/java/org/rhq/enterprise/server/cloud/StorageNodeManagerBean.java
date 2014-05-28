@@ -53,7 +53,14 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.google.gwt.thirdparty.guava.common.base.Stopwatch;
+import com.google.common.base.Function;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
+import com.google.common.net.InetAddresses;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.FutureFallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -464,7 +471,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return result;
         } finally {
             stopwatch.stop();
-            log.info("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.info("Retrieved load metrics for " + node + " in " + stopwatch.elapsedTime(TimeUnit.MILLISECONDS)
+                + " ms");
         }
     }
 
@@ -543,7 +551,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return Futures.successfulAsList(compositeFutures);
         } finally {
             stopwatch.stop();
-            log.debug("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.debug("Retrieved load metrics for " + node + " in " + stopwatch.elapsedTime(TimeUnit.MILLISECONDS)
+                + " ms");
         }
     }
 
@@ -670,7 +679,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return result;
         } finally {
             stopwatch.stop();
-            log.debug("Retrieved storage node composites in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            log.debug("Retrieved storage node composites in " + stopwatch.elapsedTime(TimeUnit.MILLISECONDS) + " ms");
         }
     }
 
@@ -814,7 +823,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return findStorageNodeAlerts(subject, false, storageNode);
         } finally {
             stopwatch.stop();
-            log.info("Retrieved unacked alerts for " + storageNode + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            log.info("Retrieved unacked alerts for " + storageNode + " in "
+                + stopwatch.elapsedTime(TimeUnit.MILLISECONDS));
         }
     }
 
@@ -898,7 +908,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return storageNodeAlertCounts;
         } finally {
             stopwatch.stop();
-            log.debug("Finished calculating storage node alert counts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS)
+            log.debug("Finished calculating storage node alert counts in "
+                + stopwatch.elapsedTime(TimeUnit.MILLISECONDS)
                 + " ms");
         }
     }
@@ -950,7 +961,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             Map<Integer, Integer> resourceIdsToStorageNodeMap = new HashMap<Integer, Integer>();
             Queue<Resource> unvisitedResources = new LinkedList<Resource>();
 
-            // we are assuming here that the set of resources is disjunktive across different storage nodes
+            // we are assuming here that the set of resources is disjunctive across different storage nodes
             for (StorageNode initialStorageNode : initialStorageNodes) {
                 if (initialStorageNode.getResource() != null) {
                     unvisitedResources.add(initialStorageNode.getResource());
@@ -973,7 +984,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             return resourceIdsToStorageNodeMap;
         } finally {
             stopwatch.stop();
-            log.debug("Found storage node resources with alert defs in " + stopwatch.elapsed(TimeUnit.MILLISECONDS)
+            log.debug("Found storage node resources with alert defs in " + stopwatch.elapsedTime(TimeUnit.MILLISECONDS)
                 + " ms");
         }
     }

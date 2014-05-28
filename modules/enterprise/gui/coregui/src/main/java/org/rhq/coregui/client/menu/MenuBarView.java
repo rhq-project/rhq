@@ -61,17 +61,11 @@ import org.rhq.coregui.client.components.AboutModalWindow;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
-import org.rhq.coregui.client.drift.DriftHistoryView;
 import org.rhq.coregui.client.footer.FavoritesButton;
 import org.rhq.coregui.client.help.HelpView;
 import org.rhq.coregui.client.inventory.InventoryView;
-import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.coregui.client.operation.OperationHistoryView;
-import org.rhq.coregui.client.report.AlertDefinitionReportView;
 import org.rhq.coregui.client.report.ReportTopView;
-import org.rhq.coregui.client.report.inventory.DriftComplianceReport;
-import org.rhq.coregui.client.report.inventory.ResourceInstallReport;
 import org.rhq.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.coregui.client.report.tag.TaggedView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -199,7 +193,6 @@ public class MenuBarView extends EnhancedVLayout {
             }
         });
     }
-    
 
     private void updateMenuVisibility(MenuItem item) {
         // set visibility based on permission
@@ -266,7 +259,15 @@ public class MenuBarView extends EnhancedVLayout {
         protected void onDraw() {
             updateActiveMenuItem(History.getToken());
             super.onDraw();
+            injectJQueryCode();
         }
+
+
+        // add jQuery magic for main navbar
+        private native void injectJQueryCode() /*-{
+            $wnd.$('.navbar-btn-item').on('mouseenter', function() {$wnd.$(this).parent().parent().addClass('navbar-btn-item-hover')});
+            $wnd.$('.navbar-btn-item').on('mouseleave', function() {$wnd.$(this).parent().parent().removeClass('navbar-btn-item-hover')});
+        }-*/;
 
         private String createBarContent() {
             Subject user = UserSessionManager.getSessionSubject();
@@ -309,7 +310,7 @@ public class MenuBarView extends EnhancedVLayout {
              + getMenuItems()
          +"</ul>"
        +"</div>"
-     +"</nav>");
+                + "</nav>");
             return sb.toString();
         }
         

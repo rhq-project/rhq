@@ -50,6 +50,7 @@
                         <artifactItem>
                            <groupId>postgresql</groupId>
                            <artifactId>postgresql</artifactId>
+                           <version>${postgresql.version}</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

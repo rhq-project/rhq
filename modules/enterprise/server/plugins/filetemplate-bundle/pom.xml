@@ -69,7 +69,7 @@
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-filetemplate-bundle-common</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-filetemplate-bundle-common.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

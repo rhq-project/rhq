@@ -59,6 +59,7 @@
                               <artifactItem>
                                  <groupId>com.oracle</groupId>
                                  <artifactId>ojdbc6</artifactId>
+                                 <version>${ojdbc6.version}</version>
                               </artifactItem>
                            </artifactItems>
                            <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

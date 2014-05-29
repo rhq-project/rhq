@@ -46,7 +46,7 @@ public class UpdateFileTest {
 //        }
 //    }
 
-    @Test(expectedExceptions = RuntimeException.class)
+    @Test
     public void bindingErrorNoProperties() throws Exception {
         UpdateFile updateFile = new UpdateFile("required_binding.xml");
         updateFile.getOrderedSteps();

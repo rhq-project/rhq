@@ -16,13 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.legacy.common;
+package org.rhq.enterprise.server.common;
 
 
 /**
- * @deprecated this package is going away, please use {@link org.rhq.enterprise.server.common.ApplicationException}
+ * Indicates a general server-side application exception. Exception details should be provided in the message.
+ * <p/>
+ * Declare this an {@link javax.ejb.ApplicationException} because we don't want these to be wrapped or to rollback an ongoing
+ * transaction.
  */
-@Deprecated
 @javax.ejb.ApplicationException(rollback = false, inherited = true)
 public class ApplicationException extends RuntimeException {
     private static final long serialVersionUID = 1L;

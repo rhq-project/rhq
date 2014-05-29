@@ -79,9 +79,11 @@ public class RuntimeApacheConfiguration {
      */
     public static class NodeInspector {
         private TransformState state;
+        final public boolean keepConditional;
 
-        private NodeInspector(TransformState state) {
+        private NodeInspector(TransformState state, boolean keepConditional) {
             this.state = state;
+            this.keepConditional = keepConditional;
         }
 
         /**
@@ -427,9 +429,9 @@ public class RuntimeApacheConfiguration {
     }
 
     public static NodeInspector getNodeInspector(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo,
-        Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings, boolean keepConditional) {
         return new NodeInspector(new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames,
-            suppressUnknownModuleWarnings));
+            suppressUnknownModuleWarnings), keepConditional);
     }
 
     /**
@@ -452,7 +454,7 @@ public class RuntimeApacheConfiguration {
         ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         ApacheDirectiveTree ret = tree.clone();
         transform(new TransformingWalker(), ret.getRootNode(),
-            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings, false));
 
         return ret;
     }
@@ -493,7 +495,7 @@ public class RuntimeApacheConfiguration {
         };
 
         transform(walker, tree.getRootNode(),
-            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings, false));
     }
 
     public static void walkRuntimeConfig(final NodeVisitor<AugeasNode> visitor, AugeasTree tree,
@@ -542,7 +544,7 @@ public class RuntimeApacheConfiguration {
             }
         };
         transform(walker, tree.getRootNode(),
-            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+            getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings, false));
     }
 
     private static <T> void transform(TreeWalker<T> walker, T parentNode, NodeInspector inspector) {

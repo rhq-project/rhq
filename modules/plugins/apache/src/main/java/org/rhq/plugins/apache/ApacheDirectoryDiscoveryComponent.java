@@ -23,8 +23,10 @@
 
 package org.rhq.plugins.apache;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -47,6 +49,8 @@ import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
  */
 public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
 
+    private static final String IFMODULE_DIRECTIVE_NAME = "<IfModule";
+
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
@@ -58,9 +62,32 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
         ApacheDirective vhost = context.getParentResourceComponent().getDirective();
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         tree.setRootNode(vhost);
-        final List<ApacheDirective> allDirectories  = tree.search("/"+ApacheDirectoryComponent.DIRECTORY_DIRECTIVE);
-        ResourceType resourceType = context.getResourceType();
+
+        discoveredResources.addAll(discoverResources(context, tree, null));
+
+        final List<ApacheDirective> allIfModules = tree.search(IFMODULE_DIRECTIVE_NAME);
+        final Map<String,Integer> ifModuleIndex = new HashMap<String, Integer>();
+        for (ApacheDirective ifmodule : allIfModules) {
+            int index = 1;
+            String moduleName = ifmodule.getValues().get(0);
+            if(ifModuleIndex.containsKey(moduleName)) {
+                index = ifModuleIndex.get(moduleName) + 1;
+            }
+            ifModuleIndex.put(moduleName, index);
+            String ifModuleKey = IFMODULE_DIRECTIVE_NAME + "|" + moduleName + "|" + index + ";";
+            tree.setRootNode(ifmodule);
+            discoveredResources.addAll(discoverResources(context, tree, ifModuleKey));
+        }
+
+        return discoveredResources;
+    }
+
+    private Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context, ApacheDirectiveTree tree, String ifModuleKey) {
+        Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
+
+        final List<ApacheDirective> allDirectories = tree.search(ApacheDirectoryComponent.DIRECTORY_DIRECTIVE);
         for (ApacheDirective apacheDirective : allDirectories) {
+            ResourceType resourceType = context.getResourceType();
             String directoryParam;
             boolean isRegexp;
             List<String> params = apacheDirective.getValues();
@@ -71,21 +98,25 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
                 directoryParam = params.get(0);
                 isRegexp = false;
             }
-            
+
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
             String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
 
-            int index = 1; 
+            int index = 1;
             for (DiscoveredResourceDetails detail : discoveredResources) {
-                if(detail.getResourceName().endsWith(resourceName))
+                if (detail.getResourceName().equals(resourceName)) {
                     index++;
+                }
             }
             StringBuilder resourceKey = new StringBuilder();
-            resourceKey.append(apacheDirective.getName()).append("|").append(directoryParam).append("|").append(index).append(";");
-            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey.toString(), resourceName, null,
-                null, pluginConfiguration, null));
-
+            apacheDirective.getParentNode();
+            resourceKey.append(apacheDirective.getName()).append("|").append(directoryParam).append("|").append(index)
+                .append(";");
+            if (ifModuleKey != null)
+                resourceKey.append(ifModuleKey);
+            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey.toString(), resourceName,
+                null, null, pluginConfiguration, null));
         }
         return discoveredResources;
     }

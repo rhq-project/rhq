@@ -1051,11 +1051,15 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     }
 
     public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings) {
+        return parseRuntimeConfiguration(suppressUnknownModuleWarnings,false);
+    }
+    
+    public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings, boolean keepConditional) {
         String httpdConfPath = getHttpdConfFile().getAbsolutePath();
         ProcessInfo processInfo = resourceContext.getNativeProcess();
 
         return ApacheServerDiscoveryComponent.parseRuntimeConfiguration(httpdConfPath, processInfo, binaryInfo,
-            getModuleNames(), suppressUnknownModuleWarnings);
+            getModuleNames(), suppressUnknownModuleWarnings, keepConditional);
     }
 
     public boolean isAugeasEnabled() {

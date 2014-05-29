@@ -495,7 +495,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      * @throws IllegalStateException if none or more than one directives found
      */
     public ApacheDirective getDirective() {
-        ApacheDirectiveTree tree = resourceContext.getParentResourceComponent().parseRuntimeConfiguration(false);
+        ApacheDirectiveTree tree = resourceContext.getParentResourceComponent().parseRuntimeConfiguration(true, true);
         String resourceKey = resourceContext.getResourceKey();
 
         int snmpIdx = getWwwServiceIndex();

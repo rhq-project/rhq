@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -67,6 +66,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
@@ -1081,7 +1081,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         Configuration pluginConfiguration = details.getPluginConfiguration();
         ConfigurationUtility.normalizeConfiguration(details.getPluginConfiguration(), details.getResourceType()
-            .getPluginConfigurationDefinition());
+            .getPluginConfigurationDefinition(), false, false);
         resource.setPluginConfiguration(pluginConfiguration);
 
         return resource;
@@ -1103,8 +1103,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setVersion(resourceFromServer.getVersion());
 
         resource.setName(resourceFromServer.getName());
-        resource.setDescription(resourceFromServer.getDescription());
-        resource.setLocation(resourceFromServer.getLocation());
 
         compactResource(resource);
         return resource;
@@ -2006,7 +2004,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             ConfigurationUtility.normalizeConfiguration(resource.getPluginConfiguration(),
-                type.getPluginConfigurationDefinition());
+                type.getPluginConfigurationDefinition(), false, false);
 
             ResourceComponent<?> parentComponent = null;
             ResourceContext<?> parentResourceContext = null;
@@ -2275,40 +2273,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public boolean isDiscoveryScanInProgress() {
         return (this.inventoryThreadPoolExecutor.getActiveCount() >= 1);
     }
-
-    // commenting out dead code, leaving for reference -jshaughn
-    //
-    //    private void activateFromDisk(Resource resource) throws PluginContainerException {
-    //        if (resource.getId() == 0) {
-    //            return; // This is for the case of a resource that hadn't been synced to the server (there are probably better places to handle this)
-    //        }
-    //
-    //        resource.setAgent(this.agent);
-    //        ResourceContainer container = getResourceContainer(resource.getId());
-    //        if (container == null) {
-    //            if (log.isDebugEnabled()) {
-    //                log.debug("Could not find a container for resource: " + resource);
-    //            }
-    //            return;
-    //        }
-    //        if (container.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-    //            if (log.isDebugEnabled()) {
-    //                log.debug("Stopped activating resources at unsynchronized resource [" + resource + "]");
-    //            }
-    //            return;
-    //        }
-    //
-    //        try {
-    //            activateResource(resource, container, false);
-    //        } catch (Exception e) {
-    //            log.debug("Failed to activate from disk [" + resource + "]");
-    //        }
-    //
-    //        for (Resource child : resource.getChildResources()) {
-    //            initResourceContainer(child);
-    //            activateFromDisk(child);
-    //        }
-    //    }
 
     /**
      * Tries to load an existing inventory from the file data/inventory.dat
@@ -2948,20 +2912,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return contentContext;
     }
 
-    //    private ResourceComponent<?> createTestPlatformComponent() {
-    //        return new ResourceComponent() {
-    //            public AvailabilityType getAvailability() {
-    //                return AvailabilityType.UP;
-    //            }
-    //
-    //            public void start(ResourceContext context) {
-    //            }
-    //
-    //            public void stop() {
-    //            }
-    //        };
-    //    }
-
     private AvailabilityContext getAvailabilityContext(Resource resource) {
         if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
             log.error("RESOURCE UUID IS NOT SET! Availability features may not work!");
@@ -3206,7 +3156,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 + "] unknownResourceSyncInfos...");
         }
 
-        boolean result = false;
         PluginMetadataManager pmm = this.pluginManager.getMetadataManager();
         Set<Resource> unknownResources = getResourcesFromSyncInfos(unknownResourceSyncInfos);
 
@@ -3218,7 +3167,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
             if (resourceType != null) {
                 log.info("Got unknown resource: " + unknownResource.getId());
-                result = true;
                 compactResource(unknownResource);
                 mergeResource(unknownResource);
                 syncSchedulesRecursively(unknownResource);
@@ -3487,6 +3435,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         targetResource.setResourceType(sourceResource.getResourceType());
         targetResource.setMtime(sourceResource.getMtime());
         targetResource.setInventoryStatus(sourceResource.getInventoryStatus());
+        // (jshaughn) noticed we don't set the version here, should we?
         boolean pluginConfigUpdated = (!targetResource.getPluginConfiguration().equals(
             sourceResource.getPluginConfiguration()));
         targetResource.setPluginConfiguration(sourceResource.getPluginConfiguration());

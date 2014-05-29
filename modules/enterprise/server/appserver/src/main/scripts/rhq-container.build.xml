@@ -224,7 +224,7 @@
         <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBossAS installation - aborting!" />
 
         <echo>Adding main EAR app module to ${jboss.modules.dir} ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/server-startup/${project.version}/server-startup-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/server-startup/${server-startup.version}/server-startup-${server-startup.version}.zip"
                dest="${jboss.modules.dir}" />
 
         <echo>Adding installer module to ${jboss.modules.dir} ...</echo>
@@ -232,11 +232,11 @@
                dest="${jboss.modules.dir}" />
 
         <echo>Adding Cassandra installer module to ${jboss.modules.dir}...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-installer/${project.version}/rhq-cassandra-installer-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-installer/${rhq-cassandra-installer.version}/rhq-cassandra-installer-${rhq-cassandra-installer.version}.zip"
                dest="${jboss.modules.dir}"/>
 
         <echo>Adding data migration module to ${jboss.modules.dir}...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-data-migration/${project.version}/rhq-data-migration-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/rhq-data-migration/${rhq-data-migration.version}/rhq-data-migration-${rhq-data-migration.version}.zip"
              dest="${jboss.modules.dir}"/>
 
         <echo>Adding RHQ Server Control module to ${jboss.modules.dir}...</echo>
@@ -564,7 +564,7 @@ checkIfRunning(16);]]>
         <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip"
               tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
 
-        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip"
+        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${rhq-rtfilter-subsystem.version}/rhq-rtfilter-subsystem-${rhq-rtfilter-subsystem.version}.zip"
               tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
     </target>
 
@@ -574,7 +574,7 @@ checkIfRunning(16);]]>
         <!-- TODO: This should likely go away and the storage props should be defined at the top of this file like
                    the other props. -->
         <loadproperties>
-          <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
+          <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${rhq-cassandra-ccm-core.version}/rhq-cassandra-ccm-core-${rhq-cassandra-ccm-core.version}.jar"
                   name="cassandra.properties"/>
         </loadproperties>
 
@@ -1125,7 +1125,7 @@ ${comment}rhq.storage.verify-data-dirs-empty=${rhq.storage.verify-data-dirs-empt
             <fileset dir="src/main/dev-resources" />
         </copy>
       <loadproperties>
-        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${rhq-cassandra-ccm-core.version}/rhq-cassandra-ccm-core-${rhq-cassandra-ccm-core.version}.jar"
                   name="cassandra.properties"/>
       </loadproperties>
 

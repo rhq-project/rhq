@@ -1124,6 +1124,7 @@
                       </c:list-property>
                   </c:group>
       -->
+      <c:simple-property name="name" displayName="Domain Name" required="true" description="Name of the managed domain. This value is same for all HostControllers in domain, but only DomainController resource is allowed to update it."/>
       <c:group name="children:system-property:name+" displayName="System-properties">
         <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
           <c:map-property name="*:name" displayName="Name" readOnly="true">

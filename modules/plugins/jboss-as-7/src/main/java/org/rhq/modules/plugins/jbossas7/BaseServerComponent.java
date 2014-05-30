@@ -151,13 +151,21 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (availabilityType == DOWN) {
             releaseVersion = null;
         } else if (previousAvailabilityType != UP) {
-            validateServerAttributes();
-            if (log.isDebugEnabled()) {
-                log.debug(getResourceDescription() + " has just come UP.");
-            }
+            onAvailGoesUp();
         }
         previousAvailabilityType = availabilityType;
         return availabilityType;
+    }
+
+    /**
+     * this method get's called when availability was DOWN and now is UP.
+     * When overriding, don't forget to call super impl.
+     */
+    protected void onAvailGoesUp() {
+        validateServerAttributes();
+        if (log.isDebugEnabled()) {
+            log.debug(getResourceDescription() + " has just come UP.");
+        }
     }
 
     private void validateServerAttributes() throws InvalidPluginConfigurationException {

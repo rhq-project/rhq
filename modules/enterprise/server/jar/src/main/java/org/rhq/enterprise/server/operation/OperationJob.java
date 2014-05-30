@@ -126,18 +126,24 @@ public abstract class OperationJob implements Job {
         return persisted;
     }
 
+    /**
+     * @return This returns all optional data and should be suitable for modification and subsequent update.
+     */
     protected ResourceOperationHistory findOperationHistory(String name, String group,
-                                                            OperationManagerLocal operationManager,
-                                                            ResourceOperationSchedule schedule) {
+        OperationManagerLocal operationManager, ResourceOperationSchedule schedule) {
 
-        JobId jobId = new JobId(name,group);
+        JobId jobId = new JobId(name, group);
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(jobId);
+        criteria.fetchOperationDefinition(true);
+        criteria.fetchParameters(true);
+        criteria.fetchResults(true);
 
-        ResourceOperationHistory history ;
-        List<ResourceOperationHistory> list = operationManager.findResourceOperationHistoriesByCriteria(schedule.getSubject(),criteria);
-        if (list==null || list.isEmpty()) {
+        ResourceOperationHistory history;
+        List<ResourceOperationHistory> list = operationManager.findResourceOperationHistoriesByCriteria(
+            schedule.getSubject(), criteria);
+        if (list == null || list.isEmpty()) {
             return null;
         }
 

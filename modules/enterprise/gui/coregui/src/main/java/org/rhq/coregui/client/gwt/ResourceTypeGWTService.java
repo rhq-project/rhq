@@ -8,6 +8,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.resource.MissingPolicy;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.util.PageList;
@@ -17,8 +18,7 @@ public interface ResourceTypeGWTService extends RemoteService {
 
     void setResourceTypeIgnoreFlag(int resourceTypeId, boolean ignoreFlag) throws RuntimeException;
 
-    void setResourceTypeUninventoryMissingFlag(int resourceTypeId, boolean uninventoryMissingFlag)
-        throws RuntimeException;
+    void setResourceTypeMissingPolicy(int resourceTypeId, MissingPolicy policy) throws RuntimeException;
 
     PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) throws RuntimeException;
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,6 @@ import javax.transaction.SystemException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -57,6 +55,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
+import org.testng.annotations.Test;
 
 /**
  * Tests the subject manager.
@@ -641,6 +640,24 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             Set<Subject> subjectSet = new HashSet<Subject>(subjects);
             assertEquals(1, subjectSet.size());
             assertTrue(subjectSet.contains(subjectWithNoRoles));
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+    
+    public void testSubjectWithNoRolesCannotLoginIfItIsDisabled() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+            final String name = "subject" + UUID.randomUUID();
+            final String password = "password";
+            Subject subjectWithNoRoles = new Subject(name, true, false);
+            subjectWithNoRoles = subjectManager.createSubject(overlord, subjectWithNoRoles, password);
+            subjectManager.login(name, password);
+            fail("Exception should be thrown when logging in without any roles if it is disabled, but wasn't.");
+        } catch (LoginException ex) {
+            assertTrue(true);
         } finally {
             getTransactionManager().rollback();
         }

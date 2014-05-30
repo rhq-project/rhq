@@ -49,6 +49,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.MissingPolicy;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -123,19 +124,18 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     @Override
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void setResourceTypeUninventoryMissingFlag(Subject subject, int resourceTypeId,
-        boolean uninventoryMissingFlag) {
+    public void setResourceTypeMissingPolicy(Subject subject, int resourceTypeId, MissingPolicy policy) {
         ResourceType resourceType = getResourceTypeById(subject, resourceTypeId);
 
         // don't bother to do anything if the type's flag is already set to the value the caller wants
-        if (resourceType.isUninventoryMissing() == uninventoryMissingFlag) {
+        if (resourceType.getMissingPolicy().equals(policy)) {
             return;
         }
 
-        log.info("Changing uninventoryMissing flag to [" + uninventoryMissingFlag + "] for resource type ["
-            + resourceType.getName() + "] with id=[" + resourceTypeId + "]");
+        log.info("Changing Missing policy to [" + policy.name() + "] for resource type [" + resourceType.getName()
+            + "] with id=[" + resourceTypeId + "]");
 
-        resourceType.setUninventoryMissing(uninventoryMissingFlag);
+        resourceType.setMissingPolicy(policy);
         return;
     }
 

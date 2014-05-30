@@ -403,3 +403,7 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
 .noOutline {
   outline:0;
 }
+
+.overflowVisible {
+	overflow: visible !important;
+}

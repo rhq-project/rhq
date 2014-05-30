@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.alert.engine.model;
 import java.util.List;
 
 import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -59,30 +60,33 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
      */
     @SuppressWarnings("incomplete-switch")
     public static void checkCacheElements(List<AvailabilityDurationCacheElement> cacheElements, Resource resource,
-        AvailabilityType providedValue) {
+        Availability providedValue) {
         if (null == cacheElements) {
             return; // nothing to do
         }
 
+        AvailabilityType availType = providedValue.getAvailabilityType();
+
         for (AvailabilityDurationCacheElement cacheElement : cacheElements) {
             switch (cacheElement.getAlertConditionOperator()) {
             case AVAIL_DURATION_DOWN:
-                if (AvailabilityType.DOWN == providedValue
+                if (AvailabilityType.DOWN == availType
                     && AvailabilityType.DOWN != cacheElement.getAlertConditionValue()) {
 
-                    LookupUtil.getAvailabilityManager().scheduleAvailabilityDurationCheck(cacheElement, resource);
+                    LookupUtil.getAvailabilityManager().scheduleAvailabilityDurationCheck(cacheElement, resource,
+                        providedValue.getStartTime());
                 }
                 break;
             case AVAIL_DURATION_NOT_UP:
-                if (AvailabilityType.UP != providedValue
-                    && AvailabilityType.UP == cacheElement.getAlertConditionValue()) {
+                if (AvailabilityType.UP != availType && AvailabilityType.UP == cacheElement.getAlertConditionValue()) {
 
-                    LookupUtil.getAvailabilityManager().scheduleAvailabilityDurationCheck(cacheElement, resource);
+                    LookupUtil.getAvailabilityManager().scheduleAvailabilityDurationCheck(cacheElement, resource,
+                        providedValue.getStartTime());
                 }
                 break;
             }
 
-            cacheElement.setAlertConditionValue(providedValue);
+            cacheElement.setAlertConditionValue(availType);
         }
     }
 

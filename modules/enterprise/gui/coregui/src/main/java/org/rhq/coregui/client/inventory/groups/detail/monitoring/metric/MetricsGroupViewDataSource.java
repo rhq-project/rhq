@@ -19,14 +19,24 @@
 
 package org.rhq.coregui.client.inventory.groups.detail.monitoring.metric;
 
+import static org.rhq.core.domain.measurement.DataType.COMPLEX;
+import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.ALERT_COUNT;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.AVG_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.MAX_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_DEF_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_LABEL;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_NAME;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_SCHEDULE_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.METRIC_UNITS;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.MIN_VALUE;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.RESOURCE_GROUP_ID;
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.SPARKLINE;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -37,6 +47,7 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -52,10 +63,6 @@ import org.rhq.coregui.client.util.MeasurementUtility;
 import org.rhq.coregui.client.util.RPCDataSource;
 import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
-
-import static org.rhq.core.domain.measurement.DataType.COMPLEX;
-import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
-import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.*;
 
 /**
  * A simple data source to read in metric data summaries for a resource.
@@ -281,7 +288,7 @@ public class MetricsGroupViewDataSource extends RPCDataSource<MetricDisplaySumma
     private void queryMetricDisplaySummaries(int[] measurementDefIds, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
         GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(
-            resourceGroup.getId(), measurementDefIds, startTime, endTime, false,
+            EntityContext.forGroup(resourceGroup), measurementDefIds, startTime, endTime, false,
             new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                 @Override
                 public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {

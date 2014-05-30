@@ -339,8 +339,12 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "IGNORED")
     private boolean ignored;
 
-    @Column(name = "UNINVENTORY_MISSING")
-    private boolean uninventoryMissing;
+    @Column(name = "SUPPORTS_MISSING")
+    private boolean supportsMissingAvailabilityType;
+
+    @Column(name = "MISSING_POLICY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private MissingPolicy missingPolicy = MissingPolicy.DOWN;
 
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
@@ -504,6 +508,17 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         return (createDeletePolicy == CreateDeletePolicy.BOTH || createDeletePolicy == CreateDeletePolicy.DELETE_ONLY);
     }
 
+    public MissingPolicy getMissingPolicy() {
+        return missingPolicy;
+    }
+
+    public void setMissingPolicy(MissingPolicy missingPolicy) {
+        if (missingPolicy == null)
+            throw new IllegalArgumentException("missingPolicy cannot be null");
+
+        this.missingPolicy = missingPolicy;
+    }
+
     /**
      * Returns the resource subcategory, if any, which this ResourceType
      * has been tagged with. If the ResourceType has not been tagged with
@@ -588,12 +603,12 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.ignored = ignored;
     }
 
-    public boolean isUninventoryMissing() {
-        return uninventoryMissing;
+    public boolean isSupportsMissingAvailabilityType() {
+        return supportsMissingAvailabilityType;
     }
 
-    public void setUninventoryMissing(boolean uninventoryMissing) {
-        this.uninventoryMissing = uninventoryMissing;
+    public void setSupportsMissingAvailabilityType(boolean uninventoryMissing) {
+        this.supportsMissingAvailabilityType = uninventoryMissing;
     }
 
     @PreUpdate

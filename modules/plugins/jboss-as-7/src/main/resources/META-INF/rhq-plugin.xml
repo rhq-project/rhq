@@ -1904,6 +1904,7 @@
              class="DeploymentComponent"
              discovery="SubsystemDiscovery"
              createDeletePolicy="neither"
+             supportsMissingAvailabilityType="true"
              description="Deployed package on a managed server. Go to server groups to manipulate it">
 
       <plugin-configuration>
@@ -8964,6 +8965,7 @@
            class="DeploymentComponent"
            discovery="SubsystemDiscovery"
            createDeletePolicy="both"
+           supportsMissingAvailabilityType="true"
            creationDataType="content">
 
     <runs-inside>

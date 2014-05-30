@@ -23,6 +23,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryTimeoutException;
 import com.google.common.util.concurrent.RateLimiter;
 
 import org.apache.commons.logging.Log;
@@ -144,6 +145,9 @@ public class StorageSession implements Host.StateListener {
             totalRequests.incrementAndGet();
             permits.acquire();
             return wrappedSession.execute(query);
+        } catch (QueryTimeoutException e) {
+            handleTimeout();
+            throw e;
         } catch (NoHostAvailableException e) {
             handleNoHostAvailable(e);
             throw e;
@@ -155,6 +159,9 @@ public class StorageSession implements Host.StateListener {
             totalRequests.incrementAndGet();
             permits.acquire();
             return wrappedSession.execute(query);
+        } catch(QueryTimeoutException e) {
+            handleTimeout();
+            throw e;
         } catch (NoHostAvailableException e) {
             handleNoHostAvailable(e);
             throw e;
@@ -241,12 +248,16 @@ public class StorageSession implements Host.StateListener {
         log.warn("Encountered " + NoHostAvailableException.class.getSimpleName() + " due to following error(s): " +
             e.getErrors());
         if (isClientTimeout(e)) {
-            ++timeouts;
-            if (System.currentTimeMillis() - permitsLastChanged > timeoutDampening) {
-                decreaseRequestThroughput((int) (getRequestLimit() * timeoutDelta));
-            }
+            handleTimeout();
         } else {
             fireClusterDownEvent(e);
+        }
+    }
+
+    void handleTimeout() {
+        ++timeouts;
+        if (System.currentTimeMillis() - permitsLastChanged > timeoutDampening) {
+            decreaseRequestThroughput((int) (getRequestLimit() * timeoutDelta));
         }
     }
 

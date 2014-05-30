@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.resource.MissingPolicy;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
@@ -32,12 +33,10 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
     }
 
     @Override
-    public void setResourceTypeUninventoryMissingFlag(int resourceTypeId, boolean uninventoryMissingFlag)
-        throws RuntimeException {
+    public void setResourceTypeMissingPolicy(int resourceTypeId, MissingPolicy policy) throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
-            typeManager.setResourceTypeUninventoryMissingFlag(getSessionSubject(), resourceTypeId,
-                uninventoryMissingFlag);
+            typeManager.setResourceTypeMissingPolicy(getSessionSubject(), resourceTypeId, policy);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -101,7 +101,7 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
      * @return true if uninventoryMissing was enabled on the type and the resource was uninventoried, or if the resource
      * was not found. Otherwise false.
      */
-    boolean uninventoryMissingResourceInNewTransaction(int resourceId);
+    boolean handleMissingResourceInNewTransaction(int resourceId);
 
     /**
      * Internal use only. use with care, avoids authz checking overhead.

@@ -62,7 +62,7 @@ class GlobalConditionCache extends AbstractConditionCache {
 
     private Map<Integer, Map<Integer, List<ResourceOperationCacheElement>>> resourceOperationCache; // key: resource ID, inner key: operation def ID
     private Map<Integer, List<AvailabilityCacheElement>> availabilityCache; // key: resource ID
-    private Map<Integer, List<AvailabilityDurationCacheElement>> availabilityDurationCache; // key: resource ID    
+    private Map<Integer, List<AvailabilityDurationCacheElement>> availabilityDurationCache; // key: resource ID
     private Map<Integer, List<ResourceConfigurationCacheElement>> resourceConfigurationCache; // key: resource ID
 
     private AlertConditionManagerLocal alertConditionManager;
@@ -280,12 +280,14 @@ class GlobalConditionCache extends AbstractConditionCache {
                 processCacheElements(cacheElements, availabilityType, availability.getStartTime(), stats);
 
                 // Avail Duration conditions are evaluated in two parts:
-                // 1) First, an avail change to the that starts the clock ticking.
+                // 1) First, an avail change that starts the clock ticking.
                 // 2) Second, after the duration period, check to see if the avail state is still the same.
-                // Here we check for part 1, see if we need to start duration processing for the avail change
+                // Here we check for part 1, see if we need to start duration processing for the avail change. If so,
+                // make sure we capture the avail start time, which is an agent time, not a server time, so we can
+                // correctly check for avail changes later (BZ 1099114).
                 List<AvailabilityDurationCacheElement> durationCacheElements = lookupAvailabilityDurationCacheElements(resource
                     .getId());
-                AvailabilityDurationCacheElement.checkCacheElements(durationCacheElements, resource, availabilityType);
+                AvailabilityDurationCacheElement.checkCacheElements(durationCacheElements, resource, availability);
             }
 
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementMatches(stats.matched);
@@ -303,7 +305,7 @@ class GlobalConditionCache extends AbstractConditionCache {
     // 1) First, an avail change to the that starts the clock ticking.
     // 2) Second, after the duration period, check to see if the avail state is still the same.
     // Here we check for part 2, finish processing of the condition whose duration job finished and
-    // determined the avail state to be satisfied.  Now hook in to the alerting chassis...
+    // determined the avail state to be satisfied.  Now hook into the alerting chassis...
     public AlertConditionCacheStats checkConditions(AvailabilityDurationComposite... composites) {
         if ((null == composites) || (composites.length == 0)) {
             return new AlertConditionCacheStats();
@@ -316,7 +318,7 @@ class GlobalConditionCache extends AbstractConditionCache {
                 List<AvailabilityDurationCacheElement> cacheElements = lookupAvailabilityDurationCacheElements(composite
                     .getResourceId());
 
-                // This method differs from the other <code>checkConditions<code> methods in that it is only 
+                // This method differs from the other <code>checkConditions<code> methods in that it is only
                 // interested in a single condition for each composite, the one for which the duration job completed.
                 if (!(null == cacheElements || cacheElements.isEmpty())) {
                     for (AvailabilityDurationCacheElement cacheElement : cacheElements) {

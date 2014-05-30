@@ -13,9 +13,11 @@
     <!-- PatternFly -->
     <script src="js/jquery-login-page-only-1.11.1.min.js"></script>
     <link href="css/patternfly.min.css" rel="stylesheet" media="screen, print"/>
-    <link href="css/patternfly-login.css" rel="stylesheet" media="screen, print"/>
+    <link href="css/patternfly-custom.css" rel="stylesheet" media="screen, print"/>
     
     <script src="js/bootstrap.min.js"></script>
+
+    <!--[if lt IE 9]><script src="js/respond.min.js"></script><![endif]-->
 
     <title>RHQ Login Page</title>
     <link rel="icon" type="image/ico" href="images/favicon.ico"/>
@@ -38,7 +40,9 @@
 <!-- PatternFly -->
 <div id="patternFlyLogin">
     <span id="badge">
-      <img src="img/logo.svg" alt="" />
+    <!--[if !IE]> --><img src="img/logo.svg" alt="logo" /><!-- <![endif]-->
+    <!--[if lte IE 8]><img src="img/logo.png" alt="logo" /><![endif]-->
+    <!--[if gt IE 8]><img src="img/logo.svg" alt="logo" /><![endif]-->
     </span>
     <div class="col-sm-12 rhqLabel">
       <h2>Log in to <strong>RHQ</strong></h2>

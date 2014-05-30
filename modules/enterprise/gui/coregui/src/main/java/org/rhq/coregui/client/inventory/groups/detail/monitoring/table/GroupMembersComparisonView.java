@@ -49,6 +49,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -213,9 +214,8 @@ public class GroupMembersComparisonView extends Table<GroupMembersComparisonData
                     int defId = record.getAttributeAsInt(GroupMembersComparisonDataSource.ATTR_DEFINITION_ID);
 
                     ResourceGroup group = groupComposite.getResourceGroup();
-                    boolean isAutogroup = group.getAutoGroupParentResource() != null;
-                    CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(group.getId(), defId,
-                        isAutogroup);
+                    EntityContext context = EntityContext.forGroup(group);
+                    CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(context, defId);
                     window.addItem(graph);
                     graph.populateData();
                     window.show();

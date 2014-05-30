@@ -18,6 +18,8 @@
  */
 package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
 
+import org.rhq.core.domain.common.EntityContext;
+
 /**
  * D3 rendition of group composite graphs for single metric multiple resources.
  *
@@ -25,8 +27,8 @@ package org.rhq.coregui.client.inventory.groups.detail.monitoring.table;
  */
 public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListView {
 
-    public CompositeGroupD3MultiLineGraph(int groupId, int defId, boolean isAutogroup) {
-        super(groupId, defId, isAutogroup);
+    public CompositeGroupD3MultiLineGraph(EntityContext context, int defId) {
+        super(context, defId);
     }
 
     @Override

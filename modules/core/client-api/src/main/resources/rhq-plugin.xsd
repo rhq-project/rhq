@@ -788,6 +788,12 @@
            by the user (i.e. rather than being autodiscovered and then imported).</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="supportsMissingAvailabilityType" use="optional" type="xs:boolean" default="false">
+        <xs:annotation>
+           <xs:documentation>Defines whether this resource type may report AvailabilityType.MISSING in its implementation
+           of AvailabilityFacet.getAvailability().</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="classLoader" use="optional" default="shared">
          <xs:annotation>
             <xs:documentation>Dictates what classes the resource component has available. If 'shared', the resource

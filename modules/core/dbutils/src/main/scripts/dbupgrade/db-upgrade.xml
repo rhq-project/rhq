@@ -2335,16 +2335,24 @@
 <!-- RHQ 4.11.0 uses DB Schema 2.146 -->
 
             <schemaSpec version="2.147">
-                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_MISSING" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="SUPPORTS_MISSING" columnType="BOOLEAN"/>
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql" desc="Set uninventoryDead flag for existing resources types to false">
-                        UPDATE RHQ_RESOURCE_TYPE SET UNINVENTORY_MISSING = false
+                    <statement targetDBVendor="postgresql" desc="Set supportsMissing flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET SUPPORTS_MISSING = false
                     </statement>
-                    <statement targetDBVendor="oracle" desc="Set ignored flag for existing resources types to false">
-                        UPDATE RHQ_RESOURCE_TYPE SET UNINVENTORY_MISSING = 0
+                    <statement targetDBVendor="oracle" desc="Set supportsMissing flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET SUPPORTS_MISSING = 0
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="UNINVENTORY_MISSING" nullable="false" />
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="SUPPORTS_MISSING" nullable="false" />
+
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="MISSING_POLICY" columnType="VARCHAR2" precision="16" />
+                <schema-directSQL>
+                    <statement desc="Set missingPolicy enum for existing resources types to DOWN">
+                        UPDATE RHQ_RESOURCE_TYPE SET MISSING_POLICY = 'DOWN'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="MISSING_POLICY" nullable="false" />
             </schemaSpec>
 
             <schemaSpec version="2.148">

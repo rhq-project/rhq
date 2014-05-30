@@ -26,6 +26,7 @@ import java.util.SortedSet;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.MissingPolicy;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -63,9 +64,9 @@ public interface ResourceTypeManagerLocal extends ResourceTypeManagerRemote {
      *
      * @param subject
      * @param resourceTypeId
-     * @param uninventoryMissingFlag
+     * @param policy
      */
-    void setResourceTypeUninventoryMissingFlag(Subject subject, int resourceTypeId, boolean uninventoryMissingFlag);
+    void setResourceTypeMissingPolicy(Subject subject, int resourceTypeId, MissingPolicy policy);
 
     /**
      * Gets the list of resource types that are children of the specified resource type and that are viewable by the

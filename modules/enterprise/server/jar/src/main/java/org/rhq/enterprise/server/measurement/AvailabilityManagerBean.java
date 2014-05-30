@@ -971,7 +971,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             if (AvailabilityType.MISSING == reportedType) {
                 // the reported.getResource() gives us only a resource with an id. Nothing else, so we call a
                 // dedicated SLSB method to do this work.
-                boolean uninventoried = resourceManager.uninventoryMissingResourceInNewTransaction(resourceId);
+                boolean uninventoried = resourceManager.handleMissingResourceInNewTransaction(resourceId);
                 if (uninventoried) {
                     continue;
                 } else {
@@ -1422,7 +1422,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource) {
+    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource,
+        long startTime) {
 
         String operator = cacheElement.getAlertConditionOperator().name();
         String durationString = (String) cacheElement.getAlertConditionOperatorOption();
@@ -1441,6 +1442,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         infoMap.put(AlertAvailabilityDurationJob.DATAMAP_RESOURCE_ID, String.valueOf(resource.getId()));
         infoMap.put(AlertAvailabilityDurationJob.DATAMAP_OPERATOR, operator);
         infoMap.put(AlertAvailabilityDurationJob.DATAMAP_DURATION, durationString); // in seconds
+        infoMap.put(AlertAvailabilityDurationJob.DATAMAP_START_TIME, String.valueOf(startTime)); // in milliseconds
 
         timerService.createSingleActionTimer(duration, new TimerConfig(infoMap, false));
     }

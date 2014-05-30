@@ -36,7 +36,7 @@ public class GroupMonitoringTablesView extends EnhancedVLayout implements Refres
     public GroupMonitoringTablesView(ResourceGroupComposite groupComposite) {
         super();
 
-        metrics = new GroupMeasurementTableView(groupComposite, groupComposite.getResourceGroup().getId());
+        metrics = new GroupMeasurementTableView(groupComposite);
         memberHealth = new GroupMembersHealthView(groupComposite, false);
         addMember(metrics);
         addMember(memberHealth);

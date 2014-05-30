@@ -48,19 +48,20 @@ public class AlertAvailabilityDurationJob {
     public static final String DATAMAP_DURATION = "duration";
     public static final String DATAMAP_OPERATOR = "alertConditionOperator";
     public static final String DATAMAP_RESOURCE_ID = "resourceId";
+    public static final String DATAMAP_START_TIME = "startTime";
 
     static public void execute(Map<String, String> infoMap) throws Exception {
         int conditionId = Integer.valueOf(infoMap.get(DATAMAP_CONDITION_ID));
         int resourceId = Integer.valueOf(infoMap.get(DATAMAP_RESOURCE_ID));
         long duration = Long.valueOf(infoMap.get(DATAMAP_DURATION)); // in seconds
+        long durationStart = Long.valueOf(infoMap.get(DATAMAP_START_TIME)); // in milliseconds
         AlertConditionOperator operator = AlertConditionOperator.valueOf(infoMap.get(DATAMAP_OPERATOR));
 
         // get the availabilities for the duration period, one consistent duration will indicate a duration condition
         AvailabilityCriteria criteria = new AvailabilityCriteria();
         criteria.addFilterResourceId(resourceId);
-        long durationEnd = System.currentTimeMillis();
-        Long durationStart = durationEnd - (duration * 1000);
-        criteria.addFilterInterval(durationStart, durationEnd);
+        long durationEnd = durationStart + (duration * 1000);
+        criteria.addFilterInterval((durationStart + 1), (durationEnd - 1)); // reduced 1ms to fake exclusive interval filter.
         criteria.addSortStartTime(PageOrdering.ASC);
         List<Availability> avails = LookupUtil.getAvailabilityManager().findAvailabilityByCriteria(
             LookupUtil.getSubjectManager().getOverlord(), criteria);

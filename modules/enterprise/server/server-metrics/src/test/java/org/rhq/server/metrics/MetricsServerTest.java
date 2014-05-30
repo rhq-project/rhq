@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,7 +70,7 @@ import org.rhq.server.metrics.domain.SimplePagedResult;
  */
 public class MetricsServerTest extends CassandraIntegrationTest {
 
-    private static final boolean ENABLED = true;
+    private static final boolean ENABLED = false;
 
     private static final double TEST_PRECISION = Math.pow(10, -9);
 
@@ -269,6 +270,47 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assert1HourMetricsIndexEmpty(scheduleId, hour9.getMillis());
     }
 
+    @Test
+    public void verifyHighValueBug() throws Exception {
+        int scheduleId = 123;
+        metricsServer.setCurrentHour(hour(15));
+
+        StorageResultSetFuture future = dao.insertRawData(new MeasurementDataNumeric(
+            hour(14).plusMinutes(20).getMillis(), scheduleId, 30.0));
+        Uninterruptibles.getUninterruptibly(future);
+
+        future = dao.insertRawData(new MeasurementDataNumeric(hour(14).plusMinutes(40).getMillis(), scheduleId, 35.0));
+        Uninterruptibles.getUninterruptibly(future);
+
+        future = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, scheduleId, hour(14).getMillis());
+        Uninterruptibles.getUninterruptibly(future);
+
+        metricsServer.calculateAggregates();
+
+        metricsServer.setCurrentHour(hour(16));
+
+        future = dao.insertRawData(new MeasurementDataNumeric(hour(15).plusMinutes(20).getMillis(), scheduleId, 25.0));
+        Uninterruptibles.getUninterruptibly(future);
+
+        future = dao.insertRawData(new MeasurementDataNumeric(hour(15).plusMinutes(40).getMillis(), scheduleId, 100.0));
+        Uninterruptibles.getUninterruptibly(future);
+
+        future = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, scheduleId, hour(15).getMillis());
+        Uninterruptibles.getUninterruptibly(future);
+
+        metricsServer.calculateAggregates();
+
+        metricsServer.setCurrentHour(hour(18));
+        metricsServer.calculateAggregates();
+
+        metricsServer.findDataForResource(scheduleId, now().minusWeeks(2).minusDays(1).getMillis(), now().getMillis(),
+            60);
+    }
+
+    private DateTime hour(int hours) {
+        return hour0().plusHours(hours);
+    }
+
     @Test(enabled = ENABLED)
     public void aggregate1HourDataDuring12thHour() {
         // set up the test fixture
@@ -333,7 +375,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
      * hour 10 which also mean we could have raw data in the 10:00 hour in addition to the
      * previous hour that need to be aggregated.
      */
-    @Test(enabled = true)
+    @Test(enabled = ENABLED)
     public void runAggregationIn15thHourAfterServerOutage() throws Exception {
         int scheduleId = 123;
         DateTime hour10 = hour0().plusHours(10);
@@ -395,7 +437,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             hour10Max, hour0().plusHours(6).getMillis())));
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLED)
     public void runAggregationIn8thHourAfterServerOutageFromPreviousDay() throws Exception {
         int scheduleId = 123;
         DateTime hour20Yesterday = hour0().minusHours(4);
@@ -509,7 +551,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assert24HourMetricsIndexEmpty(scheduleId, hour0.getMillis());
     }
 
-    @Test//(enabled = ENABLED)
+    @Test(enabled = ENABLED)
     public void findRawDataCompositesForResource() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -554,7 +596,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             actualData.get(29));
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findLatestValueForResource() throws Exception {
         int scheduleId = 123;
 
@@ -579,7 +621,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "Failed to find latest metric value for resource");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void getSummaryRawAggregateForResource() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -615,7 +657,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             TEST_PRECISION);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void getSummary1HourAggregateForResource() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
@@ -648,7 +690,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             TEST_PRECISION);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void getSummaryAggregateForGroup() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
@@ -683,7 +725,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             TEST_PRECISION);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void getSummaryRawAggregateForGroup() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -735,7 +777,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             TEST_PRECISION);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findRawDataCompositesForGroup() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -796,7 +838,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             actualData.get(29));
     }
 
-    @Test//(enabled = ENABLED)
+    @Test(enabled = ENABLED)
     public void find1HourDataComposites() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
@@ -840,7 +882,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             actualData.get(29), TEST_PRECISION);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void find1HourDatCompositesForGroup() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
@@ -885,7 +927,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             actual.get(59));
     }
 
-    @Test//(enabled = ENABLED)
+    @Test(enabled = ENABLED)
     public void find6HourDataComposites() {
         DateTime beginTime = now().minusDays(20);
         DateTime endTime = now();

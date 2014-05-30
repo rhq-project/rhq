@@ -291,10 +291,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         jobDataMap.put(OperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
 
         // Create an IN_PROGRESS item
+        // - we need a copy of parameters to avoid constraint violations upon delete
         ResourceOperationHistory history;
         history = new ResourceOperationHistory(uniqueJobId, jobGroupName, subject.getName(), opDef,
-        // we need a copy to avoid constraint violations upon delete
-            parameters == null ? null : parameters.deepCopy(false), schedule.getResource(), null);
+            (parameters == null ? null : parameters.deepCopy(false)), schedule.getResource(), null);
 
         updateOperationHistory(subject, history);
 

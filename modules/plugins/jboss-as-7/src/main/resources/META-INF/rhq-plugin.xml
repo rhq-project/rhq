@@ -1399,7 +1399,60 @@
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
 
-      &startScriptPluginConfigGroup;
+      <c:group name="operations">
+        <c:simple-property name="startScript" displayName="Start Script Path" type="file" required="false">
+          <c:description>
+            The path to the script that the Start and Restart operations should use to start the server. If the path is
+            not absolute, it is resolved relative to the server home directory
+            (e.g. &quot;bin/standalone.sh&quot;, &quot;bin/domain.sh&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptPrefix" type="string" required="false">
+          <c:description>
+            A prefix command line that should be prepended to the start script command line by the Start and Restart
+            operations; the prefix command must be an absolute path (e.g. &quot;/usr/bin/sudo&quot;). This property is
+            most commonly used to run the AS7 process as a different user than the RHQ Agent (e.g. &quot;sudo -u jboss
+            -g jboss&quot; could be used to run AS7 as user &quot;jboss&quot; and group &quot;jboss&quot;. It is also
+            possible to chain prefix commands (e.g. &quot;nohup sudo -u jboss&quot; could be used to make AS7 ignore HUP
+            signals and to run as user &quot;jboss&quot;).
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptEnv" displayName="Start Script Environment Variables" type="longString" required="false">
+          <c:description>
+            The variables that the Start and Restart operations will add to the environment of the server start script.
+            Each name=value pair should be on a new line. Variable values should *not* be enclosed in quotes (e.g.
+            PATH=/usr/bin:/bin). On UNIX systems, the typical minimum set of environment variables is:
+            PATH=/usr/bin:/bin . And on Windows the typical minimum set is: PATH=C:\Windows\System32;C:\Windows ,
+            OS=Windows_NT , SYSTEMROOT=C:\Windows . In addition, it is good practice to set JAVA_HOME to the absolute
+            path of the install directory of the JRE or JDK you wish to use to run the AS7 instance. However, if
+            JAVA_HOME is not specified, the start script will attempt to find java in the PATH. There is currently
+            a 2000 character limit for this value.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="startScriptArgs" displayName="Start Script Arguments" type="longString" required="false">
+          <c:description>
+            The arguments that the Start and Restart operations will pass to the server
+            start script. Each argument should be on a new line - for example: --server-config=standalone-ha-full.xml.
+            As an exception, the value of a space-delimited option can optionally be on the same line as the option -
+            for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="javaOpts" displayName="JAVA_OPTS" type="string" required="false">
+          <c:description>
+            !WARNING! Feature available only if standard configuration file is used (standalone.conf or standalone.conf.bat).
+            Please do not update the configuration file manually after setting this property. If value not set
+            then container configuration specific values are used. Value not set does not imply that configuration
+            file does not set JAVA_OPTS, it simply means that the value was not set via RHQ. !WARNING!
+            Value will be persisted to standalone.conf or standalone.conf.bat config file (OS dependent).
+            Use this option to make the JAVA_OPTS configuration available for restarts outside of RHQ.
+            The value (eg: -Xms512M -Xmx1024M) will be persisted at the top of the configuration file.
+            To remove any modifications done to the config file unset this property.
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>
+        <c:simple-property name="nativePort" type="integer" required="true" default="9999" description="Native management API port" />
+      </c:group>
+
       &logSources;
       &managementInterfaceSecureConnectionSettings;
 

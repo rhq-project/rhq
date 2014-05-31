@@ -44,7 +44,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
@@ -65,6 +64,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
@@ -91,6 +91,7 @@ import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.component.ComponentInvocationContextImpl;
+import org.rhq.core.pc.configuration.ConfigurationCheckExecutor;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -106,8 +107,6 @@ import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
-import org.rhq.core.pluginapi.availability.AvailabilityFacet;
-import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
@@ -1021,9 +1020,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setVersion(resourceFromServer.getVersion());
 
         resource.setName(resourceFromServer.getName());
-        resource.setDescription(resourceFromServer.getDescription());
-        resource.setLocation(resourceFromServer.getLocation());
 
+        compactResource(resource);
         return resource;
     }
 
@@ -2159,6 +2157,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 for (String uuid : inventoryFile.getResourceContainers().keySet()) {
                     ResourceContainer resourceContainer = inventoryFile.getResourceContainers().get(uuid);
                     this.resourceContainers.put(uuid, resourceContainer);
+                    Resource resource = resourceContainer.getResource();
+                    compactResource(resource);
                 }
 
                 log.info("Inventory with size [" + this.resourceContainers.size() + "] loaded from data file in ["
@@ -2961,6 +2961,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
             syncDriftDefinitions(modifiedResources);
             for (Resource modifiedResource : modifiedResources) {
+                compactResource(modifiedResource);
                 mergeResource(modifiedResource);
             }
         }
@@ -2982,6 +2983,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource unknownResource : unknownResources) {
                 ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
                 if (resourceType != null) {
+                    log.info("Got unknown resource: " + unknownResource.getId());
+                    compactResource(unknownResource);
                     mergeResource(unknownResource);
                     syncSchedulesRecursively(unknownResource);
                     syncDriftDefinitionsRecursively(unknownResource);
@@ -3090,6 +3093,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (null == r.getChildResources()) {
                     r.setChildResources(null); // this will actually initialize to an empty Set
                 }
+                compactResource(r);
                 resourceMap.put(r.getId(), r);
             }
             resourceBatch.clear();
@@ -3294,9 +3298,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         targetResource.setPluginConfiguration(sourceResource.getPluginConfiguration());
 
         targetResource.setName(sourceResource.getName());
-        targetResource.setDescription(sourceResource.getDescription());
-        targetResource.setLocation(sourceResource.getLocation());
 
+        compactResource(targetResource);
         return pluginConfigUpdated;
     }
 
@@ -3450,6 +3453,80 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 handleInvalidPluginConfigurationResourceError(resource, t);
             }
         }
+    }
+
+    private void compactResource(final Resource resource) {
+        resource.setAncestry(null);
+        resource.setAlertDefinitions(null);
+        resource.setLocation(null);
+        resource.setModifiedBy(null);
+        resource.setOperationHistories(Collections.EMPTY_LIST);
+        resource.setTags(Collections.EMPTY_SET);
+        resource.setInstalledPackages(Collections.EMPTY_SET);
+        resource.setInstalledPackageHistory(Collections.EMPTY_LIST);
+        resource.setDescription(null);
+        resource.setImplicitGroups(Collections.EMPTY_SET);
+        resource.setExplicitGroups(Collections.EMPTY_SET);
+        resource.setCreateChildResourceRequests(Collections.EMPTY_LIST);
+        resource.setDeleteResourceRequests(Collections.EMPTY_LIST);
+        resource.setAutoGroupBackingGroups(Collections.EMPTY_LIST);
+        if (resource.getSchedules() != null) { // TODO used at all in the agent?
+            if (resource.getSchedules().size() == 0) {
+                resource.setSchedules(Collections.EMPTY_SET);
+            }
+        }
+
+        if (resource.getVersion() != null) {
+            resource.setVersion(resource.getVersion().intern());
+        }
+
+        if (resource.getName() != null) {
+            resource.setName(resource.getName().intern());
+        }
+
+        Configuration pluginConfiguration = resource.getPluginConfiguration();
+        if (pluginConfiguration != null) {
+            pluginConfiguration.cleanoutRawConfiguration();
+            compactConfiguration(pluginConfiguration);
+        }
+
+        Configuration resourceConfiguration = resource.getResourceConfiguration();
+        if (resourceConfiguration != null) {
+            resourceConfiguration.cleanoutRawConfiguration();
+
+            boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(this, resource.getId(),
+                resourceConfiguration, log);
+            if (persisted) {
+                resource.setResourceConfiguration(null);
+            }
+        }
+    }
+
+    private void compactConfiguration(Configuration config) {
+        if (config == null) {
+            return;
+        }
+        if (config.getProperties() == null) {
+            return;
+        }
+        for (Property prop : config.getProperties()) {
+            if (prop.getName() != null) {
+                prop.setName(prop.getName().intern());
+            }
+        }
+        config.resize();
+    }
+
+    /**
+     * @return The location for [plugins] to write data files
+     */
+    public File getDataDirectory() {
+        return this.configuration.getDataDirectory();
+    }
+
+    public static Configuration getResourceConfiguration(Resource agentSideResource) {
+        return ConfigurationCheckExecutor.getResourceConfiguration(PluginContainer.getInstance().getInventoryManager(),
+            agentSideResource);
     }
 
     /**

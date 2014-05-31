@@ -273,6 +273,12 @@ public class ResourceUpgradeDelegate {
             return true;
         }
 
+        // upgrade requires the resource configuration be present on the resource. It may have been compacted to disk
+        boolean isResConfigCompacted = (null == resource.getResourceConfiguration());
+        if (isResConfigCompacted) {
+            resource.setResourceConfiguration(InventoryManager.getResourceConfiguration(resource));
+        }
+
         ResourceUpgradeContext<ResourceComponent<T>> upgradeContext = inventoryManager.createResourceUpgradeContext(
             resource, parentResourceContext, parentResourceComponent, discoveryComponent);
 

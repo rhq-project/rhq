@@ -702,7 +702,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             break;
         }
         case resourceConfiguration: {
-            baseLocation = resource.getResourceConfiguration().getSimpleValue(baseDirValueName, null);
+            baseLocation = InventoryManager.getResourceConfiguration(resource).getSimpleValue(baseDirValueName, null);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot determine the base directory - "
                     + "there is no resource configuration setting for [" + baseDirValueName + "]");

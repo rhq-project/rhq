@@ -25,6 +25,7 @@ package org.rhq.core.domain.configuration;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -505,9 +506,13 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private transient PropertiesProxy propertiesProxy;
 
+    // If we don't actually get rid of this soon (say, 4.10) then we may want to make this
+    // lazy, so we don't run around doing a fetch for every config we pull.  But that means
+    // we have to protect against the unresolved proxy in various places (scrub the proxies)
+    // which has its own issues.  Please let's kill this...
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
-    @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
-    private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
+    @Cascade({ CascadeType.PERSIST, CascadeType.MERGE })
+    private Set<RawConfiguration> rawConfigurations;
 
     @Column(name = "NOTES")
     private String notes;
@@ -812,22 +817,47 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return map;
     }
 
+    public void resize() {
+        Map<String, Property> tmp = new LinkedHashMap<String, Property>(this.properties.size());
+        tmp.putAll(this.properties);
+        this.properties = tmp;
+    }
+
     public Set<RawConfiguration> getRawConfigurations() {
+        if (rawConfigurations == null) {
+            rawConfigurations = new HashSet<RawConfiguration>(1);
+        }
         return rawConfigurations;
     }
 
     public void addRawConfiguration(RawConfiguration rawConfiguration) {
         rawConfiguration.setConfiguration(this);
+        if (rawConfigurations == null) {
+            rawConfigurations = new HashSet<RawConfiguration>(1);
+        }
         rawConfigurations.add(rawConfiguration);
     }
 
     public boolean removeRawConfiguration(RawConfiguration rawConfiguration) {
+        if (rawConfigurations == null) {
+            return true;
+        }
         boolean removed = rawConfigurations.remove(rawConfiguration);
         if (removed) {
             rawConfiguration.setConfiguration(null);
         }
+        if (rawConfigurations.isEmpty()) {
+            rawConfigurations = Collections.emptySet();
+        }
         return removed;
     }
+
+    public void cleanoutRawConfiguration() {
+        if (rawConfigurations != null && rawConfigurations.isEmpty()) {
+            rawConfigurations = null;
+        }
+    }
+
 
     public String getNotes() {
         return notes;
@@ -907,6 +937,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     private void createDeepCopyOfRawConfigs(Configuration copy, boolean keepId) {
+        if (rawConfigurations == null) {
+            return;
+        }
         for (RawConfiguration rawConfig : rawConfigurations) {
             copy.addRawConfiguration(rawConfig.deepCopy(keepId));
         }
@@ -937,12 +970,38 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         Configuration that = (Configuration) obj;
 
-        return (this.properties.equals(that.properties)) && (this.rawConfigurations.equals(that.rawConfigurations));
+        if (this.properties == null || this.properties.isEmpty()) {
+            if (that.properties == null || that.properties.isEmpty()) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            if (!this.properties.equals(that.properties)) {
+                return false;
+            }
+        }
+
+        boolean rcEquals = true;
+        if (this.rawConfigurations != null) {
+            rcEquals = this.getRawConfigurations().equals(that.getRawConfigurations());
+        }
+
+        return rcEquals;
     }
 
     @Override
     public int hashCode() {
-        return properties.hashCode() * rawConfigurations.hashCode() * 19;
+        int hc = 1;
+        if (properties != null) {
+            hc = properties.hashCode(); // TODO this requires loading of all properties and is expensive
+        }
+
+        if (rawConfigurations != null) {
+            int rchc = rawConfigurations.hashCode();
+            hc = hc * rchc + 19;
+        }
+        return hc;
     }
 
     @Override
@@ -980,8 +1039,13 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
             builder.append("], rawConfigurations[");
 
-            for (RawConfiguration rawConfig : rawConfigurations) {
-                builder.append("[").append(rawConfig.getPath()).append(", ").append(rawConfig.getSha256()).append("]");
+            if (rawConfigurations != null) {
+                for (RawConfiguration rawConfig : rawConfigurations) {
+                    builder.append("[").append(rawConfig.getPath()).append(", ").append(rawConfig.getSha256())
+                        .append("]");
+                }
+            } else {
+                builder.append("-none-");
             }
             builder.append("]");
         }

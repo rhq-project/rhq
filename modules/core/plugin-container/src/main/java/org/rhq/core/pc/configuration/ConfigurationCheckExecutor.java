@@ -18,6 +18,12 @@
  */
 package org.rhq.core.pc.configuration;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -111,12 +117,18 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                                     + errorMessage);
                             }
 
-                            Configuration original = resource.getResourceConfiguration();
+                            Configuration original = getResourceConfiguration(inventoryManager, resource);
+
                             if (!liveConfiguration.equals(original)) {
                                 log.info("New configuration version detected on resource: " + resource);
                                 this.configurationServerService.persistUpdatedResourceConfiguration(resource.getId(),
                                     liveConfiguration);
-                                resource.setResourceConfiguration(liveConfiguration);
+                                //resource.setResourceConfiguration(liveConfiguration);
+                                boolean persisted = persistConfigurationToFile(inventoryManager, resource.getId(),
+                                    liveConfiguration, log);
+                                if (persisted) {
+                                    resource.setResourceConfiguration(null);
+                                }
                             }
                         }
                     } catch (Throwable t) {
@@ -136,6 +148,71 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                 }
             }
         }
+    }
+
+    static public boolean persistConfigurationToFile(InventoryManager inventoryManager, int resourceId,
+        Configuration liveConfiguration, Log log) {
+
+        boolean success = true;
+        try {
+            File baseDataDir = inventoryManager.getDataDirectory();
+            String pathname = "rc/" + String.valueOf(resourceId / 1000); // Don't put too many files into one data dir
+            File dataDir = new File(baseDataDir, pathname);
+            if (!dataDir.exists()) {
+                success = dataDir.mkdirs();
+                if (!success) {
+                    log.warn("Could not create data dir " + dataDir.getAbsolutePath());
+                    return false;
+                }
+            }
+            File file = new File(dataDir, String.valueOf(resourceId));
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(liveConfiguration);
+            oos.flush();
+            oos.close();
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            log.warn("Persisting failed: " + e.getMessage());
+            success = false;
+        }
+        return success;
+
+    }
+
+    static public Configuration getResourceConfiguration(InventoryManager inventoryManager, Resource resource) {
+        Configuration result = resource.getResourceConfiguration();
+        if (null == result) {
+            result = loadConfigurationFromFile(inventoryManager, resource.getId());
+        }
+        return result;
+    }
+
+    static private Configuration loadConfigurationFromFile(InventoryManager inventoryManager, int resourceId) {
+        File baseDataDir = inventoryManager.getDataDirectory();
+        String pathname = "rc/" + String.valueOf(resourceId / 1000); // Don't put too many files into one data dir
+        File dataDir = new File(baseDataDir, pathname);
+        File file = new File(dataDir, String.valueOf(resourceId));
+        if (!file.exists()) {
+            //log.error("File " + file.getAbsolutePath() + " does not exist");
+            return new Configuration();
+        }
+
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            Configuration config = (Configuration) ois.readObject();
+            ois.close();
+            fis.close();
+            return config;
+        } catch (IOException e) {
+            e.printStackTrace(); // TODO: Customize this generated block
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace(); // TODO: Customize this generated block
+        }
+
+        return new Configuration();
     }
 
 }

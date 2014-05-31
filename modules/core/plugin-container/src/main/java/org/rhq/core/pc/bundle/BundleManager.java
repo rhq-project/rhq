@@ -517,7 +517,9 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             break;
         }
         case resourceConfiguration: {
-            baseLocation = resource.getResourceConfiguration().getSimpleValue(destBaseDirValueName, null);
+
+            baseLocation = InventoryManager.getResourceConfiguration(resource).getSimpleValue(destBaseDirValueName,
+                null);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
                     + "there is no resource configuration setting for [" + destBaseDirValueName + "]");

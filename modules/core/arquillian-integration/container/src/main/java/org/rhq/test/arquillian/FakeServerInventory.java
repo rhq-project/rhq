@@ -53,6 +53,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.inventory.InventoryManager;
 
 /**
  * This class represents a server side database store of the inventory for the purposes
@@ -542,7 +543,7 @@ public class FakeServerInventory {
             persisted.setDescription(agentSideResource.getDescription());
             persisted.setName(agentSideResource.getName());
             persisted.setPluginConfiguration(agentSideResource.getPluginConfiguration().clone());
-            persisted.setResourceConfiguration(agentSideResource.getResourceConfiguration().clone());
+            persisted.setResourceConfiguration(InventoryManager.getResourceConfiguration(agentSideResource).clone());
             persisted.setVersion(agentSideResource.getVersion());
             persisted.setInventoryStatus(requiredInventoryStatus);
             persisted.setResourceKey(agentSideResource.getResourceKey());

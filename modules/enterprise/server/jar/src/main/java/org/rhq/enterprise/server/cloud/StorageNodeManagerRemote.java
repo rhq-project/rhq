@@ -173,4 +173,13 @@ public interface StorageNodeManagerRemote {
      * @param subject   user that must have proper permissions
      */
     void runClusterMaintenance(Subject subject);
+
+    /**
+     * This method currently only allows unmanaged nodes to be updated. If the node is already linked to a resource
+     * and if its operation mode is not INSTALLED, an IllegalArgumentException is thrown.
+     *
+     * @param storageNodeId The id of the storage node to update
+     * @param address The new address
+     */
+    void updateAddress(int storageNodeId, String address);
 }

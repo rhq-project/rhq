@@ -21,6 +21,16 @@ package org.rhq.plugins.postgres;
 
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.core.domain.resource.CreateResourceStatus.FAILURE;
+import static org.rhq.core.domain.resource.CreateResourceStatus.INVALID_CONFIGURATION;
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
+import static org.rhq.plugins.database.DatabasePluginUtil.safeClose;
+import static org.rhq.plugins.postgres.PostgresUserComponent.ResourceConfig.CAN_UPDATE_SYSTEM_CATALOGS_DIRECTLY;
+import static org.rhq.plugins.postgres.PostgresUserComponent.ResourceConfig.SUPERUSER;
+import static org.rhq.plugins.postgres.PostgresUserComponent.UPDATE_PG_AUTHID_SET_ROLCATUPDATE_WHERE_OID;
+import static org.rhq.plugins.postgres.PostgresUserComponent.buildUserSql;
+import static org.rhq.plugins.postgres.PostgresUserDiscoveryComponent.createResourceKey;
+import static org.rhq.plugins.postgres.PostgresUserDiscoveryComponent.getUserOid;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -29,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -46,7 +57,6 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -54,7 +64,6 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -83,6 +92,17 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
 
     private static final Log LOG = LogFactory.getLog(PostgresServerComponent.class);
 
+    private static final String METRIC_RUNTIME_PREFIX = "Runtime.";
+    // See http://wiki.postgresql.org/wiki/What%27s_new_in_PostgreSQL_9.2#pg_stat_activity_and_pg_stat_replication.27s_definitions_have_changed
+    private static final String FIND_STAT_ACTIVITY = "select " //
+        + "pid, usename, query, state, client_addr, client_port " //
+        + "from pg_stat_activity order by pid asc";
+    private static final String FIND_STAT_ACTIVITY_PRE_PG_9_2 = "select " //
+        + "procpid as pid, usename, current_query as query, " //
+        + "(case when current_query='<IDLE>' then 'idle' else 'active' end) as state, " //
+        + "client_addr, client_port " //
+        + "from pg_stat_activity order by pid asc";
+
     static final String DEFAULT_CONFIG_FILE_NAME = "postgresql.conf";
 
     private AggregateProcessInfo aggregateProcessInfo;
@@ -91,6 +111,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
     private ResourceContext resourceContext;
     private PostgresPooledConnectionProvider pooledConnectionProvider;
 
+    @Override
     public void start(ResourceContext context) throws Exception {
         this.resourceContext = context;
         buildSharedConnectionIfNeeded();
@@ -113,6 +134,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         }
     }
 
+    @Override
     public void stop() {
         resourceContext = null;
         DatabasePluginUtil.safeClose(connection);
@@ -136,6 +158,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return PostgresDiscoveryComponent.buildUrl(resourceContext.getPluginConfiguration());
     }
 
+    @Override
     public AvailabilityType getAvailability() {
         Connection jdbcConnection = null;
         try {
@@ -152,6 +175,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return resourceContext;
     }
 
+    @Override
     public Connection getConnection() {
         buildSharedConnectionIfNeeded();
         return connection;
@@ -170,6 +194,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         }
     }
 
+    @Override
     public void removeConnection() {
         DatabasePluginUtil.safeClose(this.connection);
         this.connection = null;
@@ -191,6 +216,7 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return new PostgresqlConfFile(configFile);
     }
 
+    @Override
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration config = new Configuration();
         ConfigurationDefinition configDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
@@ -204,37 +230,10 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
             config.put(prop);
         }
 
-        // Runtime settings (session params) - obtained via SQL.
-        Connection jdbcConnection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
-            statement = jdbcConnection.createStatement();
-            resultSet = statement.executeQuery("show all");
-
-            PropertyMap runtimeSettings = new PropertyMap("runtimeSettings");
-            PropertyDefinitionMap mapDef = configDef.getPropertyDefinitionMap("runtimeSettings");
-            config.put(runtimeSettings);
-            while (resultSet.next()) {
-                String name = resultSet.getString("name");
-                String setting = resultSet.getString("setting");
-
-                PropertyDefinitionSimple pd = mapDef.getPropertyDefinitionSimple(name);
-
-                if ((pd != null) && (pd.getType() == PropertySimpleType.BOOLEAN)) {
-                    runtimeSettings.put(new PropertySimple(name, "on".equalsIgnoreCase(setting)));
-                } else if (setting != null) {
-                    runtimeSettings.put(new PropertySimple(name, setting));
-                }
-            }
-        } finally {
-            DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
-        }
-
         return config;
     }
 
+    @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         try {
             ConfigurationDefinition def = resourceContext.getResourceType().getResourceConfigurationDefinition();
@@ -246,12 +245,6 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                     // configuration file
                     String value = getPostgresParameterValue(prop, pd);
                     parameters.put(prop.getName(), value);
-                } else {
-                    // session param
-                    if (!pd.isReadOnly()) {
-                        // TODO: Update param using SQL SET command. Probably should do a SHOW ALL at the top of this method,
-                        //       and then only call SET on params that have changed. (ips, 10/4/07)
-                    }
                 }
             }
 
@@ -274,24 +267,29 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
      * @param  report  the report where all collected measurement data will be added
      * @param  metrics the schedule of what needs to be collected when
      */
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
 
+        Map<String, MeasurementScheduleRequest> runtimePropertiesRequests = new HashMap<String, MeasurementScheduleRequest>(
+            metrics.size());
+
         for (MeasurementScheduleRequest request : metrics) {
-            String property = request.getName();
-            if (property.startsWith("Process.")) {
+            String metricName = request.getName();
+            if (metricName.startsWith("Process.")) {
                 if (aggregateProcessInfo != null) {
                     aggregateProcessInfo.refresh();
 
                     //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
 
-                    Object val = lookupAttributeProperty(aggregateProcessInfo, property.substring("Process.".length()));
+                    Object val = lookupAttributeProperty(aggregateProcessInfo,
+                        metricName.substring("Process.".length()));
                     if (val != null && val instanceof Number) {
                         //                        aggregateProcessInfo.getAggregateMemory().Cpu().getTotal()
                         report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
                     }
                 }
-            } else if (property.startsWith("Database")) {
-                if (property.endsWith("startTime")) {
+            } else if (metricName.startsWith("Database")) {
+                if (metricName.endsWith("startTime")) {
                     // db start time
                     Connection jdbcConnection = null;
                     Statement statement = null;
@@ -305,12 +303,12 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                         }
                     } catch (SQLException e) {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Can not collect property: " + property + ": " + e.getLocalizedMessage());
+                            LOG.debug("Can not collect metric: " + metricName + ": " + e.getLocalizedMessage());
                         }
                     } finally {
                         DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
                     }
-                } else if (property.endsWith("backends")) {
+                } else if (metricName.endsWith("backends")) {
                     // number of connected backends
                     Connection jdbcConnection = null;
                     Statement statement = null;
@@ -324,12 +322,49 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                         }
                     } catch (SQLException e) {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Can not collect property: " + property + ": " + e.getLocalizedMessage());
+                            LOG.debug("Can not collect metricName: " + metricName + ": " + e.getLocalizedMessage());
                         }
                     } finally {
                         DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
                     }
                 }
+            } else if (metricName.startsWith(METRIC_RUNTIME_PREFIX)) {
+                runtimePropertiesRequests.put(metricName.substring(METRIC_RUNTIME_PREFIX.length()), request);
+            }
+        }
+
+        if (!runtimePropertiesRequests.isEmpty()) {
+            Connection jdbcConnection = null;
+            Statement statement = null;
+            ResultSet resultSet = null;
+            try {
+                jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+                statement = jdbcConnection.createStatement();
+                resultSet = statement.executeQuery("show all");
+
+                while (resultSet.next()) {
+                    String runtimeProperty = resultSet.getString("name");
+                    if (!runtimePropertiesRequests.containsKey(runtimeProperty)) {
+                        continue;
+                    }
+                    String setting = resultSet.getString("setting");
+                    MeasurementScheduleRequest request = runtimePropertiesRequests.get(runtimeProperty);
+                    switch (request.getDataType()) {
+                    case TRAIT:
+                        report.addData(new MeasurementDataTrait(request, setting));
+                        break;
+                    default:
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Unsupported metric data type: " + request.getName() + ", "
+                                + request.getDataType());
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                LOG.debug("Can not collect metrics: " + runtimePropertiesRequests.keySet() + ": "
+                    + e.getLocalizedMessage());
+            } finally {
+                DatabasePluginUtil.safeClose(jdbcConnection, statement, resultSet);
             }
         }
     }
@@ -387,39 +422,24 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return Double.NaN;
     }
 
+    @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
+
         if (name.equals("listProcessStatistics")) {
+
             Connection jdbcConnection = null;
-            Statement statement = null;
+            PreparedStatement statement = null;
             ResultSet resultSet = null;
             try {
+
                 jdbcConnection = getPooledConnectionProvider().getPooledConnection();
-
-                DatabaseMetaData metaData = jdbcConnection.getMetaData();
-                int databaseMajorVersion = metaData.getDatabaseMajorVersion();
-                int databaseMinorVersion = metaData.getDatabaseMinorVersion();
-                StringBuilder sqlQuery = new StringBuilder("select ");
-                // See http://wiki.postgresql.org/wiki/What%27s_new_in_PostgreSQL_9.2#pg_stat_activity_and_pg_stat_replication.27s_definitions_have_changed
-                if (databaseMajorVersion >= 9 && databaseMinorVersion >= 2) {
-                    sqlQuery.append("pid").append(",");
-                    sqlQuery.append("usename").append(",");
-                    sqlQuery.append("query").append(",");
-                    sqlQuery.append("state").append(",");
-                    sqlQuery.append("client_addr").append(",");
-                    sqlQuery.append("client_port").append(" ");
+                if (isVersionGreaterThan92(jdbcConnection)) {
+                    statement = jdbcConnection.prepareStatement(FIND_STAT_ACTIVITY);
                 } else {
-                    sqlQuery.append("procpid as pid").append(",");
-                    sqlQuery.append("usename").append(",");
-                    sqlQuery.append("current_query as query").append(",");
-                    sqlQuery.append("'' as state").append(",");
-                    sqlQuery.append("client_addr").append(",");
-                    sqlQuery.append("client_port").append(" ");
+                    statement = jdbcConnection.prepareStatement(FIND_STAT_ACTIVITY_PRE_PG_9_2);
                 }
-                sqlQuery.append("from pg_stat_activity order by pid asc");
-
-                statement = jdbcConnection.createStatement();
-                resultSet = statement.executeQuery(sqlQuery.toString());
+                resultSet = statement.executeQuery();
 
                 PropertyList procList = new PropertyList("processList");
                 while (resultSet.next()) {
@@ -444,26 +464,70 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
         return null;
     }
 
+    @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
         Configuration userConfig = report.getResourceConfiguration();
-        String user = userConfig.getSimpleValue("user", null);
+
+        String user = userConfig.getSimpleValue("user");
+        if (user == null || user.trim().isEmpty()) {
+            report.setStatus(FAILURE);
+            report.setErrorMessage("User name is missing");
+            return report;
+        }
 
         Connection jdbcConnection = null;
-        Statement statement = null;
-        String sql = PostgresUserComponent.getUserSQL(userConfig, PostgresUserComponent.UpdateType.CREATE);
+        PreparedStatement statement = null;
         try {
             jdbcConnection = getPooledConnectionProvider().getPooledConnection();
-            statement = jdbcConnection.createStatement();
+            statement = jdbcConnection.prepareStatement(buildUserSql(userConfig, /*new user*/true));
             // NOTE: Postgres doesn't seem to indicate the expect count of 1 row updated but this work
             // Postgres returns 0 for DDL that does not return rows
-            statement.executeUpdate(sql);
-            report.setResourceKey(user);
-            report.setStatus(CreateResourceStatus.SUCCESS);
+            statement.executeUpdate();
         } catch (SQLException e) {
+            report.setStatus(FAILURE);
+            report.setErrorMessage("Failed to create user.");
             report.setException(e);
+            return report;
         } finally {
             DatabasePluginUtil.safeClose(jdbcConnection, statement);
         }
+
+        String resourceName = report.getUserSpecifiedResourceName();
+        if (resourceName == null || resourceName.trim().isEmpty()) {
+            resourceName = user;
+        }
+        report.setResourceName(resourceName);
+
+        long userOid = -1;
+        try {
+            userOid = getUserOid(user, getPooledConnectionProvider());
+            report.setResourceKey(createResourceKey(userOid));
+        } catch (SQLException e) {
+            report.setStatus(FAILURE);
+            report.setErrorMessage("The user has been created but its oid could not be read.");
+            report.setException(e);
+            return report;
+        }
+
+        try {
+            jdbcConnection = getPooledConnectionProvider().getPooledConnection();
+            statement = jdbcConnection.prepareStatement(UPDATE_PG_AUTHID_SET_ROLCATUPDATE_WHERE_OID);
+            statement.setBoolean(
+                1,
+                Boolean.valueOf(userConfig.getSimpleValue(SUPERUSER))
+                    && Boolean.valueOf(userConfig.getSimpleValue(CAN_UPDATE_SYSTEM_CATALOGS_DIRECTLY)));
+            statement.setLong(2, userOid);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            report.setStatus(INVALID_CONFIGURATION);
+            report.setErrorMessage("The user has been created but cannot modify system catalogs directly.");
+            report.setException(e);
+            return report;
+        } finally {
+            safeClose(jdbcConnection, statement);
+        }
+
+        report.setStatus(SUCCESS);
 
         return report;
     }
@@ -519,6 +583,35 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
                 break;
             }
         }
+    }
+
+    /**
+     * Tests Postgres version.
+     *
+     * @return true if Postgres version is greater than 9.2, false otherwise
+     * @throws SQLException
+     */
+    boolean isVersionGreaterThan92() throws SQLException {
+        Connection connection = null;
+        try {
+            connection = getPooledConnectionProvider().getPooledConnection();
+            return isVersionGreaterThan92(connection);
+        } finally {
+            safeClose(connection);
+        }
+    }
+
+    /**
+     * Tests Postgres version. This method does not call {@link java.sql.Connection#close()} on the provided
+     * <code>connection</code>.
+     * 
+     * @param connection a JDBC connection
+     * @return true if Postgres version is greater than 9.2, false otherwise
+     * @throws SQLException
+     */
+    boolean isVersionGreaterThan92(Connection connection) throws SQLException {
+        DatabaseMetaData metaData = connection.getMetaData();
+        return metaData.getDatabaseMajorVersion() >= 9 && metaData.getDatabaseMinorVersion() >= 2;
     }
 
 }

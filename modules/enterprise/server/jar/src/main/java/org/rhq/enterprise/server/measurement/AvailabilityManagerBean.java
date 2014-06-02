@@ -350,6 +350,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 case DISABLED:
                     ++disabled;
                     break;
+                default:
+                    // Only stored avail types are relevant, MISSING, for example, is never stored
+                    break;
                 }
             }
         }
@@ -552,6 +555,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     case UNKNOWN:
                         hasUnknownPeriods = true;
                         break;
+                    default:
+                        // Only stored avail types are relevant, MISSING, for example, is never stored
+                        break;
                     }
 
                     // if the period has been all green,  then set it to UP, otherwise, be pessimistic if there is any
@@ -606,6 +612,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 case UNKNOWN:
                 default:
                     hasUnknownPeriods = true;
+                    // Only stored avail types are relevant, MISSING, for example, is never stored
                 }
 
                 // move to the previous availability record
@@ -957,6 +964,25 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
             AvailabilityType latestType = latest.getAvailabilityType();
             AvailabilityType reportedType = reported.getAvailabilityType();
+
+            // If the reported type is MISSING and this type is enabled for automatic uninventory, then
+            // uninventory the resource and continue with the next reported avail. Otherwise, convert to
+            // DOWN and process as usual.
+            if (AvailabilityType.MISSING == reportedType) {
+                // the reported.getResource() gives us only a resource with an id. Nothing else, so we call a
+                // dedicated SLSB method to do this work.
+                boolean uninventoried = resourceManager.handleMissingResourceInNewTransaction(resourceId);
+                if (uninventoried) {
+                    continue;
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Type not enabled for automatic uninventory of MISSING resources. Converting MISSING to DOWN AvailabilityType for resource: "
+                            + reported.getResource());
+                    }
+                    reported.setAvailabilityType(AvailabilityType.DOWN);
+                    reportedType = AvailabilityType.DOWN;
+                }
+            }
 
             // If the current avail is DISABLED, and this report is not trying to re-enable the resource,
             // Then ignore the reported avail.
@@ -1396,7 +1422,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource) {
+    public void scheduleAvailabilityDurationCheck(AvailabilityDurationCacheElement cacheElement, Resource resource,
+        long startTime) {
 
         String operator = cacheElement.getAlertConditionOperator().name();
         String durationString = (String) cacheElement.getAlertConditionOperatorOption();
@@ -1415,6 +1442,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         infoMap.put(AlertAvailabilityDurationJob.DATAMAP_RESOURCE_ID, String.valueOf(resource.getId()));
         infoMap.put(AlertAvailabilityDurationJob.DATAMAP_OPERATOR, operator);
         infoMap.put(AlertAvailabilityDurationJob.DATAMAP_DURATION, durationString); // in seconds
+        infoMap.put(AlertAvailabilityDurationJob.DATAMAP_START_TIME, String.valueOf(startTime)); // in milliseconds
 
         timerService.createSingleActionTimer(duration, new TimerConfig(infoMap, false));
     }

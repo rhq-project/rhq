@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -56,6 +57,7 @@ import org.rhq.coregui.client.util.async.Command;
 import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * This composite graph view has different graph types and data structures for
@@ -68,7 +70,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
     static protected final Messages MSG = CoreGUI.getMessages();
     // The d3 color palette onlys supports 20 colors so we limit to this
-    private static final int MAX_NUMBER_OF_LINES_IN_GRAPH = 20;
+    private static final int MAX_NUMBER_OF_LINES_IN_GRAPH = 50;
     // string labels
     private final String chartTitleMinLabel = MSG.chart_title_min_label();
     private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
@@ -77,9 +79,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private final String chartTimeLabel = MSG.chart_time_label();
     private final String chartHoverTimeFormat = MSG.chart_hover_time_format();
     private final String chartHoverDateFormat = MSG.chart_hover_date_format();
-    private int groupId;
+    private EntityContext context;
     private int definitionId;
-    private boolean isAutoGroup;
     private MeasurementDefinition definition;
     private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     private String adjustedMeasurementUnits;
@@ -97,10 +98,9 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     protected static Timer refreshTimer;
     protected boolean isRefreshing;
 
-    public CompositeGroupD3GraphListView(int groupId, int defId, boolean isAutoGroup) {
+    public CompositeGroupD3GraphListView(EntityContext context, int defId) {
         super();
-        this.groupId = groupId;
-        this.isAutoGroup = isAutoGroup;
+        this.context = context;
         setDefinitionId(defId);
         measurementForEachResource = new ArrayList<MultiLineGraphData>();
         buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(this);
@@ -114,10 +114,15 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterId(groupId);
+        criteria.addFilterId(context.getGroupId());
         criteria.fetchResourceType(true);
-        criteria.addFilterVisible(!isAutoGroup);
         criteria.fetchExplicitResources(true);
+        if (context.isAutoCluster()) {
+            criteria.addFilterVisible(false);
+        } else if (context.isAutoGroup()) {
+            criteria.addFilterVisible(false);
+            criteria.addFilterPrivate(true);
+        }
 
         childResources = new TreeSet<Resource>();
         measurementForEachResource.clear();
@@ -142,6 +147,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                         for (Iterator<Resource> resourceIterator = fullSetOfChildResources.iterator(); resourceIterator.hasNext(); ) {
                             Resource nextChildResource = resourceIterator.next();
                             if(i >= MAX_NUMBER_OF_LINES_IN_GRAPH){
+                                CoreGUI.getMessageCenter().notify(new Message( MSG.chart_warning_max_composite_graphs_limit_exceeded()+" "+String.valueOf( MAX_NUMBER_OF_LINES_IN_GRAPH ), Message.Severity.Warning));
                                 break;
                             }
                             childResources.add(nextChildResource);
@@ -396,7 +402,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
             for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
                 if(null != multiLineGraphData.getMeasurementData() && multiLineGraphData.getMeasurementData().size() > 0){
                     sb.append("{ \"key\": \"");
-                    sb.append(multiLineGraphData.getResourceName());
+                    sb.append(multiLineGraphData.getResourceNameEscaped());
                     sb.append("\",\"value\" : ");
                     sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
                     sb.append("},");
@@ -493,6 +499,10 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
         public String getResourceName() {
             return resourceName;
+        }
+
+        public String getResourceNameEscaped() {
+            return resourceName.replace('"', '\'');
         }
 
         public int getResourceId() {

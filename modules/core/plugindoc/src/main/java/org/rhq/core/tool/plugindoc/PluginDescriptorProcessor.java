@@ -34,7 +34,6 @@ import org.rhq.core.clientapi.agent.metadata.ContentMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
 import org.rhq.core.clientapi.agent.metadata.MetricsMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.OperationsMetadataParser;
-import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.Help;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
@@ -49,14 +48,12 @@ import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
-import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -139,8 +136,7 @@ public class PluginDescriptorProcessor {
         throws InvalidPluginDescriptorException {
         ResourceType platformResourceType = new ResourceType(platformDescriptor.getName(), pluginDescriptor.getName(),
             ResourceCategory.PLATFORM, null);
-        platformResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-            platformResourceType, platformDescriptor.getSubCategory()));
+        platformResourceType.setSubCategory(platformDescriptor.getSubCategory());
         platformResourceType.setDescription(platformDescriptor.getDescription());
         log.debug("Parsed platform resource type: " + platformResourceType);
         parseResourceDescriptor(platformDescriptor, platformResourceType, null, null, null);
@@ -166,8 +162,7 @@ public class PluginDescriptorProcessor {
             // not using Embedded extension model
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentType);
-            serverResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                serverResourceType, serverDescriptor.getSubCategory()));
+            serverResourceType.setSubCategory(serverDescriptor.getSubCategory());
             serverResourceType.setDescription(serverDescriptor.getDescription());
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
@@ -197,7 +192,7 @@ public class PluginDescriptorProcessor {
             // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
             // values.
             serverResourceType.setDescription(serverDescriptor.getDescription());
-            setSubCategory(serverDescriptor, serverResourceType);
+            serverResourceType.setSubCategory(serverDescriptor.getSubCategory());
 
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
@@ -255,8 +250,7 @@ public class PluginDescriptorProcessor {
             // not using Embedded extension model
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
-            serviceResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                serviceResourceType, serviceDescriptor.getSubCategory()));
+            serviceResourceType.setSubCategory(serviceDescriptor.getSubCategory());
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
@@ -300,7 +294,7 @@ public class PluginDescriptorProcessor {
             // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
             // values.
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
-            setSubCategory(serviceDescriptor, serviceResourceType);
+            serviceResourceType.setSubCategory(serviceDescriptor.getSubCategory());
 
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
@@ -322,20 +316,6 @@ public class PluginDescriptorProcessor {
         }
 
         return serviceResourceType;
-    }
-
-    private static void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
-        throws InvalidPluginDescriptorException {
-        String subCatName = resourceDescriptor.getSubCategory();
-        if (subCatName != null) {
-            ResourceSubCategory subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                resourceType, subCatName);
-            if (subCat == null)
-                throw new InvalidPluginDescriptorException("Resource type [" + resourceType.getName()
-                    + "] specified a subcategory (" + subCatName
-                    + ") that is not defined as a child subcategory of one of its ancestor resource types.");
-            resourceType.setSubCategory(subCat);
-        }
     }
 
     private void addRunsInsideParentTypes(ResourceDescriptor resourceDescriptor, ResourceType resourceType) {
@@ -414,14 +394,6 @@ public class PluginDescriptorProcessor {
 
         for (ContentDescriptor contentDescriptor : resourceDescriptor.getContent()) {
             resourceType.addPackageType(ContentMetadataParser.parseContentDescriptor(contentDescriptor));
-        }
-
-        if (resourceDescriptor.getSubcategories() != null) {
-            for (SubCategoryDescriptor subCategoryDescriptor : resourceDescriptor.getSubcategories()
-                .getSubcategory()) {
-                resourceType.addChildSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
-                    resourceType));
-            }
         }
 
         Help help = resourceDescriptor.getHelp();

@@ -55,7 +55,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
-import org.rhq.coregui.client.admin.AgentPluginTableView;
 import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -64,7 +63,7 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of an agent.
- * 
+ *
  * @author Jirka Kremser
  */
 public class AgentDetailView extends EnhancedVLayout {
@@ -111,8 +110,8 @@ public class AgentDetailView extends EnhancedVLayout {
                     initSectionCount = SECTION_COUNT;
                     return;
                 }
-                prepareDetailsSection(sectionStack, agents.get(0));
-                prepareFailoverListSection(sectionStack, agents.get(0));
+                prepareDetailsSection(agents.get(0));
+                prepareFailoverListSection(agents.get(0));
 
                 GWTServiceLookup.getTopologyService().getResourceIdOfAgent(agentId, new AsyncCallback<Integer>() {
                     public void onSuccess(final Integer resourceId) {
@@ -123,6 +122,7 @@ public class AgentDetailView extends EnhancedVLayout {
                             initSectionCount = SECTION_COUNT;
                         }
                     }
+
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_adminTopology_message_fetchAgentFail(String.valueOf(agentId)) + " "
@@ -130,7 +130,6 @@ public class AgentDetailView extends EnhancedVLayout {
                         initSectionCount = SECTION_COUNT;
                     }
                 });
-
             }
 
             public void onFailure(Throwable caught) {
@@ -166,7 +165,7 @@ public class AgentDetailView extends EnhancedVLayout {
                     if (null != agentPluginsSection) {
                         sectionStack.addSection(agentPluginsSection);
                     }
-                    
+
                     addMember(sectionStack);
                     markForRedraw();
 
@@ -182,7 +181,7 @@ public class AgentDetailView extends EnhancedVLayout {
         }.run(); // fire the timer immediately
     }
 
-    private void prepareFailoverListSection(SectionStack stack, Agent agent) {
+    private void prepareFailoverListSection(Agent agent) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_agentDetail_agentFailoverList());
         section.setExpanded(true);
         ServerTableView agentsTable = new ServerTableView(agent.getId(), false);
@@ -192,7 +191,7 @@ public class AgentDetailView extends EnhancedVLayout {
         ++initSectionCount;
         return;
     }
-    
+
     private void prepareAgentPluginsSection(SectionStack stack, int resourceId) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminConfig_agentPlugins());
         section.setExpanded(false);
@@ -206,8 +205,7 @@ public class AgentDetailView extends EnhancedVLayout {
         ++initSectionCount;
         return;
     }
-    
-    
+
     protected Canvas buildResultsSection(ResourceOperationHistory operationHistory) {
         OperationRequestStatus status = operationHistory.getStatus();
         if (status == OperationRequestStatus.SUCCESS || status == OperationRequestStatus.FAILURE) {
@@ -217,7 +215,8 @@ public class AgentDetailView extends EnhancedVLayout {
             ConfigurationDefinition resultsConfigurationDefinition = operationDefinition
                 .getResultsConfigurationDefinition();
             if (resultsConfigurationDefinition != null
-                && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
+                && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()
+                && operationHistory.getResults() != null) {
                 ConfigurationEditor editor = new ConfigurationEditor(
                     operationDefinition.getResultsConfigurationDefinition(), operationHistory.getResults());
                 editor.setPreserveTextFormatting(true);
@@ -235,7 +234,7 @@ public class AgentDetailView extends EnhancedVLayout {
         }
     }
 
-    private void prepareDetailsSection(SectionStack stack, Agent agent) {
+    private void prepareDetailsSection(Agent agent) {
         final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
@@ -303,8 +302,7 @@ public class AgentDetailView extends EnhancedVLayout {
         detailsSection = section;
         ++initSectionCount;
     }
-    
-    
+
     private void loadPlugins(final int resourceId) {
         if (waitingForPlugins) {
             return;
@@ -320,7 +318,6 @@ public class AgentDetailView extends EnhancedVLayout {
 
                 @Override
                 public void onSuccess(Void result) {
-                    waitingForPlugins = false;
                     final ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
                     criteria.addFilterResourceIds(resourceId);
                     criteria.addFilterOperationName("retrieveAllPluginInfo");

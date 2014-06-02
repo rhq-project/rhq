@@ -24,10 +24,14 @@
 
 package org.rhq.server.metrics.domain;
 
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
 /**
  * @author John Sanda
  */
-public class AggregateNumericMetric {
+public class AggregateNumericMetric implements NumericMetric {
 
     private int scheduleId;
 
@@ -54,6 +58,14 @@ public class AggregateNumericMetric {
         this.min = min;
         this.max = max;
         this.timestamp = timestamp;
+    }
+
+    public AggregateNumericMetric(int scheduleId, long timestamp, Map<Integer, Double> values) {
+        this.scheduleId = scheduleId;
+        this.timestamp = timestamp;
+        min = values.get(AggregateType.MIN.ordinal());
+        avg = values.get(AggregateType.AVG.ordinal());
+        max = values.get(AggregateType.MAX.ordinal());
     }
 
     public int getScheduleId() {
@@ -118,6 +130,14 @@ public class AggregateNumericMetric {
 
     public void setMaxColumnMetadata(ColumnMetadata maxColumnMetadata) {
         this.maxColumnMetadata = maxColumnMetadata;
+    }
+
+    public Map<Integer, Double> toMap() {
+        return ImmutableMap.of(
+            AggregateType.MAX.ordinal(), max,
+            AggregateType.MIN.ordinal(), min,
+            AggregateType.AVG.ordinal(), avg
+        );
     }
 
     @Override

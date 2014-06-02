@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <!DOCTYPE plugin [
- <!ENTITY platformSubcategories '
-    <!-- comment this out while JBNADM-1785 is fixed
-     <subcategories>
-         <subcategory name="platformServices"/>
-      </subcategories>
-      -->
-'>
  <!ENTITY platformOperations '
       <operation name="discovery" displayName="Manual Autodiscovery" description="Run an immediate discovery to search for resources">
          <parameters>
@@ -227,8 +220,6 @@
               discovery="WindowsPlatformDiscoveryComponent"
               description="Microsoft Windows Operating System">
 
-        &platformSubcategories;
-
         <plugin-configuration>
             <c:group name="Content">
                 <c:description>Settings to support content/package functionality</c:description>
@@ -287,8 +278,6 @@
               class="LinuxPlatformComponent"
               discovery="LinuxPlatformDiscoveryComponent"
               description="Linux Operating System">
-
-        &platformSubcategories;
 
         <plugin-configuration>
             <c:group name="Content">
@@ -389,7 +378,6 @@
             &syslogEventConfigurationGroup;
         </plugin-configuration>
 
-        &platformSubcategories;
         &platformOperations;
         &nativeMetrics;
         &platformCpu;
@@ -404,7 +392,6 @@
               class="PlatformComponent"
               discovery="HpuxPlatformDiscoveryComponent"
               description="Hewlett-Packard HP-UX Operating System">
-        &platformSubcategories;
         &platformOperations;
         &nativeMetrics;
         &platformCpu;
@@ -417,7 +404,6 @@
               class="PlatformComponent"
               discovery="AixPlatformDiscoveryComponent"
               description="IBM AIX Operating System">
-        &platformSubcategories;
         &platformOperations;
         &nativeMetrics;
         &platformCpu;
@@ -430,7 +416,6 @@
               class="PlatformComponent"
               discovery="BsdPlatformDiscoveryComponent"
               description="FreeBSD Operating System">
-        &platformSubcategories;
         &platformOperations;
         &nativeMetrics;
         &platformCpu;
@@ -447,7 +432,6 @@
             &syslogEventConfigurationGroup;
         </plugin-configuration>
 
-        &platformSubcategories;
         &platformOperations;
         &nativeMetrics;
         &platformCpu;
@@ -461,7 +445,6 @@
               class="PlatformComponent"
               discovery="JavaPlatformDiscoveryComponent"
               description="Platform with 100% Java capability but not natively supported">
-        &platformSubcategories;
         &platformOperations;
         &metrics;
         &driftConfig;

@@ -135,19 +135,27 @@ public class ContentHandlerBean extends AbstractRestBean {
     @PUT
     @Path("/{handle}/plugins")
     @ApiErrors({
-        @ApiError(code = 406, reason = "No name provided"),
+        @ApiError(code = 406, reason = "No name provided or invalid combination of parameters supplied"),
         @ApiError(code = 404, reason = "No content for handle found"),
         @ApiError(code = 403, reason = "Caller has not rights to upload plugins")
     })
     @ApiOperation(value="Put the uploaded content into the plugin drop box. ",
         notes = "This endpoint allows to deploy previously uploaded content as a plugin. You need to provide" +
             "a valid plugin (file) name in order for the plugin processing to succeed. Optionally you can" +
-            "request that a plugin scan will be started and the plugin be registered in the system." +
-            "The content identified by the handle is not removed.")
+            "request that a plugin scan will be started and the plugin be registered in the system. You can also" +
+            "specify a delay in milliseconds after which the plugin will be automatically pushed out to the agents." +
+            "Note that a non-negative \"pushOutDelay\" only makes sense when the \"scan\" is set to true, otherwise" +
+            "no update on the agents can occur because there will be no updated plugins on the server. If a " +
+            "non-negative \"pushOutDelay\" is given together with \"scan\" set to false a 406 error is returned." +
+            "The content identified by the handle is not removed. Note that this method is deprecated - use a PUT to /plugins.")
+    @Deprecated
     public Response provideAsPlugin(
         @ApiParam("Name of the handle retrieved from upload") @PathParam("handle") String handle,
         @ApiParam("Name of the plugin file") @QueryParam("name") String name,
         @ApiParam("Should a discovery scan be started?") @QueryParam("scan") @DefaultValue("false") boolean startScan,
+        @ApiParam(value = "The delay in millis before the agents update their plugins. Any negative value disables " +
+            "the automatic update of agents", defaultValue = "-1")
+            @QueryParam("pushOutDelay") @DefaultValue("-1") long pushOutDelay,
         @Context HttpHeaders headers
     ) {
 
@@ -170,6 +178,12 @@ public class ContentHandlerBean extends AbstractRestBean {
                 throw new PermissionException("You are not authorized to do this");
             }
 
+            //sanity checks before we do any real work
+            if (pushOutDelay >= 0 && !startScan) {
+                throw new BadArgumentException(
+                    "Pushing changes to agents without starting a scan for changes first doesn't make sense.");
+            }
+
             File dir = LookupUtil.getPluginManager().getPluginDropboxDirectory();
             File targetFile = new File(dir,name);
 
@@ -189,6 +203,10 @@ public class ContentHandlerBean extends AbstractRestBean {
             if (startScan) {
                 PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
                 scanner.scanAndRegister();
+            }
+
+            if (pushOutDelay >= 0) {
+                LookupUtil.getPluginManager().schedulePluginUpdateOnAgents(caller, pushOutDelay);
             }
 
             builder=Response.ok();

@@ -127,12 +127,6 @@
    <!-- try to make server-a and its children representative of "average" resources -->
    <server name="server-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server A">
 
-      <subcategories>
-         <subcategory name="subcategory0">
-            <subcategory name="childSubcategory0"/>
-         </subcategory>
-      </subcategories>
-
       <plugin-configuration>
          <c:simple-property name="property0"/>
          <c:simple-property name="property1"/>
@@ -169,7 +163,7 @@
       <content name="artifact4" displayName="Artifact 4" category="configuration"/>
 
       <service name="service-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent"
-               description="Nested Service A" subCategory="childSubcategory0">
+               description="Nested Service A" subCategory="subcategory0|childSubcategory0">
 
          <plugin-configuration>
             <c:simple-property name="childProperty0" default="red"/>

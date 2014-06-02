@@ -78,12 +78,361 @@
       <metric displayName="Start time" property="Database.startTime" dataType="trait" displayType="summary"
               description="Start time of the PostgreSQL database server"/>
 
-      <resource-configuration>
+      <!-- Metrics coming from runtime properties -->
+      
+      <metric property="Runtime.add_missing_from" displayName="Add Missing From" dataType="trait"
+              description="Automatically adds missing table references to FROM clauses"/>
+      <metric property="Runtime.allow_system_table_mods" displayName="Allow System Table Mods" dataType="trait"
+              description="Allows modifications of the structure of system tables"/>
+      <metric property="Runtime.archive_command" displayName="Archive Command" dataType="trait"
+              description="WAL archiving command"/>
+      <metric property="Runtime.archive_timeout" displayName="Archive Timeout" dataType="trait"
+              description="Forces a switch to the next xlog file if a new file has not been started within the specified amount of time"/>
+      <metric property="Runtime.array_nulls" displayName="Array Nulls" dataType="trait"
+              description="Enable input of NULL elements in arrays."/>
+      <metric property="Runtime.authentication_timeout" displayName="Authentication Timeout" dataType="trait"
+              description="The maximum allowed time to complete client authentication"/>
+      <metric property="Runtime.autovacuum" displayName="Autovacuum" dataType="trait"
+              description="Starts the autovacuum subprocess."/>
+      <metric property="Runtime.autovacuum_analyze_scale_factor" displayName="Autovacuum Analyze Scale Factor" dataType="trait"
+              description="Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples."/>
+      <metric property="Runtime.autovacuum_analyze_threshold" displayName="Autovacuum Analyze Threshold" dataType="trait"
+              description="Minimum number of tuple inserts, updates or deletes prior to analyze."/>
+      <metric property="Runtime.autovacuum_freeze_max_age" displayName="Autovacuum Freeze Max Age" dataType="trait"
+              description="Age (in transactions) at which to autovacuum a table to prevent transaction ID wraparound."/>
+      <metric property="Runtime.autovacuum_naptime" displayName="Autovacuum Naptime" dataType="trait"
+              description="Amount of time to sleep between autovacuum runs"/>
+      <metric property="Runtime.autovacuum_vacuum_cost_delay" displayName="Autovacuum Vacuum Cost Delay" dataType="trait"
+              description="Vacuum cost delay for autovacuum"/>
+      <metric property="Runtime.autovacuum_vacuum_cost_limit" displayName="Autovacuum Vacuum Cost Limit" dataType="trait"
+              description="Vacuum cost amount available before napping, for autovacuum."/>
+      <metric property="Runtime.autovacuum_vacuum_scale_factor" displayName="Autovacuum Vacuum Scale Factor" dataType="trait"
+              description="Number of tuple updates or deletes prior to vacuum as a fraction of reltuples."/>
+      <metric property="Runtime.autovacuum_vacuum_threshold" displayName="Autovacuum Vacuum Threshold" dataType="trait"
+              description="Minimum number of tuple updates or deletes prior to vacuum."/>
+      <metric property="Runtime.backslash_quote" displayName="Backslash Quote" dataType="trait"
+              description="Whether quotes are allowed in string literals"/>
+      <metric property="Runtime.bgwriter_all_maxpages" displayName="Bgwriter All Maxpages" dataType="trait"
+              description="Background writer maximum number of all pages to flush per round"/>
+      <metric property="Runtime.bgwriter_all_percent" displayName="Bgwriter All Percent" dataType="trait"
+              description="Background writer percentage of all buffers to flush per round"/>
+      <metric property="Runtime.bgwriter_delay" displayName="Bgwriter Delay" dataType="trait"
+              description="Background writer sleep time between rounds; default unit is milliseconds"/>
+      <metric property="Runtime.bgwriter_lru_maxpages" displayName="Bgwriter Lru Maxpages" dataType="trait"
+              description="Background writer maximum number of LRU pages to flush per round"/>
+      <metric property="Runtime.bgwriter_lru_percent" displayName="Bgwriter Lru Percent" dataType="trait"
+              description="Background writer percentage of LRU buffers to flush per round"/>
+      <metric property="Runtime.block_size" displayName="Block Size" dataType="trait"
+              description="Shows size of a disk block; determined by the value of BLCKSZ when building the server; default unit is bytes"/>
+      <metric property="Runtime.bonjour_name" displayName="Bonjour Name" dataType="trait"
+              description="The Bonjour broadcast service name"/>
+      <metric property="Runtime.check_function_bodies" displayName="Check Function Bodies" dataType="trait"
+              description="Check function bodies during CREATE FUNCTION."/>
+      <metric property="Runtime.checkpoint_segments" displayName="Checkpoint Segments" dataType="trait"
+              description="The maximum distance (in log segments) between automatic WAL checkpoints."/>
+      <metric property="Runtime.checkpoint_timeout" displayName="Checkpoint Timeout" dataType="trait"
+              description="The maximum amount of time between automatic WAL checkpoints; default unit is seconds"/>
+      <metric property="Runtime.checkpoint_warning" displayName="Checkpoint Warning" dataType="trait"
+              description="Logs if filling of checkpoint segments happens more frequently than this amount of time; default unit is seconds"/>
+      <metric property="Runtime.client_encoding" displayName="Client Encoding" dataType="trait"
+              description="The client's character set encoding."/>
+      <metric property="Runtime.client_min_messages" displayName="Client Min Messages" dataType="trait"
+              description="The message levels that are sent to the client."/>
+      <metric property="Runtime.commit_delay" displayName="Commit Delay" dataType="trait"
+              description="The delay in between transaction commit and flushing WAL to disk; default unit is microseconds"/>
+      <metric property="Runtime.commit_siblings" displayName="Commit Siblings" dataType="trait"
+              description="The minimum concurrent open transactions before performing commit_delay."/>
+      <metric property="Runtime.config_file" displayName="Config File" dataType="trait"
+              description="The server's main configuration file."/>
+      <metric property="Runtime.constraint_exclusion" displayName="Constraint Exclusion" dataType="trait"
+              description="Enables the planner to use constraints to optimize queries."/>
+      <metric property="Runtime.cpu_index_tuple_cost" displayName="Cpu Index Tuple Cost" dataType="trait"
+              description="The planner's estimate of the cost of processing each index entry during an index scan; measured on the same scale as the seq_page_cost configuration parameter"/>
+      <metric property="Runtime.cpu_operator_cost" displayName="Cpu Operator Cost" dataType="trait"
+              description="The planner's estimate of the cost of processing each operator or function call; measured on the same scale as the seq_page_cost configuration parameter"/>
+      <metric property="Runtime.cpu_tuple_cost" displayName="Cpu Tuple Cost" dataType="trait"
+              description="The planner's estimate of the cost of processing each tuple (row); measured on the same scale as the seq_page_cost configuration parameter"/>
+      <metric property="Runtime.custom_variable_classes" displayName="Custom Variable Classes" dataType="trait"
+              description="The list of known custom variable classes"/>
+      <metric property="Runtime.data_directory" displayName="Data Directory" dataType="trait"
+              description="The server's data directory."/>
+      <metric property="Runtime.DateStyle" displayName="DateStyle" dataType="trait"
+              description="The display format for date and time values."/>
+      <metric property="Runtime.db_user_namespace" displayName="Db User Namespace" dataType="trait"
+              description="Enables per-database user names."/>
+      <metric property="Runtime.deadlock_timeout" displayName="Deadlock Timeout" dataType="trait"
+              description="The amount of time to wait on lock before checking for a deadlock; default unit is milliseconds"/>
+      <metric property="Runtime.debug_assertions" displayName="Debug Assertions" dataType="trait"
+              description="Turns on various assertion checks."/>
+      <metric property="Runtime.debug_pretty_print" displayName="Debug Pretty Print" dataType="trait"
+              description="Indents parse and plan tree displays."/>
+      <metric property="Runtime.debug_print_parse" displayName="Debug Print Parse" dataType="trait"
+              description="Prints the parse tree to the server log."/>
+      <metric property="Runtime.debug_print_plan" displayName="Debug Print Plan" dataType="trait"
+              description="Prints the execution plan to server log."/>
+      <metric property="Runtime.debug_print_rewritten" displayName="Debug Print Rewritten" dataType="trait"
+              description="Prints the parse tree after rewriting to server log."/>
+      <metric property="Runtime.default_statistics_target" displayName="Default Statistics Target" dataType="trait"
+              description="The default statistics target; range 1-1000."/>
+      <metric property="Runtime.default_tablespace" displayName="Default Tablespace" dataType="trait"
+              description="The default tablespace to create tables and indexes in."/>
+      <metric property="Runtime.default_transaction_isolation" displayName="Default Transaction Isolation" dataType="trait"
+              description="The transaction isolation level of each new transaction."/>
+      <metric property="Runtime.default_transaction_read_only" displayName="Default Transaction Read Only" dataType="trait"
+              description="The default read-only status of new transactions."/>
+      <metric property="Runtime.default_with_oids" displayName="Default With Oids" dataType="trait"
+              description="Create new tables with OIDs by default."/>
+      <metric property="Runtime.dynamic_library_path" displayName="Dynamic Library Path" dataType="trait"
+              description="The path for dynamically loadable modules."/>
+      <metric property="Runtime.effective_cache_size" displayName="Effective Cache Size" dataType="trait"
+              description="The planner's assumption about size of the disk cache; the unit is disk pages, which are normally 8KB each"/>
+      <metric property="Runtime.enable_bitmapscan" displayName="Enable Bitmapscan" dataType="trait"
+              description="Enables the planner's use of bitmap-scan plans."/>
+      <metric property="Runtime.enable_hashagg" displayName="Enable Hashagg" dataType="trait"
+              description="Enables the planner's use of hashed aggregation plans."/>
+      <metric property="Runtime.enable_hashjoin" displayName="Enable Hashjoin" dataType="trait"
+              description="Enables the planner's use of hash join plans."/>
+      <metric property="Runtime.enable_indexscan" displayName="Enable Indexscan" dataType="trait"
+              description="Enables the planner's use of index-scan plans."/>
+      <metric property="Runtime.enable_mergejoin" displayName="Enable Mergejoin" dataType="trait"
+              description="Enables the planner's use of merge join plans."/>
+      <metric property="Runtime.enable_nestloop" displayName="Enable Nestloop" dataType="trait"
+              description="Enables the planner's use of nested-loop join plans."/>
+      <metric property="Runtime.enable_seqscan" displayName="Enable Seqscan" dataType="trait"
+              description="Enables the planner's use of sequential-scan plans."/>
+      <metric property="Runtime.enable_sort" displayName="Enable Sort" dataType="trait"
+              description="Enables the planner's use of explicit sort steps."/>
+      <metric property="Runtime.enable_tidscan" displayName="Enable Tidscan" dataType="trait"
+              description="Enables the planner's use of TID scan plans."/>
+      <metric property="Runtime.escape_string_warning" displayName="Escape String Warning" dataType="trait"
+              description="Warn about backslash escapes in ordinary string literals."/>
+      <metric property="Runtime.explain_pretty_print" displayName="Explain Pretty Print" dataType="trait"
+              description="Uses the indented output format for EXPLAIN VERBOSE."/>
+      <metric property="Runtime.external_pid_file" displayName="External Pid File" dataType="trait"
+              description="Writes the postmaster PID to the specified file."/>
+      <metric property="Runtime.extra_float_digits" displayName="Extra Float Digits" dataType="trait"
+              description="The number of extra digits displayed for floating-point values."/>
+      <metric property="Runtime.from_collapse_limit" displayName="From Collapse Limit" dataType="trait"
+              description="The FROM-list size beyond which subqueries are not collapsed"/>
+      <metric property="Runtime.fsync" displayName="Fsync" dataType="trait"
+              description="Forces synchronization of updates to disk."/>
+      <metric property="Runtime.full_page_writes" displayName="Full Page Writes" dataType="trait"
+              description="Writes full pages to WAL when first modified after a checkpoint."/>
+      <metric property="Runtime.geqo" displayName="Geqo" dataType="trait"
+              description="Enables genetic query optimization"/>
+      <metric property="Runtime.geqo_effort" displayName="Geqo Effort" dataType="trait"
+              description="GEQO: effort is used to set the default for other GEQO parameters; range 1-10"/>
+      <metric property="Runtime.geqo_generations" displayName="Geqo Generations" dataType="trait"
+              description="GEQO: number of iterations of the algorithm; default selected based on effort."/>
+      <metric property="Runtime.geqo_pool_size" displayName="Geqo Pool Size" dataType="trait"
+              description="GEQO: number of individuals in the population; default selected based on effort."/>
+      <metric property="Runtime.geqo_selection_bias" displayName="Geqo Selection Bias" dataType="trait"
+              description="GEQO: selective pressure within the population."/>
+      <metric property="Runtime.geqo_threshold" displayName="Geqo Threshold" dataType="trait"
+              description="The threshold of FROM items beyond which GEQO is used."/>
+      <metric property="Runtime.gin_fuzzy_search_limit" displayName="Gin Fuzzy Search Limit" dataType="trait"
+              description="The maximum allowed result for exact search by GIN."/>
+      <metric property="Runtime.hba_file" displayName="Hba File" dataType="trait"
+              description="The server's hba [configuration file]"/>
+      <metric property="Runtime.ident_file" displayName="Ident File" dataType="trait"
+              description="The server's ident [configuration file]"/>
+      <metric property="Runtime.ignore_system_indexes" displayName="Ignore System Indexes" dataType="trait"
+              description="Disables reading from system indexes."/>
+      <metric property="Runtime.integer_datetimes" displayName="Integer Datetimes" dataType="trait"
+              description="Datetimes are integer based."/>
+      <metric property="Runtime.join_collapse_limit" displayName="Join Collapse Limit" dataType="trait"
+              description="The FROM-list size beyond which JOIN constructs are not flattened"/>
+      <metric property="Runtime.krb_caseins_users" displayName="Krb Caseins Users" dataType="trait"
+              description="Whether Kerberos user names should be treated as case-insensitive."/>
+      <metric property="Runtime.krb_server_hostname" displayName="Krb Server Hostname" dataType="trait"
+              description="The hostname of the Kerberos server."/>
+      <metric property="Runtime.krb_server_keyfile" displayName="Krb Server Keyfile" dataType="trait"
+              description="The location of the Kerberos server key file."/>
+      <metric property="Runtime.krb_srvname" displayName="Krb Srvname" dataType="trait"
+              description="The name of the Kerberos service."/>
+      <metric property="Runtime.lc_collate" displayName="Lc Collate" dataType="trait"
+              description="Shows the collation order locale."/>
+      <metric property="Runtime.lc_ctype" displayName="Lc Ctype" dataType="trait"
+              description="Shows the character classification and case conversion locale."/>
+      <metric property="Runtime.lc_messages" displayName="Lc Messages" dataType="trait"
+              description="The language in which messages are displayed."/>
+      <metric property="Runtime.lc_monetary" displayName="Lc Monetary" dataType="trait"
+              description="The locale for formatting monetary amounts."/>
+      <metric property="Runtime.lc_numeric" displayName="Lc Numeric" dataType="trait"
+              description="The locale for formatting numbers."/>
+      <metric property="Runtime.lc_time" displayName="Lc Time" dataType="trait"
+              description="The locale for formatting date and time values."/>
+      <metric property="Runtime.listen_addresses" displayName="Listen Addresses" dataType="trait"
+              description="The host name or IP address(es) to listen to."/>
+      <metric property="Runtime.local_preload_libraries" displayName="Local Preload Libraries" dataType="trait"
+              description="Lists shared libraries to preload into each backend."/>
+      <metric property="Runtime.log_connections" displayName="Log Connections" dataType="trait"
+              description="Logs each successful connection."/>
+      <metric property="Runtime.log_destination" displayName="Log Destination" dataType="trait"
+              description="The destination for server log output."/>
+      <metric property="Runtime.log_directory" displayName="Log Directory" dataType="trait"
+              description="The destination directory for log files."/>
+      <metric property="Runtime.log_disconnections" displayName="Log Disconnections" dataType="trait"
+              description="Logs end of a session, including duration."/>
+      <metric property="Runtime.log_duration" displayName="Log Duration" dataType="trait"
+              description="Logs the duration of each completed SQL statement."/>
+      <metric property="Runtime.log_error_verbosity" displayName="Log Error Verbosity" dataType="trait"
+              description="The verbosity of logged messages."/>
+      <metric property="Runtime.log_executor_stats" displayName="Log Executor Stats" dataType="trait"
+              description="Writes executor performance statistics to the server log."/>
+      <metric property="Runtime.log_filename" displayName="Log Filename" dataType="trait"
+              description="The file name pattern for log files."/>
+      <metric property="Runtime.log_hostname" displayName="Log Hostname" dataType="trait"
+              description="Logs the host name in the connection logs."/>
+      <metric property="Runtime.log_line_prefix" displayName="Log Line Prefix" dataType="trait"
+              description="Controls information prefixed to each log line"/>
+      <metric property="Runtime.log_min_duration_statement" displayName="Log Min Duration Statement" dataType="trait"
+              description="The minimum execution time (in milliseconds) above which statements will be logged."/>
+      <metric property="Runtime.log_min_error_statement" displayName="Log Min Error Statement" dataType="trait"
+              description="Causes all statements generating error at or above this level to be logged."/>
+      <metric property="Runtime.log_min_messages" displayName="Log Min Messages" dataType="trait"
+              description="The message levels that are logged."/>
+      <metric property="Runtime.log_parser_stats" displayName="Log Parser Stats" dataType="trait"
+              description="Writes parser performance statistics to the server log."/>
+      <metric property="Runtime.log_planner_stats" displayName="Log Planner Stats" dataType="trait"
+              description="Writes planner performance statistics to the server log."/>
+      <metric property="Runtime.log_rotation_age" displayName="Log Rotation Age" dataType="trait"
+              description="Automatic log file rotation will occur after this amount of time; default unit is minutes"/>
+      <metric property="Runtime.log_rotation_size" displayName="Log Rotation Size" dataType="trait"
+              description="Automatic log file rotation will occur when the file reaches this size; default unit is kilobytes"/>
+      <metric property="Runtime.log_statement" displayName="Log Statement" dataType="trait"
+              description="The type of statements logged."/>
+      <metric property="Runtime.log_statement_stats" displayName="Log Statement Stats" dataType="trait"
+              description="Writes cumulative performance statistics to the server log."/>
+      <metric property="Runtime.log_truncate_on_rotation" displayName="Log Truncate On Rotation" dataType="trait"
+              description="Truncate existing log files of same name during log rotation."/>
+      <metric property="Runtime.maintenance_work_mem" displayName="Maintenance Work Mem" dataType="trait"
+              description="The maximum memory to be used for maintenance operations."/>
+      <metric property="Runtime.max_connections" displayName="Max Connections" dataType="trait"
+              description="The maximum number of concurrent connections."/>
+      <metric property="Runtime.max_files_per_process" displayName="Max Files Per Process" dataType="trait"
+              description="The maximum number of simultaneously open files for each server process."/>
+      <metric property="Runtime.max_fsm_pages" displayName="Max Fsm Pages" dataType="trait"
+              description="The maximum number of disk pages for which free space is tracked."/>
+      <metric property="Runtime.max_fsm_relations" displayName="Max Fsm Relations" dataType="trait"
+              description="The maximum number of tables and indexes for which free space is tracked."/>
+      <metric property="Runtime.max_function_args" displayName="Max Function Args" dataType="trait"
+              description="Shows the maximum number of function arguments."/>
+      <metric property="Runtime.max_identifier_length" displayName="Max Identifier Length" dataType="trait"
+              description="Shows the maximum identifier length"/>
+      <metric property="Runtime.max_index_keys" displayName="Max Index Keys" dataType="trait"
+              description="Shows the maximum number of index keys."/>
+      <metric property="Runtime.max_locks_per_transaction" displayName="Max Locks Per Transaction" dataType="trait"
+              description="The maximum number of locks per transaction."/>
+      <metric property="Runtime.max_prepared_transactions" displayName="Max Prepared Transactions" dataType="trait"
+              description="The maximum number of simultaneously prepared transactions."/>
+      <metric property="Runtime.max_stack_depth" displayName="Max Stack Depth" dataType="trait"
+              description="The maximum size of the server's execution stack; default unit is kilobytes"/>
+      <metric property="Runtime.password_encryption" displayName="Password Encryption" dataType="trait"
+              description="Encrypt passwords."/>
+      <metric property="Runtime.port" displayName="Port" dataType="trait"
+              description="The TCP port the server listens on"/>
+      <metric property="Runtime.post_auth_delay" displayName="Post Auth Delay" dataType="trait"
+              description="Waits the specified amount of time on connection startup after authentication; default unit is seconds"/>
+      <metric property="Runtime.pre_auth_delay" displayName="Pre Auth Delay" dataType="trait"
+              description="Waits the specified amount of time on connection startup before authentication; default unit is seconds"/>
+      <metric property="Runtime.random_page_cost" displayName="Random Page Cost" dataType="trait"
+              description="The planner's estimate of the cost of a nonsequentially fetched disk page; measured on the same scale as the seq_page_cost configuration parameter"/>
+      <metric property="Runtime.redirect_stderr" displayName="Redirect Stderr" dataType="trait"
+              description="Start a subprocess to capture stderr output into log files"/>
+      <metric property="Runtime.regex_flavor" displayName="Regex Flavor" dataType="trait"
+              description="The regular expression flavor."/>
+      <metric property="Runtime.search_path" displayName="Search Path" dataType="trait"
+              description="The schema search order for names that are not schema-qualified."/>
+      <metric property="Runtime.seq_page_cost" displayName="Seq Page Cost" dataType="trait"
+              description="The planner's estimate of the cost of a sequentially fetched disk page; measured on an arbitrary scale."/>
+      <metric property="Runtime.server_encoding" displayName="Server Encoding" dataType="trait"
+              description="The server (database) character set encoding."/>
+      <metric property="Runtime.server_version" displayName="Server Version" dataType="trait"
+              description="Shows the PostgreSQL version."/>
+      <metric property="Runtime.server_version_num" displayName="Server Version Num" dataType="trait"
+              description="Shows the PostgreSQL version as an integer (e.g. 80204 translates to 8.2.4)."/>
+      <metric property="Runtime.shared_buffers" displayName="Shared Buffers" dataType="trait"
+              description="The amount of memory for the shared memory buffers used by the server"/>
+      <metric property="Runtime.shared_preload_libraries" displayName="Shared Preload Libraries" dataType="trait"
+              description="Lists shared libraries to preload into server."/>
+      <metric property="Runtime.silent_mode" displayName="Silent Mode" dataType="trait"
+              description="Runs the server silently."/>
+      <metric property="Runtime.sql_inheritance" displayName="Sql Inheritance" dataType="trait"
+              description="Causes subtables to be included by default in various commands."/>
+      <metric property="Runtime.ssl" displayName="Ssl" dataType="trait"
+              description="Enables SSL connections."/>
+      <metric property="Runtime.standard_conforming_strings" displayName="Standard Conforming Strings" dataType="trait"
+              description="'...' strings treat backslashes literally."/>
+      <metric property="Runtime.statement_timeout" displayName="Statement Timeout" dataType="trait"
+              description="The maximum allowed duration of any statement; default unit is milliseconds"/>
+      <metric property="Runtime.stats_block_level" displayName="Stats Block Level" dataType="trait"
+              description="Collects block-level statistics on database activity."/>
+      <metric property="Runtime.stats_command_string" displayName="Stats Command String" dataType="trait"
+              description="Collects information about executing commands."/>
+      <metric property="Runtime.stats_reset_on_server_start" displayName="Stats Reset On Server Start" dataType="trait"
+              description="Zeroes collected statistics on server restart."/>
+      <metric property="Runtime.stats_row_level" displayName="Stats Row Level" dataType="trait"
+              description="Collects row-level statistics on database activity."/>
+      <metric property="Runtime.stats_start_collector" displayName="Stats Start Collector" dataType="trait"
+              description="Starts the server statistics-collection subprocess."/>
+      <metric property="Runtime.superuser_reserved_connections" displayName="Superuser Reserved Connections" dataType="trait"
+              description="The number of connection slots reserved for superusers"/>
+      <metric property="Runtime.tcp_keepalives_count" displayName="Tcp Keepalives Count" dataType="trait"
+              description="Maximum number of TCP keepalive retransmits; '0' selects the system default"/>
+      <metric property="Runtime.tcp_keepalives_idle" displayName="Tcp Keepalives Idle" dataType="trait"
+              description="Amount of time between issuing TCP keepalives; '0' selects the system default; default unit is seconds"/>
+      <metric property="Runtime.tcp_keepalives_interval" displayName="Tcp Keepalives Interval" dataType="trait"
+              description="Amount of time between TCP keepalive retransmits; '0' selects the system default; default unit is seconds"/>
+      <metric property="Runtime.temp_buffers" displayName="Temp Buffers" dataType="trait"
+              description="The maximum number of temporary buffers used by each session."/>
+      <metric property="Runtime.TimeZone" displayName="TimeZone" dataType="trait"
+              description="The time zone for displaying and interpreting time stamps."/>
+      <metric property="Runtime.timezone_abbreviations" displayName="Timezone Abbreviations" dataType="trait"
+              description="Selects a file of time zone abbreviations"/>
+      <metric property="Runtime.trace_notify" displayName="Trace Notify" dataType="trait"
+              description="Generates debugging output for LISTEN and NOTIFY."/>
+      <metric property="Runtime.trace_sort" displayName="Trace Sort" dataType="trait"
+              description="Emit information about resource usage in sorting."/>
+      <metric property="Runtime.transaction_isolation" displayName="Transaction Isolation" dataType="trait"
+              description="The current transaction's isolation level."/>
+      <metric property="Runtime.transaction_read_only" displayName="Transaction Read Only" dataType="trait"
+              description="The current transaction's read-only status."/>
+      <metric property="Runtime.transform_null_equals" displayName="Transform Null Equals" dataType="trait"
+              description="Treats expr=NULL as expr IS NULL"/>
+      <metric property="Runtime.unix_socket_directory" displayName="Unix Socket Directory" dataType="trait"
+              description="The directory where the Unix-domain socket will be created"/>
+      <metric property="Runtime.unix_socket_group" displayName="Unix Socket Group" dataType="trait"
+              description="The owning group of the Unix-domain socket"/>
+      <metric property="Runtime.unix_socket_permissions" displayName="Unix Socket Permissions" dataType="trait"
+              description="The access permissions of the Unix-domain socket"/>
+      <metric property="Runtime.update_process_title" displayName="Update Process Title" dataType="trait"
+              description="Updates the process title to show the active SQL command."/>
+      <metric property="Runtime.vacuum_cost_delay" displayName="Vacuum Cost Delay" dataType="trait"
+              description="Vacuum cost delay; default unit is milliseconds; range 0-1000"/>
+      <metric property="Runtime.vacuum_cost_limit" displayName="Vacuum Cost Limit" dataType="trait"
+              description="Vacuum cost (in credits) amount available before napping."/>
+      <metric property="Runtime.vacuum_cost_page_dirty" displayName="Vacuum Cost Page Dirty" dataType="trait"
+              description="Vacuum cost (in credits) for a page dirtied by vacuum; range 0-10000"/>
+      <metric property="Runtime.vacuum_cost_page_hit" displayName="Vacuum Cost Page Hit" dataType="trait"
+              description="Vacuum cost (in credits) for a page found in the buffer cache; range 0-10000"/>
+      <metric property="Runtime.vacuum_cost_page_miss" displayName="Vacuum Cost Page Miss" dataType="trait"
+              description="Vacuum cost (in credits) for a page not found in the buffer cache; range 0-10000"/>
+      <metric property="Runtime.vacuum_freeze_min_age" displayName="Vacuum Freeze Min Age" dataType="trait"
+              description="Minimum age (in transactions) at which VACUUM should freeze a table row."/>
+      <metric property="Runtime.wal_buffers" displayName="Wal Buffers" dataType="trait"
+              description="The number of disk-page buffers in shared memory for WAL"/>
+      <metric property="Runtime.wal_sync_method" displayName="Wal Sync Method" dataType="trait"
+              description="Selects the method used for forcing WAL updates out to disk."/>
+      <metric property="Runtime.work_mem" displayName="Work Mem" dataType="trait"
+              description="The maximum memory to be used for query workspaces; default unit is kilobytes"/>
+      <metric property="Runtime.zero_damaged_pages" displayName="Zero Damaged Pages" dataType="trait"
+              description="Continues processing past damaged page headers."/>
 
+     <resource-configuration>
          <!-- NOTE: We do *not* use type="integer" for properties that measure time or data size, because Postgres
                     supports optionally including units in the values of such properties (e.g. 500ms, 30min, 256kB,
                     5MB). -->
-
          <c:group name="configFile" displayName="Configuration File">
             <c:simple-property name="port" type="integer" description="Sets the TCP port the server listens on; default value is '5432'." activationPolicy="restart" required="false">
                <c:constraint>
@@ -106,190 +455,6 @@
             <c:simple-property name="stats_row_level" type="boolean" description="Enables the collection of row-level statistics on database activity; if this option is enabled, the data that is produced can be accessed via the pg_stat and pg_statio family of system views; disabled by default" required="false"/>
             <c:simple-property name="autovacuum" type="boolean" description="Enable autovacuum subprocess? (requires stats_start_collector and stats_row_level to also be on); enabled by default" required="false"/>
          </c:group>
-
-         <c:group name="runtime" displayName="Runtime Properties">
-            <c:map-property name="runtimeSettings" description="properties available from show all">
-               <c:simple-property name="add_missing_from" type="boolean" description="Automatically adds missing table references to FROM clauses; default value is 'off'." required="false"/>
-               <c:simple-property name="allow_system_table_mods" type="boolean" description="Allows modifications of the structure of system tables; default value is 'off'." required="false"/>
-               <c:simple-property name="archive_command" description="WAL archiving command; default value is ''." required="false"/>
-               <c:simple-property name="archive_timeout" type="integer" description="Forces a switch to the next xlog file if a new file has not been started within the specified amount of time; default unit is seconds; default value is '0'." required="false"/>
-               <c:simple-property name="array_nulls" type="boolean" default="on" description="Enable input of NULL elements in arrays." required="false"/>
-               <c:simple-property name="authentication_timeout" description="Sets the maximum allowed time to complete client authentication; default unit is seconds; default value is '60'." required="false"/>
-               <c:simple-property name="autovacuum" type="boolean" default="on" description="Starts the autovacuum subprocess." required="false"/>
-               <c:simple-property name="autovacuum_analyze_scale_factor" type="float" default="0.1" description="Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples." required="false"/>
-               <c:simple-property name="autovacuum_analyze_threshold" type="integer" default="250" description="Minimum number of tuple inserts, updates or deletes prior to analyze." required="false"/>
-               <c:simple-property name="autovacuum_freeze_max_age" type="integer" default="200000000" description="Age (in transactions) at which to autovacuum a table to prevent transaction ID wraparound." required="false"/>
-               <c:simple-property name="autovacuum_naptime" description="Amount of time to sleep between autovacuum runs; default unit is seconds; default value is '60'." required="false"/>
-               <c:simple-property name="autovacuum_vacuum_cost_delay" description="Vacuum cost delay for autovacuum; default unit is milliseconds; default value is '-1'." required="false"/>
-               <c:simple-property name="autovacuum_vacuum_cost_limit" type="integer" default="-1" description="Vacuum cost amount available before napping, for autovacuum." required="false"/>
-               <c:simple-property name="autovacuum_vacuum_scale_factor" type="float" default="0.2" description="Number of tuple updates or deletes prior to vacuum as a fraction of reltuples." required="false"/>
-               <c:simple-property name="autovacuum_vacuum_threshold" type="integer" default="500" description="Minimum number of tuple updates or deletes prior to vacuum." required="false"/>
-               <c:simple-property name="backslash_quote" default="safe_encoding" description="Sets whether quotes are allowed in string literals" required="false"/>
-               <c:simple-property name="bgwriter_all_maxpages" type="integer" default="5" description="Background writer maximum number of all pages to flush per round" required="false"/>
-               <c:simple-property name="bgwriter_all_percent" type="float" default="0.333" description="Background writer percentage of all buffers to flush per round" required="false"/>
-               <c:simple-property name="bgwriter_delay" description="Background writer sleep time between rounds; default unit is milliseconds; default value is '200'." required="false"/>
-               <c:simple-property name="bgwriter_lru_maxpages" type="integer" default="5" description="Background writer maximum number of LRU pages to flush per round" required="false"/>
-               <c:simple-property name="bgwriter_lru_percent" type="integer" default="1" description="Background writer percentage of LRU buffers to flush per round" required="false"/>
-               <c:simple-property name="block_size" type="integer" description="Shows size of a disk block; determined by the value of BLCKSZ when building the server; default unit is bytes; default value is '8192'." required="false" readOnly="true"/>
-               <c:simple-property name="bonjour_name" description="Sets the Bonjour broadcast service name; default value is the computer name." required="false"/>
-               <c:simple-property name="check_function_bodies" type="boolean" default="on" description="Check function bodies during CREATE FUNCTION." required="false"/>
-               <c:simple-property name="checkpoint_segments" type="integer" default="3" description="Sets the maximum distance (in log segments) between automatic WAL checkpoints." required="false"/>
-               <c:simple-property name="checkpoint_timeout" description="Sets the maximum amount of time between automatic WAL checkpoints; default unit is seconds; default value is '300'." required="false"/>
-               <c:simple-property name="checkpoint_warning" description="Logs if filling of checkpoint segments happens more frequently than this amount of time; default unit is seconds; default value is '30'." required="false"/>
-               <c:simple-property name="client_encoding" default="SQL_ASCII" description="Sets the client's character set encoding." required="false"/>
-               <c:simple-property name="client_min_messages" default="notice" description="Sets the message levels that are sent to the client." required="false"/>
-               <c:simple-property name="commit_delay" description="Sets the delay in between transaction commit and flushing WAL to disk; default unit is microseconds; default value is '0'." required="false"/>
-               <c:simple-property name="commit_siblings" type="integer" default="5" description="Sets the minimum concurrent open transactions before performing commit_delay." required="false"/>
-               <c:simple-property name="config_file" description="Sets the server's main configuration file." required="false"/>
-               <c:simple-property name="constraint_exclusion" type="boolean" default="off" description="Enables the planner to use constraints to optimize queries." required="false"/>
-               <c:simple-property name="cpu_index_tuple_cost" type="float" description="Sets the planner's estimate of the cost of processing each index entry during an index scan; measured on the same scale as the seq_page_cost configuration parameter; default value is '0.001'." required="false"/>
-               <c:simple-property name="cpu_operator_cost" type="float" description="Sets the planner's estimate of the cost of processing each operator or function call; measured on the same scale as the seq_page_cost configuration parameter; default value is '0.0025'." required="false"/>
-               <c:simple-property name="cpu_tuple_cost" type="float" description="Sets the planner's estimate of the cost of processing each tuple (row); measured on the same scale as the seq_page_cost configuration parameter; default value is '0.01'." required="false"/>
-               <c:simple-property name="custom_variable_classes" description="Sets the list of known custom variable classes; default value is ''." required="false"/>
-               <c:simple-property name="data_directory" description="Sets the server's data directory." required="false"/>
-               <c:simple-property name="DateStyle" default="ISO, MDY" description="Sets the display format for date and time values." required="false"/>
-               <c:simple-property name="db_user_namespace" type="boolean" default="off" description="Enables per-database user names." required="false"/>
-               <c:simple-property name="deadlock_timeout" description="The amount of time to wait on lock before checking for a deadlock; default unit is milliseconds; default value is '1000'." required="false"/>
-               <c:simple-property name="debug_assertions" type="boolean" default="off" description="Turns on various assertion checks." required="false"/>
-               <c:simple-property name="debug_pretty_print" type="boolean" default="off" description="Indents parse and plan tree displays." required="false"/>
-               <c:simple-property name="debug_print_parse" type="boolean" default="off" description="Prints the parse tree to the server log." required="false"/>
-               <c:simple-property name="debug_print_plan" type="boolean" default="off" description="Prints the execution plan to server log." required="false"/>
-               <c:simple-property name="debug_print_rewritten" type="boolean" default="off" description="Prints the parse tree after rewriting to server log." required="false"/>
-               <c:simple-property name="default_statistics_target" type="integer" default="10" description="Sets the default statistics target; range 1-1000." required="false"/>
-               <c:simple-property name="default_tablespace" default="" description="Sets the default tablespace to create tables and indexes in." required="false"/>
-               <c:simple-property name="default_transaction_isolation" default="read committed" description="Sets the transaction isolation level of each new transaction." required="false"/>
-               <c:simple-property name="default_transaction_read_only" type="boolean" default="off" description="Sets the default read-only status of new transactions." required="false"/>
-               <c:simple-property name="default_with_oids" type="boolean" default="off" description="Create new tables with OIDs by default." required="false"/>
-               <c:simple-property name="dynamic_library_path" default="$libdir" description="Sets the path for dynamically loadable modules." required="false"/>
-               <c:simple-property name="effective_cache_size" default="128MB" description="Sets the planner's assumption about size of the disk cache; the unit is disk pages, which are normally 8KB each; default value is '1000'." required="false"/>
-               <c:simple-property name="enable_bitmapscan" type="boolean" default="on" description="Enables the planner's use of bitmap-scan plans." required="false"/>
-               <c:simple-property name="enable_hashagg" type="boolean" default="on" description="Enables the planner's use of hashed aggregation plans." required="false"/>
-               <c:simple-property name="enable_hashjoin" type="boolean" default="on" description="Enables the planner's use of hash join plans." required="false"/>
-               <c:simple-property name="enable_indexscan" type="boolean" default="on" description="Enables the planner's use of index-scan plans." required="false"/>
-               <c:simple-property name="enable_mergejoin" type="boolean" default="on" description="Enables the planner's use of merge join plans." required="false"/>
-               <c:simple-property name="enable_nestloop" type="boolean" default="on" description="Enables the planner's use of nested-loop join plans." required="false"/>
-               <c:simple-property name="enable_seqscan" type="boolean" default="on" description="Enables the planner's use of sequential-scan plans." required="false"/>
-               <c:simple-property name="enable_sort" type="boolean" default="on" description="Enables the planner's use of explicit sort steps." required="false"/>
-               <c:simple-property name="enable_tidscan" type="boolean" default="on" description="Enables the planner's use of TID scan plans." required="false"/>
-               <c:simple-property name="escape_string_warning" type="boolean" default="on" description="Warn about backslash escapes in ordinary string literals." required="false"/>
-               <c:simple-property name="explain_pretty_print" type="boolean" default="on" description="Uses the indented output format for EXPLAIN VERBOSE." required="false"/>
-               <c:simple-property name="external_pid_file" default="" description="Writes the postmaster PID to the specified file." required="false"/>
-               <c:simple-property name="extra_float_digits" type="integer" default="0" description="Sets the number of extra digits displayed for floating-point values." required="false"/>
-               <c:simple-property name="from_collapse_limit" type="integer" description="Sets the FROM-list size beyond which subqueries are not collapsed; default value is 8." required="false"/>
-               <c:simple-property name="fsync" type="boolean" default="on" description="Forces synchronization of updates to disk." required="false"/>
-               <c:simple-property name="full_page_writes" type="boolean" default="on" description="Writes full pages to WAL when first modified after a checkpoint." required="false"/>
-               <c:simple-property name="geqo" type="boolean" description="Enables genetic query optimization; default value is on." required="false"/>
-               <c:simple-property name="geqo_effort" type="integer" description="GEQO: effort is used to set the default for other GEQO parameters; range 1-10; default value is 5." required="false"/>
-               <c:simple-property name="geqo_generations" type="integer" description="GEQO: number of iterations of the algorithm; default selected based on effort." required="false"/>
-               <c:simple-property name="geqo_pool_size" type="integer" description="GEQO: number of individuals in the population; default selected based on effort." required="false"/>
-               <c:simple-property name="geqo_selection_bias" type="float" description="GEQO: selective pressure within the population." required="false"/>
-               <c:simple-property name="geqo_threshold" type="integer" default="12" description="Sets the threshold of FROM items beyond which GEQO is used." required="false"/>
-               <c:simple-property name="gin_fuzzy_search_limit" type="integer" default="0" description="Sets the maximum allowed result for exact search by GIN." required="false"/>
-               <c:simple-property name="hba_file" description="Sets the server's hba [configuration file]" required="false"/>
-               <c:simple-property name="ident_file" description="Sets the server's ident [configuration file]" required="false"/>
-               <c:simple-property name="ignore_system_indexes" type="boolean" default="off" description="Disables reading from system indexes." required="false"/>
-               <c:simple-property name="integer_datetimes" type="boolean" default="off" description="Datetimes are integer based." required="false" readOnly="true"/>
-               <c:simple-property name="join_collapse_limit" type="integer" description="Sets the FROM-list size beyond which JOIN constructs are not flattened; default value is '8'." required="false"/>
-               <c:simple-property name="krb_caseins_users" type="boolean" default="off" description="Sets whether Kerberos user names should be treated as case-insensitive." required="false"/>
-               <c:simple-property name="krb_server_hostname" default="" description="Sets the hostname of the Kerberos server." required="false"/>
-               <c:simple-property name="krb_server_keyfile" default="FILE:/usr/local/pgsql/etc/krb5.keytab" description="Sets the location of the Kerberos server key file." required="false"/>
-               <c:simple-property name="krb_srvname" default="postgres" description="Sets the name of the Kerberos service." required="false"/>
-               <c:simple-property name="lc_collate" default="C" description="Shows the collation order locale." required="false" readOnly="true"/>
-               <c:simple-property name="lc_ctype" default="C" description="Shows the character classification and case conversion locale." required="false" readOnly="true"/>
-               <c:simple-property name="lc_messages" default="C" description="Sets the language in which messages are displayed." required="false"/>
-               <c:simple-property name="lc_monetary" default="C" description="Sets the locale for formatting monetary amounts." required="false"/>
-               <c:simple-property name="lc_numeric" default="C" description="Sets the locale for formatting numbers." required="false"/>
-               <c:simple-property name="lc_time" default="C" description="Sets the locale for formatting date and time values." required="false"/>
-               <c:simple-property name="listen_addresses" default="localhost" description="Sets the host name or IP address(es) to listen to." required="false"/>
-               <c:simple-property name="local_preload_libraries" default="" description="Lists shared libraries to preload into each backend." required="false"/>
-               <c:simple-property name="log_connections" type="boolean" default="off" description="Logs each successful connection." required="false"/>
-               <c:simple-property name="log_destination" default="stderr" description="Sets the destination for server log output." required="false"/>
-               <c:simple-property name="log_directory" default="pg_log" description="Sets the destination directory for log files." required="false"/>
-               <c:simple-property name="log_disconnections" type="boolean" default="off" description="Logs end of a session, including duration." required="false"/>
-               <c:simple-property name="log_duration" type="boolean" default="off" description="Logs the duration of each completed SQL statement." required="false"/>
-               <c:simple-property name="log_error_verbosity" default="default" description="Sets the verbosity of logged messages." required="false"/>
-               <c:simple-property name="log_executor_stats" type="boolean" default="off" description="Writes executor performance statistics to the server log." required="false"/>
-               <c:simple-property name="log_filename" default="postgresql-%Y-%m-%d_%H%M%S.log" description="Sets the file name pattern for log files." required="false"/>
-               <c:simple-property name="log_hostname" type="boolean" default="off" description="Logs the host name in the connection logs." required="false"/>
-               <c:simple-property name="log_line_prefix" default="%t " description="Controls information prefixed to each log line" required="false"/>
-               <c:simple-property name="log_min_duration_statement" default="-1" description="Sets the minimum execution time (in milliseconds) above which statements will be logged." required="false"/>
-               <c:simple-property name="log_min_error_statement" default="error" description="Causes all statements generating error at or above this level to be logged." required="false"/>
-               <c:simple-property name="log_min_messages" default="notice" description="Sets the message levels that are logged." required="false"/>
-               <c:simple-property name="log_parser_stats" type="boolean" default="off" description="Writes parser performance statistics to the server log." required="false"/>
-               <c:simple-property name="log_planner_stats" type="boolean" default="off" description="Writes planner performance statistics to the server log." required="false"/>
-               <c:simple-property name="log_rotation_age" description="Automatic log file rotation will occur after this amount of time; default unit is minutes; default value is '1440' (1d)." required="false"/>
-               <c:simple-property name="log_rotation_size" default="10MB" description="Automatic log file rotation will occur when the file reaches this size; default unit is kilobytes; default value is '10240' (i.e. 10MB)." required="false"/>
-               <c:simple-property name="log_statement" default="none" description="Sets the type of statements logged." required="false"/>
-               <c:simple-property name="log_statement_stats" type="boolean" default="off" description="Writes cumulative performance statistics to the server log." required="false"/>
-               <c:simple-property name="log_truncate_on_rotation" type="boolean" default="off" description="Truncate existing log files of same name during log rotation." required="false"/>
-               <c:simple-property name="maintenance_work_mem" default="16MB" description="Sets the maximum memory to be used for maintenance operations." required="false"/>
-               <c:simple-property name="max_connections" type="integer" default="100" description="Sets the maximum number of concurrent connections." required="false"/>
-               <c:simple-property name="max_files_per_process" type="integer" default="1000" description="Sets the maximum number of simultaneously open files for each server process." required="false"/>
-               <c:simple-property name="max_fsm_pages" type="integer" default="204800" description="Sets the maximum number of disk pages for which free space is tracked." required="false"/>
-               <c:simple-property name="max_fsm_relations" default="1000" description="Sets the maximum number of tables and indexes for which free space is tracked." required="false"/>
-               <c:simple-property name="max_function_args" type="integer" default="100" description="Shows the maximum number of function arguments." required="false" readOnly="true"/>
-               <c:simple-property name="max_identifier_length" type="integer" default="63" description="Shows the maximum identifier length" required="false" readOnly="true"/>
-               <c:simple-property name="max_index_keys" type="integer" default="32" description="Shows the maximum number of index keys." required="false" readOnly="true"/>
-               <c:simple-property name="max_locks_per_transaction" default="64" description="Sets the maximum number of locks per transaction." required="false"/>
-               <c:simple-property name="max_prepared_transactions" type="integer" default="5" description="Sets the maximum number of simultaneously prepared transactions." required="false"/>
-               <c:simple-property name="max_stack_depth" description="Sets the maximum size of the server's execution stack; default unit is kilobytes; default value is '2048' (i.e. 2MB)." required="false"/>
-               <c:simple-property name="password_encryption" type="boolean" default="on" description="Encrypt passwords." required="false"/>
-               <c:simple-property name="port" type="integer" description="Sets the TCP port the server listens on; default value is '5432'." required="false">
-                  <c:constraint>
-                     <c:integer-constraint minimum="1" maximum="65535"/>
-                  </c:constraint>
-               </c:simple-property>
-               <c:simple-property name="post_auth_delay" description="Waits the specified amount of time on connection startup after authentication; default unit is seconds; default value is '0'." required="false"/>
-               <c:simple-property name="pre_auth_delay" description="Waits the specified amount of time on connection startup before authentication; default unit is seconds; default value is '0'." required="false"/>
-               <c:simple-property name="random_page_cost" type="float" description="Sets the planner's estimate of the cost of a nonsequentially fetched disk page; measured on the same scale as the seq_page_cost configuration parameter; default value is '4'." required="false"/>
-               <c:simple-property name="redirect_stderr" type="boolean" description="Start a subprocess to capture stderr output into log files; default value is 'on'." required="false"/>
-               <c:simple-property name="regex_flavor" default="advanced" description="Sets the regular expression flavor." required="false"/>
-               <c:simple-property name="search_path" default="$user&quot;,public&quot;" description="Sets the schema search order for names that are not schema-qualified." required="false"/>
-               <c:simple-property name="seq_page_cost" type="float" description="Sets the planner's estimate of the cost of a sequentially fetched disk page; measured on an arbitrary scale." required="false"/>
-               <c:simple-property name="server_encoding" default="SQL_ASCII" description="Sets the server (database) character set encoding." required="false" readOnly="true"/>
-               <c:simple-property name="server_version" description="Shows the PostgreSQL version." required="false" readOnly="true"/>
-               <c:simple-property name="server_version_num" type="integer" description="Shows the PostgreSQL version as an integer (e.g. 80204 translates to 8.2.4)." required="false" readOnly="true"/>
-               <c:simple-property name="shared_buffers" description="Sets the amount of memory for the shared memory buffers used by the server; default value is typically '32MB'. The value must be minimum 128kB or max_connections*16kB." required="false"/>
-               <c:simple-property name="shared_preload_libraries" default="" description="Lists shared libraries to preload into server." required="false"/>
-               <c:simple-property name="silent_mode" type="boolean" default="off" description="Runs the server silently." required="false"/>
-               <c:simple-property name="sql_inheritance" type="boolean" default="on" description="Causes subtables to be included by default in various commands." required="false"/>
-               <c:simple-property name="ssl" type="boolean" default="off" description="Enables SSL connections." required="false"/>
-               <c:simple-property name="standard_conforming_strings" type="boolean" default="off" description="'...' strings treat backslashes literally." required="false"/>
-               <c:simple-property name="statement_timeout" description="Sets the maximum allowed duration of any statement; default unit is milliseconds; default value is '0'." required="false"/>
-               <c:simple-property name="stats_block_level" type="boolean" default="on" description="Collects block-level statistics on database activity." required="false"/>
-               <c:simple-property name="stats_command_string" type="boolean" default="on" description="Collects information about executing commands." required="false"/>
-               <c:simple-property name="stats_reset_on_server_start" type="boolean" default="off" description="Zeroes collected statistics on server restart." required="false"/>
-               <c:simple-property name="stats_row_level" type="boolean" default="on" description="Collects row-level statistics on database activity." required="false"/>
-               <c:simple-property name="stats_start_collector" type="boolean" default="on" description="Starts the server statistics-collection subprocess." required="false"/>
-               <c:simple-property name="superuser_reserved_connections" description="Sets the number of connection slots reserved for superusers; default value is '3'." required="false"/>
-               <c:simple-property name="tcp_keepalives_count" type="integer" description="Maximum number of TCP keepalive retransmits; '0' selects the system default; default value is '0'." required="false"/>
-               <c:simple-property name="tcp_keepalives_idle" description="Amount of time between issuing TCP keepalives; '0' selects the system default; default unit is seconds; default value is '0'." required="false"/>
-               <c:simple-property name="tcp_keepalives_interval" description="Amount of time between TCP keepalive retransmits; '0' selects the system default; default unit is seconds; default value is '0'." required="false"/>
-               <c:simple-property name="temp_buffers" type="integer" default="1024" description="Sets the maximum number of temporary buffers used by each session." required="false"/>
-               <c:simple-property name="TimeZone" default="US/Eastern" description="Sets the time zone for displaying and interpreting time stamps." required="false"/>
-               <c:simple-property name="timezone_abbreviations" default="Default" description="Selects a file of time zone abbreviations" required="false"/>
-               <c:simple-property name="trace_notify" type="boolean" default="off" description="Generates debugging output for LISTEN and NOTIFY." required="false"/>
-               <c:simple-property name="trace_sort" type="boolean" default="off" description="Emit information about resource usage in sorting." required="false"/>
-               <c:simple-property name="transaction_isolation" default="read committed" description="Sets the current transaction's isolation level." required="false"/>
-               <c:simple-property name="transaction_read_only" type="boolean" default="off" description="Sets the current transaction's read-only status." required="false"/>
-               <c:simple-property name="transform_null_equals" type="boolean" default="off" description="Treats expr=NULL as expr IS NULL" required="false"/>
-               <c:simple-property name="unix_socket_directory" type="directory" description="Sets the directory where the Unix-domain socket will be created; default value is ''." required="false"/>
-               <c:simple-property name="unix_socket_group" description="Sets the owning group of the Unix-domain socket; default value is ''." required="false"/>
-               <c:simple-property name="unix_socket_permissions" description="Sets the access permissions of the Unix-domain socket; default value is '511'." required="false"/>
-               <c:simple-property name="update_process_title" type="boolean" default="on" description="Updates the process title to show the active SQL command." required="false"/>
-               <c:simple-property name="vacuum_cost_delay" description="Vacuum cost delay; default unit is milliseconds; range 0-1000; default value is '0'." required="false"/>
-               <c:simple-property name="vacuum_cost_limit" type="integer" default="200" description="Vacuum cost (in credits) amount available before napping." required="false"/>
-               <c:simple-property name="vacuum_cost_page_dirty" type="integer" description="Vacuum cost (in credits) for a page dirtied by vacuum; range 0-10000; default value is '20'." required="false"/>
-               <c:simple-property name="vacuum_cost_page_hit" type="integer" description="Vacuum cost (in credits) for a page found in the buffer cache; range 0-10000; default value is '1'." required="false"/>
-               <c:simple-property name="vacuum_cost_page_miss" type="integer" default="10" description="Vacuum cost (in credits) for a page not found in the buffer cache; range 0-10000; default value is '10'." required="false"/>
-               <c:simple-property name="vacuum_freeze_min_age" type="integer" default="100000000" description="Minimum age (in transactions) at which VACUUM should freeze a table row." required="false"/>
-               <c:simple-property name="wal_buffers" description="Sets the number of disk-page buffers in shared memory for WAL; default value is '8'." required="false"/>
-               <c:simple-property name="wal_sync_method" default="open_datasync" description="Selects the method used for forcing WAL updates out to disk." required="false"/>
-               <c:simple-property name="work_mem" description="Sets the maximum memory to be used for query workspaces; default unit is kilobytes; default value is '1000' (i.e. 1MB)." required="false"/>
-               <c:simple-property name="zero_damaged_pages" type="boolean" default="off" description="Continues processing past damaged page headers." required="false"/>
-            </c:map-property>
-         </c:group>
-
       </resource-configuration>
 
       <service name="Database" class="PostgresDatabaseComponent" discovery="PostgresDatabaseDiscoveryComponent">
@@ -376,10 +541,10 @@
             <metric displayName="Total Size" property="total_size" measurementType="dynamic" displayType="summary" units="bytes"
                     description="The size in bytes of the data and all associated indexes and toast tables"/>
             <metric displayName="Rows" property="rows" measurementType="dynamic"
-                    defaultOn="false" 
+                    defaultOn="false"
                     description="The count of rows in the table. Warning: This may be an expensive operation"/>
             <metric displayName="Approximate rows" property="rows_approx" measurementType="dynamic"
-                    defaultOn="false" 
+                    defaultOn="false"
                     description="The approximate count of rows in the table. This is basically the number of rows of the last ANALYZE of the table. This metric is not expensive."/>
 
             <resource-configuration>
@@ -548,9 +713,6 @@
       <service name="User" discovery="PostgresUserDiscoveryComponent" class="PostgresUserComponent"
                createDeletePolicy="both" creationDataType="configuration"
                description="A User in the Postgres System">
-         <plugin-configuration>
-            <c:simple-property name="userName" required="true"/>
-         </plugin-configuration>
 
          <metric property="total" displayName="Total User Connections" displayType="summary"
                  description="The total number of user connections in the system, whether actively querying or idle"/>
@@ -564,11 +726,16 @@
             <c:simple-property name="password" type="password"/>
 
             <c:group name="privileges" displayName="Privileges">
-               <c:simple-property name="inheritRights" displayName="Inherit Rights" type="boolean" description="Inherit rights from parent roles"/>
-               <c:simple-property name="superuser" displayName="Super User" type="boolean" description="Is a super user" default="false"/>
-               <c:simple-property name="canCreateDatabaseObjects" displayName="Can Create Database Types" type="boolean" default="false"/>
-               <c:simple-property name="canCreateRoles" displayName="Can Create Roles" type="boolean" default="false"/>
-               <c:simple-property name="canModifyCatalogDirectly" displayName="Can Modify Catalog Directly" type="boolean" default="false"/>
+               <c:simple-property name="inheritRights" displayName="Inherit Rights" type="boolean" default="true"
+                   description="Inherit rights from parent roles."/>
+               <c:simple-property name="superuser" displayName="Super User" type="boolean" default="false"
+                   description="Is a super user."/>
+               <c:simple-property name="canCreateDatabaseObjects" displayName="Can Create Database Types" type="boolean" default="false"
+                   description="Implied for a super user."/>
+               <c:simple-property name="canCreateRoles" displayName="Can Create Roles" type="boolean" default="false"
+                   description="Implied for a super user."/>
+               <c:simple-property name="canModifyCatalogDirectly" displayName="Can Update System Catalogs Directly" type="boolean" default="false"
+                   description="Even a superuser cannot update system catalogs unless this property is true. False is implied for a non super user."/>
                <c:simple-property name="connectionLimit" displayName="User connection limit" type="integer" default="-1"/>
             </c:group>
          </resource-configuration>

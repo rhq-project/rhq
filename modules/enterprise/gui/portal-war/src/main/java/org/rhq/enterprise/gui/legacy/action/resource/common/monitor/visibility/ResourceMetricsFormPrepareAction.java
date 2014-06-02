@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
@@ -92,7 +93,8 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
         if (myGroupId > 0) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
             int[] definitionIds = resGrpMgr.findDefinitionsForCompatibleGroup(subject, myGroupId, false);
-            metricSummaries = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, myGroupId,
+            metricSummaries = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject,
+                EntityContext.forGroup(myGroupId),
                 definitionIds, begin, end, false);
         } else if ((parent > 0) && (type > 0)) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();

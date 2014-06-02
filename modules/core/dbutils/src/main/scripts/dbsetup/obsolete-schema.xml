@@ -1,26 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-        
+
 <dbsetup name="content-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="urn:xmlns:rhq-dbsetup-schema">
-    
+
     <!-- NOTE: The tables will be dropped in the *** REVERSE ORDER *** as listed in this file! -->
     <!-- NOTE: So, put the table you want dropped first at the bottom, and so on... -->
 
     <!-- !!! JMS tables removed when moving to HornetQ -->
-    
+
     <table obsolete="true">JMS_SUBSCRIPTIONS</table>
     <table obsolete="true">JMS_ROLES</table>
     <table obsolete="true">JMS_USERS</table>
     <table obsolete="true">JMS_TRANSACTIONS</table>
     <table obsolete="true">JMS_MESSAGES</table>
-    
+
+    <!-- !!! REMOVED FROM INVENTORY-SCHEMA !!!! -->
+    <table name="RHQ_RESOURCE_SUBCAT" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="100"/>
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+        <column name="PARENT_SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT"/>
+        <!-- resourceTypeId is not required on child sub categories -->
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
+    </table>
+
     <!-- !!! REMOVED FROM CONTENT-SCHEMA !!!! -->
-    
+
      <table name="RHQ_DRIFT_TEMPLATE_MAP" obsolete="true">
          <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
          <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
      </table>
-    
+
     <table name="RHQ_BUNDLE_CONFIG" obsolete="true">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />

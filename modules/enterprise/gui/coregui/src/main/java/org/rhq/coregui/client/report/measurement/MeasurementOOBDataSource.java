@@ -24,6 +24,7 @@ package org.rhq.coregui.client.report.measurement;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.LinkManager;
+import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -69,7 +71,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
-     * 
+     *
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
@@ -98,6 +100,12 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
             .dataSource_measurementOob_field_scheduleName());
         fields.add(scheduleNameField);
 
+        ListGridField timestampField = new ListGridField("timestamp", MSG.common_title_timestamp());
+        timestampField.setCellFormatter(new TimestampCellFormatter(TimestampCellFormatter.DATE_TIME_FORMAT_SHORT));
+        timestampField.setShowHover(true);
+        timestampField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer("timestamp"));
+        fields.add(timestampField);
+
         ListGridField bandField = new ListGridField("formattedBaseband", MSG
             .dataSource_measurementOob_field_formattedBaseband());
         fields.add(bandField);
@@ -110,7 +118,8 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         fields.add(factorField);
 
         resourceNameField.setWidth("20%");
-        ancestryField.setWidth("30%");
+        ancestryField.setWidth("25%");
+        timestampField.setWidth(100);
         scheduleNameField.setWidth("20%");
         bandField.setWidth("10%");
         outlierField.setWidth("10%");
@@ -146,13 +155,13 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
                         new TypesLoadedCallback() {
                             @Override
                             public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
                                 AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                                 Record[] records = buildRecords(result);
                                 for (Record record : records) {
                                     // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
-                                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                                    // Store the types map off the records so we can build a detailed hover string as needed.
                                     record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                                     // Build the decoded ancestry Strings now for display
@@ -182,7 +191,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         // on all of the ListGridFields. To me that should mean any sorting done client side on those fields should
         // not be passed in on the Request, but it seems to be...
 
-        // we don't use criterias for this datasource, just return null, don't try and apply any sort.        
+        // we don't use criterias for this datasource, just return null, don't try and apply any sort.
         return null;
     }
 
@@ -212,6 +221,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         record.setAttribute("scheduleName", from.getScheduleName());
         record.setAttribute("definitionId", from.getDefinitionId());
 
+        record.setAttribute("timestamp", new Date(from.getTimestamp()));
         record.setAttribute("factor", from.getFactor());
         record.setAttribute("formattedBaseband", from.getFormattedBaseband());
         record.setAttribute("formattedOutlier", from.getFormattedOutlier());
@@ -220,7 +230,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         record.setAttribute("parentId", from.getParentId());
         record.setAttribute("parentName", from.getParentName());
 
-        // for ancestry handling       
+        // for ancestry handling
         record.setAttribute(AncestryUtil.RESOURCE_ID, from.getResourceId());
         record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResourceName());
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getResourceAncestry());

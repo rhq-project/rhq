@@ -19,12 +19,13 @@
  */
 package org.rhq.coregui.client.util.message;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.Positioning;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.events.RightMouseDownEvent;
@@ -36,7 +37,9 @@ import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.coregui.client.CoreGUI;
-import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.coregui.client.menu.MenuBarView;
+import org.rhq.coregui.client.util.enhanced.Enhanced;
+import org.rhq.coregui.client.util.message.Message.Severity;
 
 
 /**
@@ -46,13 +49,14 @@ import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
  *
  * @author Ian Springer
  * @author Jay Shaughnessy
+ * @author Libor Zoubek
  */
-public class MessageBar extends EnhancedHLayout implements MessageCenter.MessageListener {
+public class MessageBar extends Canvas implements MessageCenter.MessageListener, Enhanced {
 
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
     private static final String NON_BREAKING_SPACE = "&nbsp;";
 
-    private Label label;
+    private HTMLFlow content;
     private Message currentMessage;
     private Message stickyMessage; // this message will always be shown until dismissed by user.
     private Menu showDetailsMenu;
@@ -61,16 +65,12 @@ public class MessageBar extends EnhancedHLayout implements MessageCenter.Message
     public MessageBar() {
         super();
         setOverflow(Overflow.VISIBLE);
-        setWidth100();
-        setAlign(Alignment.CENTER);
-
-        label = new Label();
-        label.setAlign(Alignment.CENTER);
-        label.setWidth100();
-        label.setHeight("30px");
-        label.setCanSelectText(true);
-        addMember(label);
-
+        setZIndex(300000);
+        setHeight(1);
+        setWidth(1);
+        content = new HTMLFlow();
+        content.setPosition(Positioning.ABSOLUTE);
+        injectFunctions(this);
         showDetailsMenu = new Menu();
         MenuItem showDetailsMenuItem = new MenuItem(MSG.view_messageCenter_messageBarShowDetails());
         showDetailsMenuItem.addClickHandler(new ClickHandler() {
@@ -103,6 +103,13 @@ public class MessageBar extends EnhancedHLayout implements MessageCenter.Message
         showDetailsMenu.setItems(showRootCauseMenuItem, showDetailsMenuItem);
     }
 
+    // This is our JSNI method that will be called on form submit
+    private native void injectFunctions(MessageBar self) /*-{
+      $wnd.__gwt_messageBarDismiss = $entry(function(){
+        self.@org.rhq.coregui.client.util.message.MessageBar::reset()();
+      });
+    }-*/;
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -111,14 +118,14 @@ public class MessageBar extends EnhancedHLayout implements MessageCenter.Message
 
         // sometimes it's annoying to have the error message hang around for too long;
         // let the user click the message so it goes away on demand
-        addDoubleClickHandler(new DoubleClickHandler() {
+        content.addDoubleClickHandler(new DoubleClickHandler() {
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
                 clearMessage(true);
             }
         });
 
-        addRightMouseDownHandler(new RightMouseDownHandler() {
+        content.addRightMouseDownHandler(new RightMouseDownHandler() {
             @Override
             public void onRightMouseDown(RightMouseDownEvent event) {
                 if (MessageBar.this.currentMessage != null) {
@@ -165,6 +172,7 @@ public class MessageBar extends EnhancedHLayout implements MessageCenter.Message
     public void clearMessage(boolean clearSticky) {
         this.currentMessage = null;
         setLabelEmpty();
+        setZIndex(0);
         markForRedraw();
         if (clearSticky) {
             this.stickyMessage = null;
@@ -172,13 +180,66 @@ public class MessageBar extends EnhancedHLayout implements MessageCenter.Message
     }
 
     private void setLabelEmpty() {
-        label.setContents(NON_BREAKING_SPACE);
-        label.setIcon(Message.Severity.Blank.getIcon());
-        label.setStyleName(Message.Severity.Blank.getStyle());
+        content.setContents(NON_BREAKING_SPACE);
+    }
+
+    private String messageContent(String message, Severity severity) {
+        final String closeBtn = "<button type='button' class='close' onclick='__gwt_messageBarDismiss();'>"
+        +"<span class='pficon pficon-close'></span>"
+        +"</button>";
+        StringBuilder sb = new StringBuilder();
+        switch (severity) {
+            case Blank: {
+                sb.append("<div class='alert alert-success'>");
+                sb.append("<span class='pficon pficon-ok'></span>");
+                break;
+            }
+            case Info: {
+                sb.append("<div class='alert alert-info'>");
+                sb.append(closeBtn);
+                sb.append("<span class='pficon pficon-info'></span>");
+                break;
+            }
+            case Warning: {
+                sb.append("<div class='alert alert-warning'>");
+                sb.append(closeBtn);
+                sb.append("<span class='pficon-layered'>");
+                sb.append("  <span class='pficon pficon-warning-triangle'></span>");
+                sb.append("  <span class='pficon pficon-warning-exclamation'></span>");
+                sb.append("</span>");
+                break;
+            }
+            case Error: {
+                sb.append("<div class='alert alert-danger'>");
+                sb.append(closeBtn);
+                sb.append("<span class='pficon-layered'>");
+                sb.append("  <span class='pficon pficon-error-octagon'></span>");
+                sb.append("  <span class='pficon pficon-error-exclamation'></span>");
+                sb.append("</span>");
+                break;
+            }
+            case Fatal: {
+                sb.append("<div class='alert alert-danger'>");
+                sb.append(closeBtn);
+                sb.append("<span class='pficon-layered'>");
+                sb.append("  <span class='pficon pficon-error-octagon'></span>");
+                sb.append("  <span class='pficon pficon-error-exclamation'></span>");
+                sb.append("</span>");
+                break;
+            }
+            default: {
+                sb.append("<div class='alert alert-info'>");
+                sb.append(closeBtn);
+                sb.append("<span class='pficon pficon-info'></span>");
+            }
+        }
+        sb.append(message);
+        sb.append("</div>");
+        return sb.toString();
     }
 
     private void updateLabel(Message message) {
-        label.hide();
+        content.hide();
 
         String contents;
 
@@ -189,17 +250,13 @@ public class MessageBar extends EnhancedHLayout implements MessageCenter.Message
         } else {
             contents = message.getDetailedMessage();
         }
-
-        label.setContents(contents);
-
-        String styleName = (contents != null) ? message.getSeverity().getStyle() : null;
-        label.setStyleName(styleName);
-
-        String icon = (contents != null) ? message.getSeverity().getIcon() : null;
-        label.setIcon(icon);
-
-        label.redraw();
-        label.show();
+        content.setWidth("300px");
+        content.setContents(messageContent(contents, message.getSeverity()));
+        content.setLeft(DOM.getElementById(MenuBarView.BTN_FAV_ID).getAbsoluteLeft() - 115);
+        content.setTop("32px");
+        setZIndex(999999);
+        content.redraw();
+        content.show();
     }
 
 }

@@ -25,16 +25,17 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 @RemoteServiceRelativePath("MeasurementChartsGWTService")
 public interface MeasurementChartsGWTService extends RemoteService {
 
-    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, String viewName)
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context, String viewName)
         throws RuntimeException;
 
-    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId,
+    ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(EntityContext context,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws RuntimeException;
 
     ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, String viewName)

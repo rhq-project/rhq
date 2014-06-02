@@ -45,4 +45,5 @@ public interface SystemInfoManagerLocal {
      * @param caller
      */
     void dumpToLog(Subject caller);
+
 }

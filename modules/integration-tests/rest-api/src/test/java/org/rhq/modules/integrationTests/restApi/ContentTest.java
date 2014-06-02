@@ -373,6 +373,7 @@ public class ContentTest extends AbstractBase {
                 .pathParam("handle", handle)
                 .queryParam("name", "rest-test-rhq-plugin.xml")
                 .queryParam("scan", "true")
+                .queryParam("pushOutDelay", "5000")
             .expect()
                 .statusCode(200)
                 .log().everything()

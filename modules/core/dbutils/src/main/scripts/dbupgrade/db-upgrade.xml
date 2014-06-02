@@ -2334,6 +2334,56 @@
 
 <!-- RHQ 4.11.0 uses DB Schema 2.146 -->
 
+            <schemaSpec version="2.147">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="SUPPORTS_MISSING" columnType="BOOLEAN"/>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Set supportsMissing flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET SUPPORTS_MISSING = false
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Set supportsMissing flag for existing resources types to false">
+                        UPDATE RHQ_RESOURCE_TYPE SET SUPPORTS_MISSING = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="SUPPORTS_MISSING" nullable="false" />
+
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="MISSING_POLICY" columnType="VARCHAR2" precision="16" />
+                <schema-directSQL>
+                    <statement desc="Set missingPolicy enum for existing resources types to DOWN">
+                        UPDATE RHQ_RESOURCE_TYPE SET MISSING_POLICY = 'DOWN'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="MISSING_POLICY" nullable="false" />
+            </schemaSpec>
+
+            <schemaSpec version="2.148">
+                <schema-directSQL>
+                    <statement desc="Setting the flag that protects user without any assigned roles to log in to false (false = not allowed to login)">
+                        INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                        VALUES (65, 'ENABLE_LOGIN_WITHOUT_ROLES', 'false', 'false')
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+	        <schemaSpec version="2.149">
+              <schema-addColumn   table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY" columnType="VARCHAR2" precision="4000" />
+              <schema-javaTask className="SubcategoryUpgradeTask" />
+              <schema-deleteColumn table="RHQ_RESOURCE_TYPE" column="SUBCATEGORY_ID" />
+              <schema-dropTable table="RHQ_RESOURCE_SUBCAT"/>
+            </schemaSpec>
+
+          <schemaSpec version="2.150">
+            <schema-directSQL>
+              <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">
+                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, false)
+              </statement>
+              <statement targetDBVendor="oracle" desc="Adding metrics cache table activation time">
+                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                VALUES (66, 'METRICS_CACHE_ACTIVATION_TIME', '-1', null, 0)
+              </statement>
+            </schema-directSQL>
+          </schemaSpec>
+       
         </dbupgrade>
     </target>
 </project>

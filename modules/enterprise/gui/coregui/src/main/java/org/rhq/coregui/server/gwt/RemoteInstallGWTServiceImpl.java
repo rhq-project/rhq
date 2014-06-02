@@ -22,9 +22,12 @@
  */
 package org.rhq.coregui.server.gwt;
 
+import javax.ejb.EJBException;
+
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 import org.rhq.coregui.client.gwt.RemoteInstallGWTService;
 import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerLocal;
@@ -38,8 +41,16 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private RemoteInstallManagerLocal remoteInstallManager = LookupUtil.getRemoteInstallManager();
 
+    public void checkSSHConnection(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException {
+        try {
+            remoteInstallManager.checkSSHConnection(getSessionSubject(), remoteAccessInfo);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath)
-        throws RuntimeException {
+        throws SSHSecurityException, RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.agentInstallCheck(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.agentInstallCheck");
@@ -49,7 +60,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     public AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData)
-        throws RuntimeException {
+        throws SSHSecurityException, RuntimeException {
         try {
             return SerialUtility.prepare(
                 remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo, customData),
@@ -59,7 +70,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws RuntimeException {
+    public String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.uninstallAgent(getSessionSubject(), remoteAccessInfo),
                 "RemoteInstallService.uninstallAgent");
@@ -68,7 +79,8 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
+    public String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.startAgent(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.startAgent");
@@ -77,7 +89,8 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
+    public String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.stopAgent(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.stopAgent");
@@ -86,7 +99,8 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException {
+    public String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException {
         try {
             return SerialUtility.prepare(remoteInstallManager.agentStatus(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.agentStatus");
@@ -95,7 +109,8 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException {
+    public String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath)
+        throws SSHSecurityException, RuntimeException {
         try {
             return SerialUtility.prepare((remoteInstallManager.findAgentInstallPath(getSessionSubject(),
                 remoteAccessInfo, parentPath)), "RemoteInstallService.findAgentInstallPath");
@@ -104,12 +119,27 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException {
+    public String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath)
+        throws SSHSecurityException, RuntimeException {
         try {
             return SerialUtility.prepare((remoteInstallManager.remotePathDiscover(getSessionSubject(),
                 remoteAccessInfo, parentPath)), "RemoteInstallService.remotePathDiscover");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
+    }
+
+    @Override
+    protected RuntimeException getExceptionToThrowToClient(Throwable t) throws SSHSecurityException, RuntimeException {
+        // if the SSH connection failed because of a bad or missing SSH key fingerprint, a SSHSecurityException will be thrown.
+        // We want that SSHSecurityException sent back as-is to the GWT UI.
+        if (t instanceof SSHSecurityException) {
+            return (SSHSecurityException) t;
+        } else if (t instanceof EJBException) {
+            if (t.getCause() instanceof SSHSecurityException) {
+                return (SSHSecurityException) t.getCause();
+            }
+        }
+        return super.getExceptionToThrowToClient(t);
     }
 }

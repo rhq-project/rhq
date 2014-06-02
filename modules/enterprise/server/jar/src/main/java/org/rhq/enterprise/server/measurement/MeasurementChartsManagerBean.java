@@ -98,12 +98,14 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
+    @Deprecated
     public List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin,
         long end, boolean enabledOnly) throws MeasurementException {
 
-        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, EntityContext.forAutoGroup(
-            autoGroupParentResourceId, autoGroupChildResourceTypeId), measurementDefinitionIds, begin, end, enabledOnly);
+        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject,
+            EntityContext.forAutoGroup(autoGroupParentResourceId, autoGroupChildResourceTypeId),
+            measurementDefinitionIds, begin, end, enabledOnly);
         for (MetricDisplaySummary tmp : ret) {
             tmp.setParentId(autoGroupParentResourceId);
             tmp.setChildTypeId(autoGroupChildResourceTypeId);
@@ -112,11 +114,14 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return ret;
     }
 
-    public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
-        int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
+    public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject,
+        EntityContext context, int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly)
+        throws MeasurementException {
 
-        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, EntityContext.forGroup(groupId),
-            measurementDefinitionIds, begin, end, enabledOnly);
+        List<MetricDisplaySummary> ret = getAggregateMetricDisplaySummaries(subject, context, measurementDefinitionIds,
+            begin, end, enabledOnly);
+
+        int groupId = context.getGroupId();
         for (MetricDisplaySummary tmp : ret) {
             tmp.setGroupId(groupId);
         }
@@ -124,6 +129,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return ret;
     }
 
+    @Deprecated
     public List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int parent, int type,
         String viewName) {
         MeasurementPreferences preferences = new MeasurementPreferences(subject);
@@ -152,8 +158,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return summaries;
     }
 
-    public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
-        String viewName) {
+    public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject,
+        EntityContext context, String viewName) {
 
         MeasurementPreferences preferences = new MeasurementPreferences(subject);
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
@@ -165,16 +171,16 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
          */
         int[] measurementDefinitionIds;
         try {
-            EntityContext context = new EntityContext(-1, groupId, -1, -1);
             measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, subject);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
-            measurementDefinitionIds = resourceGroupManager.findDefinitionsForCompatibleGroup(subject, groupId, true);
+            measurementDefinitionIds = resourceGroupManager.findDefinitionsForCompatibleGroup(subject,
+                context.getGroupId(), true);
         }
 
         List<MetricDisplaySummary> summaries;
         try {
-            summaries = getMetricDisplaySummariesForCompatibleGroup(subject, groupId, measurementDefinitionIds, begin,
+            summaries = getMetricDisplaySummariesForCompatibleGroup(subject, context, measurementDefinitionIds, begin,
                 end, false);
         } catch (MeasurementException me) {
             log.debug("Can't get ViewMetrics for Compat Group: " + me);
@@ -373,7 +379,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             summary.setCollectionType(collectionType);
 
             if (!narrowed) {
-                MeasurementAggregate compositeHighLow = dataManager.getMeasurementAggregate(subject, schedule.getId(), begin, end);
+                MeasurementAggregate compositeHighLow = dataManager.getMeasurementAggregate(subject, schedule.getId(),
+                    begin, end);
                 if (compositeHighLow.isEmpty()) {
                     summary.setValuesPresent(false);
                 }
@@ -513,8 +520,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 log.warn("No metric schedules found for def=[" + definition + "] and " + context
                     + ", using empty aggregate");
             } else {
-                if (context.type == EntityContext.Type.ResourceGroup &&
-                    definition.getDataType() == DataType.MEASUREMENT) {
+                if (context.type == EntityContext.Type.ResourceGroup
+                    && definition.getDataType() == DataType.MEASUREMENT) {
                     aggregate = dataManager.getAggregate(subject, context.getGroupId(), definitionId, begin, end);
                 } else {
                     aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
@@ -549,8 +556,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
         Subject subject, int[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
         // Getting all the Resource objects in one call, and caching here for the rest of this method
-        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, true, PageControl
-            .getUnlimitedInstance());
+        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, true,
+            PageControl.getUnlimitedInstance());
 
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method
         Map<Integer, MeasurementDefinition> measurementDefinitionsMap = new HashMap<Integer, MeasurementDefinition>(
@@ -634,14 +641,14 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
     private int getAlertCountForContext(int measurementDefinitionId, EntityContext context, long begin, long end) {
         if (context.type == EntityContext.Type.AutoGroup) {
-            return alertManager.getAlertCountByMeasurementDefinitionAndAutoGroup(measurementDefinitionId, context
-                .getParentResourceId(), context.getResourceTypeId(), begin, end);
+            return alertManager.getAlertCountByMeasurementDefinitionAndAutoGroup(measurementDefinitionId,
+                context.getParentResourceId(), context.getResourceTypeId(), begin, end);
         } else if (context.type == EntityContext.Type.Resource) {
-            return alertManager.getAlertCountByMeasurementDefinitionAndResource(measurementDefinitionId, context
-                .getResourceId(), begin, end);
+            return alertManager.getAlertCountByMeasurementDefinitionAndResource(measurementDefinitionId,
+                context.getResourceId(), begin, end);
         } else if (context.type == EntityContext.Type.ResourceGroup) {
-            return alertManager.getAlertCountByMeasurementDefinitionAndResourceGroup(measurementDefinitionId, context
-                .getGroupId(), begin, end);
+            return alertManager.getAlertCountByMeasurementDefinitionAndResourceGroup(measurementDefinitionId,
+                context.getGroupId(), begin, end);
         }
         return 0;
     }

@@ -16,11 +16,6 @@
            description="JBoss Application Server"
            supportsManualAdd="true">
 
-      <subcategories>
-         <subcategory name="Resources"/>
-         <subcategory name="Applications"/>
-      </subcategories>
-
       <plugin-configuration>
          <c:group name="connection" displayName="Connection Info">
             <c:simple-property name="namingURL" displayName="Naming Provider URL"

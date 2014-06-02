@@ -200,25 +200,28 @@ function _runOperationSequentially(group, operationName, operationConfig) {
     var crit = new GroupOperationHistoryCriteria;
     crit.addFilterJobId(new JobId(schedule.jobName, schedule.jobGroup));
 
-    while (true) {
+    var counter = 0;
+    while (counter++ < 30) { //30 attempts
         // XXX should this be configurable?
         // we're waiting for an AS to start/shutdown which takes time..
-        // Let's check in 5s intervals.
+        // Let's check in 2s intervals 30 times at most.
         // We're waiting at the start of this loop to also ensure that the server
         // had time to issue the quartz job and persist the history entry.
-        java.lang.Thread.currentThread().sleep(5000);
+        java.lang.Thread.currentThread().sleep(2000);
 
         var results = OperationManager.findGroupOperationHistoriesByCriteria(crit);
 
-        if (results.empty) {
-            throw "Could not find operation history for schedule " + schedule + ". This should not happen.";
-        }
+        if (!results.empty) {
+            var history = results.get(0);
 
-        var history = results.get(0);
-
-        if (history.status != OperationRequestStatus.INPROGRESS) {
-            return history;
+            if (history.status != OperationRequestStatus.INPROGRESS) {
+                return history;
+            }
         }
+    }
+
+    if (results.empty) {
+        throw "Could not find operation history for schedule " + schedule + ". This should not happen.";
     }
 }
 

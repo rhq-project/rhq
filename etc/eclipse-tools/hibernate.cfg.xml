@@ -86,7 +86,6 @@
         <mapping class="org.rhq.core.domain.resource.ProductVersion" />
         <mapping class="org.rhq.core.domain.resource.Resource" />
         <mapping class="org.rhq.core.domain.resource.ResourceError" />
-        <mapping class="org.rhq.core.domain.resource.ResourceSubCategory" />
         <mapping class="org.rhq.core.domain.resource.ResourceType" />
         <mapping class="org.rhq.core.domain.configuration.definition.ConfigurationDefinition" />
         <mapping class="org.rhq.core.domain.configuration.definition.ConfigurationTemplate" />

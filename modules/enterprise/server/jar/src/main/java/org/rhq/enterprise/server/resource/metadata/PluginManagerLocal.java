@@ -12,7 +12,7 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
 
 @Local
-public interface PluginManagerLocal {
+public interface PluginManagerLocal extends PluginManagerRemote {
 
     /**
      * Given the plugin name, will return that plugin.  The name is defined in the plugin descriptor.
@@ -64,20 +64,6 @@ public interface PluginManagerLocal {
 
     void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
-    /**
-     * This method puts the plugin into a <i>deleted</i> state and removes the plugin JAR file from the file system. It
-     * does not remove the plugin from the database. This method does not purge the plugin from the database in order
-     * to support HA deployments. In a HA deployment, if server A handles the request to delete the plugin and if it
-     * purges the plugin from the database, server B might see the plugin on the file system and not in the database.
-     * Server B would then proceed to try and re-install the plugin, not knowing it was deleted.
-     * <p/>
-     * The plugin will get eventually purged from the database, too, after all servers in HA acknowledge they know
-     * about its deletion.
-     *
-     * @param subject The user performing the deletion
-     * @param pluginIds The ids of the plugins to be deleted
-     * @throws Exception if an error occurs
-     */
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**

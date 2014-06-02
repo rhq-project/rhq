@@ -412,14 +412,15 @@ public class FileUtil {
      * or <code>null</code> is returned if there was no drive letter in the path.
      *
      * @param path the path string that will be altered to have its drive letter stripped.
-     * @return if there was a drive letter, it will be returned. If no drive letter was in path, null is returned
+     * @return if there was a drive letter, it will be returned and normalized to upcase. If no drive letter
+     *         was in path, null is returned
      */
     public static String stripDriveLetter(StringBuilder path) {
         String driveLetter = null;
         Pattern regex = Pattern.compile("^([a-zA-Z]):.*");
         Matcher matcher = regex.matcher(path);
         if (matcher.matches()) {
-            driveLetter = matcher.group(1);
+            driveLetter = matcher.group(1).toUpperCase();
             path.replace(0, 2, ""); // we know the pattern is one char drive letter plus one ':' char followed by the path
         }
         return driveLetter;
@@ -610,15 +611,23 @@ public class FileUtil {
      * return null, because it understands {@code C:\..\asdf} as an attempt to "go above" the file system root.
      *
      * @return the file with the normalized path or null if the ".."s would jump further up than the number of preceding
-     * path elements (e.g. passing files with paths like ".." or "path/../.." will return null).
+     * path elements (e.g. passing files with paths like ".." or "path/../.." will return null). On Windows the drive
+     * letter will be upper-cased if present.
      */
     public static File normalizePath(File file) {
         String path = file.getPath();
+        File root = null;
 
+        // make sure driver letter on windows is upcased
         int rootLength = FileSystem.get().getPathRootLength(path);
-        File root = rootLength == 0 ? null : new File(path.substring(0, rootLength));
+        if (rootLength > 0) {
+            StringBuilder rootPath = new StringBuilder(path.substring(0, rootLength));
+            String driveLetter = stripDriveLetter(rootPath);
+            root = new File((null == driveLetter) ? rootPath.toString() : (driveLetter + ":" + rootPath.toString()));
+        }
 
-        StringTokenizer tokenizer = new StringTokenizer(path.substring(rootLength), FileSystem.get().getSeparatorChars(), true);
+        StringTokenizer tokenizer = new StringTokenizer(path.substring(rootLength), FileSystem.get()
+            .getSeparatorChars(), true);
         LinkedList<String> pathStack = new LinkedList<String>();
 
         boolean previousWasDelimiter = false;
@@ -659,11 +668,11 @@ public class FileUtil {
 
         StringBuilder normalizedPath = new StringBuilder();
 
-        for (int i = pathStack.size(); --i >= 0; ) {
+        for (int i = pathStack.size(); --i >= 0;) {
             normalizedPath.append(pathStack.get(i));
         }
 
-        File ret = root == null ? new File(normalizedPath.toString()) : new File(root, normalizedPath.toString());
+        File ret = (root == null) ? new File(normalizedPath.toString()) : new File(root, normalizedPath.toString());
 
         if (file.isAbsolute() != ret.isAbsolute()) {
             // if the normalization changed the path such that it is not absolute anymore
@@ -755,13 +764,13 @@ public class FileUtil {
 
         private static int nextSlash(String str, int from) {
             int len = str.length();
-            for(int i = from; i < len; ++i) {
+            for (int i = from; i < len; ++i) {
                 if (isSlash(str.charAt(i))) {
                     return i;
                 }
             }
 
-           return -1;
+            return -1;
         }
 
         public static FileSystem get() {
@@ -840,7 +849,7 @@ public class FileUtil {
                 } catch (Throwable ignore) {
                 }
                 throw e;
-                }
+            }
         } finally {
             //            System.out.println("compress: original: " + decompressedFile.length() + ", "
             //                + MessageDigestGenerator.getDigestString(decompressedFile));

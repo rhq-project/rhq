@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.coregui.client.operation;
+
+import static org.rhq.coregui.client.components.table.Table.TableActionInfo.TableActionInfoBuilder;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -237,37 +239,10 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             });
 
         if (!context.isSubsystemView() && showNewScheduleButton) {
-            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    return hasControlPermission();
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Operations", "Schedules/0"));
-                    // the above doesn't work because EntityContext doesn't know if it is autogroup or not
-                    // -> using the relative URL hack
-                    String url = History.getToken();
-                    String lastChunk = url.substring(url.lastIndexOf("/") + 1);
-                    if ("Activity".equals(lastChunk)) {
-                        url = url.substring(0, url.lastIndexOf("/"));
-                        url = url.substring(0, url.lastIndexOf("/")) + "/Operations";
-                    } else if ("History".equals(lastChunk)) {
-                        url = url.substring(0, url.lastIndexOf("/"));
-                    } else {
-                        try {
-                            Integer.parseInt(lastChunk);
-                            url += "/Operations";
-                        } catch (NumberFormatException nfe) {
-                            // do nothing
-                        }
-                    }
-                    if ("Operations".equals(url.substring(url.lastIndexOf("/") + 1))) {
-                        url += "/Schedules/0";
-                        CoreGUI.goToView(url);
-                    }
-                
-                }
-            });
+            TableActionInfo rescheduleAction = new TableActionInfoBuilder(MSG.common_button_reschedule(),
+                new RescheduleTableAction()).setTooltip(MSG.common_button_reschedule_tooltip()).createTableActionInfo();
+            addTableAction(rescheduleAction);
+            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new NewScheduleTableAction());
         }
     }
 
@@ -323,5 +298,62 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     
     public void setShowNewScheduleButton(boolean showNewScheduleButton) {
         this.showNewScheduleButton = showNewScheduleButton;
+    }
+
+    private class NewScheduleTableAction implements TableAction {
+        public boolean isEnabled(ListGridRecord[] selection) {
+            return hasControlPermission();
+        }
+
+        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+            String url = getViewUrl(selection);
+            if (url != null) {
+                CoreGUI.goToView(url);
+            }
+        }
+
+        protected String getViewUrl(ListGridRecord[] selection) {
+            // CoreGUI.goToView(LinkManager.getEntityTabLink(context, "Operations", "Schedules/0"));
+            // the above doesn't work because EntityContext doesn't know if it is autogroup or not
+            // -> using the relative URL hack
+            String url = History.getToken();
+            String lastChunk = url.substring(url.lastIndexOf("/") + 1);
+            if ("Activity".equals(lastChunk)) {
+                url = url.substring(0, url.lastIndexOf("/"));
+                url = url.substring(0, url.lastIndexOf("/")) + "/Operations";
+            } else if ("History".equals(lastChunk)) {
+                url = url.substring(0, url.lastIndexOf("/"));
+            } else {
+                try {
+                    Integer.parseInt(lastChunk);
+                    url += "/Operations";
+                } catch (NumberFormatException nfe) {
+                    // do nothing
+                }
+            }
+            if ("Operations".equals(url.substring(url.lastIndexOf("/") + 1))) {
+                url += "/Schedules/0";
+                return url;
+            }
+            return null;
+        }
+    }
+
+    private class RescheduleTableAction extends NewScheduleTableAction {
+        @Override
+        public boolean isEnabled(ListGridRecord[] selection) {
+            return super.isEnabled(selection) && selection.length == 1;
+        }
+
+        @Override
+        protected String getViewUrl(ListGridRecord[] selection) {
+            String viewUrl = super.getViewUrl(selection);
+            if (viewUrl != null) {
+                ListGridRecord selectedRecord = selection[0];
+                Integer operationHistoryId = selectedRecord.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                viewUrl += "/example=" + operationHistoryId;
+            }
+            return viewUrl;
+        }
     }
 }

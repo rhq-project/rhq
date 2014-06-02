@@ -34,4 +34,11 @@
     <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/install/remote/RemoteInstallManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>void checkSSHConnection(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.install.remote.RemoteAccessInfo)</method>
+    <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
+  </difference>
+
 </differences>

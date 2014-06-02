@@ -31,6 +31,7 @@ import org.rhq.coregui.client.dashboard.DashboardContainer;
 import org.rhq.coregui.client.dashboard.DashboardView;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.coregui.client.gwt.DashboardGWTServiceAsync;
@@ -184,19 +185,24 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
 
         // right Column(approx 60%. As larger more room to display table and N rows.)
         if (resKeyNameMap.containsKey(ResourceAlertsPortlet.KEY)) {//alerts top right if available
-            DashboardPortlet alerts = new DashboardPortlet(ResourceAlertsPortlet.NAME, ResourceAlertsPortlet.KEY, 220);
+            DashboardPortlet alerts = new DashboardPortlet(ResourceAlertsPortlet.NAME, ResourceAlertsPortlet.KEY, 210);
             dashboard.addPortlet(alerts, colRight, rowRight++);
             resKeyNameMap.remove(ResourceAlertsPortlet.KEY);
         }
+        if (resKeyNameMap.containsKey(ResourceEventsPortlet.KEY)) {//events if available
+            DashboardPortlet events = new DashboardPortlet(ResourceEventsPortlet.NAME, ResourceEventsPortlet.KEY, 210);
+            dashboard.addPortlet(events, colRight, rowRight++);
+            resKeyNameMap.remove(ResourceEventsPortlet.KEY);
+        }
         if (resKeyNameMap.containsKey(ResourceOperationsPortlet.KEY)) {//operations if available
             DashboardPortlet ops = new DashboardPortlet(ResourceOperationsPortlet.NAME, ResourceOperationsPortlet.KEY,
-                220);
+                210);
             dashboard.addPortlet(ops, colRight, rowRight++);
             resKeyNameMap.remove(ResourceOperationsPortlet.KEY);
         }
         if (resKeyNameMap.containsKey(ResourceConfigurationUpdatesPortlet.KEY)) {//configuration if available
             DashboardPortlet ops = new DashboardPortlet(ResourceConfigurationUpdatesPortlet.NAME,
-                ResourceConfigurationUpdatesPortlet.KEY, 220);
+                ResourceConfigurationUpdatesPortlet.KEY, 210);
             dashboard.addPortlet(ops, colRight, rowRight++);
             resKeyNameMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
         }
@@ -204,7 +210,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         //Fill out left column(typically smaller portlets) then alternate cols with remaining
         boolean displayLeft = false;
         for (String key : resKeyNameMap.keySet()) {
-            DashboardPortlet portlet = new DashboardPortlet(resKeyNameMap.get(key), key, 100);
+            DashboardPortlet portlet = new DashboardPortlet(resKeyNameMap.get(key), key, 105);
             if (rowLeft < 4) {
                 dashboard.addPortlet(portlet, colLeft, rowLeft++);
             } else {//alternate

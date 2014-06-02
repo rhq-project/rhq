@@ -23,7 +23,6 @@
 package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -166,8 +165,6 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type " //
         + " WHERE rg.id = :groupId AND res.resourceType.deleted = false AND res.inventoryStatus = 'COMMITTED' " //
         + " GROUP BY type.id, type.name "),
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
-        + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
         + "FROM ResourceType rt " + "LEFT JOIN FETCH rt.operationDefinitions def "
         + "LEFT JOIN FETCH def.parametersConfigurationDefinition psDef "
@@ -202,7 +199,7 @@ import org.rhq.core.domain.util.Summary;
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
-        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND crt.deleted = false "
@@ -213,7 +210,7 @@ import org.rhq.core.domain.util.Summary;
         +
         //               "ORDER BY crt.name " +
         "UNION "
-        + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
+        + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory, crt2.plugin_config_def_id, crt2.res_config_def_id "
         + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
@@ -226,7 +223,7 @@ import org.rhq.core.domain.util.Summary;
         + "AND crt2.category = ? "
         + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
-        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
         + "AND crt.deleted = false "
@@ -237,7 +234,7 @@ import org.rhq.core.domain.util.Summary;
         +
         //               "ORDER BY crt.name " +
         "UNION "
-        + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
+        + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory, crt2.plugin_config_def_id, crt2.res_config_def_id "
         + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
@@ -253,7 +250,7 @@ import org.rhq.core.domain.util.Summary;
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Serializable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
 
     public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
 
@@ -278,7 +275,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     /** find child resource types for the resource type passed in :resourceType */
     public static final String FIND_CHILDREN_BY_PARENT = "ResourceType.findChildrenByParent";
     public static final String FIND_ALL_TEMPLATE_COUNT_COMPOSITES = "ResourceType.findAllTemplateCountComposites";
-    public static final String QUERY_FIND_BY_SUBCATEGORY = "ResourceType.findBySubCategory";
     public static final String QUERY_FIND_UTILIZED_BY_CATEGORY = "ResourceType.findUtilizedByCategory";
     public static final String QUERY_FIND_UTILIZED_BY_CATEGORY_admin = "ResourceType.findUtilizedByCategory_admin";
     public static final String QUERY_FIND_BY_RESOURCE_GROUP = "ResourceType.findByResourceGroup";
@@ -343,6 +339,13 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @Column(name = "IGNORED")
     private boolean ignored;
 
+    @Column(name = "SUPPORTS_MISSING")
+    private boolean supportsMissingAvailabilityType;
+
+    @Column(name = "MISSING_POLICY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private MissingPolicy missingPolicy = MissingPolicy.DOWN;
+
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
@@ -365,9 +368,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition resourceConfigurationDefinition;
 
-    @JoinColumn(name = "SUBCATEGORY_ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    private ResourceSubCategory subCategory;
+    @Column(name = "SUBCATEGORY")
+    private String subCategory;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
@@ -392,9 +394,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<PackageType> packageTypes;
-
-    @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
-    private List<ResourceSubCategory> subCategories;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.REMOVE)
     private List<Resource> resources;
@@ -509,19 +508,30 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         return (createDeletePolicy == CreateDeletePolicy.BOTH || createDeletePolicy == CreateDeletePolicy.DELETE_ONLY);
     }
 
+    public MissingPolicy getMissingPolicy() {
+        return missingPolicy;
+    }
+
+    public void setMissingPolicy(MissingPolicy missingPolicy) {
+        if (missingPolicy == null)
+            throw new IllegalArgumentException("missingPolicy cannot be null");
+
+        this.missingPolicy = missingPolicy;
+    }
+
     /**
-     * Returns the ResourceSubCategory, if any, which this ResourceType
+     * Returns the resource subcategory, if any, which this ResourceType
      * has been tagged with. If the ResourceType has not been tagged with
      * a subcategory, <code>null</code> is returned.
      */
-    public ResourceSubCategory getSubCategory() {
+    public String getSubCategory() {
         return this.subCategory;
     }
 
     /**
-     * Tags this ResourceType as being part of the specified ResourceSubCategory
+     * Tags this ResourceType as being part of the specified subcategory
      */
-    public void setSubCategory(ResourceSubCategory subcategory) {
+    public void setSubCategory(String subcategory) {
         this.subCategory = subcategory;
     }
 
@@ -591,6 +601,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setIgnored(boolean ignored) {
         this.ignored = ignored;
+    }
+
+    public boolean isSupportsMissingAvailabilityType() {
+        return supportsMissingAvailabilityType;
+    }
+
+    public void setSupportsMissingAvailabilityType(boolean uninventoryMissing) {
+        this.supportsMissingAvailabilityType = uninventoryMissing;
     }
 
     @PreUpdate
@@ -812,42 +830,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
     }
 
-    /**
-     * Returns the List of child ResourceSubCategorys which have been defined
-     * on this ResourceType. These ResourceSubCategory's are available to
-     * tag any child ResourceTypes of this ResourceType.
-     *
-     * @return the list of ResourceSubCategory's which have been defined
-     *         on this ResourceType
-     */
-    public List<ResourceSubCategory> getChildSubCategories() {
-        if (subCategories==null) {
-            return Collections.emptyList();
-        }
-        return this.subCategories;
-    }
-
-    /**
-     * Sets the List of child ResourceSubCategorys for this ResourceType.
-     *
-     * @param subCategories the List of ResourceSubCategory's for this ResourceType
-     */
-    public void setChildSubCategories(List<ResourceSubCategory> subCategories) {
-        this.subCategories = subCategories;
-    }
-
-    /**
-     * Adds a child ResourceSubCategory to the List which has been defined
-     * on this ResourceType.
-     */
-    public void addChildSubCategory(ResourceSubCategory subCategory) {
-        if (this.subCategories == null) {
-            this.subCategories = new ArrayList<ResourceSubCategory>();
-        }
-        subCategory.setResourceType(this);
-        this.subCategories.add(subCategory);
-    }
-
     public Set<ProductVersion> getProductVersions() {
         if (productVersions==null) {
             return Collections.emptySet();
@@ -908,6 +890,19 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setDriftDefinitionTemplates(Set<DriftDefinitionTemplate> driftDefinitionTemplates) {
         this.driftDefinitionTemplates = driftDefinitionTemplates;
+    }
+
+    @Deprecated
+    public List<ResourceSubCategory> getChildSubCategories() {
+        return null;
+    }
+
+    @Deprecated
+    public void setChildSubCategories(List<ResourceSubCategory> subCategories) {
+    }
+
+    @Deprecated
+    public void addChildSubCategory(ResourceSubCategory subCategory) {
     }
 
     // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing ResourceTypes, or

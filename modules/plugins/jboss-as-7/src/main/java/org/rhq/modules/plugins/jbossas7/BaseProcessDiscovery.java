@@ -192,6 +192,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
 
         String domainHost = findHost(hostXmlFile);
+        // this property is DEPRECATED we don't need it during discovery
         pluginConfig.setSimpleValue("domainHost", domainHost);
 
         File logDir = getLogDir(process, commandLine, baseDir);
@@ -220,7 +221,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         String key = createKeyForLocalResource(serverPluginConfig);
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, hostConfig.getHostName());
         String description = buildDefaultResourceDescription(hostPort, productType);
         String version = getVersion(homeDir, productType);
 
@@ -428,9 +429,22 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     protected abstract String getLogFileName();
 
-    protected abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType);
+    protected abstract String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType, String serverName);
 
     protected abstract String buildDefaultResourceDescription(HostPort hostPort, JBossProductType productType);
+
+    /**
+     * Deprecated due to changes requiring a server name to build resource name. If no name
+     * is provided then the information is omitted from the resource name.
+     *
+     *  Please see [BZ 1080552] for more details.
+     */
+    @Deprecated
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType) {
+        return buildDefaultResourceName(hostPort, managementHostPort, productType, null);
+    }
 
     // Manually add a (remote) AS7 instance.
     @Override
@@ -458,7 +472,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         managementHostPort.host = hostname;
         managementHostPort.port = port;
         String key = createKeyForRemoteResource(hostname + ":" + port);
-        String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
+        String name = buildDefaultResourceName(hostPort, managementHostPort, productType, null);
         String version = productInfo.getProductVersion();
         String description = buildDefaultResourceDescription(hostPort, productType);
 
@@ -484,7 +498,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         boolean hasLocalResourcePrefix = currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX);
         boolean hasRemoteResourcePrefix = currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX);
         if (!hasLocalResourcePrefix && !hasRemoteResourcePrefix) {
-            // Resource key in wrong format 
+            // Resource key in wrong format
             upgraded = true;
             if (new File(currentResourceKey).isDirectory()) {
                 // Old key format for a local resource (key is base dir)
@@ -595,6 +609,12 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return props;
     }
 
+    /**
+     * reads <host name= attribute from host.xml file
+     * @param hostXmlFile file
+     * @return name attribute from host.xml
+     * @Deprecated as of RHQ 4.12. domainHost pluginConfig property is deprecated as well, so this method will no longer be needed.
+     */
     private String findHost(File hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         String hostName = null;

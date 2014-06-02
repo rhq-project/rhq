@@ -20,8 +20,11 @@ package org.rhq.coregui.client.admin;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.TreeSet;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -29,17 +32,26 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.FormLayoutType;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.DateTimeItem;
+import com.smartgwt.client.widgets.form.fields.IntegerItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.Criteria;
@@ -48,7 +60,12 @@ import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
 import org.rhq.coregui.client.ImageManager;
+import org.rhq.coregui.client.PopupWindow;
 import org.rhq.coregui.client.admin.AgentPluginTableView.AgentPluginDataSource;
+import org.rhq.coregui.client.components.form.DurationItem;
+import org.rhq.coregui.client.components.form.RadioGroupWithComponentsItem;
+import org.rhq.coregui.client.components.form.TimeUnit;
+import org.rhq.coregui.client.components.form.UnitType;
 import org.rhq.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
@@ -189,6 +206,143 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
+        IButton updateOnAgentsButton = new EnhancedIButton(MSG.view_admin_plugins_update_on_agents());
+        updateOnAgentsButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                VLayout layout = new VLayout();
+                final PopupWindow w = new PopupWindow(null);
+
+                Canvas nowCanvas = new Canvas();
+                nowCanvas.setWidth(1);
+                nowCanvas.setHeight(1);
+
+
+                DynamicForm delayForm = new DynamicForm();
+                delayForm.setTitleOrientation(TitleOrientation.TOP);
+                TreeSet<TimeUnit> timeUnits = new TreeSet<TimeUnit>();
+                timeUnits.add(TimeUnit.SECONDS);
+                timeUnits.add(TimeUnit.MINUTES);
+                timeUnits.add(TimeUnit.HOURS);
+                timeUnits.add(TimeUnit.DAYS);
+                final DurationItem startDelay = new DurationItem("duration", "", timeUnits, false, false);
+
+                delayForm.setFields(startDelay);
+
+                DynamicForm scheduleForm = new DynamicForm();
+
+                final DateTimeItem schedule = new DateTimeItem("schedule");
+                schedule.setEnforceDate(true);
+                schedule.setCenturyThreshold(99);
+                schedule.setShowTitle(false);
+                schedule.setStartDate(new Date());
+                schedule.setUseMask(true);
+                schedule.setShowHint(true);
+
+                scheduleForm.setFields(schedule);
+
+
+                LinkedHashMap<String, Canvas> items = new LinkedHashMap<String, Canvas>();
+                items.put(MSG.view_admin_plugins_update_on_agents_now(), nowCanvas);
+                items.put(MSG.view_admin_plugins_update_on_agents_delayed(), delayForm);
+                items.put(MSG.view_admin_plugins_update_on_agents_scheduled(), scheduleForm);
+
+                DynamicForm form = new DynamicForm();
+                form.setWidth(300);
+                final RadioGroupWithComponentsItem scheduling = new RadioGroupWithComponentsItem("scheduling", "", items, form);
+
+                form.setFields(scheduling);
+
+                layout.addMember(form);
+
+                ButtonItem ok = new ButtonItem("ok", MSG.common_button_ok());
+                ok.setEndRow(false);
+                ok.setAlign(Alignment.RIGHT);
+                ButtonItem cancel = new ButtonItem("cancel", MSG.common_button_cancel());
+                cancel.setStartRow(false);
+                cancel.setAlign(Alignment.LEFT);
+
+                DynamicForm buttons = new DynamicForm();
+                buttons.setNumCols(2);
+                buttons.setFields(ok, cancel);
+
+                layout.addMember(buttons);
+
+                ok.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+                    @Override
+                    public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                        long delay;
+                        if (MSG.view_admin_plugins_update_on_agents_now().equals(scheduling.getSelected())) {
+                            delay = 0;
+                        } else if (MSG.view_admin_plugins_update_on_agents_delayed().equals(scheduling.getSelected())) {
+                            Integer value = (Integer) startDelay.getValue();
+                            TimeUnit u = startDelay.getValueUnit();
+
+                            if (value == null) {
+                                CoreGUI.getErrorHandler()
+                                    .handleError(MSG.view_admin_plugins_update_on_agents_no_time_specified());
+                                w.hide();
+                                return;
+                            }
+
+                            delay = value;
+                            switch (u) {
+                            case SECONDS:
+                                delay *= 1000;
+                                break;
+                            case MINUTES:
+                                delay *= 60 * 1000;
+                                break;
+                            case HOURS:
+                                delay *= 60 * 60 * 1000;
+                                break;
+                            case DAYS:
+                                delay *= 24 * 60 * 60 * 1000;
+                                break;
+                            }
+                        } else {
+                            Date scheduledDate = schedule.getValueAsDate();
+                            delay = scheduledDate.getTime() - new Date().getTime();
+                        }
+
+                        GWT.log("About to schedule update of the plugins on the agent in " + delay + " milliseconds.");
+
+                        GWTServiceLookup.getPluginService().updatePluginsOnAgents(delay, new AsyncCallback<Void>() {
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_admin_plugins_update_on_agents_failure() + " " +
+                                        caught.getMessage(), caught);
+                                w.hide();
+                            }
+
+                            @Override
+                            public void onSuccess(Void result) {
+                                w.hide();
+                            }
+                        });
+                    }
+                });
+
+                scheduling.setValue(MSG.view_admin_plugins_update_on_agents_now());
+
+                cancel.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+                    @Override
+                    public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                        w.hide();
+                    }
+                });
+
+                w.addItem(layout);
+
+                w.setTitle(MSG.view_admin_plugins_update_on_agents());
+                w.setHeight(200);
+                w.setWidth(340);
+                w.show();
+            }
+
+        });
+
         IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan());
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -213,6 +367,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
         PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(MSG.view_admin_plugins_upload(), true);
 
         addExtraWidget(scanForUpdatesButton, true);
+        addExtraWidget(updateOnAgentsButton, true);
         addExtraWidget(pluginUploadForm, true);
 
         super.configureTable();

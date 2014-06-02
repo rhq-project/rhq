@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.annotation.Resource;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
@@ -73,6 +72,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.CoreServer;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.server.metrics.DateTimeService;
@@ -104,7 +104,11 @@ public class StorageClientManager implements StorageClientManagerMBean{
     private SystemManagerLocal systemManager;
     @EJB
     private CoreServer coreServer;
-    @Resource
+
+    @EJB
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
+
+    @javax.annotation.Resource
     private TimerService timerService;
 
     private Cluster cluster;
@@ -548,6 +552,12 @@ public class StorageClientManager implements StorageClientManagerMBean{
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
+        metricsServer.setCacheActivationTime(getCacheActivationTime());
         metricsServer.init();
+    }
+
+    private long getCacheActivationTime() {
+        SystemSettings settings = systemManager.getSystemSettings(subjectManager.getOverlord());
+        return Long.parseLong(settings.get(SystemSetting.METRICS_CACHE_ACTIVATION_TIME));
     }
 }

@@ -337,14 +337,14 @@ public class ServerProperties {
     }
 
     static private boolean isOptional(Map<String, String> serverProperties, String name, String val) {
+        if (StringUtil.isBlank(val) && OPTIONAL_PROPERTIES.contains(name)) {
+            return true;
+        }
 
-        if (StringUtil.isBlank(val)) {
-            if (OPTIONAL_PROPERTIES.contains(name)) {
-                return true;
-            }
-            if (isOracle(serverProperties) && ServerProperties.OPTIONAL_PROPERTIES_ORACLE.contains(name)) {
-                return true;
-            }
+        // check for oracle-specific optional props including back compat handling of "unused" setting
+        if ((StringUtil.isBlank(val) || "unused".equals(val)) && isOracle(serverProperties)
+            && ServerProperties.OPTIONAL_PROPERTIES_ORACLE.contains(name)) {
+            return true;
         }
 
         return false;

@@ -69,7 +69,7 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
 
     @Override
     protected String getEditColumnTitle() {
-        return MSG.view_adminConfig_ignoreResourceTypes_changeTitle();
+        return MSG.view_adminConfig_changeTitle();
     }
 
     @Override

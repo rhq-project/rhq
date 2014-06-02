@@ -121,6 +121,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     private static final String RHQ_AGENT_LATEST_VERSION = "rhq-agent.latest.version";
     private static final String RHQ_AGENT_LATEST_BUILD_NUMBER = "rhq-agent.latest.build-number";
     private static final String RHQ_AGENT_LATEST_MD5 = "rhq-agent.latest.md5";
+    private static final String RHQ_AGENT_SUPPORTED_VERSIONS = "rhq-agent.supported.versions";
 
     @ExcludeDefaultInterceptors
     public void createAgent(Agent agent) {
@@ -646,21 +647,25 @@ public class AgentManagerBean implements AgentManagerLocal {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
-            // Prime Directive: whatever agent update the server has installed is the one we support,
-            // so both the version AND build number must match.
-            // For developers, however, we want to allow to be less strict - only version needs to match.
-            String supportedAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
-            if (supportedAgentVersion == null) {
+            String supportedAgentVersions = properties.getProperty(RHQ_AGENT_SUPPORTED_VERSIONS); // this is optional
+            String latestAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            if (latestAgentVersion == null) {
                 throw new NullPointerException("no agent version in file");
             }
-            ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
-            ComparableVersion server = new ComparableVersion(supportedAgentVersion);
-            if (Boolean.getBoolean("rhq.server.agent-update.nonstrict-version-check")) {
-                return agent.equals(server);
+
+            boolean isSupported;
+
+            if (supportedAgentVersions == null || supportedAgentVersions.isEmpty()) {
+                // we weren't given a regex of supported versions, make a simple string equality test on latest agent version
+                ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
+                ComparableVersion server = new ComparableVersion(latestAgentVersion);
+                isSupported = agent.equals(server);
             } else {
-                String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
-                return agent.equals(server) && agentVersionInfo.getBuild().equals(supportedAgentBuild);
+                // we were given a regex of supported versions, check the agent version to see if it matches the regex
+                isSupported = agentVersionInfo.getVersion().matches(supportedAgentVersions);
             }
+
+            return isSupported;
         } catch (Exception e) {
             LOG.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
             return false; // assume we can't talk to it
@@ -681,6 +686,13 @@ public class AgentManagerBean implements AgentManagerLocal {
             CoreServerMBean coreServer = LookupUtil.getCoreServer();
             serverVersionInfo.append(RHQ_SERVER_VERSION + '=').append(coreServer.getVersion()).append('\n');
             serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
+
+            // if there are supported agent versions, get it (this is a regex that is to match agent versions that are supported)
+            String supportedAgentVersions = coreServer.getProductInfo().getSupportedAgentVersions();
+            if (supportedAgentVersions != null && supportedAgentVersions.length() > 0) {
+                serverVersionInfo.append(RHQ_AGENT_SUPPORTED_VERSIONS + '=').append(supportedAgentVersions)
+                    .append('\n');
+            }
 
             // calculate the MD5 of the agent update binary file
             String md5Property = RHQ_AGENT_LATEST_MD5 + '=' + MessageDigestGenerator.getDigestString(binaryFile) + '\n';
@@ -786,7 +798,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         long now = System.currentTimeMillis();
 
         if (request.isRequestUpdateAvailability()) {
-            updateLastAvailabilityPing(request.getAgentName(), now);
+            request.setReplyAgentIsBackfilled(updateLastAvailabilityPing(request.getAgentName(), now));
             request.setReplyUpdateAvailability(true);
         }
 
@@ -797,16 +809,31 @@ public class AgentManagerBean implements AgentManagerLocal {
         return request;
     }
 
-    private void updateLastAvailabilityPing(String agentName, long now) {
+    /**
+     * @return true if the agent is currently backfilled, false otherwise
+     */
+    private boolean updateLastAvailabilityPing(String agentName, long now) {
         /*
-         * since we already know we have to update the agent row with the last avail ping time, might as well
-         * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
-         */
+          * There are two cases here: The agent is backfilled (rare) or not backfilled (typical).
+          * In both cases update the ping time.  If it is backfilled then reflect that fact
+          * in the response so the agent can correct the situation. Note that this takes care of
+          * the unusual case of BZ 1094540.
+          */
         Query query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING);
         query.setParameter("now", now);
         query.setParameter("agentName", agentName);
 
-        query.executeUpdate();
+        int numUpdates = query.executeUpdate();
+        if (0 == numUpdates) {
+            query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING_FORCE);
+            query.setParameter("now", now);
+            query.setParameter("agentName", agentName);
+            query.executeUpdate();
+
+            return true;
+        }
+
+        return false;
     }
 
     @ExcludeDefaultInterceptors

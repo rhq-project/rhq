@@ -1,8 +1,10 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,6 +28,10 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDetail;
+import org.quartz.ObjectAlreadyExistsException;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 
 import org.jboss.ejb3.annotation.TransactionTimeout;
 
@@ -37,6 +43,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.PluginCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.CannedGroupExpression;
 import org.rhq.core.domain.plugin.Plugin;
@@ -46,19 +53,28 @@ import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.core.plugin.PluginAdditionsReader;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.core.plugin.PluginAdditionsReader;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QuartzUtil;
 
 @Stateless
-public class PluginManagerBean implements PluginManagerLocal {
+public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemote {
 
     private final Log log = LogFactory.getLog(PluginManagerBean.class);
 
@@ -85,6 +101,15 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @EJB
     private SubjectManagerLocal subjectMgr;
+
+    @EJB
+    private ContentManagerLocal contentManager;
+
+    @EJB
+    private AgentManagerLocal agentManager;
+
+    @EJB
+    private SchedulerLocal scheduler;
 
     @Override
     public Plugin getPlugin(String name) {
@@ -346,7 +371,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         List<ResourceType> deletedServerTypes = resourceTypeMgr.findResourceTypesByCriteria(subject, criteria);
 
-        // Do this type by type in an effort to keep chunks smaller. 
+        // Do this type by type in an effort to keep chunks smaller.
         for (ResourceType deletedServerType : deletedServerTypes) {
             deleteResourcesForType(subject, deletedServerType);
         }
@@ -490,6 +515,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
             // now remove any obsolete types from the newly registered plugin
             resourceMetadataManager.removeObsoleteTypes(subjectMgr.getOverlord(), plugin.getName(), metadataManager);
+            resourceMetadataManager.removeObsoleteSubCategories(subjectMgr.getOverlord(), null, null);
         }
 
         long endTime = System.currentTimeMillis();
@@ -562,6 +588,95 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void update(Subject subject) throws Exception {
+        PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
+        scanner.scanAndRegister();
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public String schedulePluginUpdateOnAgents(Subject subject, long delayInMilliseconds) throws Exception {
+        JobDetail jobDetail = UpdatePluginsOnAgentsJob.getJobDetail();
+        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, delayInMilliseconds);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+
+            return jobDetail.getName();
+        } catch (ObjectAlreadyExistsException e) {
+            //well, there already is a plugin update job scheduled, so let's just not add another one.
+            log.debug("A request to update plugins on agents seems to already be scheduled." +
+                " Ignoring the current request with the error message: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public boolean isPluginUpdateOnAgentsFinished(Subject subject, String handle) {
+        try {
+            return scheduler.getJobDetail(handle, UpdatePluginsOnAgentsJob.class.getName()) == null;
+        } catch (SchedulerException e) {
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to retrieve job details while checking for active plugin update schedule, code: " + e.getErrorCode(), e);
+            } else {
+                log.warn("Failed to retrieve job details while checking for active plugin update schedule, code: " + e.getErrorCode() + ", message: " + e.getMessage());
+            }
+
+            return false;
+        }
+    }
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public List<Plugin> deployUsingBytes(Subject subject, String pluginJarName, byte[] pluginJarBytes) throws Exception {
+        File base = getPluginDropboxDirectory();
+
+        File targetFile = new File(base, pluginJarName);
+        FileOutputStream out = new FileOutputStream(targetFile);
+        ByteArrayInputStream in = new ByteArrayInputStream(pluginJarBytes);
+
+        StreamUtil.copy(in, out, true);
+        return updateAndDetectChanges(subject);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public List<Plugin> deployUsingContentHandle(Subject subject, String pluginJarName, String handle) throws Exception {
+        File pluginJar = contentManager.getTemporaryContentFile(handle);
+        File base = getPluginDropboxDirectory();
+
+        FileUtil.copyFile(pluginJar, new File(base, pluginJarName));
+
+        return updateAndDetectChanges(subject);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<Plugin> findPluginsByCriteria(Subject subject, PluginCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        CriteriaQueryRunner<Plugin> queryRunner = new CriteriaQueryRunner<Plugin>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
+    }
+
+    private List<Plugin> updateAndDetectChanges(Subject subject) throws Exception {
+        List<Plugin> before = getPlugins();
+
+        update(subject);
+
+        List<Plugin> after = getPlugins();
+
+        for (Plugin p : before) {
+            after.remove(p);
+        }
+
+        return after;
+    }
+
     public void acknowledgeDeletedPluginsBy(int serverId) {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_UNACKED_DELETED_PLUGINS);
         q.setParameter("serverId", serverId);

@@ -76,6 +76,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.ResolveExpression;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 
 /**
  * The base class for all AS7 resource components.
@@ -353,7 +354,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             op = new Operation("read-resource", getAddress());
             res = getASConnection().execute(op);
         }
+        includeOOBMessages(res, configuration);
+        return configuration;
+    }
 
+    protected static void includeOOBMessages(Result res, Configuration configuration) {
         if (res.isReloadRequired()) {
             PropertySimple oobMessage = new PropertySimple("__OOB",
                 "The server needs a reload for the latest changes to come effective.");
@@ -364,7 +369,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 "The server needs a restart for the latest changes to come effective.");
             configuration.put(oobMessage);
         }
-        return configuration;
     }
 
     @Override
@@ -846,6 +850,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
+            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
+                throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
+                    + getAddress().getPath() + "] - response: " + res);
+            }
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }

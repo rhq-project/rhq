@@ -126,7 +126,6 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         // used in UpdateMeasurementSubsystemTest
         resourceTypeCriteria.fetchMetricDefinitions(true);
         // used in several UpdateResourceSubsystemTest tests
-        resourceTypeCriteria.fetchSubCategory(true);
 
         PageList<ResourceType> results = resourceTypeManager
             .findResourceTypesByCriteria(overlord, resourceTypeCriteria);

@@ -24,10 +24,13 @@ package org.rhq.enterprise.server.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,6 +38,8 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -382,10 +387,66 @@ public class AbstractRestBean {
         return res;
     }
 
+    protected Response.ResponseBuilder withMediaType(Response.ResponseBuilder builder, HttpHeaders headers) {
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
+        return builder;
+    }
+
+    /**
+     * Creates a response builder with "ok" response containing the provided list and applied pagination
+     * as prescribed by the {@code pageList}.
+     * @param headers the http headers
+     * @param uriInfo uri info
+     * @param pageList the "original" list coming from the EJB layer containing the paging info
+     * @param results the result list with REST-ready entities
+     * @param elementType the type of the entities contained in the result list
+     * @param <T> the type of the entities contained in the result list
+     * @return the builder for the response
+     */
+    protected <T> Response.ResponseBuilder paginate(HttpHeaders headers, UriInfo uriInfo, PageList<?> pageList, List<T> results, final Class<T> elementType) {
+        Response.ResponseBuilder builder = Response.ok();
+        withMediaType(builder, headers);
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder, uriInfo, pageList, results);
+        } else {
+            ParameterizedType myType = new ParameterizedType() {
+                final Type[] params = new Type[] { elementType };
+
+                @Override
+                public Type[] getActualTypeArguments() {
+                    return params;
+                }
+
+                @Override
+                public Type getRawType() {
+                    return List.class;
+                }
+
+                @Override
+                public Type getOwnerType() {
+                    return null;
+                }
+            };
+            GenericEntity<List<T>> list = new GenericEntity<List<T>>(results, myType);
+            builder.entity(list);
+            createPagingHeader(builder,uriInfo,pageList);
+        }
+
+        return builder;
+    }
+
     /**
      * Create the paging headers for collections and attach them to the passed builder. Those are represented as
      * <i>Link:</i> http headers that carry the URL for the pages and the respective relation.
      * <br/>In addition a <i>X-total-size</i> header is created that contains the whole collection size.
+     * <p/>
+     * If you need no further "building" of the response apart from paginating, you should look into using
+     * the {@link #paginate(javax.ws.rs.core.HttpHeaders, javax.ws.rs.core.UriInfo, org.rhq.core.domain.util.PageList,
+     * java.util.List, Class)}.
      * @param builder The ResponseBuilder that receives the headers
      * @param uriInfo The uriInfo of the incoming request to build the urls
      * @param resultList The collection with its paging information
@@ -431,14 +492,19 @@ public class AbstractRestBean {
 
     /**
      * Wrap the passed collection #resultList in an object with paging information
+     * <p/>
+     * If you need no further "building" of the response apart from paginating, you should look into using
+     * the {@link #paginate(javax.ws.rs.core.HttpHeaders, javax.ws.rs.core.UriInfo, org.rhq.core.domain.util.PageList,
+     * java.util.List, Class)}.
+     *
      * @param builder ResonseBuilder to add the entity to
      * @param uriInfo UriInfo to construct paging links
      * @param originalList The original list to obtain the paging info from
      * @param resultList The list of result items
      */
-    protected void wrapForPaging(Response.ResponseBuilder builder, UriInfo uriInfo, final PageList<?> originalList, final Collection resultList) {
+    protected <T> void wrapForPaging(Response.ResponseBuilder builder, UriInfo uriInfo, final PageList<?> originalList, final Collection<T> resultList) {
 
-        PagingCollection pColl = new PagingCollection(resultList);
+        PagingCollection<T> pColl = new PagingCollection<T>(resultList);
         pColl.setTotalSize(originalList.getTotalSize());
         PageControl pageControl = originalList.getPageControl();
         pColl.setPageSize(pageControl.getPageSize());
@@ -537,7 +603,7 @@ public class AbstractRestBean {
     protected Link createUILink(UriInfo uriInfo, UILinkTemplate template, Integer... entityId) {
 
         String urlBase = template.getUrl();
-        String replaced = String.format(urlBase,entityId);
+        String replaced = String.format(urlBase, entityId);
 
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.fragment(replaced);

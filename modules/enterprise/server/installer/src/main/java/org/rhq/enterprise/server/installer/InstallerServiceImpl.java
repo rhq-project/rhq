@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.installer;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -44,6 +46,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
+import org.rhq.cassandra.schema.DBConnectionFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
 import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
@@ -53,6 +56,7 @@ import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.DbUtil;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
@@ -548,19 +552,27 @@ public class InstallerServiceImpl implements InstallerService {
                     storageNodeSchemaManager.drop();
                 }
 
+                final String dbPassword = clearTextDbPassword;
+                DBConnectionFactory connectionFactory = new DBConnectionFactory() {
+                    @Override
+                    public Connection newConnection() throws SQLException {
+                        return DbUtil.getConnection(dbUrl, dbUsername, dbPassword);
+                    }
+                };
+
                 try {
                     storageNodeSchemaManager.checkCompatibility();
                 } catch (AuthenticationException e1) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.install(connectionFactory);
                     storageNodeSchemaManager.updateTopology();
                 } catch (SchemaNotInstalledException e2) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.install(connectionFactory);
                     storageNodeSchemaManager.updateTopology();
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
-                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.install(connectionFactory);
                 }
                 storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 storageNodeSchemaManager.shutdown();
@@ -1075,7 +1087,7 @@ public class InstallerServiceImpl implements InstallerService {
                 // don't bother trying again
                 boolean differentValues = false;
                 String hostStr = fallbackProps.get("jboss.bind.address.management");
-                if (hostStr != null && !hostStr.equals(host)) {
+                if (hostStr != null && hostStr.length() > 0 && !hostStr.equals(host)) {
                     host = hostStr;
                     differentValues = true;
                 }

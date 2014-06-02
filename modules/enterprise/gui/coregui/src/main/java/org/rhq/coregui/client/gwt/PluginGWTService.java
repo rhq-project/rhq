@@ -198,6 +198,14 @@ public interface PluginGWTService extends RemoteService {
     void updateServerPluginScheduledJobs(PluginKey serverPluginKey, Configuration jobsConfig) throws RuntimeException;
 
     /**
+     * Updates the plugins on all agents after given delay
+     * @param delayInMilliseconds the delay in milliseconds.
+     *
+     * @since 4.11
+     */
+    void updatePluginsOnAgents(long delayInMilliseconds);
+
+    /**
      * returns canned group expressions
      * @return
      */

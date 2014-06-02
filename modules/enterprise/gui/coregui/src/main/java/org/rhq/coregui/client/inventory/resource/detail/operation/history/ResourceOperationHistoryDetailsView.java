@@ -138,7 +138,8 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
             ConfigurationDefinition resultsConfigurationDefinition = operationDefinition
                 .getResultsConfigurationDefinition();
             if (resultsConfigurationDefinition != null
-                && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
+                && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()
+                && operationHistory.getResults() != null) {
                 ConfigurationEditor editor = new ConfigurationEditor(
                     operationDefinition.getResultsConfigurationDefinition(), operationHistory.getResults());
                 editor.setPreserveTextFormatting(true);

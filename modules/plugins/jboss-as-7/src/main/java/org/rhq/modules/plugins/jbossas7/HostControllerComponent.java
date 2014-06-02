@@ -34,7 +34,9 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -53,10 +55,25 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";
     private static final String DOMAIN_HOST_TRAIT = "domain-host-name";
+    private static final String PROCESS_TYPE_DC = "Domain Controller";
+
+    private boolean domainController; // determines whether this HC is also DC
 
     @Override
     protected AS7Mode getMode() {
         return AS7Mode.DOMAIN;
+    }
+
+    @Override
+    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+        super.start(resourceContext);
+        setDomainController(PROCESS_TYPE_DC.equals(getProcessTypeAttrValue()));
+    }
+
+    @Override
+    protected void onAvailGoesUp() {
+        super.onAvailGoesUp();
+        setDomainController(PROCESS_TYPE_DC.equals(getProcessTypeAttrValue()));
     }
 
     @Override
@@ -236,6 +253,23 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             report.setException(res.getRhqThrowable());
         }
         return report;
+    }
+
+    private String getProcessTypeAttrValue() {
+        try {
+            return readAttribute(new Address("/"), "process-type");
+        } catch (Exception e) {
+            log.warn("Unable to detect HostController's process-type", e);
+            return null;
+        }
+    }
+
+    public synchronized boolean isDomainController() {
+        return domainController;
+    }
+
+    public synchronized void setDomainController(boolean domainController) {
+        this.domainController = domainController;
     }
 
     @NotNull

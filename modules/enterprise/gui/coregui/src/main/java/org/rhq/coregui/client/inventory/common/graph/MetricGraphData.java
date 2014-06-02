@@ -409,10 +409,9 @@ public class MetricGraphData implements JsonMetricProducer {
                     sb.append(" \"highFormatted\":\""
                         + MeasurementConverterClient.format(measurement.getHighValue(), definition.getUnits(), true, 0,
                             3) + "\",");
-                    sb.append(" \"low\":" + cleanseLow(newLow, newAvg, newHigh) + ",");
+                    sb.append(" \"low\":" + newLow + ",");
                     sb.append(" \"lowFormatted\":\""
-                        + MeasurementConverterClient.format(
-                            cleanseLow(measurement.getLowValue(), measurement.getValue(), measurement.getHighValue()),
+                        + MeasurementConverterClient.format( measurement.getLowValue(),
                             definition.getUnits(), true, 0, 3) + "\",");
                     sb.append(" \"avg\":" + newAvg + ",");
                     sb.append(" \"avgFormatted\":\""

@@ -42,7 +42,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
-import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
@@ -321,47 +320,33 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     @Override
     protected void deleteSelectedRecords(DSRequest requestProperties) {
+        disableAllFooterControls(); // wait for this to complete before we allow more...
+
         final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
-        Boolean forceValue = (requestProperties != null && requestProperties
-            .getAttributeAsBoolean(AbstractOperationHistoryDataSource.RequestAttribute.FORCE));
-        boolean force = ((forceValue != null) && forceValue);
-        final List<Integer> successIds = new ArrayList<Integer>();
-        final List<Integer> failureIds = new ArrayList<Integer>();
+        final Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
+        final boolean force = ((forceValue != null) && forceValue);
+        final int[] idsToBeDeleted = new int[numberOfRecordsToBeDeleted];
+        int i = 0;
         for (ListGridRecord record : recordsToBeDeleted) {
-            final OperationHistory operationHistoryToRemove = getDataSource().copyValues(record);
-            GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
-                new AsyncCallback<Void>() {
-                    public void onSuccess(Void result) {
-                        successIds.add(operationHistoryToRemove.getId());
-                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        // TODO: i18n
-                        CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
-                            caught);
-                        failureIds.add(operationHistoryToRemove.getId());
-                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
-                    }
-                });
+            idsToBeDeleted[i++] = record.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
         }
-    }
+        GWTServiceLookup.getOperationService().deleteOperationHistories(idsToBeDeleted, force,
+            new AsyncCallback<Void>() {
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_operationHistoryList_deleteSuccess(String
+                            .valueOf(numberOfRecordsToBeDeleted))));
+                    refresh();
+                    refreshTableInfo(); // enable proper buttons
+                }
 
-    private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
-        if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
-            // TODO: i18n
-            if (successIds.size() == numberOfRecordsToBeDeleted) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
-            } else {
-                CoreGUI.getMessageCenter().notify(
-                    new Message("Deleted " + successIds.size()
-                        + " operation history items, but failed to delete the items with the following IDs: "
-                        + failureIds));
-            }
-            refresh();
-        }
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_operationHistoryList_deleteFailure(), caught);
+                    refresh();
+                    refreshTableInfo(); // enable proper buttons
+                }
+            });
     }
 
     @Override

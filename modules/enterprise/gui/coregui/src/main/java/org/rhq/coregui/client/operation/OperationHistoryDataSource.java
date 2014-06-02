@@ -67,7 +67,7 @@ import org.rhq.coregui.client.util.RPCDataSource;
 
 /**
  * @author Jay Shaughnessy
- * @author Ian Springer 
+ * @author Ian Springer
  */
 public class OperationHistoryDataSource extends
     RPCDataSource<ResourceOperationHistory, ResourceOperationHistoryCriteria> {
@@ -103,7 +103,7 @@ public class OperationHistoryDataSource extends
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
-     * 
+     *
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
@@ -296,12 +296,12 @@ public class OperationHistoryDataSource extends
     /**
      * Sub-classes can override this to add fine-grained control over the result set size. By default the
      * total rows are set to the total result set for the query, allowing proper paging.  But some views (portlets)
-     * may want to limit results to a small set (like most recent).  
+     * may want to limit results to a small set (like most recent).
      * @param result
      * @param response
      * @param request
-     * 
-     * @return should not exceed result.getTotalSize(). 
+     *
+     * @return should not exceed result.getTotalSize().
      */
     protected int getTotalRows(final PageList<ResourceOperationHistory> result, final DSResponse response,
         final DSRequest request) {
@@ -341,13 +341,13 @@ public class OperationHistoryDataSource extends
             typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
                 @Override
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
                     AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                     Record[] records = buildRecords(result);
                     for (Record record : records) {
                         // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
-                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                        // Store the types map off the records so we can build a detailed hover string as needed.
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
@@ -375,13 +375,13 @@ public class OperationHistoryDataSource extends
         criteria.addFilterStatuses(statusFilter);
 
         Date startDateFilter = getFilter(request, DateFilterItem.START_DATE_FILTER, Date.class);
-        if(startDateFilter != null){
-            Date startOfDay =   DateFilterItem.adjustTimeToStartOfDay(startDateFilter);
+        if (startDateFilter != null) {
+            Date startOfDay = DateFilterItem.adjustTimeToStartOfDay(startDateFilter);
             criteria.addFilterStartTime(startOfDay.getTime());
         }
 
         Date endDateFilter = getFilter(request, DateFilterItem.END_DATE_FILTER, Date.class);
-        if( endDateFilter!= null){
+        if (endDateFilter != null) {
             Date endOfDay = DateFilterItem.adjustTimeToEndOfDay(endDateFilter);
             criteria.addFilterEndTime(endOfDay.getTime());
         }
@@ -413,15 +413,16 @@ public class OperationHistoryDataSource extends
         final ResourceOperationHistory operationHistoryToRemove = copyValues(recordToRemove);
         Boolean forceValue = request.getAttributeAsBoolean("force");
         boolean force = ((forceValue != null) && forceValue);
-        operationService.deleteOperationHistory(operationHistoryToRemove.getId(), force, new AsyncCallback<Void>() {
-            public void onSuccess(Void result) {
-                sendSuccessResponse(request, response, operationHistoryToRemove, null);
-            }
+        operationService.deleteOperationHistories(new int[] { operationHistoryToRemove.getId() }, force,
+            new AsyncCallback<Void>() {
+                public void onSuccess(Void result) {
+                    sendSuccessResponse(request, response, operationHistoryToRemove, null);
+                }
 
-            public void onFailure(Throwable caught) {
-                throw new RuntimeException("Failed to delete " + operationHistoryToRemove + ".", caught);
-            }
-        });
+                public void onFailure(Throwable caught) {
+                    throw new RuntimeException("Failed to delete " + operationHistoryToRemove + ".", caught);
+                }
+            });
     }
 
     @Override

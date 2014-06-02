@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import static javax.ejb.TransactionAttributeType.NEVER;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +29,7 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -87,6 +90,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.ApplicationException;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
@@ -116,6 +120,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @EJB
     private ConfigurationManagerLocal configurationManager;
     @EJB
+    private OperationManagerLocal operationManager;
+    @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private ResourceManagerLocal resourceManager;
@@ -127,6 +133,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     @EJB
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<IntegerOptionItem> getResourceNameOptionItems(int groupId) {
         String queryName = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID;
@@ -142,6 +149,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results;
     }
 
+    @Override
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String notes)
         throws ScheduleException {
@@ -170,6 +178,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public ResourceOperationSchedule scheduleResourceOperationUsingCron(Subject subject, int resourceId,
         String operationName, String cronExpression, int timeout, Configuration parameters, String description)
         throws ScheduleException {
@@ -189,6 +198,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule) throws ScheduleException {
         JobTrigger jobTrigger = schedule.getJobTrigger();
         Trigger trigger = convertToTrigger(jobTrigger);
@@ -202,6 +212,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public int scheduleGroupOperation(Subject subject, GroupOperationSchedule schedule) throws ScheduleException {
         JobTrigger jobTrigger = schedule.getJobTrigger();
         Trigger trigger = convertToTrigger(jobTrigger);
@@ -226,6 +237,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         Configuration parameters, Trigger trigger, String notes) throws SchedulerException {
         Resource resource = getResourceIfAuthorized(subject, resourceId);
@@ -237,7 +249,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
+        jobDataMap.put(OperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
         putDisplayName(jobDataMap, resource.getResourceType().getId(), operationName);
 
         if (parameters != null) {
@@ -245,10 +257,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 entityManager.persist(parameters);
             }
 
-            jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
+            jobDataMap.putAsString(OperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
         }
 
-        jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
+        jobDataMap.putAsString(OperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
         jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID, resource.getId());
         jobDataMap.put("description", notes);
 
@@ -275,7 +287,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         entityManager.persist(schedule);
 
         // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
-        jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
+        jobDataMap.put(OperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
 
         // Create an IN_PROGRESS item
         ResourceOperationHistory history;
@@ -306,6 +318,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public GroupOperationSchedule scheduleGroupOperation(Subject subject, int compatibleGroupId,
         int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
         Trigger trigger, String notes) throws SchedulerException {
@@ -316,7 +329,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         validateOperationNameAndParameters(group.getResourceType(), operationName, parameters);
 
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
+        jobDataMap.put(OperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
         putDisplayName(jobDataMap, group.getResourceType().getId(), operationName);
 
         if (parameters != null) {
@@ -324,10 +337,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 entityManager.persist(parameters);
             }
 
-            jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
+            jobDataMap.putAsString(OperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
         }
 
-        jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
+        jobDataMap.putAsString(OperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
         jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_GROUP_ID, group.getId());
         jobDataMap.putAsString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE, haltOnFailure);
 
@@ -364,7 +377,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         entityManager.persist(schedule);
 
         // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
-        jobDataMap.put(ResourceOperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
+        jobDataMap.put(OperationJob.DATAMAP_INT_ENTITY_ID, String.valueOf(schedule.getId()));
 
         // now actually schedule it
         Date next = scheduler.scheduleJob(jobDetail, trigger);
@@ -375,6 +388,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return newSchedule;
     }
 
+    @Override
     public void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException {
         try {
             // checks for view permissions
@@ -405,6 +419,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
+    @Override
     public void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException {
         try {
             ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, resourceGroupId,
@@ -437,6 +452,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
+    @Override
     public void deleteOperationScheduleEntity(ScheduleJobId jobId) {
         try {
             OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
@@ -453,6 +469,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
+    @Override
     public void updateOperationScheduleEntity(ScheduleJobId jobId, long nextFireTime) {
         // sched will be managed - just setting the property is enough for it to be committed
         OperationScheduleEntity sched = findOperationScheduleEntity(jobId);
@@ -461,6 +478,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
+    @Override
     public List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId)
         throws Exception {
         Resource resource = getResourceIfAuthorized(subject, resourceId);
@@ -487,6 +505,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
+    @Override
     public List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception {
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
 
@@ -512,6 +531,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
+    @Override
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, int scheduleId) {
         OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
         try {
@@ -523,6 +543,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public GroupOperationSchedule getGroupOperationSchedule(Subject whoami, int scheduleId) {
         OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
         try {
@@ -534,19 +555,20 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         String jobName = jobDetail.getName();
         String jobGroup = jobDetail.getGroup();
         String description = jobDataMap.getString("description");
-        String operationName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME);
-        String displayName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
-        int subjectId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID);
+        String operationName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_NAME);
+        String displayName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
+        int subjectId = jobDataMap.getIntFromString(OperationJob.DATAMAP_INT_SUBJECT_ID);
         Configuration parameters = null;
 
-        if (jobDataMap.containsKey(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID)) {
-            int configId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID);
+        if (jobDataMap.containsKey(OperationJob.DATAMAP_INT_PARAMETERS_ID)) {
+            int configId = jobDataMap.getIntFromString(OperationJob.DATAMAP_INT_PARAMETERS_ID);
             parameters = entityManager.find(Configuration.class, configId);
         }
 
@@ -588,7 +610,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     private int getOperationScheduleEntityId(JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
-        Object entityIdObj = jobDataMap.get(ResourceOperationJob.DATAMAP_INT_ENTITY_ID);
+        Object entityIdObj = jobDataMap.get(OperationJob.DATAMAP_INT_ENTITY_ID);
         int entityId;
         if (entityIdObj != null) {
             // for jobs created using RHQ 4.0 or later, the map will contain an entityId entry
@@ -605,6 +627,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return entityId;
     }
 
+    @Override
     public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, String jobId)
         throws SchedulerException {
         JobId jobIdObject = new JobId(jobId);
@@ -616,17 +639,18 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return resourceOperationSchedule;
     }
 
+    @Override
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         String description = jobDetail.getDescription();
-        String operationName = jobDataMap.getString(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME);
-        String displayName = jobDataMap.getString(GroupOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
-        int subjectId = jobDataMap.getIntFromString(GroupOperationJob.DATAMAP_INT_SUBJECT_ID);
+        String operationName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_NAME);
+        String displayName = jobDataMap.getString(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
+        int subjectId = jobDataMap.getIntFromString(OperationJob.DATAMAP_INT_SUBJECT_ID);
         Configuration parameters = null;
 
-        if (jobDataMap.containsKey(GroupOperationJob.DATAMAP_INT_PARAMETERS_ID)) {
-            int configId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID);
+        if (jobDataMap.containsKey(OperationJob.DATAMAP_INT_PARAMETERS_ID)) {
+            int configId = jobDataMap.getIntFromString(OperationJob.DATAMAP_INT_PARAMETERS_ID);
             parameters = entityManager.find(Configuration.class, configId);
         }
 
@@ -689,6 +713,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return sched;
     }
 
+    @Override
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, String jobId) throws SchedulerException {
         JobId jobIdObject = new JobId(jobId);
         JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
@@ -699,6 +724,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return groupOperationSchedule;
     }
 
+    @Override
     public OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) {
         OperationHistory history = entityManager.find(OperationHistory.class, historyId);
 
@@ -722,6 +748,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return history;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByGroupHistoryId(Subject subject,
         int historyId, PageControl pc) {
@@ -742,6 +769,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pagedResourceHistories;
     }
 
+    @Override
     public OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId) {
         HistoryJobId jobIdObject = new HistoryJobId(historyJobId);
 
@@ -767,6 +795,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return history;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findCompletedResourceOperationHistories(Subject subject, int resourceId,
         Long beginDate, Long endDate, PageControl pc) {
@@ -804,6 +833,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pageList;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findPendingResourceOperationHistories(Subject subject, int resourceId,
         PageControl pc) {
@@ -835,6 +865,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pageList;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationHistory> findCompletedGroupOperationHistories(Subject subject, int groupId,
         PageControl pc) {
@@ -866,6 +897,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pageList;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationHistory> findPendingGroupOperationHistories(Subject subject, int groupId,
         PageControl pc) {
@@ -897,6 +929,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return pageList;
     }
 
+    @Override
     public OperationHistory updateOperationHistory(Subject subject, OperationHistory history) {
         /*
          * either the user wants to execute an operation on some resource or some group, or the OperationServerService
@@ -952,6 +985,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return history;
     }
 
+    @Override
     public void cancelOperationHistory(Subject subject, int historyId, boolean ignoreAgentErrors) {
         OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
 
@@ -1142,6 +1176,27 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results;
     }
 
+    @Override
+    @TransactionAttribute(NEVER)
+    public void deleteOperationHistories(Subject subject, int[] historyIds, boolean deleteEvenIfInProgress) {
+        List<String> errors = null;
+        for (int id : historyIds) {
+            try {
+                operationManager.deleteOperationHistory(subject, id, deleteEvenIfInProgress);
+            } catch (Exception e) {
+                if (null == errors) {
+                    errors = new ArrayList<String>();
+                }
+                errors.add("Could not delete operation history [" + id + "]: " + e.getMessage());
+            }
+        }
+        if (null != errors) {
+            throw new ApplicationException("Failed to delete [" + errors.size() + "] of [" + historyIds.length
+                + "] operation history records:" + errors);
+        }
+    }
+
+    @Override
     public void deleteOperationHistory(Subject subject, int historyId, boolean purgeInProgress) {
         OperationHistory doomedHistory = getOperationHistoryByHistoryId(subject, historyId); // this also checks authorization so we don't have to do it again
 
@@ -1149,7 +1204,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         if ((doomedHistory.getStatus() == OperationRequestStatus.INPROGRESS) && !purgeInProgress) {
             throw new IllegalStateException(
-                "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
+                "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory.getId());
         }
 
         if (doomedHistory instanceof GroupOperationHistory) {
@@ -1190,6 +1245,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<OperationDefinition> findSupportedResourceOperations(Subject subject, int resourceId,
         boolean eagerLoaded) {
@@ -1213,6 +1269,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<OperationDefinition> findSupportedResourceTypeOperations(Subject subject, int resourceTypeId,
         boolean eagerLoaded) {
@@ -1232,6 +1289,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     @SuppressWarnings({ "unchecked" })
     public List<OperationDefinition> findSupportedGroupOperations(Subject subject, int compatibleGroupId,
         boolean eagerLoaded) {
@@ -1255,6 +1313,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public OperationDefinition getSupportedResourceOperation(Subject subject, int resourceId, String operationName,
         boolean eagerLoaded) {
@@ -1279,6 +1338,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results.get(0);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public OperationDefinition getSupportedGroupOperation(Subject subject, int compatibleGroupId, String operationName,
         boolean eagerLoaded) {
@@ -1303,6 +1363,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results.get(0);
     }
 
+    @Override
     public boolean isResourceOperationSupported(Subject subject, int resourceId) {
         Resource resource;
 
@@ -1323,6 +1384,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return (defs != null) && (defs.size() > 0);
     }
 
+    @Override
     public boolean isGroupOperationSupported(Subject subject, int resourceGroupId) {
         ResourceGroup group;
 
@@ -1351,6 +1413,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return (defs != null) && (defs.size() > 0);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void checkForTimedOutOperations(Subject subject) {
         LOG.debug("Begin scanning for timed out operation histories");
@@ -1537,6 +1600,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         LOG.debug("Finished scanning for timed out operation histories");
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationLastCompletedComposite> findRecentlyCompletedResourceOperations(Subject subject,
         Integer resourceId, PageControl pageControl) {
@@ -1568,6 +1632,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return new PageList<ResourceOperationLastCompletedComposite>(results, totalCount, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationLastCompletedComposite> findRecentlyCompletedGroupOperations(Subject subject,
         PageControl pageControl) {
@@ -1596,6 +1661,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return new PageList<GroupOperationLastCompletedComposite>(results, totalCount, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(Subject subject,
         PageControl pageControl) {
@@ -1649,6 +1715,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return new PageList<ResourceOperationScheduleComposite>(results, totalCount, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationScheduleComposite> findCurrentlyScheduledGroupOperations(Subject subject,
         PageControl pageControl) {
@@ -1710,6 +1777,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      *
      * @param historyId id of a history object
      */
+    @Override
     public void checkForCompletedGroupOperation(int historyId) {
         OperationHistory history = entityManager.find(OperationHistory.class, historyId);
         if (!(history instanceof ResourceOperationHistory)) {
@@ -1884,6 +1952,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return GroupOperationJob.createJobGroupName(group);
     }
 
+    @Override
     @Nullable
     public ResourceOperationHistory getLatestCompletedResourceOperation(Subject subject, int resourceId) {
         LOG.debug("Getting latest completed operation for resource [" + resourceId + "]");
@@ -1903,6 +1972,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return result;
     }
 
+    @Override
     @Nullable
     public ResourceOperationHistory getOldestInProgressResourceOperation(Subject subject, int resourceId) {
         LOG.debug("Getting oldest in-progress operation for resource [" + resourceId + "]");
@@ -1922,6 +1992,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return result;
     }
 
+    @Override
     public OperationDefinition getOperationDefinition(Subject subject, int operationId) {
         OperationDefinition operationDefinition = entityManager.find(OperationDefinition.class, operationId);
 
@@ -1933,6 +2004,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationDefinition;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public OperationDefinition getOperationDefinitionByResourceTypeAndName(int resourceTypeId, String operationName,
         boolean eagerLoaded) throws OperationDefinitionNotFoundException {
@@ -1974,6 +2046,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationScheduleEntity;
     }
 
+    @Override
     public GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
         boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
         int repeatCount, int timeout, String description) throws ScheduleException {
@@ -2003,6 +2076,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public GroupOperationSchedule scheduleGroupOperationUsingCron(Subject subject, int groupId,
         int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
         String cronExpression, int timeout, String description) throws ScheduleException {
@@ -2024,6 +2098,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
+    @Override
     public PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2033,6 +2108,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2046,6 +2122,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return queryRunner.execute();
     }
 
+    @Override
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);

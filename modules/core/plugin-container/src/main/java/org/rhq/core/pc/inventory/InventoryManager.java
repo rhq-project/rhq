@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -198,7 +199,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * UUID to ResourceContainer map
      */
-    private final Map<String, ResourceContainer> resourceContainers = new ConcurrentHashMap<String, ResourceContainer>(100);
+    private final Map<String, ResourceContainer> resourceContainers = new ConcurrentHashMap<String, ResourceContainer>(
+        100);
 
     /**
      * Collection of event listeners to inform of changes to the inventory.
@@ -359,7 +361,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // find the discovery callbacks defined, if there are none, just return the results as-is
-        Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(context.getResourceType());
+        Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(
+            context.getResourceType());
         if (callbacks == null || callbacks.isEmpty()) {
             return results;
         }
@@ -370,7 +373,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
         ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
 
-        for (Iterator<DiscoveredResourceDetails> detailsIterator = results.iterator(); detailsIterator.hasNext(); ) {
+        for (Iterator<DiscoveredResourceDetails> detailsIterator = results.iterator(); detailsIterator.hasNext();) {
             DiscoveredResourceDetails details = detailsIterator.next();
             int callbackCount = 0;
             boolean stopProcessing = false; // if true, a callback told us he found a details that he modified and we should stop
@@ -380,38 +383,39 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 String pluginName = entry.getKey();
                 List<String> callbackClassNames = entry.getValue();
                 for (String className : callbackClassNames) {
-                    ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName, className);
+                    ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName,
+                        className);
                     try {
                         Thread.currentThread().setContextClassLoader(callback.getClass().getClassLoader());
-                        callbackResults= callback.discoveredResources(details);// inline in our calling thread - no time outs or anything; hopefully the plugin plays nice
+                        callbackResults = callback.discoveredResources(details);// inline in our calling thread - no time outs or anything; hopefully the plugin plays nice
                         callbackCount++;
                         if (log.isDebugEnabled()) {
                             log.debug("Discovery callback [{" + pluginName + "}" + className + "] returned ["
-                                    + callbackResults + "] #invocations=" + callbackCount);
+                                + callbackResults + "] #invocations=" + callbackCount);
                         }
                         switch (callbackResults) {
-                            case PROCESSED: {
-                                if (stopProcessing) {
-                                    abortDiscovery = true;
-                                    log.warn("Another discovery callback [{" + pluginName + "}" + className
-                                            + "] processed details [" + details
-                                            + "]. This is not allowed. Discovery will be aborted for that resource");
-                                } else {
-                                    stopProcessing = true;
-                                }
-                                break;
+                        case PROCESSED: {
+                            if (stopProcessing) {
+                                abortDiscovery = true;
+                                log.warn("Another discovery callback [{" + pluginName + "}" + className
+                                    + "] processed details [" + details
+                                    + "]. This is not allowed. Discovery will be aborted for that resource");
+                            } else {
+                                stopProcessing = true;
                             }
-                            case VETO: {
-                                vetoDiscovery = true;
-                                log.warn("Discovery callback [{" + pluginName + "}" + className
-                                        + "] vetoed resource [" + details
-                                        + "]. Discovery will be skipped for that resource and it will not be inventoried.");
-                                break;
-                            }
-                            default: {
-                                // callback left the details unprocessed, nothing to do.
-                                break;
-                            }
+                            break;
+                        }
+                        case VETO: {
+                            vetoDiscovery = true;
+                            log.warn("Discovery callback [{" + pluginName + "}" + className + "] vetoed resource ["
+                                + details
+                                + "]. Discovery will be skipped for that resource and it will not be inventoried.");
+                            break;
+                        }
+                        default: {
+                            // callback left the details unprocessed, nothing to do.
+                            break;
+                        }
                         }
                         // note that we keep going, even if we set stopProcessing is true - this is because we
                         // want to keep calling callbacks and check if they, too, think they can identify the details. If
@@ -752,7 +756,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             //make sure we have the full version of the resource
             ResourceContainer container = getResourceContainer(resource.getId());
-            if (container  == null) {
+            if (container == null) {
                 //don't bother doing anything
                 return new AvailabilityReport(changesOnly, getAgent().getName());
             }
@@ -3486,13 +3490,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         Configuration pluginConfiguration = resource.getPluginConfiguration();
         if (pluginConfiguration != null) {
-            pluginConfiguration.cleanoutRawConfiguration();
             compactConfiguration(pluginConfiguration);
         }
 
         Configuration resourceConfiguration = resource.getResourceConfiguration();
         if (resourceConfiguration != null) {
-            resourceConfiguration.cleanoutRawConfiguration();
 
             boolean persisted = ConfigurationCheckExecutor.persistConfigurationToFile(this, resource.getId(),
                 resourceConfiguration, log);
@@ -3514,7 +3516,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 prop.setName(prop.getName().intern());
             }
         }
-        config.resize();
+        resizeConfiguration(config);
+    }
+
+    static public void resizeConfiguration(Configuration config) {
+        Map<String, Property> tmp = new LinkedHashMap<String, Property>(config.getAllProperties().size());
+        tmp.putAll(config.getAllProperties());
+        config.setProperties(tmp.values());
     }
 
     /**

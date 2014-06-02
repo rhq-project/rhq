@@ -191,7 +191,7 @@ public class DatasourceJBossASClient extends JBossASClient {
 
     /**
      * Returns a ModelNode that can be used to create a datasource.
-     * Callers are free to tweek the datasource request that is returned,
+     * Callers are free to tweak the datasource request that is returned,
      * if they so choose, before asking the client to execute the request.
      *
      * @param name
@@ -216,7 +216,7 @@ public class DatasourceJBossASClient extends JBossASClient {
         String connectionUrlExpression, String driverName, String exceptionSorterClassName, int idleTimeoutMinutes,
         boolean jta, int minPoolSize, int maxPoolSize, int preparedStatementCacheSize, String securityDomain,
         String staleConnectionCheckerClassName, String transactionIsolation, String validConnectionCheckerClassName,
-        Map<String, String> connectionProperties) {
+        boolean validateOnMatch, Map<String, String> connectionProperties) {
 
         String jndiName = "java:jboss/datasources/" + name;
 
@@ -237,12 +237,13 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"transaction-isolation\" => \"%s\" " //
             + ", \"use-java-context\" => true " //
             + ", \"valid-connection-checker-class-name\" => \"%s\" " //
+            + ", \"validate-on-match\" => %s " //
             + "}";
 
         String dmr = String.format(dmrTemplate, blockingTimeoutWaitMillis, connectionUrlExpression, driverName,
             exceptionSorterClassName, idleTimeoutMinutes, jndiName, jta, minPoolSize, maxPoolSize,
             preparedStatementCacheSize, securityDomain, staleConnectionCheckerClassName, transactionIsolation,
-            validConnectionCheckerClassName);
+            validConnectionCheckerClassName, validateOnMatch);
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name);
         final ModelNode request1 = ModelNode.fromString(dmr);

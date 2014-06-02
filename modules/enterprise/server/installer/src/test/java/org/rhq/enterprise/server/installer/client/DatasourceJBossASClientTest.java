@@ -85,7 +85,7 @@ public class DatasourceJBossASClientTest {
             "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, false, 2, 5, 75,
             "RHQDSSecurityDomain", "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
             "TRANSACTION_READ_COMMITTED", "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker",
-            connProps);
+            true, connProps);
 
         System.out.println("==============\n" + request);
 

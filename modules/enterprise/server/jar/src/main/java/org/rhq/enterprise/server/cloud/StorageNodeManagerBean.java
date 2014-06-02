@@ -54,6 +54,7 @@ import javax.persistence.TypedQuery;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.net.InetAddresses;
@@ -92,6 +93,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.collection.ArrayUtils;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -171,6 +173,42 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
+
+    @Override
+    public void updateAddress(int storageNodeId, String address) {
+        Preconditions.checkArgument(!StringUtil.isEmpty(address), "The address cannot be empty");
+
+        StorageNode storageNode = entityManager.find(StorageNode.class, storageNodeId);
+        if (storageNode == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("No address update will be performed. No storage node with id " + storageNodeId + " found.");
+            }
+        } else {
+            Preconditions.checkArgument(isAddressEditable(storageNode), storageNode + " cannot have its address " +
+                "directly updated since it is already linked to a resource.");
+
+            if (storageNode.getAddress().equals(address)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No address update necessary for " + storageNode + " since " + address + " is the same");
+                }
+            } else {
+                if (log.isInfoEnabled()) {
+                    log.info("Updating address of " + storageNode + " to " + address);
+                    storageNode.setAddress(address);
+                    entityManager.merge(storageNode);
+                }
+            }
+        }
+    }
+
+    /**
+     * We will only allow the address to be edited for a node that is not yet managed since we do yet have support
+     * for all of the changes necessary with a managed node. See https://bugzilla.redhat.com/show_bug.cgi?id=1102885
+     * for details.
+     */
+    private boolean isAddressEditable(StorageNode storageNode) {
+        return storageNode.getOperationMode() == OperationMode.INSTALLED && storageNode.getResource() == null;
+    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)

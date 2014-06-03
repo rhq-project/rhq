@@ -83,7 +83,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     private final String SQL_REINDEX = "REINDEX TABLE {0}";
 
-    private final String SQL_REBUILD = "ALTER INDEX {0} REBUILD UNRECOVERABLE";
+    private final String SQL_REBUILD = "ALTER INDEX {0} REBUILD";
 
     private final String[] TABLES_TO_VACUUM = { "RHQ_RESOURCE", "RHQ_CONFIG", "RHQ_CONFIG_PROPERTY", "RHQ_AGENT" };
 
@@ -371,7 +371,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         case STORAGE_AUTOMATIC_DEPLOYMENT:
         case STORAGE_PASSWORD:
         case STORAGE_USERNAME:
-            return true;        
+            return true;
         default:
             return false;
         }
@@ -806,7 +806,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             return false; // paranoid catch-all
         }
     }
-    
+
     @Override
     public boolean isLoginWithoutRolesEnabled() {
         try {

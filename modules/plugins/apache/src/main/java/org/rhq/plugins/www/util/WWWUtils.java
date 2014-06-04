@@ -259,6 +259,30 @@ public class WWWUtils {
         return ret;
     }
 
+
+
+    /**
+     * Get the response code.
+     *
+     * @param httpURL a http or https URL to get the header from
+     *
+     * @return the response code to actually trigger sending the request.
+     */
+    public static int getResponseCode(URL httpURL) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(1000);
+
+            connection.connect();
+            // Get the response code to actually trigger sending the request.
+            return connection.getResponseCode();
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
     private static TrustManager NO_OP_TRUST_MANAGER = new X509TrustManager() {
         @Override
         public X509Certificate[] getAcceptedIssuers() {

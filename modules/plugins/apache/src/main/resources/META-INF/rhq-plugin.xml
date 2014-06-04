@@ -821,11 +821,10 @@
          <service name="Location" class="ApacheLocationComponent"  discovery="ApacheLocationDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
-                                   description="Does the name of this location denote a regular expression?"/>
+                                   description="Does the name of this location denote a regular expression?"/>      
+                <c:simple-property name="url" displayName="Location url" type="string" default="" readOnly="true"/>    
+                <c:simple-property name="handler" displayName="Location handler" type="string" default="" readOnly="true"/>            
             </plugin-configuration>
-            <resource-configuration>
-                <c:simple-property name="regexp" type="boolean" default="false"/>                
-            </resource-configuration>
          </service>
 
       </service>

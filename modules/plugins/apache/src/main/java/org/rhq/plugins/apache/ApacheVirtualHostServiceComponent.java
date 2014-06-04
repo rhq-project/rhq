@@ -1,4 +1,4 @@
-/*
+/* 
  * RHQ Management Platform
  * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
@@ -614,8 +614,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             return tree.getRootNode();
         }
 
-        final List<ApacheDirective> allVhosts  = tree.findByName("<VirtualHost", true);
-        
+        final List<ApacheDirective> allVhosts  = tree.search("/<VirtualHost");
+
         //transform the SNMP index into the index of the vhost
         int idx = allVhosts.size() - snmpIdx + 1;
 
@@ -802,6 +802,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public boolean isAugeasEnabled() {
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
         return parent.isAugeasEnabled();
+    }
+
+    public URL getURL() {
+        return url;
     }
 
 }

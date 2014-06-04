@@ -27,16 +27,17 @@ public class ApacheLocationDiscoveryComponent implements ResourceDiscoveryCompon
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
     public static final String LOCATION_DIRECTIVE = "<Location";
+    private static final String HANDLER_DIRECTIVE = "SetHandler";
 
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
-        ApacheDirective vhost = context.getParentResourceComponent().getDirective();
+        ApacheDirective vhost = context.getParentResourceComponent().getDirective(true);
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         tree.setRootNode(vhost);
-        final List<ApacheDirective> allDirectories = tree.search("/" + LOCATION_DIRECTIVE);
+        final List<ApacheDirective> allDirectories = tree.search(LOCATION_DIRECTIVE);
         ResourceType resourceType = context.getResourceType();
         for (ApacheDirective apacheDirective : allDirectories) {
             String locationParam;
@@ -52,7 +53,16 @@ public class ApacheLocationDiscoveryComponent implements ResourceDiscoveryCompon
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
             pluginConfiguration.put(new PropertySimple(ApacheLocationComponent.REGEXP_PROP, isRegexp));
+            
+            List<ApacheDirective> handlers = apacheDirective.getChildByName(HANDLER_DIRECTIVE);
+            if(handlers.size() == 1) {
+                pluginConfiguration.put(new PropertySimple(ApacheLocationComponent.HANDLER_PROP, handlers.get(0).getValues().get(0)));
+            }
+
             String resourceName = AugeasNodeValueUtil.unescape(locationParam);
+            if(!isRegexp && context.getParentResourceComponent().getURL() !=null) {
+                pluginConfiguration.put(new PropertySimple(ApacheLocationComponent.URL_PROP, context.getParentResourceComponent().getURL() + resourceName));
+            }
 
             int index = 1;
             for (DiscoveredResourceDetails detail : discoveredResources) {

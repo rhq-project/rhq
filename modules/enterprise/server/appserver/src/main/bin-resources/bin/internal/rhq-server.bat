@@ -9,60 +9,22 @@ rem RHQ Server in a console window. The RHQ Server is actually wrapped
 rem by the Java Service Wrapper (JSW) and it is the JSW that is the actual
 rem executable that is registered as the Windows Service.
 rem
-rem This script is customizable by setting the following environment variables:
-rem
-rem    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
-rem                       messages.
-rem                       If not set or set to "false", debug is turned off.
-rem
-rem    RHQ_SERVER_HOME - Defines where the Server's home install directory is.
-rem                      If not defined, it will be assumed to be the parent
-rem                      directory of the directory where this script lives.
-rem
-rem    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
-rem                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
-rem                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
-rem                    JAVA_HOME will be used.
-rem
-rem    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
-rem                             use. If this is set, RHQ_JAVA_HOME is ignored.
-rem                             If this is not set, then $RHQ_JAVA_HOME/bin/java
-rem                             is used. If this and RHQ_JAVA_HOME are not set,
-rem                             then $JAVA_HOME/bin/java will be used.
-rem
-rem    RHQ_SERVER_INSTANCE_NAME - The name of the Windows Service; it must
-rem                               conform to the Windows Service naming
-rem                               conventions. By default, this is the
-rem                               name "rhqserver-%COMPUTERNAME%"
-rem
-rem    RHQ_SERVER_WRAPPER_LOG_DIR_PATH - The full path to the location where
-rem                                      the wrapper log file will go.
-rem
-rem    RHQ_SERVER_RUN_AS - if defined, then when the Windows Service is
-rem                        installed, the value is the domain\username of the
-rem                        user that the Windows Service will run as. It is
-rem                        required to also set RHQ_SERVER_PASSWORD for the
-rem                        specified user account.
-rem                       
-rem    RHQ_SERVER_RUN_AS_ME - if defined, then when the Windows Service is
-rem                           installed, the domain\username of the user that the Windows
-rem                           Service will run as will be the current user (.\%USERNAME%).
-rem                           This takes precedence over RHQ_SERVER_RUN_AS. It is
-rem                           required to also set RHQ_SERVER_PASSWORD for the
-rem                           current user account.
-rem                       
-rem Note that you cannot define custom Java VM parameters or command line
-rem arguments to pass to the RHQ Server standalone.sh.  If you wish to pass in 
-rem specific arguments, modify the rhq-server-wrapper.conf file.
-rem
-rem This script does not use the built-in JBossAS run.bat. 
-rem ===========================================================================
+rem This script is customized by the settings in rhq-server-env.bat.  The options
+rem set there will be applied to this script.  It is not recommended to edit this
+rem script directly.
+rem =============================================================================
 
 setlocal enabledelayedexpansion
 
 rem if debug variable is set, it is assumed to be on, unless its value is false
 if "%RHQ_SERVER_DEBUG%" == "false" (
    set RHQ_SERVER_DEBUG=
+)
+
+if exist "..\rhq-server-env.bat" (
+   call "..\rhq-server-env.bat" %*
+) else (
+   if defined RHQ_SERVER_DEBUG echo Failed to find rhq-server-env.bat. Continuing with current environment...
 )
 
 rem ----------------------------------------------------------------------
@@ -137,10 +99,18 @@ set RHQ_SERVER_WRAPPER_DIR_PATH=%RHQ_SERVER_BIN_DIR_PATH%\..\wrapper
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_DIR_PATH: %RHQ_SERVER_WRAPPER_DIR_PATH%
 
 rem ----------------------------------------------------------------------
-rem The Windows OS platform name is also the wrapper subdirectory name.
+rem If this is 64 bit windows and a 64-Bit JVM then run the 64 bit wrapper,
+rem otherwise 32-bit.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_OS_PLATFORM=windows-x86_32
+if /I "%PROCESSOR_ARCHITECTURE:~-2%"=="64" set RHQ_SERVER_OS_PLATFORM=windows-x86_64
+if /I "%PROCESSOR_ARCHITEW6432:~-2%"=="64" set RHQ_SERVER_OS_PLATFORM=windows-x86_64
+rem For 64 bit OS, ensure it's a 64 bit JVM
+"%RHQ_JAVA_EXE_FILE_PATH%" -version 2>>&1 | findstr /I /C:"64-Bit" >>nul:
+if errorlevel 1 (
+    set RHQ_SERVER_OS_PLATFORM=windows-x86_32
+)
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_OS_PLATFORM: %RHQ_SERVER_OS_PLATFORM%
 
 rem ----------------------------------------------------------------------

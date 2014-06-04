@@ -25,28 +25,40 @@ package org.rhq.coregui.client.gwt;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
+import org.rhq.core.domain.install.remote.CustomAgentInstallData;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
+import org.rhq.core.domain.install.remote.SSHSecurityException;
 
 /**
  * Provides methods to remotely install, start and stop agents over SSH.
- * 
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
 public interface RemoteInstallGWTService extends RemoteService {
 
-    // --- RemoteInstallManagerRemote
-    boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
+    void checkSSHConnection(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException;
 
-    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
+    boolean agentInstallCheck(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException;
 
-    String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
+    AgentInstallInfo installAgent(RemoteAccessInfo remoteAccessInfo, CustomAgentInstallData customData)
+        throws SSHSecurityException, RuntimeException;
 
-    String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
+    String uninstallAgent(RemoteAccessInfo remoteAccessInfo) throws SSHSecurityException, RuntimeException;
 
-    String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws RuntimeException;
+    String startAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException;
 
-    String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
+    String stopAgent(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException;
 
-    String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) throws RuntimeException;
+    String agentStatus(RemoteAccessInfo remoteAccessInfo, String agentInstallPath) throws SSHSecurityException,
+        RuntimeException;
+
+    String findAgentInstallPath(RemoteAccessInfo remoteAccessInfo, String parentPath) throws SSHSecurityException,
+        RuntimeException;
+
+    String[] remotePathDiscover(RemoteAccessInfo remoteAccessInfo, String parentPath) throws SSHSecurityException,
+        RuntimeException;
 }

@@ -1,0 +1,125 @@
+<html class="login-pf" xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- this forces us to emulate IE8 "quirks" mode regardless of IE browser version.  It:
+         1) Follows the SmartGWT recommendation of not declaring a DOCTYPE and instead using these meta elements.
+            http://forums.smartclient.com/showthread.php?t=15973
+         2) solves initial app load issues that we experienced on some XP and Vista/Windows7  flavors.
+    -->
+    <meta http-equiv="X-UA-Compatible" content="IE=9"/>
+
+    <!-- support internationalized characters -->
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
+
+    <!-- PatternFly -->
+    <script src="js/jquery-login-page-only-1.11.1.min.js"></script>
+    <link href="css/patternfly.min.css" rel="stylesheet" media="screen, print"/>
+    <link href="css/patternfly-custom.css" rel="stylesheet" media="screen, print"/>
+    
+    <script src="js/bootstrap.min.js"></script>
+
+    <!--[if lt IE 9]><script src="js/respond.min.js"></script><![endif]-->
+
+    <title>RHQ Login Page</title>
+    <link rel="icon" type="image/ico" href="images/favicon.ico"/>
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+    <script type="text/javascript">
+        var isomorphicDir = "org.rhq.coregui.CoreGUI/sc/";
+    </script>
+</head>
+<body>
+
+<script type="text/javascript" language="javascript"
+        src="org.rhq.coregui.CoreGUI/org.rhq.coregui.CoreGUI.nocache.js"></script>
+
+<noscript>
+    <h1>Your browser does not support JavaScript!</h1>
+    <h2>Please turn it on or use a different browser.</h2>
+</noscript>
+
+<!-- PatternFly -->
+<div id="patternFlyLogin">
+    <span id="badge">
+    <!--[if !IE]> --><img src="img/logo.svg" alt="logo" /><!-- <![endif]-->
+    <!--[if lte IE 8]><img src="img/logo.png" alt="logo" /><![endif]-->
+    <!--[if gt IE 8]><img src="img/logo.svg" alt="logo" /><![endif]-->
+    </span>
+    <div class="col-sm-12 rhqLabel">
+      <h2>Log in to <strong>RHQ</strong></h2>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <br/>
+        </div>
+        <div id="errorFeedback" class="hideError">
+          <p>
+            <strong id="loginError">Invalid username or password.</strong><br/>Please, fill in the fields again.
+          </p>
+        </div>
+
+        <div class="col-sm-7 col-md-6 col-lg-5 login">
+          <form action="login" id="loginForm" autocomplete="on" class="form-horizontal" role="form">
+            <div class="form-group">
+              <label for="inputUsername" class="col-sm-2 col-md-2 control-label">Username</label>
+              <div class="col-sm-10 col-md-10">
+                <input type="text" class="form-control" id="inputUsername" placeholder="" tabindex="1" autofocus>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="inputPassword" class="col-sm-2 col-md-2 control-label">Password</label>
+              <div class="col-sm-10 col-md-10">
+                <input type="password" class="form-control" id="inputPassword" placeholder="" tabindex="2" >
+              </div>
+            </div>
+            <div class="form-group">
+              
+              <div class="col-xs-8 col-sm-offset-2 col-sm-6 col-md-offset-2 col-md-6" >
+              </div>
+              
+              <div class="col-xs-4 col-sm-4 col-md-4 submit">
+                <button id="loginSubmit" type="submit" class="btn btn-primary btn-lg" tabindex="4">Log In</button>
+              </div>
+            </div>
+          </form>
+        </div><!--/.col-*-->
+        <div class="col-sm-5 col-md-6 col-lg-7 details">
+          <p><strong>Welcome to RHQ ${project.version}!</strong><br/>
+          RHQ is an enterprise management solution for JBoss middleware projects, Tomcat, Apache Web Server, and numerous other server-side applications.<br/></p>
+        </div><!--/.col-*-->
+      </div><!--/.row-->
+    </div><!--/.container-->
+</div>
+
+<!-- check if CAPS LOCK is on -->
+<script type="text/javascript" src="js/jquery.capslockstate.js"></script>
+<script type="text/javascript" language="javascript">
+<!--
+$(document).ready(function() {
+  $(window).capslockstate();
+  $(window).bind("capsOn", function(event) {
+    if ($("#inputPassword:focus").length > 0) {
+      $('#inputPassword').addClass("caps");
+    }
+  });
+  $("#inputPassword").bind("focusin", function(event) {
+    if ($(window).capslockstate("state") === true) {
+      $('#inputPassword').addClass("caps");
+    }
+  });
+  $(window).bind("capsOff capsUnknown", function(event) {
+    $('#inputPassword').removeClass("caps");
+  });
+  $("#inputPassword").bind("focusout", function(event) {
+    $('#inputPassword').removeClass("caps");
+  });
+});
+// -->
+</script>
+
+
+<!-- GWT iframe -->
+<iframe src="javascript:''" id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
+
+</body>
+</html>

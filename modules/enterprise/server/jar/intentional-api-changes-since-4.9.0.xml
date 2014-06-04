@@ -113,4 +113,11 @@
     <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
   </difference>
 
+  <difference>
+    <className>org/rhq/enterprise/server/measurement/CallTimeDataManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.util.PageList findCallTimeDataRawForResource(org.rhq.core.domain.auth.Subject, int, long, long, org.rhq.core.domain.util.PageControl)</method>
+    <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
+  </difference>
+
 </differences>

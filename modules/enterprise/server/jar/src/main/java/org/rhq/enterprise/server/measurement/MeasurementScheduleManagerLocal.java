@@ -301,4 +301,5 @@ public interface MeasurementScheduleManagerLocal extends MeasurementScheduleMana
      * @param scheduleSubQuery the subquery indicating which schedules changed
      */
     void notifyAgentsOfScheduleUpdates(EntityContext entityContext, String scheduleSubQuery);
+
 }

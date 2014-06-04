@@ -28,22 +28,29 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This job purges plugins from the database asynchronously. It queries for plugins that are scheduled to be purged.
- * A plugin is considered a candidate for purging when its status is <code>DELETED</code> and its <code>ctime</code>
- * is set to {@link Plugin#PURGED}. A plugin is only purged when all of the resource types defined by the plugin have
- * already been purged. Puring resource types is performed by {@link PurgeResourceTypesJob}.
+ * A plugin is considered a candidate for purging when its status is <code>DELETED</code>, all its resource types
+ * are deleted and all the servers in HA cloud have acknowledged they know about the plugin deletion.
+ * Purging resource types is performed by {@link PurgeResourceTypesJob} independently of this job.
  */
 public class PurgePluginsJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(PurgePluginsJob.class);
 
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
+        purgeAgentPlugins();
+        purgeServerPlugins();
+    }
+
+    private void purgeAgentPlugins() {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-        List<Plugin> plugins = pluginMgr.findPluginsMarkedForPurge();
+        List<Plugin> plugins = pluginMgr.findAllDeletedPlugins();
         List<Plugin> pluginsToPurge = new ArrayList<Plugin>();
 
         for (Plugin plugin : plugins) {
@@ -57,8 +64,15 @@ public class PurgePluginsJob extends AbstractStatefulJob {
 
         if (!pluginsToPurge.isEmpty()) {
             pluginMgr.purgePlugins(pluginsToPurge);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Purged " + pluginsToPurge.size() + " plugins");
+        }
+    }
+
+    private void purgeServerPlugins() {
+        ServerPluginsLocal pluginMgr = LookupUtil.getServerPlugins();
+
+        for (ServerPlugin p : pluginMgr.getDeletedPlugins()) {
+            if (pluginMgr.isReadyForPurge(p.getId())) {
+                pluginMgr.purgeServerPlugin(p.getId());
             }
         }
     }

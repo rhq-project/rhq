@@ -42,60 +42,54 @@ public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends Abstra
 
         if (alertConditionOperator == AlertConditionOperator.EQUALS) {
             return providedValue.equals(alertConditionValue);
+
         } else if (alertConditionOperator == AlertConditionOperator.CHANGES) {
-            Boolean results = null;
+            boolean result;
 
-            if ((results == null) && (alertConditionValue.equals(providedValue) == false)) {
-                results = Boolean.TRUE;
-            }
-
-            if (results == null) {
-                results = Boolean.FALSE;
+            if (null == alertConditionValue) {
+                result = (null != providedValue);
+            } else {
+                result = !alertConditionValue.equals(providedValue);
             }
 
             alertConditionValue = providedValue;
 
-            return results;
+            return result;
+
         } else if (alertConditionOperator == AlertConditionOperator.LESS_THAN_OR_EQUAL_TO) {
             return (providedValue.ordinal() <= alertConditionValue.ordinal());
+
         } else if (alertConditionOperator == AlertConditionOperator.LESS_THAN) {
             return (providedValue.ordinal() < alertConditionValue.ordinal());
+
         } else if (alertConditionOperator == AlertConditionOperator.GREATER_THAN) {
             return (providedValue.ordinal() > alertConditionValue.ordinal());
+
         } else if (alertConditionOperator == AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO) {
             return (providedValue.ordinal() >= alertConditionValue.ordinal());
+
         } else if (alertConditionOperator == AlertConditionOperator.CHANGES_TO) {
-            Boolean results = null;
+            boolean result;
 
             // if the last value recorded doesn't equal the operator option, but the current value does
-            if ((results == null) && (alertConditionOperatorOption.equals(alertConditionValue) == false)
-                && (alertConditionOperatorOption.equals(providedValue) == true)) {
-                results = Boolean.TRUE;
-            }
-
-            if (results == null) {
-                results = Boolean.FALSE;
-            }
+            result = !alertConditionOperatorOption.equals(alertConditionValue)
+                && alertConditionOperatorOption.equals(providedValue);
 
             alertConditionValue = providedValue;
 
-            return results;
+            return result;
+
         } else if (alertConditionOperator == AlertConditionOperator.CHANGES_FROM) {
-            Boolean results = null;
+            Boolean result;
 
             // if the last value recorded equals the operator option, but the current value does not
-            if ((alertConditionOperatorOption.equals(alertConditionValue) == true)
-                && (alertConditionOperatorOption.equals(providedValue) == false)) {
-                results = Boolean.TRUE;
-            }
-
-            if (results == null) {
-                results = Boolean.FALSE;
-            }
+            result = alertConditionOperatorOption.equals(alertConditionValue)
+                && !alertConditionOperatorOption.equals(providedValue);
 
             alertConditionValue = providedValue;
 
-            return results;
+            return result;
+
         } else {
             throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName() + " does not yet support "
                 + alertConditionOperator);

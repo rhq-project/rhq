@@ -201,6 +201,8 @@ import org.rhq.enterprise.server.support.SupportManagerBean;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
 import org.rhq.enterprise.server.sync.SynchronizationManagerBean;
 import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
+import org.rhq.enterprise.server.system.SystemInfoManagerBean;
+import org.rhq.enterprise.server.system.SystemInfoManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.tagging.TagManagerBean;
@@ -623,6 +625,10 @@ public final class LookupUtil {
 
     public static StartupLocal getStartupLocal() {
         return lookupLocal(StartupBean.class);
+    }
+
+    public static SystemInfoManagerLocal getSystemInfoManager() {
+        return lookupLocal(SystemInfoManagerBean.class);
     }
 
     public static CoreServerMBean getCoreServer() {

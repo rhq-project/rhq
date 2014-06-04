@@ -33,11 +33,13 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.PermissionsLoadedListener;
 import org.rhq.coregui.client.PermissionsLoader;
 import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.components.table.AbstractTableAction;
 import org.rhq.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.coregui.client.components.table.IconField;
 import org.rhq.coregui.client.components.table.TableActionEnablement;
 import org.rhq.coregui.client.components.table.TableSection;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
@@ -65,6 +67,28 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth(50);
+
+        IconField originField = new IconField("cannedExpression");
+        originField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String icon = "global/User_16.png";
+                if (value!=null) {
+                    icon = "global/Plugin_16.png";
+                }
+                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+            }
+        });
+        originField.setShowHover(true);
+        originField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String expr = record.getAttribute("cannedExpression");
+                String displayName = MSG.view_dynagroup_originHoverUser();
+                if (expr!=null) {
+                    displayName = MSG.view_dynagroup_originHoverPlugin(expr.replaceAll(":.*", ""));
+                }
+                return displayName;
+            }
+        });
 
         ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 150);
         nameField.setCellFormatter(new EscapedHtmlCellFormatter());
@@ -122,7 +146,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             }
         });
 
-        setListGridFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
+        setListGridFields(idField, originField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
         addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(

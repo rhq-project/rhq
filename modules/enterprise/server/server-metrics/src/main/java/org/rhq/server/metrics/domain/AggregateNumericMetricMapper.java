@@ -66,18 +66,21 @@ public class AggregateNumericMetricMapper implements ResultSetMapper<AggregateNu
                     for (int i = 0; i < row.length; i += 3) {
                         AggregateNumericMetric metric = new AggregateNumericMetric();
                         metric.setScheduleId(row[i].getInt(0));
+                        ColumnMetadata maxMetadata = new ColumnMetadata(row[i].getInt(4), row[i].getLong(5));
+                        metric.setMaxColumnMetadata(maxMetadata);
                         metric.setTimestamp(row[i].getDate(1).getTime());
                         metric.setMax(row[i].getDouble(3));
-                        metric.setMin(row[i + 1].getDouble(3));
-                        metric.setAvg(row[i + 2].getDouble(3));
+                        if (row[i + 1] != null) {
+                            metric.setMin(row[i + 1].getDouble(3));
+                            ColumnMetadata minMetadata = new ColumnMetadata(row[i + 1].getInt(4), row[i + 1].getLong(5));
+                            metric.setMinColumnMetadata(minMetadata);
 
-                        ColumnMetadata maxMetadata = new ColumnMetadata(row[i].getInt(4), row[i].getLong(5));
-                        ColumnMetadata minMetadata = new ColumnMetadata(row[i + 1].getInt(4), row[i + 1].getLong(5));
-                        ColumnMetadata avgMetadata = new ColumnMetadata(row[i + 2].getInt(4), row[i + 2].getLong(5));
-
-                        metric.setAvgColumnMetadata(avgMetadata);
-                        metric.setMaxColumnMetadata(maxMetadata);
-                        metric.setMinColumnMetadata(minMetadata);
+                            if (row[i + 2] != null) {
+                                metric.setAvg(row[i + 2].getDouble(3));
+                                ColumnMetadata avgMetadata = new ColumnMetadata(row[i + 2].getInt(4), row[i + 2].getLong(5));
+                                metric.setAvgColumnMetadata(avgMetadata);
+                            }
+                        }
 
                         metrics.add(metric);
                     }
@@ -117,8 +120,13 @@ public class AggregateNumericMetricMapper implements ResultSetMapper<AggregateNu
                         metric.setScheduleId(row[i].getInt(0));
                         metric.setTimestamp(row[i].getDate(1).getTime());
                         metric.setMax(row[i].getDouble(3));
-                        metric.setMin(row[i + 1].getDouble(3));
-                        metric.setAvg(row[i + 2].getDouble(3));
+                        if (row[i + 1] != null) {
+                            metric.setMin(row[i + 1].getDouble(3));
+
+                            if (row[i + 2] != null) {
+                                metric.setAvg(row[i + 2].getDouble(3));
+                            }
+                        }
 
                         metrics.add(metric);
                     }

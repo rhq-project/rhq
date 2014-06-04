@@ -111,6 +111,8 @@ public interface ResourceManagerRemote {
      *
      * @param user the logged in user
      * @param doomedAgent the agent to be deleted and whose resources are to be uninventoried
+     *
+     * @since 4.7
      */
     void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent);
 
@@ -119,6 +121,8 @@ public interface ResourceManagerRemote {
      *
      * @param subject the logged in user
      * @param resourceTypeId identifies the type whose resources are to be uninventoried
+     *
+     * @since 4.7
      */
     void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId);
 

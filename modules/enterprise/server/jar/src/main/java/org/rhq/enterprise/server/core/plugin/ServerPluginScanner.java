@@ -41,6 +41,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -51,6 +52,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
@@ -124,7 +126,7 @@ public class ServerPluginScanner {
                 try {
                     log.info("Plugin file [" + undeployedFile + "] has been undeployed. It will be deleted.");
                     List<Integer> id = Arrays.asList(undeployedPlugin.getId());
-                    serverPluginsManager.undeployServerPlugins(LookupUtil.getSubjectManager().getOverlord(), id);
+                    serverPluginsManager.deleteServerPlugins(LookupUtil.getSubjectManager().getOverlord(), id);
                 } finally {
                     this.serverPluginsOnFilesystem.remove(undeployedFile);
                 }
@@ -195,7 +197,12 @@ public class ServerPluginScanner {
             log.debug("Scan detected server plugin [" + updatedFile + "]...");
             this.scanned.add(updatedFile);
         }
-        return;
+
+        ServerPluginsLocal pluginMgr = LookupUtil.getServerPlugins();
+        ServerManagerLocal serverMgr = LookupUtil.getServerManager();
+        Server thisServer = serverMgr.getServer();
+
+        pluginMgr.acknowledgeDeletedPluginsBy(thisServer.getId());
     }
 
     /**

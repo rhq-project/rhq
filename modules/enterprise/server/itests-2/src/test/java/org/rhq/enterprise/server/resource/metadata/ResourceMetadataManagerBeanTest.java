@@ -85,7 +85,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
-        // create the initial type that has bundle and drift definitions 
+        // create the initial type that has bundle and drift definitions
         createPlugin("test-plugin.jar", "1.0", "remove_bundle_drift_config_v1.xml");
 
         // make sure the drift definition was persisted, and remember the type
@@ -413,7 +413,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             resourcesServiceE1.get(0));
         List<Resource> resourcesServiceE3 = createResources(2, "RemoveTypesPlugin", "ServiceE3",
             resourcesServiceE2.get(0));
-        // Intentionally greater than 200 to test an issue with Criteria fetch defaults 
+        // Intentionally greater than 200 to test an issue with Criteria fetch defaults
         List<Resource> resourcesServiceE4 = createResources(205, "RemoveTypesPlugin", "ServiceE4",
             resourcesServiceE3.get(0));
 
@@ -528,15 +528,6 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The process scans should have been deleted", 0, processScans.size());
     }
 
-    @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
-        "RemoveTypes" })
-    public void deleteSubcategories() {
-        List<?> subcategories = getEntityManager()
-            .createQuery("from ResourceSubCategory r where r.name = :name1 or r.name = :name2 or r.name = :name3")
-            .setParameter("name1", "ServerC.Category1").setParameter("name2", "ServerC.Category2")
-            .setParameter("name3", "ServerC.NestedCategory1").getResultList();
-        assertEquals("The subcategories should have been deleted", 0, subcategories.size());
-    }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
         "RemoveTypes" })

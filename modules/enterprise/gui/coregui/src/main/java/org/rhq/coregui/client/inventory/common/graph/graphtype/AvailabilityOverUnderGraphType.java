@@ -115,6 +115,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             return MSG.common_status_avail_disabled();
         case UNKNOWN:
         default:
+            // Only stored avail types are relevant, MISSING, for example, is never stored
             return MSG.common_status_avail_unknown();
         }
     }
@@ -132,6 +133,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             return MSG.common_status_avail_group_mixed();
         case DOWN:
         default:
+            // Only stored avail types are relevant, MISSING, for example, is never stored
             return MSG.common_status_avail_down();
         }
     }
@@ -165,7 +167,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
         var availabilityGraph = function () {
 
-            var margin = {top: 5, right: 5, bottom: 5, left: 40},
+            var margin = {top: 5, right: 5, bottom: 5, left: 90},
                     barOffset = 10,
                     width = 750 - margin.left - margin.right + barOffset,
                     height = 40 - margin.top - margin.bottom;

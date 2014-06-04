@@ -486,11 +486,18 @@ public class RemoteClient extends AbstractRhqFacade {
      */
     private void checkServerSupported(ProductInfo serverVersionInfo) throws IllegalStateException {
         boolean supported;
-        String clientVersionString;
         String serverVersionString;
+        final String propName = "rhq.client.version-check";
+        final String versionCheckProp = System.getProperty(propName, "true");
 
+        if (!versionCheckProp.equalsIgnoreCase("true")) {
+            return;
+        }
+        String clientVersionString = System.getProperty("rhq.client.version", null);
         try {
-            clientVersionString = getClass().getPackage().getImplementationVersion();
+            if (clientVersionString == null) {
+                clientVersionString = getClass().getPackage().getImplementationVersion();
+            }
             if (clientVersionString == null) {
                 clientVersionString = " undefined ";
             }
@@ -505,15 +512,7 @@ public class RemoteClient extends AbstractRhqFacade {
         if (!supported) {
             String errMsg = "This client [" + clientVersionString + "] does not support the remote server ["
                 + serverVersionString + "]";
-
-            final String propName = "rhq.client.version-check";
-            String versionCheckProp = System.getProperty(propName, "true");
-            if (versionCheckProp.equalsIgnoreCase("true")) {
-                throw new IllegalStateException(errMsg);
-            } else {
-                LOG.error(errMsg + " - '" + propName
-                    + "' was not set to true so this client will be allowed to continue but expect errors");
-            }
+            throw new IllegalStateException(errMsg);
         }
     }
 }

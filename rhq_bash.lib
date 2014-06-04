@@ -174,8 +174,8 @@ validate_git()
    git --version >/dev/null
    [ $? -ne 0 ] && abort "git --version failed with exit code $?."
    GIT_VERSION=`git --version | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
-   if echo $GIT_VERSION | grep -v "^1.[67]"; then
-      abort "Unsupported git version - $GIT_VERSION. Only git 1.6.x or 1.7.x are supported. Please add a directory containing a supported version of git to your PATH, then try again."
+   if echo $GIT_VERSION | grep -v "^1.[678]"; then
+      abort "Unsupported git version - $GIT_VERSION. Only git 1.6.x, 1.7.x, or 1.8.x are supported. Please add a directory containing a supported version of git to your PATH, then try again."
    fi
 }
 

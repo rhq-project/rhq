@@ -18,20 +18,21 @@
  */
 package org.rhq.enterprise.gui.navigation.group;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.resource.flyweight.AutoGroupCompositeFlyweight;
 import org.rhq.core.domain.resource.flyweight.ResourceFlyweight;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.sort.HumaneStringComparator;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.TreeSet;
 
 /**
  * @author Greg Hinkle
@@ -52,7 +53,7 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
     private String shortPath;
 
     private ResourceGroupTreeNode parent;
-    
+
     public ResourceGroupTreeNode(Object level, ResourceGroupTreeNode parent) {
         this.level = level;
         this.parent = parent;
@@ -109,7 +110,7 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
             return level.getClass().getSimpleName();
         }
     }
-    
+
     public String toString() {
         if (level instanceof ResourceGroup) {
             ResourceGroup group = (ResourceGroup) level;
@@ -119,7 +120,7 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
             if (ag.getResourceType() != null) {
                 return ag.getResourceType().getName();
             } else if (ag.getSubcategory() != null) {
-                return ag.getSubcategory().getName();
+                return ag.getSubcategory();
             }
         }
         return level.toString();
@@ -137,7 +138,7 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
     public void addChildren(Collection<ResourceGroupTreeNode> resourceGroupTreeNodes) {
         this.children.addAll(resourceGroupTreeNodes);
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -153,5 +154,5 @@ public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> 
     @Override
     public int hashCode() {
         return level.hashCode();
-    }    
+    }
 }

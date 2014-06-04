@@ -38,6 +38,7 @@ public class ProductInfo implements Serializable {
     private String supportEmail;
     private String version;
     private String buildNumber;
+    private String supportedAgentVersions;
     private String helpDocRoot;
     private HashMap<String, String> helpViewContent;
 
@@ -111,6 +112,14 @@ public class ProductInfo implements Serializable {
 
     public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
+    }
+
+    public String getSupportedAgentVersions() {
+        return supportedAgentVersions;
+    }
+
+    public void setSupportedAgentVersions(String supportedAgentVersions) {
+        this.supportedAgentVersions = supportedAgentVersions;
     }
 
     public String getHelpDocRoot() {

@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
@@ -64,11 +63,18 @@ public class HostControllerDiscovery extends BaseProcessDiscovery {
     }
 
     @Override
-    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort, JBossProductType productType) {
+    protected String buildDefaultResourceName(HostPort hostPort, HostPort managementHostPort,
+        JBossProductType productType, String serverName) {
         boolean isDomainController = hostPort.isLocal;
         String instanceType = (isDomainController) ? "Domain Controller" : "Host Controller";
+
+        if (serverName != null && !serverName.trim().isEmpty()) {
+            return String.format("%s %s (%s %s:%d)", productType.SHORT_NAME, instanceType, serverName,
+                managementHostPort.host, managementHostPort.port);
+        }
+
         return String.format("%s %s (%s:%d)", productType.SHORT_NAME, instanceType, managementHostPort.host,
-                managementHostPort.port);
+            managementHostPort.port);
     }
 
     @Override

@@ -53,10 +53,12 @@ public interface StorageNodeManagerRemote {
      * <p>Returns the current configuration of the storage node.</p>
      * <p>For updating the configuration see {@link #retrieveConfiguration(Subject,StorageNode)}.</p>
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     * 
+     *
      * @param subject           user that must have proper permissions
      * @param storageNode       the storage node for which we want to get the configuration
      * @return                  instance of {@link StorageNodeConfigurationComposite} with the configuration properties
+     *
+     * @since 4.9
      */
     StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
 
@@ -64,10 +66,12 @@ public interface StorageNodeManagerRemote {
      * <p>Updates the current configuration of the storage node.</p>
      * <p>For retrieving the configuration see {@link #updateConfiguration(Subject,StorageNodeConfigurationComposite)}.</p>
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     * 
+     *
      * @param subject                   user that must have proper permissions
      * @param storageNodeConfiguration  instance of {@link StorageNodeConfigurationComposite} with the configuration properties
      * @return                          true if the update was successful
+     *
+     * @since 4.9
      */
     boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
 
@@ -84,44 +88,52 @@ public interface StorageNodeManagerRemote {
 
     /**
      * <p>Fetches the list of Storage Node related alerts that have not yet been acknowledged.</p>
-     * 
+     *
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
      * @param subject   user that must have proper permissions
      * @return          storage nodes alerts not acknowledged
+     *
+     * @since 4.9
      */
     PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
 
     /**
      * <p>Fetches the list of Storage Node related alerts that have not yet been acknowledged for the
      * specified storage node.</p>
-     * 
+     *
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
      * @param subject     user that must have proper permissions
      * @param storageNode the storage node
      * @return            storage nodes alerts not acknowledged
+     *
+     * @since 4.9
      */
     PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode);
 
     /**
      * <p>Fetches all the Storage Node related alerts.</p>
-     * 
+     *
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
      * @param subject   user that must have proper permissions
      * @return          all storage nodes alerts
+     *
+     * @since 4.9
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject);
 
     /**
      * <p>Fetches all the Storage Node related alerts for the specified storage node.</p>
-     * 
+     *
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
      * @param subject     user that must have proper permissions
      * @param storageNode the storage node
      * @return            all storage nodes alerts
+     *
+     * @since 4.9
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
 
@@ -134,12 +146,14 @@ public interface StorageNodeManagerRemote {
      *  <li><code>ADD_MAINTENANCE</code></li>
      * </ol>
      * <p>This can be run also on a storage node that is in any intermediate modes mentioned above, because of some failure during the deployment process.</p>
-     * 
+     *
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     * 
+     *
      * @see                     <a href="https://docs.jboss.org/author/display/RHQ/Deploying+Storage+Nodes">https://docs.jboss.org/author/display/RHQ/Deploying+Storage+Nodes</a>
      * @param sbubject          user that must have proper permissions
      * @param storageNode       storage node to be deployed to the cluster
+     *
+     * @since 4.9
      */
     void deployStorageNode(Subject sbubject, StorageNode storageNode);
 
@@ -148,12 +162,14 @@ public interface StorageNodeManagerRemote {
      * <p>This will move the storage node from operation mode <code>NORMAL</code> or any other mode to the mode <code>UNINSTALL</code>. At the end of the day,
      *  the node is removed also from the relational database. Currently there is no way to add it back.</p>
      * <p>WARNING: Run this operation only if you know what you are doing.</p>
-     *  
+     *
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     * 
+     *
      * @see                     <a href="https://docs.jboss.org/author/display/RHQ/Deploying+Storage+Nodes">https://docs.jboss.org/author/display/RHQ/Deploying+Storage+Nodes</a>
      * @param subject          user that must have proper permissions
      * @param storageNode       storage node to be deployed to the cluster
+     *
+     * @since 4.9
      */
     void undeployStorageNode(Subject subject, StorageNode storageNode);
 
@@ -167,10 +183,12 @@ public interface StorageNodeManagerRemote {
      * <strong>NOTE:</strong> Repair is one of the most resource-intensive operations that a storage node performs. Make
      * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
      * </p>
-     * 
+     *
      * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
      * @param subject   user that must have proper permissions
+     *
+     * @since 4.9
      */
     void runClusterMaintenance(Subject subject);
 }

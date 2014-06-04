@@ -643,7 +643,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 addJoinCondition(joinCondition);
                 addJoinCondition(definitionJoinCondition);
 
-                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", "%" + propertyName + "%", false, false);
+                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", propertyName, false, false);
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
 
                 whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);

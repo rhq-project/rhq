@@ -153,7 +153,7 @@ public class Install extends AbstractInstall {
             if (startStorage || installServer) {
                 startedStorage = true;
                 Start startCommand = new Start();
-                rValue = Math.max(rValue, startCommand.exec(new String[] { "start", "--storage" }));
+                rValue = Math.max(rValue, startCommand.exec(new String[] { "--storage" }));
             }
 
             if (installServer) {
@@ -166,7 +166,7 @@ public class Install extends AbstractInstall {
                     }
                 } else {
                     startedServer = true;
-                    startRHQServerForInstallation();
+                    rValue = Math.max(rValue, startRHQServerForInstallation());
                     int installerStatusCode = runRHQServerInstaller();
                     rValue = Math.max(rValue, installerStatusCode);
                     if (installerStatusCode == RHQControl.EXIT_CODE_OK) {
@@ -217,10 +217,18 @@ public class Install extends AbstractInstall {
             if (!start && (startedStorage || startedServer)) {
                 Stop stopCommand = new Stop();
                 if (startedServer) {
-                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--server" }));
+                    try {
+                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "--server" }));
+                    } catch (Exception e) {
+                        log.warn("Could not stop the server - it may still be running.");
+                    }
                 }
                 if (startedStorage) {
-                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--storage" }));
+                    try {
+                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "--storage" }));
+                    } catch (Exception e) {
+                        log.warn("Could not stop the storage node - it may still be running.");
+                    }
                 }
             }
         }

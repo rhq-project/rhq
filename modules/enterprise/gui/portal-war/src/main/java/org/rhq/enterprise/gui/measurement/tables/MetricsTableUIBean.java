@@ -41,8 +41,8 @@ import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -112,8 +112,8 @@ public class MetricsTableUIBean {
                 defIds[i++] = def.getId();
             }
 
-            metricSummaries = chartManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(),
-                context.groupId, defIds, range.begin, range.end, true);
+            metricSummaries = chartManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), context,
+                defIds, range.begin, range.end, true);
 
         } else if (context.type == EntityContext.Type.AutoGroup) {
             List<MeasurementDefinition> measurementDefinitions = definitionManager
@@ -126,8 +126,8 @@ public class MetricsTableUIBean {
                 defIds[i++] = def.getId();
             }
 
-            metricSummaries = chartManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context
-                .getParentResourceId(), context.getResourceTypeId(), defIds, range.begin, range.end, true);
+            metricSummaries = chartManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(),
+                context.getParentResourceId(), context.getResourceTypeId(), defIds, range.begin, range.end, true);
 
         } else {
             log.error(context.getUnknownContextMessage());
@@ -139,7 +139,7 @@ public class MetricsTableUIBean {
             MonitorUtils.formatSimpleMetrics(summary, FacesContext.getCurrentInstance().getExternalContext()
                 .getRequestLocale());
             if (summary.getValuesPresent())
-                valuesPresent=true;
+                valuesPresent = true;
         }
 
         return metricSummaries;

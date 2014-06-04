@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>4.10.0-SNAPSHOT</version>
+        <version>4.12.0-SNAPSHOT</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
@@ -97,6 +97,20 @@
         <scope>provided</scope>
       </dependency>
 
+      <!-- needed by rhq-cassandra-schema -->
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>2.1</version>
+      </dependency>
+
+      <!-- needed by rhq-cassandra-schema -->
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>14.0.1</version>
+      </dependency>
+
         <!-- test deps -->
         <dependency>
             <groupId>org.mockito</groupId>
@@ -183,6 +197,16 @@
                                   <artifactId>rhq-cassandra-ccm-core</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                <groupId>joda-time</groupId>
+                                <artifactId>joda-time</artifactId>
+                                <version>2.1</version>
+                              </artifactItem>
+                              <artifactItem>
+                                <groupId>com.google.guava</groupId>
+                                <artifactId>guava</artifactId>
+                                <version>14.0.1</version>
+                              </artifactItem>
                               </artifactItems>
                             <outputDirectory>${project.build.directory}/installer-deps</outputDirectory>
                         </configuration>

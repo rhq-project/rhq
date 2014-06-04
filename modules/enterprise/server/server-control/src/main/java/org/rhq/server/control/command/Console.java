@@ -27,13 +27,10 @@ import java.io.InputStreamReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
-
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * @author John Sanda
@@ -121,20 +118,14 @@ public class Console extends ControlCommand {
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(getCommandLine(false,
             "cassandra", "-f"));
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(storageBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
-        return executor.execute(commandLine);
+        return ExecutorAssist.execute(storageBinDir, commandLine);
     }
 
     private int startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
-        return executor.execute(commandLine);
+        return ExecutorAssist.execute(getBinDir(), commandLine);
     }
 
     private int startAgentInForeground() throws Exception {

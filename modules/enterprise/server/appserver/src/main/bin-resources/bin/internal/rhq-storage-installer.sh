@@ -6,50 +6,9 @@
 # This file is used to complete the installation of the RHQ storage Server on a
 # UNIX platform.
 #
-# This script is customizable by setting the following environment variables:
-#
-#    RHQ_STORAGE_DEBUG - If this is defined, the script will emit debug
-#                       messages. If this is not defined or set to "false"
-#                       debug messages are not emitted.
-#
-#    RHQ_SERVER_HOME - Defines where the server's home install directory is.
-#                      If not defined, it will be assumed to be the parent
-#                      directory of the directory where this script lives.
-#
-#    RHQ_SERVER_JBOSS_HOME - The location of the AS instance that will
-#                            host RHQ. If this is set, it overrides any
-#                            JBOSS_HOME that might be set. If this not
-#                            set, JBOSS_HOME is used as a fallback. If
-#                            neither is set, it is assumed the AS bundled
-#                            under RHQ_SERVER_HOME/jbossas is to be used.
-#
-#    RHQ_JAVA_HOME - The location of the JRE that the server will use. This
-#                    will be ignored if RHQ_JAVA_EXE_FILE_PATH is set.
-#                    If this and RHQ_JAVA_EXE_FILE_PATH are not set, then
-#                    JAVA_HOME will be used.
-#
-#    RHQ_JAVA_EXE_FILE_PATH - Defines the full path to the Java executable to
-#                             use. If this is set, RHQ_JAVA_HOME is ignored.
-#                             If this is not set, then $RHQ_JAVA_HOME/bin/java
-#                             is used. If this and RHQ_JAVA_HOME are not set,
-#                             then $JAVA_HOME/bin/java will be used.
-#
-#    RHQ_STORAGE_INSTALLER_JAVA_OPTS - Java VM command line options to be
-#                        passed into the Java VM. If this is not defined
-#                        this script will pass in a default set of options.
-#                        If you only want to add options to the defaults,
-#                        then you will want to use
-#                        RHQ_STORAGE_ADDITIONAL_JAVA_OPTS instead.
-#
-#    RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS - additional Java VM command
-#                                   line options to be passed into the VM.
-#                                   This is added to RHQ_STORAGE_JAVA_OPTS; it
-#                                   is mainly used to augment the
-#                                   default set of options. This can be
-#                                   left unset if it is not needed.
-#
-# If the embedded JRE is to be used but is not available, the fallback
-# JRE to be used will be determined by the JAVA_HOME environment variable.
+# This script is customized by the settings in rhq-server-env.bat.  The options
+# set there will be applied to this script.  It is not recommended to edit this
+# script directly.
 # =============================================================================
 
 debug_msg ()
@@ -59,6 +18,12 @@ debug_msg ()
       echo $1
    fi
 }
+
+if [ -f "../rhq-server-env.sh" ]; then
+   . "../rhq-server-env.sh" $*
+else
+   debug_msg "Failed to find rhq-server-env.sh. Continuing with current environment..."
+fi
 
 # ----------------------------------------------------------------------
 # Determine what specific platform we are running on.

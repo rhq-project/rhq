@@ -11,7 +11,7 @@ Ant Script that provides ways to package the Agent.
    <!-- in case these weren't passed in (i.e. not invoked via maven), assume some defaults -->
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="2.0.0-SNAPSHOT"/>
-   <property name="sigar.version" value="1.6.5.132-5"/>
+   <property name="sigar.version" value="1.6.5.132-6"/>
    <property name="augeas.version" value="0.9.0-4"/>
    <property name="augeas.classifier" value="el5"/>
    <property name="augeas.zip.location" value="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}/"/>
@@ -195,7 +195,11 @@ Ant Script that provides ways to package the Agent.
        <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_32" />
     </copy>
 
-    <copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
+    <copy todir="${agent.distro.dir}/bin/wrapper/windows-x86_64">
+       <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_64" />
+    </copy>
+
+   	<copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
        <fileset refid="plugins.fileset"/>
     </copy>
     <!--

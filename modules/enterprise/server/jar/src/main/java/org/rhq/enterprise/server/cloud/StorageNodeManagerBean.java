@@ -101,9 +101,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
-import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManager;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
@@ -122,14 +120,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     private final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
 
-    private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
-    private static final String RHQ_STORAGE_GOSSIP_PORT_PROPERTY = "storagePort";
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
-    private static final int OPERATION_QUERY_TIMEOUT = 20000;
-    private static final int MAX_ITERATIONS = 10;
-    private static final String UPDATE_CONFIGURATION_OPERATION = "updateConfiguration";
+    //private static final int OPERATION_QUERY_TIMEOUT = 20000;
+    //private static final int MAX_ITERATIONS = 10;
     private static final String RESTART_OPERATION = "restart";
 
     // metric names on Storage Service resource
@@ -151,9 +146,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private MeasurementDataManagerLocal measurementManager;
 
     @EJB
-    private SchedulerLocal quartzScheduler;
-
-    @EJB
     private SubjectManagerLocal subjectManager;
 
     @EJB
@@ -166,7 +158,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private ConfigurationManagerLocal configurationManager;
 
     @EJB
-    private StorageNodeManagerLocal storageNodeManger;
+    private StorageNodeManagerLocal storageNodeManager;
 
     @EJB
     private StorageClientManager storageClientManager;
@@ -175,35 +167,33 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
-
-    @EJB
     private StorageClusterSettingsManagerLocal storageClusterSettingsManager;
 
     @EJB
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void linkResource(Resource resource) {
-        Configuration pluginConfig = resource.getPluginConfiguration();
+        Configuration pluginConfig = configurationManager.getPluginConfiguration(resource.getId());
         String address = pluginConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
 
         if (log.isInfoEnabled()) {
             log.info("Linking " + resource + " to storage node at " + address);
         }
         try {
-            StorageNode storageNode = findStorageNodeByAddress(address);
+            StorageNode storageNode = storageNodeManager.findStorageNodeByAddress(address);
             if (storageNode == null) {
                 if (InetAddresses.isInetAddress(address)) {
                     String hostName = InetAddresses.forString(address).getHostName();
-                    log.info("Did not find storage node with address [" + address + "]. Searching by hostname [" +
-                        hostName + "]");
-                    storageNode = findStorageNodeByAddress(hostName);
+                    log.info("Did not find storage node with address [" + address + "]. Searching by hostname ["
+                        + hostName + "]");
+                    storageNode = storageNodeManager.findStorageNodeByAddress(hostName);
                 } else {
                     String ipAddress = InetAddress.getByName(address).getHostAddress();
-                    log.info("Did not find storage node with address [" + address + "] Searching by IP address [" +
-                        ipAddress + "]");
-                    storageNode = findStorageNodeByAddress(ipAddress);
+                    log.info("Did not find storage node with address [" + address + "] Searching by IP address ["
+                        + ipAddress + "]");
+                    storageNode = storageNodeManager.findStorageNodeByAddress(ipAddress);
                 }
             }
 
@@ -214,26 +204,45 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNode.setAddress(address);
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
+                storageNodeManager.linkExistingStorageNodeToResource(storageNode);
+
             } else {
-                StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
-                    subjectManager.getOverlord());
-                storageNode = createStorageNode(resource, clusterSettings);
+                StorageClusterSettings clusterSettings = storageClusterSettingsManager
+                    .getClusterSettings(subjectManager.getOverlord());
+                storageNode = storageNodeManager.createStorageNode(resource, clusterSettings);
 
                 if (log.isInfoEnabled()) {
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
                 }
                 if (clusterSettings.getAutomaticDeployment()) {
                     log.info("Deploying " + storageNode);
-                    deployStorageNode(subjectManager.getOverlord(), storageNode);
+                    storageNodeManager.deployStorageNode(subjectManager.getOverlord(), storageNode);
                 } else {
-                    log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the " +
-                        "cluster until it is deployed.");
+                    log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the "
+                        + "cluster until it is deployed.");
                 }
             }
         } catch (UnknownHostException e) {
-            throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
-                " cannot be linked to a storage node", e);
+            throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource
+                + " cannot be linked to a storage node", e);
         }
+    }
+
+    @Override
+    public StorageNode linkExistingStorageNodeToResource(StorageNode storageNode) {
+        StorageNode existingStorageNode = entityManager.find(StorageNode.class, storageNode.getId());
+        if (null != existingStorageNode) {
+            existingStorageNode.setAddress(storageNode.getAddress());
+            existingStorageNode.setResource(storageNode.getResource());
+            existingStorageNode.setOperationMode(storageNode.getOperationMode());
+            storageNode = entityManager.merge(existingStorageNode);
+
+        } else {
+            log.info("Storage node did not exist, could not link to Resource. Returning unpersisted Storage Node "
+                + storageNode);
+        }
+
+        return storageNode;
     }
 
     @Override
@@ -254,73 +263,92 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void deployStorageNode(Subject subject, StorageNode storageNode) {
-        storageNode = entityManager.find(StorageNode.class, storageNode.getId());
+        StorageNodeCriteria c = new StorageNodeCriteria();
+        c.addFilterId(storageNode.getId());
+        c.fetchResource(true);
+        List<StorageNode> storageNodes = storageNodeManager.findStorageNodesByCriteria(subject, c);
+        if (storageNodes.isEmpty()) {
+            throw new RuntimeException("Storage node not found, can not undeploy " + storageNode);
+        }
+        storageNode = storageNodes.get(0);
 
         switch (storageNode.getOperationMode()) {
-            case INSTALLED:
-                storageNode.setOperationMode(OperationMode.ANNOUNCE);
-            case ANNOUNCE:
-                reset();
-                storageNodeOperationsHandler.announceStorageNode(subject, storageNode);
-                break;
-            case BOOTSTRAP:
-                reset();
-                storageNodeOperationsHandler.bootstrapStorageNode(subject, storageNode);
-                break;
-            case ADD_MAINTENANCE:
-                reset();
-                storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
-                break;
-            default:
-                // TODO what do we do with/about maintenance mode?
+        case INSTALLED:
+            storageNodeOperationsHandler.setMode(storageNode, OperationMode.ANNOUNCE);
+        case ANNOUNCE:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.announceStorageNode(subject, storageNode);
+            break;
+        case BOOTSTRAP:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.bootstrapStorageNode(subject, storageNode);
+            break;
+        case ADD_MAINTENANCE:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
+            break;
+        default:
+            // TODO what do we do with/about maintenance mode?
 
-                // We do not want to deploying a node that is in the process of being
-                // undeployed. It is too hard to make sure we are in an inconsistent state.
-                // Instead finishe the undeployment and redeploy the storage node.
-                throw new RuntimeException("Cannot deploy " + storageNode);
+            // We do not want to deploying a node that is in the process of being
+            // undeployed. It is too hard to make sure we are in an inconsistent state.
+            // Instead finish the undeployment and redeploy the storage node.
+            throw new RuntimeException("Cannot deploy " + storageNode);
         }
     }
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void undeployStorageNode(Subject subject, StorageNode storageNode) {
-        storageNode = entityManager.find(StorageNode.class, storageNode.getId());
+        StorageNodeCriteria c = new StorageNodeCriteria();
+        c.addFilterId(storageNode.getId());
+        c.fetchResource(true);
+        List<StorageNode> storageNodes = storageNodeManager.findStorageNodesByCriteria(subject, c);
+        if (storageNodes.isEmpty()) {
+            throw new RuntimeException("Storage node not found, can not undeploy " + storageNode);
+        }
+        storageNode = storageNodes.get(0);
+
         switch (storageNode.getOperationMode()) {
-            case INSTALLED:
-                reset();
-                storageNodeOperationsHandler.uninstall(subject, storageNode);
-                break;
-            case ANNOUNCE:
-            case BOOTSTRAP:
-                reset();
-                storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
-                break;
-            case ADD_MAINTENANCE:
-            case NORMAL:
-            case DECOMMISSION:
-                reset();
-                storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
-                break;
-            case REMOVE_MAINTENANCE:
-                reset();
-                storageNodeOperationsHandler.performRemoveNodeMaintenance(subject, storageNode);
-                break;
-            case UNANNOUNCE:
-                reset();
-                storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
-                break;
-            case UNINSTALL:
-                reset();
-                storageNodeOperationsHandler.uninstall(subject, storageNode);
-                break;
-            default:
-                // TODO what do we do with/about maintenance mode
-                throw new RuntimeException("Cannot undeploy " + storageNode);
+        case INSTALLED:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.uninstall(subject, storageNode);
+            break;
+        case ANNOUNCE:
+        case BOOTSTRAP:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
+            break;
+        case ADD_MAINTENANCE:
+        case NORMAL:
+        case DECOMMISSION:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
+            break;
+        case REMOVE_MAINTENANCE:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.performRemoveNodeMaintenance(subject, storageNode);
+            break;
+        case UNANNOUNCE:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
+            break;
+        case UNINSTALL:
+            storageNodeManager.resetInNewTransaction();
+            storageNodeOperationsHandler.uninstall(subject, storageNode);
+            break;
+        default:
+            // TODO what do we do with/about maintenance mode
+            throw new RuntimeException("Cannot undeploy " + storageNode);
         }
     }
 
-    private void reset() {
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void resetInNewTransaction() {
         for (StorageNode storageNode : getClusterNodes()) {
             storageNode.setErrorMessage(null);
             storageNode.setFailedOperation(null);
@@ -330,7 +358,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         try {
             if (!storageClientManager.isClusterAvailable()) {
                 return new StorageNodeLoadComposite(node, beginTime, endTime);
@@ -442,17 +470,17 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return result;
         } finally {
-            stopwatch.stop();
-            log.info("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved load metrics for " + node + " in ");
+            }
         }
     }
-    
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ListenableFuture<List<StorageNodeLoadComposite>> getLoadAsync(Subject subject, StorageNode node,
         long beginTime, long endTime) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         final StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
         try {
             if (!storageClientManager.isClusterAvailable()) {
@@ -468,7 +496,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             try {
                 final String host = InetAddress.getByName(node.getAddress()).getCanonicalHostName();
                 if (!node.getAddress().equals(host)) {
-                    result.setHostname(host+" ("+node.getAddress()+")");
+                    result.setHostname(host + " (" + node.getAddress() + ")");
                 }
             } catch (UnknownHostException e) {
             }
@@ -529,13 +557,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return Futures.successfulAsList(compositeFutures);
         } finally {
-            stopwatch.stop();
-            log.debug("Retrieved load metrics for " + node + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved load metrics for " + node + " in ");
+            }
         }
     }
 
-    private ListenableFuture<StorageNodeLoadComposite> wrapFuture(
-        ListenableFuture<StorageNodeLoadComposite> future, final StorageNodeLoadComposite value, final String msg) {
+    private ListenableFuture<StorageNodeLoadComposite> wrapFuture(ListenableFuture<StorageNodeLoadComposite> future,
+        final StorageNodeLoadComposite value, final String msg) {
         return Futures.withFallback(future, new FutureFallback<StorageNodeLoadComposite>() {
             @Override
             public ListenableFuture<StorageNodeLoadComposite> create(Throwable t) throws Exception {
@@ -578,10 +607,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
      * @param input
      */
     private void updateAggregateTotal(MeasurementAggregate accumulator, MeasurementAggregate input) {
-        if (accumulator != null && input != null
-                && input.getMax() != null && !Double.isNaN(input.getMax())
-                && input.getMin() != null && !Double.isNaN(input.getMin())
-                && input.getAvg() != null && !Double.isNaN(input.getAvg())) {
+        if (accumulator != null && input != null && input.getMax() != null && !Double.isNaN(input.getMax())
+            && input.getMin() != null && !Double.isNaN(input.getMin()) && input.getAvg() != null
+            && !Double.isNaN(input.getAvg())) {
             accumulator.setAvg(accumulator.getAvg() + input.getAvg());
             accumulator.setMax(accumulator.getMax() + input.getMax());
             accumulator.setMin(accumulator.getMin() + input.getMin());
@@ -597,15 +625,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public List<StorageNode> getClusterNodes() {
-        return entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODES,
-            StorageNode.class).setParameter("operationModes", asList(StorageNode.OperationMode.NORMAL,
-            StorageNode.OperationMode.MAINTENANCE)).getResultList();
+        return entityManager
+            .createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODES, StorageNode.class)
+            .setParameter("operationModes",
+                asList(StorageNode.OperationMode.NORMAL, StorageNode.OperationMode.MAINTENANCE)).getResultList();
     }
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<StorageNodeLoadComposite> getStorageNodeComposites(Subject subject) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         List<StorageNode> nodes = getStorageNodes();
         final CountDownLatch latch = new CountDownLatch(nodes.size());
         final PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
@@ -656,8 +685,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             log.info("There was an interrupt while waiting for storage node load data.", e);
             return result;
         } finally {
-            stopwatch.stop();
-            log.debug("Retrieved storage node composites in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved storage node composites in ");
+            }
         }
     }
 
@@ -709,8 +739,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         AggregateNumericMetric metric = metricsServer.getSummaryAggregate(schedId, beginTime, endTime);
         MeasurementAggregate measurementAggregate = new MeasurementAggregate(metric.getMin(), metric.getAvg(),
             metric.getMax());
-        StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new
-            StorageNodeLoadComposite.MeasurementAggregateWithUnits(measurementAggregate, units);
+        StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+            measurementAggregate, units);
         measurementAggregateWithUnits.setFormattedValue(getSummaryString(measurementAggregate, units));
         return measurementAggregateWithUnits;
     }
@@ -718,18 +748,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private ListenableFuture<StorageNodeLoadComposite.MeasurementAggregateWithUnits> getMeasurementAggregateWithUnitsAsync(
         int schedId, final MeasurementUnits units, long beginTime, long endTime) {
         MetricsServer metricsServer = storageClientManager.getMetricsServer();
-        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(schedId, beginTime,
-            endTime);
-        return Futures.transform(dataFuture, new Function<AggregateNumericMetric, StorageNodeLoadComposite.MeasurementAggregateWithUnits>() {
-            @Override
-            public StorageNodeLoadComposite.MeasurementAggregateWithUnits apply(AggregateNumericMetric metric) {
-                MeasurementAggregate measurementAggregate = new MeasurementAggregate(metric.getMin(), metric.getAvg(),
-                    metric.getMax());
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new
-                    StorageNodeLoadComposite.MeasurementAggregateWithUnits(measurementAggregate, units);
-                return measurementAggregateWithUnits;
-            }
-        });
+        ListenableFuture<AggregateNumericMetric> dataFuture = metricsServer.getSummaryAggregateAsync(schedId,
+            beginTime, endTime);
+        return Futures.transform(dataFuture,
+            new Function<AggregateNumericMetric, StorageNodeLoadComposite.MeasurementAggregateWithUnits>() {
+                @Override
+                public StorageNodeLoadComposite.MeasurementAggregateWithUnits apply(AggregateNumericMetric metric) {
+                    MeasurementAggregate measurementAggregate = new MeasurementAggregate(metric.getMin(), metric
+                        .getAvg(), metric.getMax());
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                        measurementAggregate, units);
+                    return measurementAggregateWithUnits;
+                }
+            });
     }
 
     private int getResourceIdFromStorageNode(StorageNode storageNode) {
@@ -763,7 +794,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             criteria.addFilterResourceTypeName("StorageService");
             criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-            PageList<Resource> resources = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+            PageList<Resource> resources = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(),
+                criteria);
             if (resources.size() > 0) {
                 Resource storageServiceResource = resources.get(0);
 
@@ -774,7 +806,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 newSchedule.setDescription("Run by StorageNodeManagerBean");
                 newSchedule.setParameters(new Configuration());
 
-                storageNodeManger.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
+                storageNodeManager.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
             }
         }
 
@@ -794,12 +826,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         try {
             return findStorageNodeAlerts(subject, false, storageNode);
         } finally {
-            stopwatch.stop();
-            log.info("Retrieved unacked alerts for " + storageNode + " in " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Retrieved unacked alerts for " + storageNode + " in ");
+            }
         }
     }
 
@@ -826,7 +859,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions(storageNode);
         PageList<Alert> alerts = new PageList<Alert>();
 
-        if( resouceIdsWithAlertDefinitions != null && resouceIdsWithAlertDefinitions.length != 0 ){
+        if (resouceIdsWithAlertDefinitions != null && resouceIdsWithAlertDefinitions.length != 0) {
             AlertCriteria criteria = new AlertCriteria();
             criteria.setPageControl(PageControl.getUnlimitedInstance());
             criteria.addFilterResourceIds(resouceIdsWithAlertDefinitions);
@@ -851,7 +884,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     private Map<Integer, Integer> findUnackedAlertCounts(List<StorageNode> storageNodes) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         try {
             Map<Integer, StorageNode> resourceIdToStorageNodeMap = new TreeMap<Integer, StorageNode>();
             for (StorageNode storageNode : storageNodes) {
@@ -867,7 +900,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             for (Integer resourceId : alertCountsByResource.keySet()) {
                 currentResourceId = resourceId;
                 while (!resourceIdToStorageNodeMap.containsKey(currentResourceId)) {
-                    currentResourceId = entityManager.find(Resource.class, currentResourceId).getParentResource().getId();
+                    currentResourceId = entityManager.find(Resource.class, currentResourceId).getParentResource()
+                        .getId();
                 }
                 Integer alertsForResource = alertCountsByResource.get(resourceId);
                 StorageNode storageNode = resourceIdToStorageNodeMap.get(currentResourceId);
@@ -881,9 +915,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return storageNodeAlertCounts;
         } finally {
-            stopwatch.stop();
-            log.debug("Finished calculating storage node alert counts in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                " ms");
+            stopwatchEnd(stopwatch, "Finished calculating storage node alert counts in ");
         }
     }
 
@@ -919,9 +951,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         return new Integer[0];
     }
-    
+
     private Map<Integer, Integer> findResourcesWithAlertsToStorageNodeMap(StorageNode storageNode) {
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = stopwatchStart();
         List<StorageNode> initialStorageNodes = getStorageNodes();
         try {
             if (storageNode == null) {
@@ -956,9 +988,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
             return resourceIdsToStorageNodeMap;
         } finally {
-            stopwatch.stop();
-            log.debug("Found storage node resources with alert defs in " + stopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                " ms");
+            if (log.isDebugEnabled()) {
+                stopwatchEnd(stopwatch, "Found storage node resources with alert defs in ");
+            }
         }
     }
 
@@ -997,8 +1029,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
-        StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration
-            .getStorageNode().getAddress());
+        StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration.getStorageNode().getAddress());
         if (storageNode == null || storageNode.getResource() == null || !storageNodeConfiguration.validate())
             return false;
 
@@ -1051,8 +1082,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             criteria.addFilterStartTime(System.currentTimeMillis() - (5 * 60 * 1000));
             boolean updateSuccess = waitForConfigurationUpdateToFinish(subject, criteria, 10);
             // restart the storage node and wait for it
-            boolean restartSuccess = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION, null,
-                5000, 15);
+            boolean restartSuccess = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
+                null, 5000, 15);
             if (!updateSuccess || !restartSuccess)
                 return false;
         }
@@ -1068,11 +1099,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             + storageNodeConfiguration.getJmxPort() + "/");
         storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
 
-        configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
-            storageNodePluginConfig);
+        configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(), storageNodePluginConfig);
         return true;
     }
-    
+
     private boolean waitForConfigurationUpdateToFinish(Subject subject, ResourceConfigurationUpdateCriteria criteria,
         int maxAttempts) {
         if (maxAttempts == 0)
@@ -1110,14 +1140,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         StorageNode node, long beginTime, long endTime, int numPoints) {
         // this method is called to get the data for sparkline graphs
         if (!storageClientManager.isClusterAvailable()) {
-            return Collections.<String, List<MeasurementDataNumericHighLowComposite>>emptyMap();
+            return Collections.<String, List<MeasurementDataNumericHighLowComposite>> emptyMap();
         }
         int storageNodeResourceId;
         try {
             storageNodeResourceId = getResourceIdFromStorageNode(node);
         } catch (ResourceNotFoundException e) {
             log.warn(e.getMessage());
-            return Collections.<String, List<MeasurementDataNumericHighLowComposite>>emptyMap();
+            return Collections.<String, List<MeasurementDataNumericHighLowComposite>> emptyMap();
         }
         Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
 
@@ -1134,17 +1164,18 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
             resourceWithDefinitionIds.get(resId).add(definitionId);
         }
-        
+
         int defNameIndex = 0;
         for (Entry<Integer, List<Integer>> entry : resourceWithDefinitionIds.entrySet()) {
-            List<List<MeasurementDataNumericHighLowComposite>> storageServiceData = measurementManager.findDataForResource(
-                subject, entry.getKey(), ArrayUtils.unwrapCollection(entry.getValue()), beginTime, endTime, numPoints);    
+            List<List<MeasurementDataNumericHighLowComposite>> storageServiceData = measurementManager
+                .findDataForResource(subject, entry.getKey(), ArrayUtils.unwrapCollection(entry.getValue()), beginTime,
+                    endTime, numPoints);
             for (int i = 0; i < storageServiceData.size(); i++) {
                 List<MeasurementDataNumericHighLowComposite> oneRecord = storageServiceData.get(i);
                 result.put(defNames.get(defNameIndex++), filterNans(oneRecord));
             }
         }
-        
+
         tupples = getGrandchildrenScheduleIds(storageNodeResourceId, false);
         defNames = new ArrayList<String>();
         int[] definitionIds = new int[tupples.size()];
@@ -1167,11 +1198,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         return result;
     }
-    
+
     private List<MeasurementDataNumericHighLowComposite> filterNans(List<MeasurementDataNumericHighLowComposite> data) {
         // NaNs are not useful for sparkline graphs, lets filter them and reduce the traffic over the wire
-        if (data == null || data.isEmpty()) return Collections.<MeasurementDataNumericHighLowComposite>emptyList();
-        List<MeasurementDataNumericHighLowComposite> filteredData = new ArrayList<MeasurementDataNumericHighLowComposite>(data.size());
+        if (data == null || data.isEmpty())
+            return Collections.<MeasurementDataNumericHighLowComposite> emptyList();
+        List<MeasurementDataNumericHighLowComposite> filteredData = new ArrayList<MeasurementDataNumericHighLowComposite>(
+            data.size());
         for (MeasurementDataNumericHighLowComposite number : data) {
             if (!Double.isNaN(number.getValue())) {
                 filteredData.add(number);
@@ -1180,13 +1213,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return filteredData;
     }
 
-    
-    private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
-        Configuration parameters) {
-        return runOperationAndWaitForResult(subject, storageNodeResource, operationToRun,
-            parameters, OPERATION_QUERY_TIMEOUT, MAX_ITERATIONS);
-    }
-    
+    //    private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
+    //        Configuration parameters) {
+    //        return runOperationAndWaitForResult(subject, storageNodeResource, operationToRun, parameters,
+    //            OPERATION_QUERY_TIMEOUT, MAX_ITERATIONS);
+    //    }
+
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
         Configuration parameters, long operationQueryTimeout, int maxIterations) {
 
@@ -1200,7 +1232,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         newSchedule.setDescription("Run by StorageNodeManagerBean");
         newSchedule.setParameters(parameters);
 
-        storageNodeManger.scheduleOperationInNewTransaction(subject, newSchedule);
+        storageNodeManager.scheduleOperationInNewTransaction(subject, newSchedule);
 
         //waiting for the operation result then return it
         int iteration = 0;
@@ -1234,6 +1266,20 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return successResultFound;
+    }
+    
+    private Stopwatch stopwatchStart() {
+        if (log.isDebugEnabled()) {
+            return new Stopwatch().start();
+        }
+        return null;
+    }
+
+    private void stopwatchEnd(Stopwatch stopwatch, String message) {
+        if (stopwatch != null && log.isDebugEnabled()) {
+            stopwatch.stop();
+            log.debug(message + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        }
     }
 
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+    <className>org/rhq/core/domain/install/remote/AgentInstallInfo</className>
+    <differenceType>6010</differenceType> <!-- field less accessible -->
+    <field>steps</field>
+    <justification>Data field only used internally for installing remote agents - should never have been public in the first place. It was a typo.</justification>
+  </difference>
+</differences>

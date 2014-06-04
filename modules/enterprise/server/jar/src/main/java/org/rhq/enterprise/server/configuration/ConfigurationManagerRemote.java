@@ -34,7 +34,9 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.rest.BadArgumentException;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -50,6 +52,7 @@ public interface ConfigurationManagerRemote {
      * @param subject
      * @param criteria
      * @return not null
+     *
      * @since 4.10
      */
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
@@ -59,6 +62,7 @@ public interface ConfigurationManagerRemote {
      * @param subject
      * @param criteria
      * @return not null
+     *
      * @since 4.10
      */
     PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
@@ -162,13 +166,14 @@ public interface ConfigurationManagerRemote {
      *
      * @return the plugin configuration update item corresponding to this request
      * @throws ResourceNotFoundException
+     * @throws PermissionException If the caller lacks MODIFY permission on the Resource.
+     * @throws BadArgumentException If attempting to change a readOnly property value.
      */
     PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
         throws ResourceNotFoundException;
 
     /**
-     * This method is called when a user has requested to change the resource configuration for an existing resource. If
-     * the user does not have the proper permissions to change the resource's configuration, an exception is thrown.
+     * This method is called when a user has requested to change the resource configuration for an existing resource.
      *
      * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
      * sent.</p>
@@ -180,6 +185,8 @@ public interface ConfigurationManagerRemote {
      * @return the resource configuration update item corresponding to this request
      * @throws ResourceNotFoundException
      * @throws ConfigurationUpdateStillInProgressException
+     * @throws PermissionException If the caller lacks CONFIGURE_WRITE permission on the Resource.
+     * @throws BadArgumentException If attempting to change a readOnly property value.
      */
     ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;

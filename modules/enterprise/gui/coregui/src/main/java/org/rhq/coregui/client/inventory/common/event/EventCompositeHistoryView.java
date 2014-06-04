@@ -92,7 +92,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         return new EventCompositeHistoryView(tableTitle, context, hasWriteAccess);
     }
 
-    private EventCompositeHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
+    public EventCompositeHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
@@ -134,7 +134,9 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setColSpan(2);
 
-        setFilterFormItems(sourceFilter, detailsFilter, severityFilter, startDateFilter, spacerItem, endDateFilter);
+        if (isShowFilterForm()) {
+            setFilterFormItems(sourceFilter, detailsFilter, severityFilter, startDateFilter, spacerItem, endDateFilter);
+        }
     }
 
     @Override
@@ -162,23 +164,25 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     }
 
     private void setupTableInteractions() {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
-            : TableActionEnablement.NEVER;
-        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-            singleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteButtonPressed(selection);
-            }
-        });
+        if (canSupportDeleteAndPurgeAll()) {
+            TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
+                : TableActionEnablement.NEVER;
+            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+                singleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteButtonPressed(selection);
+                }
+            });
 
-        TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
-            : TableActionEnablement.NEVER;
-        addTableAction(MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(), new AbstractTableAction(
-            multipleTargetEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                purgeButtonPressed();
-            }
-        });
+            TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
+                : TableActionEnablement.NEVER;
+            addTableAction(MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+                multipleTargetEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    purgeButtonPressed();
+                }
+            });
+        }
     }
 
     private void deleteButtonPressed(ListGridRecord[] selection) {
@@ -219,6 +223,23 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
                     MSG.view_inventory_eventHistory_purgeFailed(context.toShortString()), caught);
             }
         });
+    }
+
+    public EntityContext getContext() {
+        return context;
+    }
+
+    /**
+     * Subclasses can override this to indicate they do not support
+     * deleting and purge all the events. Portlet subclasses
+     * that only trim their views to the top N events can override this to
+     * return false so they don't delete events that aren't displayed
+     * to the user.
+     * 
+     * @return this default implementation returns true
+     */
+    protected boolean canSupportDeleteAndPurgeAll() {
+        return true;
     }
 
     @Override

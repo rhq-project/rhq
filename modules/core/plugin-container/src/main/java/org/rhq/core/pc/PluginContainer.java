@@ -44,6 +44,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.ping.PingAgentService;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
@@ -61,6 +62,7 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.inventory.ResourceFactoryManager;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationManager;
+import org.rhq.core.pc.ping.PingManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginLifecycleListenerManager;
 import org.rhq.core.pc.plugin.PluginLifecycleListenerManagerImpl;
@@ -114,6 +116,7 @@ public class PluginContainer {
     private SupportManager supportManager;
     private BundleManager bundleManager;
     private DriftManager driftManager;
+    private PingManager pingManager;
 
     private final Collection<AgentServiceLifecycleListener> agentServiceListeners = new CopyOnWriteArraySet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
@@ -299,6 +302,7 @@ public class PluginContainer {
             supportManager = new SupportManager(agentServiceStreamRemoter);
             bundleManager = new BundleManager(configuration, agentServiceStreamRemoter, inventoryManager, measurementManager);
             driftManager = new DriftManager(configuration, agentServiceStreamRemoter, inventoryManager);
+            pingManager = new PingManager(agentServiceStreamRemoter);
 
             for (AgentServiceLifecycleListener ll : agentServiceListeners) {
                 for (AgentService service : services()) {
@@ -326,6 +330,7 @@ public class PluginContainer {
             inventoryManager,
             measurementManager,
             operationManager,
+            pingManager,
             resourceFactoryManager,
             supportManager };
     }
@@ -623,6 +628,15 @@ public class PluginContainer {
         }
     }
 
+    public PingManager getPingManager() {
+        Lock lock = obtainReadLock();
+        try {
+            return pingManager;
+        } finally {
+            releaseLock(lock);
+        }
+    }
+
     // The methods below return the manager implementations wrapped in their remote client interfaces.
     // External clients to the plugin container should probably use these rather than the getXXXManager() methods.
 
@@ -656,6 +670,10 @@ public class PluginContainer {
 
     public BundleAgentService getBundleAgentService() {
         return getBundleManager();
+    }
+
+    public PingAgentService getPingAgentService() {
+        return getPingManager();
     }
 
     public boolean isInsideAgent() {

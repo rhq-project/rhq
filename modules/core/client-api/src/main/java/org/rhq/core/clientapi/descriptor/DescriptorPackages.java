@@ -30,4 +30,5 @@ package org.rhq.core.clientapi.descriptor;
 public interface DescriptorPackages {
     String CONFIGURATION = "org.rhq.core.clientapi.descriptor.configuration";
     String PC_PLUGIN = "org.rhq.core.clientapi.descriptor.plugin";
+    String CANNED_EXPRESSIONS = "org.rhq.core.clientapi.descriptor.group.expressions";
 }

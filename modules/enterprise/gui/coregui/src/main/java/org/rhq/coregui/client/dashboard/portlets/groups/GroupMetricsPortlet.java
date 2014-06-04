@@ -88,7 +88,6 @@ import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     public static final String CHART_TITLE = MSG.common_title_metric_chart();
-    private int groupId = -1;
     private EntityContext context;
     protected Canvas recentMeasurementsContent = new Canvas();
     protected boolean currentlyLoading = false;
@@ -103,7 +102,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     //instance ui widgets
 
     protected Timer refreshTimer;
-    
+
     private volatile List<MeasurementSchedule> enabledSchedules = null;
     private volatile boolean renderChart = false;
 
@@ -123,7 +122,6 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     public GroupMetricsPortlet(EntityContext context) {
         super();
-        this.groupId = context.getGroupId();
         this.context = context;
         this.refreshablePortlet = this;
     }
@@ -227,7 +225,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     protected void getRecentMetrics() {
 
         renderChart = true;
-        
+
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack
@@ -256,10 +254,9 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 //organize definitionArrayIds for ordered request on server.
                 int index = 0;
                 for (String definitionToDisplay : displayOrder) {
-                    definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
-                        .getId();
+                    definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay).getId();
                 }
-                
+
                 fetchEnabledMetrics(enabledSchedules, definitionArrayIds, displayOrder, measurementDefMap, column);
             }
         });
@@ -277,53 +274,52 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
         recentMeasurementsContent.addChild(column);
         recentMeasurementsContent.markForRedraw();
     }
-    
+
     private void fetchEnabledSchedules(final CountDownLatch latch) {
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
         criteria.addFilterEnabled(true);
         criteria.fetchDefinition(true);
         criteria.setPageControl(PageControl.getUnlimitedInstance());
         addFilterKey(criteria);
-        GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria, new AsyncCallback<PageList<MeasurementSchedule>>() {
+        GWTServiceLookup.getMeasurementDataService().findMeasurementSchedulesByCriteria(criteria,
+            new AsyncCallback<PageList<MeasurementSchedule>>() {
 
-            @Override
-            public void onSuccess(PageList<MeasurementSchedule> result) {
-                enabledSchedules = result;
-                latch.countDown();
-            }
+                @Override
+                public void onSuccess(PageList<MeasurementSchedule> result) {
+                    enabledSchedules = result;
+                    latch.countDown();
+                }
 
-            @Override
-            public void onFailure(Throwable caught) {
-                latch.countDown();
-            }
-        });
+                @Override
+                public void onFailure(Throwable caught) {
+                    latch.countDown();
+                }
+            });
     }
-    
+
     protected void fetchResourceType(final CountDownLatch latch, final VLayout layout) {
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterId(this.groupId);
+        criteria.addFilterId(context.getGroupId());
+        // for autoclusters and autogroups we need to add more criteria
+        if (context.isAutoCluster()) {
+            criteria.addFilterVisible(false);
+        } else if (context.isAutoGroup()) {
+            criteria.addFilterVisible(false);
+            criteria.addFilterPrivate(true);
+        }
+
         criteria.fetchConfigurationUpdates(false);
         criteria.fetchExplicitResources(false);
         criteria.fetchGroupDefinition(false);
         criteria.fetchOperationHistories(false);
-
-        // for autoclusters and autogroups we need to add more criteria
-        final boolean isAutoCluster = isAutoCluster();
-        final boolean isAutoGroup = isAutoGroup();
-        if (isAutoCluster) {
-            criteria.addFilterVisible(false);
-        } else if (isAutoGroup) {
-            criteria.addFilterVisible(false);
-            criteria.addFilterPrivate(true);
-        }
 
         //locate the resource group
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
+                    Log.debug("Error retrieving resource group composite for group [" + context.getGroupId() + "]:"
                         + caught.getMessage());
                     setRefreshing(false);
                     latch.countDown();
@@ -368,14 +364,6 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
         }
     }
 
-    private boolean isAutoGroup() {
-        return this.context.isAutoGroup();
-    }
-
-    private boolean isAutoCluster() {
-        return this.context.isAutoCluster();
-    }
-
     protected void setRefreshing(boolean currentlyRefreshing) {
         this.currentlyLoading = currentlyRefreshing;
     }
@@ -418,12 +406,13 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     protected void fetchEnabledMetrics(List<MeasurementSchedule> schedules, int[] definitionArrayIds,
         final String[] displayOrder, final Map<String, MeasurementDefinition> measurementDefMap, final VLayout layout) {
-        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(groupId, definitionArrayIds,
-            CustomDateRangeState.getInstance().getStartTime(), CustomDateRangeState.getInstance().getEndTime(), 60,
+        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(context.getGroupId(),
+            definitionArrayIds, CustomDateRangeState.getInstance().getStartTime(),
+            CustomDateRangeState.getInstance().getEndTime(), 60,
             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving recent metrics charting data for group [" + groupId + "]:"
+                    Log.debug("Error retrieving recent metrics charting data for group [" + context.getGroupId() + "]:"
                         + caught.getMessage());
                     setRefreshing(false);
                 }
@@ -434,20 +423,18 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 }
             });
     }
-    
-    
-    protected void renderData(List<List<MeasurementDataNumericHighLowComposite>> results, String[] displayOrder, Map<String, MeasurementDefinition> measurementDefMap, VLayout layout) {
+
+    protected void renderData(List<List<MeasurementDataNumericHighLowComposite>> results, String[] displayOrder,
+        Map<String, MeasurementDefinition> measurementDefMap, VLayout layout) {
         if (!results.isEmpty() && !measurementDefMap.isEmpty()) {
             boolean someChartedData = false;
             //iterate over the retrieved charting data
             for (int index = 0; index < displayOrder.length; index++) {
                 //retrieve the correct measurement definition
-                final MeasurementDefinition md = measurementDefMap
-                    .get(displayOrder[index]);
+                final MeasurementDefinition md = measurementDefMap.get(displayOrder[index]);
 
                 //load the data results for the given metric definition
-                List<MeasurementDataNumericHighLowComposite> data = results
-                    .get(index);
+                List<MeasurementDataNumericHighLowComposite> data = results.get(index);
 
                 //locate last and minimum values.
                 double lastValue = -1;
@@ -455,8 +442,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
                 String commaDelimitedList = "";
                 for (MeasurementDataNumericHighLowComposite d : data) {
-                    if ((!Double.isNaN(d.getValue()))
-                        && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                    if ((!Double.isNaN(d.getValue())) && (!String.valueOf(d.getValue()).contains("NaN"))) {
                         commaDelimitedList += d.getValue() + ",";
                         if (d.getValue() < minValue) {
                             minValue = d.getValue();
@@ -471,8 +457,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 row.setAutoHeight();
                 row.setOverflow(Overflow.VISIBLE);
                 HTMLFlow graph = new HTMLFlow();
-                String contents = "<span id='sparkline_" + index
-                    + "' class='dynamicsparkline' width='0' " + "values='"
+                String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0' " + "values='"
                     + commaDelimitedList + "'>...</span>";
                 graph.setContents(contents);
                 graph.setContentsType(ContentsType.PAGE);
@@ -486,8 +471,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 graphContainer.setCanvas(graph);
 
                 final String title = md.getDisplayName();
-                LinkItem link = AbstractActivityView.newLinkItem(title,
-                    null);
+                LinkItem link = AbstractActivityView.newLinkItem(title, null);
                 link.setTooltip(title);
                 link.setTitleVAlign(VerticalAlignment.TOP);
                 link.setAlign(Alignment.LEFT);
@@ -507,18 +491,15 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                 }
 
                 //Value
-                String convertedValue = AbstractActivityView
-                    .convertLastValueForDisplay(lastValue, md);
-                StaticTextItem value = AbstractActivityView
-                    .newTextItem(convertedValue);
+                String convertedValue = AbstractActivityView.convertLastValueForDisplay(lastValue, md);
+                StaticTextItem value = AbstractActivityView.newTextItem(convertedValue);
                 value.setVAlign(VerticalAlignment.TOP);
                 value.setWidth("100%");
 
                 row.setItems(graphContainer, link, value);
                 row.setWidth100();
                 //if graph content returned
-                if ((!md.getName().trim().contains("Trait."))
-                    && (lastValue != -1)) {
+                if ((!md.getName().trim().contains("Trait.")) && (lastValue != -1)) {
                     layout.addMember(row);
                     someChartedData = true;
                 }
@@ -549,7 +530,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     protected void showPopupWithChart(final String title, final MeasurementDefinition md) {
         ChartViewWindow window = new ChartViewWindow(title, "", refreshablePortlet);
-        CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(groupId, md.getId(), isAutoGroup());
+        CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(context, md.getId());
         window.addItem(graph);
         graph.populateData();
         window.show();
@@ -562,9 +543,9 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     protected String getSeeMoreLink() {
         return LinkManager.getGroupMonitoringGraphsLink(context);
     }
-    
+
     protected MeasurementScheduleCriteria addFilterKey(MeasurementScheduleCriteria criteria) {
-        criteria.addFilterResourceGroupId(groupId);
+        criteria.addFilterResourceGroupId(context.getGroupId());
         return criteria;
     }
 }

@@ -85,12 +85,12 @@ public class Simulator implements ShutdownManager {
         storageSession = new StorageSession(session);
         metricsDAO = new MetricsDAO(storageSession, plan.getMetricsServerConfiguration());
 
-        metricsServer = new SimulatedMetricsServer();
+        metricsServer = new MetricsServer();
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
         metricsServer.setAggregationBatchSize(plan.getAggregationBatchSize());
-        metricsServer.setUseAsyncAggregation(plan.getAggregationType() == SimulationPlan.AggregationType.ASYNC);
         metricsServer.setDateTimeService(plan.getDateTimeService());
+        metricsServer.init();
     }
 
     /**
@@ -103,21 +103,17 @@ public class Simulator implements ShutdownManager {
     private void runSequentialSimulation(SimulationPlan plan) throws Throwable {
         this.initializeMetricsServer(plan);
 
-        SimulatedMetricsServer simulatedMetricsServer = (SimulatedMetricsServer) metricsServer;
-        SimulatedDateTimeService simulatedDateTimeService = (SimulatedDateTimeService) plan.getDateTimeService();
         Random random = new Random();
         long timestamp = plan.getDateTimeService().nowInMillis();
         long endOfSimulation = timestamp + 24L * 60 * 60 * 1000 * plan.getSimulationTime();
-        long numberOfMetrics = plan.getBatchSize() * plan.getNumMeasurementCollectors();
+        int numberOfMetrics = plan.getBatchSize() * plan.getNumMeasurementCollectors();
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(plan.getBatchSize());
 
         int lastAggregationHour = new DateTime(timestamp).getHourOfDay();
 
-        for (; timestamp < endOfSimulation; timestamp += 60 * 1000) {
+        for (; timestamp < endOfSimulation; timestamp += 30 * 1000) {
             DateTime currentTime = new DateTime(timestamp);
-            simulatedMetricsServer.setCurrentHour(new DateTime(timestamp));
-            //simulatedDateTimeService.setNow(new DateTime(timestamp));
 
             data.clear();
             for (int i = 0; i < numberOfMetrics; ++i) {
@@ -129,9 +125,8 @@ public class Simulator implements ShutdownManager {
             waitForRawInserts.await("Failed to insert raw data at time: " + timestamp);
 
             if (currentTime.getHourOfDay() != lastAggregationHour) {
-                log.info("Current simulation time" + currentTime.toString());
                 lastAggregationHour = currentTime.getHourOfDay();
-                simulatedMetricsServer.calculateAggregates();
+                metricsServer.calculateAggregates();
             }
         }
 

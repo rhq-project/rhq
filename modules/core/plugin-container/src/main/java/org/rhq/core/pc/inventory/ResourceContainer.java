@@ -162,7 +162,7 @@ public class ResourceContainer implements Serializable {
             this.currentAvailType = availabilityType;
             this.currentAvailStart = System.currentTimeMillis();
 
-            Availability tmp = new Availability(this.resource,availabilityType);
+            Availability tmp = new Availability(this.resource, availabilityType);
             tmp.setStartTime(this.currentAvailStart);
             return tmp;
         }
@@ -181,7 +181,7 @@ public class ResourceContainer implements Serializable {
     @Nullable
     public Availability getAvailability() {
         synchronized (this) {
-            Availability tmp = new Availability(this.resource,this.currentAvailType);
+            Availability tmp = new Availability(this.resource, this.currentAvailType);
             tmp.setStartTime(this.currentAvailStart);
             return tmp;
         }
@@ -210,7 +210,7 @@ public class ResourceContainer implements Serializable {
 
     public Set<ResourcePackageDetails> getInstalledPackages() {
         synchronized (this) {
-            if (this.installedPackages==null) {
+            if (this.installedPackages == null) {
                 return Collections.emptySet();
             }
             return this.installedPackages;
@@ -252,11 +252,10 @@ public class ResourceContainer implements Serializable {
         synchronized (this) {
             if (this.measurementSchedule == null) {
                 return Collections.emptySet();
+            } else {
+                return this.measurementSchedule;
             }
-            else {
-             return this.measurementSchedule;
-          }
-      }
+        }
     }
 
     public void setMeasurementSchedule(Set<MeasurementScheduleRequest> measurementSchedule) {
@@ -318,8 +317,10 @@ public class ResourceContainer implements Serializable {
         return availabilityScheduleTime;
     }
 
-    // TODO: Is there a reason for this to be synchronized like the other setters? I don't see why it would need to be.
-    public void setAvailabilityScheduleTime(long availabilityScheduleTime) {
+    /**
+     * Sets the availability schedule time; synchronized to ensure visibility.
+     */
+    public synchronized void setAvailabilityScheduleTime(long availabilityScheduleTime) {
         this.availabilityScheduleTime = availabilityScheduleTime;
     }
 
@@ -341,7 +342,7 @@ public class ResourceContainer implements Serializable {
     * @return true if the schedule was updated successfully, false otherwise or if measurementScheduleUpdate is null
     */
     public boolean updateMeasurementSchedule(Set<MeasurementScheduleRequest> measurementScheduleUpdate) {
-        if (null == measurementScheduleUpdate || measurementScheduleUpdate.size()==0) {
+        if (null == measurementScheduleUpdate || measurementScheduleUpdate.size() == 0) {
             return false;
         }
 
@@ -363,7 +364,7 @@ public class ResourceContainer implements Serializable {
         }
 
         synchronized (this) {
-            if (this.measurementSchedule==null) {
+            if (this.measurementSchedule == null) {
                 this.measurementSchedule = new HashSet<MeasurementScheduleRequest>(measurementScheduleUpdate.size());
             }
             Set<MeasurementScheduleRequest> toBeRemoved = new HashSet<MeasurementScheduleRequest>();
@@ -382,7 +383,7 @@ public class ResourceContainer implements Serializable {
 
     public Collection<DriftDefinition> getDriftDefinitions() {
         synchronized (this) {
-            if (driftDefinitions==null) {
+            if (driftDefinitions == null) {
                 return Collections.emptyList();
             }
             return driftDefinitions.values();
@@ -391,7 +392,7 @@ public class ResourceContainer implements Serializable {
 
     public boolean containsDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            if (driftDefinitions==null)
+            if (driftDefinitions == null)
                 return false;
             return driftDefinitions.containsKey(d.getName());
         }
@@ -399,7 +400,7 @@ public class ResourceContainer implements Serializable {
 
     public void addDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            if (driftDefinitions==null) {
+            if (driftDefinitions == null) {
                 driftDefinitions = new HashMap<String, DriftDefinition>(1);
             }
             driftDefinitions.put(d.getName(), d);
@@ -408,7 +409,7 @@ public class ResourceContainer implements Serializable {
 
     public void removeDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            if (driftDefinitions!=null) {
+            if (driftDefinitions != null) {
                 driftDefinitions.remove(d.getName());
 
                 if (driftDefinitions.isEmpty()) {
@@ -549,7 +550,7 @@ public class ResourceContainer implements Serializable {
     }
 
     private String getFacetLockStatus() {
-        StringBuilder str = new StringBuilder("Facet lock status for [" );
+        StringBuilder str = new StringBuilder("Facet lock status for [");
         str.append(getResource());
 
         str.append("], is-write-locked=[").append(facetAccessLock.isWriteLocked());

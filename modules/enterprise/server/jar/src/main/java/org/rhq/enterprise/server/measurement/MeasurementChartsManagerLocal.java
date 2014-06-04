@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
@@ -38,7 +39,6 @@ public interface MeasurementChartsManagerLocal {
      * @deprecated portal-war
      */
     @Deprecated
-    // TODO: jmarques - this will go away once ListChildrenAction is moved to JSF
     List<MetricDisplaySummary> getMetricDisplaySummariesForMetrics(Subject subject, int resourceId, DataType dataType,
         long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException;
 
@@ -46,7 +46,7 @@ public interface MeasurementChartsManagerLocal {
      * Get metric display summaries for a compatible group
      *
      * @param  subject
-     * @param  groupId
+     * @param  context A resource group context
      * @param  measurementDefinitionIds
      * @param  begin
      * @param  end
@@ -56,10 +56,11 @@ public interface MeasurementChartsManagerLocal {
      *
      * @throws MeasurementException
      */
-    List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
+    List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, EntityContext context,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException;
 
-    List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId, String viewName);
+    List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, EntityContext context,
+        String viewName);
 
     /**
      * Get metric display summaries for an autogroup.

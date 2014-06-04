@@ -32,7 +32,6 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -42,6 +41,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.Messages;
 import org.rhq.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
 
 /**
  * This is a window for displaying portlet settings. The window contains a form which in turn will contain the
@@ -60,6 +60,7 @@ public class PortletSettingsWindow extends Window {
     private PortletWindow parentWindow;
     private DashboardPortlet storedPortlet;
     private Portlet view;
+    private EnhancedToolStrip toolStrip;
 
     public PortletSettingsWindow(PortletWindow parentWindow, DashboardPortlet storedPortlet,
         Portlet view) {
@@ -119,15 +120,14 @@ public class PortletSettingsWindow extends Window {
                     }
                 }
             });
-
-            HLayout buttons = new HLayout(10);
-            buttons.setLayoutAlign(Alignment.CENTER);
-            buttons.addMember(cancel);
-            buttons.addMember(save);
-            layout.addMember(buttons);
-
+            toolStrip = new EnhancedToolStrip();
+            toolStrip.setPadding(5);
+            toolStrip.setWidth100();
+            toolStrip.setMembersMargin(15);
+            toolStrip.addMember(cancel);
+            toolStrip.addMember(save);
+            toolStrip.setLayoutAlign(Alignment.CENTER);
         } else if (view instanceof ConfigurablePortlet) {
-
             ConfigurationDefinition definition = ((ConfigurablePortlet) view).getConfigurationDefinition();
             Configuration configuration = storedPortlet.getConfiguration();
 
@@ -162,18 +162,19 @@ public class PortletSettingsWindow extends Window {
                     }
                 }
             });
-
-            HLayout buttons = new HLayout(10);
-            buttons.setLayoutAlign(Alignment.CENTER);
-            buttons.addMember(cancel);
-            buttons.addMember(save);
-            layout.addMember(buttons);
-
+            
+            toolStrip = new EnhancedToolStrip();
+            toolStrip.setPadding(5);
+            toolStrip.setWidth100();
+            toolStrip.setMembersMargin(15);
+            toolStrip.addMember(cancel);
+            toolStrip.addMember(save);
+            toolStrip.setLayoutAlign(Alignment.CENTER);
         } else {
             layout.addMember(new Label(MSG.view_portlet_configure_notNeeded()));
         }
-
         addItem(layout);
+        if (null != toolStrip) addItem(toolStrip);
     }
 
 }

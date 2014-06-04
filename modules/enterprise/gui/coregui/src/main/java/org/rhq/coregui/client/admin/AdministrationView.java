@@ -30,13 +30,13 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.IconEnum;
-import org.rhq.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.coregui.client.admin.roles.RolesView;
 import org.rhq.coregui.client.admin.storage.StorageNodeAdminView;
 import org.rhq.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.coregui.client.admin.templates.IgnoreResourceTypesView;
 import org.rhq.coregui.client.admin.templates.MetricTemplateTypeView;
+import org.rhq.coregui.client.admin.templates.MissingPolicyResourceTypesView;
 import org.rhq.coregui.client.admin.topology.AffinityGroupTableView;
 import org.rhq.coregui.client.admin.topology.AgentTableView;
 import org.rhq.coregui.client.admin.topology.PartitionEventTableView;
@@ -68,9 +68,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources",
+    public static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources",
         MSG.view_adminContent_contentSources(), IconEnum.CONTENT);
-    private static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG.common_title_repositories(),
+    public static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG.common_title_repositories(),
         IconEnum.CONTENT);
 
     public AdministrationView() {
@@ -131,13 +131,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
     private NavigationSection buildTopologySection() {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
-        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
-
-        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, new ViewFactory() {
-            public Canvas createView() {
-                return new RemoteAgentInstallView();
-            }
-        }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
+        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName()); // use this to hide experimental features from product
 
         NavigationItem serversItem = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
@@ -172,9 +166,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         // Arrays.asList returns a list with a fixed size, therefore there is the wrapping ArrayList
         List<NavigationItem> navigationItems = new ArrayList<NavigationItem>(Arrays.asList(serversItem,
             storageNodesItem, agentsItem, affinityGroupsItem, partitionEventsItem));
-        if (isRHQ) {
-            navigationItems.add(remoteAgentInstallItem);
-        }
+
         NavigationSection topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID,
             navigationItems.toArray(new NavigationItem[] {}));
         return topologyRegion;
@@ -218,6 +210,15 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         });
         ignoreResourceTypesItem.setRefreshRequired(true); // we always need a new page
 
+        NavigationItem missingResourcePolicyItem = new NavigationItem(
+            MissingPolicyResourceTypesView.VIEW_ID,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new MissingPolicyResourceTypesView();
+                }
+            });
+        missingResourcePolicyItem.setRefreshRequired(true); // we always need a new page
+
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new DownloadsView();
@@ -237,7 +238,8 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
-            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, downloadsItem, agentPluginsItem,
+            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, missingResourcePolicyItem,
+            downloadsItem, agentPluginsItem,
             serverPluginsItem);
     }
 

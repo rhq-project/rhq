@@ -880,6 +880,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view live measurement data for resource[id=" + resourceId + "]");
         }
+        // return an empty collection if no definition ids were provided
+        if (definitionIds == null || definitionIds.length == 0) {
+            return Collections.<MeasurementData>emptySet();
+        }
 
         Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
         query.setParameter("resourceId", resourceId);
@@ -924,7 +928,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
         //            Global UI Exceptions when attempting to serialize null responses.
         if (null == result) {
-            result = Collections.emptySet();
+            result = Collections.<MeasurementData>emptySet();
         }
 
         return result;
@@ -938,8 +942,12 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view measurement data for resourceGroup[id=" + groupId + "]");
         }
+        // return an empty collection if no definition ids were provided
+        if (definitionIds == null || definitionIds.length == 0) {
+            return Collections.<MeasurementData>emptySet();
+        }
+        
         Set<MeasurementData> values = new HashSet<MeasurementData>();
-
         if (resourceIds != null) {
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS);
             query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));

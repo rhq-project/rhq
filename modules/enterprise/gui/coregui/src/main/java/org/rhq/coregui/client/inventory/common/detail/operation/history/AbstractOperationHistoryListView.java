@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.coregui.client.inventory.common.detail.operation.history;
+
+import static org.rhq.coregui.client.components.table.Table.TableActionInfo.TableActionInfoBuilder;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -167,17 +170,10 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
             });
 
         if (showNewScheduleButton()) {
-            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    return hasControlPermission();
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    String oldurl = History.getToken();
-                    String newUrl = oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
-                    CoreGUI.goToView(newUrl);
-                }
-            });
+            TableActionInfo rescheduleAction = new TableActionInfoBuilder(MSG.common_button_reschedule(),
+                new RescheduleTableAction()).setTooltip(MSG.common_button_reschedule_tooltip()).createTableActionInfo();
+            addTableAction(rescheduleAction);
+            addTableAction(MSG.common_button_new() + " " + MSG.common_button_schedule(), new NewScheduleTableAction());
         }
         super.configureTable();
     }
@@ -369,4 +365,39 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         return AbstractOperationHistoryDataSource.Field.OPERATION_NAME;
     }
 
+    private class NewScheduleTableAction implements TableAction {
+        public boolean isEnabled(ListGridRecord[] selection) {
+            return hasControlPermission();
+        }
+
+        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+            String url = getViewUrl(selection);
+            if (url != null) {
+                CoreGUI.goToView(url);
+            }
+        }
+
+        protected String getViewUrl(ListGridRecord[] selection) {
+            String oldurl = History.getToken();
+            return oldurl.substring(0, oldurl.lastIndexOf("/")) + "/Schedules/0";
+        }
+    }
+
+    private class RescheduleTableAction extends NewScheduleTableAction {
+        @Override
+        public boolean isEnabled(ListGridRecord[] selection) {
+            return super.isEnabled(selection) && selection.length == 1;
+        }
+
+        @Override
+        protected String getViewUrl(ListGridRecord[] selection) {
+            String viewUrl = super.getViewUrl(selection);
+            if (viewUrl != null) {
+                ListGridRecord selectedRecord = selection[0];
+                Integer operationHistoryId = selectedRecord.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                viewUrl += "/example=" + operationHistoryId;
+            }
+            return viewUrl;
+        }
+    }
 }

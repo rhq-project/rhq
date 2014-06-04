@@ -191,7 +191,7 @@ public class DatasourceJBossASClient extends JBossASClient {
 
     /**
      * Returns a ModelNode that can be used to create a datasource.
-     * Callers are free to tweek the datasource request that is returned,
+     * Callers are free to tweak the datasource request that is returned,
      * if they so choose, before asking the client to execute the request.
      *
      * @param name
@@ -216,7 +216,7 @@ public class DatasourceJBossASClient extends JBossASClient {
         String connectionUrlExpression, String driverName, String exceptionSorterClassName, int idleTimeoutMinutes,
         boolean jta, int minPoolSize, int maxPoolSize, int preparedStatementCacheSize, String securityDomain,
         String staleConnectionCheckerClassName, String transactionIsolation, String validConnectionCheckerClassName,
-        Map<String, String> connectionProperties) {
+        boolean validateOnMatch, Map<String, String> connectionProperties) {
 
         String jndiName = "java:jboss/datasources/" + name;
 
@@ -237,12 +237,13 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"transaction-isolation\" => \"%s\" " //
             + ", \"use-java-context\" => true " //
             + ", \"valid-connection-checker-class-name\" => \"%s\" " //
+            + ", \"validate-on-match\" => %s " //
             + "}";
 
         String dmr = String.format(dmrTemplate, blockingTimeoutWaitMillis, connectionUrlExpression, driverName,
             exceptionSorterClassName, idleTimeoutMinutes, jndiName, jta, minPoolSize, maxPoolSize,
             preparedStatementCacheSize, securityDomain, staleConnectionCheckerClassName, transactionIsolation,
-            validConnectionCheckerClassName);
+            validConnectionCheckerClassName, validateOnMatch);
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name);
         final ModelNode request1 = ModelNode.fromString(dmr);
@@ -326,6 +327,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @param name
      * @param blockingTimeoutWaitMillis
      * @param driverName
+     * @param xaDataSourceClass
      * @param exceptionSorterClassName
      * @param idleTimeoutMinutes
      * @param minPoolSize
@@ -342,7 +344,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      *
      * @return the request that can be used to create the XA datasource
      */
-    public ModelNode createNewXADatasourceRequest(String name, int blockingTimeoutWaitMillis, String driverName,
+    public ModelNode createNewXADatasourceRequest(String name, int blockingTimeoutWaitMillis, String driverName, String xaDataSourceClass,
         String exceptionSorterClassName, int idleTimeoutMinutes, int minPoolSize, int maxPoolSize, Boolean noRecovery,
         Boolean noTxSeparatePool, int preparedStatementCacheSize, String recoveryPluginClassName,
         String securityDomain, String staleConnectionCheckerClassName, String transactionIsolation,
@@ -352,7 +354,8 @@ public class DatasourceJBossASClient extends JBossASClient {
 
         String dmrTemplate = "" //
             + "{" //
-            + "\"blocking-timeout-wait-millis\" => %dL " //
+            + "\"xa-datasource-class\" => \"%s\""
+            + ", \"blocking-timeout-wait-millis\" => %dL " //
             + ", \"driver-name\" => \"%s\" " //
             + ", \"exception-sorter-class-name\" => \"%s\" " //
             + ", \"idle-timeout-minutes\" => %dL " //
@@ -371,7 +374,7 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"valid-connection-checker-class-name\" => \"%s\" " //
             + "}";
 
-        String dmr = String.format(dmrTemplate, blockingTimeoutWaitMillis, driverName, exceptionSorterClassName,
+        String dmr = String.format(dmrTemplate, xaDataSourceClass, blockingTimeoutWaitMillis, driverName, exceptionSorterClassName,
             idleTimeoutMinutes, jndiName, minPoolSize, maxPoolSize, noRecovery, noTxSeparatePool,
             preparedStatementCacheSize, recoveryPluginClassName, securityDomain, staleConnectionCheckerClassName,
             transactionIsolation, validConnectionCheckerClassName);

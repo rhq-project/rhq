@@ -39,9 +39,11 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.plugin.CannedGroupAddition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -263,13 +265,11 @@ public class ProductPluginDeployer {
         boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
         ComparableVersion version;
         version = AgentPluginDescriptorUtil.getPluginVersion(pluginFile, descriptor);
-
         if (initialDeploy) {
             log.info("Discovered agent plugin [" + pluginName + "]");
         } else {
             log.info("Rediscovered agent plugin [" + pluginName + "]");
         }
-
         if (initialDeploy || isNewestVersion(pluginName, version)) {
             this.metadataManager.storePluginDescriptor(descriptor);
             this.deploymentInfos.put(pluginName, deploymentInfo);
@@ -287,7 +287,7 @@ public class ProductPluginDeployer {
             throw new Exception("Failed to parse descriptor found in plugin [" + di.url + "]", e);
         }
     }
-
+    
     private boolean isNewestVersion(String pluginName, ComparableVersion version) {
         boolean newestVersion;
         ComparableVersion existingVersion = this.pluginVersions.get(pluginName);
@@ -425,8 +425,9 @@ public class ProductPluginDeployer {
         if (result == null) {
             DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
             PluginDescriptor descriptor = this.metadataManager.getPluginDescriptor(pluginName);
+            CannedGroupAddition addition = PluginAdditionsReader.getCannedGroupsAddition(deploymentInfo.url, pluginName);
             if ((null != deploymentInfo) && (null != descriptor)) {
-                result = new DeploymentRunnable(pluginName, deploymentInfo, descriptor);
+                result = new DeploymentRunnable(pluginName, deploymentInfo, descriptor, addition);
                 runnableMap.put(pluginName, result);
             }
         }
@@ -437,7 +438,7 @@ public class ProductPluginDeployer {
      * This is the mechanism to kick off the registration of a new plugin. You must ensure you call this at the
      * appropriate time such that the plugin getting registered already has its dependencies registered.
      */
-    private void registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo, boolean forceUpdate) {
+    private void registerPluginJar(PluginDescriptor pluginDescriptor, CannedGroupAddition addition, DeploymentInfo deploymentInfo, boolean forceUpdate) {
         if (pluginDescriptor == null) {
             log.error("Missing plugin descriptor; is [" + deploymentInfo.url + "] a valid plugin?");
             return;
@@ -478,6 +479,10 @@ public class ProductPluginDeployer {
             // if we are called when hot-deploying a plugin whose dependencies aren't deployed, this will fail
             PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
             pluginMgr.registerPlugin(plugin, pluginDescriptor, localPluginFile, forceUpdate);
+            if (addition!=null) {
+                GroupDefinitionManagerLocal groupDefMgr = LookupUtil.getGroupDefinitionManager();
+                groupDefMgr.updateGroupsByCannedExpressions(pluginName, addition.getExpressions());
+            }
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + deploymentInfo.url + "]", e);
         }
@@ -568,13 +573,15 @@ public class ProductPluginDeployer {
     class DeploymentRunnable implements Runnable {
         private final DeploymentInfo pluginDeploymentInfo;
         private final PluginDescriptor pluginDescriptor;
+        private final CannedGroupAddition cgAddition;
         private final String pluginName;
         private boolean forceUpdate;
 
-        public DeploymentRunnable(String pluginName, DeploymentInfo di, PluginDescriptor descriptor) {
+        public DeploymentRunnable(String pluginName, DeploymentInfo di, PluginDescriptor descriptor, CannedGroupAddition cgAddition) {
             this.pluginName = pluginName;
             this.pluginDeploymentInfo = di;
             this.pluginDescriptor = descriptor;
+            this.cgAddition = cgAddition;
             this.forceUpdate = false;
         }
 
@@ -585,7 +592,7 @@ public class ProductPluginDeployer {
         @Override
         public void run() {
             log.debug("Being asked to deploy plugin [" + this.pluginName + "]...");
-            registerPluginJar(this.pluginDescriptor, this.pluginDeploymentInfo, this.forceUpdate);
+            registerPluginJar(this.pluginDescriptor, this.cgAddition, this.pluginDeploymentInfo, this.forceUpdate);
         }
     }
 

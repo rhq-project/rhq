@@ -328,7 +328,7 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.undeployServerPlugins(subject, getIds(pluginsToUndeploy));
+            serverPluginsBean.deleteServerPlugins(subject, getIds(pluginsToUndeploy));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: "
                 + selectedPluginNames);
         } catch (Exception e) {
@@ -351,8 +351,10 @@ public class InstalledPluginsUIBean {
         }
 
         try {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.purgeServerPlugins(subject, getIds(allSelectedPlugins));
+            //The JSF UI is no longer used for server plugins, so I'm just commenting out the code
+            //that would not compile anymore...
+            //Subject subject = EnterpriseFacesContextUtility.getSubject();
+            //serverPluginsBean.purgeServerPlugins(subject, getIds(allSelectedPlugins));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Purged server plugins: " + selectedPluginNames);
         } catch (Exception e) {
             processException("Failed to undeploy server plugins", e);
@@ -389,8 +391,10 @@ public class InstalledPluginsUIBean {
                 pluginNames.add(plugin.getName());
             }
 
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            pluginMgr.markPluginsForPurge(subject, getIds(getSelectedAgentPlugins()));
+            //Plugin deletion has been reimplemented to not require an explicit purge operation
+            //This UI bean is now not used, so I just comment out the conflicting pieces of impl.
+            //Subject subject = EnterpriseFacesContextUtility.getSubject();
+            //pluginMgr.markPluginsForPurge(subject, getIds(getSelectedAgentPlugins()));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Preparing to purge agent plugins: " +
                 pluginNames + ". This may take a few minutes since all type definitions from the plugins must " +
                 "first be purged from the system. The plugins will still be visible on this page until they have " +

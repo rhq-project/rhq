@@ -107,7 +107,7 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
 
     /**
      * The default column title name for the edit column.
-     * 
+     *
      * @return title for edit column
      */
     protected String getEditColumnTitle() {
@@ -156,12 +156,12 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
             SectionStack sectionStack = new SectionStack();
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
 
-            ListGrid platformsList = new CustomResourceTypeListGrid();
+            ListGrid platformsList = getCustomResourceTypeListGrid();
             SectionStackSection platforms = new SectionStackSection(MSG.view_adminTemplates_platforms());
             platforms.setExpanded(true);
             platforms.addItem(platformsList);
 
-            ListGrid platformServicesList = new CustomResourceTypeListGrid();
+            ListGrid platformServicesList = getCustomResourceTypeListGrid();
             SectionStackSection platformServices = new SectionStackSection(MSG.view_adminTemplates_platformServices());
             platformServices.setExpanded(true);
             platformServices.addItem(platformServicesList);
@@ -188,7 +188,7 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
     /**
      * This will remove all members from the given parent canvas and then add
      * the canvasToShow as the only member to the parent.
-     * 
+     *
      * @param parentCanvas parent to show the given canvas
      * @param canvasToShow the canvas to show in the parent, if null, show the main grid canvas (not a sub-canvas)
      */
@@ -212,6 +212,10 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
         parentCanvas.markForRedraw();
     }
 
+    public CustomResourceTypeListGrid getCustomResourceTypeListGrid() {
+        return new CustomResourceTypeListGrid();
+    }
+
     public class CustomResourceTypeListGrid extends ListGrid {
 
         public CustomResourceTypeListGrid() {
@@ -227,10 +231,12 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
             final ListGridField nameField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME,
                 MSG.common_title_name());
             nameField.setShowValueIconOnly(false);
+            nameField.setCanEdit(false);
             fields.add(nameField);
 
             final ListGridField pluginField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN,
                 MSG.common_title_plugin());
+            pluginField.setCanEdit(false);
             fields.add(pluginField);
             pluginField.setHidden(true);
 

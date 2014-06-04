@@ -29,13 +29,14 @@ package org.rhq.server.metrics.domain;
  * @author John Sanda
  */
 public enum AggregateType {
-    MAX, MIN, AVG;
+    MAX, MIN, AVG, VALUE;
 
     public static AggregateType valueOf(int type) {
         switch (type) {
         case 0 : return MAX;
         case 1 : return MIN;
         case 2 : return AVG;
+        case 3:  return VALUE;
         default: throw new IllegalArgumentException(type + " is not a supported " +
             AggregateType.class.getSimpleName());
         }

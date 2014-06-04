@@ -1,10 +1,32 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.coregui.client.inventory.groups.detail.operation.schedule;
+
+import static org.rhq.coregui.client.util.message.Message.Severity;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -21,16 +43,26 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
+import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.coregui.client.components.sorter.ReorderableList;
+import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
 import org.rhq.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.coregui.client.inventory.resource.ResourceDatasource;
+import org.rhq.coregui.client.util.async.Command;
+import org.rhq.coregui.client.util.async.CountDownLatch;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.coregui.client.util.message.Message;
 
 /**
  * The details view of the Group Operations>Schedules subtab.
@@ -48,6 +80,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     private ListGridRecord[] memberResourceRecords;
     private EnhancedDynamicForm executionModeForm;
     private ReorderableList memberExecutionOrderer;
+    private GroupOperationHistory operationExample;
 
     public GroupOperationScheduleDetailsView(ResourceGroupComposite groupComposite, int scheduleId) {
         super(new GroupOperationScheduleDataSource(groupComposite),
@@ -66,26 +99,36 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     }
 
     @Override
+    protected OperationHistory getOperationExample() {
+        return operationExample;
+    }
+
+    @Override
     protected void init(final boolean isReadOnly) {
         if (isNewRecord()) {
-            ResourceDatasource resourceDatasource = new ResourceDatasource();
-            Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(this.groupComposite
-                .getResourceGroup().getId()));
-            resourceDatasource.fetchData(criteria, new DSCallback() {
-                public void execute(DSResponse response, Object rawData, DSRequest request) {
-                    if (response.getStatus() != DSResponse.STATUS_SUCCESS) {
-                        throw new RuntimeException(MSG.view_group_operationScheduleDetails_failedToLoadMembers());
-                    }
-                    Record[] data = response.getData();
-                    memberResourceRecords = new ListGridRecord[data.length];
-                    for (int i = 0, dataLength = data.length; i < dataLength; i++) {
-                        Record record = data[i];
-                        ListGridRecord listGridRecord = (ListGridRecord) record;
-                        memberResourceRecords[i] = listGridRecord;
-                    }
+
+            final CountDownLatch latch = CountDownLatch.create(getOperationExampleId() == null ? 1 : 2, new Command() {
+                @Override
+                public void execute() {
                     GroupOperationScheduleDetailsView.super.init(isReadOnly);
                 }
             });
+
+            ResourceDatasource resourceDatasource = new ResourceDatasource();
+            Criteria criteria = new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(this.groupComposite
+                .getResourceGroup().getId()));
+            resourceDatasource.fetchData(criteria, new LoadResourcesCallback(latch));
+
+            if (getOperationExampleId() != null) {
+                GroupOperationHistoryCriteria historyCriteria = new GroupOperationHistoryCriteria();
+                historyCriteria.addFilterId(getOperationExampleId());
+                historyCriteria.fetchOperationDefinition(true);
+                historyCriteria.fetchParameters(true);
+                historyCriteria.setPageControl(PageControl.getSingleRowInstance());
+                GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(historyCriteria,
+                    new LoadExampleCallback(latch));
+            }
+
         } else {
             super.init(isReadOnly);
         }
@@ -231,4 +274,54 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         super.save(requestProperties);
     }
 
+    private class LoadResourcesCallback implements DSCallback {
+        private final CountDownLatch latch;
+
+        public LoadResourcesCallback(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        public void execute(DSResponse response, Object rawData, DSRequest request) {
+            if (response.getStatus() != DSResponse.STATUS_SUCCESS) {
+                throw new RuntimeException(MSG.view_group_operationScheduleDetails_failedToLoadMembers());
+            }
+            Record[] data = response.getData();
+            memberResourceRecords = new ListGridRecord[data.length];
+            for (int i = 0, dataLength = data.length; i < dataLength; i++) {
+                Record record = data[i];
+                ListGridRecord listGridRecord = (ListGridRecord) record;
+                memberResourceRecords[i] = listGridRecord;
+            }
+            latch.countDown();
+        }
+    }
+
+    private class LoadExampleCallback implements AsyncCallback<PageList<GroupOperationHistory>> {
+        private final CountDownLatch latch;
+
+        public LoadExampleCallback(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Override
+        public void onFailure(Throwable throwable) {
+            CoreGUI.getMessageCenter().notify(
+                new Message(MSG.view_operationScheduleDetails_load_example_failure(), throwable, Severity.Warning));
+            latch.countDown();
+        }
+
+        @Override
+        public void onSuccess(PageList<GroupOperationHistory> groupOperationHistories) {
+            if (groupOperationHistories.getTotalSize() == 0) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_operationScheduleDetails_example_not_found(), Severity.Warning));
+            } else if (groupOperationHistories.getTotalSize() != 1) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_operationScheduleDetails_example_not_unique(), Severity.Warning));
+            } else {
+                operationExample = groupOperationHistories.get(0);
+            }
+            latch.countDown();
+        }
+    }
 }

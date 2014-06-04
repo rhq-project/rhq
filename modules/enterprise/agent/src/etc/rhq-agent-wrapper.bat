@@ -81,10 +81,18 @@ set RHQ_AGENT_WRAPPER_DIR_PATH=%RHQ_AGENT_BIN_DIR_PATH%\wrapper
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_WRAPPER_DIR_PATH: %RHQ_AGENT_WRAPPER_DIR_PATH%
 
 rem ----------------------------------------------------------------------
-rem The Windows OS platform name is also the wrapper subdirectory name.
+rem If this is 64 bit windows and a 64-Bit JVM then run the 64 bit wrapper,
+rem otherwise 32-bit.
 rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_OS_PLATFORM=windows-x86_32
+if /I "%PROCESSOR_ARCHITECTURE:~-2%"=="64" set RHQ_AGENT_OS_PLATFORM=windows-x86_64
+if /I "%PROCESSOR_ARCHITEW6432:~-2%"=="64" set RHQ_AGENT_OS_PLATFORM=windows-x86_64
+rem For 64 bit OS, ensure it's a 64 bit JVM
+"%RHQ_JAVA_EXE_FILE_PATH%" -version 2>>&1 | findstr /I /C:"64-Bit" >>nul:
+if errorlevel 1 (
+    set RHQ_AGENT_OS_PLATFORM=windows-x86_32
+)
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_OS_PLATFORM: %RHQ_AGENT_OS_PLATFORM%
 
 rem ----------------------------------------------------------------------

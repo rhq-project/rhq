@@ -22,8 +22,12 @@ package org.rhq.modules.plugins.jbossas7;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.AS;
+import static org.rhq.modules.plugins.jbossas7.JBossProductType.WILDFLY8;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -33,9 +37,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+import org.w3c.dom.Document;
 
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
@@ -68,6 +76,7 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 
 /**
  * Base component for functionality that is common to Standalone Servers and Host Controllers.
@@ -88,13 +97,17 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private ServerPluginConfiguration serverPluginConfig;
     private AvailabilityType previousAvailabilityType;
     private String releaseVersion;
+    private String aSHostName;
+    private DocumentBuilderFactory docBuilderFactory;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
+        docBuilderFactory = DocumentBuilderFactory.newInstance();
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         serverPluginConfig.validate();
         connection = new ASConnection(ASConnectionParams.createFrom(serverPluginConfig));
+        setASHostName(findASDomainHostName());
         getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
@@ -112,9 +125,24 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public AvailabilityType getAvailability() {
         AvailabilityType availabilityType;
         try {
-            readAttribute("launch-type");
+            readAttribute(getHostAddress(), "name");
             availabilityType = UP;
-        } catch (Exception e) {
+        }
+        catch (ResultFailedException e) {
+            log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
+            setASHostName(findASDomainHostName());
+            log.info("Detected domain host name ["+getASHostName()+"]");
+            try {
+                readAttribute(getHostAddress(), "name");
+                availabilityType = UP;
+            } catch (Exception ex) {
+                if (log.isDebugEnabled()) {
+                    log.debug(getResourceDescription() + ": exception while checking availability", e);
+                }
+                availabilityType = DOWN;
+            }
+        }
+        catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug(getResourceDescription() + ": exception while checking availability", e);
             }
@@ -123,13 +151,21 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (availabilityType == DOWN) {
             releaseVersion = null;
         } else if (previousAvailabilityType != UP) {
-            validateServerAttributes();
-            if (log.isDebugEnabled()) {
-                log.debug(getResourceDescription() + " has just come UP.");
-            }
+            onAvailGoesUp();
         }
         previousAvailabilityType = availabilityType;
         return availabilityType;
+    }
+
+    /**
+     * this method get's called when availability was DOWN and now is UP.
+     * When overriding, don't forget to call super impl.
+     */
+    protected void onAvailGoesUp() {
+        validateServerAttributes();
+        if (log.isDebugEnabled()) {
+            log.debug(getResourceDescription() + " has just come UP.");
+        }
     }
 
     private void validateServerAttributes() throws InvalidPluginConfigurationException {
@@ -185,7 +221,18 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 + getResourceDescription(), e);
         }
         if (runtimeProductName == null || runtimeProductName.trim().isEmpty()) {
-            runtimeProductName = JBossProductType.AS.PRODUCT_NAME;
+            String releaseVersionNumber;
+            try {
+                releaseVersionNumber = readAttribute(getHostAddress(), "release-version");
+            } catch (Exception e) {
+                throw new InvalidPluginConfigurationException("Failed to validate product type for "
+                    + getResourceDescription(), e);
+            }
+            if (releaseVersionNumber.startsWith("8.")) {
+                runtimeProductName = WILDFLY8.PRODUCT_NAME;
+            } else {
+                runtimeProductName = AS.PRODUCT_NAME;
+            }
         }
         if (!runtimeProductName.equals(expectedRuntimeProductName)) {
             throw new InvalidPluginConfigurationException(
@@ -760,6 +807,44 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             MeasurementDataTrait data = new MeasurementDataTrait(request, new File(config).getName());
             report.addData(data);
         }
+    }
+    private synchronized void setASHostName(String aSHostName) {
+        this.aSHostName = aSHostName;
+    }
+    /**
+     * gets AS domain host name (defult is master for HC) null for standalone;
+     * @return AS domain host name
+     */
+    protected synchronized String getASHostName() {
+           return aSHostName;
+    }
+
+    /**
+     * Reads <host name= attribute from host.xml file.
+     *
+     * @return name attribute from host.xml file
+     */
+    protected String findASDomainHostName() {
+        File hostXmlFile = getServerPluginConfiguration().getHostConfigFile();
+        if (hostXmlFile==null) {
+            return null;
+        }
+        String hostName = null;
+        try {
+            DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
+            InputStream is = new FileInputStream(hostXmlFile);
+            try {
+                Document document = builder.parse(is);
+                hostName = document.getDocumentElement().getAttribute("name");
+            } finally {
+                is.close();
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        if (hostName == null)
+            hostName = "local"; // Fallback to the installation default
+        return hostName;
     }
 
     private HostConfiguration getHostConfig() {

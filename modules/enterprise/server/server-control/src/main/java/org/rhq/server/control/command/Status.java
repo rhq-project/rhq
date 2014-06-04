@@ -29,14 +29,10 @@ import java.io.File;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
-
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * @author John Sanda
@@ -125,24 +121,9 @@ public class Status extends ControlCommand {
         int rValue = RHQControl.EXIT_CODE_OK;
 
         if (isWindows()) {
-            Executor executor = new DefaultExecutor();
-            executor.setStreamHandler(new PumpStreamHandler());
             org.apache.commons.exec.CommandLine commandLine;
-            executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "status");
-            try {
-                rValue = executor.execute(commandLine);
-            } catch (ExecuteException ee) {
-                log.debug("Failed to check storage service status", ee);
-                rValue = ee.getExitValue();
-                if (rValue == RHQControl.EXIT_CODE_OK) {
-                    // if somehow we were told it was OK, change it to unknown since it can't be OK
-                    rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
-                }
-            } catch (Exception e) {
-                log.debug("Failed to check storage service status", e);
-                rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
-            }
+            rValue = ExecutorAssist.execute(getBinDir(), commandLine);
         } else {
             final String ANSI_RED = "\u001B[31m";
             final String ANSI_GREEN = "\u001B[32m";
@@ -164,21 +145,7 @@ public class Status extends ControlCommand {
         log.debug("Checking RHQ server status");
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "status");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
-
-        int rValue;
-        try {
-            rValue = executor.execute(commandLine);
-        } catch (ExecuteException ee) {
-            rValue = ee.getExitValue();
-            if (rValue == RHQControl.EXIT_CODE_OK) {
-                // if somehow we were told it was OK, change it to unknown since it can't be OK
-                rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
-            }
-        }
-        return rValue;
+        return ExecutorAssist.execute(getBinDir(), commandLine);
     }
 
     private int checkAgentStatus() throws Exception {
@@ -187,30 +154,11 @@ public class Status extends ControlCommand {
         File agentBinDir = new File(getAgentBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "status");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(agentBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
-
-        int rValue;
-        try {
-            rValue = executor.execute(commandLine);
-        } catch (ExecuteException e) {
-            // For windows the JSW exit code for a status check is expected to be a mask value and the agent wrapper
-            // .bat will return it explicitly.  We can ignore it and assume that the logged output is sufficient.
-            // See http://wrapper.tanukisoftware.com/doc/english/launch-win.html#standalone-status
-            if (!isWindows()) {
-                // UNIX script will exit with 1 if its not running, this is expected, so don't throw exception on 1
-                if (e.getExitValue() != 1) {
-                    throw e;
-                }
-            }
-            rValue = e.getExitValue();
-            if (rValue == RHQControl.EXIT_CODE_OK) {
-                // if somehow we were told it was OK, change it to unknown since it can't be OK
-                rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
-            }
+        int rValue = ExecutorAssist.execute(agentBinDir, commandLine);
+        if(!isWindows() && rValue > 1 && rValue != 3) {
+            // Return codes 0 and agent not running are accepted, but anything else above 0 isn't
+            throw new RHQControlException("rhq-agent-wrapper exited with return value " + rValue);
         }
-
         return rValue;
     }
 }

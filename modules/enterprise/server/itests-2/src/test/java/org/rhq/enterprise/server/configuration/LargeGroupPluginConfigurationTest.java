@@ -207,7 +207,12 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         }
 
         @Override
-        public void executeServiceScanDeferred() {
+        public boolean executeServiceScanDeferred() {
+            return true;
+        }
+
+        @Override
+        public void executeServiceScanDeferred(int resourceId) {
         }
 
         @Override
@@ -246,5 +251,6 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         @Override
         public void synchronizeServer(int resourceId, Collection<ResourceSyncInfo> toplevelServerSyncInfo) {
         }
+
     }
 }

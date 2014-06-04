@@ -54,13 +54,16 @@ public abstract class AbstractBase {
     int _platformId ;
     int _platformTypeId;
 
-    @Before
-    public void setUp() throws Exception {
-
+    protected static void setupRestAssured() {
         RestAssured.baseURI = "http://" + System.getProperty("rest.server","localhost")  ;
         RestAssured.port = 7080;
         RestAssured.basePath = "/rest/";
         RestAssured.authentication = basic("rhqadmin","rhqadmin");
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        setupRestAssured();
 
         Resource resource = new Resource();
         resource.setResourceName(REST_TEST_DUMMY);
@@ -111,6 +114,34 @@ public abstract class AbstractBase {
                 .delete("/resource/{id}");
 
         }
+    }
+    protected int findIdOfARealEAP6() {
+        // Find an EAP 6 server
+        List<Map<String,Object>> resources =
+        given()
+            .header(acceptJson)
+            .queryParam("q","EAP (")
+            .queryParam("category","SERVER")
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/resource")
+        .jsonPath().getList("$");
+
+        assert resources.size() > 0 : "No real EAP6 server found in inventory";
+
+        int as7Id = (Integer)resources.get(0).get("resourceId");
+        // try to find stock EAP6 
+        if (resources.size() > 1) {
+          for (Map<String,Object> res : resources) {
+            if (!res.get("resourceName").toString().contains("RHQ Server")) {
+              as7Id = (Integer)res.get("resourceId");
+              break;
+            }
+          }
+        }
+        return as7Id;
     }
 
     protected int findIdOfARealPlatform() {

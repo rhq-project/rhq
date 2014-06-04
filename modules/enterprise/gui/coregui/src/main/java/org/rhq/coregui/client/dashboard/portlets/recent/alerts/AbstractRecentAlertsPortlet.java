@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2014 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.coregui.client.dashboard.portlets.recent.alerts;
 
 import java.util.ArrayList;
@@ -16,7 +34,9 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.Alert;
@@ -130,6 +150,13 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_recentAlerts());
     }
+    
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields(false);
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
+    }
 
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -169,6 +196,9 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
+        // alert name filter
+        final TextItem alertNameFilter = PortletConfigurationEditorComponent.getAlertNameEditor(portletConfig);
+        
         // alert priority selector
         final SelectItem alertPrioritySelector = PortletConfigurationEditorComponent
             .getAlertPriorityEditor(portletConfig);
@@ -180,15 +210,20 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
-        filterForm.setItems(alertPrioritySelector, resultCountSelector);
+        filterForm.setItems(alertNameFilter, alertPrioritySelector, resultCountSelector);
 
         //submit handler
         customSettingsForm.addSubmitValuesHandler(new SubmitValuesHandler() {
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
+                // alert name
+                String selectedValue = (null == alertNameFilter.getValue()) ? "" : alertNameFilter.getValue()
+                    .toString();
+                portletConfig.put(new PropertySimple(Constant.ALERT_NAME, selectedValue));
+                
                 // alert severity
-                String selectedValue = (null == alertPrioritySelector.getValue()) ? "" : alertPrioritySelector
+                selectedValue = (null == alertPrioritySelector.getValue()) ? "" : alertPrioritySelector
                     .getValue().toString();
                 if ((selectedValue.trim().isEmpty())
                     || (selectedValue.split(",").length == AlertPriority.values().length)) {
@@ -351,9 +386,13 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         @Override
         protected AlertCriteria getFetchCriteria(DSRequest request) {
             AlertCriteria criteria = new AlertCriteria();
+            
+            // name filter
+            String currentSetting = this.configuration.getSimpleValue(Constant.ALERT_NAME, "");
+            criteria.addFilterName(currentSetting);
 
             // result count
-            String currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,
+            currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,
                 Constant.RESULT_COUNT_DEFAULT);
 
             // We have to set a PageControl override here, or RPCDataSource will apply default paging based on the
@@ -413,11 +452,13 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             case Resource:
                 criteria.addFilterResourceIds(getEntityContext().getResourceId());
                 break;
-
             case ResourceGroup:
                 criteria.addFilterResourceGroupIds(getEntityContext().getGroupId());
+                break;
+            default:
+                // no default
+                break;
             }
-
             criteria.fetchAlertDefinition(true);
             criteria.fetchRecoveryAlertDefinition(true);
             criteria.fetchConditionLogs(true);

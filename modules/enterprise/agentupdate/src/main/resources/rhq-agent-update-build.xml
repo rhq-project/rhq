@@ -190,14 +190,14 @@
       </chmod>
 
       <!-- copy over the agent-configuration and log4j xml files, but rename them so they do not take effect -->
-      <echo>Copy agent configuration file - use the new copy and backup the old copy</echo>
+      <echo>Copy agent configuration file - use the old copy and backup the new copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
                         newdir="${_update.tmp.dir}/rhq-agent/conf"
-                        filename="agent-configuration.xml" keep="new" backupextension=".custom" failonerror="false" />
-      <echo>Copy log4j configuration file - use the new copy and backup the old copy</echo>
+                        filename="agent-configuration.xml" keep="old" backupextension=".new" failonerror="false" />
+      <echo>Copy log4j configuration file - use the old copy and backup the new copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
                         newdir="${_update.tmp.dir}/rhq-agent/conf"
-                        filename="log4j.xml" keep="new" backupextension=".custom" failonerror="false" />
+                        filename="log4j.xml" keep="old" backupextension=".new" failonerror="false" />
 
       <echo>
       Everything is done; _update.tmp.dir/rhq-agent has our new agent.

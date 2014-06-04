@@ -56,9 +56,11 @@ public interface AgentClient {
     void stopSending();
 
     /**
-     * Returns <code>true</code> if the agent is up and this client can communicate with it. This will return <code>
-     * false</code> if, for any reason, the agent cannot be pinged (which could mean the agent is down, or a network
-     * problem has occurred that prohibits the client from reaching the agent).
+     * Returns <code>true</code> if this client can communicate with the agent. This *only* means a comm link
+     * can be established.  It does not mean the Agent is ready to service requests.  For that use
+     * {@link #pingService(long)}  This will return <code>false</code> if, for any reason, the agent cannot be pinged
+     * (which could mean the agent is down, or a network problem has occurred that prohibits the client from reaching
+     * the agent).
      *
      * @param  timeoutMillis the amount of time, in milliseconds, the caller wants to wait before considering the agent
      *                       down
@@ -67,6 +69,26 @@ public interface AgentClient {
      *         the agent for some reason
      */
     boolean ping(long timeoutMillis);
+
+    /**
+     * Makes the agent download the plugin updates from the server and make its plugin container use them.
+     * @since 4.11
+     */
+    void updatePlugins();
+
+    /**
+     * Returns <code>true</code> if this client can communicate with the agent and the agent Services are
+     * available. For a simple communication check see {@link #ping(long)}. This will return <code>
+     * false</code> if, for any reason, the agent cannot be pinged (which could mean the agent is down, or a network
+     * problem has occurred that prohibits the client from reaching the agent) or its Services are not yet available.
+     *
+     * @param  timeoutMillis the amount of time, in milliseconds, the caller wants to wait before considering the agent
+     *                       Services unavailable.
+     *
+     * @return <code>true</code> if the agent Services can be pinged; <code>false</code> if this client cannot communicate
+     *         with the agent or the agent is not yet servicing requests.
+     */
+    boolean pingService(long timeoutMillis);
 
     // each agent subsystem has two getters for it below - one allows you to override the timeout, one uses the default timeout
 

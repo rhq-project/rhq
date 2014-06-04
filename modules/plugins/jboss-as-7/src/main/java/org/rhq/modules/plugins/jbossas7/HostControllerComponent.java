@@ -28,12 +28,15 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -51,10 +54,26 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
 
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";
+    private static final String DOMAIN_HOST_TRAIT = "domain-host-name";
+    private static final String PROCESS_TYPE_DC = "Domain Controller";
+
+    private boolean domainController; // determines whether this HC is also DC
 
     @Override
     protected AS7Mode getMode() {
         return AS7Mode.DOMAIN;
+    }
+
+    @Override
+    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+        super.start(resourceContext);
+        setDomainController(PROCESS_TYPE_DC.equals(getProcessTypeAttrValue()));
+    }
+
+    @Override
+    protected void onAvailGoesUp() {
+        super.onAvailGoesUp();
+        setDomainController(PROCESS_TYPE_DC.equals(getProcessTypeAttrValue()));
     }
 
     @Override
@@ -64,7 +83,11 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             String requestName = request.getName();
             if (requestName.equals(DOMAIN_CONFIG_TRAIT) || requestName.equals(HOST_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
-            } else {
+            } else if (requestName.equals(DOMAIN_HOST_TRAIT)) {
+                MeasurementDataTrait data = new MeasurementDataTrait(request, findASDomainHostName());
+                report.addData(data);
+            }
+            else {
                 leftovers.add(request); // handled below
             }
         }
@@ -85,7 +108,7 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             return runCliCommand(parameters);
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
-            String domainHost = pluginConfiguration.getSimpleValue("domainHost", "");
+            String domainHost = getASHostName();
             if (domainHost.isEmpty()) {
                 OperationResult result = new OperationResult();
                 result.setErrorMessage("No domain host found - can not continue");
@@ -232,20 +255,33 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
         return report;
     }
 
+    private String getProcessTypeAttrValue() {
+        try {
+            return readAttribute(new Address("/"), "process-type");
+        } catch (Exception e) {
+            log.warn("Unable to detect HostController's process-type", e);
+            return null;
+        }
+    }
+
+    public synchronized boolean isDomainController() {
+        return domainController;
+    }
+
+    public synchronized void setDomainController(boolean domainController) {
+        this.domainController = domainController;
+    }
+
     @NotNull
     @Override
     protected Address getEnvironmentAddress() {
-        return new Address("host=" + getHostName() + ",core-service=host-environment");
+        return new Address("host=" + getASHostName() + ",core-service=host-environment");
     }
 
     @NotNull
     @Override
     protected Address getHostAddress() {
-        return new Address("host=" + getHostName());
-    }
-
-    private String getHostName() {
-        return context.getPluginConfiguration().getSimpleValue("domainHost", "master");
+        return new Address("host=" + getASHostName());
     }
 
     @NotNull

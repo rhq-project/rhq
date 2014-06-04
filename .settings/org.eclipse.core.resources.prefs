@@ -1,8 +1,10 @@
+#Fri Apr 04 11:49:54 EDT 2014
 eclipse.preferences.version=1
 encoding//modules/core/dbutils/src/main/java/org/rhq/core/db/DbUtilsI18NResourceKeys.java=UTF-8
 encoding//modules/core/util/src/main/java/org/rhq/core/util/UtilI18NResourceKeys.java=UTF-8
 encoding//modules/enterprise/agent/src/main/java/org/rhq/enterprise/agent/i18n/AgentI18NResourceKeys.java=UTF-8
 encoding//modules/enterprise/comm/src/main/java/org/rhq/enterprise/communications/i18n/CommI18NResourceKeys.java=UTF-8
+encoding//modules/enterprise/gui/coregui/src/main/resources/org/rhq/coregui/client/Messages_cs.properties=UTF-8
 encoding//modules/enterprise/gui/portal-war/src/main/java/org/rhq/enterprise/gui/measurement/MeasurementI18NResourceKeys.java=ISO-8859-1
 encoding//modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/core/comm/ServerI18NFactory.java=UTF-8
 encoding//modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/core/comm/ServerI18NResourceKeys.java=UTF-8

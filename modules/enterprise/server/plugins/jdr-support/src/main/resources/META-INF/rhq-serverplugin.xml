@@ -1,0 +1,15 @@
+<generic-plugin name="JdrSupportPlugin"
+                displayName="JDR Support Plugin"
+                description="A plugin adds support for JDR (JBoss Diagnostic Reporter)"
+                package="org.rhq.enterprise.server.plugins.jdr"
+                disabledOnDiscovery="false"
+                version="1.0"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin">
+
+	<serverplugin:help><![CDATA[
+       Starts up socket listener on 127.0.0.1:7079. At startup it generates authorization token and stores it to ${jboss.server.data.dir}/jdr-token file. Client is supposed to read this file and authorize with token. If client gets authorized it recieves  System Information (similar as returned by /rest/status endpoint).
+    ]]></serverplugin:help>
+
+	<serverplugin:plugin-component class="JdrServerPluginComponent" />
+</generic-plugin>

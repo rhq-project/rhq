@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.10.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
@@ -416,7 +416,7 @@
     <dependency>
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
-      <version>0.1.29</version>
+      <version>0.1.51</version>
     </dependency>
 
     <dependency>

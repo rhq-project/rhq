@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.10.0-SNAPSHOT</version>
+  <version>4.12.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -100,7 +100,7 @@
     <cassandra.snappy.version>1.0.4.1-rhq-p1</cassandra.snappy.version>
     <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
-    <cassandra.version>1.2.9</cassandra.version>
+    <cassandra.version>1.2.9-jboss-1</cassandra.version>
     <clirr.version>2.6</clirr.version>
     <commons-beanutils.version>1.8.2</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
@@ -117,7 +117,7 @@
     <freemarker.version>2.3.18</freemarker.version>
 
     <el.version>1.0</el.version>
-    <ems.version>1.3</ems.version>
+    <ems.version>1.3.5-rhq</ems.version>
 
     <getopt.version>1.0.13</getopt.version>
 
@@ -176,7 +176,7 @@
 
     <mockito-core.version>1.9.0</mockito-core.version>
 
-    <ojdbc6.version>11.2.0.3.0</ojdbc6.version>
+    <ojdbc6.version>12.1.0.1.0</ojdbc6.version>
     <opencsv.version>1.8</opencsv.version>
 
     <picketbox.version>4.0.7.Final</picketbox.version>
@@ -190,7 +190,7 @@
 
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <servlet-api.version>2.4</servlet-api.version>
-    <sigar.version>1.6.5.132-5</sigar.version>
+    <sigar.version>1.6.5.132-6</sigar.version>
     <sigar.zip.version>1.6.5</sigar.zip.version>
     <swagger-annotations.version>1.2.3</swagger-annotations.version>
 
@@ -415,6 +415,11 @@
       <dependency>
         <groupId>org.jboss.as</groupId>
         <artifactId>jboss-as-ejb3</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-jdr</artifactId>
         <version>${jboss.version}</version>
       </dependency>
       <dependency>
@@ -884,7 +889,7 @@
       <dependency>
         <groupId>commons-fileupload</groupId>
         <artifactId>commons-fileupload</artifactId>
-        <version>1.2</version>
+        <version>1.3.1</version>
       </dependency>
 
       <dependency>

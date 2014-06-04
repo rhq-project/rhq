@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.rhq.core.util.collection.IntHashMap;
 import org.rhq.core.util.stream.StreamUtil;
@@ -410,14 +412,15 @@ public class FileUtil {
      * or <code>null</code> is returned if there was no drive letter in the path.
      *
      * @param path the path string that will be altered to have its drive letter stripped.
-     * @return if there was a drive letter, it will be returned. If no drive letter was in path, null is returned
+     * @return if there was a drive letter, it will be returned and normalized to upcase. If no drive letter
+     *         was in path, null is returned
      */
     public static String stripDriveLetter(StringBuilder path) {
         String driveLetter = null;
         Pattern regex = Pattern.compile("^([a-zA-Z]):.*");
         Matcher matcher = regex.matcher(path);
         if (matcher.matches()) {
-            driveLetter = matcher.group(1);
+            driveLetter = matcher.group(1).toUpperCase();
             path.replace(0, 2, ""); // we know the pattern is one char drive letter plus one ':' char followed by the path
         }
         return driveLetter;
@@ -608,15 +611,23 @@ public class FileUtil {
      * return null, because it understands {@code C:\..\asdf} as an attempt to "go above" the file system root.
      *
      * @return the file with the normalized path or null if the ".."s would jump further up than the number of preceding
-     * path elements (e.g. passing files with paths like ".." or "path/../.." will return null).
+     * path elements (e.g. passing files with paths like ".." or "path/../.." will return null). On Windows the drive
+     * letter will be upper-cased if present.
      */
     public static File normalizePath(File file) {
         String path = file.getPath();
+        File root = null;
 
+        // make sure driver letter on windows is upcased
         int rootLength = FileSystem.get().getPathRootLength(path);
-        File root = rootLength == 0 ? null : new File(path.substring(0, rootLength));
+        if (rootLength > 0) {
+            StringBuilder rootPath = new StringBuilder(path.substring(0, rootLength));
+            String driveLetter = stripDriveLetter(rootPath);
+            root = new File((null == driveLetter) ? rootPath.toString() : (driveLetter + ":" + rootPath.toString()));
+        }
 
-        StringTokenizer tokenizer = new StringTokenizer(path.substring(rootLength), FileSystem.get().getSeparatorChars(), true);
+        StringTokenizer tokenizer = new StringTokenizer(path.substring(rootLength), FileSystem.get()
+            .getSeparatorChars(), true);
         LinkedList<String> pathStack = new LinkedList<String>();
 
         boolean previousWasDelimiter = false;
@@ -657,11 +668,11 @@ public class FileUtil {
 
         StringBuilder normalizedPath = new StringBuilder();
 
-        for (int i = pathStack.size(); --i >= 0; ) {
+        for (int i = pathStack.size(); --i >= 0;) {
             normalizedPath.append(pathStack.get(i));
         }
 
-        File ret = root == null ? new File(normalizedPath.toString()) : new File(root, normalizedPath.toString());
+        File ret = (root == null) ? new File(normalizedPath.toString()) : new File(root, normalizedPath.toString());
 
         if (file.isAbsolute() != ret.isAbsolute()) {
             // if the normalization changed the path such that it is not absolute anymore
@@ -753,13 +764,13 @@ public class FileUtil {
 
         private static int nextSlash(String str, int from) {
             int len = str.length();
-            for(int i = from; i < len; ++i) {
+            for (int i = from; i < len; ++i) {
                 if (isSlash(str.charAt(i))) {
                     return i;
                 }
             }
 
-           return -1;
+            return -1;
         }
 
         public static FileSystem get() {
@@ -814,4 +825,145 @@ public class FileUtil {
 
         return new File(cwdDriveLetter + ":" + path).isAbsolute();
     }
+
+    /**
+     * Compressed the data found in the file. The file can only be decompressed with {@link #decompressFile(File)}.
+     *
+     * @param originalFile
+     * @throws IOException
+     */
+    public static void compressFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the compressed data
+        File decompressedFile = new File(originalFile + ".d");
+        try {
+            copyFile(originalFile, decompressedFile);
+            try {
+                FileOutputStream out = new FileOutputStream(originalFile);
+                out.write(new byte[] { (byte) 0 }); // write a prefix byte so people can't easily just gunzip this
+                GZIPOutputStream zip = new GZIPOutputStream(out); // writes the compressed data into original file
+                StreamUtil.copy(new FileInputStream(decompressedFile), zip);
+            } catch (IOException e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(decompressedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                throw e;
+            }
+        } finally {
+            //            System.out.println("compress: original: " + decompressedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(decompressedFile));
+            //            System.out.println("          compress: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            decompressedFile.delete();
+        }
+    }
+
+    /**
+     * Decompresses the compressed data found in the file that was compressed with {@link #compressFile(File)}.
+     * If the file was not previously compressed, an exception is thrown.
+     *
+     * @param originalFile
+     * @throws IOException
+     */
+    public static void decompressFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the decompressed data
+        File compressedFile = new File(originalFile + ".c");
+        try {
+            copyFile(originalFile, compressedFile);
+            try {
+                FileInputStream in = new FileInputStream(compressedFile);
+                in.read(); // read our prefix byte
+                GZIPInputStream zip = new GZIPInputStream(in);
+                StreamUtil.copy(zip, new FileOutputStream(originalFile));
+            } catch (IOException e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(compressedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                throw e;
+            }
+        } finally {
+            //            System.out.println("decompre: original: " + compressedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(compressedFile));
+            //            System.out.println("          decompre: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            compressedFile.delete();
+        }
+    }
+
+    /*
+     * I was going to use this, but then decided to use the compress/decompress instead.
+     * However, this might be useful in the future. We can uncomment this if we want to use something
+     * like this. There is also a commented out test in FileUtilTest that should be uncommented if
+     * we reintroduce these two methods.
+     *
+    public static void obfuscateFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the compressed data
+        File deobfuscatedFile = new File(originalFile + ".d");
+        try {
+            copyFile(originalFile, deobfuscatedFile);
+            try {
+                byte[] unobfuscatedData;
+                String obfuscatedData;
+                unobfuscatedData = StreamUtil.slurp(new FileInputStream(deobfuscatedFile));
+                obfuscatedData = Obfuscator.encode(new String(unobfuscatedData));
+                unobfuscatedData = null; // help GC
+                FileUtil.writeFile(new ByteArrayInputStream(obfuscatedData.getBytes()), originalFile);
+                obfuscatedData = null; // help GC
+            } catch (Exception e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(deobfuscatedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                } else {
+                    throw new IOException(e);
+                }
+            }
+        } finally {
+            //            System.out.println("obfuscat: original: " + deobfuscatedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(deobfuscatedFile));
+            //            System.out.println("          obfuscat: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            deobfuscatedFile.delete();
+        }
+    }
+
+    public static void deobfuscateFile(File originalFile) throws IOException {
+        // make a copy of the original data, so we can use the original file for the decompressed data
+        File obfuscatedFile = new File(originalFile + ".o");
+        try {
+            copyFile(originalFile, obfuscatedFile);
+            try {
+                String unobfuscatedData;
+                byte[] obfuscatedData = StreamUtil.slurp(new FileInputStream(obfuscatedFile));
+                unobfuscatedData = Obfuscator.decode(new String(obfuscatedData));
+                obfuscatedData = null; // help GC
+                FileUtil.writeFile(new ByteArrayInputStream(unobfuscatedData.getBytes()), originalFile);
+                unobfuscatedData = null; // help GC
+            } catch (Exception e) {
+                // try to restore the original file before throwing exception
+                try {
+                    copyFile(obfuscatedFile, originalFile);
+                } catch (Throwable ignore) {
+                }
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                } else {
+                    throw new IOException(e);
+                }
+            }
+        } finally {
+            //            System.out.println("deobfusc: original: " + obfuscatedFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(obfuscatedFile));
+            //            System.out.println("          deobfusc: " + originalFile.length() + ", "
+            //                + MessageDigestGenerator.getDigestString(originalFile));
+            obfuscatedFile.delete();
+        }
+    }
+    */
 }

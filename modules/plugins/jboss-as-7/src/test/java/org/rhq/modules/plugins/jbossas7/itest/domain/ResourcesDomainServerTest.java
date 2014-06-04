@@ -31,7 +31,6 @@ import org.rhq.test.arquillian.RunDiscovery;
 
 /**
  * @author Stefan Negrea
- *
  */
 @Test(groups = { "integration", "pc", "domain" }, singleThreaded = true)
 public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
@@ -81,14 +80,21 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("Console Handler");
 
         // Datasources need a complex workflow, cannot be tested like this
-
         ignoredResources.add("DataSource (Profile)");
         ignoredResources.add("DataSource (Managed)");
 
-        // Cannot apply configuration blindly
+        if (System.getProperty("as7.version").equals("6.1.0.Alpha")) {
+            // HornetQ resource is broken on 6.1.0.Alpha. Operation fails with:
+            // JBAS011673: The clustered attribute is deprecated.
+            // To create a clustered HornetQ server, define at least one cluster-connection
+            ignoredResources.add("HornetQ (Profile)");
+        }
 
-        ignoredResources.add("Cluster Connection (Profile)");
-        ignoredResources.add("HornetQ (Profile)");
+        if (System.getProperty("as7.version").startsWith("6.0") || System.getProperty("as7.version").startsWith("6.1")) {
+            // Cluster Connection resources cannot be modified on EAP 6.0 or 6.1, only deleted/re-created
+            // See Bug 1001612 https://bugzilla.redhat.com/show_bug.cgi?id=1001612#c0
+            ignoredResources.add("Cluster Connection (Profile)");
+        }
 
         int errorCount = loadUpdateConfigChildResources(server, ignoredResources);
         Assert.assertEquals(errorCount, 0);
@@ -117,5 +123,4 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
 
         executeNoArgOperations(server, ignoredSubsystems, ignoredOperations);
     }
-
 }

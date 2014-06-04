@@ -133,6 +133,8 @@ public interface SystemManagerLocal extends SystemManagerRemote {
     void loadSystemConfigurationCache();
 
     boolean isDebugModeEnabled();
+    
+    boolean isLoginWithoutRolesEnabled();
 
     boolean isExperimentalFeaturesEnabled();
 

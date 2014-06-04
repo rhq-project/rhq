@@ -62,8 +62,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
-    // this must match the constant found in ServerManagerBean
-    protected static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
     protected static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "TestServer";
 
     protected TestServerCommunicationsService agentServiceContainer;
@@ -93,7 +91,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         resourceTypeManager = LookupUtil.getResourceTypeManager();
         resourceManager = LookupUtil.getResourceManager();
 
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
+        setServerIdentity(RHQ_SERVER_NAME_PROPERTY_VALUE);
     }
 
     @Override
@@ -106,8 +104,6 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         unprepareForTestAgents();
 
         deleteServerIdentity();
-
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
     }
 
     protected void prepareMockAgentServiceContainer() {
@@ -130,7 +126,6 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         // used in UpdateMeasurementSubsystemTest
         resourceTypeCriteria.fetchMetricDefinitions(true);
         // used in several UpdateResourceSubsystemTest tests
-        resourceTypeCriteria.fetchSubCategory(true);
 
         PageList<ResourceType> results = resourceTypeManager
             .findResourceTypesByCriteria(overlord, resourceTypeCriteria);

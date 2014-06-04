@@ -24,21 +24,29 @@
 package org.rhq.core.domain.plugin;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import org.rhq.core.domain.cloud.Server;
 
 /**
  * Base plugin implementation that agent and server plugin implementations extend.
@@ -106,6 +114,11 @@ public class AbstractPlugin implements Serializable {
 
     @Column(name = "CONTENT", nullable = true)
     private byte[] content;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "RHQ_PLUGIN_SERVER_ACK_DELETE", joinColumns = @JoinColumn(name = "PLUGIN_ID"),
+        inverseJoinColumns = @JoinColumn(name = "SERVER_ID"))
+    private Set<Server> serversAcknowledgedDelete;
 
     public AbstractPlugin() {
     }
@@ -355,6 +368,17 @@ public class AbstractPlugin implements Serializable {
 
     public void setDeployment(PluginDeploymentType deployment) {
         this.deployment = deployment;
+    }
+
+    /**
+     * The list of the servers that acknowledged that this plugin is deleted.
+     * Used to determine whether it is safe to purge the plugin from the database.
+     */
+    public Set<Server> getServersAcknowledgedDelete() {
+        if (serversAcknowledgedDelete == null) {
+            serversAcknowledgedDelete = new HashSet<Server>();
+        }
+        return serversAcknowledgedDelete;
     }
 
     /**

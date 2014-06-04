@@ -75,7 +75,7 @@ class VersionManager extends AbstractManager {
      *
      * @throws Exception
      */
-    public void install() throws Exception {
+    public void install(Properties properties) throws Exception {
         log.info("Preparing to install storage schema");
 
         try {
@@ -86,7 +86,7 @@ class VersionManager extends AbstractManager {
             create();
         }
 
-        update();
+        update(properties);
     }
 
     /**
@@ -142,7 +142,7 @@ class VersionManager extends AbstractManager {
      *
      * @throws Exception
      */
-    private void update() throws Exception {
+    private void update(Properties properties) throws Exception {
         initClusterSession();
 
         if (!schemaExists()) {
@@ -176,12 +176,12 @@ class VersionManager extends AbstractManager {
                 log.info("Storage schema is current! No updates applied.");
             } else {
                 for (UpdateFile updateFile : updateFolder.getUpdateFiles()) {
-                    execute(updateFile);
+                    execute(updateFile, properties);
 
-                    Properties versionProperties = new Properties();
-                    versionProperties.put("version", updateFile.extractVersion() + "");
-                    versionProperties.put("time", System.currentTimeMillis() + "");
-                    executeManagementQuery(Query.INSERT_SCHEMA_VERSION, versionProperties);
+                    int version = updateFile.extractVersion();
+                    long time = System.currentTimeMillis();
+                    execute(
+                        "INSERT INTO rhq.schema_version (version, time ) VALUES (" + version + ", " + time + ")");
 
                     log.info("Storage schema update " + updateFile + " applied.");
                 }

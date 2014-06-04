@@ -527,7 +527,8 @@ class AgentConditionCache extends AbstractConditionCache {
                 Event event = i.next();
                 i.remove();
                 int matched = stats.matched;
-                processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp(), stats, event.getDetail());
+                processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp(), stats,
+                    event.getDetail(), "sourceLocation=" + source.getLocation());
                 if (matched < stats.matched) {
                     break;
                 }

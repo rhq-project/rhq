@@ -44,6 +44,7 @@ import org.apache.http.HttpStatus;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
+import org.rhq.modules.integrationTests.restApi.d.CreateCBRRequest;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -55,6 +56,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 
@@ -936,6 +938,242 @@ public class ResourcesTest extends AbstractBase {
             given().pathParam("id",platformId)
                 .expect().statusCode(HttpStatus.SC_NO_CONTENT)
                 .when().delete("/resource/{id}");
+        }
+    }
+
+    @Test
+    public void testCreateResourceRegularChildAndRemove() throws Exception {
+        int as7Id = findIdOfARealEAP6();
+
+        int createdResourceId=-1;
+
+        try {
+            CreateCBRRequest resource = new CreateCBRRequest();
+            resource.setParentId(as7Id);
+            resource.setResourceName("netinterface-rest");
+
+            // type of the new resource
+            resource.setTypeName("Network Interface");
+            resource.setPluginName("JBossAS7");
+
+            // pass resourceConfig
+            resource.getResourceConfig().put("any-address", "false");
+            resource.getResourceConfig().put("any-ipv4-address", "true");
+            Response response =
+            given()
+                .body(resource) // Type of new resource
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+                .log().everything()
+            .expect()
+                .statusCode(isOneOf(200, 201, 302))
+                .log().everything()
+            .when()
+                .post("/resource");
+
+            System.out.println("after post");
+            System.out.flush();
+
+            int status = response.getStatusCode();
+            String location = response.getHeader("Location");
+
+            if (status!=200) {
+                System.out.println("\nLocation " + location + "\n\n");
+                assert location!=null;
+            }
+
+            // We need to check what we got. A 302 means the deploy is still
+            // in progress, so we need to wait a little longer
+            while (status==302) {
+
+                response =
+                given()
+                    .header(acceptJson)
+                    .log().everything()
+                    .redirects().follow(false)
+                    .redirects().allowCircular(true)
+                .expect()
+                    .statusCode(isOneOf(200, 201, 302))
+                    .log().everything()
+                .when()
+                    .get(location);
+
+                status = response.getStatusCode();
+            }
+
+            createdResourceId = response.jsonPath().getInt("resourceId");
+
+            System.out.flush();
+            System.out.println("\n  Resource is created, resource Id = " + createdResourceId + " \n");
+            System.out.flush();
+            // TODO validate resource configuration once our rest api can tell us
+            assert  createdResourceId != -1;
+
+        } finally {
+            // We need to wait here a little, as the machinery is not used to
+            // quick create-delete-cycles
+            Thread.sleep(20*1000L);
+
+            given()
+                .header(acceptJson)
+                .queryParam("physical", "true") // Also remove target on the EAP instance
+                .pathParam("id",createdResourceId)
+                .log().everything()
+            .expect()
+                .log().everything()
+            .when()
+                .delete("/resource/{id}");
+        }
+    }
+
+    /**
+     * this test creates Network Interface resource child on real AS7 without passing resourceConfiguration. 
+     * Resource must be created, because our REST API is smart enough to use default configuration.  
+     * @throws Exception
+     */
+    @Test
+    public void testCreateResourceRegularChildEmptyConfigAndRemove() throws Exception {
+        int as7Id = findIdOfARealEAP6();
+
+        int createdResourceId=-1;
+
+        try {
+            CreateCBRRequest resource = new CreateCBRRequest();
+            resource.setParentId(as7Id);
+            resource.setResourceName("netinterface-rest");
+
+            // type of the new resource
+            resource.setTypeName("Network Interface");
+            resource.setPluginName("JBossAS7");
+
+            // leave pluginConfig and resourceConfigs empty, so defaults are used
+            Response response =
+            given()
+                .body(resource) // Type of new resource
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+                .log().everything()
+            .expect()
+                .statusCode(isOneOf(200, 201, 302))
+                .log().everything()
+            .when()
+                .post("/resource");
+
+            System.out.println("after post");
+            System.out.flush();
+
+            int status = response.getStatusCode();
+            String location = response.getHeader("Location");
+
+            if (status!=200) {
+                System.out.println("\nLocation " + location + "\n\n");
+                assert location!=null;
+            }
+
+            // We need to check what we got. A 302 means the deploy is still
+            // in progress, so we need to wait a little longer
+            while (status==302) {
+
+                response =
+                given()
+                    .header(acceptJson)
+                    .log().everything()
+                    .redirects().follow(false)
+                    .redirects().allowCircular(true)
+                .expect()
+                    .statusCode(isOneOf(200, 201, 302))
+                    .log().everything()
+                .when()
+                    .get(location);
+
+                status = response.getStatusCode();
+            }
+
+            createdResourceId = response.jsonPath().getInt("resourceId");
+
+            System.out.flush();
+            System.out.println("\n  Resource is created, resource Id = " + createdResourceId + " \n");
+            System.out.flush();
+
+            assert  createdResourceId != -1;
+
+        } finally {
+            // We need to wait here a little, as the machinery is not used to
+            // quick create-delete-cycles
+            Thread.sleep(20*1000L);
+
+            given()
+                .header(acceptJson)
+                .queryParam("physical", "true") // Also remove target on the EAP instance
+                .pathParam("id",createdResourceId)
+                .log().everything()
+            .expect()
+                .log().everything()
+            .when()
+                .delete("/resource/{id}");
+        }
+    }
+
+    /**
+     * a little bit more complex test. First we create a manually imported resource (ScriptServer), 
+     * then we attempt to create it again (this must fail on duplicate resource error), finally
+     * we uninventory
+     * @throws Exception
+     */
+    @Test
+    public void testCreateResourceManualImportAndRemove() throws Exception {
+        int platformId = findIdOfARealPlatform();
+        int createdResourceId=-1;
+
+        try {
+            CreateCBRRequest resource = new CreateCBRRequest();
+            resource.setParentId(platformId);
+            resource.setResourceName("script-server");
+
+            // type of the new resource
+            resource.setTypeName("Script Server");
+            resource.setPluginName("Script");
+
+            resource.getPluginConfig().put("executable", "/bin/ls");
+
+            Response response =
+            given()
+                .body(resource) // Type of new resource
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+                .log().everything()
+            .expect()
+                .statusCode(isOneOf(200, 201))
+                .log().everything()
+            .when()
+                .post("/resource");
+
+            System.out.println("after post");
+            System.out.flush();
+            // in this case, we don't get 302, because manual import is synchronous
+
+            createdResourceId = response.jsonPath().getInt("resourceId");
+
+            System.out.flush();
+            System.out.println("\n  Resource is created, resource Id = " + createdResourceId + " \n");
+            System.out.flush();
+
+            assert  createdResourceId != -1;
+
+        } finally {
+            // We need to wait here a little, as the machinery is not used to
+            // quick create-delete-cycles
+            Thread.sleep(20*1000L);
+
+            given()
+                .header(acceptJson)
+                .queryParam("physical", "false") // Also uninventory
+                .pathParam("id",createdResourceId)
+                .log().everything()
+            .expect()
+                .log().everything()
+            .when()
+                .delete("/resource/{id}");
         }
     }
 

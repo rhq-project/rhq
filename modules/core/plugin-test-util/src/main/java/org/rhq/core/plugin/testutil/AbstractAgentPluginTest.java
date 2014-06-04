@@ -22,23 +22,17 @@ package org.rhq.core.plugin.testutil;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,14 +52,11 @@ import org.jboss.shrinkwrap.resolver.api.maven.strategy.AcceptScopesStrategy;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -74,7 +65,6 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.MeasurementDefinitionFilter;
 import org.rhq.core.domain.util.ResourceFilter;
 import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.core.domain.util.ResourceUtility;
@@ -417,286 +407,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         return report;
     }
 
-    protected void assertAllResourceComponentsStarted() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType = new LinkedHashMap<ResourceType, ResourceContainer>();
-        findNonStartedResourceComponentsRecursively(platform, nonStartedResourceContainersByType);
-        assertTrue(nonStartedResourceContainersByType.isEmpty(),
-            "Resource containers with non-started Resource components by type: " + nonStartedResourceContainersByType);
-    }
 
-    private void findNonStartedResourceComponentsRecursively(Resource resource,
-        Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType) throws Exception {
-        ResourceType resourceType = resource.getResourceType();
-        if (!nonStartedResourceContainersByType.containsKey(resourceType)) {
-            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(
-                resource);
-            if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-                nonStartedResourceContainersByType.put(resourceType, resourceContainer);
-            } else if (resourceContainer.getResourceComponent() == null) {
-                System.err.println("****** Resource container " + resourceContainer
-                    + " says its Resource component is started, but the component is null. ******");
-                nonStartedResourceContainersByType.put(resourceType, resourceContainer);
-            }
-        }
 
-        // Recurse.
-        for (Resource childResource : resource.getChildResources()) {
-            findNonStartedResourceComponentsRecursively(childResource, nonStartedResourceContainersByType);
-        }
-    }
 
-    protected void assertAllResourceConfigsLoad() throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Map<ResourceType, Exception> resourceConfigLoadExceptionsByType = new LinkedHashMap<ResourceType, Exception>();
-        findResourceConfigsThatFailToLoadRecursively(platform, resourceConfigLoadExceptionsByType);
-        assertTrue(resourceConfigLoadExceptionsByType.isEmpty(), "Resource configs that failed to load by type: "
-            + resourceConfigLoadExceptionsByType);
-    }
-
-    private void findResourceConfigsThatFailToLoadRecursively(Resource resource,
-        Map<ResourceType, Exception> resourceConfigLoadExceptionsByType) throws Exception {
-        ResourceType resourceType = resource.getResourceType();
-        // Only check resource configs on types of Resources from the plugin under test.
-        if (resourceType.getPlugin().equals(getPluginName())
-            && (resourceType.getResourceConfigurationDefinition() != null)
-            && !resourceConfigLoadExceptionsByType.containsKey(resourceType)) {
-            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(
-                resource);
-            if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-                return;
-            }
-
-            Exception exception = null;
-            try {
-                Configuration resourceConfig = loadResourceConfiguration(resource);
-                List<String> validationErrors = ConfigurationUtility.validateConfiguration(resourceConfig,
-                    resourceType.getResourceConfigurationDefinition());
-                if (!validationErrors.isEmpty()) {
-                    exception = new Exception("Resource config is not valid: " + validationErrors.toString());
-                }
-            } catch (Exception e) {
-                exception = e;
-            }
-            if (exception != null) {
-                resourceConfigLoadExceptionsByType.put(resourceType, exception);
-            }
-        }
-
-        // Recurse.
-        for (Resource childResource : resource.getChildResources()) {
-            findResourceConfigsThatFailToLoadRecursively(childResource, resourceConfigLoadExceptionsByType);
-        }
-    }
-
-    protected void assertAllNumericMetricsAndTraitsHaveNonNullValues(
-        Map<ResourceType, String[]> excludedMetricNamesByType) throws Exception {
-        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType = new LinkedHashMap<ResourceType, Set<String>>();
-        findNumericMetricsAndTraitsWithNullValuesRecursively(platform, metricsWithNullValuesByType);
-        removeExcludedMetricNames(metricsWithNullValuesByType, excludedMetricNamesByType);
-        assertTrue(metricsWithNullValuesByType.isEmpty(), "Metrics with null values by type: "
-            + metricsWithNullValuesByType);
-    }
-
-    private void removeExcludedMetricNames(LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType,
-        Map<ResourceType, String[]> excludedMetricNamesByType) {
-        for (Iterator<ResourceType> mapIterator = metricsWithNullValuesByType.keySet().iterator(); mapIterator
-            .hasNext();) {
-            ResourceType resourceType = mapIterator.next();
-            if (excludedMetricNamesByType.get(resourceType) == null) {
-                continue;
-            }
-
-            Set<String> namesOfMetricsWithNullValues = metricsWithNullValuesByType.get(resourceType);
-            List<String> excludedMetricNames = Arrays.asList(excludedMetricNamesByType.get(resourceType));
-            for (Iterator<String> setIterator = namesOfMetricsWithNullValues.iterator(); setIterator.hasNext();) {
-                String nameOfMetricWithNullValue = setIterator.next();
-                if (excludedMetricNames.contains(nameOfMetricWithNullValue)) {
-                    setIterator.remove();
-                }
-            }
-            if (namesOfMetricsWithNullValues.isEmpty()) {
-                mapIterator.remove();
-            }
-        }
-    }
-
-    private void findNumericMetricsAndTraitsWithNullValuesRecursively(Resource resource,
-        Map<ResourceType, Set<String>> metricsWithNullValuesByType) throws Exception {
-        ResourceType resourceType = resource.getResourceType();
-        // Only check metrics on types of Resources from the plugin under test.
-        if (resourceType.getPlugin().equals(getPluginName())) {
-            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(
-                resource);
-            if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-                return;
-            }
-
-            Set<String> metricsWithNullValues = getNumericMetricsAndTraitsWithNullValues(resource);
-            if (!metricsWithNullValues.isEmpty()) {
-                Set<String> metricsWithNullValuesForType = metricsWithNullValuesByType.get(resourceType);
-                if (metricsWithNullValuesForType != null) {
-                    metricsWithNullValuesForType.addAll(metricsWithNullValues);
-                } else {
-                    metricsWithNullValuesByType.put(resourceType, metricsWithNullValues);
-                }
-            }
-        }
-
-        // Recurse.
-        for (Resource childResource : resource.getChildResources()) {
-            findNumericMetricsAndTraitsWithNullValuesRecursively(childResource, metricsWithNullValuesByType);
-        }
-    }
-
-    protected Set<String> getNumericMetricsAndTraitsWithNullValues(Resource resource) throws Exception {
-        ResourceType type = resource.getResourceType();
-        Set<MeasurementDefinition> numericMetricAndTraitDefs = ResourceTypeUtility.getMeasurementDefinitions(type,
-            new MeasurementDefinitionFilter() {
-                private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
-
-                public boolean accept(MeasurementDefinition metricDef) {
-                    return acceptableDataTypes.contains(metricDef.getDataType());
-                }
-            });
-        Set<String> metricsWithNullValues = getMetricsWithNullValues(resource, numericMetricAndTraitDefs);
-        return metricsWithNullValues;
-    }
-
-    protected Set<String> getMetricsWithNullValues(Resource resource, Set<MeasurementDefinition> metricDefs)
-        throws Exception {
-        Set<String> metricsWithNullValues = new TreeSet<String>();
-        for (MeasurementDefinition metricDef : metricDefs) {
-            if (!metricDef.getResourceType().equals(resource.getResourceType())) {
-                throw new IllegalArgumentException(metricDef + " is not defined by " + resource.getResourceType());
-            }
-            Object value;
-            switch (metricDef.getDataType()) {
-            case MEASUREMENT:
-                value = collectNumericMetric(resource, metricDef.getName());
-                break;
-            case TRAIT:
-                value = collectTrait(resource, metricDef.getName());
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported metric type: " + metricDef.getDataType());
-            }
-            if (value == null) {
-                metricsWithNullValues.add(metricDef.getName());
-            }
-        }
-        return metricsWithNullValues;
-    }
-
-    @Nullable
-    protected Double collectNumericMetric(Resource resource, String metricName) throws Exception {
-        System.out.println("=== Collecting numeric metric [" + metricName + "] for " + resource + "...");
-        MeasurementReport report = collectMetric(resource, metricName);
-
-        Double value;
-        if (report.getNumericData().isEmpty()) {
-            assertEquals(
-                report.getTraitData().size(),
-                0,
-                "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
-                    + " is defined as a numeric metric, but the plugin returned one or more traits!: "
-                    + report.getTraitData());
-            assertEquals(report.getCallTimeData().size(), 0,
-                "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
-                    + " is defined as a numeric metric, but the plugin returned one or more call-time metrics!: "
-                    + report.getCallTimeData());
-            value = null;
-        } else {
-            assertEquals(report.getNumericData().size(), 1,
-                "Requested a single metric, but plugin returned more than one datum: " + report.getNumericData());
-            MeasurementDataNumeric datum = report.getNumericData().iterator().next();
-            assertEquals(datum.getName(), metricName, "Numeric metric [" + metricName + "] for Resource type "
-                + resource.getResourceType() + " was requested, but the plugin returned a numeric metric with name ["
-                + datum.getName() + "] and value [" + datum.getValue() + "]!");
-            // Normalize NaN or infinite to null, as the PC does.
-            value = (datum.getValue().isNaN() || datum.getValue().isInfinite()) ? null : datum.getValue();
-        }
-        System.out.println("====== Collected numeric metric [" + metricName + "] with value of [" + value + "] for "
-            + resource + ".");
-
-        return value;
-    }
-
-    @Nullable
-    protected String collectTrait(Resource resource, String traitName) throws Exception {
-        System.out.println("=== Collecting trait [" + traitName + "] for " + resource + "...");
-        MeasurementReport report = collectMetric(resource, traitName);
-
-        String value;
-        if (report.getTraitData().isEmpty()) {
-            assertEquals(
-                report.getNumericData().size(),
-                0,
-                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
-                    + " is defined as a trait, but the plugin returned one or more numeric metrics!: "
-                    + report.getNumericData());
-            assertEquals(
-                report.getCallTimeData().size(),
-                0,
-                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
-                    + " is defined as a trait, but the plugin returned one or more call-time metrics!: "
-                    + report.getCallTimeData());
-            value = null;
-        } else {
-            assertEquals(report.getTraitData().size(), 1,
-                "Requested a single trait, but plugin returned more than one datum: " + report.getTraitData());
-            MeasurementDataTrait datum = report.getTraitData().iterator().next();
-            assertEquals(datum.getName(), traitName,
-                "Trait [" + traitName + "] for Resource type " + resource.getResourceType()
-                    + " was requested, but the plugin returned a trait with name [" + datum.getName() + "] and value ["
-                    + datum.getValue() + "]!");
-            value = datum.getValue();
-        }
-        System.out.println("====== Collected trait [" + traitName + "] with value of [" + value + "] for " + resource
-            + ".");
-
-        return value;
-    }
-
-    /**
-     * Collect a metric for a Resource synchronously, with a 7 second timeout.
-     *
-     * @param resource the Resource
-     * @param metricName the name of the metric
-     *
-     * @return the report containing the collected data
-     */
-    @NotNull
-    private MeasurementReport collectMetric(Resource resource, String metricName) throws Exception {
-        ResourceType resourceType = resource.getResourceType();
-        MeasurementDefinition measurementDefinition = ResourceTypeUtility.getMeasurementDefinition(resourceType,
-            metricName);
-        assertNotNull(measurementDefinition, "No metric named [" + metricName + "] is defined for ResourceType {"
-            + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
-
-        ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
-        long timeoutMillis = 5000;
-        if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            throw new IllegalStateException("Resource component for " + resource + " has not yet been started.");
-        }
-        MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
-            FacetLockType.READ, timeoutMillis, false, false, false);
-        MeasurementReport report = new MeasurementReport();
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
-            measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
-        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
-        requests.add(request);
-        try {
-            measurementFacet.getValues(report, requests);
-        } catch (Exception e) {
-            System.out.println("====== Error occurred during collection of metric [" + metricName + "] on " + resource
-                + ": " + e);
-            throw new RuntimeException("Error occurred during collection of metric [" + metricName + "] on " + resource
-                + ": " + e);
-        }
-        return report;
-    }
 
     protected OperationResult invokeOperationAndAssertSuccess(Resource resource, String operationName, @Nullable
     Configuration params) throws PluginContainerException {
@@ -851,6 +564,81 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                     + childResource.getInventoryStatus());
             }
         }
+    }
+
+    @Nullable
+    protected String collectTrait(Resource resource, String traitName) throws Exception {
+        System.out.println("=== Collecting trait [" + traitName + "] for " + resource + "...");
+        MeasurementReport report = collectMetric(resource, traitName);
+
+        String value;
+        if (report.getTraitData().isEmpty()) {
+            assertEquals(
+                report.getNumericData().size(),
+                0,
+                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
+                    + " is defined as a trait, but the plugin returned one or more numeric metrics!: "
+                    + report.getNumericData());
+            assertEquals(
+                report.getCallTimeData().size(),
+                0,
+                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
+                    + " is defined as a trait, but the plugin returned one or more call-time metrics!: "
+                    + report.getCallTimeData());
+            value = null;
+        } else {
+            assertEquals(report.getTraitData().size(), 1,
+                "Requested a single trait, but plugin returned more than one datum: " + report.getTraitData());
+            MeasurementDataTrait datum = report.getTraitData().iterator().next();
+            assertEquals(datum.getName(), traitName,
+                "Trait [" + traitName + "] for Resource type " + resource.getResourceType()
+                    + " was requested, but the plugin returned a trait with name [" + datum.getName() + "] and value ["
+                    + datum.getValue() + "]!");
+            value = datum.getValue();
+        }
+        System.out.println("====== Collected trait [" + traitName + "] with value of [" + value + "] for " + resource
+            + ".");
+
+        return value;
+    }
+
+    /**
+     * Collect a metric for a Resource synchronously, with a 7 second timeout.
+     *
+     * @param resource the Resource
+     * @param metricName the name of the metric
+     *
+     * @return the report containing the collected data
+     */
+    @NotNull
+    protected MeasurementReport collectMetric(Resource resource, String metricName) throws Exception {
+        ResourceType resourceType = resource.getResourceType();
+        MeasurementDefinition measurementDefinition = ResourceTypeUtility.getMeasurementDefinition(resourceType,
+            metricName);
+        assertNotNull(measurementDefinition, "No metric named [" + metricName + "] is defined for ResourceType {"
+            + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
+
+        ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+        long timeoutMillis = 5000;
+        if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
+            throw new IllegalStateException("Resource component for " + resource + " has not yet been started.");
+        }
+        MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
+            FacetLockType.READ, timeoutMillis, false, false, false);
+        MeasurementReport report = new MeasurementReport();
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
+            measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
+        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
+        requests.add(request);
+        try {
+            measurementFacet.getValues(report, requests);
+        } catch (Exception e) {
+            System.out.println("====== Error occurred during collection of metric [" + metricName + "] on " + resource
+                + ": " + e);
+            throw new RuntimeException("Error occurred during collection of metric [" + metricName + "] on " + resource
+                + ": " + e);
+        }
+        return report;
     }
 
 }

@@ -31,13 +31,10 @@ import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
-
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * @author John Sanda
@@ -134,8 +131,6 @@ public class Start extends ControlCommand {
     private int startStorage() throws Exception {
         log.debug("Starting RHQ storage node");
 
-        Executor executor = new DefaultExecutor();
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
         int rValue;
@@ -150,15 +145,10 @@ public class Start extends ControlCommand {
         env.put("JAVA_HOME", javaHome);
 
         if (isWindows()) {
-            executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "start");
-            try {
-                rValue = executor.execute(commandLine, env);
-
-            } catch (Exception e) {
-                // Ignore, service may not exist or may already be running, script returns 1
-                log.debug("Failed to start storage service", e);
-                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
+            rValue = ExecutorAssist.execute(getBinDir(), commandLine, env);
+            if(rValue != RHQControl.EXIT_CODE_OK) {
+                log.debug("Failed to start storage service, return value" + rValue);                    
             }
         } else {
             File storageBinDir = new File(getStorageBasedir(), "bin");
@@ -172,9 +162,7 @@ public class Start extends ControlCommand {
                 rValue = RHQControl.EXIT_CODE_OK;
             } else {
                 commandLine = getCommandLine(false, "cassandra", "-p", pidFile.getAbsolutePath());
-                executor.setWorkingDirectory(storageBinDir);
-
-                rValue = executor.execute(commandLine, env);
+                rValue = ExecutorAssist.execute(storageBinDir, commandLine, env);
             }
         }
         return rValue;
@@ -183,23 +171,20 @@ public class Start extends ControlCommand {
     private int startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 
         int rValue;
 
         if (isWindows()) {
             try {
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to start server service", e);
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            rValue = executor.execute(commandLine);
+            rValue = ExecutorAssist.execute(getBinDir(), commandLine);
         }
         return rValue;
     }
@@ -208,23 +193,20 @@ public class Start extends ControlCommand {
         log.debug("Starting RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(agentBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
 
         int rValue;
 
         if (isWindows()) {
             try {
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(agentBinDir, commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to start agent service", e);
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            rValue = executor.execute(commandLine);
+            rValue = ExecutorAssist.execute(agentBinDir, commandLine);
         }
 
         return rValue;

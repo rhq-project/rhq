@@ -28,7 +28,7 @@ package org.rhq.server.metrics.domain;
 /**
  * @author John Sanda
  */
-public class RawNumericMetric {
+public class RawNumericMetric implements NumericMetric {
 
     private int scheduleId;
 
@@ -76,6 +76,21 @@ public class RawNumericMetric {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public Double getMin() {
+        return value;
+    }
+
+    @Override
+    public Double getMax() {
+        return value;
+    }
+
+    @Override
+    public Double getAvg() {
+        return value;
     }
 
     public ColumnMetadata getColumnMetadata() {

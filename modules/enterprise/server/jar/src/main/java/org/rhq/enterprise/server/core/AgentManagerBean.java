@@ -37,6 +37,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.interceptor.ExcludeDefaultInterceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -50,6 +51,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.criteria.AgentCriteria;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite;
@@ -59,6 +61,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -118,6 +121,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     private static final String RHQ_AGENT_LATEST_VERSION = "rhq-agent.latest.version";
     private static final String RHQ_AGENT_LATEST_BUILD_NUMBER = "rhq-agent.latest.build-number";
     private static final String RHQ_AGENT_LATEST_MD5 = "rhq-agent.latest.md5";
+    private static final String RHQ_AGENT_SUPPORTED_VERSIONS = "rhq-agent.supported.versions";
 
     @ExcludeDefaultInterceptors
     public void createAgent(Agent agent) {
@@ -127,11 +131,136 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public AgentInstall getAgentInstallByAgentName(Subject user, String agentName) {
+        if (agentName == null) {
+            return null;
+        }
+        Query q = entityManager.createNamedQuery(AgentInstall.QUERY_FIND_BY_NAME);
+        q.setParameter("agentName", agentName);
+        try {
+            AgentInstall ai;
+            ai = (AgentInstall) q.getSingleResult();
+
+            entityManager.detach(ai);
+            deobfuscateAgentInstall(ai);
+            return ai;
+        } catch (NoResultException e) {
+            return null;
+        } catch (NonUniqueResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public AgentInstall updateAgentInstall(Subject user, AgentInstall agentInstall) {
+        // make sure we encode the password before persisting it
+        obfuscateAgentInstall(agentInstall);
+
+        if (agentInstall.getId() == 0) {
+            // Caller gave us an agentInstall without an ID - see if there is already an entity with the given agent name.
+            // If there is one already with the given agent name then update that record, overlaying it with the data from agentInstall.
+            // If there is nothing with the given agent name, persist a new record with the data in agentInstall.
+            // Note that if the caller didn't give us either an install ID or an agent name, we still persist the entity
+            // with the expectation that the new ID will be used later by a new agent (new agent will register with this new ID and
+            // will tell us what agent name it wants to use).
+            AgentInstall existing = getAgentInstallByAgentName(user, agentInstall.getAgentName());
+            if (existing != null) {
+                existing.overlay(agentInstall); // note: "existing" is detached
+                agentInstall = entityManager.merge(existing);
+            } else {
+                entityManager.persist(agentInstall);
+            }
+        } else {
+            // Caller gave us an agentInstall with an ID. See if there is already an entity with the given ID.
+            // If there is an entity with the given ID, but that entity's agentName does not match the agentName given in agentInstall,
+            // abort - one agent can't change another agent's install data.
+            // If there is an entity with the given ID and the agentName matches then update that record, overlaying it with data from agentInstall.
+            // If there is no entity with the given ID then throw an error.
+            AgentInstall existing = entityManager.find(AgentInstall.class, agentInstall.getId());
+            if (existing != null) {
+                if (agentInstall.getAgentName() != null) {
+                    if (existing.getAgentName() != null && !agentInstall.getAgentName().equals(existing.getAgentName())) {
+                        throw new IllegalStateException("Updating agent install ID [" + agentInstall.getId()
+                            + "] with a mismatched agent name is not allowed");
+                    }
+
+                    // It is possible some past installs were aborted, or this agent is getting reinstalled.
+                    // This cases like this, we'll have duplicate rows with the same agent name - this just deletes
+                    // those older rows since this new agent supercedes the other ones.
+                    Query q = entityManager.createNamedQuery(AgentInstall.QUERY_FIND_BY_NAME);
+                    q.setParameter("agentName", agentInstall.getAgentName());
+                    List<AgentInstall> otherAgentInstalls = q.getResultList();
+                    if (otherAgentInstalls != null) {
+                        for (AgentInstall otherAgentInstall : otherAgentInstalls) {
+                            if (otherAgentInstall.getId() != agentInstall.getId()) {
+                                entityManager.remove(otherAgentInstall);
+                            }
+                        }
+                    }
+                }
+                existing.overlay(agentInstall); // modify the attached hibernate entity
+                agentInstall = existing;
+            } else {
+                throw new IllegalStateException("Agent install ID [" + agentInstall.getId()
+                    + "] does not exist. Cannot update install info for agent [" + agentInstall.getAgentName() + "]");
+            }
+        }
+
+        // don't allow empty strings in credentials, use null
+        String s = agentInstall.getSshUsername();
+        if (s != null && s.trim().length() == 0) {
+            agentInstall.setSshUsername(null);
+        }
+        s = agentInstall.getSshPassword();
+        if (s != null && s.trim().length() == 0) {
+            agentInstall.setSshPassword(null);
+        }
+
+        // let the caller have the decoded data - we need to flush and detach the entity so we can deobfuscate PW and not push it to DB
+        entityManager.flush();
+        entityManager.detach(agentInstall);
+        deobfuscateAgentInstall(agentInstall);
+
+        return agentInstall;
+    }
+
+    private void obfuscateAgentInstall(AgentInstall ai) {
+        try {
+            String pw = ai.getSshPassword();
+            if (pw != null && pw.length() > 0) {
+                ai.setSshPassword(Obfuscator.encode(pw));
+            }
+        } catch (Exception e) {
+            ai.setSshPassword("");
+            LOG.debug("Failed to obfuscate password for agent [" + ai.getAgentName() + "]. Will be emptied.");
+        }
+    }
+
+    private void deobfuscateAgentInstall(AgentInstall ai) {
+        try {
+            String pw = ai.getSshPassword();
+            if (pw != null && pw.length() > 0) {
+                ai.setSshPassword(Obfuscator.decode(pw));
+            }
+        } catch (Exception e) {
+            ai.setSshPassword("");
+            LOG.debug("Failed to deobfuscate password for agent [" + ai.getAgentName() + "]. Will be emptied.");
+        }
+    }
+
     @ExcludeDefaultInterceptors
     public void deleteAgent(Agent agent) {
         agent = entityManager.find(Agent.class, agent.getId());
         failoverListManager.deleteServerListsForAgent(agent);
         entityManager.remove(agent);
+
+        Query q = entityManager.createNamedQuery(AgentInstall.QUERY_DELETE_BY_NAME);
+        q.setParameter("agentName", agent.getName());
+        q.executeUpdate();
+
         destroyAgentClient(agent);
         LOG.info("Removed agent: " + agent);
     }
@@ -140,6 +269,8 @@ public class AgentManagerBean implements AgentManagerLocal {
     public void destroyAgentClient(Agent agent) {
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
         try {
+            // note, this destroys the KnownAgentClient on this HA node only.  It will leave other HA nodes "dirty", but
+            // that is OK as there is logic in place to handle dirty entries.
             bootstrap.destroyKnownAgentClient(agent);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("agent client destroyed for agent: " + agent);
@@ -516,21 +647,25 @@ public class AgentManagerBean implements AgentManagerLocal {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
-            // Prime Directive: whatever agent update the server has installed is the one we support,
-            // so both the version AND build number must match.
-            // For developers, however, we want to allow to be less strict - only version needs to match.
-            String supportedAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
-            if (supportedAgentVersion == null) {
+            String supportedAgentVersions = properties.getProperty(RHQ_AGENT_SUPPORTED_VERSIONS); // this is optional
+            String latestAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            if (latestAgentVersion == null) {
                 throw new NullPointerException("no agent version in file");
             }
-            ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
-            ComparableVersion server = new ComparableVersion(supportedAgentVersion);
-            if (Boolean.getBoolean("rhq.server.agent-update.nonstrict-version-check")) {
-                return agent.equals(server);
+
+            boolean isSupported;
+
+            if (supportedAgentVersions == null || supportedAgentVersions.isEmpty()) {
+                // we weren't given a regex of supported versions, make a simple string equality test on latest agent version
+                ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
+                ComparableVersion server = new ComparableVersion(latestAgentVersion);
+                isSupported = agent.equals(server);
             } else {
-                String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
-                return agent.equals(server) && agentVersionInfo.getBuild().equals(supportedAgentBuild);
+                // we were given a regex of supported versions, check the agent version to see if it matches the regex
+                isSupported = agentVersionInfo.getVersion().matches(supportedAgentVersions);
             }
+
+            return isSupported;
         } catch (Exception e) {
             LOG.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
             return false; // assume we can't talk to it
@@ -551,6 +686,13 @@ public class AgentManagerBean implements AgentManagerLocal {
             CoreServerMBean coreServer = LookupUtil.getCoreServer();
             serverVersionInfo.append(RHQ_SERVER_VERSION + '=').append(coreServer.getVersion()).append('\n');
             serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
+
+            // if there are supported agent versions, get it (this is a regex that is to match agent versions that are supported)
+            String supportedAgentVersions = coreServer.getProductInfo().getSupportedAgentVersions();
+            if (supportedAgentVersions != null && supportedAgentVersions.length() > 0) {
+                serverVersionInfo.append(RHQ_AGENT_SUPPORTED_VERSIONS + '=').append(supportedAgentVersions)
+                    .append('\n');
+            }
 
             // calculate the MD5 of the agent update binary file
             String md5Property = RHQ_AGENT_LATEST_MD5 + '=' + MessageDigestGenerator.getDigestString(binaryFile) + '\n';
@@ -656,7 +798,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         long now = System.currentTimeMillis();
 
         if (request.isRequestUpdateAvailability()) {
-            updateLastAvailabilityPing(request.getAgentName(), now);
+            request.setReplyAgentIsBackfilled(updateLastAvailabilityPing(request.getAgentName(), now));
             request.setReplyUpdateAvailability(true);
         }
 
@@ -667,16 +809,31 @@ public class AgentManagerBean implements AgentManagerLocal {
         return request;
     }
 
-    private void updateLastAvailabilityPing(String agentName, long now) {
+    /**
+     * @return true if the agent is currently backfilled, false otherwise
+     */
+    private boolean updateLastAvailabilityPing(String agentName, long now) {
         /*
-         * since we already know we have to update the agent row with the last avail ping time, might as well
-         * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
-         */
+          * There are two cases here: The agent is backfilled (rare) or not backfilled (typical).
+          * In both cases update the ping time.  If it is backfilled then reflect that fact
+          * in the response so the agent can correct the situation. Note that this takes care of
+          * the unusual case of BZ 1094540.
+          */
         Query query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING);
         query.setParameter("now", now);
         query.setParameter("agentName", agentName);
 
-        query.executeUpdate();
+        int numUpdates = query.executeUpdate();
+        if (0 == numUpdates) {
+            query = entityManager.createNamedQuery(Agent.QUERY_UPDATE_LAST_AVAIL_PING_FORCE);
+            query.setParameter("now", now);
+            query.setParameter("agentName", agentName);
+            query.executeUpdate();
+
+            return true;
+        }
+
+        return false;
     }
 
     @ExcludeDefaultInterceptors
@@ -690,7 +847,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
             //now ping
             AgentClient client = getAgentClient(agent);
-            pingResults = client.ping(5000L);
+            pingResults = client.pingService(5000L);
 
         } catch (NoResultException e) {
             if (LOG.isDebugEnabled()) {

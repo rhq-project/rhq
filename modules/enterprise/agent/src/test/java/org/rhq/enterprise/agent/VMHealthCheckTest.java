@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 @Test
 public class VMHealthCheckTest {
 
-    private int interval = 1000;
+    private final int interval = 1000;
 
     private final Logger LOG = AgentI18NFactory.getLogger(getClass());
 
@@ -20,6 +20,7 @@ public class VMHealthCheckTest {
         p.put(AgentConfigurationConstants.VM_HEALTH_CHECK_INTERVAL_MSECS, "" + interval);
         p.put(AgentConfigurationConstants.WAIT_FOR_SERVER_AT_STARTUP_MSECS, "100");
         p.put(AgentConfigurationConstants.DO_NOT_START_PLUGIN_CONTAINER_AT_STARTUP, "true");
+        agent.getConfiguration().setAgentSecurityToken("foo");
         VMHealthCheckThread t = new VMHealthCheckThread(agent);
         t.start();
         assert t.isOutOfMemory() == false: "memory should be good";

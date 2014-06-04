@@ -29,13 +29,10 @@ import java.io.File;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
-
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
+import org.rhq.server.control.util.ExecutorAssist;
 
 /**
  * This command is registered on Windows only.  It performs Windows service removal.
@@ -127,9 +124,6 @@ public class Remove extends ControlCommand {
     private int removeStorageService() throws Exception {
         log.debug("Stopping RHQ storage node");
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
         int rValue;
@@ -137,7 +131,7 @@ public class Remove extends ControlCommand {
         if (isWindows()) {
             commandLine = getCommandLine("rhq-storage", "remove");
             try {
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
             } catch (Exception e) {
                 log.debug("Failed to remove storage service", e);
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
@@ -149,7 +143,7 @@ public class Remove extends ControlCommand {
                 System.out.println("RHQ storage node (pid=" + pid + ") is stopping...");
 
                 commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
 
                 System.out.println("RHQ storage node has stopped");
             } else {
@@ -163,9 +157,6 @@ public class Remove extends ControlCommand {
     private int removeServerService() throws Exception {
         log.debug("Stopping RHQ server");
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(getBinDir());
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
         int rValue;
@@ -173,7 +164,7 @@ public class Remove extends ControlCommand {
         if (isWindows()) {
             try {
                 commandLine = getCommandLine("rhq-server", "remove");
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to remove server service", e);
@@ -184,7 +175,7 @@ public class Remove extends ControlCommand {
 
             if (pid != null) {
                 commandLine = getCommandLine("rhq-server", "stop");
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(getBinDir(), commandLine);
             } else {
                 rValue = RHQControl.EXIT_CODE_OK;
             }
@@ -196,9 +187,6 @@ public class Remove extends ControlCommand {
         log.debug("Stopping RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(agentBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
         int rValue;
@@ -206,7 +194,7 @@ public class Remove extends ControlCommand {
         if (isWindows()) {
             try {
                 commandLine = getCommandLine("rhq-agent-wrapper", "remove");
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(agentBinDir, commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist, script returns 1
                 log.debug("Failed to remove agent service", e);
@@ -217,7 +205,7 @@ public class Remove extends ControlCommand {
 
             if (pid != null) {
                 commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                rValue = executor.execute(commandLine);
+                rValue = ExecutorAssist.execute(agentBinDir, commandLine);
             } else {
                 rValue = RHQControl.EXIT_CODE_OK;
             }

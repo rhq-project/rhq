@@ -1,0 +1,15 @@
+<plugin name="UpdatePluginMetadataTestBasePlugin" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+  
+   <server name="testServer1">
+       <subcategories>
+         <subcategory name="parent" displayName="Parent" description="The parent.">
+              <subcategory name="services" displayName="Services" description="Some services"/>
+              <subcategory name="applications" displayName="Apps" description="The apps."/>
+         </subcategory>
+      </subcategories>
+   </server>
+
+</plugin>
+   

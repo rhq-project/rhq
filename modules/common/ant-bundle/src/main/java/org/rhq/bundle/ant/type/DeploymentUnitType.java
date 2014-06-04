@@ -37,7 +37,6 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
 
 import org.rhq.bundle.ant.BundleAntProject.AuditStatus;
-import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -49,6 +48,7 @@ import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.Deployer;
 import org.rhq.core.util.updater.DeploymentData;
 import org.rhq.core.util.updater.DeploymentProperties;
+import org.rhq.core.util.updater.DestinationComplianceMode;
 
 /**
  * An Ant task for deploying a bundle or previewing the deployment.
@@ -66,8 +66,8 @@ public class DeploymentUnitType extends AbstractBundleType {
     private Set<URL> rawUrlFilesToReplace = new LinkedHashSet<URL>();
     private Map<File, String> localFileNames = new LinkedHashMap<File, String>();
 
-    private Set<File> archives = new LinkedHashSet<File>();
-    private Set<URL> urlArchives = new LinkedHashSet<URL>();
+    private Map<File, File> archives = new LinkedHashMap<File, File>();
+    private Map<URL, File> urlArchives = new LinkedHashMap<URL, File>();
     private Map<File, Pattern> archiveReplacePatterns = new HashMap<File, Pattern>();
     private Map<URL, Pattern> urlArchiveReplacePatterns = new HashMap<URL, Pattern>();
     private Map<File, Boolean> archivesExploded = new HashMap<File, Boolean>();
@@ -168,22 +168,22 @@ public class DeploymentUnitType extends AbstractBundleType {
                             AuditStatus.INFO,
                             "Managing Top Level Deployment Directory",
                             "The top level deployment directory will be managed - files found there will be backed up and removed!",
-                            "The bundle recipe has requested that the top level deployment directory be fully managed by RHQ." +
-                            "This means any files currently located in the top level deployment directory will be removed and backed up",
+                            "The bundle recipe has requested that the top level deployment directory be fully managed by RHQ."
+                                + "This means any files currently located in the top level deployment directory will be removed and backed up",
                             null);
                 }
                 break;
             case filesAndDirectories:
-                log("Files and directories in the destination directory not contained in the bundle will be kept intact.\n" +
-                    "Note that the contents of the directories that ARE contained in the bundle will be synced with " +
-                    "the contents as specified in the bundle. I.e. the subdirectories in the destination that are also " +
-                    "contained in the bundle are made compliant with the bundle.", Project.MSG_VERBOSE);
+                log("Files and directories in the destination directory not contained in the bundle will be kept intact.\n"
+                    + "Note that the contents of the directories that ARE contained in the bundle will be synced with "
+                    + "the contents as specified in the bundle. I.e. the subdirectories in the destination that are also "
+                    + "contained in the bundle are made compliant with the bundle.", Project.MSG_VERBOSE);
                 break;
             default:
                 throw new IllegalStateException("Unhandled destination compliance mode: " + complianceToUse.toString());
             }
 
-            Set<File> allArchives = new HashSet<File>(this.archives);
+            Map<File, File> allArchives = new HashMap<File, File>(this.archives);
             Map<File, File> allFiles = new HashMap<File, File>(this.files);
             Map<File, Pattern> allArchiveReplacePatterns = new HashMap<File, Pattern>(this.archiveReplacePatterns);
             Set<File> allRawFilesToReplace = new HashSet<File>(this.rawFilesToReplace);
@@ -192,8 +192,8 @@ public class DeploymentUnitType extends AbstractBundleType {
                 allArchivesExploded);
 
             try {
-                DeploymentData deploymentData = new DeploymentData(deploymentProps, allArchives, allFiles, getProject()
-                    .getBaseDir(), deployDir, allArchiveReplacePatterns, allRawFilesToReplace, templateEngine,
+                DeploymentData deploymentData = new DeploymentData(deploymentProps, getProject().getBaseDir(),
+                    deployDir, allFiles, allRawFilesToReplace, allArchives, allArchiveReplacePatterns, templateEngine,
                     this.ignorePattern, allArchivesExploded);
                 Deployer deployer = new Deployer(deploymentData);
                 DeployDifferences diffs = getProject().getDeployDifferences();
@@ -280,7 +280,7 @@ public class DeploymentUnitType extends AbstractBundleType {
      * @param allRawFilesToReplace when a new raw file is downloaded, its information is added to this
      * @param allArchivesExploded when a new archive is downloaded, its information is added to this
      */
-    private void downloadFilesFromUrlEndpoints(Set<File> allArchives, Map<File, File> allFiles,
+    private void downloadFilesFromUrlEndpoints(Map<File, File> allArchives, Map<File, File> allFiles,
         Map<File, Pattern> allArchiveReplacePatterns, Set<File> allRawFilesToReplace,
         Map<File, Boolean> allArchivesExploded) throws Exception {
 
@@ -308,8 +308,11 @@ public class DeploymentUnitType extends AbstractBundleType {
             }
 
             // do the archives next
-            for (URL url : this.urlArchives) {
+            for (Map.Entry<URL, File> archiveEntry : this.urlArchives.entrySet()) {
                 // determine what the base filename should be of our downloaded tmp archive file
+                URL url = archiveEntry.getKey();
+                File destinationDirectory = archiveEntry.getValue();
+
                 String baseFileName = url.getPath();
                 if (baseFileName.endsWith("/")) {
                     baseFileName = baseFileName.substring(0, baseFileName.length());
@@ -325,7 +328,7 @@ public class DeploymentUnitType extends AbstractBundleType {
                 File tmpFile = new File(downloadDir, baseFileName);
                 download(url, tmpFile);
                 downloadedFiles.add(tmpFile);
-                allArchives.add(tmpFile);
+                allArchives.put(tmpFile, destinationDirectory);
                 if (this.urlArchiveReplacePatterns.containsKey(url)) {
                     allArchiveReplacePatterns.put(tmpFile, this.urlArchiveReplacePatterns.get(url));
                 }
@@ -403,6 +406,7 @@ public class DeploymentUnitType extends AbstractBundleType {
     /**
      * @deprecated since RHQ 4.9.0, use {@link #getCompliance()}
      */
+    @Deprecated
     public String getManageRootDir() {
         return Boolean.toString(getCompliance() == DestinationComplianceMode.full);
     }
@@ -410,6 +414,7 @@ public class DeploymentUnitType extends AbstractBundleType {
     /**
      * @deprecated since RHQ 4.9.0, use {@link #setCompliance(org.rhq.core.util.updater.DestinationComplianceMode)}
      */
+    @Deprecated
     public void setManageRootDir(String booleanString) {
         if (!Boolean.TRUE.toString().equalsIgnoreCase(booleanString)
             && !Boolean.FALSE.toString().equalsIgnoreCase(booleanString)) {
@@ -444,7 +449,7 @@ public class DeploymentUnitType extends AbstractBundleType {
      * is a path that is either absolute or relative - it is the destination
      * where the file is to be placed when being deployed on the destination file system;
      * if the value is relative, then it is relative to the root destination directory.
-     * 
+     *
      * @return map of raw files
      */
     public Map<File, File> getFiles() {
@@ -455,16 +460,24 @@ public class DeploymentUnitType extends AbstractBundleType {
      * Returns a map of all raw files. The key is the full absolute path
      * to the file as it does or would appear on the file system (the same key
      * as the keys in map {@link #getFiles()}).
-     * The value is a path relative to the file as it is found in the bundle distro (this 
+     * The value is a path relative to the file as it is found in the bundle distro (this
      * is the "name" attribute of the "file" type tag).
-     * 
+     *
      * @return map of local file names
      */
     public Map<File, String> getLocalFileNames() {
         return localFileNames;
     }
 
-    public Set<File> getArchives() {
+    /**
+     * Returns a map of all archive files. The key is the full absolute path
+     * to the file as it does or would appear on the file system. The value is
+     * the destination directory for the archive.  If null the deployment's root
+     * destination directory is assumed.
+     *
+     * @return map of raw files
+     */
+    public Map<File, File> getArchives() {
         return archives;
     }
 
@@ -472,9 +485,9 @@ public class DeploymentUnitType extends AbstractBundleType {
      * Returns a map of all archive files. The key is the full absolute path
      * to the archive as it does or would appear on the file system (the same key
      * as the keys in map {@link #getArchives()}).
-     * The value is a path relative to the file as it is found in the bundle distro (this 
+     * The value is a path relative to the file as it is found in the bundle distro (this
      * is the "name" attribute of the "archive" type tag).
-     * 
+     *
      * @return map of local file names
      */
     public Map<File, String> getLocalArchiveNames() {
@@ -485,7 +498,7 @@ public class DeploymentUnitType extends AbstractBundleType {
      * Returns a map keyed on {@link #getArchives() archive names} whose values
      * are either true or false, where true means the archive is to be deployed exploded
      * and false means the archive should be deployed in compressed form.
-     * 
+     *
      * @return map showing how an archive should be deployed in its final form
      */
     public Map<File, Boolean> getArchivesExploded() {
@@ -539,17 +552,6 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
     }
 
-    public void addConfigured(ArchiveType archive) {
-        this.archives.add(archive.getSource());
-        this.localArchiveNames.put(archive.getSource(), archive.getName());
-        Pattern replacePattern = archive.getReplacePattern();
-        if (replacePattern != null) {
-            this.archiveReplacePatterns.put(archive.getSource(), replacePattern);
-        }
-        Boolean exploded = Boolean.valueOf(archive.getExploded());
-        this.archivesExploded.put(archive.getSource(), exploded);
-    }
-
     public void addConfigured(UrlFileType file) {
         File destFile = file.getDestinationFile();
         if (destFile == null) {
@@ -562,8 +564,19 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
     }
 
+    public void addConfigured(ArchiveType archive) {
+        this.archives.put(archive.getSource(), archive.getDestinationDir());
+        this.localArchiveNames.put(archive.getSource(), archive.getName());
+        Pattern replacePattern = archive.getReplacePattern();
+        if (replacePattern != null) {
+            this.archiveReplacePatterns.put(archive.getSource(), replacePattern);
+        }
+        Boolean exploded = Boolean.valueOf(archive.getExploded());
+        this.archivesExploded.put(archive.getSource(), exploded);
+    }
+
     public void addConfigured(UrlArchiveType archive) {
-        this.urlArchives.add(archive.getSource());
+        this.urlArchives.put(archive.getSource(), archive.getDestinationDir());
         Pattern replacePattern = archive.getReplacePattern();
         if (replacePattern != null) {
             this.urlArchiveReplacePatterns.put(archive.getSource(), replacePattern);

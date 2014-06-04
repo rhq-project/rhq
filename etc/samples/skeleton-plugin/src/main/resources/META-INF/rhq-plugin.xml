@@ -32,20 +32,6 @@
            class="SamplePluginServerComponent"
            supportsManualAdd="true"
            description="This is a sample resource type and should be removed.">
-
-      <!--       
-         CHANGE: Categories are optional; this entire section may be removed if there is no need to further group
-                 related child resources. Categories defined at this level can carry metadata on the category itself,
-                 such as a display name and description.
-      -->
-      <subcategories>
-         <subcategory name="Category1" displayName="Sample Category 1"
-                      description="This is a sample category that should be removed."/>
-         <subcategory name="Category2" >
-            <subcategory name="ChildCategory2a" />
-         </subcategory>
-      </subcategories>
-
       <!--
          CHANGE: The entire plugin configuration is optional. If there are properties specific to handling how the
                  resource component will connect to the resource, they should be added here. If the plugin-configuration

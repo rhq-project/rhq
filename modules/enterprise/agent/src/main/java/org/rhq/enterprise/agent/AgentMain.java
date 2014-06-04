@@ -53,6 +53,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.prefs.BackingStoreException;
@@ -74,6 +75,7 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.jboss.util.file.FilenameSuffixFilter;
 
+import org.rhq.core.clientapi.agent.lifecycle.PluginContainerLifecycle;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
@@ -259,7 +261,7 @@ public class AgentMain {
     /**
      * Lock held when the m_clientSender needs to be created and destroyed.
      */
-     private final Object m_init = new Object();
+    private final Object m_init = new Object();
 
     /**
      * The time (as reported by <code>System.currentTimeMillis()</code>) when the agent was {@link #start() started}.
@@ -319,12 +321,12 @@ public class AgentMain {
      * itself with the server. This is an array because the array itself will be used for its lock to synchronize access
      * to the thread.
      */
-    private Thread[] m_registrationThread = new Thread[1];
+    private final AtomicReference<Thread> m_registrationThread = new AtomicReference<Thread>();
 
     /**
      * Will be non-<code>null</code> if this agent has successfully registered with the server.
      */
-    private AgentRegistrationResults m_registration;
+    private volatile AgentRegistrationResults m_registration;
 
     /**
      * This is the management MBean responsible for managing and monitoring this agent. This is the object the agent
@@ -345,7 +347,7 @@ public class AgentMain {
      * allowing one failover attempt to happen at any one time regardless of the number of
      * concurrent messages/failovers requested.
      */
-    private long[] m_lastFailoverTime = new long[] { 0L };
+    private final long[] m_lastFailoverTime = new long[] { 0L };
 
     /**
      * Thread used to try to maintain connectivity to the primary server as much as possible.
@@ -355,7 +357,7 @@ public class AgentMain {
     /**
      * Object that remembers when the last connect agent message was sent and to which server.
      */
-    private LastSentConnectAgent m_lastSentConnectAgent = new LastSentConnectAgent();
+    private final LastSentConnectAgent m_lastSentConnectAgent = new LastSentConnectAgent();
 
     /**
      * This is the number of milliseconds this agent clock differs from its server's clock.
@@ -405,10 +407,8 @@ public class AgentMain {
         reconfigureJavaLogging();
 
         AgentMain agent = null;
-        int retries = 0;
-        final int MAX_RETRIES = 5;
 
-        while (retries++ < MAX_RETRIES) {
+        while (true) {
             try {
                 agent = new AgentMain(args);
 
@@ -440,39 +440,40 @@ public class AgentMain {
                 } else {
                     agent.inputLoop();
                 }
-                retries = MAX_RETRIES; // no need to retry...we're good to go
+                break;
             } catch (HelpException he) {
-                retries = MAX_RETRIES; // do nothing but exit the thread
+                break; // do nothing but exit the thread
             } catch (AgentNotSupportedException anse) {
                 LOG.fatal(anse, AgentI18NResourceKeys.AGENT_START_FAILURE);
                 agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
                 anse.printStackTrace(agent.getOut());
-                retries = MAX_RETRIES; // this is unrecoverable, we need this main thread to exit *now*
-            } catch (Exception e) {
+                break; // this is unrecoverable, we need this main thread to exit *now*
+            } catch (AgentRegistrationException e) {
                 LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
+                e.printStackTrace(agent.getOut());
+                break;
+            } catch (Exception e) {
 
-                if (agent != null) {
-                    agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
-                    e.printStackTrace(agent.getOut());
-                    if (retries < MAX_RETRIES) {
-                        LOG.error(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE);
-                        agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE));
-                        try {
-                            Thread.sleep(60000L);
-                        } catch (InterruptedException e1) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }
-                } else {
+                if (agent == null) {
+                    LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
                     System.err.println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
                     e.printStackTrace(System.err);
-                    retries = MAX_RETRIES; // agent could not even be instantiated, this is unrecoverable, just exit
+                    break; // agent could not even be instantiated, this is unrecoverable, just exit
                 }
 
-                agent = null;
+                LOG.error(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
+                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                e.printStackTrace(agent.getOut());
+                LOG.error(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE);
+                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE));
+                try {
+                    Thread.sleep(60000L);
+                } catch (InterruptedException e1) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
-        return;
     }
 
     private void checkTempDir() {
@@ -585,6 +586,7 @@ public class AgentMain {
                     if (lastIndexOfLib >= 0) {
                         int lastIndexOfFileProtocol = pathStr.lastIndexOf("file:") + 5;
                         pathStr = pathStr.substring(lastIndexOfFileProtocol, lastIndexOfLib);
+                        pathStr = pathStr.replace("%20", " "); // the URL will have spaces encoded - this is so we can support agent installs in dirs with spaces
                         File file = new File(pathStr);
                         if (file.exists()) {
                             agentHomeDir = file;
@@ -689,8 +691,28 @@ public class AgentMain {
                     BootstrapLatchCommandListener latch = new BootstrapLatchCommandListener();
                     startCommServices(latch); // note that we start the comm services before we start the plugin container
                     startManagementServices(); // we start our metric collectors before plugin container so the agent plugin can work
-                    prepareStartupWorkRequiringServer();
-                    waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
+                    boolean mustRegister = prepareStartupWorkRequiringServer();
+                    boolean keepWaitingForServer;
+                    do {
+                        boolean aServerIsKnownToBeUp = waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
+                        boolean agentIsRegistered = isRegistered();
+                        if (!aServerIsKnownToBeUp) {
+                            // The wait timed out or failed to talk to server.
+                            // See if agent is registered. If registered, we can just continue the startup/initialization
+                            // and the agent will connect with the server later.
+                            // If agent is not registered, we need to keep waiting for the server because there is nothing the agent
+                            // can do - it probably doesn't even have plugins yet.
+                            // If thread has been interrupted, abort the loop.
+                            keepWaitingForServer = !agentIsRegistered && !Thread.currentThread().isInterrupted();
+                        } else if (mustRegister && !agentIsRegistered) {
+                            // If we got here, we know a server is up and the agent needs to be registered, but it isn't registered.
+                            // This usually means an unrecoverable registration error occurred, so abort.
+                            throw new AgentRegistrationException(
+                                MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
+                        } else {
+                            keepWaitingForServer = false;
+                        }
+                    } while (keepWaitingForServer);
 
                     if (!m_configuration.doNotStartPluginContainerAtStartup()) {
                         // block indefinitely - we cannot continue until we are registered, we have plugins and the PC starts
@@ -1400,8 +1422,13 @@ public class AgentMain {
                             String version = Version.getProductVersion();
                             String build = Version.getBuildNumber();
                             AgentVersion agentVersion = new AgentVersion(version, build);
+                            String installId = System.getProperty(AgentRegistrationRequest.SYSPROP_INSTALL_ID);
+                            String installLocation = getAgentHomeDirectory();
+                            if (installLocation != null && installLocation.trim().length() == 0) {
+                                installLocation = null; // tells the server we don't know it
+                            }
                             AgentRegistrationRequest request = new AgentRegistrationRequest(agent_name, address, port,
-                                remote_endpoint, regenerate_token, token, agentVersion);
+                                remote_endpoint, regenerate_token, token, agentVersion, installId, installLocation);
 
                             Thread.sleep(retry_interval);
 
@@ -1560,24 +1587,18 @@ public class AgentMain {
             }
         };
 
-        // another paraniod synchronization - just in case multiple threads attempt to concurrently register
+        // just in case multiple threads attempt to concurrently register
         // this agent, this assures that only one registration thread is running - any old thread that
         // may still be running will be interrupted (which will eventually cause it to die).  Its
         // OK if more than one registration command is sent via the task, that is concurrent-safe.
         // This just ensures that only one registration thread continues to run.
 
-        Thread thread;
-
-        synchronized (m_registrationThread) {
-            thread = m_registrationThread[0];
-            if (thread != null) {
-                thread.interrupt(); // make sure the old thread eventually dies
-            }
-
-            thread = new Thread(task, "RHQ Agent Registration Thread");
-            thread.setDaemon(true);
-            m_registrationThread[0] = thread;
-            thread.start();
+        Thread thread = new Thread(task, "RHQ Agent Registration Thread");
+        thread.setDaemon(true);
+        thread.start();
+        Thread old = m_registrationThread.getAndSet(thread);
+        if (old != null) {
+            old.interrupt();
         }
 
         if (wait > 0L) {
@@ -1750,7 +1771,7 @@ public class AgentMain {
      *
      * @return <code>true</code> if the plugin container is started, <code>false</code> if it did not start
      */
-    public boolean startPluginContainer(long wait_for_registration) {
+    public boolean startPluginContainer(final long wait_for_registration) {
         PluginContainer plugin_container = PluginContainer.getInstance();
 
         if (plugin_container.isStarted()) {
@@ -1861,6 +1882,10 @@ public class AgentMain {
 
         try {
             LOG.debug(AgentI18NResourceKeys.CREATING_PLUGIN_CONTAINER_SERVER_SERVICES);
+
+            //make the service container understand the requests for plugin container lifecycle events.
+            getServiceContainer().addRemotePojo(new PluginContainerLifecycleListener(this),
+                PluginContainerLifecycle.class);
 
             // Get remote pojo's for server access and make them accessible in the configuration object
             ClientRemotePojoFactory factory = m_clientSender.getClientRemotePojoFactory();
@@ -3762,6 +3787,18 @@ public class AgentMain {
 
                 // take this opportunity to check the agent-server clock sync
                 serverClockNotification(request.getReplyServerTimestamp());
+
+                // If the server thinks we are down, we need to do some things to get this agent in sync
+                // with the server. Anything we do in here should be very fast.
+                boolean serverThinksWeAreDown = request.isReplyAgentIsBackfilled();
+                if (serverThinksWeAreDown) {
+                    LOG.warn(AgentI18NResourceKeys.SERVER_THINKS_AGENT_IS_DOWN);
+                    PluginContainer pluginContainer = PluginContainer.getInstance();
+                    if (pluginContainer.isStarted()) {
+                        // tell the plugin container to send a full avail report up so the server knows we are UP
+                        pluginContainer.getInventoryManager().requestFullAvailabilityReport();
+                    }
+                }
 
             } catch (Throwable t) {
                 // If the ping fails, typically do to a CannotConnectException, and we're not using autodiscovery,

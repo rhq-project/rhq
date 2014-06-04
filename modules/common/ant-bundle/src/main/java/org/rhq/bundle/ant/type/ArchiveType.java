@@ -22,6 +22,7 @@
  */
 package org.rhq.bundle.ant.type;
 
+import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -35,8 +36,18 @@ import org.apache.tools.ant.BuildException;
  * @author Ian Springer
  */
 public class ArchiveType extends AbstractFileType {
+    private File destinationDir;
     private Pattern replacePattern;
-    private String exploded = Boolean.TRUE.toString();
+    private String exploded;
+
+    public File getDestinationDir() {
+        return this.destinationDir;
+    }
+
+    // Pass in a String, rather than a File, since we don't want Ant to resolve the path relative to basedir if it's relative.
+    public void setDestinationDir(String destinationDir) {
+        this.destinationDir = new File(destinationDir);
+    }
 
     public void addConfigured(ReplaceType replace) {
         List<FileSet> fileSets = replace.getFileSets();
@@ -48,12 +59,17 @@ public class ArchiveType extends AbstractFileType {
     }
 
     public String getExploded() {
-        return exploded;
+        return (null == exploded) ? Boolean.TRUE.toString() : exploded;
     }
 
     public void setExploded(String exploded) {
         if (!Boolean.TRUE.toString().equalsIgnoreCase(exploded) && !Boolean.FALSE.toString().equalsIgnoreCase(exploded)) {
             throw new BuildException("'exploded' attribute must be 'true' or 'false': " + exploded);
+        }
+        if (Boolean.TRUE.toString().equalsIgnoreCase(exploded) && null != destinationDir) {
+            throw new BuildException(
+                "'exploded' attribute must be 'false' when setting 'destinationDir', which has been set to: "
+                    + destinationDir);
         }
         this.exploded = exploded;
     }

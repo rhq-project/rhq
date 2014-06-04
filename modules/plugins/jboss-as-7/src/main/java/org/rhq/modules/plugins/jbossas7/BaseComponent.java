@@ -76,6 +76,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.ResolveExpression;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.ResultFailedException;
 
 /**
  * The base class for all AS7 resource components.
@@ -176,79 +177,94 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
         for (MeasurementScheduleRequest req : metrics) {
+            getMetricValue(report, req, null);
+        }
+    }
 
-            if (req.getName().startsWith(INTERNAL))
-                processPluginStats(req, report);
-            else {
-                // Metrics from the application server
+    /**
+     * gets metric value for given request
+     * @param report
+     * @param req
+     * @param explicitExpressions set of metric names that could be represented by expression instead of value on AS7 (can be null)
+     * @return ReadMetricResult value that if different from 'Success' determines why we failed to read metric
+     */
+    protected ReadMetricResult getMetricValue(MeasurementReport report, MeasurementScheduleRequest req, Set<String> explicitExpressions) {
+        if (req.getName().startsWith(INTERNAL))
+            processPluginStats(req, report);
+        else {
+            // Metrics from the application server
 
-                String reqName = req.getName();
-                boolean resolveExpression = false;
-                if (reqName.startsWith(EXPRESSION)) {
-                    resolveExpression = true;
-                    reqName = reqName.substring(EXPRESSION_SIZE);
-                }
+            String reqName = req.getName();
+            boolean resolveExpression = false;
+            if (reqName.startsWith(EXPRESSION)) {
+                resolveExpression = true;
+                reqName = reqName.substring(EXPRESSION_SIZE);
+            } else if (explicitExpressions!=null && explicitExpressions.contains(reqName)) {
+                resolveExpression = true;
+            }
 
-                ComplexRequest complexRequest = null;
-                Operation op;
-                if (reqName.contains(":")) {
-                    complexRequest = ComplexRequest.create(reqName);
-                    op = new ReadAttribute(address, complexRequest.getProp());
-                } else {
-                    op = new ReadAttribute(address, reqName); // TODO batching
-                }
+            ComplexRequest complexRequest = null;
+            Operation op;
+            if (reqName.contains(":")) {
+                complexRequest = ComplexRequest.create(reqName);
+                op = new ReadAttribute(address, complexRequest.getProp());
+            } else {
+                op = new ReadAttribute(address, reqName); // TODO batching
+            }
 
-                Result res = getASConnection().execute(op);
-                if (!res.isSuccess()) {
-                    getLog().warn("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
-                        + res.getFailureDescription());
-                    continue;
-                }
+            Result res = getASConnection().execute(op);
+            if (!res.isSuccess()) {
+                getLog().warn("Getting metric [" + req.getName() + "] at [ " + address + "] failed: "
+                    + res.getFailureDescription());
+                return ReadMetricResult.RequestFailed;
+            }
 
-                Object val = res.getResult();
-                if (val == null) // One of the AS7 ways of telling "This is not implemented" See also AS7-1454
-                    continue;
+            Object val = res.getResult();
+            if (val == null) // One of the AS7 ways of telling "This is not implemented" See also AS7-1454
+                return ReadMetricResult.Null;
 
-                if (req.getDataType() == DataType.MEASUREMENT) {
-                    if (val instanceof String && ((String) val).startsWith("JBAS018003")) // AS7 way of saying "no value available"
-                        continue;
-                    try {
-                        if (complexRequest != null) {
-                            HashMap<String, Number> myValues = (HashMap<String, Number>) val;
-                            for (String key : myValues.keySet()) {
-                                String sub = complexRequest.getSub();
-                                if (key.equals(sub)) {
-                                    addMetric2Report(report, req, myValues.get(key), resolveExpression);
-                                }
-                            }
-                        } else {
-                            addMetric2Report(report, req, val, resolveExpression);
-                        }
-                    } catch (NumberFormatException e) {
-                        getLog().warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
-                    }
-                } else if (req.getDataType() == DataType.TRAIT) {
-
-                    if (resolveExpression && val instanceof Map && ((Map) val).containsKey(EXPRESSION_VALUE_KEY)) {
-                        String expression = (String) ((Map) val).get(EXPRESSION_VALUE_KEY);
-                        ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
-                        Result result = getASConnection().execute(resolveExpressionOperation);
-                        if (!result.isSuccess()) {
-                            if (getLog().isWarnEnabled()) {
-                                getLog().warn("Skipping trait [" + req.getName()
-                                    + "] in measurement report. Could not resolve expression [" + expression
-                                    + "], failureDescription:" + result.getFailureDescription());
-                                continue;
+            if (req.getDataType() == DataType.MEASUREMENT) {
+                if (val instanceof String && ((String) val).startsWith("JBAS018003")) // AS7 way of saying "no value available"
+                    return ReadMetricResult.Null;
+                try {
+                    if (complexRequest != null) {
+                        HashMap<String, Number> myValues = (HashMap<String, Number>) val;
+                        for (String key : myValues.keySet()) {
+                            String sub = complexRequest.getSub();
+                            if (key.equals(sub)) {
+                                addMetric2Report(report, req, myValues.get(key), resolveExpression);
                             }
                         }
-                        val = result.getResult();
+                    } else {
+                        addMetric2Report(report, req, val, resolveExpression);
                     }
-
-                    MeasurementDataTrait data = new MeasurementDataTrait(req, getStringValue(val));
-                    report.addData(data);
+                } catch (NumberFormatException e) {
+                    getLog().warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                    return ReadMetricResult.ResolveFailed;
                 }
+            } else if (req.getDataType() == DataType.TRAIT) {
+
+                if (resolveExpression && val instanceof Map && ((Map) val).containsKey(EXPRESSION_VALUE_KEY)) {
+                    String expression = (String) ((Map) val).get(EXPRESSION_VALUE_KEY);
+                    ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
+                    Result result = getASConnection().execute(resolveExpressionOperation);
+                    if (!result.isSuccess()) {
+                        if (getLog().isWarnEnabled()) {
+                            getLog().warn("Skipping trait [" + req.getName()
+                                + "] in measurement report. Could not resolve expression [" + expression
+                                + "], failureDescription:" + result.getFailureDescription());
+                            return ReadMetricResult.ResolveFailed;
+                        }
+                    }
+                    val = result.getResult();
+                }
+
+                MeasurementDataTrait data = new MeasurementDataTrait(req, getStringValue(val));
+                report.addData(data);
             }
         }
+        return ReadMetricResult.Success;
+
     }
 
     private void addMetric2Report(MeasurementReport report, MeasurementScheduleRequest req, Object val,
@@ -338,7 +354,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             op = new Operation("read-resource", getAddress());
             res = getASConnection().execute(op);
         }
+        includeOOBMessages(res, configuration);
+        return configuration;
+    }
 
+    protected static void includeOOBMessages(Result res, Configuration configuration) {
         if (res.isReloadRequired()) {
             PropertySimple oobMessage = new PropertySimple("__OOB",
                 "The server needs a reload for the latest changes to come effective.");
@@ -349,7 +369,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 "The server needs a restart for the latest changes to come effective.");
             configuration.put(oobMessage);
         }
-        return configuration;
     }
 
     @Override
@@ -831,6 +850,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
+            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
+                throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
+                    + getAddress().getPath() + "] - response: " + res);
+            }
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }
@@ -911,6 +934,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 report.addData(data);
             }
         }
+    }
+
+    static enum ReadMetricResult {
+        Success, RequestFailed, Null, ResolveFailed
     }
 
     private static class ComplexRequest {

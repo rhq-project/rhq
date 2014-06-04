@@ -46,9 +46,11 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.install.remote.AgentInstall;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -103,10 +105,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(groups = { "core.agent.registration" })
 public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String TEST_AGENT_NAME_PREFIX = "CoreServerServiceImplTest.Agent";
-    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
     private AgentVersion agentVersion;
     private Server server;
-    private String oldServerNamePropertyValue = null;
 
     private static final int A_PORT = 11111;
     private static final String A_HOST = "hostA";
@@ -145,7 +145,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         // clean up any agents we might have created
         Query q = getEntityManager().createQuery(
             "select a from Agent a where name like '" + TEST_AGENT_NAME_PREFIX + "%'");
-        List<Agent> doomed = (List<Agent>) q.getResultList();
+        List<Agent> doomed = q.getResultList();
         for (Agent deleteMe : doomed) {
             LookupUtil.getAgentManager().deleteAgent(deleteMe);
         }
@@ -154,9 +154,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     @Override
     protected void beforeMethod() throws Exception {
         // mock the name of our server via the sysprop (in production, this is normally set in rhq-server.properties)
-        oldServerNamePropertyValue = System.getProperty(RHQ_SERVER_NAME_PROPERTY);
-        String newServerNamePropertyValue = "CoreServerServiceImplTest.Server";
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, newServerNamePropertyValue);
+        setServerIdentity("CoreServerServiceImplTest.Server");
 
         // mock up our core server MBean that provides information about where the jboss home dir is
         DummyCoreServer mbean = new DummyCoreServer();
@@ -198,7 +196,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         // mock our server
         server = new Server();
-        server.setName(newServerNamePropertyValue);
+        server.setName(getServerIdentity());
         server.setAddress("CoreServerServiceImplTest.localhost");
         server.setPort(12345);
 
@@ -220,11 +218,6 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         unprepareCustomServerService(CoreServerMBean.OBJECT_NAME);
 
         unprepareForTestAgents();
-
-        // in case this was set before our tests, put it back the way it was
-        if (oldServerNamePropertyValue != null) {
-            System.setProperty(RHQ_SERVER_NAME_PROPERTY, oldServerNamePropertyValue);
-        }
     }
 
     @Test
@@ -621,6 +614,46 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         }
     }
 
+    @Test
+    public void testLinkAgentWithAgentInstall() throws Exception {
+        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+        SubjectManagerLocal sm = LookupUtil.getSubjectManager();
+
+        AgentInstall persistedAgentInstall = agentManager.getAgentInstallByAgentName(sm.getOverlord(),
+            "should-not-exist");
+        assert persistedAgentInstall == null;
+
+        AgentInstall agentInstall = new AgentInstall();
+        agentInstall.setSshHost("CoreServerServiceImpl-SshHost");
+        agentInstall.setSshPort(44);
+        agentInstall.setSshUsername("CoreServerServiceImpl-SshUsername");
+        agentInstall.setSshPassword("CoreServerServiceImpl-SshPassword");
+        agentInstall = agentManager.updateAgentInstall(sm.getOverlord(), agentInstall);
+        assert agentInstall.getId() > 0 : "didn't persist properly - ID should be non-zero";
+        assert agentInstall.getAgentName() == null : "there should be no agent name yet";
+        assert agentInstall.getInstallLocation() == null : "there should be no install location yet";
+
+        CoreServerServiceImpl service = new CoreServerServiceImpl();
+        AgentRegistrationRequest aReq = createRequest(prefixName(".AgentInstall"), A_HOST, A_PORT, null,
+            String.valueOf(agentInstall.getId()), "/tmp/CoreServerServiceImplTest/rhq-agent");
+        AgentRegistrationResults aResults = service.registerAgent(aReq);
+        assert aResults != null : "got null results";
+
+        persistedAgentInstall = agentManager.getAgentInstallByAgentName(sm.getOverlord(), aReq.getName());
+        assert persistedAgentInstall != null : "the new agent info is missing";
+        assert persistedAgentInstall.getAgentName().equals(aReq.getName());
+        assert persistedAgentInstall.getInstallLocation().equals("/tmp/CoreServerServiceImplTest/rhq-agent");
+        assert persistedAgentInstall.getSshHost().equals("CoreServerServiceImpl-SshHost");
+        assert persistedAgentInstall.getSshPort().equals(44);
+        assert persistedAgentInstall.getSshUsername().equals("CoreServerServiceImpl-SshUsername");
+        assert persistedAgentInstall.getSshPassword().equals("CoreServerServiceImpl-SshPassword");
+
+        Agent doomed = agentManager.getAgentByName(aReq.getName());
+        agentManager.deleteAgent(doomed);
+        persistedAgentInstall = agentManager.getAgentInstallByAgentName(sm.getOverlord(), aReq.getName());
+        assert persistedAgentInstall == null : "the agent info should have been deleted";
+    }
+
     private void buildFakeAgentJar(File binaryContents, File agentBinaryFile) throws FileNotFoundException, IOException {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "54321");
@@ -671,8 +704,13 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     }
 
     private AgentRegistrationRequest createRequest(String name, String address, int port, String token) {
+        return createRequest(name, address, port, token, "12345", "/tmp/CoreServerServiceImplTest/rhq-agent");
+    }
+
+    private AgentRegistrationRequest createRequest(String name, String address, int port, String token,
+        String installId, String installLocation) {
         return new AgentRegistrationRequest(name, address, port, "socket://" + address + ":" + port
-            + "/?rhq.communications.connector.rhqtype=agent", true, token, agentVersion);
+            + "/?rhq.communications.connector.rhqtype=agent", true, token, agentVersion, installId, installLocation);
     }
 
     private String prefixName(String name) {

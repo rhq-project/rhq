@@ -25,20 +25,18 @@ import javax.ejb.Local;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
-import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 
 @Local
-public interface StorageNodeManagerLocal {
+public interface StorageNodeManagerLocal extends StorageNodeManagerRemote {
 
     // The following have package visibility to make accessible to StorageNodeManagerBeanTest
     String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
@@ -54,76 +52,17 @@ public interface StorageNodeManagerLocal {
      * @return All storage nodes that are part of the cluster.
      */
     List<StorageNode> getClusterNodes();
-    
+
     PageList<StorageNodeLoadComposite> getStorageNodeComposites(Subject subject);
 
     void linkResource(Resource resource);
 
-    /**
-     * <p>Returns the summary of load of the storage node.</p>
-     *
-     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     *
-     * @param subject   user that must have proper permissions
-     * @param node      storage node entity (it can be a new object, but the id should be set properly)
-     * @param beginTime the start time
-     * @param endTime   the end time
-     * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
-     */
-    StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
+    StorageNode linkExistingStorageNodeToResource(StorageNode storageNode);
 
     ListenableFuture<List<StorageNodeLoadComposite>> getLoadAsync(Subject subject, StorageNode node, long beginTime,
         long endTime);
 
-    StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
-
-    boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
-    
     void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
-
-    /**
-     * Fetches the list of StorageNode entities based on provided criteria.
-     *
-     * the subject needs to have MANAGE_SETTINGS permissions.
-     *
-     * @param subject caller
-     * @param criteria the criteria
-     * @return list of nodes
-     */
-    PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
-
-    /**
-     * Fetches the list of Storage Node related alerts that have not yet been acknowledged.
-     *
-     * @param subject subject
-     * @return storage nodes alerts not acknowledged
-     */
-    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
-
-    /**
-     * Fetches the list of Storage Node related alerts that have not yet been acknowledged for the
-     * specified storage node.
-     *
-     * @param subject subject
-     * @return storage nodes alerts not acknowledged
-     */
-    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode);
-
-    /**
-     * Fetches all the Storage Node related alerts.
-     *
-     * @param subject subject
-     * @return all storage nodes alerts
-     */
-    PageList<Alert> findAllStorageNodeAlerts(Subject subject);
-
-    /**
-     * Fetches all the Storage Node related alerts for the specified storage node.
-     *
-     * @param subject subject
-     * @return all storage nodes alerts
-     */
-    PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
 
     StorageNode findStorageNodeByAddress(String address);
 
@@ -162,30 +101,15 @@ public interface StorageNodeManagerLocal {
      */
     void prepareNodeForUpgrade(Subject subject, StorageNode storageNode);
 
-    /**
-     * <p>
-     * Schedules read repair to run on the storage cluster. The repair operation is executed one node at a time. This
-     * method is invoked from {@link org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob StorageClusterReadRepairJob}
-     * as part of regularly scheduled maintenance.
-     * </p>
-     * <p>
-     * <strong>NOTE:</strong> Repair is one of the most resource-intensive operations that a storage node performs. Make
-     * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
-     * </p>
-     * 
-     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     *
-     * @param subject   user that must have proper permissions
-     */
-    void runClusterMaintenance(Subject subject);
-
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
 
     StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings);
 
-    void deployStorageNode(Subject subject, StorageNode storageNode);
-
-    void undeployStorageNode(Subject subject, StorageNode storageNode);
+    /**
+     * Resets all StorageNode errorMessage and failedOperation values to null.
+     * Done in new trans to ensure ensuing logic sees the reset and avoids locking.
+     */
+    void resetInNewTransaction();
 }

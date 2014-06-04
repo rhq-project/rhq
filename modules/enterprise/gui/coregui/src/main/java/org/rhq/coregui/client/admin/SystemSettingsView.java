@@ -360,11 +360,29 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setPropertyGroupDefinition(generalGroup);
                 pd.setDefaultValue("false");
                 break;
+            case LOGIN_WITHOUT_ROLES_ENABLED:
+                pd.setDescription(MSG.view_admin_systemSettings_EnableLoginWithoutRoles_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_EnableLoginWithoutRoles_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue("false");
+                break;
             case EXPERIMENTAL_FEATURES_ENABLED:
                 pd.setDescription(MSG.view_admin_systemSettings_EnableExperimentalFeatures_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_EnableExperimentalFeatures_name());
                 pd.setPropertyGroupDefinition(generalGroup);
                 pd.setDefaultValue("false");
+                break;
+            case REMOTE_SSH_USERNAME_DEFAULT:
+                pd.setDescription(MSG.view_admin_systemSettings_RemoteSshUsernameDefault_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_RemoteSshUsernameDefault_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue(null);
+                break;
+            case REMOTE_SSH_PASSWORD_DEFAULT:
+                pd.setDescription(MSG.view_admin_systemSettings_RemoteSshPasswordDefault_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_RemoteSshPasswordDefault_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue(null);
                 break;
 
             ////////////////////////////////////////

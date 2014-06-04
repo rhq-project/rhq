@@ -61,6 +61,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.rest.BadArgumentException;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -340,6 +341,76 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // the purpose of this little test is to test an error condition I'm getting when attempting to delete
         // a resource type - just forces a run with before/afterMethod
         return;
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testInvalidPluginConfigurationUpdate() throws Exception {
+        Resource resource = newResource1;
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        Configuration configuration1 = new Configuration();
+        configuration1.put(new PropertySimple("fakeReadOnly", "1"));
+
+        Configuration configuration2 = new Configuration();
+        configuration2.put(new PropertySimple("fakeReadOnly", "2"));
+
+        Configuration current;
+
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
+        assert current != null;
+        assert current.getProperties().size() == 0 : current; // there is no plugin config settings yet
+
+        configurationManager.updatePluginConfiguration(overlord, resource.getId(), configuration1);
+        current = configurationManager.getPluginConfiguration(overlord, resource.getId());
+        assert current != null;
+        assert current.getProperties().size() == 1 : current;
+        assert current.getSimple("fakeReadOnly").getIntegerValue() == 1 : current;
+
+        try {
+            configurationManager.updatePluginConfiguration(overlord, resource.getId(), configuration2);
+            fail("Should have thrown BadArgumentException when trying to change readOnly property.");
+        } catch (BadArgumentException e) {
+            // expected
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testInvalidResourceConfigurationUpdate() throws Exception {
+        Resource resource = newResource1;
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        Configuration configuration1 = new Configuration();
+        configuration1.put(new PropertySimple("fakeReadOnly", "1"));
+        configuration1.put(new PropertySimple("myboolean", "false"));
+
+        Configuration configuration2 = new Configuration();
+        configuration2.put(new PropertySimple("fakeReadOnly", "2"));
+        configuration2.put(new PropertySimple("myboolean", "false"));
+
+        Configuration current = configurationManager.getResourceConfiguration(overlord, resource.getId());
+        assert current != null;
+        assert current.getProperties().size() == 0 : current; // there is no res config settings yet
+
+        ResourceConfigurationUpdate rcu = configurationManager.updateResourceConfiguration(overlord, resource.getId(),
+            configuration1);
+        for (int i = 0; configurationManager.isResourceConfigurationUpdateInProgress(overlord, newResource1.getId())
+            && i < 5; ++i) {
+            Thread.sleep(1000);
+        }
+
+        current = configurationManager.getResourceConfiguration(overlord, resource.getId());
+        assert current != null;
+        assert current.getProperties().size() == 2 : current;
+        assert current.getSimple("fakeReadOnly").getIntegerValue() == 1 : current;
+
+        try {
+            configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
+            fail("Should have thrown BadArgumentException when trying to change readOnly property.");
+        } catch (BadArgumentException e) {
+            // expected
+        }
     }
 
     @Test(enabled = ENABLE_TESTS)
@@ -1182,8 +1253,13 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             return null;
         }
 
-        public void executeServiceScanDeferred() {
-            return;
+        @Override
+        public boolean executeServiceScanDeferred() {
+            return true;
+        }
+
+        @Override
+        public void executeServiceScanDeferred(int resourceId) {
         }
 
         public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {

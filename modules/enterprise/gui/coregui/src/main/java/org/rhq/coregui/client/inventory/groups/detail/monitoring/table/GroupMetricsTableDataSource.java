@@ -13,6 +13,7 @@ import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
@@ -40,13 +41,13 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
 
     public static final String FIELD_MEMBERS_REPORTING = "membersReporting";
 
-    private int groupId;
     private ResourceGroupComposite groupComposite;
 
-    public GroupMetricsTableDataSource(ResourceGroupComposite groupComposite, int groupId) {
-        super(groupId);
+    public GroupMetricsTableDataSource(ResourceGroupComposite groupComposite) {
+        // this is a little ugly, the subclass expects a resourceId, we override everything relevant to
+        // ensure everything works and we deal with the group.
+        super(groupComposite.getResourceGroup().getId());
         this.groupComposite = groupComposite;
-        this.groupId = groupId;
     }
 
     /**
@@ -58,8 +59,8 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField memberCountField = new ListGridField(FIELD_MEMBERS_REPORTING, MSG
-            .common_title_members_reporting());
+        ListGridField memberCountField = new ListGridField(FIELD_MEMBERS_REPORTING,
+            MSG.common_title_members_reporting());
         memberCountField.setWidth("15%");
         fields.add(memberCountField);
 
@@ -146,10 +147,9 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
                     MeasurementUserPreferences mprefs = new MeasurementUserPreferences(prefs);
                     ArrayList<Long> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
 
-                    //now retrieve metric display sumamries
-                    GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(groupId,
-                        definitionArrayIds, range.get(0),
-                        range.get(1), false,
+                    //now retrieve metric display summaries
+                    GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(
+                        EntityContext.forGroup(group), definitionArrayIds, range.get(0), range.get(1), false,
                         new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                             @Override
                             public void onSuccess(ArrayList<MetricDisplaySummary> result) {

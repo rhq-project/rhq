@@ -45,6 +45,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -178,7 +179,7 @@ public class TomcatServerOperationsDelegate {
         Integer exitCode = results.getExitCode();
         AvailabilityType avail;
 
-        if (startScriptFailed(controlMethod, error, exitCode)) {
+        if (startScriptFailed(controlMethod, error, exitCode, isWindows())) {
             String output = results.getCapturedOutput();
             String message = "Script returned error or non-zero exit code while starting the Tomcat instance - exitCode=["
                 + ((exitCode != null) ? exitCode : "UNKNOWN") + "], output=[" + output + "].";
@@ -200,11 +201,11 @@ public class TomcatServerOperationsDelegate {
         }
     }
 
-    private static boolean startScriptFailed(ControlMethod controlMethod, Throwable error, Integer exitCode) {
+    private static boolean startScriptFailed(ControlMethod controlMethod, Throwable error, Integer exitCode, boolean isWindows) {
         if (error != null || exitCode == null) {
             return true;
         }
-        if (controlMethod == ControlMethod.SCRIPT && isWindows()) {
+        if (controlMethod == ControlMethod.SCRIPT && isWindows) {
             // Believe it or not, an exit code of 1 from startup.bat does not indicate an error.
             return exitCode != 0 && exitCode != 1;
         } else {
@@ -252,15 +253,23 @@ public class TomcatServerOperationsDelegate {
     private ProcessExecution getRpmStart(Configuration pluginConfiguration) {
         ProcessExecution processExecution;
         String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
-        String rpm = TomcatDiscoveryComponent.isRPMTomcat6(catalinaHome) ? TomcatDiscoveryComponent.EWS_TOMCAT_6
-            : TomcatDiscoveryComponent.EWS_TOMCAT_5;
+        String rpm = getTomcatServiceNum(catalinaHome);
 
-        processExecution = new ProcessExecution("service");
-        // disable the executable existence check because it is a command on the supplied PATH
-        processExecution.setCheckExecutableExists(false);
-        processExecution.setArguments(new ArrayList<String>());
-        processExecution.getArguments().add(rpm);
-        processExecution.getArguments().add("start");
+        if (isWindows()) {
+            processExecution = new ProcessExecution("net");
+            // disable the executable existence check because it is a command on the supplied PATH
+            processExecution.setCheckExecutableExists(false);
+            processExecution.setArguments(new ArrayList<String>());
+            processExecution.getArguments().add("start");
+            processExecution.getArguments().add(rpm);
+        } else {
+            processExecution = new ProcessExecution("service");
+            // disable the executable existence check because it is a command on the supplied PATH
+            processExecution.setCheckExecutableExists(false);
+            processExecution.setArguments(new ArrayList<String>());
+            processExecution.getArguments().add(rpm);
+            processExecution.getArguments().add("start");
+        }
 
         Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
         processExecution.setEnvironmentVariables(envVars);
@@ -284,6 +293,9 @@ public class TomcatServerOperationsDelegate {
             return result;
         }
     }
+    private boolean isWindows() {
+        return this.systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
+    }
 
     /**
      * Shuts down the AS server using a shutdown script.
@@ -292,6 +304,7 @@ public class TomcatServerOperationsDelegate {
      */
     private String doShutdown(PropertyList environment) {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
+        // NOTE: In TomcatDiscoveryComponent.java we set TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT (amongst others).
         String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
             ControlMethod.SCRIPT.name());
         ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptShutdown(pluginConfiguration)
@@ -332,18 +345,37 @@ public class TomcatServerOperationsDelegate {
         return processExecution;
     }
 
+    private static String getTomcatServiceNum(String catalinaHome) {
+        String rpm = TomcatDiscoveryComponent.EWS_TOMCAT_8;
+        if (TomcatDiscoveryComponent.isTomcat7(catalinaHome))
+            rpm = TomcatDiscoveryComponent.EWS_TOMCAT_7;
+        if (TomcatDiscoveryComponent.isTomcat6(catalinaHome))
+            rpm = TomcatDiscoveryComponent.EWS_TOMCAT_6;
+        if (TomcatDiscoveryComponent.isTomcat5(catalinaHome))
+            rpm = TomcatDiscoveryComponent.EWS_TOMCAT_5;
+        return rpm;
+    }
+
     private ProcessExecution getRpmShutdown() {
         ProcessExecution processExecution;
         String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
-        String rpm = TomcatDiscoveryComponent.isRPMTomcat6(catalinaHome) ? TomcatDiscoveryComponent.EWS_TOMCAT_6
-            : TomcatDiscoveryComponent.EWS_TOMCAT_5;
+        String rpm = getTomcatServiceNum(catalinaHome);
 
-        processExecution = new ProcessExecution("service");
-        // disable the executable existence check because it is a command on the supplied PATH
-        processExecution.setCheckExecutableExists(false);
-        processExecution.setArguments(new ArrayList<String>());
-        processExecution.getArguments().add(rpm);
-        processExecution.getArguments().add("stop");
+        if (isWindows()) {
+            processExecution = new ProcessExecution("net");
+            // disable the executable existence check because it is a command on the supplied PATH
+            processExecution.setCheckExecutableExists(false);
+            processExecution.setArguments(new ArrayList<String>());
+            processExecution.getArguments().add("stop");
+            processExecution.getArguments().add(rpm);
+        } else {
+            processExecution = new ProcessExecution("service");
+            // disable the executable existence check because it is a command on the supplied PATH
+            processExecution.setCheckExecutableExists(false);
+            processExecution.setArguments(new ArrayList<String>());
+            processExecution.getArguments().add(rpm);
+            processExecution.getArguments().add("stop");
+        }
 
         Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
         log.info("Operation Envs: " + envVars);
@@ -530,7 +562,4 @@ public class TomcatServerOperationsDelegate {
         }
     }
 
-    private static boolean isWindows() {
-        return File.separatorChar == '\\';
-    }
 }

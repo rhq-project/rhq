@@ -258,6 +258,65 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             throw e;
         }
     }
+    @Test
+    public void testFindCallTimeDataRaw() throws Exception {
+        try {
+            beginTx();
+
+            setupResources(em);
+
+            em.flush();
+            long now = System.currentTimeMillis();
+
+            MeasurementScheduleRequest request1 = new MeasurementScheduleRequest(schedule1);
+
+            CallTimeData data1 = new CallTimeData(request1);
+            CallTimeData data2 = new CallTimeData(request1);
+            Date dNow = new Date();
+            dNow.setTime(now);
+
+            data1.addCallData("/1", dNow, 1);
+            data1.addCallData("/1", dNow, 1);
+
+            dNow.setTime(now + 1);
+            data2.addCallData("/1", dNow, 3);
+
+            dNow.setTime(now + 2);
+            data2.addCallData("/2a", dNow, 4);
+
+            dNow.setTime(now + 3);
+            data2.addCallData("/2b", dNow, 5);
+
+            commit();
+
+            MeasurementReport report = new MeasurementReport();
+            report.addData(data1);
+            measurementDataManager.mergeMeasurementReport(report);
+
+            report = new MeasurementReport();
+            report.addData(data2);
+            measurementDataManager.mergeMeasurementReport(report);
+
+            // Do not remove this sleep -- the previous is is asynchronous
+            // and the sleep "guarantees" that data is actually hitting the db
+            Thread.sleep(10000);
+
+            PageList<CallTimeDataComposite> list = callTimeDataManager.findCallTimeDataRawForResource(overlord,
+                schedule1.getId(), now - DELTA, System.currentTimeMillis() + DELTA, new PageControl());
+
+            assert list != null;
+
+            assert list.size() == 4 : "List 1 returned " + list.size() + " entries, expected was 4";
+            assert list.get(0).getTotal() == 2 : "First value must be total = 2, but was "+list.get(0).getTotal();
+            assert list.get(1).getTotal() == 3 : "Second value must be total = 3, but was "+list.get(1).getTotal();
+            assert list.get(2).getTotal() == 4 : "Third value must be total = 4, but was "+list.get(2).getTotal();
+            assert list.get(3).getTotal() == 5 : "Fourth value must be total = 5, but was "+list.get(3).getTotal();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
     /**
      * Just set up two resources plus measurement definitions

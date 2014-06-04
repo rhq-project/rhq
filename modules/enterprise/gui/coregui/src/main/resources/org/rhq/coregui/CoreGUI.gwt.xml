@@ -1,6 +1,5 @@
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN"
     "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
-
 <module>
 
     <inherits name='com.google.gwt.user.User'/>
@@ -51,13 +50,13 @@
     </generate-with>
 
     <script src="/coregui/js/moment-2.0.0.min.js"/>
-    <script src="/coregui/js/rhq-4.10.0.js"/>
+    <script src="/coregui/js/rhq-4.12.0.js"/>
     <!-- External javascript libraries -->
     <!-- jquery.sparkline requires jquery.
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
     <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
-    <script src="/coregui/js/d3.v3.3.13.min.js"/>
+    <script src="/coregui/js/d3.v3.3.48.min.js"/>
 
 
     <!--

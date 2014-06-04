@@ -31,7 +31,6 @@ import org.rhq.test.arquillian.RunDiscovery;
 
 /**
  * @author Stefan Negrea
- *
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
@@ -86,24 +85,28 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest {
 
         //will revisit after BZ 826542 is resolved
         //        ignoredResources.add("Authentication (Classic)");
-
         ignoredResources.add("Memory Pool");
         ignoredResources.add("Periodic Rotating File Handler");
 
-        //created BZ 1059882 for failures related to:
-        //  attribute discovery-group-name (mutually exclusive issue?)
-        ignoredResources.add("Pooled Connection Factory");
-        ignoredResources.add("Connection Factory");
-        //  attribute static-connectors (nullable list issue?)
-        ignoredResources.add("Cluster Connection");
+        // Datasources need a complex workflow, cannot be tested like this
+        ignoredResources.add("DataSource (Standalone)");
 
-        ignoredResources.add("HornetQ");
-        ignoredResources.add("HornetQ (Profile)");
+        if (System.getProperty("as7.version").equals("6.1.0.Alpha")) {
+            // HornetQ resource is broken on 6.1.0.Alpha. Operation fails with:
+            // JBAS011673: The clustered attribute is deprecated.
+            // To create a clustered HornetQ server, define at least one cluster-connection
+            ignoredResources.add("HornetQ");
+        }
 
+        if (System.getProperty("as7.version").startsWith("6.1")) {
+            // These HornetQ resources cannot be modified on EAP 6.1, only deleted/re-created
+            // See Bug 1001612 https://bugzilla.redhat.com/show_bug.cgi?id=1001612#c0
+            ignoredResources.add("Pooled Connection Factory");
+            ignoredResources.add("Connection Factory");
+            ignoredResources.add("Cluster Connection");
+        }
 
         int errorCount = loadUpdateConfigChildResources(server, ignoredResources);
         Assert.assertEquals(errorCount, 0);
     }
-
-
 }

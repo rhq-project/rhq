@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.installer;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,6 +47,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
+import org.rhq.cassandra.schema.DBConnectionFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
 import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
@@ -56,6 +59,7 @@ import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.DbUtil;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
@@ -258,9 +262,10 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         // its possible the ear is not yet deployed (during server init/startup, it won't show up)
-        // but our extension should always show up and its one of the last things our installer deploys.
-        // if this doesn't exist, our installation isn't done yet
-        if (isExtensionDeployed()) {
+        // but our marker file should exist (since its the last thing the installer will write).
+        // If the marker file exists, we can assume the installer is done and we just have to wait.
+
+        if (getInstalledFileMarker().exists()) {
             return ""; // installer has done all it could - just need to wait for the EAR to fully startup
         }
 
@@ -449,11 +454,6 @@ public class InstallerServiceImpl implements InstallerService {
                 } else {
                     throw new Exception("Cannot get server, port or db name from connection URL: " + url);
                 }
-            } else {
-                // these need to be set to "unused" to pass property file validation
-                serverProperties.put(ServerProperties.PROP_DATABASE_SERVER_NAME, "unused");
-                serverProperties.put(ServerProperties.PROP_DATABASE_PORT, "unused");
-                serverProperties.put(ServerProperties.PROP_DATABASE_DB_NAME, "unused");
             }
         } catch (Exception e) {
             throw new Exception("JDBC connection URL seems to be invalid", e);
@@ -570,19 +570,27 @@ public class InstallerServiceImpl implements InstallerService {
                     storageNodeSchemaManager.drop();
                 }
 
+                final String dbPassword = clearTextDbPassword;
+                DBConnectionFactory connectionFactory = new DBConnectionFactory() {
+                    @Override
+                    public Connection newConnection() throws SQLException {
+                        return DbUtil.getConnection(dbUrl, dbUsername, dbPassword);
+                    }
+                };
+
                 try {
                     storageNodeSchemaManager.checkCompatibility();
                 } catch (AuthenticationException e1) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.install(connectionFactory);
                     storageNodeSchemaManager.updateTopology();
                 } catch (SchemaNotInstalledException e2) {
                     log("Install RHQ schema along with updates to storage nodes.");
-                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.install(connectionFactory);
                     storageNodeSchemaManager.updateTopology();
                 } catch (InstalledSchemaTooOldException e3) {
                     log("Install RHQ schema updates to storage cluster.");
-                    storageNodeSchemaManager.install();
+                    storageNodeSchemaManager.install(connectionFactory);
                 }
                 storageNodeAddresses = storageNodeSchemaManager.getStorageNodeAddresses();
                 storageNodeSchemaManager.shutdown();
@@ -724,10 +732,17 @@ public class InstallerServiceImpl implements InstallerService {
         final File serverPropertiesFile = getServerPropertiesFile();
         final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
 
-        // GWT can't handle Properties - so we use HashMap but convert to Properties internally
+        // this code use to be used within GWT which is why the signature uses HashMap and we convert to Properties here
         final Properties props = new Properties();
         for (Map.Entry<String, String> entry : serverProperties.entrySet()) {
             props.setProperty(entry.getKey(), entry.getValue());
+        }
+
+        // BZ 1080508 - the server will fail to install if rhq.server.log-level isn't set
+        // (as will be the case for upgrades from older versions), so force it to be set now
+        if (!props.containsKey(ServerProperties.PROP_LOG_LEVEL)) {
+            props.setProperty(ServerProperties.PROP_LOG_LEVEL, "INFO");
+            serverProperties.put(ServerProperties.PROP_LOG_LEVEL, "INFO");
         }
 
         propsFile.update(props);
@@ -1090,7 +1105,7 @@ public class InstallerServiceImpl implements InstallerService {
                 // don't bother trying again
                 boolean differentValues = false;
                 String hostStr = fallbackProps.get("jboss.bind.address.management");
-                if (hostStr != null && !hostStr.equals(host)) {
+                if (hostStr != null && hostStr.length() > 0 && !hostStr.equals(host)) {
                     host = hostStr;
                     differentValues = true;
                 }
@@ -1369,12 +1384,17 @@ public class InstallerServiceImpl implements InstallerService {
         return new SchemaManager(username, password, nodes, cqlPort);
     }
 
-    private void writeInstalledFileMarker() throws Exception {
+    private File getInstalledFileMarker() throws Exception {
         File datadir = new File(getAppServerDataDir());
         if (!datadir.isDirectory()) {
             throw new IOException("Directory Not Found: [" + datadir.getPath() + "]");
         }
         File markerFile = new File(datadir, "rhq.installed");
+        return markerFile;
+    }
+
+    private void writeInstalledFileMarker() throws Exception {
+        File markerFile = getInstalledFileMarker();
         markerFile.createNewFile();
     }
 }

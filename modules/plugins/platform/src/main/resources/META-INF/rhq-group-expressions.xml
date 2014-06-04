@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<expressions xmlns="urn:xmlns:rhq-canned-groups">
+  <definition>
+    <id>Platforms</id>
+    <name>Groups by platform</name>
+    <createByDefault>true</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>Generates groups by platform</description>
+    <expression>resource.type.category = PLATFORM</expression>
+    <expression>groupby resource.type.name</expression>
+  </definition>
+  <definition>
+    <id>Downed resources</id>
+    <name>All resources currently down</name>
+    <createByDefault>true</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>Group of all resources currently down</description>
+    <expression>resource.availability = DOWN</expression>
+  </definition>
+  <definition>
+    <id>Unique types</id>
+    <name>Unique resource types in inventory</name>
+    <createByDefault>false</createByDefault>
+    <recalcInMinutes>10</recalcInMinutes>
+    <recursive>false</recursive>
+    <description>Unique resource types in inventory</description>
+    <expression>groupby resource.type.plugin</expression>
+    <expression>groupby resource.type.name</expression>
+  </definition>
+</expressions>

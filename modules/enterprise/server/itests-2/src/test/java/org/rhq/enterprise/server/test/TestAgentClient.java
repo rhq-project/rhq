@@ -193,6 +193,16 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
         return true;
     }
 
+    @Override
+    public void updatePlugins() {
+        //no-op
+    }
+
+    @Override
+    public boolean pingService(long timeoutMillis) {
+        return true;
+    }
+
     // provide no-ops for all agent services
 
     @Override
@@ -303,8 +313,12 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public void executeServiceScanDeferred() {
-        return;
+    public boolean executeServiceScanDeferred() {
+        return true;
+    }
+
+    @Override
+    public void executeServiceScanDeferred(int resourceId) {
     }
 
     @Override

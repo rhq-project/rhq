@@ -25,6 +25,9 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 public enum SystemSetting {
     /** Base URL for the application - (i think this is only used for alert emails) */
     BASE_URL("CAM_BASE_URL", PropertySimpleType.STRING, false, true, true),
+    
+    /** Is user without any assigned role allowed to see the web UI */
+    LOGIN_WITHOUT_ROLES_ENABLED("ENABLE_LOGIN_WITHOUT_ROLES", PropertySimpleType.BOOLEAN, false, true, true),
 
     /** how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it */
     AGENT_MAX_QUIET_TIME_ALLOWED("AGENT_MAX_QUIET_TIME_ALLOWED", PropertySimpleType.LONG, false, true, true),
@@ -154,6 +157,14 @@ public enum SystemSetting {
      */
     STORAGE_PASSWORD("STORAGE_PASSWORD", PropertySimpleType.PASSWORD, true, true, false),
 
+    /**
+     * Setting this property deactivates the metrics_cache table. Data will not be pulled from metrics_cache until
+     * the time specified by this property has been reached. This applies to both past and current data. There are two
+     * use cases for this - 1) data migration during upgrade and 2) cache partition resizing (i.e., number of schedules
+     * stored per partition)
+     */
+    METRICS_CACHE_ACTIVATION_TIME("METRICS_CACHE_ACTIVATION_TIME", PropertySimpleType.LONG, false, false, true),
+
     //these seem to be unused yet still present in the database...
     @Deprecated
     HELP_USER("CAM_HELP_USER", PropertySimpleType.STRING, true, false, true),
@@ -164,7 +175,19 @@ public enum SystemSetting {
     @Deprecated
     GUIDE_ENABLED("CAM_GUIDE_ENABLED", PropertySimpleType.STRING, true, false, true),
     @Deprecated
-    RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true)
+    RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true),
+
+    /**
+     * This is a default username that can be used to connect to a remote SSH box.
+     * Right now, it's used when remotely controlling/installing/uninstalling agents.
+     */
+    REMOTE_SSH_USERNAME_DEFAULT("REMOTE_SSH_USERNAME_DEFAULT", PropertySimpleType.STRING, false, false, true),
+
+    /**
+     * This is a default password that can be used to connect to a remote SSH box.
+     * Right now, it's used when remotely controlling/installing/uninstalling agents.
+     */
+    REMOTE_SSH_PASSWORD_DEFAULT("REMOTE_SSH_PASSWORD_DEFAULT", PropertySimpleType.PASSWORD, false, false, true)
 
     ;
 

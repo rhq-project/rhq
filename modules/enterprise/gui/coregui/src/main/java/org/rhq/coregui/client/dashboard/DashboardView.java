@@ -72,6 +72,7 @@ import org.rhq.coregui.client.dashboard.portlets.resource.ResourceBundleDeployme
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceEventsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOobsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
@@ -467,7 +468,7 @@ public class DashboardView extends EnhancedVLayout {
                 // MEASUREMENT related portlets(METRICS)
                 if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
                     resourceMenuMap.remove(ResourceMetricsPortlet.KEY);
-                    resourceMenuMap.remove(ResourceMetricsPortlet.KEY);
+                    resourceMenuMap.remove(ResourceOobsPortlet.KEY);
                 }
                 // Content related portlets
                 if (!facets.contains(ResourceTypeFacet.CONTENT)) {

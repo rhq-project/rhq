@@ -44,6 +44,7 @@ import org.rhq.coregui.client.dashboard.portlets.inventory.resource.FavoriteReso
 import org.rhq.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
+import org.rhq.coregui.client.dashboard.portlets.recent.events.RecentEventsPortlet;
 import org.rhq.coregui.client.dashboard.portlets.recent.imported.RecentlyAddedResourcesPortlet;
 import org.rhq.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
 import org.rhq.coregui.client.dashboard.portlets.recent.operations.OperationSchedulePortlet;
@@ -99,6 +100,7 @@ public class PortletFactory {
         globalPortletFactoryMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(RecentEventsPortlet.KEY, RecentEventsPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ResourceD3GraphPortlet.KEY, ResourceD3GraphPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ResourceGroupD3GraphPortlet.KEY, ResourceGroupD3GraphPortlet.Factory.INSTANCE);
         //conditionally add tags. Defaults to true, not available in JON builds.
@@ -121,6 +123,7 @@ public class PortletFactory {
         globalPortletNameMap.put(PlatformSummaryPortlet.NAME, PlatformSummaryPortlet.KEY);
         globalPortletNameMap.put(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY);
         globalPortletNameMap.put(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY);
+        globalPortletNameMap.put(RecentEventsPortlet.NAME, RecentEventsPortlet.KEY);
         globalPortletNameMap.put(ResourceD3GraphPortlet.NAME, ResourceD3GraphPortlet.KEY);
         globalPortletNameMap.put(ResourceGroupD3GraphPortlet.NAME, ResourceGroupD3GraphPortlet.KEY);
         //conditionally add tags. Defaults to true, not available in JON builds.

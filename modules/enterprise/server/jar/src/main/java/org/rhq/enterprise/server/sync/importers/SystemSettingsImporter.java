@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
@@ -54,7 +53,7 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
 
     public static final String PROPERTIES_TO_IMPORT_PROPERTY = "propertiesToImport";
     public static final String DEFAULT_IMPORTED_PROPERTIES_LIST =
-        "AGENT_MAX_QUIET_TIME_ALLOWED, ENABLE_AGENT_AUTO_UPDATE, ENABLE_DEBUG_MODE, ENABLE_EXPERIMENTAL_FEATURES, CAM_DATA_PURGE_1H, CAM_DATA_PURGE_6H, "
+        "AGENT_MAX_QUIET_TIME_ALLOWED, ENABLE_AGENT_AUTO_UPDATE, ENABLE_DEBUG_MODE, ENABLE_EXPERIMENTAL_FEATURES, ENABLE_LOGIN_WITHOUT_ROLES, CAM_DATA_PURGE_1H, CAM_DATA_PURGE_6H, "
             + "CAM_DATA_PURGE_1D, CAM_DATA_MAINTENANCE, DATA_REINDEX_NIGHTLY, RT_DATA_PURGE, ALERT_PURGE, EVENT_PURGE, TRAIT_PURGE, AVAILABILITY_PURGE, CAM_BASELINE_FREQUENCY, CAM_BASELINE_DATASET";
     
     private Subject subject;

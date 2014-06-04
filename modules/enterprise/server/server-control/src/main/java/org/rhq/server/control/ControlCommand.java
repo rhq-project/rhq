@@ -40,7 +40,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.exec.DefaultExecutor;
@@ -60,6 +59,8 @@ public abstract class ControlCommand {
     public static final String SERVER_OPTION = "server";
     public static final String STORAGE_OPTION = "storage";
     public static final String AGENT_OPTION = "agent";
+    public static final String HELP_OPTION_1 = "--help";
+    public static final String HELP_OPTION_2 = "-h";
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
@@ -75,11 +76,24 @@ public abstract class ControlCommand {
 
     private PropertiesConfiguration rhqctlConfig = null; // the (optional) settings found in rhqctl.properties
 
+    private static final int WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS;
+    static {
+        int propInt;
+        try {
+            propInt = Integer.parseInt(System.getProperty("rhqctl.wait-for-process-to-stop-timeout-secs", "30"));
+        } catch (Exception e) {
+            propInt = 30;
+        }
+        WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS = propInt;
+    }
+
     private ArrayList<Runnable> undoTasks = new ArrayList<Runnable>();
 
     protected void undo() {
-        Collections.reverse(undoTasks); // do the undo tasks in the reverse order in which they were added to the list
-        for (Runnable undoTask : undoTasks) {
+        // perform the undo on the snapshot of undoTasks, because of possible ConcurrentModificationException
+        List<Runnable> undoTasksCopy = new ArrayList<Runnable>(undoTasks);
+        Collections.reverse(undoTasksCopy); // do the undo tasks in the reverse order in which they were added to the list
+        for (Runnable undoTask : undoTasksCopy) {
             try {
                 undoTask.run();
             } catch (Throwable t) {
@@ -150,8 +164,14 @@ public abstract class ControlCommand {
         Options options = getOptions();
         int rValue = RHQControl.EXIT_CODE_OK;
         try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine cmdLine = parser.parse(options, args);
+            CommandLineParser parser = new RHQPosixParser(false);
+            CommandLine cmdLine = parser.parse(options, args, true);
+            if (!cmdLine.getArgList().isEmpty()) {
+                // there were some unrecognized args
+                System.out.println("Unrecognized arguments: " + cmdLine.getArgList());
+                printUsage();
+                return RHQControl.EXIT_CODE_INVALID_ARGUMENT;
+            }
             rValue = exec(cmdLine);
 
             if (rhqctlConfig != null) {
@@ -432,26 +452,26 @@ public abstract class ControlCommand {
     }
 
     protected void waitForProcessToStop(String pid) throws Exception {
-
-        if (isWindows() || pid==null) {
+        if (isWindows() || pid == null) {
             // For the moment we have no better way to just wait some time
-            Thread.sleep(10*1000L);
+            Thread.sleep(WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS * 1000L);
         } else {
-            int tries = 5;
-            while (tries > 0) {
-                log.debug(".");
+            final int maxTries = 5;
+            int tries = 1;
+            while (tries <= maxTries) {
+                log.debug("Waiting for pid [" + pid + "] to stop. Try #" + tries);
                 if (!isUnixPidRunning(pid)) {
                     break;
                 }
-                Thread.sleep(2*1000L);
-                tries--;
+                Thread.sleep((WAIT_FOR_PROCESS_TO_STOP_TIMEOUT_SECS / maxTries) * 1000L);
+                tries++;
             }
-            if (tries==0) {
-                throw new RHQControlException("Process [" + pid + "] did not finish yet. Terminate it manually and retry.");
+            if (tries > maxTries) {
+                throw new RHQControlException("Process [" + pid
+                    + "] did not finish yet. Terminate it manually and retry.");
+                }
             }
         }
-
-    }
 
     protected void killPid(String pid) throws IOException {
         Executor executor = new DefaultExecutor();
@@ -473,20 +493,24 @@ public abstract class ControlCommand {
         org.apache.commons.exec.CommandLine commandLine;
         commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument("-0").addArgument(pid);
 
+        boolean isRunning = true; // assume it is running
         try {
             int code = executor.execute(commandLine);
             if (code != 0) {
-                return false;
+                isRunning = false;
             }
         } catch (ExecuteException ee ) {
+            log.debug("kill -0 for pid [" + pid + "] threw exception with exit value [" + ee.getExitValue() + "]");
             if (ee.getExitValue() == 1) {
                 // return code 1 means process does not exist
-                return false;
+                isRunning = false;
             }
         } catch (IOException e) {
-            log.error("Checking for running process failed: " + e.getMessage());
+            log.error("Checking for running process failed. Will assume it is running. Error: " + e.getMessage());
         }
-        return true;
+
+        log.debug("unix pid [" + pid + "] " + ((isRunning) ? "is" : "is NOT") + " running");
+        return isRunning;
     }
 
     protected boolean isStorageRunning() throws IOException {

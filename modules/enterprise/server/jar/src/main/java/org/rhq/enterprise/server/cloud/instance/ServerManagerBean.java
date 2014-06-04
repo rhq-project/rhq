@@ -39,6 +39,10 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.as.controller.client.ModelControllerClient;
+
+import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
@@ -57,14 +61,14 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
 /**
  * If you want to manipulate or report on the {@link Server} instance that
  * some piece of code is currently executing on, use the {@link ServerManagerBean}.
- * 
+ *
  * This session bean determines the identity of the server it's running on by
  * reading the <code>rhq.server.high-availability.name</code> property from the
  * rhq-server.properties file.
- * 
+ *
  * The functionality provided here is useful when you need to execute something
  * on every server in the cloud, such as partitioned services and data.
- * 
+ *
  * @author Joseph Marques
  */
 @Stateless
@@ -100,7 +104,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     private ServerManagerLocal serverManager;
 
     public void scheduleServerHeartbeat() {
-        /* each time the webapp is reloaded, it would create 
+        /* each time the webapp is reloaded, it would create
          * duplicate events if we don't cancel the existing ones
          */
         Collection<Timer> timers = timerService.getTimers();
@@ -243,9 +247,16 @@ public class ServerManagerBean implements ServerManagerLocal {
                 // This will prevent a running CloudManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
 
+                log.info("Notified communication layer of server operation mode " + serverMode);
+
                 lastEstablishedServerMode = serverMode;
                 serverMode = determineServerOperationMode(server.hasStatus(Server.Status.MANUAL_MAINTENANCE_MODE),
                     storageClientManager.isClusterAvailable(), OperationMode.NORMAL);
+
+                if (serverMode == OperationMode.MAINTENANCE) {
+                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer()
+                        .addCommandListener(getMaintenanceModeListener());
+                }
             }
 
             // If this server just transitioned from INSTALLED to NORMAL operation mode then it
@@ -307,10 +318,24 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void beat() {
-        Server server = getServer();
-        server.setMtime(System.currentTimeMillis());
+        try {
+            Server server = getServer();
+            server.setMtime(System.currentTimeMillis());
+        } catch (ServerNotFoundException snfe) {
+            // an admin removed our server entity, that means we are to be decommissioned so immediately shutdown
+            ModelControllerClient mcc = null;
+            try {
+                log.info("This server has been decommissioned!!! It will now shutdown.");
+                mcc = MCCHelper.createModelControllerClient();
+                new CoreJBossASClient(mcc).shutdown(false);
+            } catch (Exception e) {
+                log.fatal("This server was decommissioned, however, it failed to shut itself down. This server will now behave in an indeterminate manner. Please shut it down.");
+            } finally {
+                MCCHelper.safeClose(mcc);
+            }
+        }
 
-        // Handles server mode state changes 
+        // Handles server mode state changes
         // note: this call should be fast. if not we need to break the heart beat into its own job
         establishCurrentServerMode();
     }

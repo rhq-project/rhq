@@ -41,5 +41,16 @@ public interface CallTimeDataManagerRemote {
      */
     PageList<CallTimeDataComposite> findCallTimeDataForResource(Subject subject, int scheduleId, long beginTime,
         long endTime, PageControl pc);
+    /**
+     * Compared to {@link #findCallTimeDataForResource(Subject, int, long, long, PageControl)}
+     * this method returns more detailed call-time data not grouped by callDestination.
+     * @param subject
+     * @param scheduleId The MeasurementSchedule id
+     * @param beginTime in millis
+     * @param endTime in millis
+     * @param pc
+     * @return not null
+     */
+    PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId, long beginTime, long endTime, PageControl pc);
 
 }

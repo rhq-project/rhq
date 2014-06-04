@@ -116,6 +116,8 @@ public class DiscoveryTest extends Arquillian {
     @RunDiscovery
     @Test(groups = "pc.itest.discovery", priority = 10)
     public void testDiscoveryRunsOnlyOncePerType() throws Exception {
+        waitForAsyncDiscoveries();
+
         // make sure our inventory is as we expect it to be
         validatePluginContainerInventory();
 

@@ -8,12 +8,12 @@
 # a strict number ordering (that continues from rhq-server-wrapper.conf)
 # and currently must start with:
 #
-# wrapper.java.additional.24=
+# wrapper.java.additional.25=
 #
 # For example, to set a non-default temp directory for Java:
 #   Note: use forward slashes for directories:
 #
-# wrapper.java.additional.24="-Djava.io.tmpdir=c:/temp"
+# wrapper.java.additional.25="-Djava.io.tmpdir=c:/temp"
 #
 #*****************************************************************************
 

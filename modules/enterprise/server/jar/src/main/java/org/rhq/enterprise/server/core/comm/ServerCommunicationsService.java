@@ -151,7 +151,10 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
     /**
      * A map of clients of known agents. This effectively caches our clients so we don't create more than one sender
-     * object to the same agent. The key is a string that is produced by {@link #getEndpointKey(String, int)}.
+     * object to the same agent. The key is a string that is produced by {@link #getEndpointKey(String, int)}. Note
+     * that this cache can be dirty in an HA environment.  When deleting an agent (due to a platform uninventory, for
+     * example) this cache entry will only be cleaned on the primary HA node.  As such, we need to be careful to
+     * ensure cache entries are correct, by doing a quick token match on the cache entry, when accessed.
      */
     private Map<String, AgentClient> m_knownAgentClients = new HashMap<String, AgentClient>();
 
@@ -176,7 +179,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * after we are assured the EJBs are all deployed and we are ready to begin processing incoming agent messages.
      *
      * Synchronized to ensure that the start operation completes atomically.
-     * 
+     *
      * @see ServerCommunicationsServiceMBean#startCommunicationServices()
      */
     public synchronized void startCommunicationServices() throws Exception {
@@ -210,7 +213,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
     /**
      * Synchronized to ensure that the stop operation completes atomically.
-     * 
+     *
      * @see ServerCommunicationsServiceMBean#stop()
      */
     public synchronized void stop() {
@@ -384,14 +387,16 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             throw new IllegalStateException("Agent must be non-null - is a resource not assigned an agent?");
         }
 
-        // first see if its already cached, if not we need to create one
+        // first see if its already cached, if not we need to create one.
         synchronized (m_knownAgentClients) {
             String agent_address = agent.getAddress();
             int agent_port = agent.getPort();
 
             agent_client = m_knownAgentClients.get(getEndpointKey(agent_address, agent_port));
 
-            if (agent_client == null) {
+            // BZ1071994: Note that this cache can be dirty in an HA environment.  As such, we need to ensure cache
+            // entries are correct. Do a quick token match on the cache entry, when accessed, and recreate as needed.
+            if ((agent_client == null) || !agent_client.getAgent().getAgentToken().equals(agent.getAgentToken())) {
                 String remote_uri;
                 InvokerLocator locator = m_knownAgents.getAgent(agent_address, agent_port);
 
@@ -410,6 +415,8 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 ClientCommandSender sender = getServiceContainer().createClientCommandSender(remote_uri, client_config);
                 agent_client = new AgentClientImpl(agent, sender);
 
+                // add the new cache entry, or replace the dirty cache entry (note that dirty cache entries don't
+                // need to be destroyed as the new one is "logically" the same, but with updated auth info.)
                 m_knownAgentClients.put(getEndpointKey(agent_address, agent_port), agent_client);
             }
         }

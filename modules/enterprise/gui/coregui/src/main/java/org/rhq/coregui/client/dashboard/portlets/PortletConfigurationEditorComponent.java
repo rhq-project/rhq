@@ -18,16 +18,24 @@
  */
 package org.rhq.coregui.client.dashboard.portlets;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.smartgwt.client.types.MultipleAppearance;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.form.fields.PickerIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
 
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.coregui.client.CoreGUI;
@@ -48,6 +56,11 @@ public class PortletConfigurationEditorComponent {
     public interface Constant {
         String ALERT_PRIORITY = "ALERT_PRIORITY";
         String ALERT_PRIORITY_DEFAULT = ""; // no filtering
+        String ALERT_NAME = "ALERT_NAME";
+        String EVENT_SEVERITY = "EVENT_SEVERITY";
+        String EVENT_SEVERITY_DEFAULT = ""; // no filtering
+        String EVENT_SOURCE = "EVENT_SOURCE";
+        String EVENT_RESOURCE = "EVENT_RESOURCE";
         String METRIC_RANGE_ENABLE = "METRIC_RANGE_ENABLE";
         String METRIC_RANGE_ENABLE_DEFAULT = String.valueOf(false); //disabled
         String METRIC_RANGE_BEGIN_END_FLAG = "METRIC_RANGE_BEGIN_END_FLAG";
@@ -74,6 +87,13 @@ public class PortletConfigurationEditorComponent {
     public static Map<String, String> CONFIG_PROPERTY_INITIALIZATION = new HashMap<String, String>();
     static {// Key, Default value
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_PRIORITY, Constant.ALERT_PRIORITY_DEFAULT);
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.ALERT_NAME, "");
+        
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.EVENT_SEVERITY, Constant.EVENT_SEVERITY_DEFAULT);
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.EVENT_SOURCE, "");
+        
+        CONFIG_PROPERTY_INITIALIZATION.put(Constant.EVENT_RESOURCE, "");
+
         //result sort order, if empty initialize to "DESC"
         CONFIG_PROPERTY_INITIALIZATION.put(Constant.RESULT_SORT_ORDER, Constant.RESULT_SORT_ORDER_DEFAULT);
         //result count, if empty initialize to 5
@@ -128,6 +148,57 @@ public class PortletConfigurationEditorComponent {
         return maximumResultsComboBox;
     }
 
+    public static TextItem getAlertNameEditor(Configuration portletConfig) {
+        final TextItem alertNameEditor = new TextItem(Constant.ALERT_NAME);
+        alertNameEditor.setTitle(MSG.common_title_name());
+        alertNameEditor.setWrapTitle(false);
+        alertNameEditor.setWidth(100);
+        String currentValue = portletConfig.getSimpleValue(Constant.ALERT_NAME, "");
+        alertNameEditor.setValue(currentValue);
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {  
+            public void onFormItemClick(FormItemIconClickEvent event) {  
+                alertNameEditor.clearValue();
+            }  
+        });
+        alertNameEditor.setIcons(refreshFilter);
+        alertNameEditor.setIconPrompt("Resets the alert name filter.");
+        return alertNameEditor;
+    }
+    
+    public static TextItem getEventSourceEditor(Configuration portletConfig) {
+        final TextItem eventSourceEditor = new TextItem(Constant.EVENT_SOURCE);
+        eventSourceEditor.setTitle(MSG.view_alert_common_tab_conditions_type_event_matching());
+        eventSourceEditor.setWrapTitle(false);
+        eventSourceEditor.setWidth(100);
+        String currentValue = portletConfig.getSimpleValue(Constant.EVENT_SOURCE, "");
+        eventSourceEditor.setValue(currentValue);
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {  
+            public void onFormItemClick(FormItemIconClickEvent event) {  
+                eventSourceEditor.clearValue();
+            }  
+        });
+        eventSourceEditor.setIcons(refreshFilter);
+        eventSourceEditor.setIconPrompt("Resets the event source filter.");
+        return eventSourceEditor;
+    }
+    
+    public static TextItem getEventResourceEditor(Configuration portletConfig) {
+        final TextItem eventResourceEditor = new TextItem(Constant.EVENT_RESOURCE);
+        eventResourceEditor.setTitle(MSG.common_title_resource());
+        eventResourceEditor.setWrapTitle(false);
+        eventResourceEditor.setWidth(100);
+        String currentValue = portletConfig.getSimpleValue(Constant.EVENT_RESOURCE, "");
+        eventResourceEditor.setValue(currentValue);
+        PickerIcon refreshFilter = new PickerIcon(PickerIcon.CLEAR, new FormItemClickHandler() {  
+            public void onFormItemClick(FormItemIconClickEvent event) {  
+                eventResourceEditor.clearValue();
+            }  
+        });
+        eventResourceEditor.setIcons(refreshFilter);
+        eventResourceEditor.setIconPrompt("Resets the resource filter.");
+        return eventResourceEditor;
+    }
+    
     /* Multiple select combobox for alert priorities to display on dashboard
      *
      * @return Populated selectItem instance.
@@ -173,7 +244,61 @@ public class PortletConfigurationEditorComponent {
 
         return priorityFilter;
     }
+    
+    /* Multiple select combobox for event severities to display on dashboard
+    *
+    * @return Populated selectItem instance.
+    */
+   public static SelectItem getEventSeverityEditor(Configuration portletConfig) {
+       SelectItem severityFilter = new SelectItem(Constant.EVENT_SEVERITY, MSG.view_inventory_eventHistory_severityFilter());
+       severityFilter.setWrapTitle(false);
+       severityFilter.setWidth(200);
+       severityFilter.setMultiple(true);
+       severityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
 
+       LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
+       severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
+       severities.put(EventSeverity.INFO.name(), MSG.common_severity_info());
+       severities.put(EventSeverity.WARN.name(), MSG.common_severity_warn());
+       severities.put(EventSeverity.ERROR.name(), MSG.common_severity_error());
+       severities.put(EventSeverity.FATAL.name(), MSG.common_severity_fatal());
+       LinkedHashMap<String, String> severityIcons = new LinkedHashMap<String, String>(5);
+       severityIcons.put(EventSeverity.DEBUG.name(), ImageManager.getEventSeverityIcon(EventSeverity.DEBUG));
+       severityIcons.put(EventSeverity.INFO.name(), ImageManager.getEventSeverityIcon(EventSeverity.INFO));
+       severityIcons.put(EventSeverity.WARN.name(), ImageManager.getEventSeverityIcon(EventSeverity.WARN));
+       severityIcons.put(EventSeverity.ERROR.name(), ImageManager.getEventSeverityIcon(EventSeverity.ERROR));
+       severityIcons.put(EventSeverity.FATAL.name(), ImageManager.getEventSeverityIcon(EventSeverity.FATAL));
+       severityFilter.setValueMap(severities);
+       severityFilter.setValueIcons(severityIcons);
+       //reload current settings if they exist, otherwise enable all.
+       String currentValue = portletConfig.getSimpleValue(Constant.EVENT_SEVERITY, Constant.EVENT_SEVERITY_DEFAULT);
+       if (currentValue.trim().isEmpty() || currentValue.split(",").length == EventSeverity.values().length) {
+            severityFilter.setValues(EventSeverity.DEBUG.name(), EventSeverity.INFO.name(), EventSeverity.WARN.name(),
+                EventSeverity.ERROR.name(), EventSeverity.FATAL.name());
+
+       } else {
+           List<String> values = new ArrayList<String>(5);
+           if (currentValue.toUpperCase().contains(EventSeverity.FATAL.name())) {
+               values.add(EventSeverity.FATAL.name());
+           } 
+           if (currentValue.toUpperCase().contains(EventSeverity.ERROR.name())) {
+               values.add(EventSeverity.ERROR.name());
+           }
+           if (currentValue.toUpperCase().contains(EventSeverity.WARN.name())) {
+               values.add(EventSeverity.WARN.name());
+           }
+           if (currentValue.toUpperCase().contains(EventSeverity.INFO.name())) {
+               values.add(EventSeverity.INFO.name());
+           }
+           if (currentValue.toUpperCase().contains(EventSeverity.DEBUG.name())) {
+               values.add(EventSeverity.DEBUG.name());
+           }
+           severityFilter.setValues(values.toArray(new String[values.size()]));
+       }
+
+       return severityFilter;
+   }
+   
     /* Single select combobox for sort order of items to display on dashboard
      *
      * @return Populated selectItem instance.

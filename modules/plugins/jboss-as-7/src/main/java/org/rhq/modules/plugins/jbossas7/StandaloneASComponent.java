@@ -58,7 +58,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
 
     private static final String SERVER_CONFIG_TRAIT = "config-file";
     private static final String HOME_DIR_PROP = "homeDir";
-    private static final String JAVA_OPTS_PROP = "javaOpts";
+    private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
 
@@ -271,7 +271,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         File baseDirectory = new File(resourceContext.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
         File binDirectory = new File(baseDirectory, "bin");
 
-        String javaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_PROP);
+        String javaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
 
         File configFile = null;
         JavaOptsConfig javaOptsConfig = null;

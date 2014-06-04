@@ -1437,16 +1437,18 @@
             for example: -c standalone-ha-full.xml. There is currently a 2000 character limit for this value.
           </c:description>
         </c:simple-property>
-        <c:simple-property name="javaOpts" displayName="JAVA_OPTS" type="string" required="false">
+        <c:simple-property name="javaOptsAdditional" displayName="Additional JAVA_OPTS" type="string" required="false">
           <c:description>
-            !WARNING! Feature available only if standard configuration file is used (standalone.conf or standalone.conf.bat).
-            Please do not update the configuration file manually after setting this property. If value not set
-            then container configuration specific values are used. Value not set does not imply that configuration
-            file does not set JAVA_OPTS, it simply means that the value was not set via RHQ. !WARNING!
-            Value will be persisted to standalone.conf or standalone.conf.bat config file (OS dependent).
-            Use this option to make the JAVA_OPTS configuration available for restarts outside of RHQ.
-            The value (eg: -Xms512M -Xmx1024M) will be persisted at the top of the configuration file.
-            To remove any modifications done to the config file unset this property.
+            Property used to make persistent changes to JAVA_OPTS by overriding or adding additional settings. 
+            !!!WARNING!!! Feature available only if standard configuration file is used (standalone.conf or standalone.conf.bat). 
+            Please do not update the configuration file manually after setting this property. If value not set 
+            then configuration specific values are used. Value not set does not imply that configuration 
+            file does not set JAVA_OPTS, it simply means that the value was not set via RHQ. !!!WARNING!!! 
+            Value will be persisted to standalone.conf or standalone.conf.bat config file (OS dependent). 
+            Use this option to make the JAVA_OPTS configuration available for restarts outside of RHQ. 
+            The value (eg: -Xms512M -Xmx1024M) will be persisted in the configuration file. 
+            To remove any modifications done to the config file unset this property. The server requires restart 
+            for these changes to take effect.
           </c:description>
         </c:simple-property>
         <c:simple-property name="nativeHost" default="127.0.0.1" required="true" description="Native management API host"/>

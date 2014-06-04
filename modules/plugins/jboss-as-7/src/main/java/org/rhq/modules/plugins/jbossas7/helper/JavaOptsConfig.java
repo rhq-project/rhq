@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +47,11 @@ public abstract class JavaOptsConfig {
         private final String[] sequence = new String[] {
             "##  JAVA_OPTS (set via RHQ) - Start     ######################################",
             "##  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ######################################",
-            "if [ \"x$JAVA_OPTS\" = \"x\" ]; then",
-            "JAVA_OPTS=\"",
-            "if",
+            "JAVA_OPTS_ADDITIONAL=\"",
+            "JAVA_OPTS=\"$JAVA_OPTS $JAVA_OPTS_ADDITIONAL\"",
             "##  JAVA_OPTS (set via RHQ) - End       ######################################" };
 
-        private final int contentIndex = 3;
+        private final int contentIndex = 2;
 
         @Override
         public String[] getSequence() {
@@ -77,13 +77,11 @@ public abstract class JavaOptsConfig {
         private final String[] sequence = new String[] {
             "rem ###  JAVA_OPTS (set via RHQ) - Start     ####################################",
             "rem ###  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ####################################",
-            "if \"x%JAVA_OPTS%\" == \"x\" (",
-            "set \"JAVA_OPTS=",
-            "goto JAVA_OPTS_SET",
-            ")",
+            "set \"JAVA_OPTS_ADDITIONAL=",
+            "set \"JAVA_OPTS=%JAVA_OPTS% %JAVA_OPTS_ADDITIONAL%\"",
             "rem ###  JAVA_OPTS (set via RHQ) - End       ####################################" };
 
-        private final int contentIndex = 3;
+        private final int contentIndex = 2;
 
         @Override
         public String[] getSequence() {
@@ -112,107 +110,77 @@ public abstract class JavaOptsConfig {
      */
     public void updateJavaOptsConfig(File configFile, String javaOptsContent) throws Exception {
 
-        javaOptsContent = javaOptsContent.replace(this.getEndOfSequenceCharacter()+"", "");
-
-        String line;
-        int lineNumber;
-
-        int lineToUpdate = -1;
-        boolean identicalJavaOpts = false;
+        List<String> fileContent = new ArrayList<String>();
 
         BufferedReader br = new BufferedReader(new FileReader(configFile));
         try {
-            line = null;
-            lineNumber = 0;
+            String line = null;
 
-            //skip empty lines
             while ((line = br.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    break;
-                }
-
-                lineNumber++;
-            }
-
-            boolean goodSequence = false;
-            identicalJavaOpts = false;
-
-            //the sequence should be at the top of file
-            //after skipping all the empty lines check if the sequence is the RHQ sequence
-            goodSequence = true;
-            for (int sequenceIndex = 0; sequenceIndex < this.getSequence().length; sequenceIndex++) {
-                if (line != null) {
-                    if (!line.trim().startsWith(this.getSequence()[sequenceIndex])) {
-                        goodSequence = false;
-                        identicalJavaOpts = false;
-                        break;
-                    }
-
-                    if (sequenceIndex == this.getContentIndex()) {
-                        String javaOptsNewContent = this.getSequence()[this.getContentIndex()] + javaOptsContent + this.getEndOfSequenceCharacter();
-                        if (line.trim().equals(javaOptsNewContent)) {
-                            identicalJavaOpts = true;
-                        }
-                    }
-                } else {
-                    goodSequence = false;
-                    break;
-                }
-
-                line = br.readLine();
-            }
-
-            if (goodSequence) {
-                lineToUpdate = lineNumber + this.getContentIndex();
-            } else {
-                lineToUpdate = -1;
+                fileContent.add(line);
             }
         } finally {
             br.close();
+        }
+
+
+        if (fileContent.size() == 0) {
+            return;
+        }
+
+        //strip empty lines at the end of the file
+        while(fileContent.get(fileContent.size() -1).trim().isEmpty()) {
+            fileContent.remove(fileContent.size() - 1);
+        }
+
+        javaOptsContent = javaOptsContent.replace(this.getEndOfSequenceCharacter() + "", "");
+        String javaOptsNewContent = this.getSequence()[this.getContentIndex()] + javaOptsContent
+            + this.getEndOfSequenceCharacter();
+
+        boolean goodSequence = true;
+        boolean identicalJavaOpts = false;
+        int lineToUpdate = -1;
+
+        int potentialSequenceStart = fileContent.size() - this.getSequence().length;
+
+        for (int sequenceIndex = 0; sequenceIndex < this.getSequence().length; sequenceIndex++) {
+            if (!fileContent.get(potentialSequenceStart + sequenceIndex).trim()
+                .startsWith(this.getSequence()[sequenceIndex])) {
+                goodSequence = false;
+                break;
+            }
+
+            if (sequenceIndex == this.getContentIndex()) {
+                if (fileContent.get(potentialSequenceStart + sequenceIndex).trim().equals(javaOptsNewContent)) {
+                    identicalJavaOpts = true;
+                }
+
+                lineToUpdate = potentialSequenceStart + sequenceIndex;
+            }
         }
 
         if (identicalJavaOpts) {
             return;
         }
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        BufferedWriter newContent = new BufferedWriter(new OutputStreamWriter(outputStream));
-
-        //add new content at the top of the file if RHQ JAVA_OPTS never found
-        if (lineToUpdate < 0) {
+        if (!goodSequence) {
             for (int index = 0; index < this.getSequence().length; index++) {
                 if (this.getContentIndex() == index) {
-                    newContent.write(this.getSequence()[index] + javaOptsContent + this.getEndOfSequenceCharacter()
-                        + NEW_LINE);
+                    fileContent.add(this.getSequence()[index] + javaOptsContent + this.getEndOfSequenceCharacter());
                 } else {
-                    newContent.write(this.getSequence()[index] + NEW_LINE);
+                    fileContent.add(this.getSequence()[index]);
                 }
             }
+        } else {
+            fileContent.set(lineToUpdate, javaOptsNewContent);
         }
 
-        //add the rest of config file content
-        br = new BufferedReader(new FileReader(configFile));
+        BufferedWriter updatedConfigFile = new BufferedWriter(new FileWriter(configFile));
         try {
-            line = null;
-            lineNumber = -1;
-            while ((line = br.readLine()) != null) {
-                lineNumber++;
-
-                if (lineNumber == lineToUpdate) {
-                    newContent.write(this.getSequence()[this.getContentIndex()] + javaOptsContent
-                        + this.getEndOfSequenceCharacter() + NEW_LINE);
-                } else {
-                    newContent.write(line + NEW_LINE);
-                }
+            for (String line : fileContent) {
+                updatedConfigFile.write(line);
+                updatedConfigFile.write(NEW_LINE);
             }
-        } finally {
-            br.close();
-            newContent.close();
-        }
-
-        FileOutputStream updatedConfigFile = new FileOutputStream(configFile);
-        try {
-            outputStream.writeTo(updatedConfigFile);
         } finally {
             updatedConfigFile.close();
         }
@@ -232,47 +200,46 @@ public abstract class JavaOptsConfig {
         String javaOptsValue = null;
 
         BufferedReader br = new BufferedReader(new FileReader(configFile));
+        List<String> fileContent = new ArrayList<String>();
         try {
             line = null;
 
-            //skip empty lines
             while ((line = br.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
-                    break;
+                    fileContent.add(line);
                 }
             }
 
-            boolean goodSequence = false;
-
-            //the sequence should be at the top of file
-            //after skipping all the empty lines check if the sequence is the RHQ sequence
-            goodSequence = true;
-            for (int sequenceIndex = 0; sequenceIndex < this.getSequence().length; sequenceIndex++) {
-                if (line != null) {
-                    if (!line.trim().startsWith(this.getSequence()[sequenceIndex])) {
-                        goodSequence = false;
-                        break;
-                    }
-
-                    if (sequenceIndex == this.getContentIndex()) {
-                        javaOptsValue = line.replace(this.getSequence()[sequenceIndex], "");
-                        javaOptsValue = javaOptsValue.substring(0, javaOptsValue.lastIndexOf('"'));
-                    }
-                } else {
-                    goodSequence = false;
-                    break;
-                }
-
-                line = br.readLine();
-            }
-
-            if (!goodSequence) {
-                javaOptsValue = null;
-            } else {
-                javaOptsValue = javaOptsValue.replace(this.getEndOfSequenceCharacter() + "", "");
-            }
         } finally {
             br.close();
+        }
+
+        if (fileContent.size() == 0) {
+            return null;
+        }
+
+
+        boolean goodSequence = true;
+        int potentialSequenceStart = fileContent.size() - this.getSequence().length;
+
+        for (int sequenceIndex = 0; sequenceIndex < this.getSequence().length; sequenceIndex++) {
+            if (!fileContent.get(potentialSequenceStart + sequenceIndex).trim()
+                .startsWith(this.getSequence()[sequenceIndex])) {
+                goodSequence = false;
+                break;
+            }
+
+            if (sequenceIndex == this.getContentIndex()) {
+                javaOptsValue = fileContent.get(potentialSequenceStart + sequenceIndex)
+                    .replace(this.getSequence()[sequenceIndex], "");
+                javaOptsValue = javaOptsValue.substring(0, javaOptsValue.lastIndexOf(this.getEndOfSequenceCharacter()));
+            }
+        }
+
+        if (!goodSequence) {
+            javaOptsValue = null;
+        } else {
+            javaOptsValue = javaOptsValue.replace(this.getEndOfSequenceCharacter() + "", "");
         }
 
         return javaOptsValue;

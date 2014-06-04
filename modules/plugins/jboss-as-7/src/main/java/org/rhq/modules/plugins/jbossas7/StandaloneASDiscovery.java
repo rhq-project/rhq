@@ -50,7 +50,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     private static final String SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
 
     private static final String HOME_DIR_PROP = "homeDir";
-    private static final String JAVA_OPTS_PROP = "javaOpts";
+    private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     @Override
     protected AS7Mode getMode() {
@@ -137,7 +137,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         File baseDirectory = new File(discoveredResource.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
         File binDirectory = new File(baseDirectory, "bin");
 
-        String javaOptsValue = null;
+        String javaOptsAdditionalValue = null;
         File configFile = null;
         JavaOptsConfig javaOptsConfig = null;
 
@@ -150,11 +150,11 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         }
 
         try {
-            javaOptsValue = javaOptsConfig.discoverJavaOptsConfig(configFile);
+            javaOptsAdditionalValue = javaOptsConfig.discoverJavaOptsConfig(configFile);
         } catch (Exception e) {
             log.error("Unable to discovery JAVA_OPTS from configuration file.", e);
         }
 
-        discoveredResource.getPluginConfiguration().setSimpleValue(JAVA_OPTS_PROP, javaOptsValue);
+        discoveredResource.getPluginConfiguration().setSimpleValue(JAVA_OPTS_ADDITIONAL_PROP, javaOptsAdditionalValue);
     }
 }

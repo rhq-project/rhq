@@ -825,6 +825,77 @@
                 <c:simple-property name="url" displayName="Location url" type="string" default="" readOnly="true"/>    
                 <c:simple-property name="handler" displayName="Location handler" type="string" default="" readOnly="true"/>            
             </plugin-configuration>
+	        <service name="ServerStatus" class="ApacheServerStatusComponent"  discovery="ApacheServerStatusDiscoveryComponent" createDeletePolicy="neither" singleton="true">
+	             <metric displayName="Total Accesses" property="TotalAccesses"
+                         displayType="summary"
+                         units="none" measurementType="trendsup"/>
+		         <metric displayName="Total kBytes" property="TotalkBytes"
+                         displayType="detail"
+                         units="kilobytes" measurementType="trendsup"/>
+                 <metric displayName="Uptime" property="Uptime"
+                         displayType="detail"
+                         units="seconds"/>
+		         <metric displayName="ReqPerSec" property="ReqPerSec"
+                         displayType="summary"
+                         units="none"/>
+		         <metric displayName="BytesPerSec" property="BytesPerSec"
+                         displayType="detail"
+                         units="bytes"/>
+		         <metric displayName="BytesPerReq" property="BytesPerReq"
+                         displayType="detail"
+                         units="bytes"/>
+		         <metric displayName="BusyWorkers" property="BusyWorkers"
+                         displayType="summary"
+                         units="none"/>
+		         <metric displayName="IdleWorkers" property="IdleWorkers"
+                         displayType="detail"
+                         units="none"/>
+                         
+		         <metric displayName="Waiting for Connection" property="waitingForConnection"
+                         description="Scoreboard key : _"
+                         displayType="summary"
+                         units="none"/>
+		         <metric displayName="Starting up" property="startingUp"
+                         description="Scoreboard key : S"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="Reading Request" property="readingRequest"
+                         description="Scoreboard key : R"
+                         displayType="summary"
+                         units="none"/>
+		         <metric displayName="Sending Reply" property="sendingReply"
+                         description="Scoreboard key : W"
+                         displayType="summary"
+                         units="none"/>
+		         <metric displayName="Keepalive (read)" property="keepalive"
+                         description="Scoreboard key : K"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="DNS Lookup" property="dnsLookup"
+                         description="Scoreboard key : D"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="Closing connection" property="closingConnection"
+                         description="Scoreboard key : C"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="Logging" property="logging"
+                         description="Scoreboard key : L"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="Gracefully finishing" property="gracefullyFinishing"
+                         description="Scoreboard key : G"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="Idle cleanup of worker" property="idleCleanupOfWorker"		         
+                         description="Scoreboard key : I"
+                         displayType="detail"
+                         units="none"/>
+		         <metric displayName="Open slot with no current process" property="openSlotWithNoCurrentProcess"
+                         description="Scoreboard key : ."
+                         displayType="detail"
+                         units="none"/>			       
+	        </service>   
          </service>
 
       </service>

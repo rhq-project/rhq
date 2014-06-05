@@ -41,7 +41,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.modules.plugins.jbossas7.helper.JavaOptsConfig;
+import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOptsConfig;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -274,13 +274,13 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         String javaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
 
         File configFile = null;
-        JavaOptsConfig javaOptsConfig = null;
+        AdditionalJavaOptsConfig javaOptsConfig = null;
         if (OS_IS_WINDOWS) {
             configFile = new File(binDirectory, "standalone.conf.bat");
-            javaOptsConfig = new JavaOptsConfig.JavaOptsConfigurationWindows();
+            javaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
         } else {
             configFile = new File(binDirectory, "standalone.conf");
-            javaOptsConfig = new JavaOptsConfig.JavaOptsConfigurationLinux();
+            javaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
         }
 
         try {

@@ -29,7 +29,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class JavaOptsConfig {
+public abstract class AdditionalJavaOptsConfig {
 
     private static final String NEW_LINE = System.getProperty("line.separator");
 
@@ -43,7 +43,7 @@ public abstract class JavaOptsConfig {
      * Linux specific JAVA_OPTS configuration handler.
      *
      */
-    public static class JavaOptsConfigurationLinux extends JavaOptsConfig {
+    public static class LinuxConfiguration extends AdditionalJavaOptsConfig {
         private final String[] sequence = new String[] {
             "##  JAVA_OPTS (set via RHQ) - Start     ######################################",
             "##  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ######################################",
@@ -73,7 +73,7 @@ public abstract class JavaOptsConfig {
      * Windows specific JAVA_OPTS configuration handler.
      *
      */
-    public static class JavaOptsConfigurationWindows extends JavaOptsConfig {
+    public static class WindowsConfiguration extends AdditionalJavaOptsConfig {
         private final String[] sequence = new String[] {
             "rem ###  JAVA_OPTS (set via RHQ) - Start     ####################################",
             "rem ###  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ####################################",

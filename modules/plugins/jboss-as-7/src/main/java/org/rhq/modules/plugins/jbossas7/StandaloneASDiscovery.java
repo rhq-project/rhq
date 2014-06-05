@@ -32,7 +32,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
-import org.rhq.modules.plugins.jbossas7.helper.JavaOptsConfig;
+import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOptsConfig;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -139,14 +139,14 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
         String javaOptsAdditionalValue = null;
         File configFile = null;
-        JavaOptsConfig javaOptsConfig = null;
+        AdditionalJavaOptsConfig javaOptsConfig = null;
 
         if (OS_IS_WINDOWS) {
             configFile = new File(binDirectory, "standalone.conf.bat");
-            javaOptsConfig = new JavaOptsConfig.JavaOptsConfigurationWindows();
+            javaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
         }else {
             configFile = new File(binDirectory, "standalone.conf");
-            javaOptsConfig = new JavaOptsConfig.JavaOptsConfigurationLinux();
+            javaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
         }
 
         try {

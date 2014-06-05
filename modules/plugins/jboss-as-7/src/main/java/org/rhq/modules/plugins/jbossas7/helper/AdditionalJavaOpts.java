@@ -29,21 +29,40 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AdditionalJavaOptsConfig {
+/**
+ * Configures, updates and deletes additional JAVA_OPTS set at the
+ * bottom of a standard configuration file used by AS7 standalone.
+ * This has been designeed, tested and used with standard.conf (for Linux)
+ * and standard.conf.bat (for Windows).
+ *
+ * @author Stefan Negrea
+ *
+ */
+public abstract class AdditionalJavaOpts {
 
     private static final String NEW_LINE = System.getProperty("line.separator");
 
-    public abstract String[] getSequence();
+    /**
+     * @return content sequence
+     */
+    protected abstract String[] getSequence();
 
-    public abstract int getContentIndex();
+    /**
+     * @return index of additional JAVA_OPTS content
+     */
+    protected abstract int getContentIndex();
 
-    public abstract char getEndOfSequenceCharacter();
+    /**
+     * @return end of sequence character
+     */
+    protected abstract char getEndOfSequenceCharacter();
+
 
     /**
      * Linux specific JAVA_OPTS configuration handler.
      *
      */
-    public static class LinuxConfiguration extends AdditionalJavaOptsConfig {
+    public static class LinuxConfiguration extends AdditionalJavaOpts {
         private final String[] sequence = new String[] {
             "##  JAVA_OPTS (set via RHQ) - Start     ######################################",
             "##  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ######################################",
@@ -54,26 +73,27 @@ public abstract class AdditionalJavaOptsConfig {
         private final int contentIndex = 2;
 
         @Override
-        public String[] getSequence() {
+        protected String[] getSequence() {
             return sequence;
         }
 
         @Override
-        public int getContentIndex() {
+        protected int getContentIndex() {
             return contentIndex;
         }
 
         @Override
-        public char getEndOfSequenceCharacter(){
+        protected char getEndOfSequenceCharacter() {
             return '"';
         }
     }
+
 
     /**
      * Windows specific JAVA_OPTS configuration handler.
      *
      */
-    public static class WindowsConfiguration extends AdditionalJavaOptsConfig {
+    public static class WindowsConfiguration extends AdditionalJavaOpts {
         private final String[] sequence = new String[] {
             "rem ###  JAVA_OPTS (set via RHQ) - Start     ####################################",
             "rem ###  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ####################################",
@@ -100,15 +120,15 @@ public abstract class AdditionalJavaOptsConfig {
     }
 
     /**
-     * Adds JAVA_OPTS setting to the config file. The code will attempt
-     * to merge/update existing content if detected at the top of the file.
-     * RHQ content is added only at the top of the file.
+     * Adds additional JAVA_OPTS setting to the config file. The code will attempt
+     * to merge/update existing content if detected at the bottom of the file. If
+     * no existing content found then new content is added only at the bottom of the file.
      *
-     * @param configFile
-     * @param javaOptsContent
+     * @param configFile config file
+     * @param additionalJavaOptsContent additional JAVA_OPTS content
      * @throws Exception
      */
-    public void updateConfig(File configFile, String javaOptsContent) throws Exception {
+    public void update(File configFile, String additionalJavaOptsContent) throws Exception {
 
         List<String> fileContent = new ArrayList<String>();
 
@@ -133,8 +153,8 @@ public abstract class AdditionalJavaOptsConfig {
             fileContent.remove(fileContent.size() - 1);
         }
 
-        javaOptsContent = javaOptsContent.replace(this.getEndOfSequenceCharacter() + "", "");
-        String javaOptsNewContent = this.getSequence()[this.getContentIndex()] + javaOptsContent
+        additionalJavaOptsContent = additionalJavaOptsContent.replace(this.getEndOfSequenceCharacter() + "", "");
+        String javaOptsNewContent = this.getSequence()[this.getContentIndex()] + additionalJavaOptsContent
             + this.getEndOfSequenceCharacter();
 
         boolean goodSequence = true;
@@ -166,7 +186,8 @@ public abstract class AdditionalJavaOptsConfig {
         if (!goodSequence) {
             for (int index = 0; index < this.getSequence().length; index++) {
                 if (this.getContentIndex() == index) {
-                    fileContent.add(this.getSequence()[index] + javaOptsContent + this.getEndOfSequenceCharacter());
+                    fileContent.add(this.getSequence()[index] + additionalJavaOptsContent
+                        + this.getEndOfSequenceCharacter());
                 } else {
                     fileContent.add(this.getSequence()[index]);
                 }
@@ -187,22 +208,19 @@ public abstract class AdditionalJavaOptsConfig {
     }
 
     /**
-     * Discover JAVA_OPTS setting from to the config file. The code will attempt
-     * to detect only RHQ set JAVA_OPTS content that is top of the file.
+     * Discover additional JAVA_OPTS setting from to the config file. The code will attempt
+     * to detect only RHQ set JAVA_OPTS content that is bottom of the file.
      *
-     * @param configFile
+     * @param configFile config file
      * @throws Exception
      */
-    public String discoverConfig(File configFile)
+    public String discover(File configFile)
         throws Exception {
-
-        String line;
-        String javaOptsValue = null;
 
         BufferedReader br = new BufferedReader(new FileReader(configFile));
         List<String> fileContent = new ArrayList<String>();
         try {
-            line = null;
+            String line = null;
 
             while ((line = br.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
@@ -218,9 +236,9 @@ public abstract class AdditionalJavaOptsConfig {
             return null;
         }
 
-
         boolean goodSequence = true;
         int potentialSequenceStart = fileContent.size() - this.getSequence().length;
+        String additionalJavaOptsValue = null;
 
         for (int sequenceIndex = 0; sequenceIndex < this.getSequence().length; sequenceIndex++) {
             if (!fileContent.get(potentialSequenceStart + sequenceIndex).trim()
@@ -230,30 +248,32 @@ public abstract class AdditionalJavaOptsConfig {
             }
 
             if (sequenceIndex == this.getContentIndex()) {
-                javaOptsValue = fileContent.get(potentialSequenceStart + sequenceIndex)
+                additionalJavaOptsValue = fileContent.get(potentialSequenceStart + sequenceIndex)
                     .replace(this.getSequence()[sequenceIndex], "");
-                javaOptsValue = javaOptsValue.substring(0, javaOptsValue.lastIndexOf(this.getEndOfSequenceCharacter()));
+                additionalJavaOptsValue = additionalJavaOptsValue.substring(0,
+                    additionalJavaOptsValue.lastIndexOf(this.getEndOfSequenceCharacter()));
             }
         }
 
         if (!goodSequence) {
-            javaOptsValue = null;
+            additionalJavaOptsValue = null;
         } else {
-            javaOptsValue = javaOptsValue.replace(this.getEndOfSequenceCharacter() + "", "");
+            additionalJavaOptsValue = additionalJavaOptsValue.replace(this.getEndOfSequenceCharacter() + "", "");
         }
 
-        return javaOptsValue;
+        return additionalJavaOptsValue;
     }
 
     /**
      * Clean the config file of any traces of JAVA_OPTS set via RHQ. If
-     * the content is set inadvertently multiple times it will delete it all.
+     * the content is set inadvertently multiple times it will delete all
+     * instances.
      *
      * @param configFile
      * @param javaOptsConfig
      * @throws Exception
      */
-    public void cleanConfig(File configFile) throws Exception {
+    public void clean(File configFile) throws Exception {
         String line;
         int lineNumber;
 
@@ -291,7 +311,7 @@ public abstract class AdditionalJavaOptsConfig {
             return;
         }
 
-        //remove those spaced too close
+        //remove those spaced too close or not matching from the lines to clear list
         List<Integer> linesToClear = new ArrayList<Integer>(potentialLinesToClear.size());
         for (int index = 0; index < potentialLinesToClear.size(); index++) {
             List<String> sequenceToCheck = potentialSequencesToClear.get(index);
@@ -307,7 +327,11 @@ public abstract class AdditionalJavaOptsConfig {
                 }
 
                 if (goodSequence) {
-                    linesToClear.add(potentialLinesToClear.get(index));
+                    //add all the lines to clear to the list of lines to clear
+                    int startLineToClear = potentialLinesToClear.get(index);
+                    for (int sequenceIndex = 0; sequenceIndex < this.getSequence().length; sequenceIndex++) {
+                        linesToClear.add(startLineToClear + sequenceIndex);
+                    }
                 }
             }
         }
@@ -316,12 +340,11 @@ public abstract class AdditionalJavaOptsConfig {
             return;
         }
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        BufferedWriter newContent = new BufferedWriter(new OutputStreamWriter(outputStream));
+        ByteArrayOutputStream cachedUpdatedFileContent = new ByteArrayOutputStream();
+        BufferedWriter updatedFileContent = new BufferedWriter(new OutputStreamWriter(cachedUpdatedFileContent));
 
         String newLineSeparator = System.getProperty("line.separator");
 
-        //Add the rest of config file content
         br = new BufferedReader(new FileReader(configFile));
         try {
             line = null;
@@ -330,25 +353,19 @@ public abstract class AdditionalJavaOptsConfig {
                 lineNumber++;
 
                 if (!linesToClear.isEmpty() && lineNumber == linesToClear.get(0)) {
-                    //discard lines, they are guaranteed to exist and match the JAVA_OPTS sequence
-                    for (int index = 1; index < this.getSequence().length; index++) {
-                        br.readLine();
-                        lineNumber++;
-                    }
-
                     linesToClear.remove(0);
                 } else {
-                    newContent.write(line + newLineSeparator);
+                    updatedFileContent.write(line + newLineSeparator);
                 }
             }
         } finally {
             br.close();
-            newContent.close();
+            updatedFileContent.close();
         }
 
         FileOutputStream updatedConfigFile = new FileOutputStream(configFile);
         try {
-            outputStream.writeTo(updatedConfigFile);
+            cachedUpdatedFileContent.writeTo(updatedConfigFile);
         } finally {
             updatedConfigFile.close();
         }

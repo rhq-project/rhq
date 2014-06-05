@@ -41,7 +41,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOptsConfig;
+import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -274,20 +274,20 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         String additionalJavaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
 
         File configFile = null;
-        AdditionalJavaOptsConfig additionalJavaOptsConfig = null;
+        AdditionalJavaOpts additionalJavaOptsConfig = null;
         if (OS_IS_WINDOWS) {
             configFile = new File(binDirectory, "standalone.conf.bat");
-            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
         } else {
             configFile = new File(binDirectory, "standalone.conf");
-            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOpts.LinuxConfiguration();
         }
 
         try {
             if (additionalJavaOptsContent != null && !additionalJavaOptsContent.trim().isEmpty()) {
-                additionalJavaOptsConfig.updateConfig(configFile, additionalJavaOptsContent);
+                additionalJavaOptsConfig.update(configFile, additionalJavaOptsContent);
             } else {
-                additionalJavaOptsConfig.cleanConfig(configFile);
+                additionalJavaOptsConfig.clean(configFile);
             }
         } catch (Exception e) {
             log.error("Unable to update configuration file with additional JAVA_OPTS set via RHQ.", e);

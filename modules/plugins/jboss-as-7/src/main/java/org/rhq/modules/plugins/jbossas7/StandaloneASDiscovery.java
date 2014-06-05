@@ -31,7 +31,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOptsConfig;
+import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
 /**
@@ -139,18 +139,18 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
         String javaOptsAdditionalValue = null;
         File configFile = null;
-        AdditionalJavaOptsConfig additionalJavaOptsConfig = null;
+        AdditionalJavaOpts additionalJavaOptsConfig = null;
 
         if (OS_IS_WINDOWS) {
             configFile = new File(binDirectory, "standalone.conf.bat");
-            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
         }else {
             configFile = new File(binDirectory, "standalone.conf");
-            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOpts.LinuxConfiguration();
         }
 
         try {
-            javaOptsAdditionalValue = additionalJavaOptsConfig.discoverConfig(configFile);
+            javaOptsAdditionalValue = additionalJavaOptsConfig.discover(configFile);
         } catch (Exception e) {
             log.error("Unable to discover additional JAVA_OPTS set via RHQ from configuration file.", e);
         }

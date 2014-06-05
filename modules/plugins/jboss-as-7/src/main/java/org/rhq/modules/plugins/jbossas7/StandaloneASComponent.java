@@ -67,7 +67,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
-        updateJavaOpts(resourceContext);
+        updateAdditionalJavaOpts(resourceContext);
     };
 
     @Override
@@ -267,30 +267,30 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
      *
      * @param resourceContext
      */
-    private void updateJavaOpts(ResourceContext<T> resourceContext) {
+    private void updateAdditionalJavaOpts(ResourceContext<T> resourceContext) {
         File baseDirectory = new File(resourceContext.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
         File binDirectory = new File(baseDirectory, "bin");
 
-        String javaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
+        String additionalJavaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
 
         File configFile = null;
-        AdditionalJavaOptsConfig javaOptsConfig = null;
+        AdditionalJavaOptsConfig additionalJavaOptsConfig = null;
         if (OS_IS_WINDOWS) {
             configFile = new File(binDirectory, "standalone.conf.bat");
-            javaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
         } else {
             configFile = new File(binDirectory, "standalone.conf");
-            javaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
         }
 
         try {
-            if (javaOptsContent != null && !javaOptsContent.trim().isEmpty()) {
-                javaOptsConfig.updateJavaOptsConfig(configFile, javaOptsContent);
+            if (additionalJavaOptsContent != null && !additionalJavaOptsContent.trim().isEmpty()) {
+                additionalJavaOptsConfig.updateConfig(configFile, additionalJavaOptsContent);
             } else {
-                javaOptsConfig.cleanJavaOptsConfig(configFile);
+                additionalJavaOptsConfig.cleanConfig(configFile);
             }
         } catch (Exception e) {
-            log.error("Unable to update configuration file.", e);
+            log.error("Unable to update configuration file with additional JAVA_OPTS set via RHQ.", e);
         }
     }
 }

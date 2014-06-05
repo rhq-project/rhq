@@ -108,7 +108,7 @@ public abstract class AdditionalJavaOptsConfig {
      * @param javaOptsContent
      * @throws Exception
      */
-    public void updateJavaOptsConfig(File configFile, String javaOptsContent) throws Exception {
+    public void updateConfig(File configFile, String javaOptsContent) throws Exception {
 
         List<String> fileContent = new ArrayList<String>();
 
@@ -193,7 +193,7 @@ public abstract class AdditionalJavaOptsConfig {
      * @param configFile
      * @throws Exception
      */
-    public String discoverJavaOptsConfig(File configFile)
+    public String discoverConfig(File configFile)
         throws Exception {
 
         String line;
@@ -253,7 +253,7 @@ public abstract class AdditionalJavaOptsConfig {
      * @param javaOptsConfig
      * @throws Exception
      */
-    public void cleanJavaOptsConfig(File configFile) throws Exception {
+    public void cleanConfig(File configFile) throws Exception {
         String line;
         int lineNumber;
 

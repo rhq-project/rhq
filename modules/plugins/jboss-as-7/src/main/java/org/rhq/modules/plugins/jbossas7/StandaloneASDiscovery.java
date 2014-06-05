@@ -31,8 +31,8 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOptsConfig;
+import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -109,7 +109,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         Set<DiscoveredResourceDetails> discoveredResources = super.discoverResources(discoveryContext);
 
         for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-            discoverJavaOpts(discoveredResource);
+            discoverAdditionalJavaOpts(discoveredResource);
         }
 
         return discoveredResources;
@@ -120,7 +120,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         throws InvalidPluginConfigurationException {
         DiscoveredResourceDetails discoveredResource = super.discoverResource(pluginConfig, context);
 
-        discoverJavaOpts(discoveredResource);
+        discoverAdditionalJavaOpts(discoveredResource);
 
         return discoveredResource;
     }
@@ -133,26 +133,26 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         return resourceUpgradeReport;
     }
 
-    private void discoverJavaOpts(DiscoveredResourceDetails discoveredResource) {
+    private void discoverAdditionalJavaOpts(DiscoveredResourceDetails discoveredResource) {
         File baseDirectory = new File(discoveredResource.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
         File binDirectory = new File(baseDirectory, "bin");
 
         String javaOptsAdditionalValue = null;
         File configFile = null;
-        AdditionalJavaOptsConfig javaOptsConfig = null;
+        AdditionalJavaOptsConfig additionalJavaOptsConfig = null;
 
         if (OS_IS_WINDOWS) {
             configFile = new File(binDirectory, "standalone.conf.bat");
-            javaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.WindowsConfiguration();
         }else {
             configFile = new File(binDirectory, "standalone.conf");
-            javaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
+            additionalJavaOptsConfig = new AdditionalJavaOptsConfig.LinuxConfiguration();
         }
 
         try {
-            javaOptsAdditionalValue = javaOptsConfig.discoverJavaOptsConfig(configFile);
+            javaOptsAdditionalValue = additionalJavaOptsConfig.discoverConfig(configFile);
         } catch (Exception e) {
-            log.error("Unable to discovery JAVA_OPTS from configuration file.", e);
+            log.error("Unable to discover additional JAVA_OPTS set via RHQ from configuration file.", e);
         }
 
         discoveredResource.getPluginConfiguration().setSimpleValue(JAVA_OPTS_ADDITIONAL_PROP, javaOptsAdditionalValue);

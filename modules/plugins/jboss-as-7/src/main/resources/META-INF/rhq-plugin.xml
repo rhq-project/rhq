@@ -1439,7 +1439,7 @@
         </c:simple-property>
         <c:simple-property name="javaOptsAdditional" displayName="Additional JAVA_OPTS" type="string" required="false">
           <c:description>
-            Property used to make persistent changes to JAVA_OPTS by overriding or adding additional settings. 
+            Property used to make persistent changes to JAVA_OPTS. 
             !!!WARNING!!! Feature available only if standard configuration file is used (standalone.conf or standalone.conf.bat). 
             Please do not update the configuration file manually after setting this property. If value not set 
             then configuration specific values are used. Value not set does not imply that configuration 

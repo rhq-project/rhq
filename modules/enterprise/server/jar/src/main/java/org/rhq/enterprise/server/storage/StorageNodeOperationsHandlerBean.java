@@ -858,6 +858,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             replicationFactor = 1;
         } else if (newClusterSize >= 5) {
             isRepairNeeded = false;
+        } else if (previousClusterSize > 4) {
+            isRepairNeeded = false;
         } else if (previousClusterSize == 4 && newClusterSize == 3) {
             isRepairNeeded = true;
             replicationFactor = 2;

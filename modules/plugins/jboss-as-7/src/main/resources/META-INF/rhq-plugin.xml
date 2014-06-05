@@ -1446,7 +1446,7 @@
             file does not set JAVA_OPTS, it simply means that the value was not set via RHQ. !!!WARNING!!! 
             Value will be persisted to standalone.conf or standalone.conf.bat config file (OS dependent). 
             Use this option to make the JAVA_OPTS configuration available for restarts outside of RHQ. 
-            The value (eg: -Xms512M -Xmx1024M) will be persisted in the configuration file. 
+            The value (e.g.: -Xms512M -Xmx1024M) will be persisted in the configuration file. 
             To remove any modifications done to the config file unset this property. The server requires restart 
             for these changes to take effect.
           </c:description>

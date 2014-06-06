@@ -66,8 +66,8 @@ public abstract class AdditionalJavaOpts {
         private final String[] sequence = new String[] {
             "##  JAVA_OPTS (set via RHQ) - Start     ######################################",
             "##  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ######################################",
-            "JAVA_OPTS_ADDITIONAL=\"",
-            "JAVA_OPTS=\"$JAVA_OPTS $JAVA_OPTS_ADDITIONAL\"",
+            "JAVA_OPTS_ADDITIONAL_RHQ=\"",
+            "JAVA_OPTS=\"$JAVA_OPTS $JAVA_OPTS_ADDITIONAL_RHQ\"",
             "##  JAVA_OPTS (set via RHQ) - End       ######################################" };
 
         private final int contentIndex = 2;
@@ -97,8 +97,8 @@ public abstract class AdditionalJavaOpts {
         private final String[] sequence = new String[] {
             "rem ###  JAVA_OPTS (set via RHQ) - Start     ####################################",
             "rem ###  PLEASE DO NOT UPDATE OUTSIDE RHQ!!! ####################################",
-            "set \"JAVA_OPTS_ADDITIONAL=",
-            "set \"JAVA_OPTS=%JAVA_OPTS% %JAVA_OPTS_ADDITIONAL%\"",
+            "set \"JAVA_OPTS_ADDITIONAL_RHQ=",
+            "set \"JAVA_OPTS=%JAVA_OPTS% %JAVA_OPTS_ADDITIONAL_RHQ%\"",
             "rem ###  JAVA_OPTS (set via RHQ) - End       ####################################" };
 
         private final int contentIndex = 2;

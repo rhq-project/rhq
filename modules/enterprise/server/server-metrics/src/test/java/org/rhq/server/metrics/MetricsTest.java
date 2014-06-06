@@ -323,7 +323,7 @@ public class MetricsTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "The " + table + " cache is wrong");
     }
 
-    private void assertCacheIndexEntriesEqual(List<CacheIndexEntry> actual, List<CacheIndexEntry> expected,
+    protected void assertCacheIndexEntriesEqual(List<CacheIndexEntry> actual, List<CacheIndexEntry> expected,
         MetricsTable bucket) {
         assertEquals(actual.size(), expected.size(), "The number of " + bucket + " cache index entries is wrong");
         for (int i = 0; i < expected.size(); ++i) {

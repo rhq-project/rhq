@@ -46,7 +46,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeComparator;
+import org.joda.time.Days;
 import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -93,6 +93,8 @@ public class MetricsServer {
 
     private long cacheActivationTime;
 
+    private Days rawDataAgeLimit = Days.days(Integer.parseInt(System.getProperty("rhq.metrics.data.age-limit", "3")));
+
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
     }
@@ -135,6 +137,14 @@ public class MetricsServer {
 
     public void setCacheActivationTime(long cacheActivationTime) {
         this.cacheActivationTime = cacheActivationTime;
+    }
+
+    public int getRawDataAgeLimit() {
+        return rawDataAgeLimit.getDays();
+    }
+
+    public void setRawDataAgeLimit(int rawDataAgeLimit) {
+        this.rawDataAgeLimit = Days.days(rawDataAgeLimit);
     }
 
     public void init() {
@@ -496,17 +506,18 @@ public class MetricsServer {
         final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
         // TODO add support for splitting cache index partition
         final int partition = 0;
-        DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
         DateTime insertTimeSlice = dateTimeService.currentHour();
 
         for (final MeasurementDataNumeric data : dataSet) {
             DateTime collectionTimeSlice = dateTimeService.getTimeSlice(new DateTime(data.getTimestamp()),
                 configuration.getRawTimeSliceDuration());
-            // TODO make the age cap configurable
-            if (dateTimeComparator.compare(collectionTimeSlice, dateTimeService.now().minusHours(24)) < 0) {
+            Days days = Days.daysBetween(collectionTimeSlice, dateTimeService.now());
+
+            if (days.isGreaterThan(rawDataAgeLimit)) {
                 callback.onSuccess(data);
                 continue;
             }
+
             int startScheduleId = calculateStartScheduleId(data.getScheduleId());
             DateTime day = dateTimeService.get24HourTimeSlice(collectionTimeSlice);
 
@@ -519,13 +530,7 @@ public class MetricsServer {
             StorageResultSetFuture indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition,
                 collectionTimeSlice.getMillis(), startScheduleId, insertTimeSlice.getMillis(),
                 ImmutableSet.of(data.getScheduleId()));
-//            if (collectionTimeSlice.isBefore(insertTimeSlice)) {
-//                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, collectionTimeSlice.getMillis(),
-//                    startScheduleId, insertTimeSlice.getMillis(), ImmutableSet.of(data.getScheduleId()));
-//            } else {
-//                indexFuture = dao.updateCacheIndex(MetricsTable.RAW, day.getMillis(), partition, collectionTimeSlice.getMillis(),
-//                    startScheduleId, insertTimeSlice.getMillis(), ImmutableSet.of(data.getScheduleId()));
-//            }
+
             ListenableFuture<List<ResultSet>> insertsFuture = Futures.successfulAsList(rawFuture, cacheFuture,
                 indexFuture);
 
@@ -575,14 +580,14 @@ public class MetricsServer {
             if (pastAggregationMissed) {
                 DateTime missedHour = roundDownToHour(mostRecentRawDataPriorToStartup);
                 AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService,
-                    missedHour, aggregationBatchSize, parallelism, cacheBatchSize);
+                    missedHour, aggregationBatchSize, parallelism, cacheBatchSize, configuration.getIndexPageSize());
                 aggregator.setCacheActivationTime(cacheActivationTime);
                 pastAggregationMissed = false;
             }
             DateTime timeSlice = theHour.minus(configuration.getRawTimeSliceDuration());
 
             AggregationManager aggregator = new AggregationManager(aggregationWorkers, dao, dateTimeService, timeSlice,
-                aggregationBatchSize, parallelism, cacheBatchSize);
+                aggregationBatchSize, parallelism, cacheBatchSize, configuration.getIndexPageSize());
             aggregator.setCacheActivationTime(cacheActivationTime);
 
             return aggregator.run();

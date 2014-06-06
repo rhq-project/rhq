@@ -197,12 +197,6 @@ public class MetricsServerTest extends MetricsTest {
             newRawCacheIndexEntry(yesterday().plusHours(19), startScheduleId(scheduleId1), hour(5), scheduleId1),
             newRawCacheIndexEntry(yesterday().plusHours(19), startScheduleId(scheduleId2), hour(5), scheduleId2)
         ));
-
-        // TODO I think the query used in this assert only handles a single collection time slice
-//        assertRawCacheIndexEquals(today(), partition, asList(
-//            newRawCacheIndexEntry(today(), startScheduleId(scheduleId4), hour(4), ImmutableSet.of(scheduleId4)),
-//            newRawCacheIndexEntry(today(), startScheduleId(scheduleId3), hour(5))
-//        ));
     }
 
     @Test(enabled = ENABLED)
@@ -210,7 +204,7 @@ public class MetricsServerTest extends MetricsTest {
         int scheduleId = 123;
         int partition = 0;
         Set<MeasurementDataNumeric> data = ImmutableSet.of(new MeasurementDataNumeric(
-            hour(5).minusHours(25).getMillis(), scheduleId, 3.14));
+            today().minusDays(4).plusHours(5).minusHours(25).getMillis(), scheduleId, 3.14));
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
         dateTimeService.setNow(hour(5).plusMinutes(2));

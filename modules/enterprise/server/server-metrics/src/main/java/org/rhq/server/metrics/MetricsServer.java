@@ -175,41 +175,57 @@ public class MetricsServer {
         StorageResultSetFuture future = dao.findPastCacheIndexEntriesFromToday(MetricsTable.RAW, day.getMillis(), 0,
             previousHour.getMillis());
         List<CacheIndexEntry> indexEntries = mapper.map(future.get());
-        CacheIndexEntry lastIndexEntry = null;
 
         if (!indexEntries.isEmpty()) {
             log.info("Raw data aggregate computations are up to date");
-            lastIndexEntry = indexEntries.get(indexEntries.size() - 1);
-            mostRecentRawDataPriorToStartup = lastIndexEntry.getCollectionTimeSlice();
-            pastAggregationMissed = true;
+            setMostRecentRawDataPriorToStartup(indexEntries);
         } else {
+            // Now we need to look for raw data in previous days
             day = day.minus(configuration.getSixHourTimeSliceDuration());
-            previousHour = previousHour.minus(configuration.getSixHourTimeSliceDuration());
-            future = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW, day.getMillis(), 0,
-                previousHour.getMillis());
+            DateTime hour;
+
+            if (day.isAfter(oldestRawTime)) {
+                future = dao.findCacheIndexEntriesByDay(MetricsTable.RAW, day.getMillis(), 0);
+            } else {
+                hour = day.plusHours(dateTimeService.currentHour().getHourOfDay());
+                future = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW, day.getMillis(), 0,
+                    hour.getMillis());
+            }
             indexEntries = mapper.map(future.get());
 
-            while (indexEntries.isEmpty() && previousHour.isAfter(oldestRawTime)) {
-                day = day.minus(configuration.getSixHourTimeSliceDuration());
-                previousHour = previousHour.minus(configuration.getSixHourTimeSliceDuration());
-                future = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW, day.getMillis(), 0,
-                    previousHour.getMillis());
+            while (indexEntries.isEmpty() && day.isAfter(oldestRawTime)) {
+                future = dao.findCacheIndexEntriesByDay(MetricsTable.RAW, day.getMillis(), 0);
                 indexEntries = mapper.map(future.get());
+                day = day.minus(configuration.getSixHourTimeSliceDuration());
             }
 
             if (indexEntries.isEmpty()) {
-                log.info("Did not find any raw data in the storage database since the last server shutdown. Raw data " +
-                    "aggregate computations are up to date.");
-            } else {
-                lastIndexEntry = indexEntries.get(indexEntries.size() - 1);
-                mostRecentRawDataPriorToStartup = lastIndexEntry.getCollectionTimeSlice();
-                pastAggregationMissed = true;
+                hour = day.plusHours(dateTimeService.currentHour().getHourOfDay());
+                future = dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW, day.getMillis(), 0,
+                    hour.getMillis());
+                indexEntries = mapper.map(future.get());
 
-                log.info("Found the most recently inserted raw data prior to this server start up with a timestamp " +
-                    "of [" + mostRecentRawDataPriorToStartup + "]. Aggregates for this data will be computed the " +
-                    "next time the aggregation job runs.");
+                if (indexEntries.isEmpty()) {
+                    log.info("Did not find any raw data in the storage database since the last server shutdown. " +
+                        "Raw data aggregate computations are up to date.");
+                } else {
+                    setMostRecentRawDataPriorToStartup(indexEntries);
+                }
+            } else {
+                setMostRecentRawDataPriorToStartup(indexEntries);
             }
         }
+    }
+
+    private void setMostRecentRawDataPriorToStartup(List<CacheIndexEntry> indexEntries) {
+        CacheIndexEntry lastIndexEntry;
+        lastIndexEntry = indexEntries.get(indexEntries.size() - 1);
+        mostRecentRawDataPriorToStartup = lastIndexEntry.getCollectionTimeSlice();
+        pastAggregationMissed = true;
+
+        log.info("Found the most recently inserted raw data prior to this server start up with a timestamp " +
+            "of [" + mostRecentRawDataPriorToStartup + "]. Aggregates for this data will be computed the " +
+            "next time the aggregation job runs.");
     }
 
     protected DateTime roundDownToHour(long timestamp) {

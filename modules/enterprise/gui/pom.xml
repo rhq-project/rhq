@@ -36,6 +36,7 @@
         <module>rest-war</module>
         <module>rest-examples-war</module>
         <module>remoting-war</module>
+        <module>rh-access-war</module>
       </modules>
     </profile>
 

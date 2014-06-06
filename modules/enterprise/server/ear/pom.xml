@@ -84,6 +84,13 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-rh-access</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>rhq-rest-examples</artifactId>
             <version>${project.version}</version>
             <type>war</type>
@@ -324,6 +331,14 @@
                             <bundleFileName>rhq-rest-examples.war</bundleFileName>
                             <contextRoot>/rest-examples</contextRoot>
                         </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-rh-access</artifactId>
+                            <bundleFileName>rhq-rh-access.war</bundleFileName>
+                            <contextRoot>/rha</contextRoot>
+                        </webModule>
+
 
                         <webModule>
                             <groupId>${project.groupId}</groupId>

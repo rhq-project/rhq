@@ -109,13 +109,9 @@ class TopologyManager extends AbstractManager {
             gcGraceSeconds = 691200; // 8 days
         }
 
-        updateGCGraceSeconds("rhq.raw_metrics", gcGraceSeconds);
-        updateGCGraceSeconds("rhq.one_hour_metrics", gcGraceSeconds);
-        updateGCGraceSeconds("rhq.six_hour_metrics", gcGraceSeconds);
-        updateGCGraceSeconds("rhq.twenty_four_hour_metrics", gcGraceSeconds);
-        updateGCGraceSeconds("rhq.schema_version", gcGraceSeconds);
-        updateGCGraceSeconds("rhq.metrics_cache", gcGraceSeconds);
-        updateGCGraceSeconds("rhq.metrics_cache_index", gcGraceSeconds);
+        for (Table table : Table.values()) {
+            updateGCGraceSeconds(table.getTableName(), gcGraceSeconds);
+        }
 
         log.info("Updated gc_grace_seconds to " + gcGraceSeconds);
         log.info("Successfully executed " + Task.UpdateGCGrace + " task.");

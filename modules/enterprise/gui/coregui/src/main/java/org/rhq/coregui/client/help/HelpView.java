@@ -52,8 +52,8 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
 
     public static final ViewName VIEW_ID = new ViewName("Help", MSG.common_title_help(), IconEnum.HELP);
 
-    private static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
-
+    public static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
+    public static final ViewName PAGE_RHA_SUPORT = new ViewName("Support", "Support", IconEnum.HELP);
     private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
     private final MessageConstants messageConstants = CoreGUI.getMessageConstants();
     private boolean contentFromProductInfo;
@@ -100,7 +100,16 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 }
             });
         aboutItem.setRefreshRequired(true);
-
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
+        if (isRHQ) { // TODO conditional visiblity for JON only!!!
+            NavigationItem rhaItem = new NavigationItem(PAGE_RHA_SUPORT, new ViewFactory() {
+                public Canvas createView() {
+                    return new FullHTMLPane("/rha/support.html");
+                }
+            });
+            return new NavigationSection(SECTION_PRODUCT_VIEW_ID, aboutItem, rhaItem);
+        }
         return new NavigationSection(SECTION_PRODUCT_VIEW_ID, aboutItem);
     }
 

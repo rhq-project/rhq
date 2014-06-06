@@ -23,10 +23,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 
 /**
  * Discover subsystems. We need to distinguish two cases denoted by the path
@@ -58,7 +62,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author Jay Shaughnessy
  */
-public class VersionedSubsystemDiscovery extends SubsystemDiscovery {
+public class VersionedSubsystemDiscovery extends SubsystemDiscovery implements ResourceUpgradeFacet {
 
     /* The matched format is name-VERSION.ext.  Version must minimally be in major.minor format.  Simpler versions,
      * like a single digit, are too possibly part of the actual name.  myapp-1.war and myapp-2.war could easily be
@@ -95,7 +99,7 @@ public class VersionedSubsystemDiscovery extends SubsystemDiscovery {
         MATCHER = (null != m) ? m : Pattern.compile(PATTERN_DEFAULT).matcher("");
     }
 
-    //private final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
         throws Exception {
@@ -120,15 +124,14 @@ public class VersionedSubsystemDiscovery extends SubsystemDiscovery {
                 // the Subdeployment will not be properly updated if its version remains unchanged in the
                 // updated Deployment.
                 if (SUBDEPLOYMENT_TYPE.equals(context.getResourceType().getName())) {
-                    BaseComponent parentComponent = context.getParentResourceComponent();
-                    String parentPath = parentComponent.getPath();
-                    String parentResourceVersion = (parentPath.isEmpty()) ? "" : (context.getParentResourceContext()
-                        .getVersion() + "/");
+                    String parentResourceVersion = context.getParentResourceContext().getVersion();
+                    parentResourceVersion = (null == parentResourceVersion) ? "" : (parentResourceVersion + "/");
                     detail.setResourceVersion(parentResourceVersion + MATCHER.group(2));
                 } else {
                     detail.setResourceVersion(MATCHER.group(2));
                 }
             }
+
             StringBuilder sb = new StringBuilder();
             String comma = "";
             for (String segment : detail.getResourceKey().split(",")) {
@@ -145,5 +148,60 @@ public class VersionedSubsystemDiscovery extends SubsystemDiscovery {
         }
 
         return details;
+    }
+
+    // The Matching logic here is the same as above, but instead of setting the discovery details we
+    // set new values in the upgrade report for name, version and key.
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+        ResourceUpgradeReport result = null;
+
+        MATCHER.reset(inventoriedResource.getName());
+        if (MATCHER.matches()) {
+            result = new ResourceUpgradeReport();
+            result.setForceGenericPropertyUpgrade(true); // It is critical the name and version get upgraded
+
+            // reset the resource name with the stripped value
+            result.setNewName(MATCHER.group(1) + MATCHER.group(3));
+
+            // The version string for a subdeployment must incorporate the parent deployment's version
+            // so that we detect an overall version change if the parent is re-deployed.  Without this
+            // the Subdeployment will not be properly updated if its version remains unchanged in the
+            // updated Deployment.
+            if (SUBDEPLOYMENT_TYPE.equals(inventoriedResource.getResourceType().getName())) {
+                String parentResourceVersion = inventoriedResource.getParentResourceContext().getVersion();
+                parentResourceVersion = (null == parentResourceVersion) ? "" : (parentResourceVersion + "/");
+                result.setNewVersion(parentResourceVersion + MATCHER.group(2));
+            } else {
+                result.setNewVersion(MATCHER.group(2));
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        String comma = "";
+        boolean upgradeKey = false;
+        for (String segment : inventoriedResource.getResourceKey().split(",")) {
+            sb.append(comma);
+            comma = ",";
+            MATCHER.reset(segment);
+            if (MATCHER.matches()) {
+                upgradeKey = true;
+                sb.append(MATCHER.group(1) + MATCHER.group(3));
+            } else {
+                sb.append(segment);
+            }
+        }
+        if (upgradeKey) {
+            if (null == result) {
+                result = new ResourceUpgradeReport();
+            }
+            result.setNewResourceKey(sb.toString());
+        }
+
+        if (null != result && log.isDebugEnabled()) {
+            log.debug("Requesting upgrade: " + result);
+        }
+
+        return result;
     }
 }

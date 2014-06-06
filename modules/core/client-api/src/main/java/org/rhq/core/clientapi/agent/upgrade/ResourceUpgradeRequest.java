@@ -31,7 +31,7 @@ import org.rhq.core.domain.resource.ResourceUpgradeReport;
 
 /**
  * Represents a request to upgrade a resource.
- * 
+ *
  * @author Lukas Krejci
  */
 public class ResourceUpgradeRequest extends ResourceUpgradeReport {
@@ -119,6 +119,8 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         setNewName(report.getNewName());
         setNewResourceKey(report.getNewResourceKey());
         setNewPluginConfiguration(report.getNewPluginConfiguration());
+        setNewVersion(report.getNewVersion());
+        setForceGenericPropertyUpgrade(report.isForceGenericPropertyUpgrade());
     }
 
     public void fillInFromResource(Resource resource) {
@@ -126,6 +128,7 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         setNewName(resource.getName());
         setNewResourceKey(resource.getResourceKey());
         setNewPluginConfiguration(resource.getPluginConfiguration());
+        setNewVersion(resource.getVersion());
     }
 
     public void updateResource(Resource resource) {
@@ -144,6 +147,10 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         if (getNewPluginConfiguration() != null) {
             resource.setPluginConfiguration(getNewPluginConfiguration());
         }
+
+        if (getNewVersion() != null) {
+            resource.setVersion(getNewVersion());
+        }
     }
 
     /**
@@ -154,6 +161,8 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         setNewName(null);
         setNewResourceKey(null);
         setNewPluginConfiguration(null);
+        setNewVersion(null);
+        setForceGenericPropertyUpgrade(false);
     }
 
     @Override
@@ -183,9 +192,8 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
 
     @Override
     public String toString() {
-        return "ResourceUpgradeRequest[resourceId = '" + resourceId + "', newResourceKey = '" + getNewResourceKey()
-            + "', newName = '" + getNewName() + "', newDescription = '" + getNewDescription()
-            + "', hasNewPluginConfig = '" + (null != getNewPluginConfiguration()) + "', upgradeErrorMessage = '"
-            + upgradeErrorMessage + "', upgradeErrorStackTrace = '" + upgradeErrorStackTrace + "']";
+        return "ResourceUpgradeRequest [resourceId=" + resourceId + ", upgradeErrorMessage=" + upgradeErrorMessage
+            + ", upgradeErrorStackTrace=" + upgradeErrorStackTrace + ", timestamp=" + timestamp + ", toString()="
+            + super.toString() + "]";
     }
 }

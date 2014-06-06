@@ -23,11 +23,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 
 /**
  * Discover subsystems. We need to distinguish two cases denoted by the path
@@ -50,7 +54,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author Jay Shaughnessy
  */
-public class VersionedRuntimeDiscovery extends SubsystemDiscovery {
+public class VersionedRuntimeDiscovery extends SubsystemDiscovery implements ResourceUpgradeFacet {
 
     /* The matched format is name-VERSION.ext.  Version must minimally be in major.minor format.  Simpler versions,
      * like a single digit, are too possibly part of the actual name.  myapp-1.war and myapp-2.war could easily be
@@ -86,7 +90,7 @@ public class VersionedRuntimeDiscovery extends SubsystemDiscovery {
         MATCHER = (null != m) ? m : Pattern.compile(PATTERN_DEFAULT).matcher("");
     }
 
-    // private final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
         throws Exception {
@@ -120,14 +124,12 @@ public class VersionedRuntimeDiscovery extends SubsystemDiscovery {
             // their own.
 
             StringBuilder sb = new StringBuilder();
-            String version = null;
             String slash = "";
             for (String segment : detail.getResourceName().split("/")) {
                 MATCHER.reset(segment);
                 if (MATCHER.matches()) {
                     sb.append(slash);
                     sb.append(MATCHER.group(1) + MATCHER.group(3));
-                    version += (slash + MATCHER.group(2));
                 } else {
                     sb.append(slash);
                     sb.append(segment);
@@ -157,5 +159,85 @@ public class VersionedRuntimeDiscovery extends SubsystemDiscovery {
         }
 
         return details;
+    }
+
+    // The Matching logic here is the same as above, but instead of setting the discovery details we
+    // set new values in the upgrade report for name, version and key.
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+        ResourceUpgradeReport result = null;
+
+        // Note that in addition to the comma-separated segments of the DMR address, certain runtime
+        // resources (e.g. "Hibernate Persistence Unit") have a forwardSlash-separated segments of
+        // their own.
+
+        StringBuilder sb = new StringBuilder();
+        String slash = "";
+        boolean upgradeName = false;
+        for (String segment : inventoriedResource.getName().split("/")) {
+            MATCHER.reset(segment);
+            if (MATCHER.matches()) {
+                upgradeName = true;
+                sb.append(slash);
+                sb.append(MATCHER.group(1) + MATCHER.group(3));
+            } else {
+                sb.append(slash);
+                sb.append(segment);
+            }
+            slash = "/";
+        }
+
+        if (upgradeName) {
+            if (null == result) {
+                result = new ResourceUpgradeReport();
+            }
+            result.setForceGenericPropertyUpgrade(true); // It is critical the name get upgraded
+            result.setNewName(sb.toString());
+        }
+
+        // Note that the version string is always set to the parent's version for these
+        // resources which are logically part of the umbrella deployment.
+        String parentVersion = inventoriedResource.getParentResourceContext().getVersion();
+        String currentVersion = inventoriedResource.getVersion();
+        if ((currentVersion != parentVersion)
+            && ((null == currentVersion && null != parentVersion) || !currentVersion.equals(parentVersion))) {
+            if (null == result) {
+                result = new ResourceUpgradeReport();
+            }
+            result.setForceGenericPropertyUpgrade(true); // It is critical the version get upgraded
+            result.setNewVersion(parentVersion);
+        }
+
+        sb = new StringBuilder();
+        String comma = "";
+        boolean upgradeKey = false;
+        for (String outerSegment : inventoriedResource.getResourceKey().split(",")) {
+            sb.append(comma);
+            comma = ",";
+            slash = "";
+            for (String segment : outerSegment.split("/")) {
+                sb.append(slash);
+                slash = "/";
+                MATCHER.reset(segment);
+                if (MATCHER.matches()) {
+                    upgradeKey = true;
+                    sb.append(MATCHER.group(1) + MATCHER.group(3));
+                } else {
+                    sb.append(segment);
+                }
+            }
+        }
+        if (upgradeKey) {
+            if (null == result) {
+                result = new ResourceUpgradeReport();
+            }
+            result.setNewResourceKey(sb.toString());
+        }
+
+        if (null != result && log.isDebugEnabled()) {
+            log.debug("Requesting upgrade: " + result);
+        }
+
+        return result;
     }
 }

@@ -46,6 +46,7 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
     private final Configuration resourceConfiguration;
     private final String name;
     private final String description;
+    private final String version;
 
     /**
      * @see ResourceContext#ResourceContext(org.rhq.core.domain.resource.Resource, org.rhq.core.pluginapi.inventory.ResourceComponent, org.rhq.core.pluginapi.inventory.ResourceContext, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, org.rhq.core.system.SystemInfo, java.io.File, java.io.File, String, org.rhq.core.pluginapi.event.EventContext, org.rhq.core.pluginapi.operation.OperationContext, org.rhq.core.pluginapi.content.ContentContext, org.rhq.core.pluginapi.availability.AvailabilityContext, org.rhq.core.pluginapi.inventory.InventoryContext, org.rhq.core.pluginapi.inventory.PluginContainerDeployment)
@@ -65,11 +66,10 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();
         this.description = resource.getDescription();
+        this.version = resource.getVersion();
     }
 
     /**
-     * Returns the context of the Resource component's parent Resource component.
-     *
      * @return the context of the Resource component's parent Resource component
      *
      * @since 4.0
@@ -89,6 +89,10 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
 
     public String getDescription() {
         return description;
+    }
+
+    public String getVersion() {
+        return version;
     }
 
 }

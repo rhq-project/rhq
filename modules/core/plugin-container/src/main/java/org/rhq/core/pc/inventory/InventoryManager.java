@@ -1694,16 +1694,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 String resourceKey = upgradeResponse.getUpgradedResourceKey();
                 String name = upgradeResponse.getUpgradedResourceName();
                 String description = upgradeResponse.getUpgradedResourceDescription();
+                String version = upgradeResponse.getUpgradedResourceVersion();
                 Configuration pluginConfig = upgradeResponse.getUpgradedResourcePluginConfiguration();
 
                 //only bother if there's something to upgrade at all on this resource.
-                if (resourceKey != null || name != null || description != null || pluginConfig != null) {
+                if (resourceKey != null || name != null || version != null || description != null
+                    || pluginConfig != null) {
                     ResourceContainer existingResourceContainer = getResourceContainer(upgradeResponse.getResourceId());
                     if (existingResourceContainer != null) {
                         Resource existingResource = existingResourceContainer.getResource();
 
                         StringBuilder logMessage = new StringBuilder("Resource [").append(existingResource.toString())
-                            .append("] upgraded its ");
+                            .append("] upgraded [");
 
                         if (resourceKey != null) {
                             existingResource.setResourceKey(resourceKey);
@@ -1713,6 +1715,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         if (name != null) {
                             existingResource.setName(name);
                             logMessage.append("name, ");
+                        }
+
+                        if (version != null) {
+                            existingResource.setVersion(version);
+                            logMessage.append("version, ");
                         }
 
                         if (description != null) {
@@ -1725,7 +1732,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                             logMessage.append("pluginConfiguration, ");
                         }
 
-                        logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [")
+                        logMessage.replace(logMessage.length() - 1, logMessage.length(), "] to become [")
                             .append(existingResource.toString()).append("]");
 
                         log.info(logMessage.toString());

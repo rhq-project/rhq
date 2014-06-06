@@ -41,6 +41,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -59,8 +60,6 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     private static final String SERVER_CONFIG_TRAIT = "config-file";
     private static final String HOME_DIR_PROP = "homeDir";
     private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
-
-    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
 
     private static final Address ENVIRONMENT_ADDRESS = new Address("core-service=server-environment");
 
@@ -275,7 +274,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
 
         File configFile = null;
         AdditionalJavaOpts additionalJavaOptsConfig = null;
-        if (OS_IS_WINDOWS) {
+        if (OperatingSystemType.WINDOWS.equals(resourceContext.getSystemInformation().getOperatingSystemType())) {
             configFile = new File(binDirectory, "standalone.conf.bat");
             additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
         } else {

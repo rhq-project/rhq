@@ -25,11 +25,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
@@ -41,7 +40,7 @@ import org.rhq.modules.plugins.jbossas7.helper.HostPort;
  */
 public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
-    private static final Log log = LogFactory.getLog(BaseProcessDiscovery.class);
+    private static final Log log = LogFactory.getLog(StandaloneASDiscovery.class);
 
     private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
 
@@ -109,7 +108,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         Set<DiscoveredResourceDetails> discoveredResources = super.discoverResources(discoveryContext);
 
         for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-            discoverAdditionalJavaOpts(discoveredResource);
+            discoverAdditionalJavaOpts(discoveredResource, discoveryContext);
         }
 
         return discoveredResources;
@@ -120,20 +119,14 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         throws InvalidPluginConfigurationException {
         DiscoveredResourceDetails discoveredResource = super.discoverResource(pluginConfig, context);
 
-        discoverAdditionalJavaOpts(discoveredResource);
+        discoverAdditionalJavaOpts(discoveredResource, context);
 
         return discoveredResource;
     }
 
-    @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
-        // TODO Auto-generated method stub
-        ResourceUpgradeReport resourceUpgradeReport = super.upgrade(inventoriedResource);
-
-        return resourceUpgradeReport;
-    }
-
-    private void discoverAdditionalJavaOpts(DiscoveredResourceDetails discoveredResource) {
+    @SuppressWarnings("rawtypes")
+    private void discoverAdditionalJavaOpts(DiscoveredResourceDetails discoveredResource,
+        ResourceDiscoveryContext context) {
         File baseDirectory = new File(discoveredResource.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
         File binDirectory = new File(baseDirectory, "bin");
 
@@ -141,7 +134,7 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         File configFile = null;
         AdditionalJavaOpts additionalJavaOptsConfig = null;
 
-        if (OS_IS_WINDOWS) {
+        if (OperatingSystemType.WINDOWS.equals(context.getSystemInformation().getOperatingSystemType())) {
             configFile = new File(binDirectory, "standalone.conf.bat");
             additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
         }else {

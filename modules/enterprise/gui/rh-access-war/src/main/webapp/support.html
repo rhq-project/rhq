@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Red Hat Access: Support</title>
+
+<link rel="stylesheet" href="css/custom_support.css" />
+<link rel="stylesheet" href="css/redhat_access_angular_ui-embedded-images.css" />
+<link rel="stylesheet" href="/coregui/css/patternfly.min.css" />
+</head>
+<body>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/angular.min.js"></script>
+	<script src="js/redhat_access_angular_ui.js"></script>
+	<script src="js/custom-cases.js"></script>
+
+	<div ng-app="RedhatAccess.customCaseView">
+		<div class="text-center">
+			<div class="btn-group" ng-controller="customCase"
+				data-ng-init="init()">
+				<button type="button" class="btn btn-sm btn-default"
+					ng-click="openCaseClick()" ng-model="selected"
+					btn-radio="'open-case'">Open Case</button>
+				<button type="button" class="btn btn-sm btn-default"
+					ng-click="modifyCaseClick()" ng-model="selected"
+					btn-radio="'modify-case'">Modify Case</button>
+			</div>
+		</div>
+		<div id="rha-content" ui-view></div>
+	</div>
+	<script>
+		strata.setRedhatClientID('redhat-access-plugin-jon-1.0.4');
+	</script>
+</body>
+</html>

@@ -132,7 +132,7 @@
 	        <dependency>
 	            <groupId>org.rhq</groupId>
 	            <artifactId>rhq-core-plugin-container</artifactId>
-	            <version>${project.version}</version>
+	            <version>${rhq-core-plugin-container.version}</version>
 	            <type>test-jar</type>
 	            <scope>test</scope>
 			</dependency>

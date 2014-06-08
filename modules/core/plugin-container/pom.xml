@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>rhq-core-plugin-container</artifactId>
+   <version>4.9.0.JON320GA</version>
    <packaging>jar</packaging>
 
    <name>RHQ Plugin Container</name>
@@ -34,13 +35,13 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-comm-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-comm-api.version}</version>
       </dependency>
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-client-api.version}</version>
       </dependency>
 
       <dependency>
@@ -52,7 +53,7 @@
       <dependency>
           <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-common-drift</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-common-drift.version}</version>
       </dependency>
 
       <!-- 3rd Party Deps -->
@@ -75,7 +76,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>test-utils</artifactId>
-         <version>${project.version}</version>
+         <version>${test-utils.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -303,7 +304,6 @@
                  <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-duplicate-test-2.0.0.jar">
                     <fileset dir="${project.build.testOutputDirectory}/tmp/duplicate/v2" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
-
                  <delete dir="${project.build.testOutputDirectory}/tmp" />
               </target>
             </configuration>
@@ -328,7 +328,7 @@
                 <configuration>
                     <skipTests>${skipTests}</skipTests>
                     <systemPropertyVariables>
-                       <rhq.version>${project.version}</rhq.version>
+                       <rhq.version>${project.parent.version}</rhq.version>
                     </systemPropertyVariables>
 
                     <excludedGroups>arquillian,${rhq.testng.excludedGroups}</excludedGroups>

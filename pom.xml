@@ -432,6 +432,8 @@
     <rhq-virt-plugin.version>${rhq.pom.version}</rhq-virt-plugin.version>
     <test-utils.version>${rhq.pom.version}</test-utils.version>
     <rhq-modules-parent.version>${rhq.pom.version}</rhq-modules-parent.version>
+    <rhq-shrinkwrap-agent-plugin-archive.version>${rhq.pom.version}</rhq-shrinkwrap-agent-plugin-archive.version>
+    <rhq-arquillian-container-test-plugin.version>${rhq.pom.version}</rhq-arquillian-container-test-plugin.version>
 
   </properties>
 

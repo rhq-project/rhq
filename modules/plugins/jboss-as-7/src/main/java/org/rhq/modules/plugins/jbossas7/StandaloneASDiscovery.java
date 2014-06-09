@@ -32,6 +32,7 @@ import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -42,13 +43,10 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     private static final Log log = LogFactory.getLog(StandaloneASDiscovery.class);
 
-    private static final boolean OS_IS_WINDOWS = (File.separatorChar == '\\');
-
     private static final String SERVER_BASE_DIR_SYSPROP = "jboss.server.base.dir";
     private static final String SERVER_CONFIG_DIR_SYSPROP = "jboss.server.config.dir";
     private static final String SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
 
-    private static final String HOME_DIR_PROP = "homeDir";
     private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     @Override
@@ -127,7 +125,14 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     @SuppressWarnings("rawtypes")
     private void discoverAdditionalJavaOpts(DiscoveredResourceDetails discoveredResource,
         ResourceDiscoveryContext context) {
-        File baseDirectory = new File(discoveredResource.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
+        if (discoveredResource.getPluginConfiguration().getSimpleValue(ServerPluginConfiguration.Property.HOME_DIR) == null) {
+            log.error("Additional JAVA_OPTS cannot be discovered because "
+                + ServerPluginConfiguration.Property.HOME_DIR + " property not set");
+            return;
+        }
+
+        File baseDirectory = new File(discoveredResource.getPluginConfiguration().getSimpleValue(
+            ServerPluginConfiguration.Property.HOME_DIR));
         File binDirectory = new File(baseDirectory, "bin");
 
         String javaOptsAdditionalValue = null;

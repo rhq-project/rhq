@@ -43,6 +43,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -58,7 +59,6 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         implements MeasurementFacet, OperationFacet {
 
     private static final String SERVER_CONFIG_TRAIT = "config-file";
-    private static final String HOME_DIR_PROP = "homeDir";
     private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     private static final Address ENVIRONMENT_ADDRESS = new Address("core-service=server-environment");
@@ -267,7 +267,14 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
      * @param resourceContext
      */
     private void updateAdditionalJavaOpts(ResourceContext<T> resourceContext) {
-        File baseDirectory = new File(resourceContext.getPluginConfiguration().getSimpleValue(HOME_DIR_PROP));
+        if (resourceContext.getPluginConfiguration().getSimpleValue(ServerPluginConfiguration.Property.HOME_DIR) == null) {
+            log.error("Additional JAVA_OPTS cannot be configured because "
+                + ServerPluginConfiguration.Property.HOME_DIR + " property not set");
+            return;
+        }
+
+        File baseDirectory = new File(resourceContext.getPluginConfiguration().getSimpleValue(
+            ServerPluginConfiguration.Property.HOME_DIR));
         File binDirectory = new File(baseDirectory, "bin");
 
         String additionalJavaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);

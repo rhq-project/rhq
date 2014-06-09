@@ -125,7 +125,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public AvailabilityType getAvailability() {
         AvailabilityType availabilityType;
         try {
-            readAttribute(getHostAddress(), "name");
+            readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
             availabilityType = UP;
         }
         catch (ResultFailedException e) {

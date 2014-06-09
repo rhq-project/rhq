@@ -56,7 +56,7 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
         // Domain deployments have no 'enabled' attribute
 
         Operation op = new ReadResource(getAddress());
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
         // this resource cannot be down, either UP = exists, or MISSING
         return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.MISSING;
     }

@@ -230,4 +230,13 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
             throw getExceptionToThrowToClient(t);
         }
     }
+    
+    @Override
+    public void updateAddress(int storageNodeId, String address) throws RuntimeException {
+        try {
+            storageNodeManager.updateAddress(storageNodeId, address);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

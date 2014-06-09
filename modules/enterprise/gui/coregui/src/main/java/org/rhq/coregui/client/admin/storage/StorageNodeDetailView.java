@@ -33,19 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
-
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
@@ -62,6 +49,7 @@ import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.ImageManager;
 import org.rhq.coregui.client.LinkManager;
 import org.rhq.coregui.client.ViewPath;
+import org.rhq.coregui.client.admin.storage.StorageNodeConfigurationEditor.SaveCallback;
 import org.rhq.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.inventory.InventoryView;
@@ -71,6 +59,25 @@ import org.rhq.coregui.client.util.StringUtility;
 import org.rhq.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.coregui.client.util.message.Message;
+
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.layout.SectionStack;
+import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 /**
  * Shows details of a storage node.
@@ -91,7 +98,10 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private StaticTextItem alertsItem;
     private HTMLFlow header;
     private boolean alerts = false;
+    private boolean isAddressEditable = true;
     private StaticTextItem jmxPortItem;
+    private String originalAddress;
+    private FormItem nameItem;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -295,8 +305,35 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         form.setWrapItemTitles(false);
         form.setNumCols(2);
 
-        final StaticTextItem nameItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
-        nameItem.setValue("<b>" + storageNode.getAddress() + "</b>");
+        ButtonItem save = null;
+        isAddressEditable = storageNode.getResource() == null
+            && storageNode.getOperationMode() == OperationMode.INSTALLED;
+        if (isAddressEditable) {
+            nameItem = new TextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
+            nameItem.setValue(storageNode.getAddress());
+            originalAddress = storageNode.getAddress();
+            save = new ButtonItem("save");
+            save.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    if (addressWasChanged()) {
+                        SC.say("Info", MSG.view_adminTopology_storageNodes_settings_noChanges());
+                    } else {
+                        SC.ask(MSG.view_adminTopology_storageNodes_settings_confirmation(), new BooleanCallback() {
+                            @Override
+                            public void execute(Boolean value) {
+                                if (value) {
+                                    updateAddress();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        } else {
+            nameItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
+            nameItem.setValue("<b>" + storageNode.getAddress() + "</b>");
+        }
 
         final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
         cqlPortItem.setValue(storageNode.getCqlPort());
@@ -397,6 +434,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         formItems.addAll(Arrays.asList(clusterStatusItem, installationDateItem, lastUpdateItem, alertsItem, messageItem));
         if (isOperationFailed)
             formItems.add(lastOperation);
+        if (isAddressEditable)
+            formItems.add(save);
         form.setItems(formItems.toArray(new FormItem[] {}));
 
         detailsLayout = new EnhancedVLayout();
@@ -431,8 +470,17 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private void prepareResourceConfigEditor(final StorageNodeConfigurationComposite configuration) {
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setHeight(15);
-        StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration);
-        SectionStackSection section = new SectionStackSection("Configuration");
+        StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration,
+            !isAddressEditable ? null : new SaveCallback() {
+                public void onSave() {
+                    updateAddress();
+                }
+                public boolean wasChanged() {
+                    return addressWasChanged();
+                }
+            });
+        SectionStackSection section = new SectionStackSection(
+            MSG.view_adminTopology_storageNodes_detail_configuration());
         section.setItems(spacer, editorView);
         section.setExpanded(true);
         section.setCanCollapse(false);
@@ -440,7 +488,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         configurationSection = section;
         initSectionCount++;
     }
-    
+
     private void showAlertsForSingleStorageNode() {
         GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new StorageNode(storageNodeId),
             new AsyncCallback<Integer[]>() {

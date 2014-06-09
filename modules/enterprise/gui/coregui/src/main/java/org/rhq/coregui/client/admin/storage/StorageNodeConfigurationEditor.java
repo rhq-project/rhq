@@ -63,28 +63,45 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
     private EnhancedIButton saveButton;
     private boolean oddRow;
     private final StorageNodeConfigurationComposite configuration;
+    private SaveCallback saveCallback;
     
     private static String FIELD_HEAP_MAX = "heap_max";
     private static String FIELD_HEAP_NEW = "heap_new";
     private static String FIELD_THREAD_STACK_SIZE = "thread_stack_size";
     private static String FIELD_JMX_PORT = "jmx_port";
+    
+    public static interface SaveCallback {
+        void onSave();
+        boolean wasChanged();
+    }
 
-    public StorageNodeConfigurationEditor(final StorageNodeConfigurationComposite configuration) {
+    public StorageNodeConfigurationEditor(final StorageNodeConfigurationComposite configuration, SaveCallback saveCallback) {
         super();
-        this.configuration = configuration; 
+        this.configuration = configuration;
+        this.saveCallback = saveCallback;
     }
 
     private void save(final StorageNodeConfigurationComposite configuration) {
-        GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Void>() {
-            public void onSuccess(Void result) {
-                Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
-                CoreGUI.getMessageCenter().notify(msg);
-            }
+        final boolean wasChangedElsewhere = saveCallback != null && saveCallback.wasChanged();
+        if (wasChangedElsewhere){
+            saveCallback.onSave();
+        }
+        if (!StorageNodeConfigurationEditor.this.configuration.equals(configuration)) {
+            GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Void>() {
+                public void onSuccess(Void result) {
+                    if (!wasChangedElsewhere) {
+                        Message msg = new Message(MSG.view_adminTopology_storageNodes_settings_message_updateSuccess(),
+                            Message.Severity.Info);
+                        CoreGUI.getMessageCenter().notify(msg);
+                    }
+                }
 
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Unable to update the storage node settings.", caught);
-            }
-        });
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_storageNodes_clusterSettings_message_updateFail(), caught);
+                }
+            });
+        }
     }
 
     private List<FormItem> buildOneFormRowWithCombobox(String name, String title, String value, String description) {
@@ -236,8 +253,9 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                         return;
                     }
                     final StorageNodeConfigurationComposite configuration = getConfiguration();
-                    if (StorageNodeConfigurationEditor.this.configuration.equals(configuration)) {
-                        SC.say("Info", "There were no changes done.");
+                    if (StorageNodeConfigurationEditor.this.configuration.equals(configuration)
+                        && (saveCallback == null || !saveCallback.wasChanged())) {
+                        SC.say("Info", MSG.view_adminTopology_storageNodes_settings_noChanges());
                     } else {
                         SC.ask(
                             "Changing the storage node configuration requires restart of storage node. Do you want to continue?",

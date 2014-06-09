@@ -11,7 +11,7 @@
    </parent>
 
    <artifactId>rhq-core-plugin-container</artifactId>
-   <version>4.9.0.JON320GA</version>
+   <version>4.9.0.JON320GA-redhat-1</version>
    <packaging>jar</packaging>
 
    <name>RHQ Plugin Container</name>

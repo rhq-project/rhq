@@ -93,6 +93,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     static final String EXPRESSION = "_expr:";
     static final int EXPRESSION_SIZE = EXPRESSION.length();
     static final String EXPRESSION_VALUE_KEY = "EXPRESSION_VALUE";
+    static final int AVAIL_OP_TIMEOUT_SECONDS = 15 * 60;
 
     public static final String MANAGED_SERVER = "Managed Server";
 
@@ -149,7 +150,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     @Override
     public AvailabilityType getAvailability() {
         ReadResource op = new ReadResource(address);
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
         return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
@@ -842,13 +843,35 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return readAttribute(getAddress(), name);
     }
 
+    protected String readAttribute(String name, int timeoutSec) throws Exception {
+        return readAttribute(getAddress(), name, timeoutSec);
+    }
+
     protected String readAttribute(Address address, String name) throws Exception {
         return readAttribute(address, name, String.class);
+    }
+
+    protected String readAttribute(Address address, String name, int timeoutSec) throws Exception {
+        return readAttribute(address, name, String.class, timeoutSec);
     }
 
     protected <T> T readAttribute(Address address, String name, Class<T> resultType) throws Exception {
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op);
+        if (!res.isSuccess()) {
+            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
+                throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
+                    + getAddress().getPath() + "] - response: " + res);
+            }
+            throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
+                + "] - response: " + res);
+        }
+        return (T) res.getResult();
+    }
+
+    protected <T> T readAttribute(Address address, String name, Class<T> resultType, int timeoutSec) throws Exception {
+        Operation op = new ReadAttribute(address, name);
+        Result res = getASConnection().execute(op, timeoutSec);
         if (!res.isSuccess()) {
             if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
                 throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["

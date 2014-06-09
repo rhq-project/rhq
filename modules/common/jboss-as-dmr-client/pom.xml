@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>rhq-jboss-as-dmr-client</artifactId>
-  <version>4.9.0.JON320GA-redhat-1</version>
+  <version>4.9.0.JON320GA-redhat-2</version>
   <packaging>jar</packaging>
 
   <name>RHQ JBoss AS DMR Client</name>

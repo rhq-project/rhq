@@ -20,8 +20,6 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,41 +52,7 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  *
  * @author Jay Shaughnessy
  */
-public class VersionedRuntimeDiscovery extends SubsystemDiscovery implements ResourceUpgradeFacet {
-
-    /* The matched format is name-VERSION.ext.  Version must minimally be in major.minor format.  Simpler versions,
-     * like a single digit, are too possibly part of the actual name.  myapp-1.war and myapp-2.war could easily be
-     * different apps (albeit poorly named).  But myapp-1.0.war and myapp-2.0.war are pretty clearly versions of
-     * the same app.  The goal was to handle maven-style versioning.
-     */
-    static private final String PATTERN_DEFAULT = "^(.*?)-([0-9]+\\.[0-9].*)(\\..*)$";
-    static private final String PATTERN_PROP = "rhq.as7.VersionedSubsystemDiscovery.pattern";
-    static private final Matcher MATCHER;
-
-    static {
-        Matcher m = null;
-        try {
-            String override = System.getProperty(PATTERN_PROP);
-            if (null != override) {
-                Pattern p = Pattern.compile(override);
-                m = p.matcher("");
-                if (m.groupCount() != 3) {
-                    String msg = "Pattern supplied by system property [" + PATTERN_PROP
-                        + "] is invalid. Expected [3] matching groups but found [" + m.groupCount()
-                        + "]. Will use default pattern [" + PATTERN_DEFAULT + "].";
-                    m = null;
-                    LogFactory.getLog(VersionedRuntimeDiscovery.class).error(msg);
-                }
-            }
-        } catch (Exception e) {
-            String msg = "Pattern supplied by system property [" + PATTERN_PROP
-                + "] is invalid. Will use default pattern [" + PATTERN_DEFAULT + "].";
-            m = null;
-            LogFactory.getLog(VersionedRuntimeDiscovery.class).error(msg, e);
-        }
-
-        MATCHER = (null != m) ? m : Pattern.compile(PATTERN_DEFAULT).matcher("");
-    }
+public class VersionedRuntimeDiscovery extends AbstractVersionedSubsystemDiscovery implements ResourceUpgradeFacet {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -98,6 +62,10 @@ public class VersionedRuntimeDiscovery extends SubsystemDiscovery implements Res
         // Perform the standard discovery. This can return resources with versions in the name,
         // key and path.
         Set<DiscoveredResourceDetails> details = super.discoverResources(context);
+
+        if (DISABLED) {
+            return details;
+        }
 
         // Now, post-process the discovery as needed.  We need to strip the versions from the
         // resource name and the resource key.  We want to leave them in the path plugin config
@@ -166,6 +134,10 @@ public class VersionedRuntimeDiscovery extends SubsystemDiscovery implements Res
     @Override
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
         ResourceUpgradeReport result = null;
+
+        if (DISABLED) {
+            return result;
+        }
 
         // Note that in addition to the comma-separated segments of the DMR address, certain runtime
         // resources (e.g. "Hibernate Persistence Unit") have a forwardSlash-separated segments of

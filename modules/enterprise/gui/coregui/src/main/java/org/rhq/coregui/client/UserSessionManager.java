@@ -154,7 +154,8 @@ public class UserSessionManager {
 
                     if (sessionIdString.startsWith("booting")) {
                         // "booting" is the string we get back from SessionAccessServlet if StartupBean hasn't finished
-//                        new LoginView().showLoginDialog(MSG.view_core_serverInitializing());
+                        if (!LoginView.isKeycloakEnabled())
+                            new LoginView().showLoginDialog(MSG.view_core_serverInitializing());
                         return;
                     }
 
@@ -182,8 +183,8 @@ public class UserSessionManager {
                             // a browser refresh kills any existing logoutTimer. Reschedule the logout.
                             sessionState = State.IS_LOGGED_OUT;
                             scheduleLogoutServerSide(sessionId);
-
-//                            new LoginView().showLoginDialog();
+                            if (!LoginView.isKeycloakEnabled())
+                                new LoginView().showLoginDialog();
                             return;
                         }
 
@@ -254,7 +255,8 @@ public class UserSessionManager {
                                 //we've lost crucial information, probably in a browser refresh. Send them back through login
                                 Log.trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
                                 sessionState = State.IS_LOGGED_OUT;
-//                                new LoginView().showLoginDialog();
+                                if (!LoginView.isKeycloakEnabled())
+                                    new LoginView().showLoginDialog();
                                 return;
                             }
 
@@ -268,7 +270,8 @@ public class UserSessionManager {
                                         Log.debug("Failed to complete ldap processing for subject: "
                                             + caught.getMessage());
                                         //TODO: pass message to login dialog.
-//                                        new LoginView().showLoginDialog();
+                                        if (!LoginView.isKeycloakEnabled())
+                                            new LoginView().showLoginDialog();
                                         return;
                                     }
 
@@ -309,7 +312,8 @@ public class UserSessionManager {
                                             caught);
                                         Log.info("Failed to load user's subject");
                                         //TODO: pass message to login ui.
-//                                        new LoginView().showLoginDialog();
+                                        if (!LoginView.isKeycloakEnabled())
+                                            new LoginView().showLoginDialog();
                                         return;
                                     }
 
@@ -346,7 +350,8 @@ public class UserSessionManager {
                     } else {
                         //invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
-//                        new LoginView().showLoginDialog();
+                        if (!LoginView.isKeycloakEnabled())
+                            new LoginView().showLoginDialog();
                         return;
                     }
                 }

@@ -168,7 +168,7 @@ public class SessionAccessServlet extends HttpServlet {
             try {
                 SystemSettings settings = LookupUtil.getSystemManager().getSystemSettings(
                     LookupUtil.getSubjectManager().getOverlord());
-                keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL);
+                keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL.name());
             } catch (Exception e) {
                 // do nothing;
             }
@@ -176,8 +176,8 @@ public class SessionAccessServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
         out.println("{");
         out.println("  \"serverInitialized\": " + serverInitialized + ",");
-        out.println("  \"startupError\": " + (startupError == null ? "null" : "\"" + startupError + "\""));
-        out.println("  \"keycloak\": " + (keycloakUrl == null || keycloakUrl.trim().isEmpty()));
+        out.println("  \"startupError\": " + (startupError == null ? "null" : "\"" + startupError + "\","));
+        out.println("  \"keycloak\": " + (keycloakUrl != null && !keycloakUrl.trim().isEmpty()));
         out.println("}");
     }
     
@@ -204,7 +204,7 @@ public class SessionAccessServlet extends HttpServlet {
             try {
                 SystemSettings settings = LookupUtil.getSystemManager().getSystemSettings(
                     LookupUtil.getSubjectManager().getOverlord());
-                keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL);
+                keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL.name());
 
                 out.println("{");
                 out.println("  \"realm\": \"rhq\",");

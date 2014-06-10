@@ -178,10 +178,25 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         */
 
         messageCenter = new MessageCenter();
+        // wait for keycloak sript to finish
+        new Timer() {
+            @Override
+            public void run() {
+                if (LoginView.isKeycloakReady()) {
+                    this.cancel();
+                } else {
+                    this.schedule(300);
+                }
+            }
+        }.schedule(50);
 
-//        UserSessionManager.login();
-//        UserSessionManager.login("rhqadmin", "rhqadmin");
-        new LoginView().login("rhqadmin", "rhqadmin");
+        if (LoginView.isKeycloakEnabled()) {
+            // todo: parse keycloak data
+            new LoginView().login("rhqadmin", "rhqadmin");
+        } else {
+            UserSessionManager.login();
+        }
+        
     }
 
     public int getRpcTimeout() {

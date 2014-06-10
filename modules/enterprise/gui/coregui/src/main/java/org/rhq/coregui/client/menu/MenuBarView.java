@@ -61,11 +61,17 @@ import org.rhq.coregui.client.components.AboutModalWindow;
 import org.rhq.coregui.client.components.view.ViewName;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
+import org.rhq.coregui.client.drift.DriftHistoryView;
 import org.rhq.coregui.client.footer.FavoritesButton;
 import org.rhq.coregui.client.help.HelpView;
 import org.rhq.coregui.client.inventory.InventoryView;
+import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.coregui.client.operation.OperationHistoryView;
+import org.rhq.coregui.client.report.AlertDefinitionReportView;
 import org.rhq.coregui.client.report.ReportTopView;
+import org.rhq.coregui.client.report.inventory.DriftComplianceReport;
+import org.rhq.coregui.client.report.inventory.ResourceInstallReport;
 import org.rhq.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.coregui.client.report.tag.TaggedView;
 import org.rhq.coregui.client.util.enhanced.EnhancedVLayout;
@@ -106,20 +112,18 @@ public class MenuBarView extends EnhancedVLayout {
         ),
         new MenuItem(ReportTopView.VIEW_ID)
             .subItems(
+                new MenuItem(ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID, true),
+                new MenuItem(TaggedView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
                 new MenuItem(MeasurementOOBView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(ResourceConfigurationHistoryListView.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
                 new MenuItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(AlertDefinitionReportView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
+                new MenuItem(ReportTopView.SECTION_INVENTORY_VIEW_ID, true),
                 new MenuItem(PlatformSummaryPortlet.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID),
-                new MenuItem(new ViewName(ReportTopView.VIEW_ID.getName(), "More ..."))
-                    //.subItems(
-                    //    new MenuItem(TaggedView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),                
-                    //    new MenuItem(ResourceConfigurationHistoryListView.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
-                    //    new MenuItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),                
-                    //    new MenuItem(AlertDefinitionReportView.VIEW_ID,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
-                    //    new MenuItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID),
-                    //    new MenuItem(ResourceInstallReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID),                
-                    //    new MenuItem(DriftComplianceReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID)
-                    //    )
-                
+                new MenuItem(ResourceInstallReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID),
+                new MenuItem(DriftComplianceReport.VIEW_ID,Permission.MANAGE_INVENTORY,ReportTopView.VIEW_ID,ReportTopView.SECTION_INVENTORY_VIEW_ID)
             ),
         new MenuItem(BundleTopView.VIEW_ID),
         new MenuItem(AdministrationView.VIEW_ID)

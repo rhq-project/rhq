@@ -36,17 +36,12 @@ import org.rhq.server.metrics.domain.MetricsTable;
  */
 public class MetricsConfiguration {
 
-//    private Duration rawRetention = Duration.standardDays(7);
     private ReadablePeriod rawRetention = Days.days(7);
 
     private ReadablePeriod oneHourRetention = Days.days(14);
-//    private Duration oneHourRetention = Duration.standardDays(14);
-//    private Duration oneHourRetention = Days.days(14).toStandardDuration();
 
-//    private Duration sixHourRetention = Duration.standardDays(31);
     private ReadablePeriod sixHourRetention = Days.days(31);
 
-//    private Duration twentyFourHourRetention = Duration.standardDays(365);
     private ReadablePeriod twentyFourHourRetention = Days.days(365);
 
     private int rawTTL = MetricsTable.RAW.getTTL();
@@ -62,6 +57,8 @@ public class MetricsConfiguration {
     private Duration oneHourTimeSliceDuration = Duration.standardHours(6);
 
     private Duration sixHourTimeSliceDuration = Duration.standardHours(24);
+
+    private int indexPageSize = 2500;
 
     public int getRawTTL() {
         return rawTTL;
@@ -162,5 +159,13 @@ public class MetricsConfiguration {
 
         throw new IllegalArgumentException("Time slice duration for " + table.getTableName()
             + " table is not supported");
+    }
+
+    public int getIndexPageSize() {
+        return indexPageSize;
+    }
+
+    public void setIndexPageSize(int indexPageSize) {
+        this.indexPageSize = indexPageSize;
     }
 }

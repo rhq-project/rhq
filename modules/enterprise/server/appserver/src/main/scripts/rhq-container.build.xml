@@ -939,6 +939,11 @@ rhq.metrics.aggregation.parallelism=3
 # The number of threads to use during aggregation. It defaults to
 # ceiling(5, num_cores).
 rhq.metrics.aggregation.workers=4
+
+# A limit, specified in days, on the age of raw data that is ingested. If raw
+# data has a timestamp that is more than limit days old, then it is not stored.
+# This prevents raw data that is for example a year old from being stored.
+rhq.metrics.data.age-limit=3
 </echo>
 
         <echo file="${rhq.bin.dir}/rhq-storage.properties">#################### RHQ Storage Configuration Properties ####################

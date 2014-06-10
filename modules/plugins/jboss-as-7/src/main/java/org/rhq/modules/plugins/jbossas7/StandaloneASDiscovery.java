@@ -18,8 +18,21 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -28,9 +41,13 @@ import org.rhq.modules.plugins.jbossas7.helper.HostPort;
  */
 public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
+    private static final Log log = LogFactory.getLog(StandaloneASDiscovery.class);
+
     private static final String SERVER_BASE_DIR_SYSPROP = "jboss.server.base.dir";
     private static final String SERVER_CONFIG_DIR_SYSPROP = "jboss.server.config.dir";
     private static final String SERVER_LOG_DIR_SYSPROP = "jboss.server.log.dir";
+
+    private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     @Override
     protected AS7Mode getMode() {
@@ -84,4 +101,58 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         return process.getParentProcess();
     }
 
+    @Override
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
+        Set<DiscoveredResourceDetails> discoveredResources = super.discoverResources(discoveryContext);
+
+        for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+            discoverAdditionalJavaOpts(discoveredResource, discoveryContext);
+        }
+
+        return discoveredResources;
+    }
+
+    @Override
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig, ResourceDiscoveryContext context)
+        throws InvalidPluginConfigurationException {
+        DiscoveredResourceDetails discoveredResource = super.discoverResource(pluginConfig, context);
+
+        discoverAdditionalJavaOpts(discoveredResource, context);
+
+        return discoveredResource;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void discoverAdditionalJavaOpts(DiscoveredResourceDetails discoveredResource,
+        ResourceDiscoveryContext context) {
+        if (discoveredResource.getPluginConfiguration().getSimpleValue(ServerPluginConfiguration.Property.HOME_DIR) == null) {
+            log.error("Additional JAVA_OPTS cannot be discovered because "
+                + ServerPluginConfiguration.Property.HOME_DIR + " property not set");
+            return;
+        }
+
+        File baseDirectory = new File(discoveredResource.getPluginConfiguration().getSimpleValue(
+            ServerPluginConfiguration.Property.HOME_DIR));
+        File binDirectory = new File(baseDirectory, "bin");
+
+        String javaOptsAdditionalValue = null;
+        File configFile = null;
+        AdditionalJavaOpts additionalJavaOptsConfig = null;
+
+        if (OperatingSystemType.WINDOWS.equals(context.getSystemInformation().getOperatingSystemType())) {
+            configFile = new File(binDirectory, "standalone.conf.bat");
+            additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
+        }else {
+            configFile = new File(binDirectory, "standalone.conf");
+            additionalJavaOptsConfig = new AdditionalJavaOpts.LinuxConfiguration();
+        }
+
+        try {
+            javaOptsAdditionalValue = additionalJavaOptsConfig.discover(configFile);
+        } catch (Exception e) {
+            log.error("Unable to discover additional JAVA_OPTS set via RHQ from configuration file.", e);
+        }
+
+        discoveredResource.getPluginConfiguration().setSimpleValue(JAVA_OPTS_ADDITIONAL_PROP, javaOptsAdditionalValue);
+    }
 }

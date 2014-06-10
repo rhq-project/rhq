@@ -287,6 +287,16 @@ public class MeasurementMonitor implements MeasurementMonitorMBean {
         storageClientManager.setAggregationWorkers(numWorkers);
     }
 
+    @Override
+    public int getRawDataAgeLimit() {
+        return storageClientManager.getRawDataAgeLimit();
+    }
+
+    @Override
+    public void setRawDataAgeLimit(int ageLimit) {
+        storageClientManager.setRawDataAgeLimit(ageLimit);
+    }
+
     @PostConstruct
     private void init() {
         JMXUtil.registerMBean(this, OBJECT_NAME);

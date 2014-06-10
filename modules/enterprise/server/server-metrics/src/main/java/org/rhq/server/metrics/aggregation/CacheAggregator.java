@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
@@ -22,7 +21,6 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
-import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.ResultSetMapper;
 
@@ -67,18 +65,9 @@ class CacheAggregator extends BaseAggregator {
     }
 
     @Override
-    protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
-        StorageResultSetFuture indexFuture = dao.findCurrentCacheIndexEntries(aggregationType.getCacheTable(),
-            currentDay.getMillis(), AggregationManager.INDEX_PARTITION, startTime.getMillis());
-
-        return Futures.transform(indexFuture, new Function<ResultSet, List<CacheIndexEntry>>() {
-            @Override
-            public List<CacheIndexEntry> apply(ResultSet resultSet) {
-                CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
-
-                return mapper.map(resultSet);
-            }
-        });
+    protected List<CacheIndexEntry> getIndexEntries() {
+        IndexEntriesLoader loader = new IndexEntriesLoader(startTime, currentDay, dao);
+        return loader.loadCurrentCacheIndexEntries(indexPageSize, aggregationType.getCacheTable());
     }
 
     /**

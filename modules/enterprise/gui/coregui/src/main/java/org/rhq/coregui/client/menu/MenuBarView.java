@@ -285,7 +285,9 @@ public class MenuBarView extends EnhancedVLayout {
            +"<span class='icon-bar'></span>"
          +"</button>"
          +"<a class='navbar-brand' href='#' onclick='__gwt_showAboutBox(); return false;'>"
-           +"<img class='navbar-logo' src='img/logo.png' />"
+                + "<img class='navbar-logo' src='img/"
+                + ("RHQ".equals(CoreGUI.get().getProductInfo().getShortName()) ? "logo" : "RH-JON-Login-Logo")
+                + ".png'/>"
          +"</a>"
        +"</div>"
        +"<div class='navbar-collapse navbar-collapse-1 collapse'>"

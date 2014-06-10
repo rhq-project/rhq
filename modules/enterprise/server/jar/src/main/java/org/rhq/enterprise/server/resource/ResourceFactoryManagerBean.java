@@ -695,9 +695,13 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         DeleteResourceRequest request = new DeleteResourceRequest(persistedHistory.getId(), resourceId);
 
         try {
-            AgentClient agentClient = agentManager.getAgentClient(agent);
-            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
-            resourceFactoryAgentService.deleteResource(request);
+            if (resource.isSynthetic()) {
+                resourceFactoryManager.completeDeleteResourceRequest(new DeleteResourceResponse(persistedHistory.getId(), DeleteResourceStatus.SUCCESS, null));
+            } else {
+                AgentClient agentClient = agentManager.getAgentClient(agent);
+                ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
+                resourceFactoryAgentService.deleteResource(request);
+            }
 
             return persistedHistory;
         } catch (CannotConnectException e) {

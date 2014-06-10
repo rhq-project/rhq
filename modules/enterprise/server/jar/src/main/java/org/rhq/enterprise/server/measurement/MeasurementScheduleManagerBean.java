@@ -498,10 +498,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 // query must not return domain entities as they would be placed in the Hibernate cache.
                 // Return only the data necessary to construct minimal objects ourselves. Using JPQL
                 // is ok, it just lets Hibernate do the heavy lifting for query generation.
+                //
+                // It only makes sense to update schedules of non-synthetic resources. Agents don't operate
+                // on the synthetic resources at all.
                 queryString = "" //
                     + "SELECT ms.id, ms.interval, ms.resource.id, ms.definition.name, ms.definition.dataType, ms.definition.rawNumericType" //
                     + " FROM  MeasurementSchedule ms" //
-                    + " WHERE ms.definition.id IN ( :definitionIds )";
+                    + " WHERE ms.definition.id IN ( :definitionIds ) AND ms.resource.synthetic = false";
                 Query query = entityManager.createQuery(queryString);
                 query.setParameter("definitionIds", idsAsList);
                 List<Object[]> rs = query.getResultList();
@@ -756,7 +759,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             + "       ms.definition.rawNumericType " //
             + "  FROM MeasurementSchedule ms " //
             + " WHERE ms.id IN ( " + scheduleSubQuery + " ) " //
-            + "   AND ms.resource.agent.id = :agentId";
+            + "   AND ms.resource.agent.id = :agentId" //
+            + "   AND ms.resource.synthetic = false";
         if (log.isDebugEnabled()) {
             log.debug("scheduleRequestQueryString: " + scheduleRequestQueryString);
         }
@@ -1268,6 +1272,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         Map<Agent, Set<ResourceMeasurementScheduleRequest>> agentScheduleMap = new HashMap<Agent, Set<ResourceMeasurementScheduleRequest>>();
         for (Resource resource : resources) {
+            if (resource.isSynthetic()) {
+                continue;
+            }
             Agent agent = resource.getAgent();
             Set<ResourceMeasurementScheduleRequest> agentSchedules = agentScheduleMap.get(agent);
             if (agentSchedules == null) {

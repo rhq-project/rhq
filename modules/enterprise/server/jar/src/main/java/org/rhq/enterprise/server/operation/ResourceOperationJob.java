@@ -111,7 +111,8 @@ public class ResourceOperationJob extends OperationJob {
             }
 
             invokeOperationOnResource(schedule, resourceHistory, operationManager);
-        } catch (Exception e) {            if (e instanceof CancelJobException) {
+        } catch (Exception e) {
+            if (e instanceof CancelJobException) {
                 // if a cancel job exception was thrown we do not need to do anything else.
                 // we can just rethrow the exception.
                 throw (CancelJobException) e;
@@ -185,6 +186,7 @@ public class ResourceOperationJob extends OperationJob {
      */
     void invokeOperationOnResource(ResourceOperationSchedule schedule, ResourceOperationHistory resourceHistory,
         OperationManagerLocal operationManager) throws Exception {
+
         // make sure we have a valid session
         Subject s = getUserWithSession(schedule.getSubject(), true);
         schedule.setSubject(s);
@@ -192,10 +194,18 @@ public class ResourceOperationJob extends OperationJob {
         resourceHistory.setStartedTime();
         resourceHistory = (ResourceOperationHistory) operationManager.updateOperationHistory(s, resourceHistory);
 
+        Resource resource = schedule.getResource();
+
+        if (resource.isSynthetic()) {
+            String message = "Cannot invoke operations on a synthetic resource ID " + resource.getId();
+            resourceHistory.setErrorMessage(message);
+            operationManager.updateOperationHistory(s, resourceHistory);
+            operationManager.checkForCompletedGroupOperation(resourceHistory.getId());
+            throw new IllegalArgumentException(message);
+        }
+
         // now tell the agent to invoke it!
         try {
-            Resource resource = schedule.getResource();
-
             if (isResourceUncommitted(resource)) {
                 String msg = "The resource with id " + resource.getId() + " is not committed in inventory. It may "
                     + "have been deleted from inventory. Canceling job.";

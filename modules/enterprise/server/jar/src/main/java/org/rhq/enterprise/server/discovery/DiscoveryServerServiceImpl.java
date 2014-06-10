@@ -333,73 +333,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
     @Override
     public Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
-        if (log.isDebugEnabled()) {
-            log.debug("Post-processing " + resourceIds.size() + "newly committed resources");
-            log.debug("Ids were: " + resourceIds);
-        }
-
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-        MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-        StatusManagerLocal statusManager = LookupUtil.getStatusManager();
-
-        long start = System.currentTimeMillis();
-
-        // do this in one fell swoop, instead of one resource at a time
-        Set<ResourceMeasurementScheduleRequest> results = scheduleManager.findSchedulesForResourceAndItsDescendants(
-            ArrayUtils.unwrapCollection(resourceIds), false);
-
-        long time = (System.currentTimeMillis() - start);
-
-        if (time >= 10000L) {
-            log.info("Performance: commit resource, create schedules timing: resourceCount/millis="
-                + resourceIds.size() + '/' + time);
-        } else if (log.isDebugEnabled()) {
-            log.debug("Performance: commit resource, create schedules timing: resourceCount/millis="
-                + resourceIds.size() + '/' + time);
-        }
-
-        start = System.currentTimeMillis();
-
-        for (Integer resourceId : resourceIds) {
-            // apply alert templates
-            try {
-                alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId);
-            } catch (AlertDefinitionCreationException adce) {
-                /* should never happen because AlertDefinitionCreationException is only ever
-                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-                 *
-                 * but we'll log it anyway, just in case, so it isn't just swallowed
-                 */
-                log.error(adce);
-            } catch (Throwable t) {
-                log.debug("Could not apply alert templates for resourceId = " + resourceId, t);
-            }
-        }
-
-        try {
-            if (resourceIds.size() > 0) {
-                // they all come from the same agent, so pick any old one
-                int anyResourceIdFromNewlyCommittedSet = resourceIds.iterator().next();
-                int agentId = agentManager.getAgentIdByResourceId(anyResourceIdFromNewlyCommittedSet);
-                statusManager.updateByAgent(agentId);
-            }
-        } catch (Throwable t) {
-            log.debug("Could not reload caches for newly committed resources", t);
-        }
-
-        time = (System.currentTimeMillis() - start);
-
-        if (time >= 10000L) {
-            log.info("Performance: commit resource, apply alert templates timing: resourceCount/millis="
-                + resourceIds.size() + '/' + time);
-        } else if (log.isDebugEnabled()) {
-            log.debug("Performance: commit resource, apply alert templates timing: resourceCount/millis="
-                + resourceIds.size() + '/' + time);
-        }
-
-        return results;
+        DiscoveryBossLocal boss = LookupUtil.getDiscoveryBoss();
+        return boss.postProcessNewlyCommittedResources(resourceIds);
     }
 
     @Override

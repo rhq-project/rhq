@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -82,6 +83,7 @@ import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -100,6 +102,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -115,6 +118,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Class that deals with getting data about resources
@@ -620,6 +624,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
             "via a normal RHQ agent. DEPRECATED Use POST /platforms instead")
     @POST
     @Path("platform/{name}")
+    //NOT_SUPPORTED so that the underlying EJB calls get called in their own transactions - they actually
+    //expect it, because resource creation requires an agent round-trip in the non-REST case.
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Response createPlatformOLD(
             @ApiParam(value = "Name of the platform") @PathParam("name") String name,
             @ApiParam(value = "Type of the platform", allowableValues = "Linux,Windows,... TODO") StringValue typeValue,
@@ -636,6 +643,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Create a new platform in the Server. If the platform already exists, this is a no-op." +
             "The platform internally has a special name so that it will not clash with one that was generated" +
             "via a normal RHQ agent. Only resourceName and typeName need to be supplied in the passed object")
+    //NOT_SUPPORTED so that the underlying EJB calls get called in their own transactions - they actually
+    //expect it, because resource creation requires an agent round-trip in the non-REST case.
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Response createPlatform(
         @ApiParam("The info about the platform. Only type name and resource name need to be supplied") ResourceWithType resource,
         @Context UriInfo uriInfo)
@@ -677,7 +687,11 @@ public class ResourceHandlerBean extends AbstractRestBean {
         Agent agent ;
         agent = new Agent(DUMMY_AGENT_NAME_PREFIX + name, "-dummy-p:" + name, 12345, "http://foo.com/p:name/" + name,
             DUMMY_AGENT_TOKEN_PREFIX + name);
+        agent.setServer(LookupUtil.getServerManager().getServer());
+        agent.setSynthetic(true);
         agentMgr.createAgent(agent);
+        AlertConditionCacheManagerLocal cacheManager = LookupUtil.getAlertConditionCacheManager();
+        cacheManager.reloadCachesForAgent(agent.getId());
 
         Resource platform = new Resource(resourceKey,name,type);
         platform.setUuid(UUID.randomUUID().toString());
@@ -686,11 +700,14 @@ public class ResourceHandlerBean extends AbstractRestBean {
         platform.setModifiedBy(caller.getName());
         platform.setDescription(type.getDescription() + ". Created via REST-api");
         platform.setItime(System.currentTimeMillis());
+        platform.setSynthetic(true);
 
         try {
-            resMgr.createResource(caller,platform,-1);
+            resMgr.createResource(caller, platform, Resource.ROOT_ID);
+            discoveryBoss.postProcessNewlyCommittedResources(Collections.singleton(platform.getId()));
 
-            createSchedules(platform);
+            //reload, because post-processing created bunch of stuff on the resource
+            platform = resMgr.getResourceById(caller, platform.getId());
 
             ResourceWithType rwt = fillRWT(platform,uriInfo);
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
@@ -733,6 +750,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Create a new resource as a child of an existing resource. ",
         notes= "If a handle is given, a content based resource is created; the content identified by the handle is not removed from the content store." +
             "If no handle is given, a resource is created from the data of the passed 'resource' object.")
+    //NOT_SUPPORTED so that the underlying EJB calls get called in their own transactions - they actually
+    //expect it, because resource creation requires an agent round-trip in the non-REST case.
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Response createResource(
         @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBResourceRequest resource,
         @ApiParam("A handle that identifies content that has been uploaded to the server before.") @QueryParam("handle") String handle,
@@ -792,7 +812,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         try {
             Thread.sleep(2000L); // give the agent time to do the work
         } catch (InterruptedException e) {
-            ; // nothing
+            //reset the flag and finish off anyway
+            Thread.currentThread().interrupt();
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
@@ -816,7 +837,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
             try {
                 Thread.sleep(2000L); // give the agent time to do the work
             } catch (InterruptedException e) {
-                ; // nothing
+                //reset the flag and finish off anyway
+                Thread.currentThread().interrupt();
             }
 
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
@@ -836,7 +858,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     }
 
     /**
-     * creates syntetic resource. This way we can create resources that would normally be discovered by agent 
+     * Creates synthetic resource. This way we can create resources that would normally be discovered by agent
      * and there's no way in UI/CLI to create them.
      * @param request
      * @param resType
@@ -844,7 +866,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
      * @param uriInfo
      * @return
      */
-    private Response createResourceSyntetic(CreateCBResourceRequest request, ResourceType resType, HttpHeaders headers, UriInfo uriInfo) {
+    private Response createResourceSynthetic(CreateCBResourceRequest request, ResourceType resType, HttpHeaders headers,
+        UriInfo uriInfo) {
         int parentId = request.getParentId();
         String typeName = request.getTypeName();
         String plugin = request.getPluginName();
@@ -873,11 +896,18 @@ public class ResourceHandlerBean extends AbstractRestBean {
         res.setParentResource(parent);
         res.setInventoryStatus(InventoryStatus.COMMITTED);
         res.setDescription(resType.getDescription() + ". Created via REST-api");
+        res.setSynthetic(true);
 
         try {
-            resMgr.createResource(caller,res,parent.getId());
+            DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+            MergeResourceResponse response = discoveryBoss.addResource(res, caller.getId());
 
-            createSchedules(res);
+            discoveryBoss.postProcessNewlyCommittedResources(Collections.singleton(response.getResourceId()));
+
+            res = resMgr.getResourceById(caller, response.getResourceId());
+            //avoid lazy load exception by replacing the JPA proxies with the stuff we know
+            //that will be used in fillRWT
+            res.setParentResource(parent);
 
             ResourceWithType rwt = fillRWT(res,uriInfo);
 
@@ -887,6 +917,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
             Response.ResponseBuilder builder = Response.created(uri);
             builder.entity(rwt);
+
             return builder.build();
 
 
@@ -937,15 +968,27 @@ public class ResourceHandlerBean extends AbstractRestBean {
         } catch (InvalidPluginConfigurationClientException e) {
             builder = Response.serverError();
             builder.entity(new StringValue(e.getMessage()));
-            e.printStackTrace();
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to manually add resource " + request + " through REST.", e);
+            } else {
+                log.warn("Failed to manually add resource " + request + " through REST: " + e.getMessage());
+            }
         } catch (PluginContainerException e) {
             builder = Response.serverError();
             builder.entity(new StringValue(e.getMessage()));
-            e.printStackTrace();
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to manually add resource " + request + " through REST.", e);
+            } else {
+                log.warn("Failed to manually add resource " + request + " through REST: " + e.getMessage());
+            }
         } catch (Exception e) {
             builder = Response.serverError();
             builder.entity(new StringValue(e.getMessage()));
-            e.printStackTrace();
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to manually add resource " + request + " through REST.", e);
+            } else {
+                log.warn("Failed to manually add resource " + request + " through REST: " + e.getMessage());
+            }
         }
         return builder.build();
     }
@@ -955,20 +998,19 @@ public class ResourceHandlerBean extends AbstractRestBean {
         int parentId = request.getParentId();
 
         // Check for valid parent
-        fetchResource(parentId);
+        Resource parentResource = fetchResource(parentId);
+        boolean syntheticParent = parentResource.isSynthetic();
 
         ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(request.getTypeName(),request.getPluginName());
         if (resType == null) {
             throw new StuffNotFoundException("ResourceType with name [" + request.getTypeName() + "] and plugin [" + request.getPluginName() + "]");
         }
-        if (resType.isSupportsManualAdd()) {
+        if (resType.isSupportsManualAdd() && !syntheticParent) {
             return createResourceManualImport(request, resType, headers, uriInfo);
-        }
-        else if (resType.isCreatable()) {
+        } else if (resType.isCreatable() && !syntheticParent) {
             return createResourceRegularChild(request, resType, headers, uriInfo);
-        }
-        else {
-            return createResourceSyntetic(request, resType, headers, uriInfo);
+        } else {
+            return createResourceSynthetic(request, resType, headers, uriInfo);
         }
     }
 
@@ -1031,6 +1073,15 @@ public class ResourceHandlerBean extends AbstractRestBean {
         String plugin = request.getPluginName();
         String name = request.getResourceName();
 
+        // Check for valid parent
+        Resource parentResource = fetchResource(parentId);
+        if (parentResource.isSynthetic()) {
+            ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,plugin);
+            if (resType==null)
+                throw new StuffNotFoundException("ResourceType with name [" + typeName + "] and plugin [" + plugin + "]");
+            return createResourceSynthetic(request, resType, headers, uriInfo);
+        }
+
         String tmpDirName = System.getProperty("java.io.tmpdir");
 
         File tmpDir = new File(tmpDirName);
@@ -1040,9 +1091,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
             throw new StuffNotFoundException("Content for handle " + handle);
 
         BufferedInputStream resourceBits = new BufferedInputStream(new FileInputStream(content));
-
-        // Check for valid parent
-        fetchResource(parentId);
 
         ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,plugin);
         if (resType==null)
@@ -1061,7 +1109,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         try {
             Thread.sleep(2000L); // give the agent time to do the work
         } catch (InterruptedException e) {
-            ; // nothing
+            //reset the flag and finish off anyway
+            Thread.currentThread().interrupt();
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);

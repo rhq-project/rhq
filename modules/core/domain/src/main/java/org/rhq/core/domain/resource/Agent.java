@@ -69,7 +69,7 @@ import org.rhq.core.domain.cloud.Server;
         + "AND r.inventoryStatus = 'COMMITTED'" //
         + "AND r.agent.id = :agentId"),
     @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_WITH_AGENTS_BY_RESOURCE_IDS, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite(r.id, r.agent) " //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite(r.id, r.synthetic, r.agent) " //
         + "  FROM Resource r " //
         + " WHERE r.id IN (:resourceIds)"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite "
@@ -146,17 +146,20 @@ import org.rhq.core.domain.cloud.Server;
         + "  WHERE a.status = 0 "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_REPORT, query = "" //
         + " UPDATE Agent a " //
-        + "    SET lastAvailabilityReport = :reportTime, backFilled = FALSE " //
-        + "  WHERE id = :agentId "), //
+        + "    SET a.lastAvailabilityReport = :reportTime, a.backFilled = FALSE " //
+        + "  WHERE a.id = :agentId "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_PING, query = "" //
         + " UPDATE Agent a " //
-        + "    SET lastAvailabilityPing = :now " //
-        + "  WHERE name = :agentName AND backfilled = FALSE "), //
+        + "    SET a.lastAvailabilityPing = :now " //
+        + "  WHERE a.name = :agentName AND a.backFilled = FALSE "), //
     @NamedQuery(name = Agent.QUERY_UPDATE_LAST_AVAIL_PING_FORCE, query = "" //
         + " UPDATE Agent a " //
-        + "    SET lastAvailabilityPing = :now " //
-        + "  WHERE name = :agentName ") //
-
+        + "    SET a.lastAvailabilityPing = :now " //
+        + "  WHERE a.name = :agentName "), //
+    @NamedQuery(name = Agent.QUERY_FIND_CLAIMABLE_SYNTHETIC_AGENTS, query = "" //
+        + " SELECT a" //
+        + " FROM Agent a"
+        + " WHERE a.synthetic = true AND a.server.mtime < :oldestValidHeartBeat") //
 })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_AGENT_ID_SEQ", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
@@ -196,6 +199,8 @@ public class Agent implements Serializable {
     public static final String QUERY_UPDATE_LAST_AVAIL_REPORT = "Agent.updateLastAvailReport";
     public static final String QUERY_UPDATE_LAST_AVAIL_PING = "Agent.updateLastAvailPing";
     public static final String QUERY_UPDATE_LAST_AVAIL_PING_FORCE = "Agent.updateLastAvailPingForce";
+
+    public static final String QUERY_FIND_CLAIMABLE_SYNTHETIC_AGENTS = "Agent.findClaimableSyntheticAgents";
 
     // this value is set, when authorized user wants to reset the token
     public static final String SECURITY_TOKEN_RESET = "@#$reset$#@";
@@ -245,6 +250,9 @@ public class Agent implements Serializable {
 
     @Column(name = "BACKFILLED", nullable = false)
     private boolean backFilled;
+
+    @Column(name = "SYNTHETIC", nullable = false)
+    private boolean synthetic;
 
     /**
      * Creates a new instance of Agent
@@ -521,6 +529,14 @@ public class Agent implements Serializable {
 
     public void setBackFilled(boolean backFilled) {
         this.backFilled = backFilled;
+    }
+
+    public boolean isSynthetic() {
+        return synthetic;
+    }
+
+    public void setSynthetic(boolean synthetic) {
+        this.synthetic = synthetic;
     }
 
     @PrePersist

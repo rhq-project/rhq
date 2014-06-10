@@ -53,4 +53,19 @@ public class CreateCBResourceRequest extends ResourceWithType {
         this.resourceConfig = resourceConfig;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CreateCBResourceRequest[");
+        sb.append("resourceName='").append(resourceName).append('\'');
+        sb.append(", resourceId=").append(resourceId);
+        sb.append(", typeName='").append(typeName).append('\'');
+        sb.append(", typeId=").append(typeId);
+        sb.append(", pluginName='").append(pluginName).append('\'');
+        sb.append(", parentId=").append(parentId);
+        sb.append(", ancestry='").append(getAncestry()).append('\'');
+        sb.append(", pluginConfig=").append(pluginConfig);
+        sb.append(", resourceConfig=").append(resourceConfig);
+        sb.append(']');
+        return sb.toString();
+    }
 }

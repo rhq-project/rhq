@@ -23,18 +23,20 @@ import java.io.Serializable;
 import org.rhq.core.domain.resource.Agent;
 
 /**
- * (resourceId, agent) tuple
+ * (resourceId, synthetic, agent) tuple. Synthetic is true if the resource in question is synthetic.
  * 
  * @author Jirka Kremser
  */
 public class ResourceIdWithAgentComposite implements Serializable {
 
-    private static final long serialVersionUID = 42L;
+    private static final long serialVersionUID = 43L;
     private final int resourceId;
     private final Agent agent;
+    private final boolean synthetic;
 
-    public ResourceIdWithAgentComposite(int resourceId, Agent agent) {
+    public ResourceIdWithAgentComposite(int resourceId, boolean synthetic, Agent agent) {
         this.resourceId = resourceId;
+        this.synthetic = synthetic;
         this.agent = agent;
     }
 
@@ -44,5 +46,9 @@ public class ResourceIdWithAgentComposite implements Serializable {
 
     public Agent getAgent() {
         return agent;
+    }
+
+    public boolean isSynthetic() {
+        return synthetic;
     }
 }

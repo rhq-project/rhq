@@ -42,6 +42,7 @@
         <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="false"/>
         <column name="STATUS" type="INTEGER" required="false" default="0" />
         <column name="BACKFILLED" type="BOOLEAN" required="true" />
+        <column name="SYNTHETIC" type="BOOLEAN" required="true" default="false"/>
 
         <index name="RHQ_AGENT_NAME_UNIQUE" unique="true">
             <field ref="NAME"/>

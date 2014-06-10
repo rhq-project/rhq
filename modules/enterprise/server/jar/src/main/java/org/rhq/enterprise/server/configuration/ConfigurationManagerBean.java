@@ -258,15 +258,17 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationUpdateResponse response = null;
 
         try {
-            // now let's tell the agent to actually update the resource component's plugin configuration
-            AgentClient agentClient = this.agentManager.getAgentClient(resource.getAgent());
+            if (!resource.isSynthetic()) {
+                // now let's tell the agent to actually update the resource component's plugin configuration
+                AgentClient agentClient = this.agentManager.getAgentClient(resource.getAgent());
 
-            agentClient.getDiscoveryAgentService().updatePluginConfiguration(resource.getId(), configuration);
-            try {
-                agentClient.getDiscoveryAgentService().executeServiceScanDeferred(resource.getId());
-            } catch (Exception e) {
-                LOG.warn("Failed to execute service scan - cannot detect children of the newly connected resource ["
-                    + resource + "]", e);
+                agentClient.getDiscoveryAgentService().updatePluginConfiguration(resource.getId(), configuration);
+                try {
+                    agentClient.getDiscoveryAgentService().executeServiceScanDeferred(resource.getId());
+                } catch (Exception e) {
+                    LOG.warn("Failed to execute service scan - cannot detect children of the newly connected resource ["
+                        + resource + "]", e);
+                }
             }
 
             response = new ConfigurationUpdateResponse(update.getId(), null, ConfigurationUpdateStatus.SUCCESS, null);
@@ -1326,6 +1328,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
+
+        if (resource.isSynthetic()) {
+            //configuration validation returns null on success or non-null on error.
+            //pretend success for the synthetic resources.
+            return null;
+        }
+
         Agent agent = resource.getAgent();
         AgentClient agentClient = this.agentManager.getAgentClient(agent);
         ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
@@ -1402,6 +1411,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      */
     private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
         try {
+            if (update.getResource().isSynthetic()) {
+                return;
+            }
+
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(),
                 update.getConfiguration(), update.getResource().getId());
@@ -1729,6 +1742,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * @return the resource's live configuration or <code>null</code> if it could not be retrieved from the agent
      */
     private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst, boolean fromStructured) {
+        if (resource.isSynthetic()) {
+            //synthetic resources don't have any agents we can ask for modifications...
+            return resource.getResourceConfiguration();
+        }
+
         Configuration liveConfig = null;
 
         try {
@@ -2444,6 +2462,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_READ, resource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
+        }
+
+        if (resource.isSynthetic()) {
+            throw new IllegalArgumentException("Configuration translation not supported on synthetic resources.");
         }
 
         try {

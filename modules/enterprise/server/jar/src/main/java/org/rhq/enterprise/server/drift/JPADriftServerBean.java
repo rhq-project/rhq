@@ -447,6 +447,11 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     public void ackChangeSetInNewTransaction(Subject subject, final int resourceId, final Headers headers,
         final List<JPADriftFile> driftFilesToRequest) throws Exception {
 
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (resource.isSynthetic()) {
+            return;
+        }
+
         try {
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();

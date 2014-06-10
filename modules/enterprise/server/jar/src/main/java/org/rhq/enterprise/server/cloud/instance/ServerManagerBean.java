@@ -75,6 +75,7 @@ import org.rhq.enterprise.server.storage.StorageClientManager;
 public class ServerManagerBean implements ServerManagerLocal {
     private final Log log = LogFactory.getLog(ServerManagerBean.class);
 
+    private static final long HEART_BEAT_INTERVAL = 30000L;
     static private final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
     static private Server.OperationMode lastEstablishedServerMode = null;
@@ -117,7 +118,7 @@ public class ServerManagerBean implements ServerManagerLocal {
             }
         }
         // single-action timer that will trigger in 30 seconds
-        timerService.createIntervalTimer(30000L, 30000L, new TimerConfig(null, false));
+        timerService.createIntervalTimer(HEART_BEAT_INTERVAL, HEART_BEAT_INTERVAL, new TimerConfig(null, false));
     }
 
     @Timeout
@@ -194,6 +195,10 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public void establishCurrentServerMode() {
         Server server = getServer();
+        establishCurrentServerMode(server);
+    }
+
+    private void establishCurrentServerMode(Server server) {
         Server.OperationMode serverMode = determineServerOperationMode(
             server.hasStatus(Server.Status.MANUAL_MAINTENANCE_MODE), storageClientManager.isClusterAvailable(),
             server.getOperationMode());
@@ -318,8 +323,9 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void beat() {
+        Server server = null;
         try {
-            Server server = getServer();
+            server = getServer();
             server.setMtime(System.currentTimeMillis());
         } catch (ServerNotFoundException snfe) {
             // an admin removed our server entity, that means we are to be decommissioned so immediately shutdown
@@ -337,14 +343,12 @@ public class ServerManagerBean implements ServerManagerLocal {
 
         // Handles server mode state changes
         // note: this call should be fast. if not we need to break the heart beat into its own job
-        establishCurrentServerMode();
+        if (server != null) {
+            establishCurrentServerMode(server);
+            claimSyntheticAgents(server);
+        }
     }
 
-    /**
-     * @param manualMaintenance
-     * @param storageNodeUp
-     * @param currentOperationMode
-     */
     private Server.OperationMode determineServerOperationMode(boolean isManualMaintenance,
         boolean isStorageClusterAvailable, Server.OperationMode requestedOperationMode) {
 
@@ -363,5 +367,17 @@ public class ServerManagerBean implements ServerManagerLocal {
         }
 
         throw new RuntimeException("Unable to determine new server operation mode.");
+    }
+
+    private void claimSyntheticAgents(Server server) {
+        Query q = entityManager.createNamedQuery(Agent.QUERY_FIND_CLAIMABLE_SYNTHETIC_AGENTS);
+        q.setParameter("oldestValidHeartBeat", server.getMtime() - HEART_BEAT_INTERVAL - 1);
+
+        @SuppressWarnings("unchecked")
+        List<Agent> agents = (List<Agent>) q.getResultList();
+
+        for(Agent agent : agents) {
+            agent.setServer(server);
+        }
     }
 }

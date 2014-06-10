@@ -77,6 +77,7 @@ import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -95,14 +96,18 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
@@ -280,6 +285,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Set<Integer> topLevelServerIds = new HashSet<Integer>();
 
         for (Resource platformChild : platform.getChildResources()) {
+            if (platformChild.isSynthetic()) {
+                continue;
+            }
+
             switch (platformChild.getResourceType().getCategory()) {
             case SERVER:
                 topLevelServerIds.add(platformChild.getId());
@@ -532,6 +541,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         ResourceSyncInfo syncInfo;
 
         for (Resource platform : platforms) {
+            if (platform.isSynthetic()) {
+                continue;
+            }
+
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             if (agentClient != null) {
                 try {
@@ -549,7 +562,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
         for (Resource server : servers) {
             // Only update servers if they haven't already been updated at the platform level
-            if (!platforms.contains(server.getParentResource())) {
+            if (!server.isSynthetic() && !platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 if (agentClient != null) {
                     try {
@@ -629,6 +642,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Resource parentResource = this.resourceManager.getResourceById(user, parentResourceId);
 
+        if (parentResource.isSynthetic()) {
+            throw new IllegalArgumentException("A resource cannot be manually added under a synthetic resource.");
+        }
+
         if (!resourceType.isSupportsManualAdd()) {
             throw new RuntimeException("Cannot manually add " + resourceType + " child Resource under parent "
                 + parentResource + ", since the " + resourceType + " type does not support manual add.");
@@ -697,6 +714,77 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         return mergeResourceResponse;
+    }
+
+    @Override
+    public Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Post-processing " + resourceIds.size() + "newly committed resources");
+            LOG.debug("Ids were: " + resourceIds);
+        }
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+        MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+        StatusManagerLocal statusManager = LookupUtil.getStatusManager();
+
+        long start = System.currentTimeMillis();
+
+        // do this in one fell swoop, instead of one resource at a time
+        Set<ResourceMeasurementScheduleRequest> results = scheduleManager.findSchedulesForResourceAndItsDescendants(
+            ArrayUtils.unwrapCollection(resourceIds), false);
+
+        long time = (System.currentTimeMillis() - start);
+
+        if (time >= 10000L) {
+            LOG.info("Performance: commit resource, create schedules timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Performance: commit resource, create schedules timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        }
+
+        start = System.currentTimeMillis();
+
+        for (Integer resourceId : resourceIds) {
+            // apply alert templates
+            try {
+                alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId);
+            } catch (AlertDefinitionCreationException adce) {
+                /* should never happen because AlertDefinitionCreationException is only ever
+                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
+                 *
+                 * but we'll log it anyway, just in case, so it isn't just swallowed
+                 */
+                LOG.error(adce);
+            } catch (Throwable t) {
+                LOG.debug("Could not apply alert templates for resourceId = " + resourceId, t);
+            }
+        }
+
+        try {
+            if (resourceIds.size() > 0) {
+                // they all come from the same agent, so pick any old one
+                int anyResourceIdFromNewlyCommittedSet = resourceIds.iterator().next();
+                int agentId = agentManager.getAgentIdByResourceId(anyResourceIdFromNewlyCommittedSet);
+                statusManager.updateByAgent(agentId);
+            }
+        } catch (Throwable t) {
+            LOG.debug("Could not reload caches for newly committed resources", t);
+        }
+
+        time = (System.currentTimeMillis() - start);
+
+        if (time >= 10000L) {
+            LOG.info("Performance: commit resource, apply alert templates timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Performance: commit resource, apply alert templates timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        }
+
+        return results;
     }
 
     public boolean updateResourceVersion(int resourceId, String version) {

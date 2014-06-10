@@ -454,7 +454,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementFacet measurementFacet;
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
         if (resourceContainer == null) {
-            LOG.warn("Can not get resource container for resource with id " + resourceId);
+            LOG.warn("Cannot get resource container for resource with id " + resourceId);
             return Collections.emptySet();
         }
         Resource resource = resourceContainer.getResource();

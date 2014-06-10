@@ -84,13 +84,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>rhq-rh-access</artifactId>
-            <version>${project.version}</version>
-            <type>war</type>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>rhq-rest-examples</artifactId>
             <version>${project.version}</version>
             <type>war</type>
@@ -243,7 +236,10 @@
         <plugins>
 
             <plugin>
-                <artifactId>maven-ear-plugin</artifactId>
+              <artifactId>maven-ear-plugin</artifactId>
+
+                <!-- if adding new module here, please add it to 'enable-rha' profile as well -->  
+
                 <configuration>
                     <version>6</version> <!-- version of the generated application.xml -->
                     <displayName>RHQ</displayName>
@@ -331,14 +327,6 @@
                             <bundleFileName>rhq-rest-examples.war</bundleFileName>
                             <contextRoot>/rest-examples</contextRoot>
                         </webModule>
-
-                        <webModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-rh-access</artifactId>
-                            <bundleFileName>rhq-rh-access.war</bundleFileName>
-                            <contextRoot>/rha</contextRoot>
-                        </webModule>
-
 
                         <webModule>
                             <groupId>${project.groupId}</groupId>
@@ -550,6 +538,141 @@
     </build>
 
     <profiles>
+        <profile>
+          <id>enable-rha</id>
+           <activation>
+              <property>
+                 <!-- we want this always active but activeByDefault doesn't work -->
+                 <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
+                 <name>java.home</name>
+              </property>
+           </activation>
+            <dependencies>
+              <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>rhq-rh-access</artifactId>
+                <version>${project.version}</version>
+                <type>war</type>
+              </dependency>
+            </dependencies>
+            <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-ear-plugin</artifactId>
+                <configuration>
+                    <version>6</version> <!-- version of the generated application.xml -->
+                    <displayName>RHQ</displayName>
+                    <workDirectory>${earDirectory}</workDirectory>
+                    <filtering>true</filtering>
+                    <defaultJavaBundleDir>lib</defaultJavaBundleDir>
+                    <unpackTypes>war,ejb</unpackTypes>
+                    <initializeInOrder>true</initializeInOrder>
+                    <modules>
+                        <!-- ** EJB-JARs -->
+                        <ejbModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-core-domain</artifactId>
+                            <bundleFileName>rhq-core-domain-ejb3.jar</bundleFileName>
+                        </ejbModule>
+
+                        <ejbModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-enterprise-server</artifactId>
+                            <bundleFileName>rhq-server.jar</bundleFileName>
+                        </ejbModule>
+
+                        <ejbClientModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-enterprise-server</artifactId>
+                            <excluded>true</excluded>
+                        </ejbClientModule>
+
+                        <!-- ** JARs -->
+                        <jarModule>
+                            <groupId>org.rhq.helpers</groupId>
+                            <artifactId>rhq-rtfilter</artifactId>
+                            <bundleDir>lib</bundleDir>
+                            <includeInApplicationXml>false</includeInApplicationXml>
+                        </jarModule>
+                        <!-- ** WARs -->
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-portal</artifactId>
+                            <bundleFileName>rhq-portal.war</bundleFileName>
+                            <contextRoot>/portal</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-remote-client-war</artifactId>
+                            <bundleFileName>rhq-client.war</bundleFileName>
+                            <contextRoot>/client</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-downloads-war</artifactId>
+                            <bundleFileName>rhq-downloads.war</bundleFileName>
+                            <contextRoot>/downloads</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-agentupdate-war</artifactId>
+                            <bundleFileName>rhq-agentupdate.war</bundleFileName>
+                            <contextRoot>/agentupdate</contextRoot>
+                        </webModule>
+
+                        <!-- used to expose content through http -->
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-content_http</artifactId>
+                            <excluded>${exclude-content_http}</excluded>
+                            <bundleFileName>rhq-content_http.war</bundleFileName>
+                            <contextRoot>/content</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-rest</artifactId>
+                            <bundleFileName>rhq-rest.war</bundleFileName>
+                            <contextRoot>/rest</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-rest-examples</artifactId>
+                            <bundleFileName>rhq-rest-examples.war</bundleFileName>
+                            <contextRoot>/rest-examples</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-remoting-war</artifactId>
+                            <bundleFileName>rhq-remoting.war</bundleFileName>
+                            <contextRoot>/jboss-remoting-servlet-invoker</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-coregui</artifactId>
+                            <bundleFileName>coregui.war</bundleFileName>
+                            <contextRoot>/coregui</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-rh-access</artifactId>
+                            <bundleFileName>rhq-rh-access.war</bundleFileName>
+                            <contextRoot>/rha</contextRoot>
+                        </webModule>
+                     </modules>
+                  </configuration>
+              </plugin>
+            </plugins> 
+          </build>
+        </profile>
+
         <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
         <profile>
            <id>bundle-additional-script-languages</id>

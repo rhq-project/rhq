@@ -13539,4 +13539,46 @@
     </resource-configuration>
   </service>
 
+  <help >
+    <![CDATA[
+    <h3>Versioned Deployments (Since RHQ 4.12)</h3>
+    
+    This plugin supports Versioned Deployments.  A Deployment  (EAR, WAR, etc) can be a managed server deployment or
+    standalone deployment. This includes Versioned Subdeployments (WAR, EJB JAR inside an EAR, etc).  A Versioned
+    Deployment is one that incorporates a version into the artifact name.  For example, testapp-1.0.war.  By default
+    the plugin will strip the version from the artifact and create a resource named "testapp.war" with version "1.0".
+    The benefit to this approach is that when upgrading to testapp-2.0.war, for example, the logical "testapp.war"
+    resource remains in inventory and is reset to version "2.0".  In this way all historical data is maintained, and the
+    resource does not fall into a permanent "DOWN" state.  Without versioned deployments, after the upgrade there would
+    exist in inventory two resources: a permanently DOWN testapp-1.0.war resource as well as a new testapp-2.0.war
+    resource.
+
+    </p>
+    The version matching is designed to match "Maven-style" versions (see http://mojo.codehaus.org/versions-maven-plugin/version-rules.html).
+    The version stamp is delimited by a dash, and must minimally include a Major.Minor version.  This avoids confusion
+    with distinct but poorly named Deployments like app-1.war and app-2.war, or app1.war and app2.war.  In both of those
+    cases the version matcher would not match and all of the apps would be different resources.
+
+    <p/>
+    The default pattern is the following regular expression:<pre>^(.*?)-([0-9]+\\.[0-9].*)(\\..*)$</pre>
+
+    <p/>
+    There is a system property that can be set to alter the default behavior of the plugin.  Note that for the property
+    to have any effect it must be applied to every applicable RHQ Agent prior to its startup.  To disable versioned
+    Deployments and allow for version stamps to remain in the Deployment names set:
+    <pre>rhq.as7.VersionedSubsystemDiscovery.pattern=disable</pre>
+    To override the default pattern (not recommended) set:
+    <pre>rhq.as7.VersionedSubsystemDiscovery.pattern=YourPatternHere</pre>
+    Note that the custom regex pattern *must* capture three groups as does the default. Group1=name, Group2=version,
+    Group3=extension.  The single pattern is applied to all Deployments.
+
+    <p/>
+    Earlier versions of RHQ may have Deployment resources in inventory that contain version stamps in their names.  This
+    plugin implememts the ResourceUpgradeFacet, which will convert the existing resources on the first Agent startup
+    with the new updated plugin.  To avoid this the above system property must be set in advance.  Behavior can always
+    be changed.  If necessary update the system property as needed and, when desired, uninventory any
+    old resources that are no longer needed after the change.
+    ]]>
+  </help>
+
 </plugin>

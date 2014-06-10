@@ -41,6 +41,8 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
+import org.jboss.as.server.AbstractDeploymentChainStep;
+import org.jboss.as.server.DeploymentProcessorTarget;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.modules.Module;
@@ -59,6 +61,14 @@ class StartupSubsystemAdd extends AbstractAddStepHandler {
     @Override
     protected void populateModel(OperationContext context, ModelNode operation, Resource resource)
         throws OperationFailedException {
+
+        context.addStep(new AbstractDeploymentChainStep() {
+            @Override
+            protected void execute(DeploymentProcessorTarget processorTarget) {
+                processorTarget.addDeploymentProcessor("", StartupCrippledDeploymentProcessor.PHASE,
+                    StartupCrippledDeploymentProcessor.PRIORITY, new StartupCrippledDeploymentProcessor());
+            }
+        }, OperationContext.Stage.RUNTIME);
 
         try {
             if (requiresRuntime(context)) { // only add the step if we are going to actually deploy the ear

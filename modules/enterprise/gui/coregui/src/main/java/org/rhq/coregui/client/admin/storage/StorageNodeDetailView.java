@@ -316,10 +316,10 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             save.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    if (addressWasChanged()) {
+                    if (!addressWasChanged()) {
                         SC.say("Info", MSG.view_adminTopology_storageNodes_settings_noChanges());
                     } else {
-                        SC.ask(MSG.view_adminTopology_storageNodes_settings_confirmation(), new BooleanCallback() {
+                        SC.ask(MSG.common_msg_areYouSure(), new BooleanCallback() {
                             @Override
                             public void execute(Boolean value) {
                                 if (value) {
@@ -487,6 +487,27 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
         configurationSection = section;
         initSectionCount++;
+    }
+    
+    private boolean addressWasChanged() {
+        return !originalAddress.equals(nameItem.getValue()) && !((String) nameItem.getValue()).isEmpty();
+    }
+    
+    private void updateAddress() {
+        GWTServiceLookup.getStorageService().updateAddress(storageNodeId, (String) nameItem.getValue(),
+            new AsyncCallback<Void>() {
+                public void onSuccess(Void result) {
+                    Message msg = new Message(MSG.view_adminTopology_storageNodes_settings_message_updateSuccess(),
+                        Message.Severity.Info);
+                    CoreGUI.getMessageCenter().notify(msg);
+                    originalAddress = (String) nameItem.getValue();
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_storageNodes_clusterSettings_message_updateFail(), caught);
+                }
+            });
     }
 
     private void showAlertsForSingleStorageNode() {

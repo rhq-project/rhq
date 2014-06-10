@@ -93,7 +93,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     static final String EXPRESSION = "_expr:";
     static final int EXPRESSION_SIZE = EXPRESSION.length();
     static final String EXPRESSION_VALUE_KEY = "EXPRESSION_VALUE";
-    static final int AVAIL_OP_TIMEOUT_SECONDS = 15 * 60;
+    static final int AVAIL_OP_TIMEOUT_SECONDS = 10 * 60;
 
     public static final String MANAGED_SERVER = "Managed Server";
 

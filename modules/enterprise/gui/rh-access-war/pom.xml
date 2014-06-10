@@ -10,6 +10,7 @@
 
 	<artifactId>rhq-rh-access</artifactId>
 	<packaging>war</packaging>
+	<name>RHQ RedHat Access</name>
 	<properties>
 		<redhat-support-lib.version>1.0.4.jbossorg-1</redhat-support-lib.version>
 	</properties>

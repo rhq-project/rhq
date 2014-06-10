@@ -102,7 +102,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         aboutItem.setRefreshRequired(true);
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
-        if (isRHQ) { // TODO conditional visiblity for JON only!!!
+        if (!isRHQ) {
             NavigationItem rhaItem = new NavigationItem(PAGE_RHA_SUPORT, new ViewFactory() {
                 public Canvas createView() {
                     return new FullHTMLPane("/rha/support.html");

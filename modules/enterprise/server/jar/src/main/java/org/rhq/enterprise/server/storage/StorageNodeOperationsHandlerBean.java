@@ -17,6 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.Hours;
 
+import org.rhq.cassandra.schema.Table;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -858,6 +859,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             replicationFactor = 1;
         } else if (newClusterSize >= 5) {
             isRepairNeeded = false;
+        } else if (previousClusterSize > 4) {
+            isRepairNeeded = false;
         } else if (previousClusterSize == 4 && newClusterSize == 3) {
             isRepairNeeded = true;
             replicationFactor = 2;
@@ -899,23 +902,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     private void updateGCGraceSeconds(int seconds) {
         StorageSession session = storageClientManager.getSession();
-        session.execute("ALTER COLUMNFAMILY rhq.metrics_index WITH gc_grace_seconds = " + seconds);
-        session.execute("ALTER COLUMNFAMILY rhq.raw_metrics WITH gc_grace_seconds = " + seconds);
-        session.execute("ALTER COLUMNFAMILY rhq.one_hour_metrics WITH gc_grace_seconds = " + seconds);
-        session.execute("ALTER COLUMNFAMILY rhq.six_hour_metrics WITH gc_grace_seconds = " + seconds);
-        session.execute("ALTER COLUMNFAMILY rhq.twenty_four_hour_metrics WITH gc_grace_seconds = " + seconds);
-        session.execute("ALTER COLUMNFAMILY rhq.schema_version WITH gc_grace_seconds = " + seconds);
+        for (Table table : Table.values()) {
+            session.execute("ALTER TABLE " + table.getTableName() + " WITH gc_grace_seconds = " + seconds);
+        }
+        session.execute("ALTER TABLE rhq.schema_version WITH gc_grace_seconds = " + seconds);
     }
-
-    //    private String getRequiredStorageProperty(String property) {
-    //        String value = System.getProperty(property);
-    //        if (StringUtil.isEmpty(property)) {
-    //            throw new IllegalStateException("The system property [" + property + "] is not set. The RHQ "
-    //                + "server will not be able connect to the RHQ storage node(s). This property should be defined "
-    //                + "in rhq-server.properties.");
-    //        }
-    //        return value;
-    //    }
 
     /**
      * Optimally this should be called outside of a transaction, because when scheduling an operation we

@@ -40,9 +40,9 @@
 <!-- PatternFly -->
 <div id="patternFlyLogin">
     <span id="badge">
-    <!--[if !IE]> --><img src="img/logo.svg" alt="logo" /><!-- <![endif]-->
-    <!--[if lte IE 8]><img src="img/logo.png" alt="logo" /><![endif]-->
-    <!--[if gt IE 8]><img src="img/logo.svg" alt="logo" /><![endif]-->
+    <!--[if !IE]> --><img src="img/logo-login.svg" alt="logo" /><!-- <![endif]-->
+    <!--[if lte IE 8]><img src="img/logo-login.png" alt="logo" /><![endif]-->
+    <!--[if gt IE 8]><img src="img/logo-login.svg" alt="logo" /><![endif]-->
     </span>
     <div class="col-sm-12 rhqLabel">
       <h2>Log in to <strong>RHQ</strong></h2>

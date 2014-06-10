@@ -23,12 +23,9 @@ import org.joda.time.DateTime;
 import org.rhq.server.metrics.StorageResultSetFuture;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.CacheIndexEntry;
-import org.rhq.server.metrics.domain.CacheIndexEntryMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
-import org.rhq.server.metrics.domain.NumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetricMapper;
-import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda
@@ -69,39 +66,12 @@ class PastDataAggregator extends BaseAggregator {
     }
 
     /**
-     * We store a configurable amount of past data where the amount is specified as a duration in days. Suppose that the
-     * duration is set at 4 days, and the current time is 14:00 Friday. This method will query the index as far back
-     * as 14:00 on Monday, and each day up to the current time slice of today will be queried for past data.
-     *
-     * @return The past cache index entries
+     * @see IndexEntriesLoader#loadPastIndexEntries(DateTime)
      */
     @Override
-    protected ListenableFuture<List<CacheIndexEntry>> findIndexEntries() {
-        List<ListenableFuture<ResultSet>> insertFutures = new ArrayList<ListenableFuture<ResultSet>>();
-        DateTime day = startingDay;
-
-        while (day.isBefore(currentDay)) {
-            insertFutures.add(dao.findPastCacheIndexEntriesBeforeToday(MetricsTable.RAW, day.getMillis(),
-                AggregationManager.INDEX_PARTITION, day.plusHours(startTime.getHourOfDay()).getMillis()));
-            day = day.plusDays(1);
-        }
-        insertFutures.add(dao.findPastCacheIndexEntriesFromToday(MetricsTable.RAW, currentDay.getMillis(),
-            AggregationManager.INDEX_PARTITION, startTime.getMillis()));
-
-        ListenableFuture<List<ResultSet>> insertsFuture = Futures.allAsList(insertFutures);
-        return Futures.transform(insertsFuture, new Function<List<ResultSet>, List<CacheIndexEntry>>() {
-            @Override
-            public List<CacheIndexEntry> apply(List<ResultSet> resultSets) {
-                CacheIndexEntryMapper mapper = new CacheIndexEntryMapper();
-                List<CacheIndexEntry> indexEntries = new ArrayList<CacheIndexEntry>();
-
-                for (ResultSet resultSet : resultSets) {
-                    indexEntries.addAll(mapper.map(resultSet));
-                }
-
-                return indexEntries;
-            }
-        }, aggregationTasks);
+    protected List<CacheIndexEntry> getIndexEntries() {
+        IndexEntriesLoader loader = new IndexEntriesLoader(startTime, currentDay, dao);
+        return loader.loadPastIndexEntries(startingDay);
     }
 
     @Override
@@ -339,8 +309,8 @@ class PastDataAggregator extends BaseAggregator {
      * aggregation run.
      * </p>
      *
-     * @param queryFutures Futures of the raw data result sets
      * @param indexEntry The index entry for which data is being aggregated
+     * @param cacheFuture A future of the cache block
      */
     @SuppressWarnings("unchecked")
     protected void processRawDataCacheBlock(CacheIndexEntry indexEntry, StorageResultSetFuture cacheFuture) {

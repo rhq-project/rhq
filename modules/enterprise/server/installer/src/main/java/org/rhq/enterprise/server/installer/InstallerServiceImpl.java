@@ -585,6 +585,12 @@ public class InstallerServiceImpl implements InstallerService {
                 "\t2) The rhq.storage.nodes property specifies the correct hostname/address of at least one storage node\n" +
                 "\t3) The rhq.storage.cql-port property has the correct value\n");
             throw new Exception("Could not connect to the storage cluster: " + ThrowableUtil.getRootMessage(e));
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to connect to the storage cluster. Please check the following:\n"
+                + "\t1) At least one storage node is running\n"
+                + "\t2) The rhq.storage.nodes property specifies the correct hostname/address of at least one storage node\n"
+                + "\t3) The rhq.storage.cql-port property has the correct value\n");
+            throw new Exception("Could not connect to the storage cluster: " + ThrowableUtil.getRootMessage(e));
         } catch (Exception e) {
             String msg = "Could not complete storage cluster schema installation: " + ThrowableUtil.getRootMessage(e);
             log.error(msg, e);
@@ -1225,6 +1231,15 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private Set<StorageNode> parseNodeInformation(Map<String, String> serverProps, Set<String> storageNodeAddresses) {
+        if (storageNodeAddresses.size() == 0) {
+            throw new IllegalArgumentException("List of storage nodes not configured.");
+        }
+
+        String propStorageCQLPort = serverProps.get(ServerProperties.PROP_STORAGE_CQL_PORT);
+        if (propStorageCQLPort == null || propStorageCQLPort.trim().isEmpty()) {
+            throw new IllegalArgumentException("CQL port not configured.");
+        }
+
         int cqlPort = Integer.parseInt(serverProps.get(ServerProperties.PROP_STORAGE_CQL_PORT));
 
         Set<StorageNode> parsedNodes = new TreeSet<StorageNode>(new Comparator<StorageNode>() {
@@ -1244,6 +1259,12 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private Set<StorageNode> parseNodeInformation(Map<String, String> serverProps) {
+        String propStorageNodes = serverProps.get(ServerProperties.PROP_STORAGE_NODES);
+
+        if (propStorageNodes == null || propStorageNodes.trim().isEmpty()) {
+            throw new IllegalArgumentException(ServerProperties.PROP_STORAGE_NODES + " not set.");
+        }
+
         return parseNodeInformation(serverProps, ImmutableSet.copyOf(serverProps.get(
             ServerProperties.PROP_STORAGE_NODES).split(",")));
     }

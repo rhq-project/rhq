@@ -12,7 +12,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
@@ -66,6 +65,8 @@ abstract class BaseAggregator {
      * allow resizing of cache partitions to take effect.
      */
     protected boolean cacheActive = true;
+
+    protected int indexPageSize;
 
     /**
      * AggregationTask is a Runnable that computes aggregates for a set of schedules in a {@link CacheIndexEntry}.
@@ -154,29 +155,24 @@ abstract class BaseAggregator {
         this.cacheActive = cacheActive;
     }
 
+    public void setIndexPageSize(int indexPageSize) {
+        this.indexPageSize = indexPageSize;
+    }
+
     public Map<AggregationType, Integer> execute() throws InterruptedException, AbortedException {
         LOG.debug("Starting " + getDebugType() + " aggregation");
 
         Stopwatch stopwatch = new Stopwatch().start();
         try {
-            // need to call addTask() here for this initial callback; otherwise, the
-            // following call waitForTasksToFinish can complete prematurely.
-            taskTracker.addTask();
-            Futures.addCallback(findIndexEntries(), new FutureCallback<List<CacheIndexEntry>>() {
-                @Override
-                public void onSuccess(List<CacheIndexEntry> indexEntries) {
-                    scheduleTasks(indexEntries);
-                    taskTracker.finishedTask();
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    taskTracker.abort("There was an error fetching current cache index entries: " + t.getMessage());
-                }
-            }, aggregationTasks);
+            List<CacheIndexEntry> indexEntries = getIndexEntries();
+            scheduleTasks(indexEntries);
             taskTracker.waitForTasksToFinish();
-
-            return getAggregationCounts();
+        } catch (CacheIndexQueryException e) {
+            LOG.warn("There was an error querying the cache index", e);
+            taskTracker.abort("There was an error querying the cache index: " + e.getMessage());
+        } catch (Exception e) {
+            LOG.warn("There was an unexpected error scheduling aggregation tasks", e);
+            taskTracker.abort("There was an unexpected error scheduling aggregation tasks: " + e.getMessage());
         } finally {
             stopwatch.stop();
             if (LOG.isDebugEnabled()) {
@@ -184,12 +180,14 @@ abstract class BaseAggregator {
                     + " ms");
             }
         }
+        return getAggregationCounts();
     }
+
 
     /**
      * @return The cache index entries for which aggregation tasks will be scheduled
      */
-    protected abstract ListenableFuture<List<CacheIndexEntry>> findIndexEntries();
+    protected abstract List<CacheIndexEntry> getIndexEntries();
 
     protected abstract AggregationTask createAggregationTask(CacheIndexEntry indexEntry);
 

@@ -55,8 +55,10 @@ public class AggregationManager {
 
     private long cacheActivationTime;
 
+    private int indexPageSize;
+
     public AggregationManager(ListeningExecutorService aggregationTasks, MetricsDAO dao, DateTimeService dtService,
-        DateTime startTime, int batchSize, int parallelism, int cacheBatchSize) {
+        DateTime startTime, int batchSize, int parallelism, int cacheBatchSize, int indexPageSize) {
 
         this.dao = dao;
         this.dtService = dtService;
@@ -65,6 +67,7 @@ public class AggregationManager {
         this.cacheBatchSize = cacheBatchSize;
         permits = new Semaphore(batchSize * parallelism);
         this.aggregationTasks = aggregationTasks;
+        this.indexPageSize = indexPageSize;
     }
 
     private boolean is6HourTimeSliceFinished() {
@@ -134,12 +137,13 @@ public class AggregationManager {
         aggregator.setCurrentDay(dtService.get24HourTimeSlice(startTime));
         aggregator.setDao(dao);
         aggregator.setPermits(permits);
-        aggregator.setStartingDay(dtService.current24HourTimeSlice().minusDays(1));
+        aggregator.setStartingDay(dtService.get24HourTimeSlice(startTime).minusDays(1));
         aggregator.setStartTime(startTime);
         aggregator.setDateTimeService(dtService);
         aggregator.setPersistFns(persistFunctions);
         aggregator.setPersistMetrics(persistFunctions.persist1HourMetricsAndUpdateCache());
         aggregator.setCacheActive(isCacheActive());
+        aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }
@@ -162,6 +166,7 @@ public class AggregationManager {
         });
         aggregator.setCacheActive(isCacheActive());
         aggregator.setResultSetMapper(new RawNumericMetricMapper());
+        aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }
@@ -178,6 +183,7 @@ public class AggregationManager {
         aggregator.setPersistMetrics(persistFunctions.persist6HourMetricsAndUpdateCache());
         aggregator.setCacheActive(isCacheActive());
         aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
+        aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }
@@ -194,6 +200,7 @@ public class AggregationManager {
         aggregator.setPersistMetrics(persistFunctions.persist24HourMetrics());
         aggregator.setCacheActive(isCacheActive());
         aggregator.setResultSetMapper(new AggregateNumericMetricMapper());
+        aggregator.setIndexPageSize(indexPageSize);
 
         return aggregator;
     }

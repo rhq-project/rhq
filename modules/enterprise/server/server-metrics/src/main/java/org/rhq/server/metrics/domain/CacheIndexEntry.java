@@ -109,6 +109,36 @@ public class CacheIndexEntry {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CacheIndexEntry that = (CacheIndexEntry) o;
+
+        if (collectionTimeSlice != that.collectionTimeSlice) return false;
+        if (day != that.day) return false;
+        if (insertTimeSlice != that.insertTimeSlice) return false;
+        if (partition != that.partition) return false;
+        if (startScheduleId != that.startScheduleId) return false;
+        if (bucket != that.bucket) return false;
+        if (scheduleIds != null ? !scheduleIds.equals(that.scheduleIds) : that.scheduleIds != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = bucket.hashCode();
+        result = 23 * result + (int) (day ^ (day >>> 32));
+        result = 23 * result + (int) (insertTimeSlice ^ (insertTimeSlice >>> 32));
+        result = 23 * result + partition;
+        result = 23 * result + startScheduleId;
+        result = 23 * result + (int) (collectionTimeSlice ^ (collectionTimeSlice >>> 32));
+        result = 23 * result + (scheduleIds != null ? scheduleIds.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "CacheIndexEntry[bucket: " + bucket + ", day: " + day + ", partition: " + partition +
             ", collectionTimeSlice: " + collectionTimeSlice + ", startScheduleId: " + startScheduleId +

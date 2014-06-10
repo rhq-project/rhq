@@ -106,4 +106,8 @@ public interface MeasurementMonitorMBean {
     int getAggregationWorkers();
 
     void setAggregationWorkers(int numWorkers);
+
+    int getRawDataAgeLimit();
+
+    void setRawDataAgeLimit(int ageLimit);
 }

@@ -35,10 +35,15 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.OperatingSystemType;
+import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -54,8 +59,15 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         implements MeasurementFacet, OperationFacet {
 
     private static final String SERVER_CONFIG_TRAIT = "config-file";
+    private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";
 
     private static final Address ENVIRONMENT_ADDRESS = new Address("core-service=server-environment");
+
+    @Override
+    public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
+        super.start(resourceContext);
+        updateAdditionalJavaOpts(resourceContext);
+    };
 
     @Override
     protected AS7Mode getMode() {
@@ -65,14 +77,14 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
-        for (MeasurementScheduleRequest request: requests) {
+        for (MeasurementScheduleRequest request : requests) {
             String requestName = request.getName();
             if (requestName.equals(SERVER_CONFIG_TRAIT)) {
                 collectConfigTrait(report, request);
             } else if (requestName.equals("multicastAddress")) {
                 collectMulticastAddressTrait(report, request);
             } else if (requestName.equals("deployDir")) {
-                resolveDeployDir(report,request);
+                resolveDeployDir(report, request);
             } else {
                 leftovers.add(request); // handled below
             }
@@ -89,9 +101,9 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
      */
     private void resolveDeployDir(MeasurementReport report, MeasurementScheduleRequest request) {
 
-        if ("JDG".equals(pluginConfiguration.getSimpleValue("productType","AS7"))) {
+        if ("JDG".equals(pluginConfiguration.getSimpleValue("productType", "AS7"))) {
             log.debug("This is a JDG server, so there is no deployDir");
-            MeasurementDataTrait trait = new MeasurementDataTrait(request,"- not applicable to JDG -");
+            MeasurementDataTrait trait = new MeasurementDataTrait(request, "- not applicable to JDG -");
             report.addData(trait);
             return;
         }
@@ -101,7 +113,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         ReadResource op = new ReadResource(scanner);
         Result res = getASConnection().execute(op);
         if (res.isSuccess()) {
-            Map<String,String> scannerMap = (Map<String, String>) res.getResult();
+            Map<String, String> scannerMap = (Map<String, String>) res.getResult();
             String path = scannerMap.get("path");
             String relativeTo = scannerMap.get("relative-to");
             File basePath = resolveRelativePath(relativeTo);
@@ -109,24 +121,23 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
             // It is safe to use File.separator, as the agent we are running in, will also lay down the plugins
             String deployDir = new File(basePath, path).getAbsolutePath();
 
-            MeasurementDataTrait trait = new MeasurementDataTrait(request,deployDir);
+            MeasurementDataTrait trait = new MeasurementDataTrait(request, deployDir);
             report.addData(trait);
-        }
-        else {
+        } else {
             log.error("No default deployment scanner was found, returning no value");
         }
     }
 
     private File resolveRelativePath(String relativeTo) {
 
-        Address addr = new Address("path",relativeTo);
+        Address addr = new Address("path", relativeTo);
         ReadResource op = new ReadResource(addr);
         Result res = getASConnection().execute(op);
         if (res.isSuccess()) {
-            Map<String,String> pathMap = (Map<String, String>) res.getResult();
+            Map<String, String> pathMap = (Map<String, String>) res.getResult();
             String path = pathMap.get("path");
             String relativeToProp = pathMap.get("relative-to");
-            if (relativeToProp==null)
+            if (relativeToProp == null)
                 return new File(path);
             else {
                 File basePath = resolveRelativePath(relativeToProp);
@@ -149,8 +160,7 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
     }
 
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("start")) {
             return startServer();
         } else if (name.equals("restart")) {
@@ -249,4 +259,45 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         return "base-dir";
     }
 
+    /**
+     * Updates JAVA_OPTS in standalone.conf and standalone.conf.bat files.
+     * If JAVA_OPTS is set, then new config is added or updated in the file
+     * If JAVA_OPTS is unset, then the config file will be cleared of any traced the config set via RHQ
+     *
+     * @param resourceContext
+     */
+    private void updateAdditionalJavaOpts(ResourceContext<T> resourceContext) {
+        if (resourceContext.getPluginConfiguration().getSimpleValue(ServerPluginConfiguration.Property.HOME_DIR) == null) {
+            log.error("Additional JAVA_OPTS cannot be configured because "
+                + ServerPluginConfiguration.Property.HOME_DIR + " property not set");
+            return;
+        }
+
+        File baseDirectory = new File(resourceContext.getPluginConfiguration().getSimpleValue(
+            ServerPluginConfiguration.Property.HOME_DIR));
+        File binDirectory = new File(baseDirectory, "bin");
+
+        String additionalJavaOptsContent = resourceContext.getPluginConfiguration().getSimpleValue(JAVA_OPTS_ADDITIONAL_PROP);
+
+        File configFile = null;
+        AdditionalJavaOpts additionalJavaOptsConfig = null;
+        if (OperatingSystemType.WINDOWS.equals(resourceContext.getSystemInformation().getOperatingSystemType())) {
+            configFile = new File(binDirectory, "standalone.conf.bat");
+            additionalJavaOptsConfig = new AdditionalJavaOpts.WindowsConfiguration();
+        } else {
+            configFile = new File(binDirectory, "standalone.conf");
+            additionalJavaOptsConfig = new AdditionalJavaOpts.LinuxConfiguration();
+        }
+
+        try {
+            if (additionalJavaOptsContent != null && !additionalJavaOptsContent.trim().isEmpty()) {
+                additionalJavaOptsConfig.update(configFile, additionalJavaOptsContent);
+            } else {
+                additionalJavaOptsConfig.clean(configFile);
+            }
+        } catch (Exception e) {
+            log.error("Unable to update configuration file with additional JAVA_OPTS set via RHQ.", e);
+        }
+    }
 }
+

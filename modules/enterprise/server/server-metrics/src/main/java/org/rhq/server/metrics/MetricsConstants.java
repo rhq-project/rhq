@@ -11,6 +11,8 @@ public class MetricsConstants {
 
     public static final String AGGREGATION_PARALLELISM = "rhq.metrics.aggregation.parallelism";
 
+    public static final String RAW_DATA_AGE_LIMIT = "rhq.metrics.data.age-limit";
+
     private MetricsConstants() {
     }
 }

@@ -2371,6 +2371,7 @@
               <schema-dropTable table="RHQ_RESOURCE_SUBCAT"/>
             </schemaSpec>
 
+<<<<<<< HEAD
             <schemaSpec version="2.150">
               <schema-directSQL>
                 <statement targetDBVendor="postgresql" desc="Adding metrics cache table activation time">
@@ -2412,6 +2413,15 @@
                   VALUES (68, 'OPERATION_HISTORY_PURGE', '0', '0')
                 </statement>
               </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.154">
+                <schema-directSQL>
+                    <statement desc="URL of Keycloak server.">
+                        INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                        VALUES (69, 'KEYCLOAK_URL', '', '')
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
         </dbupgrade>

@@ -488,11 +488,11 @@
     <target name="prepare-welcome-content">
       <echo>Changing the default welcome content</echo>
       <!-- Simple redirect script written in EcmaScript checking if the server has fully started -->
-      <echo file="${jboss.home}/welcome-content/backend-checker.js"><![CDATA[function httpGet() {
+      <echo file="${jboss.home}/welcome-content/backend-checker.js"><![CDATA[function httpPut() {
   var url = "/portal/sessionAccess";
   var xmlHttp = null;
   xmlHttp = new XMLHttpRequest();
-  xmlHttp.open("GET", url, false);
+  xmlHttp.open("PUT", url, false);
   xmlHttp.send(null);
   return xmlHttp;
 }
@@ -512,7 +512,7 @@ function showError(msg) {
 
 function checkIfRunning(attemptNum) {
   try {
-    var response = httpGet();
+    var response = httpPut();
   } catch (error) {
     showError(error.message + " Is the server running?");
   }

@@ -74,18 +74,32 @@
 <body>
 
 <script type="text/javascript" language="javascript">
-    var keycloak = Keycloak('js/keycloak.json');
-
-    var loadData = function () {
-        if (keycloak.idToken) {
-        } else {
-            keycloak.loadUserProfile(function() {
-            }, function() {
-            });
-        }
-    };
-    keycloak.onAuthSuccess = loadData;
-    keycloak.init('login-required');
+    function httpTrace() {
+        var url = "/portal/sessionAccess";
+        var xmlHttp = null;
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("TRACE", url, false);
+        xmlHttp.send(null);
+        return xmlHttp;
+    }
+    try {
+      var response = httpTrace();
+    } catch (error) {
+      window.alert('back-end is down');
+    }
+    if (response && response.status === 200) {
+    var json = JSON.parse(response.responseText);
+    if (json.serverInitialized && json.keycloak) {
+        var keycloak = Keycloak('../portal/sessionAccess');
+        var loadData = function () {
+            if (keycloak.idToken) {
+            } else {
+                keycloak.loadUserProfile(function() {}, function() {});
+            }
+        };
+        keycloak.onAuthSuccess = loadData;
+        keycloak.init('login-required');
+    }
 </script>
 
 

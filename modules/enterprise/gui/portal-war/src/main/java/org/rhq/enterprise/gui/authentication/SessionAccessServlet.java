@@ -32,6 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -144,7 +146,7 @@ public class SessionAccessServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         response.addHeader("Pragma", "no-cache");
         response.addHeader("Cache-Control", "no-cache");
@@ -154,17 +156,72 @@ public class SessionAccessServlet extends HttpServlet {
         response.addHeader("Expires", "Mon, 8 Aug 2006 10:00:00 GMT");
         boolean serverInitialized;
         String startupError = null;
+        String keycloakUrl = null;
         try {
             StartupLocal startupBean = LookupUtil.getStartupLocal();
             serverInitialized = startupBean.isInitialized();
             startupError = startupBean.getError();
-        } catch (Throwable t) {
+        } catch (Exception e) {
             serverInitialized = false; // this probably means we are still starting up and app server hasn't made EJBs available yet
+        }
+        if (serverInitialized) {
+            try {
+                SystemSettings settings = LookupUtil.getSystemManager().getSystemSettings(
+                    LookupUtil.getSubjectManager().getOverlord());
+                keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL);
+            } catch (Exception e) {
+                // do nothing;
+            }
         }
         PrintWriter out = response.getWriter();
         out.println("{");
         out.println("  \"serverInitialized\": " + serverInitialized + ",");
         out.println("  \"startupError\": " + (startupError == null ? "null" : "\"" + startupError + "\""));
+        out.println("  \"keycloak\": " + (keycloakUrl == null || keycloakUrl.trim().isEmpty()));
         out.println("}");
+    }
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("application/json");
+        response.addHeader("Pragma", "no-cache");
+        response.addHeader("Cache-Control", "no-cache");
+        response.addHeader("Cache-Control", "no-store");
+        response.addHeader("Cache-Control", "must-revalidate");
+        // some date in the past
+        response.addHeader("Expires", "Mon, 8 Aug 2006 10:00:00 GMT");
+        boolean serverInitialized;
+        String keycloakUrl = null;
+        PrintWriter out = response.getWriter();
+
+        try {
+            StartupLocal startupBean = LookupUtil.getStartupLocal();
+            serverInitialized = startupBean.isInitialized();
+        } catch (Exception e) {
+            serverInitialized = false; // this probably means we are still starting up and app server hasn't made EJBs available yet
+        }
+        if (serverInitialized) {
+            try {
+                SystemSettings settings = LookupUtil.getSystemManager().getSystemSettings(
+                    LookupUtil.getSubjectManager().getOverlord());
+                keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL);
+
+                out.println("{");
+                out.println("  \"realm\": \"rhq\",");
+                out.println("  \"resource\": \"coregui\",");
+                out.println("  \"realm-public-key\": \"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQAB\",");
+                out.println("  \"auth-server-url\":" + (keycloakUrl == null ? "null" : "\"" + keycloakUrl + "\"") + ",");
+                out.println("  \"ssl-not-required\": true,");
+                out.println("  \"expose-token\": true,");
+                out.println("  \"public-client\" : true");
+                out.println("}");
+
+            } catch (Exception e) {
+                // do nothing;
+            }
+
+        } else {
+            out.println("null");
+        }
     }
 }

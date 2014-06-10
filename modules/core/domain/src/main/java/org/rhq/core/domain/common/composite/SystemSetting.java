@@ -227,7 +227,9 @@ public enum SystemSetting {
     LAST_SYSTEM_CONFIG_UPDATE_TIME("LAST_SYSCONFIG_UPDATE_TIME", PropertySimpleType.LONG, true, false, false),
 
     /** How long do we keep operation history data */
-    OPERATION_HISTORY_PURGE_PERIOD("OPERATION_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true)
+    OPERATION_HISTORY_PURGE_PERIOD("OPERATION_HISTORY_PURGE", PropertySimpleType.LONG, false, true, true),
+
+    KEYCLOAK_URL("KEYCLOAK_URL", PropertySimpleType.STRING, false, false, true)
     ;
 
     private final String internalName;

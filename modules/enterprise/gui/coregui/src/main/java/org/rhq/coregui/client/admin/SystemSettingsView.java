@@ -376,6 +376,12 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setPropertyGroupDefinition(generalGroup);
                 pd.setDefaultValue("false");
                 break;
+            case KEYCLOAK_URL:
+                pd.setDescription("URL pointing to Keycloak server. This needs to be set when using SSO.");
+                pd.setDisplayName("Keycloak URL");
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue("");
+                break;   
             case EXPERIMENTAL_FEATURES_ENABLED:
                 pd.setDescription(MSG.view_admin_systemSettings_EnableExperimentalFeatures_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_EnableExperimentalFeatures_name());

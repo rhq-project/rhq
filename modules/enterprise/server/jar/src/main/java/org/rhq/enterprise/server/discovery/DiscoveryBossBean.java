@@ -829,7 +829,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 ret.setUpgradedResourceDescription(resource.getDescription());
             }
 
-            if (isUpgradeAll && needsUpgrade(resource.getVersion(), version)) {
+            if (needsUpgrade(resource.getVersion(), version)) {
                 resource.setVersion(version);
                 logMessage.append("version, ");
                 ret.setUpgradedResourceVersion(resource.getVersion());

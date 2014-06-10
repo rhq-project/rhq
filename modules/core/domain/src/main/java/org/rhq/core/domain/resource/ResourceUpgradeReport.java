@@ -58,7 +58,7 @@ public class ResourceUpgradeReport implements Serializable {
     //    private Configuration newResourceConfiguration;
 
     // In some cases assume the plugin knows best, and let it force upgrade of what we call "generic" resource
-    // properties (name, version, description).  If set to true by the plugin code the server will obey,
+    // properties (name, description).  If set to true by the plugin code the server will obey,
     // regardless of the value of SystemSetting.ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE.
     private boolean forceGenericPropertyUpgrade = false;
 
@@ -121,6 +121,14 @@ public class ResourceUpgradeReport implements Serializable {
         return forceGenericPropertyUpgrade;
     }
 
+    /**
+     * In some cases assume the plugin knows best.  Set true (with care) to force upgrade of what we call "generic"
+     * resource properties (name, description).  If set to true by the plugin code the server will obey,
+     * regardless of the value of SystemSetting.ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE, which is false by default
+     * in order to protect hand-edited resource names.
+     *
+     * @param forceGenericPropertyUpgrade
+     */
     public void setForceGenericPropertyUpgrade(boolean forceGenericPropertyUpgrade) {
         this.forceGenericPropertyUpgrade = forceGenericPropertyUpgrade;
     }

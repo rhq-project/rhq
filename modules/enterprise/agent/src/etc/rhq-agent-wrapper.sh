@@ -308,8 +308,20 @@ case "$1" in
            RHQ_AGENT_START_COMMAND="${_START_SCRIPT}"
         fi
 
-        RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon --setup --advanced"
-        export RHQ_AGENT_CMDLINE_OPTS
+
+        if [ -z "$2" ]; then
+           RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon --setup --advanced"
+           export RHQ_AGENT_CMDLINE_OPTS
+        else
+           if [ ! -f "$2" ]; then
+              echo "ERROR! Cannot find config file"
+              echo "Not found: $2"
+              exit 1
+           fi
+
+           RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon --config=\"$2\""
+           export RHQ_AGENT_CMDLINE_OPTS
+        fi
 
         # start the agent now!
         if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then

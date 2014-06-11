@@ -457,7 +457,7 @@ case "$1" in
         exit $?
         ;;
 *)
-        echo "Usage: $0 { start | stop | kill | restart | status | config }"
+        echo "Usage: $0 { start | stop | kill | restart | status | config | cleanconfig | quiet-restart}"
         exit 1
         ;;
 esac

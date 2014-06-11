@@ -34,6 +34,10 @@ public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Dou
 
     @Override
     public boolean matches(Double providedValue, Object... extraParams) {
+        if (alertConditionOperator == AlertConditionOperator.CHANGES) {
+            return checkForChangeAndRemember(providedValue);
+        }
+
         /*
          * allow null/NaN/infinite Numeric elements to be processed;
          *
@@ -56,15 +60,6 @@ public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Dou
         } else if (alertConditionOperator == AlertConditionOperator.EQUALS) {
             return (providedValue.compareTo(alertConditionValue) == 0);
 
-        } else if (alertConditionOperator == AlertConditionOperator.CHANGES) {
-            boolean result;
-
-            result = (alertConditionValue.compareTo(providedValue) != 0);
-
-            alertConditionValue = providedValue;
-
-            return result;
-
         } else {
             throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName() + " does not yet support "
                 + alertConditionOperator);
@@ -79,5 +74,22 @@ public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Dou
         }
 
         return AlertConditionOperator.Type.NONE;
+    }
+
+    private boolean checkForChangeAndRemember(Double providedValue) {
+        Double currentValue = alertConditionValue;
+
+        //remember the value for the future comparisons
+        alertConditionValue = providedValue;
+
+        if (currentValue == null) {
+            return providedValue != null;
+        } else if (currentValue.isNaN()) {
+            return providedValue == null || !providedValue.isNaN();
+        } else if (currentValue.isInfinite()) {
+            return providedValue == null || !providedValue.isInfinite();
+        } else {
+            return providedValue == null || currentValue.compareTo(providedValue) != 0;
+        }
     }
 }

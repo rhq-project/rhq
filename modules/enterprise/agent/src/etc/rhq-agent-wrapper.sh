@@ -332,6 +332,44 @@ case "$1" in
 
         ;;
 
+'cleanconfig')
+        prepare_pid_dir
+
+        if [ "$_RUNNING" = "1" ]; then
+           echo "Cannot run config - please stop the agent before running config"
+           echo $_STATUS
+           exit 0
+        fi
+
+        echo "Configure RHQ Agent..."
+
+        # Determine the command to execute when starting the agent
+        if [ -z "$RHQ_AGENT_START_COMMAND" ]; then
+           # Find out where the agent start script is located
+           _START_SCRIPT="${RHQ_AGENT_HOME}/bin/rhq-agent.sh"
+
+           if [ ! -f "$_START_SCRIPT" ]; then
+              echo "ERROR! Cannot find the RHQ Agent start script"
+              echo "Not found: $_START_SCRIPT"
+              exit 1
+           fi
+           debug_wrapper_msg "Start script found here: $_START_SCRIPT"
+
+           RHQ_AGENT_START_COMMAND="${_START_SCRIPT}"
+        fi
+
+        RHQ_AGENT_CMDLINE_OPTS="--cleanconfig --nostart --daemon"
+        export RHQ_AGENT_CMDLINE_OPTS
+
+        # start the agent now!
+        if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+           debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND} ${RHQ_AGENT_CMDLINE_OPTS}"
+        fi
+
+        . $RHQ_AGENT_START_COMMAND
+
+        ;;
+
 'stop')
         prepare_pid_dir
 

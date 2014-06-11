@@ -3,8 +3,6 @@ package org.rhq.plugins.apache.parser;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.augeas.node.AugeasNode;
-
 public class ApacheDirectiveTree implements Cloneable {
 
     private ApacheDirective rootNode;

@@ -65,6 +65,12 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         discoveredResources.addAll(discoverResources(context, tree, null));
 
+        discoverResourcesInIfModules(context, discoveredResources, tree, "");
+
+        return discoveredResources;
+    }
+
+    private void discoverResourcesInIfModules(ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context, Set<DiscoveredResourceDetails> discoveredResources, ApacheDirectiveTree tree, String parentModuleKey) {
         final List<ApacheDirective> allIfModules = tree.search(IFMODULE_DIRECTIVE_NAME);
         final Map<String,Integer> ifModuleIndex = new HashMap<String, Integer>();
         for (ApacheDirective ifmodule : allIfModules) {
@@ -74,12 +80,11 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
                 index = ifModuleIndex.get(moduleName) + 1;
             }
             ifModuleIndex.put(moduleName, index);
-            String ifModuleKey = IFMODULE_DIRECTIVE_NAME + "|" + moduleName + "|" + index + ";";
+            String ifModuleKey = IFMODULE_DIRECTIVE_NAME + "|" + moduleName + "|" + index + ";" + parentModuleKey;
             tree.setRootNode(ifmodule);
             discoveredResources.addAll(discoverResources(context, tree, ifModuleKey));
+            discoverResourcesInIfModules(context, discoveredResources, tree, ifModuleKey);
         }
-
-        return discoveredResources;
     }
 
     private Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context, ApacheDirectiveTree tree, String ifModuleKey) {

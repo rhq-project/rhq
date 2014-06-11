@@ -93,9 +93,6 @@ case "$1" in
     stop)
         rm "$lockfile"
         ;;
-    cleanconfig)
-        exec $RHQ_AGENT_HOME/bin/rhq-agent.sh --cleanconfig --nostart --daemon
-        ;;
 esac
 
 exec $RHQ_AGENT_HOME/bin/rhq-agent-wrapper.sh "$@"

@@ -88,7 +88,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * @author John Mazzitelli
  */
 @Stateless
-public class AgentManagerBean implements AgentManagerLocal {
+public class AgentManagerBean implements AgentManagerLocal, AgentManagerRemote {
     private static final Log LOG = LogFactory.getLog(AgentManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -864,6 +864,11 @@ public class AgentManagerBean implements AgentManagerLocal {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Agent> runner = new CriteriaQueryRunner<Agent>(criteria, generator, entityManager);
         return runner.execute();
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void deleteAgent(Subject subject, Agent agent) {
+        deleteAgent(agent);
     }
 
 }

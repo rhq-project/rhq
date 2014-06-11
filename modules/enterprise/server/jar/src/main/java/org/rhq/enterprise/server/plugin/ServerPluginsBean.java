@@ -47,14 +47,12 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -83,7 +81,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-public class ServerPluginsBean implements ServerPluginsLocal {
+public class ServerPluginsBean implements ServerPluginsLocal, ServerPluginsRemote {
 
     private final Log log = LogFactory.getLog(ServerPluginsBean.class);
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -748,4 +746,11 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         List<PluginKey> keys = q.getResultList();
         return keys;
     }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public List<ServerPlugin> getServerPlugins(Subject subject) {
+        return getServerPlugins();
+    }
+
 }

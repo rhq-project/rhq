@@ -798,4 +798,5 @@ public class PluginManagerBean implements PluginManagerLocal, PluginManagerRemot
         }
         return list;
     }
+
 }

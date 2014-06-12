@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,15 +24,18 @@ import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.g
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getMissingMeasurements;
 import static org.rhq.modules.plugins.jbossas7.itest.standalone.DeploymentTest.getTestDeploymentPackageDetails;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -44,6 +47,9 @@ import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -56,6 +62,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
@@ -67,7 +75,6 @@ import org.rhq.test.arquillian.RunDiscovery;
  */
 @Test(groups = { "integration", "pc", "standalone" }, singleThreaded = true)
 public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
-    private static final Log LOG = LogFactory.getLog(DeploymentRuntimeResourcesTest.class);
 
     private enum RuntimeServiceType {
         DATASOURCES_RUNTIME("Datasources Runtime"), //
@@ -98,9 +105,9 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
         }
     }
 
-    private Resource standaloneServer;
     private Resource deployment;
 
+    @Override
     protected void injectMocks(MockingServerServices serverServices) {
         Mockito.when(
             serverServices.getContentServerService().downloadPackageBitsGivenResource(Mockito.anyInt(),
@@ -138,9 +145,7 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
         try {
             int data;
             while ((data = in.read()) != -1) {
-                if (out != null) {
-                    out.write(data);
-                }
+                out.write(data);
                 cnt++;
             }
         } finally {
@@ -154,8 +159,8 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
     @RunDiscovery
     public void testDeploy() throws Exception {
         Resource platform = validatePlatform();
-        standaloneServer = waitForResourceByTypeAndKey(platform, platform, StandaloneServerComponentTest.RESOURCE_TYPE,
-            StandaloneServerComponentTest.RESOURCE_KEY);
+        Resource standaloneServer = waitForResourceByTypeAndKey(platform, platform,
+            StandaloneServerComponentTest.RESOURCE_TYPE, StandaloneServerComponentTest.RESOURCE_KEY);
 
         //assertFalse(standaloneResources == null || standaloneResources.size() != 1,
         //    "Exactly 1 AS7 standalone server resource should be present.");
@@ -198,7 +203,7 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
 
     private void ensureAllRuntimeServicesAreFound() throws InterruptedException {
         long start = System.currentTimeMillis();
-        boolean foundAllRuntimeServices = false;
+        boolean foundAllRuntimeServices;
         do {
             boolean runtimeServiceMissing = false;
             for (RuntimeServiceType runtimeServiceType : RuntimeServiceType.values()) {
@@ -255,7 +260,6 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
             return resourceContainer.createResourceComponentProxy(MeasurementFacet.class, FacetLockType.READ,
                 SECONDS.toMillis(5), false, false, false);
         } catch (PluginContainerException e) {
-
             return null;
         }
     }
@@ -274,6 +278,33 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
         return foundResources;
     }
 
+    @Test(priority = 13)
+    public void testHibernatePersistenceUnitViewQueriesOperation() throws Exception {
+        Set<Resource> resources = getChildResourcesOfType(getDeploymentResource(),
+            RuntimeServiceType.HIBERNATE_PERSISTENCE_UNIT.getServiceTypeName());
+        for (Resource resource : resources) {
+            OperationFacet operationFacet = getOperationFacet(resource);
+            Configuration parameters = new Configuration();
+            parameters.setSimpleValue("batchSize", "50");
+            parameters.setSimpleValue("managementQueryTimeout", "180");
+            OperationResult operationResult = operationFacet.invokeOperation("viewQueries", parameters);
+            String errorMessage = operationResult.getErrorMessage();
+            assertNull(errorMessage, errorMessage);
+            Configuration complexResults = operationResult.getComplexResults();
+            assertNotNull(complexResults, "ComplexResults is null");
+            PropertyList queriesPropList = complexResults.getList("queries");
+            assertNotNull(queriesPropList, "queriesPropList is null");
+            List<Property> queriesList = queriesPropList.getList();
+            assertFalse(queriesList.isEmpty(), "queriesPropList is empty");
+            for (Property queryProperty : queriesList) {
+                assertTrue(queryProperty instanceof PropertyMap, "Not a PropertyMap: " + queryProperty);
+                PropertyMap queryPropertyMap = (PropertyMap) queryProperty;
+                assertTrue(queryPropertyMap.getMap().containsKey("query-name"),
+                    "Map does not contain query-name attribute: " + queryPropertyMap.getMap());
+            }
+        }
+    }
+
     @Test(priority = 99)
     public void testUndeploy() throws Exception {
         Resource deploymentResource = getDeploymentResource();
@@ -284,6 +315,16 @@ public class DeploymentRuntimeResourcesTest extends AbstractJBossAS7PluginTest {
 
     private Resource getDeploymentResource() {
         return deployment;
+    }
+
+    private OperationFacet getOperationFacet(Resource resource) {
+        ResourceContainer resourceContainer = pluginContainer.getInventoryManager().getResourceContainer(resource);
+        try {
+            return resourceContainer.createResourceComponentProxy(OperationFacet.class, FacetLockType.WRITE,
+                SECONDS.toMillis(5), false, false, false);
+        } catch (PluginContainerException e) {
+            return null;
+        }
     }
 
 }

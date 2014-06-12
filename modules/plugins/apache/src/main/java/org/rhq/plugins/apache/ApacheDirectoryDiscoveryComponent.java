@@ -57,71 +57,55 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
-
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
         ApacheDirective vhost = context.getParentResourceComponent().getDirective();
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        tree.setRootNode(vhost);
-
-        discoveredResources.addAll(discoverResources(context, tree, null));
-
-        discoverResourcesInIfModules(context, discoveredResources, tree, "");
-
-        return discoveredResources;
+        return discoverResources(context, discoveredResources, vhost, "");
     }
 
-    private void discoverResourcesInIfModules(ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context, Set<DiscoveredResourceDetails> discoveredResources, ApacheDirectiveTree tree, String parentModuleKey) {
-        final List<ApacheDirective> allIfModules = tree.search(IFMODULE_DIRECTIVE_NAME);
-        final Map<String,Integer> ifModuleIndex = new HashMap<String, Integer>();
-        for (ApacheDirective ifmodule : allIfModules) {
-            int index = 1;
-            String moduleName = ifmodule.getValues().get(0);
-            if(ifModuleIndex.containsKey(moduleName)) {
-                index = ifModuleIndex.get(moduleName) + 1;
-            }
-            ifModuleIndex.put(moduleName, index);
-            String ifModuleKey = IFMODULE_DIRECTIVE_NAME + "|" + moduleName + "|" + index + ";" + parentModuleKey;
-            tree.setRootNode(ifmodule);
-            discoveredResources.addAll(discoverResources(context, tree, ifModuleKey));
-            discoverResourcesInIfModules(context, discoveredResources, tree, ifModuleKey);
-        }
-    }
-
-    private Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context, ApacheDirectiveTree tree, String ifModuleKey) {
-        Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
-
-        final List<ApacheDirective> allDirectories = tree.search(ApacheDirectoryComponent.DIRECTORY_DIRECTIVE);
-        for (ApacheDirective apacheDirective : allDirectories) {
-            ResourceType resourceType = context.getResourceType();
-            String directoryParam;
-            boolean isRegexp;
-            List<String> params = apacheDirective.getValues();
-            if (params.size() > 1 && StringUtil.isNotBlank(params.get(1))) {
-                directoryParam = params.get(1);
-                isRegexp = true;
-            } else {
-                directoryParam = params.get(0);
-                isRegexp = false;
-            }
-
-            Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
-            String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
-
-            int index = 1;
-            for (DiscoveredResourceDetails detail : discoveredResources) {
-                if (detail.getResourceName().equals(resourceName)) {
-                    index++;
+    private Set<DiscoveredResourceDetails> discoverResources(
+        ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context,
+        Set<DiscoveredResourceDetails> discoveredResources, ApacheDirective parent, String parentKey) {
+        final Map<String, Integer> ifModuleIndex = new HashMap<String, Integer>();
+        for (ApacheDirective directive : parent.getChildDirectives()) {
+            if (directive.getName().startsWith(ApacheDirectoryComponent.DIRECTORY_DIRECTIVE)) {
+                ResourceType resourceType = context.getResourceType();
+                String directoryParam;
+                boolean isRegexp;
+                List<String> params = directive.getValues();
+                if (params.size() > 1 && StringUtil.isNotBlank(params.get(1))) {
+                    directoryParam = params.get(1);
+                    isRegexp = true;
+                } else {
+                    directoryParam = params.get(0);
+                    isRegexp = false;
                 }
+
+                Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
+                pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
+                String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
+
+                int index = 1;
+                for (DiscoveredResourceDetails detail : discoveredResources) {
+                    if (detail.getResourceName().equals(resourceName)) {
+                        index++;
+                    }
+                }
+                StringBuilder resourceKey = new StringBuilder();
+                resourceKey.append(directive.getName()).append("|").append(directoryParam).append("|").append(index)
+                    .append(";").append(parentKey);
+                discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey.toString(),
+                    resourceName, null, null, pluginConfiguration, null));
+
+            } else if (directive.getName().startsWith(IFMODULE_DIRECTIVE_NAME)) {
+                int index = 1;
+                String moduleName = directive.getValues().get(0);
+                if (ifModuleIndex.containsKey(moduleName)) {
+                    index = ifModuleIndex.get(moduleName) + 1;
+                }
+                ifModuleIndex.put(moduleName, index);
+                String ifModuleKey = IFMODULE_DIRECTIVE_NAME + "|" + moduleName + "|" + index + ";" + parentKey;
+                discoverResources(context, discoveredResources, directive, ifModuleKey);
             }
-            StringBuilder resourceKey = new StringBuilder();
-            apacheDirective.getParentNode();
-            resourceKey.append(apacheDirective.getName()).append("|").append(directoryParam).append("|").append(index)
-                .append(";");
-            if (ifModuleKey != null)
-                resourceKey.append(ifModuleKey);
-            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey.toString(), resourceName,
-                null, null, pluginConfiguration, null));
         }
         return discoveredResources;
     }

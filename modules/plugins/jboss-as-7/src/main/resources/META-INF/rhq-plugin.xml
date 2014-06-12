@@ -10058,7 +10058,7 @@
     </plugin-configuration>
 
     <service name="Hibernate Persistence Unit"
-             class="BaseComponent"
+             class="HibernatePersistenceUnitComponent"
              discovery="SubsystemDiscovery"
              description="Runtime information about JPA use in the deployment."
              singleton="true">
@@ -10082,6 +10082,46 @@
       <operation name="subsystem:summary" description="Log the statistics.">
         <results>
           <c:simple-property name="operationResult" description="Log the statistics."/>
+        </results>
+      </operation>
+
+      <operation name="viewQueries" description="View statistical information about queries executed by Hibernate">
+        <parameters>
+          <c:simple-property name="batchSize" required="true" type="integer" default="10"
+                             description="Sets the Query Cache resources read batch size. Defaults to 10.">
+            <c:constraint>
+              <c:integer-constraint minimum="1"/>
+            </c:constraint>
+          </c:simple-property>
+          <c:simple-property name="managementQueryTimeout" required="true" type="integer" default="60" units="seconds"
+                             description="In seconds. Sets the connection read timeout for queries sent to the server management interface. Defaults to 60 seconds.">
+            <c:constraint>
+              <c:integer-constraint minimum="1"/>
+            </c:constraint>
+          </c:simple-property>
+        </parameters>
+        <results>
+          <c:list-property name="queries">
+            <c:map-property name="query">
+              <c:simple-property name="query-name" description="Query name."/>
+              <c:simple-property name="query-execution-count" type="long"
+                                 description="Get number of times query has been executed."/>
+              <c:simple-property name="query-execution-row-count" type="long"
+                                 description="Get number of rows returned from executions of query."/>
+              <c:simple-property name="query-execution-min-time" type="long"
+                                 description="Get the minimum time in milliseconds of the query."/>
+              <c:simple-property name="query-execution-max-time" type="long"
+                                 description="Get the time in milliseconds of the query."/>
+              <c:simple-property name="query-execution-average-time" type="long"
+                                 description="Get the average time in milliseconds of the query."/>
+              <c:simple-property name="query-cache-hit-count" type="long"
+                                 description="Get the number of times query was retrieved from cache."/>
+              <c:simple-property name="query-cache-miss-count" type="long"
+                                 description="Get the number of times query was not found in cache."/>
+              <c:simple-property name="query-cache-put-count" type="long"
+                                 description="Get the number of times query was put in cache."/>
+            </c:map-property>
+          </c:list-property>
         </results>
       </operation>
 
@@ -10133,26 +10173,6 @@
         <metric property="miss-count" description="Number of cacheable entities/collections not found in the cache and loaded."/>
         <metric property="put-count" description="Number of cacheable entities/collections put in the cache."/>
       </service>
-
-      <!--<service name="Query Cache"-->
-               <!--class="BaseComponent"-->
-               <!--discovery="QueryCacheDiscovery"-->
-               <!--description="Statistics for individual queries."-->
-               <!--singleton="true">-->
-        <!--<plugin-configuration>-->
-          <!--<c:simple-property name="path" readOnly="true"/>-->
-        <!--</plugin-configuration>-->
-
-        <!--<metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was retrieved from cache."/>-->
-        <!--<metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was not found in cache."/>-->
-        <!--<metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was put in cache."/>-->
-        <!--<metric property="query-execution-average-time" description="Get the average time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of times query has been executed."/>-->
-        <!--<metric property="query-execution-max-time" description="Get the time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-min-time" description="Get the minimum time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-row-count" displayType="summary" measurementType="trendsup" description="Get number of rows returned from executions of query."/>-->
-        <!--<metric property="query-name" dataType="trait" description="Query name."/>-->
-      <!--</service>-->
 
       <service name="Entity"
                class="BaseComponent"

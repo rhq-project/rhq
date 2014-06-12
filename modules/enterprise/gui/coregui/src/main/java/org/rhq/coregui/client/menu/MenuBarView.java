@@ -64,6 +64,7 @@ import org.rhq.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet
 import org.rhq.coregui.client.drift.DriftHistoryView;
 import org.rhq.coregui.client.footer.FavoritesButton;
 import org.rhq.coregui.client.help.HelpView;
+import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
 import org.rhq.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
@@ -272,6 +273,10 @@ public class MenuBarView extends EnhancedVLayout {
             $wnd.$('.navbar-btn-item').on('mouseenter', function() {$wnd.$(this).parent().parent().addClass('navbar-btn-item-hover')});
             $wnd.$('.navbar-btn-item').on('mouseleave', function() {$wnd.$(this).parent().parent().removeClass('navbar-btn-item-hover')});
         }-*/;
+
+        private String getViewLink(ViewName view) {
+            return "<a href='#" + view.getName() + "'>" + view.getTitle() + "</a>";
+        }
 
         private String createCspButtonContent() {
             ProductInfo productInfo = CoreGUI.get().getProductInfo();

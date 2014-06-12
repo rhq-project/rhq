@@ -207,13 +207,20 @@ public class SessionAccessServlet extends HttpServlet {
                 keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL.name());
 
                 out.println("{");
-                out.println("  \"realm\": \"rhq\",");
+                out.println("  \"realm\": \"master\",");
                 out.println("  \"resource\": \"coregui\",");
                 out.println("  \"realm-public-key\": \"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQAB\",");
                 out.println("  \"auth-server-url\":" + (keycloakUrl == null ? "null" : "\"" + keycloakUrl + "\"") + ",");
                 out.println("  \"ssl-not-required\": true,");
                 out.println("  \"expose-token\": true,");
-                out.println("  \"public-client\" : true");
+                out.println("  \"enable-cors\" : true,");
+                out.println("  \"cors-max-age\" : 5000,");
+                out.println("  \"response-type\" : \"token\",");
+                out.println("  \"cors-allowed-methods\" : [ \"POST\", \"PUT\", \"DELETE\", \"GET\" ],");
+                out.println("  \"public-client\" : false,");
+                out.println("  \"credentials\": {");
+                out.println("    \"secret\": \"password\"");
+                out.println("  }");
                 out.println("}");
 
             } catch (Exception e) {

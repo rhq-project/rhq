@@ -1,5 +1,5 @@
 {
-    "realm": "rhq",
+    "realm": "master",
     "enabled": true,
     "accessTokenLifespan": 3000,
     "accessCodeLifespan": 10,
@@ -8,8 +8,8 @@
     "registrationAllowed": false,
     "social": false,
     "updateProfileOnInitialSocialLogin": false,
-    "privateKey": "MIICXAIBAAKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQABAoGAfmO8gVhyBxdqlxmIuglbz8bcjQbhXJLR2EoS8ngTXmN1bo2L90M0mUKSdc7qF10LgETBzqL8jYlQIbt+e6TH8fcEpKCjUlyq0Mf/vVbfZSNaVycY13nTzo27iPyWQHK5NLuJzn1xvxxrUeXI6A2WFpGEBLbHjwpx5WQG9A+2scECQQDvdn9NE75HPTVPxBqsEd2z10TKkl9CZxu10Qby3iQQmWLEJ9LNmy3acvKrE3gMiYNWb6xHPKiIqOR1as7L24aTAkEAtyvQOlCvr5kAjVqrEKXalj0Tzewjweuxc0pskvArTI2Oo070h65GpoIKLc9jf+UA69cRtquwP93aZKtW06U8dQJAF2Y44ks/mK5+eyDqik3koCI08qaC8HYq2wVl7G2QkJ6sbAaILtcvD92ToOvyGyeE0flvmDZxMYlvaZnaQ0lcSQJBAKZU6umJi3/xeEbkJqMfeLclD27XGEFoPeNrmdx0q10Azp4NfJAY+Z8KRyQCR2BEG+oNitBOZ+YXF9KCpH3cdmECQHEigJhYg+ykOvr1aiZUMFT72HU0jnmQe2FVekuG+LJUt2Tm7GtMjTFoGpf0JwrVuZN39fOYAlo+nTixgeW7X8Y=",
-    "publicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQAB",
+    "privateKeyPem": "MIIEpAIBAAKCAQEAv5Mwgs/bNKMBuzFUWskpn3f8vqdT0eVpQUQwToCZLMAtr7MF0tOuV/9/3mrop50F73aH83U/wS6ZSiADOPiczhiKJiAZo8WLxX7O6mUGRDy5IjJiUYm0m2bZdnLOTvOapnk+ijFG/BlF8kCWGh5dhG2uqEhTi1KyrKWS0K88jC/UCSKNLvYhqQdEc7XAf9+DwoMIZDtChUhP83HX8jflZXKcO89x3I/GFucIZKPcjcaVdMvnDykkLlA6IKpFCWNjB/8s7KF5SSEk9BzDJu1dC/N13GJRb7EWL5mn47o2XxiJQtHbAN2p88TRND/j0KgDZU1sAccl1kIcH2djvUaJPwIDAQABAoIBAFSCK44o/vvTRHo9IocB4jiUh4va6GDZIHtIBz85/1f8VqsA//qmomvzK4cEBimaXPnrgcFl4X/ofHp0cLd7BEDuFlMHKghSpnuymrhPZFpJpylsrG5nnqJG1nsn3dZ6I6h4J5xybGvdAjwBPbW722kFsVxOu3vkOSlryL4B72WvFnLr8kmkm09a/x4Uhvnvy1ysjNi9br1UEWHeQ6HqL69+JCh8A73IpflsUzmB5W3MA2GtnyOgnJtmHpx0HNBkf9FrVHeI4CBQfnfY2nxYVRkDvxS8fkdR13amKmPoMnR1uMwHpUtVIHjbMjWde6gcRH8HkXLmK2QrLWBKxjAKNUECgYEA/M4cMC4s7eXbGMuzs1q1ckgPke2NDUYZWTVmaD3TtG3qXiyLCtxDJ3uuHcHyIXMOXUYH0NtIvz7P9Sblgrrb0oM9tZpadk3oWdBVcz5pWgoqLLZMFLW20RgOQKrThy+6lYIZKl/y2mqzLR0YgNmxGkDziq+qqEXTM1IQei/x5VECgYEAwf7751Km6C0F9zB3vllCvqTVCDlrLgOrlXGFtidrmP/E2X72pyGgVmbHrBW2L3+DTxEgxjr2egvCjvIhDZIC4No7fWx5/AK+QAqVQqaFPRoczk6X/YnSnCaQ5uBT2KyO8enFBa6Dz23njWD9eR+pvgYnnVPQmZip1cS2nRcYIY8CgYEAy96fZs9mFje+V6G2elYVa2Lng4QxstmsCYAB5OCvQJs/XNDJFGoKkeWwxXipfgYeOGQIW4rrgKbz57yFa8arDXofIrumZi9vyDY1Iuna5ey6lDIy6qScGMUwgUABs8xuyLERAFY+L5vKgQAsyYREyWpFvLrrgiZFKubsOM0/YvECgYEAi6ePGoESrLO0xrV6jmpdtTaeMbR8Jvz3abb2piIMwHDn+hb/Y2O+tFR7S7O5msn18laHPI034LZUkmlWSBmjvtD74JfV3QjwgtPbjcaoxkrlD9PecOPl3QmaaMp3MdVPdnFup19xfkNFXS7EaozTuntdy1GKKviO0tgxCjeU5JsCgYBxntzXmZES4FUMzAA8Olymto1EpFQ5FjzKqvOaqhCXNA0VmzSzRciEgOqMAWuBbyr4QB0FXpmT9vAG4P8p6rf6LSXrBRzBlmPhct6MTd5YpuX47VED10kmZvM69LOvYYkMLzOD4YRpTRT9pEHubnytiEX1//BRRu+pMa3QQJ9tSw==", 
+    "publicKeyPem": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv5Mwgs/bNKMBuzFUWskpn3f8vqdT0eVpQUQwToCZLMAtr7MF0tOuV/9/3mrop50F73aH83U/wS6ZSiADOPiczhiKJiAZo8WLxX7O6mUGRDy5IjJiUYm0m2bZdnLOTvOapnk+ijFG/BlF8kCWGh5dhG2uqEhTi1KyrKWS0K88jC/UCSKNLvYhqQdEc7XAf9+DwoMIZDtChUhP83HX8jflZXKcO89x3I/GFucIZKPcjcaVdMvnDykkLlA6IKpFCWNjB/8s7KF5SSEk9BzDJu1dC/N13GJRb7EWL5mn47o2XxiJQtHbAN2p88TRND/j0KgDZU1sAccl1kIcH2djvUaJPwIDAQAB",
     "requiredCredentials": [ "password" ],
     "users" : [
         {
@@ -20,7 +20,7 @@
             "lastName": "Doe",
             "credentials" : [
                 { "type" : "password",
-                    "value" : "rhqadmin" }
+                  "value" : "rhqadmin" }
             ]
         }
     ],
@@ -57,7 +57,9 @@
             "baseUrl": "http://localhost:7080/coregui",
             "redirectUris": [
                 "http://localhost:7080/coregui/*"
-            ]
+            ],
+            "publicClient" : false,
+            "secret" : "password"
         }
     ],
     "applicationRoleMappings": {

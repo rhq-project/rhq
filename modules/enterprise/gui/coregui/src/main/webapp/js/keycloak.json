@@ -1,9 +1,12 @@
 {
-    "realm": "rhq",
+    "realm": "master",
     "resource": "coregui",
     "realm-public-key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQAB",
     "auth-server-url": "http://localhost:7080/auth",
     "ssl-not-required": true,
     "expose-token": true,
-    "public-client" : true
+    "public-client" : false,
+    "credentials": {
+      "secret": "password"
+    }
 }

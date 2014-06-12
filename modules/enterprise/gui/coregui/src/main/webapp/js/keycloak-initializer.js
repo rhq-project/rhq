@@ -29,12 +29,17 @@ function initKeycloak() {
         var json = JSON.parse(response.responseText);
         if (json.serverInitialized) {
             if (json.keycloak) {
+                //var keycloak = Keycloak('../portal/sessionAccess');
                 var keycloak = Keycloak('../portal/sessionAccess');
                 var loadData = function () {
                     if (keycloak.idToken) {
                         window.kcReady=true;
+                        window.keycloak=keycloak;
                     } else {
-                        keycloak.loadUserProfile(function() {window.kcReady=true;}, function() {
+                        keycloak.loadUserProfile(function() {
+                          window.kcReady=true;
+                          window.keycloak=keycloak;
+                        }, function() {
                           window.kcReady=false;
                           window.alert('unable to loak Keycloak');
                         });
@@ -53,4 +58,3 @@ function initKeycloak() {
 }
 
 initKeycloak();
-

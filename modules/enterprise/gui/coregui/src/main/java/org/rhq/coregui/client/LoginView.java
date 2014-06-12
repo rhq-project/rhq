@@ -678,7 +678,7 @@ public class LoginView extends Canvas {
     }-*/;
     
     public native static boolean isKeycloakEnabled() /*-{
-        return $wnd.keycloak;
+        return typeof($wnd.keycloak) != "undefined";
     }-*/;
     
     public native static boolean isKeycloakReady() /*-{

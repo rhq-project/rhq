@@ -13627,12 +13627,30 @@
     Note that the custom regex pattern *must* capture three groups as does the default. Group1=name, Group2=version,
     Group3=extension.  The single pattern is applied to all Deployments.
 
-    <p/>
+    <h4>Upgrade Behavior</h4>
     Earlier versions of RHQ may have Deployment resources in inventory that contain version stamps in their names.  This
-    plugin implememts the ResourceUpgradeFacet, which will convert the existing resources on the first Agent startup
+    plugin implements the ResourceUpgradeFacet, which will convert the existing resources on the first Agent startup
     with the new updated plugin.  To avoid this the above system property must be set in advance.  Behavior can always
     be changed.  If necessary update the system property as needed and, when desired, uninventory any
     old resources that are no longer needed after the change.
+    
+    <h5>Multiple Versions of the Same Resource in Inventory</h5>
+    The new feature is designed for the use case where a single version of a given resource is in inventory under a
+    given parent.  When upgraded the logical resource is maintained and its version is updated.  For installations where
+    multiple versions already exist the resource upgrade may generate failures.  For example, if under some server I
+    have both app-1.0.war and app-2.0.war deployed, both will try to upgrade to the same logical resource: app.war.  To
+    avoid issues it is recommended to either, 1) disable this feature prior to upgrade or 2) uninventory resources leaving
+    only a single version of the resource.
+    
+    <h3>MISSING Resource Support (Since RHQ 4.12)</h3>
+    This plugin supports the MISSING Resource Policy feature introduced in RHQ 4.12.  Deployments and Domain Deployments
+    can be configured to be automatically uninventoried or ignored if they can no longer be found in the underlying
+    appication server.
+    
+    <h5>Interaction with Versioned Deployment Support</h5>
+    If utilizing versioned deployments as described above, it is recommended to leave the MISSING Policy as DOWN (the
+    default).  Otherwise, while updating versions it is possible during the update window to have the resource removed
+    or ignored. 
     ]]>
   </help>
 

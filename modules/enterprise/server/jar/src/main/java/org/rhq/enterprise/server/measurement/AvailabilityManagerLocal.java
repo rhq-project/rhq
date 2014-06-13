@@ -180,7 +180,9 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
 
     /**
      * Executing this method will update the given agent's lastAvailabilityReport time
-     * in a new transaction
+     * in a new transaction.
+     * <p/>
+     * SIDE-EFFECT: will unset the backfill flag if currently set on the agent.
      *
      * @param agentId the id of the agent
      */

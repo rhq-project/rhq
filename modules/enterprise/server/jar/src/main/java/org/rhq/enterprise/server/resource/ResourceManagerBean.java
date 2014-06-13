@@ -81,7 +81,6 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -2443,15 +2442,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
+
         Resource res = getResourceById(subject, resourceId);
-        //platforms are never unknown, just up or down, so we need to default the availability to a different value
-        //depending on the resource's category
-        ResourceAvailability results = new ResourceAvailability(res,
+
+        // platforms are never unknown, just up or down, so we need to default the availability to a different value
+        // depending on the resource's category
+        ResourceAvailability result = new ResourceAvailability(res,
             res.getResourceType().getCategory() == ResourceCategory.PLATFORM ? AvailabilityType.DOWN
                 : AvailabilityType.UNKNOWN);
 
         try {
-            // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
+            // validate the resource and agent, protect against REST dummy agent
             Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
             if (agent == null) {
                 if (log.isDebugEnabled()) {
@@ -2460,7 +2461,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             } else if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
                 && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
-                // dummy agent created from REST
                 return getResourceById(subject, resourceId).getCurrentAvailability();
             }
             AgentClient client = agentManager.getAgentClient(agent);
@@ -2470,6 +2470,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             AvailabilityReport report = null;
 
+            // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
             boolean agentPing = client.ping(5000L);
             if (agentPing) {
                 // we can't serialize the resource due to the hibernate proxies (agent can't deserialize hibernate objs)
@@ -2477,28 +2478,28 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 Resource bareResource = new Resource(res.getResourceKey(), res.getName(), res.getResourceType());
                 bareResource.setId(res.getId());
                 bareResource.setUuid(res.getUuid());
+                // root the avail check at the desired resource. Ask for a full report to guarantee that we
+                // get back the agent-side avail for the resource and keep the server in sync.  This also means we'll
+                // get the descendants as well.
                 report = client.getDiscoveryAgentService().getCurrentAvailability(bareResource, false);
             }
 
-            if (report == null) {
-                report = new AvailabilityReport(client.getAgent().getName());
-                Availability fakeAvail = new Availability(res,
-                    res.getResourceType().getCategory() == ResourceCategory.PLATFORM ? AvailabilityType.DOWN
-                        : AvailabilityType.UNKNOWN);
-                fakeAvail.setStartTime(System.currentTimeMillis());
-                report.addAvailability(fakeAvail);
-            }
+            if (report != null) {
+                // although the data came from the agent this should be processed like a server-side report
+                // because it was requested and initiated by the server (bz 1094540).  The availabilities will
+                // still be merged but certain backfill logic will remain unscathed.
+                report.setServerSideReport(true);
 
-            // The report is most likely empty as it's unlikely the avail has changed.  Don't merge it and return
-            AvailabilityType foundAvail = report.forResource(res.getId());
-            if (foundAvail != null) {
-                availabilityManager.mergeAvailabilityReport(report);
-            } else {
-                foundAvail = res.getCurrentAvailability() == null ? AvailabilityType.UNKNOWN : res
-                    .getCurrentAvailability().getAvailabilityType();
-            }
+                AvailabilityType foundAvail = report.forResource(res.getId());
+                if (foundAvail != null) {
+                    availabilityManager.mergeAvailabilityReport(report);
+                } else {
+                    foundAvail = res.getCurrentAvailability() == null ? AvailabilityType.UNKNOWN : res
+                        .getCurrentAvailability().getAvailabilityType();
+                }
 
-            results.setAvailabilityType(foundAvail);
+                result.setAvailabilityType(foundAvail);
+            }
 
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
@@ -2506,7 +2507,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-        return results;
+        return result;
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here

@@ -30,10 +30,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -109,13 +106,13 @@ public interface DiscoveryAgentService {
     AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport);
 
     /**
-     * Returns the current availability for the specified resource.
+     * Return an availability report for the specified root resource and its descendants.
      * <p/>
-     * This call returns an availability report (rather just a simple availability of a single resource)
-     * because it also scans for the changes in availability in the child resources. Notice that the returned report may
-     * contain no results if {@code changesOnly} is set to true. If it is false, the report will always contain
-     * the availability of the supplied resource but can also additionally contain the availabilities of some of its
-     * child resources, if they were eligible for availability collection at the time of calling this method.
+     * The returned report may contain no results if {@code changesOnly} is set to true.  Otherwise it will return
+     * the availability of the root resource and its descendants.  Note, a live availability check (i.e. a call
+     * to getAvailability()) is always performed on the root resource.  Only descendants normally eligible for
+     * availability collection at the time of this call will also have live availability. Others will report their
+     * most recently reported availability.
      * <p/>
      * Also note that the availability types of the resources in the report may have any of the following values from
      * the {@link AvailabilityType} enum - it may happen that the availability of the resource is
@@ -126,13 +123,10 @@ public interface DiscoveryAgentService {
      * correctly handle the report within the server.
      *
      * @param resource the resource to return the availability of.
-     * @param changesOnly if true, only changes in availability will be reported, if false the report will contain
-     *                    the availabilities of all resources eligible for collection at the time of the call regardless
-     *                    of whether their availability changed or not.
-     * @return an availability report containing at least the availability of the supplied resource + possibly avails
-     *         of some of the child resources that were eligible for avail collection at the time. The rest of the
-     *         children are scheduled for availability collection in the next collector run (which happens
-     *         approximately 30 seconds after this call).
+     * @param changesOnly if true, only changes in availability will be reported. if false the report will contain
+     *                    the availabilities of the root resource and all descendants, whether their availability
+     *                    changed or not.
+     * @return an availability report populated as described in the above options.
      */
     @NotNull
     AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly);

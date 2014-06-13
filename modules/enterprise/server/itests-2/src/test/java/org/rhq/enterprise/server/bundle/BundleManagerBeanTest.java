@@ -530,7 +530,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
         assertNotNull("Instance of newly created bundle version should not be null", bv1);
 
-        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        ResourceGroup platformResourceGroup = createTestResourceGroup(false);
         assertNotNull("Instance of newly created resource group should not be null", platformResourceGroup);
         BundleDestination dest1 = createDestination(b1, "one", "/test", platformResourceGroup);
         assertNotNull("Instance of newly created bundle destination should not be null", dest1);
@@ -906,7 +906,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
         assertNotNull(bv1);
-        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        ResourceGroup platformResourceGroup = createTestResourceGroup(false);
         assertNotNull(platformResourceGroup);
         BundleDestination dest1 = createDestination(b1, "one", "/test", platformResourceGroup);
         assertNotNull(dest1);
@@ -929,7 +929,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bv1);
         Configuration config = new Configuration();
         config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
-        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        ResourceGroup platformResourceGroup = createTestResourceGroup(false);
         assertNotNull(platformResourceGroup);
         BundleDestination dest1 = createDestination(b1, "one", "/test", platformResourceGroup);
         assertNotNull(dest1);
@@ -990,6 +990,58 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(newHistory);
         assertEquals(auditMessage, newHistory.getAction());
         assertEquals(BundleResourceDeploymentHistory.Status.SUCCESS, newHistory.getStatus());
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCannotDeployToSyntheticResources() throws Exception {
+        Bundle b1 = createBundle("one-synthetic");
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
+        ResourceGroup platformResourceGroup = createTestResourceGroup(true);
+        assertNotNull(platformResourceGroup);
+        BundleDestination dest1 = createDestination(b1, "one-synthetic", "/test", platformResourceGroup);
+        assertNotNull(dest1);
+        BundleDeployment bd1 = createDeployment("one-synthetic", bv1, dest1, config);
+        assertNotNull(bd1);
+        assertEquals(BundleDeploymentStatus.PENDING, bd1.getStatus());
+
+        BundleDeployment bd1d = bundleManager.scheduleBundleDeployment(overlord, bd1.getId(), false);
+        assertNotNull(bd1d);
+        assertEquals(bd1.getId(), bd1d.getId());
+
+        BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
+        bdc.addFilterId(bd1d.getId());
+        bdc.fetchBundleVersion(true);
+        bdc.fetchDestination(true);
+        bdc.fetchResourceDeployments(true);
+        bdc.fetchTags(true);
+        List<BundleDeployment> bds = bundleManager.findBundleDeploymentsByCriteria(overlord, bdc);
+        assertEquals(1, bds.size());
+        bd1d = bds.get(0);
+
+        assertEquals(platformResourceGroup, bd1d.getDestination().getGroup());
+        assertEquals(dest1.getId(), bd1d.getDestination().getId());
+
+        BundleResourceDeploymentCriteria c = new BundleResourceDeploymentCriteria();
+        c.addFilterBundleDeploymentId(bd1d.getId());
+        c.fetchBundleDeployment(true);
+        c.fetchHistories(true);
+        c.fetchResource(true);
+        List<BundleResourceDeployment> brds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
+        assertEquals(1, brds.size());
+        assertEquals(1, bd1d.getResourceDeployments().size());
+        assertEquals(bd1d.getResourceDeployments().get(0).getId(), brds.get(0).getId());
+        BundleResourceDeployment brd = brds.get(0);
+
+        assertNotNull(brd.getBundleResourceDeploymentHistories());
+        int size = brd.getBundleResourceDeploymentHistories().size();
+        assertTrue(size == 1);
+
+        BundleResourceDeploymentHistory hist = brd.getBundleResourceDeploymentHistories().get(0);
+        assertEquals(hist.getStatus(), BundleResourceDeploymentHistory.Status.FAILURE);
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -1809,7 +1861,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(subject, b1.getName() + "-1", null, b1);
         assertNotNull(bv1);
-        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        ResourceGroup platformResourceGroup = createTestResourceGroup(false);
         assertNotNull(platformResourceGroup);
 
         // deny destination create (no view of resource group)
@@ -1902,7 +1954,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(subject, b1.getName() + "-1", null, b1);
         assertNotNull(bv1);
-        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        ResourceGroup platformResourceGroup = createTestResourceGroup(false);
         assertNotNull(platformResourceGroup);
         LookupUtil.getRoleManager().addResourceGroupsToRole(overlord, role.getId(),
             new int[] { platformResourceGroup.getId() });
@@ -2225,7 +2277,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     // lifted from ResourceManagerBeanTest, with the addition of adding bundle config to the type
-    private ResourceGroup createTestResourceGroup() throws Exception {
+    private ResourceGroup createTestResourceGroup(boolean synthetic) throws Exception {
         getTransactionManager().begin();
 
         ResourceGroup resourceGroup = null;
@@ -2264,6 +2316,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             assert bdbd.getValueName().equals(TEST_BUNDLE_DESTBASEDIR_PROP);
 
             Agent agent = new Agent(TEST_PREFIX + "-testagent", "testaddress", 1, "", "testtoken");
+            agent.setSynthetic(synthetic);
             em.persist(agent);
             em.flush();
 
@@ -2276,6 +2329,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
             resource.setAgent(agent);
             resource.setResourceConfiguration(rc);
+            resource.setSynthetic(synthetic);
             em.persist(resource);
 
             resourceGroup = new ResourceGroup(TEST_PREFIX + "-group-" + System.currentTimeMillis());

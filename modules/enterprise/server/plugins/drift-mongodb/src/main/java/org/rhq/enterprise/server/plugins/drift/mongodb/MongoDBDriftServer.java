@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getEntityManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
@@ -241,18 +242,21 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
                 ds.save(changeSet);
 
-                // The following section of code really should not be part of the plugin
-                // implementation, but it is currently required due to a flaw in the design
-                // of the drift plugin framework. Two things are done here. First, if we
-                // successfully persist the change set, then we need to send an
-                // acknowledgement to the agent. This is critical because the agent will
-                // in effect suspend drift detection (for the particular definition) until
-                // it receives the ACK. Secondly, we need to tell the agent to send the
-                // actual file bits for any change set content we do not have.
-                DriftAgentService driftService = getDriftAgentService(resourceId);
-                driftService.ackChangeSet(headers.getResourceId(), headers.getDriftDefinitionName());
-                if (!missingContent.isEmpty()) {
-                    driftService.requestDriftFiles(resourceId, headers, missingContent);
+                Resource resource = getEntityManager().find(Resource.class, resourceId);
+                if (!resource.isSynthetic()) {
+                    // The following section of code really should not be part of the plugin
+                    // implementation, but it is currently required due to a flaw in the design
+                    // of the drift plugin framework. Two things are done here. First, if we
+                    // successfully persist the change set, then we need to send an
+                    // acknowledgement to the agent. This is critical because the agent will
+                    // in effect suspend drift detection (for the particular definition) until
+                    // it receives the ACK. Secondly, we need to tell the agent to send the
+                    // actual file bits for any change set content we do not have.
+                    DriftAgentService driftService = getDriftAgentService(resourceId);
+                    driftService.ackChangeSet(headers.getResourceId(), headers.getDriftDefinitionName());
+                    if (!missingContent.isEmpty()) {
+                        driftService.requestDriftFiles(resourceId, headers, missingContent);
+                    }
                 }
 
                 return true;

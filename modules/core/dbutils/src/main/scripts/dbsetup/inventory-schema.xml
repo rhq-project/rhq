@@ -89,6 +89,7 @@
         <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
         <column name="PRODUCT_VERSION_ID" type="INTEGER" references="RHQ_PRD_VER"/>
+        <column name="SYNTHETIC" type="BOOLEAN" required="true" default="false"/>
 
         <index name="RHQ_RESOURCE_idx_key">
             <field ref="RESOURCE_KEY"/>

@@ -102,6 +102,10 @@ public class AgentRequestFullAvailabilityJob implements Job {
         // it; if it's down we'll get a full report when it comes up.
         AgentManagerLocal agentManager = LookupUtil.getAgentManager();
         for (Agent agent : internalizeJobValues((String) jobDataMap.get(AGENTS))) {
+            if (agent.isSynthetic()) {
+                continue;
+            }
+
             try {
                 AgentClient agentClient = agentManager.getAgentClient(agent);
                 agentClient.getDiscoveryAgentService().requestFullAvailabilityReport();

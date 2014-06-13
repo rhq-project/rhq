@@ -402,6 +402,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
 
+        if (resource.isSynthetic()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Aborting the deployment of packages to resource ID [" + resourceId + "]. The resource is" +
+                    " synthetic.");
+            }
+            return;
+        }
+
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         // This call will also create the audit trail entry.
         ContentServiceRequest persistedRequest = contentManager.createDeployRequest(resourceId, user.getName(),
@@ -617,6 +625,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
 
+        if (resource.isSynthetic()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Aborting the deletion of packages from resource ID [" + resourceId + "]. The resource is" +
+                    " synthetic.");
+            }
+            return;
+        }
+
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         // This will also create the audit trail entry
         ContentServiceRequest persistedRequest = contentManager.createRemoveRequest(resourceId, user.getName(),
@@ -801,6 +817,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Load entities for references later in the method
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
+
+        if (resource.isSynthetic()) {
+            // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+            ContentServiceRequest persistedRequest = contentManager.createRetrieveBitsRequest(resourceId, user.getName(),
+                installedPackageId);
+
+            // Update the request with the failure
+            contentManager
+                .failRequest(persistedRequest.getId(), new Exception("Cannot retrieve bits from a synthetic resource"));
+            return;
+        }
+
         InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
@@ -875,6 +903,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
+
+        if (resource.isSynthetic()) {
+            throw new IllegalArgumentException("Cannot retrieve installation steps from a synthetic resource");
+        }
 
         // Make call to agent
         List<DeployPackageStep> packageStepList;

@@ -41,6 +41,10 @@ import org.rhq.core.domain.resource.Resource;
 /**
  * Sync info for a resource.  This is a lightweight "Resource" entity that contains only the information required
  * to perform Inventory Sync between the Agent and Server.
+ * <p/>
+ * Because this entity is meant for syncing between the agent and server, only "real" non-synthetic resources are
+ * considered in the named queries and care should be taken that a synthetic resource never travels across the wire to
+ * the agent.
  *
  * @author Jay Shaughnessy
  */
@@ -49,17 +53,18 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceSyncInfo.QUERY_SERVICE_CHILDREN, query = "" //
         + "SELECT r " //
         + "  FROM ResourceSyncInfo r " //
-        + " WHERE r.id IN ( SELECT rr.id FROM Resource rr WHERE rr.parentResource.id IN ( :parentIds )) " //
+        + " WHERE r.id IN ( SELECT rr.id FROM Resource rr WHERE rr.parentResource.id IN ( :parentIds )" //
+        + " AND rr.synthetic = false )" //
         + ""),
     @NamedQuery(name = ResourceSyncInfo.QUERY_TOP_LEVEL_SERVER, query = "" //
         + "SELECT rsi " //
         + "  FROM ResourceSyncInfo rsi " //
         + " WHERE rsi.id = :resourceId " //
-        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.id = :resourceId) "
-        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.id = :resourceId) "
-        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.id = :resourceId) "
-        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
-        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId) "
+        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.id = :resourceId AND rr.synthetic = false) "
+        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.id = :resourceId AND rr.synthetic = false) "
+        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.id = :resourceId AND rr.synthetic = false) "
+        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.id = :resourceId AND rr.synthetic = false) "
+        + "    OR rsi.id IN (SELECT rr.id FROM Resource rr WHERE rr.parentResource.parentResource.parentResource.parentResource.parentResource.id = :resourceId AND rr.synthetic = false) "
         + "   ") })
 @Table(name = "RHQ_RESOURCE")
 public class ResourceSyncInfo implements Serializable {
@@ -75,18 +80,20 @@ public class ResourceSyncInfo implements Serializable {
     public static final String QUERY_NATIVE_QUERY_TOP_LEVEL_SERVER_ORACLE = "" //
         + "           SELECT r.id, r.uuid, r.mtime, r.inventory_status " //
         + "             FROM rhq_resource r " //
+        + "             WHERE r.synthetic = 0 " //
         + "       START WITH r.id = :resourceId " //
-        + " CONNECT BY PRIOR r.id = r.parent_resource_id ";
+        + " CONNECT BY PRIOR r.id = r.parent_resource_id AND r.synthetic = 0";
     public static final String QUERY_NATIVE_QUERY_TOP_LEVEL_SERVER_POSTGRES = "" //
         + " WITH RECURSIVE childResource AS " //
         + " (   SELECT r.id, r.uuid, r.mtime, r.inventory_status " //
         + "       FROM rhq_resource AS r " //
         + "      WHERE r.id = :resourceId " // non-recursive term
+        + "       AND r.synthetic = false " //
         + "  UNION ALL " //
         + "     SELECT r.id, r.uuid, r.mtime, r.inventory_status " // recursive term
         + "       FROM rhq_resource AS r " //
         + "       JOIN childResource AS cr " //
-        + "         ON (r.parent_resource_id = cr.id) " //
+        + "         ON (r.parent_resource_id = cr.id AND r.synthetic = false) " //
         + " ) " //
         + " SELECT id, uuid, mtime, inventory_status " //
         + "   FROM childResource ";

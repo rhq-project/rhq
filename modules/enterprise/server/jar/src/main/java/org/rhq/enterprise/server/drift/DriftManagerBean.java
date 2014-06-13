@@ -103,6 +103,7 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -159,6 +160,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
+    @EJB
+    private ResourceManagerLocal resourceManager;
+
     // use a new transaction when putting things on the JMS queue. see 
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
@@ -196,9 +200,12 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         authorizeOrFail(subject, resourceId, "Can not update drifts");
         saveChangeSetFiles(subject, changeSetFilesZip);
 
-        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-        DriftAgentService driftService = agent.getDriftAgentService();
-        driftService.ackChangeSetContent(resourceId, driftDefName, token);
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (!resource.isSynthetic()) {
+            AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+            DriftAgentService driftService = agent.getDriftAgentService();
+            driftService.ackChangeSetContent(resourceId, driftDefName, token);
+        }
     }
 
     @Override
@@ -325,6 +332,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                 throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
             }
 
+            if (resource.isSynthetic()) {
+                throw new IllegalArgumentException("Cannot proactively detect drift on synthetic resources.");
+            }
+
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();
             // this is a one-time on-demand call. If it fails throw an exception to make sure the user knows it
@@ -367,15 +378,20 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
                 // TODO security check!
 
+                Resource resource = entityManager.find(Resource.class, resourceId);
+
                 // tell the agent first - we don't want the agent reporting on the drift def after we delete it
-                boolean unscheduledOnAgent = false;
-                try {
-                    AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-                    DriftAgentService service = agentClient.getDriftAgentService();
-                    service.unscheduleDriftDetection(resourceId, doomedDriftDef);
-                    unscheduledOnAgent = true;
-                } catch (Exception e) {
-                    log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftDef + "]", e);
+                // synthetic resources aren't backed by an agent so, don't bother trying to contact one...
+                boolean unscheduledOnAgent = resource.isSynthetic();
+                if (!unscheduledOnAgent) {
+                    try {
+                        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                        DriftAgentService service = agentClient.getDriftAgentService();
+                        service.unscheduleDriftDetection(resourceId, doomedDriftDef);
+                        unscheduledOnAgent = true;
+                    } catch (Exception e) {
+                        log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftDef + "]", e);
+                    }
                 }
 
                 // purge all data related to this drift definition
@@ -610,14 +626,16 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             throw new RuntimeException("Failed to pin snapshot", e);
         }
 
-        try {
-            AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource()
-                .getId());
-            DriftAgentService driftService = agent.getDriftAgentService();
-            driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
-        } catch (Exception e) {
-            log.warn("Unable to notify agent that DriftDefinition[driftDefinitionId: " + driftDefId
-                + ", driftDefinitionName: " + driftDef.getName() + "] has been pinned. The agent may be down.", e);
+        if (!driftDef.getResource().isSynthetic()) {
+            try {
+                AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource()
+                    .getId());
+                DriftAgentService driftService = agent.getDriftAgentService();
+                driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
+            } catch (Exception e) {
+                log.warn("Unable to notify agent that DriftDefinition[driftDefinitionId: " + driftDefId
+                    + ", driftDefinitionName: " + driftDef.getName() + "] has been pinned. The agent may be down.", e);
+            }
         }
     }
 
@@ -799,6 +817,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                     driftServerPlugin.copyChangeSet(subject, template.getChangeSetId(), driftDef.getId(), resourceId);
                 }
             }
+
+            if (resource.isSynthetic()) {
+                // don't bother reaching out to the agent for synthetic resources... nothing needs to be done
+                // for synthetic resources because they are not backed by the agent.
+                break;
+            }
+
             resource.setAgentSynchronizationNeeded();
 
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

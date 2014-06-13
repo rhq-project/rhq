@@ -40,6 +40,7 @@ import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.PlatformSyncInfo;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -91,7 +92,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
     PlatformSyncInfo getPlatformSyncInfo(Agent knownAgent);
 
     /**
-     * @param resourceid the root resourceId on which we want to sync
+     * @param resourceId the root resourceId on which we want to sync
      * @return null if resource not found, otherwise the entire tree rooted at the specified resource, as an
      * unordered collection.  Although not strictly a Set (to save on computation) this collection should not
      * contain duplicates.
@@ -233,4 +234,17 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
     Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests);
 
     void updateAgentInventoryStatus(String platformsList, String serversList);
+
+    /**
+     * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources
+     * that have been successfully synchronized on the agent.
+     *
+     * @param  resourceIds a collection of{@link Resource} ids that have been newly committed and successfully
+     *                     synchronized on the agent
+     *
+     * @return the current list of measurement schedules that should be installed agent side for each resource contained
+     *         within the passed set
+     */
+    Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds);
+
 }

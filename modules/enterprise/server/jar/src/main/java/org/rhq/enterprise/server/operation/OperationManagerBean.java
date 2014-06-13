@@ -1141,78 +1141,87 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         AgentClient agent = null;
         boolean canceled = false;
 
-        try {
-            agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+        if (doomedHistory.getResource().isSynthetic()) {
+            // well, we shouldn't be able to even invoke an operation on a synthetic resource in the first place,
+            // but let's just handle the situation here anyway.
+            results = new CancelResults(InterruptedState.UNKNOWN);
+            canceled = true;
+        } else {
+            try {
+                agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
 
-            // since this method is usually called by the UI, we want to quickly determine if we can even talk to the agent
-            if (agent.pingService(5000L)) {
-                results = agent.getOperationAgentService().cancelOperation(jobIdString);
+                // since this method is usually called by the UI, we want to quickly determine if we can even talk to the agent
+                if (agent.pingService(5000L)) {
+                    results = agent.getOperationAgentService().cancelOperation(jobIdString);
 
-                InterruptedState interruptedState = results.getInterruptedState();
+                    InterruptedState interruptedState = results.getInterruptedState();
 
-                switch (interruptedState) {
-                case FINISHED: {
-                    // If the agent says the interrupted state was FINISHED, we should not set the history state
-                    // to canceled because it can't be canceled after its completed.  Besides, the agent will very
-                    // shortly send us the "success" message which will set the state to SUCCESS.  Under odd circumstances
-                    // (like the agent crashing after it finished the op but before it had a chance to send the "success"
-                    // message), it will eventually be flagged as timed-out, but this is extremely rare since the
-                    // "success" message is sent with guaranteed delivery - so the crash had to occur in just the right
-                    // split second of time for that to occur.
+                    switch (interruptedState) {
+                    case FINISHED: {
+                        // If the agent says the interrupted state was FINISHED, we should not set the history state
+                        // to canceled because it can't be canceled after its completed.  Besides, the agent will very
+                        // shortly send us the "success" message which will set the state to SUCCESS.  Under odd circumstances
+                        // (like the agent crashing after it finished the op but before it had a chance to send the "success"
+                        // message), it will eventually be flagged as timed-out, but this is extremely rare since the
+                        // "success" message is sent with guaranteed delivery - so the crash had to occur in just the right
+                        // split second of time for that to occur.
 
-                    LOG.debug("Agent already finished the operation so it cannot be canceled. " + "agent=[" + agent
-                        + "], op=[" + doomedHistory + "]");
-                    break;
+                        LOG.debug("Agent already finished the operation so it cannot be canceled. " + "agent=[" + agent
+                            + "], op=[" + doomedHistory + "]");
+                        break;
+                    }
+
+                    case QUEUED: {
+                        // If the agent says the interrupted state was QUEUED, this is good.  The agent never even
+                        // got a chance to tell its plugin to execute the operation; it just dequeued and threw the op away.
+                        // Therefore, we can really say it was canceled.
+                        canceled = true;
+                        LOG.debug("Cancel successful. Agent dequeued the operation and will not invoke it. " + "agent=["
+                            + agent + "], op=[" + doomedHistory + "]");
+                        break;
+                    }
+
+                    case RUNNING: {
+                        // If the agent says the interrupted state was RUNNING, it means it was told to cancel the
+                        // operation while it was already being invoked by the plugin.  This means the cancel may or may not have
+                        // really worked.  The agent will have tried to interrupt the plugin, but if the plugin ignored
+                        // the cancel request (e.g. to avoid putting the resource in an inconsistent state) we'll never know.
+                        // We still flag the operation as canceled to indicate that the agent did attempt to cancel it;
+                        // hopefully, the plugin did the right thing.
+                        canceled = true;
+                        LOG.debug(
+                            "Agent attempted to cancel the operation - it interrupted the operation while it was running. "
+                                + "agent=[" + agent + "], op=[" + doomedHistory + "]");
+                        break;
+                    }
+
+                    case UNKNOWN: {
+                        // If the agent didn't know anything about the operation invocation, its probably because
+                        // it crashed after the operation was initially submitted.  I guess it
+                        // could also mean that the agent has just finished the operation and erased its memory of its
+                        // existence (but it was so recent that the INPROGRESS state has not yet had time to be committed
+                        // to one of its terminal states like SUCCESS or FAILURE).
+                        // This is going to be a rare interrupted state.  It means the agent doesn't know anything about
+                        // the operation.  In this case, we'll allow its state to be canceled since the most probably reason
+                        // for this is the agent was recycled and has no idea what this operation is or was.
+                        canceled = true;
+                        LOG.debug("Agent does not know about the operation. Nothing to cancel. " + "agent=[" + agent
+                            + "], op=[" + doomedHistory + "]");
+                        break;
+                    }
+
+                    default: {
+                        // someone added a constant to the interrupted state enum but didn't update this code
+                        throw new RuntimeException("Please report this bug - bad state: " + interruptedState);
+                    }
+                    }
+                } else {
+                    LOG.warn("Agent down? Cannot cancel operation. agent=[" + agent + "], op=[" + doomedHistory + "]");
                 }
-
-                case QUEUED: {
-                    // If the agent says the interrupted state was QUEUED, this is good.  The agent never even
-                    // got a chance to tell its plugin to execute the operation; it just dequeued and threw the op away.
-                    // Therefore, we can really say it was canceled.
-                    canceled = true;
-                    LOG.debug("Cancel successful. Agent dequeued the operation and will not invoke it. " + "agent=["
-                        + agent + "], op=[" + doomedHistory + "]");
-                    break;
-                }
-
-                case RUNNING: {
-                    // If the agent says the interrupted state was RUNNING, it means it was told to cancel the
-                    // operation while it was already being invoked by the plugin.  This means the cancel may or may not have
-                    // really worked.  The agent will have tried to interrupt the plugin, but if the plugin ignored
-                    // the cancel request (e.g. to avoid putting the resource in an inconsistent state) we'll never know.
-                    // We still flag the operation as canceled to indicate that the agent did attempt to cancel it;
-                    // hopefully, the plugin did the right thing.
-                    canceled = true;
-                    LOG.debug("Agent attempted to cancel the operation - it interrupted the operation while it was running. "
-                        + "agent=[" + agent + "], op=[" + doomedHistory + "]");
-                    break;
-                }
-
-                case UNKNOWN: {
-                    // If the agent didn't know anything about the operation invocation, its probably because
-                    // it crashed after the operation was initially submitted.  I guess it
-                    // could also mean that the agent has just finished the operation and erased its memory of its
-                    // existence (but it was so recent that the INPROGRESS state has not yet had time to be committed
-                    // to one of its terminal states like SUCCESS or FAILURE).
-                    // This is going to be a rare interrupted state.  It means the agent doesn't know anything about
-                    // the operation.  In this case, we'll allow its state to be canceled since the most probably reason
-                    // for this is the agent was recycled and has no idea what this operation is or was.
-                    canceled = true;
-                    LOG.debug("Agent does not know about the operation. Nothing to cancel. " + "agent=[" + agent
-                        + "], op=[" + doomedHistory + "]");
-                    break;
-                }
-
-                default: {
-                    // someone added a constant to the interrupted state enum but didn't update this code
-                    throw new RuntimeException("Please report this bug - bad state: " + interruptedState);
-                }
-                }
-            } else {
-                LOG.warn("Agent down? Cannot cancel operation. agent=[" + agent + "], op=[" + doomedHistory + "]");
+            } catch (Throwable t) {
+                LOG.warn("Cannot tell the agent to cancel operation. agent=[" + agent + "], op=[" + doomedHistory + "]",
+                    t);
             }
-        } catch (Throwable t) {
-            LOG.warn("Cannot tell the agent to cancel operation. agent=[" + agent + "], op=[" + doomedHistory + "]", t);
         }
 
         // if the agent canceled it or we failed to talk to the agent but we are allowed to ignore that failure

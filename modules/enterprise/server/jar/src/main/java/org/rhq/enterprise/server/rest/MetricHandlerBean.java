@@ -76,6 +76,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
@@ -840,7 +841,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         }
         Set<CallTimeData> data = new HashSet<CallTimeData>();
         data.add(ctd);
-        calltimeDataManager.addCallTimeData(data);
+        dataManager.mergeMeasurementReport(getCalltimeMeasurementReport(data));
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/metric/data/{scheduleId}/callTime");
         uriBuilder.queryParam("startTime",startTime);
@@ -875,7 +876,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
         data.add(new MeasurementDataNumeric(timestamp,scheduleId,value.getValue()));
 
-        dataManager.addNumericData(data);
+        dataManager.mergeMeasurementReport(getNumericMeasurementReport(data));
 
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/metric/data/{scheduleId}/raw");
@@ -908,7 +909,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         MeasurementDataPK pk = new MeasurementDataPK(timestamp,scheduleId);
         traits.add(new MeasurementDataTrait(pk,value.getValue()));
 
-        dataManager.addTraitData(traits);
+        dataManager.mergeMeasurementReport(getTraitMeasurementReport(traits));
 
         return Response.ok().build();
     }
@@ -948,7 +949,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             data.add(new MeasurementDataNumeric(point.getTimeStamp(), point.getScheduleId(),point.getValue()));
         }
 
-        dataManager.addNumericData(data);
+        dataManager.mergeMeasurementReport(getNumericMeasurementReport(data));
 
         return Response.noContent().type(mediaType).build();
 
@@ -972,7 +973,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             // TODO signal bad items to the caller?
         }
 
-        dataManager.addNumericData(data);
+        dataManager.mergeMeasurementReport(getNumericMeasurementReport(data));
 
         return Response.noContent().type(mediaType).build();
     }
@@ -1216,5 +1217,23 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             pw.flush();
             pw.close();
         }
+    }
+
+    private MeasurementReport getNumericMeasurementReport(Set<MeasurementDataNumeric> numericData) {
+        MeasurementReport ret = new MeasurementReport();
+        ret.getNumericData().addAll(numericData);
+        return ret;
+    }
+
+    private MeasurementReport getTraitMeasurementReport(Set<MeasurementDataTrait> traitData) {
+        MeasurementReport ret = new MeasurementReport();
+        ret.getTraitData().addAll(traitData);
+        return ret;
+    }
+
+    private MeasurementReport getCalltimeMeasurementReport(Set<CallTimeData> callTimeData) {
+        MeasurementReport ret = new MeasurementReport();
+        ret.getCallTimeData().addAll(callTimeData);
+        return ret;
     }
 }

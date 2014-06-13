@@ -27,7 +27,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1188,6 +1190,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Map<BundleResourceDeployment, String> failedToPurge = new HashMap<BundleResourceDeployment, String>();
         for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
             try {
+                if (resourceDeploy.getResource().isSynthetic()) {
+                    BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
+                        "Purge Requested", "User [" + subject.getName() + "] requested to purge this deployment", null,
+                        BundleResourceDeploymentHistory.Status.FAILURE, "Cannot purge from a synthetic deployment", null);
+                    bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subjectManager.getOverlord(),
+                        resourceDeploy.getId(), history);
+                    continue;
+                }
+
                 // first put the user name that requested the purge in the audit trail
                 BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                     "Purge Requested", "User [" + subject.getName() + "] requested to purge this deployment", null,
@@ -1410,6 +1421,28 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
         Resource bundleTarget, boolean isCleanDeployment, boolean isRevert) throws Exception {
+
+        if (bundleTarget.isSynthetic()) {
+            String now = DateFormat.getInstance().format(new Date(System.currentTimeMillis()));
+
+            BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeploymentInNewTrans(
+                subjectManager.getOverlord(), deployment.getId(), bundleTarget.getId());
+
+            bundleManager.setBundleResourceDeploymentStatusInNewTransaction(subject, resourceDeployment.getId(),
+                BundleDeploymentStatus.FAILURE);
+
+            // add the deployment request history (in a new trans)
+            BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
+                AUDIT_ACTION_DEPLOYMENT_REQUESTED, deployment.getName(), null,
+                BundleResourceDeploymentHistory.Status.FAILURE, "Cannot deploy to a synthetic resource."
+                    + " Requested deployment time: "+ now, null);
+
+            bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subjectManager.getOverlord(),
+                resourceDeployment.getId(), history);
+
+            return resourceDeployment;
+        }
+
 
         int bundleTargetResourceId = bundleTarget.getId();
         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), bundleTargetResourceId);

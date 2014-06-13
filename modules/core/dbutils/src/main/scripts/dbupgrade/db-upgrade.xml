@@ -2384,6 +2384,45 @@
             </schema-directSQL>
           </schemaSpec>
        
+          <schemaSpec version="2.151">
+                <schema-addColumn table="RHQ_AGENT" column="SYNTHETIC" columnType="BOOLEAN"/>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        UPDATE rhq_agent SET synthetic = false
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        UPDATE rhq_agent SET synthetic = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        UPDATE rhq_agent SET synthetic = true WHERE name LIKE 'dummy-agent:name%'
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        UPDATE rhq_agent SET synthetic = 1 WHERE name LIKE 'dummy-agent:name%'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_AGENT" column="SYNTHETIC" nullable="false"/>
+
+                <schema-addColumn table="RHQ_RESOURCE" column="SYNTHETIC" columnType="BOOLEAN"/>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        UPDATE rhq_resource SET synthetic = false
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        UPDATE rhq_resource SET synthetic = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        UPDATE rhq_resource SET synthetic = true WHERE resource_key LIKE 'res:%' AND description LIKE '%. Created via REST-api'
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        UPDATE rhq_resource SET synthetic = 1 WHERE resource_key LIKE 'res:%' AND description LIKE '%. Created via REST-api'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_RESOURCE" column="SYNTHETIC" nullable="false"/>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

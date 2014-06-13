@@ -31,12 +31,14 @@ import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -64,9 +66,17 @@ public class SupportManagerBean implements SupportManagerLocal, SupportManagerRe
     @EJB
     private SubjectManagerLocal subjectManager;
 
+    @EJB
+    private ResourceManagerLocal resourceManager;
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public InputStream getSnapshotReportStream(Subject subject, int resourceId, String name, String description)
         throws Exception {
+
+        Resource resource = resourceManager.getResourceById(subject, resourceId);
+        if (resource.isSynthetic()) {
+            throw new IllegalArgumentException("Support facet not supported on synthetic resources.");
+        }
 
         AgentClient agentClient = this.agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
         SupportAgentService supportService = agentClient.getSupportAgentService();

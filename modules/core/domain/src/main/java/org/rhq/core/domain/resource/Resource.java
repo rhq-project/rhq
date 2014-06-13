@@ -981,7 +981,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     private static final int UUID_LENGTH = 36;
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final String ANCESTRY_ENTRY_DELIM = "_:_"; // delimiter separating entry fields
     public static final String ANCESTRY_DELIM = "_::_"; // delimiter seperating ancestry entries
@@ -1172,6 +1172,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private Set<DriftDefinition> driftDefinitions = null;
+
+    @Column(name = "SYNTHETIC", nullable = false)
+    private boolean synthetic;
 
     @Transient
     private final boolean customChildResourcesCollection;
@@ -1967,6 +1970,25 @@ public class Resource implements Comparable<Resource>, Serializable {
      */
     public boolean hasCustomChildResourcesCollection() {
         return customChildResourcesCollection;
+    }
+
+    /**
+     * Synthetic resources are those that were not discovered on or manually added to agents.
+     * Also resources added to synthetic agents are all by definition synthetic.
+     * <p/>
+     * For the server-side, a synthetic resource behaves just like any other normal resource
+     * (only any updates or measurements to it can only come through REST iface). On the agents
+     * synthetic resources are completely ignored.
+     */
+    public boolean isSynthetic() {
+        return synthetic;
+    }
+
+    /**
+     * @see #isSynthetic()
+     */
+    public void setSynthetic(boolean synthetic) {
+        this.synthetic = synthetic;
     }
 
     // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing Resources, or

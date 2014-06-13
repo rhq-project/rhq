@@ -395,12 +395,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             AgentClient agentClient = null;
-            try {
-                // The test code does not always generate agents for the resources. Catch and log any problem but continue
-                agentClient = agentManager.getAgentClient(overlord, resourceId);
-            } catch (Throwable t) {
-                log.warn("No AgentClient found for resource [" + resource
-                    + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
+
+            if (!resource.isSynthetic()) {
+                try {
+                    // The test code does not always generate agents for the resources. Catch and log any problem but continue
+                    agentClient = agentManager.getAgentClient(overlord, resourceId);
+                } catch (Throwable t) {
+                    log.warn("No AgentClient found for resource [" + resource
+                        + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
+                }
             }
 
             // since we delete the resource asynchronously, make sure we remove things that would cause system
@@ -472,23 +475,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             entityManager.flush();
 
             // still need to tell the agent about the removed resources so it stops avail reports
-            // but not if this is a synthetic agent that was created in the REST-api
-            // See org.rhq.enterprise.server.rest.ResourceHandlerBean.createPlatformInternal()
-            // See also https://docs.jboss.org/author/display/RHQ/Virtual+platforms+and+synthetic+agents
             if (agentClient != null) {
-                if (agentClient.getAgent() == null || agentClient.getAgent().getName() == null
-                    || !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
-                    try {
-                        if (agentClient.pingService(3000L)) {
-                            agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
-                        } else {
-                            log.warn(" Unable to inform agent [" + agentClient.getAgent().getName()
-                                + "] of inventory removal for resource [" + resourceId
-                                + "]. Agent can not be reached or is not accepting service requests.");
-                        }
-                    } catch (Exception e) {
-                        log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                try {
+                    if (agentClient.pingService(3000L)) {
+                        agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
+                    } else {
+                        log.warn(" Unable to inform agent [" + agentClient.getAgent().getName()
+                            + "] of inventory removal for resource [" + resourceId
+                            + "]. Agent can not be reached or is not accepting service requests.");
                     }
+                } catch (Exception e) {
+                    log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
                 }
             }
 
@@ -2500,11 +2497,22 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
         Resource res = getResourceById(subject, resourceId);
+
         //platforms are never unknown, just up or down, so we need to default the availability to a different value
         //depending on the resource's category
         ResourceAvailability results = new ResourceAvailability(res,
             res.getResourceType().getCategory() == ResourceCategory.PLATFORM ? AvailabilityType.DOWN
                 : AvailabilityType.UNKNOWN);
+
+        if (res.isSynthetic()) {
+            AvailabilityType foundAvail = res.getCurrentAvailability() == null ? AvailabilityType.UNKNOWN : res
+                .getCurrentAvailability().getAvailabilityType();
+
+            foundAvail = (AvailabilityType.MISSING == foundAvail) ? AvailabilityType.DOWN : foundAvail;
+            results.setAvailabilityType(foundAvail);
+
+            return results;
+        }
 
         try {
             // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
@@ -2514,10 +2522,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     log.debug("Resource [" + resourceId + "] does not exist or has no agent assigned");
                 }
                 new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
-            } else if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
-                && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
-                // dummy agent created from REST
-                return getResourceById(subject, resourceId).getCurrentAvailability();
             }
             AgentClient client = agentManager.getAgentClient(agent);
             if (client == null) {

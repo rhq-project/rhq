@@ -76,7 +76,7 @@ public class PlatformSyncInfo implements Serializable {
     public static PlatformSyncInfo buildPlatformSyncInfo(Resource platform) {
         Set<Integer> toplevelServerIds = new HashSet<Integer>();
         for (Resource r : platform.getChildResources()) {
-            if (r.getResourceType().getCategory().equals(ResourceCategory.SERVER)) {
+            if (r.getResourceType().getCategory().equals(ResourceCategory.SERVER) && !r.isSynthetic()) {
                 toplevelServerIds.add(r.getId());
             }
         }

@@ -99,6 +99,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.ResourceHandlerBean;
 import org.rhq.enterprise.server.storage.StorageClientManager;
@@ -171,6 +172,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private ResourceManagerLocal resourceManager;
 
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -882,20 +886,17 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
         // return an empty collection if no definition ids were provided
         if (definitionIds == null || definitionIds.length == 0) {
-            return Collections.<MeasurementData>emptySet();
+            return Collections.emptySet();
         }
 
-        Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);
-        query.setParameter("resourceId", resourceId);
-        Agent agent = (Agent) query.getSingleResult();
+        Resource resource = resourceManager.getResourceById(subject, resourceId);
+        Agent agent = resource.getAgent();
 
-        // return empty data if the agent is the dummy one
-        if (agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)
-            && agent.getAgentToken().startsWith(ResourceHandlerBean.DUMMY_AGENT_TOKEN_PREFIX)) {
-            return Collections.<MeasurementData> emptySet();
+        if (resource.isSynthetic()) {
+            return Collections.emptySet();
         }
 
-        query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
         query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
         query.setParameter("resourceIds", Arrays.asList(resourceId));
         List<MeasurementSchedule> schedules = query.getResultList();
@@ -967,17 +968,24 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 query.setParameter("resourceIds", Arrays.asList(resourceIdWithAgent.getResourceId()));
                 List<MeasurementSchedule> schedules = query.getResultList();
 
+                Set<MeasurementData> newValues = null;
                 Map<Integer, Integer> scheduleIdToResourceIdMap = new HashMap<Integer, Integer>(schedules.size());
-                Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>(schedules.size());
-                for (MeasurementSchedule schedule : schedules) {
-                    requests.add(new MeasurementScheduleRequest(schedule));
-                    scheduleIdToResourceIdMap.put(schedule.getId(), resourceIdWithAgent.getResourceId());
-                }
 
-                AgentClient ac = agentClientManager.getAgentClient(resourceIdWithAgent.getAgent());
-                Set<MeasurementData> newValues = ac.getMeasurementAgentService().getRealTimeMeasurementValue(
-                    resourceIdWithAgent.getResourceId(), requests);
-                values.addAll(newValues);
+                if (resourceIdWithAgent.isSynthetic()) {
+                    newValues = Collections.emptySet();
+                } else {
+                    Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>(
+                        schedules.size());
+                    for (MeasurementSchedule schedule : schedules) {
+                        requests.add(new MeasurementScheduleRequest(schedule));
+                        scheduleIdToResourceIdMap.put(schedule.getId(), resourceIdWithAgent.getResourceId());
+                    }
+
+                    AgentClient ac = agentClientManager.getAgentClient(resourceIdWithAgent.getAgent());
+                    newValues = ac.getMeasurementAgentService().getRealTimeMeasurementValue(
+                        resourceIdWithAgent.getResourceId(), requests);
+                    values.addAll(newValues);
+                }
 
                 // Add the resource id as a prefix of the name, because the name is not unique across different platforms
                 for (MeasurementData value : newValues) {

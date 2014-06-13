@@ -23,6 +23,7 @@
 package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.measurement.DataType;
 
 /**
@@ -30,15 +31,10 @@ import org.rhq.core.domain.measurement.DataType;
  */
 public class AlertConditionChangesCategoryComposite extends AlertConditionScheduleCategoryComposite {
 
-    /*
-     * it would be nice to preload the current measurement numeric value for this condition at the time
-     * of object creation, but since we don't have a proper entity for it (because we have several raw 
-     * measurement tables with rotation logic at the business layer), we can not easily query the current
-     * value via JPQL; instead, and for simplicity's sake, let's assume that most of the measurement-based
-     * alert conditions will be threshold-oriented (which can be queried efficiently).
-     */
-    public AlertConditionChangesCategoryComposite(AlertCondition condition, Integer scheduleId, DataType dataType) {
-        super(condition, scheduleId, dataType);
+    public AlertConditionChangesCategoryComposite(int cid, AlertConditionCategory ccategory, String cname, String ccomparator, Double cthreshold, String coption, Integer triggerId,
+            Integer scheduleId, DataType dataType) {
+        super(new AlertCondition(cid, ccategory, cname, ccomparator, cthreshold, coption, triggerId),
+                scheduleId, dataType);
     }
 
 }

@@ -169,7 +169,7 @@
         <!-- test deps -->
         <dependency>
             <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-subsystem-test</artifactId>
+            <artifactId>jboss-as-subsystem-test-framework</artifactId>
             <version>${jboss.version}</version>
             <scope>test</scope>
         </dependency>

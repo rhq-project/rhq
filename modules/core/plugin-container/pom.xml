@@ -72,12 +72,6 @@
 
       <!-- Test dependencies -->
       <dependency>
-         <groupId>org.powermock</groupId>
-         <artifactId>powermock-api-mockito</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>test-utils</artifactId>
          <version>${project.version}</version>
@@ -93,6 +87,16 @@
      	<groupId>net.sf.trove4j</groupId>
      	<artifactId>trove4j</artifactId>
      </dependency>
+
+      <!-- this has to come at the end because otherwise this results:
+           SecurityException: class "org.hamcrest.TypeSafeMatcher"'s signer information does not match signer
+           information of other classes in the same package"  -->
+      <dependency>
+         <groupId>org.powermock</groupId>
+         <artifactId>powermock-api-mockito</artifactId>
+         <scope>test</scope>
+      </dependency>
+
    </dependencies>
 
   <build>

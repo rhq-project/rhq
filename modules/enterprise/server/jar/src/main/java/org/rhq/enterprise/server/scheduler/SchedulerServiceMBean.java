@@ -38,8 +38,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerListener;
 import org.quartz.spi.JobFactory;
 
-import org.jboss.mx.util.ObjectNameFactory;
-
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 
 /**

@@ -402,7 +402,7 @@
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
                     </statement>
                 </datasource>
-                <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                <xa-datasource jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
                     <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
                     <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
@@ -479,7 +479,7 @@
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
                     </statement>
                 </datasource>
-                <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                <xa-datasource jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
@@ -625,6 +625,18 @@
           <artifactId>jboss-javaee-6.0</artifactId>
           <scope>provided</scope>
           <type>pom</type>
+        </dependency>
+
+        <!-- when not explicitly defining xnio, we were getting odd AbstractMethodError exceptions in Arquillian due to pulling in older xnio versions -->
+        <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-nio</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

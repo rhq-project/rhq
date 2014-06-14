@@ -714,12 +714,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         if (reportSize == 0) {
             log.error("Agent [" + agentName + "] sent an empty availability report.  This is a bug, please report it");
             return true; // even though this report is bogus, do not ask for an immediate full report to avoid unusual infinite recursion due to this error condition
-        }
 
-        if (log.isDebugEnabled()) {
-            if (reportSize > 1) {
-                log.debug("Agent [" + agentName + "]: processing availability report of size: " + reportSize);
-            }
+        } else if (log.isDebugEnabled()) {
+            log.debug("Agent [" + agentName + "]: processing availability report of size: " + reportSize);
         }
 
         // translate data into Availability objects for downstream processing
@@ -730,43 +727,40 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
-
-        // if this report is from an agent update the lastAvailReport time
-        if (!report.isServerSideReport() && agentToUpdate != null) {
-            availabilityManager.updateLastAvailabilityReportInNewTransaction(agentToUpdate.intValue());
-        }
-
         MergeInfo mergeInfo = new MergeInfo(report);
 
-        // if this report is from an agent, and is a changes-only report, and the agent appears backfilled,
-        // then we need to skip this report so as not to waste our time. Then, immediately request and process
-        // a full report because, obviously, the agent is no longer down but the server thinks
-        // it still is down - we need to know the availabilities for all the resources on that agent
-        if (!report.isServerSideReport() && report.isChangesOnlyReport()
-            && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
-
-            mergeInfo.setAskForFullReport(true);
-
-        } else {
-            // process the report in batches to avoid an overly long transaction and to potentially increase the
-            // speed in which an avail change becomes visible.
-
-            while (!availabilities.isEmpty()) {
-                int size = availabilities.size();
-                int end = (MERGE_BATCH_SIZE < size) ? MERGE_BATCH_SIZE : size;
-
-                List<Availability> availBatch = availabilities.subList(0, end);
-                availabilityManager.mergeAvailabilitiesInNewTransaction(availBatch, mergeInfo);
-
-                // Advance our progress and possibly help GC. This will remove the processed avails from the backing list
-                availBatch.clear();
+        // For agent reports (not a server-side report)
+        if (!report.isServerSideReport() && agentToUpdate != null) {
+            // if this is a changes-only report, and the agent appears backfilled, then immediately request and process
+            // a full report because, obviously, the agent is no longer down but the server thinks it still is down -
+            // we need to know the availabilities for all the resources on that agent
+            if (report.isChangesOnlyReport() && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
+                mergeInfo.setAskForFullReport(true);
             }
 
-            MeasurementMonitor.getMBean().incrementAvailabilityReports(report.isChangesOnlyReport());
-            MeasurementMonitor.getMBean().incrementAvailabilitiesInserted(mergeInfo.getNumInserted());
-            MeasurementMonitor.getMBean().incrementAvailabilityInsertTime(watch.getElapsed());
-            watch.reset();
+            // update the lastAvailReport time and unset the backfill flag if it is set.
+            availabilityManager.updateLastAvailabilityReportInNewTransaction(agentToUpdate.intValue());
+
         }
+
+        // process the report in batches to avoid an overly long transaction and to potentially increase the
+        // speed in which an avail change becomes visible.
+
+        while (!availabilities.isEmpty()) {
+            int size = availabilities.size();
+            int end = (MERGE_BATCH_SIZE < size) ? MERGE_BATCH_SIZE : size;
+
+            List<Availability> availBatch = availabilities.subList(0, end);
+            availabilityManager.mergeAvailabilitiesInNewTransaction(availBatch, mergeInfo);
+
+            // Advance our progress and possibly help GC. This will remove the processed avails from the backing list
+            availBatch.clear();
+        }
+
+        MeasurementMonitor.getMBean().incrementAvailabilityReports(report.isChangesOnlyReport());
+        MeasurementMonitor.getMBean().incrementAvailabilitiesInserted(mergeInfo.getNumInserted());
+        MeasurementMonitor.getMBean().incrementAvailabilityInsertTime(watch.getElapsed());
+        watch.reset();
 
         if (!report.isServerSideReport()) {
             if (agentToUpdate != null) {

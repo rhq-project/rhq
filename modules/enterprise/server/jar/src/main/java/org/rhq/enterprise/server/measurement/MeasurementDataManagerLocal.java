@@ -139,8 +139,6 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
      */
     Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds, Long timeout);
 
-    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
-
     void updateAlertConditionCache(String callingMethod, MeasurementData[] data);
 
 }

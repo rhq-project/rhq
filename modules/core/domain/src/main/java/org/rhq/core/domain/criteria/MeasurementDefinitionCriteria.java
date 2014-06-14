@@ -45,6 +45,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private String filterDisplayName;
     private String filterDescription;
     private String filterResourceTypeName; // requires overrides
+    private String filterPluginName; // requires overrides
     private Integer filterResourceTypeId; // requires overrides
     private MeasurementCategory filterCategory;
     private MeasurementUnits filterUnits;
@@ -69,6 +70,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
 
     public MeasurementDefinitionCriteria() {
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");
+        filterOverrides.put("pluginName", "resourceType.plugin like ?");
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
@@ -93,6 +95,10 @@ public class MeasurementDefinitionCriteria extends Criteria {
 
     public void addFilterResourceTypeName(String filterResourceTypeName) {
         this.filterResourceTypeName = filterResourceTypeName;
+    }
+
+    public void addFilterPluginName(String filterPluginName) {
+        this.filterPluginName = filterPluginName;
     }
 
     public void addFilterResourceTypeId(Integer filterResourceTypeId) {

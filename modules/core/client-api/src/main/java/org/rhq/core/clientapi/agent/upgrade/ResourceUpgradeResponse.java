@@ -31,22 +31,22 @@ import org.rhq.core.domain.configuration.Configuration;
  * Represents a response to a resource upgrade request.
  * The upgraded* properties contain the values of the corresponding resource properties
  * as they were stored on the server.
- * 
+ *
  * @author Lukas Krejci
  */
 public class ResourceUpgradeResponse implements Serializable {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     private int resourceId;
-    
+
     private String upgradedResourceName;
     private String upgradedResourceKey;
     private String upgradedResourceDescription;
+    private String upgradedResourceVersion;
     private Configuration upgradedResourcePluginConfiguration;
-    
+
     public ResourceUpgradeResponse() {
-        
     }
 
     public int getResourceId() {
@@ -83,6 +83,14 @@ public class ResourceUpgradeResponse implements Serializable {
 
     public void setUpgradedResourceDescription(String upgradedResourceDescription) {
         this.upgradedResourceDescription = upgradedResourceDescription;
+    }
+
+    public String getUpgradedResourceVersion() {
+        return upgradedResourceVersion;
+    }
+
+    public void setUpgradedResourceVersion(String upgradedResourceVersion) {
+        this.upgradedResourceVersion = upgradedResourceVersion;
     }
 
     public void setUpgradedResourcePluginConfiguration(Configuration upgradedResourcePluginConfiguration) {

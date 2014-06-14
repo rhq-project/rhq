@@ -46,7 +46,7 @@
       <plugin>
         <groupId>org.rhq.maven.plugins</groupId>
         <artifactId>rhq-agent-plugin-plugin</artifactId>
-        <version>0.6</version>
+        <version>1.0-SNAPSHOT</version>
         <extensions>true</extensions>
         <configuration>
           <archive>
@@ -65,13 +65,16 @@
               <Build-Time>${buildTime}</Build-Time>
             </manifestEntries>
           </archive>
+          <rhqVersion>${rhq.version}</rhqVersion>
           <host>127.0.0.1</host>
           <port>7080</port>
           <username>rhqadmin</username>
           <password>rhqadmin</password>
-          <startScan>true</startScan>
+          <startScan>false</startScan>
+          <updatePluginsOnAllAgents>true</updatePluginsOnAllAgents>
           <failOnError>false</failOnError>
-          <rhqVersion>${rhq.version}</rhqVersion>
+          <waitForPluginsUpdateOnAllAgents>false</waitForPluginsUpdateOnAllAgents>
+          <maxWaitForPluginsUpdateOnAllAgents>300</maxWaitForPluginsUpdateOnAllAgents>
         </configuration>
         <executions>
           <execution>

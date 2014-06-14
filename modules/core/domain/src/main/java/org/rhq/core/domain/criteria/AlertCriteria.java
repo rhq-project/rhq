@@ -60,6 +60,7 @@ public class AlertCriteria extends Criteria {
     private List<AlertPriority> filterPriorities; // requires overrides
     private String filterResourceTypeId; // requires overrides
     private String filterResourceTypeName; // requires overrides
+    private String filterPluginName; // requires overrides
     private List<Integer> filterResourceIds; // requires overrides
     private List<Integer> filterResourceGroupIds; // requires overrides
     private List<Integer> filterAlertDefinitionIds; // requires overrides
@@ -88,6 +89,7 @@ public class AlertCriteria extends Criteria {
         filterOverrides.put("priorities", "alertDefinition.priority IN ( ? )");
         filterOverrides.put("resourceTypeId", "alertDefinition.resource.resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "alertDefinition.resource.resourceType.name like ?");
+        filterOverrides.put("pluginName", "alertDefinition.resource.resourceType.plugin like ?");
         filterOverrides.put("resourceIds", "alertDefinition.resource.id IN ( ? )");
         filterOverrides.put("resourceGroupIds", "alertDefinition.resource.id IN " //
             + "( SELECT res.id " //
@@ -141,6 +143,10 @@ public class AlertCriteria extends Criteria {
 
     public void addFilterResourceTypeName(String filterResourceTypeName) {
         this.filterResourceTypeName = filterResourceTypeName;
+    }
+
+    public void addFilterPluginName(String filterPluginName) {
+        this.filterPluginName = filterPluginName;
     }
 
     public void addFilterEntityContext(EntityContext filterEntityContext) {

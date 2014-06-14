@@ -805,9 +805,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             String resourceKey = upgradeRequest.getNewResourceKey();
             String name = upgradeRequest.getNewName();
             String description = upgradeRequest.getNewDescription();
+            String version = upgradeRequest.getNewVersion();
+            boolean isUpgradeAll = allowGenericPropertiesUpgrade || upgradeRequest.isForceGenericPropertyUpgrade();
 
             StringBuilder logMessage = new StringBuilder("Resource [").append(resource.toString()).append(
-                "] upgraded its ");
+                "] upgraded [");
 
             if (needsUpgrade(resource.getResourceKey(), resourceKey)) {
                 resource.setResourceKey(resourceKey);
@@ -815,16 +817,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 ret.setUpgradedResourceKey(resource.getResourceKey());
             }
 
-            if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getName(), name)) {
+            if (isUpgradeAll && needsUpgrade(resource.getName(), name)) {
                 resource.setName(name);
                 logMessage.append("name, ");
                 ret.setUpgradedResourceName(resource.getName());
             }
 
-            if (allowGenericPropertiesUpgrade && needsUpgrade(resource.getDescription(), description)) {
+            if (isUpgradeAll && needsUpgrade(resource.getDescription(), description)) {
                 resource.setDescription(description);
                 logMessage.append("description, ");
                 ret.setUpgradedResourceDescription(resource.getDescription());
+            }
+
+            if (needsUpgrade(resource.getVersion(), version)) {
+                resource.setVersion(version);
+                logMessage.append("version, ");
+                ret.setUpgradedResourceVersion(resource.getVersion());
             }
 
             // If provided, assume the new plugin config should replace the old plugin config in its entirety.
@@ -848,8 +856,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 entityManager.remove(error);
             }
 
-            logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [").append(resource.toString())
-                .append("]");
+            logMessage.replace(logMessage.length() - 1, logMessage.length(), "] to become [")
+                .append(resource.toString()).append("]");
 
             LOG.info(logMessage.toString());
         }

@@ -143,11 +143,6 @@ public class TomcatConfig {
                 }
             }
 
-            String scheme = attributes.getValue("scheme");
-            if ("https".equals(scheme)) {
-                return;
-            }
-
             String className = attributes.getValue("className");
             if (className != null) {
                 if (className.endsWith("WarpConnector") //e.g. 4.0.x

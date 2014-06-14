@@ -115,9 +115,15 @@ public class ResourceTypeHandlerBean extends AbstractRestBean {
         if (name!=null) {
             criteria.addFilterName(name);
         }
+
         if (pluginName!=null) {
             criteria.addFilterPluginName(pluginName);
         }
+
+        if (page != null) {
+            criteria.setPaging(page, pageSize);
+        }
+
         PageList<ResourceType> pageList = typeManager.findResourceTypesByCriteria(caller,criteria);
         List<ResourceTypeRest> rtrList = new ArrayList<ResourceTypeRest>(pageList.size());
         for (ResourceType type : pageList) {

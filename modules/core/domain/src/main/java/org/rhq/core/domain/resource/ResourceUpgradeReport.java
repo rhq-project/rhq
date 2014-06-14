@@ -28,8 +28,8 @@ import java.io.Serializable;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * Represents the changes that should be applied to the existing resource 
- * in order to upgrade it to conform to the new requirements set by the 
+ * Represents the changes that should be applied to the existing resource
+ * in order to upgrade it to conform to the new requirements set by the
  * changed resource component.
  * </p>
  * Null values of the properties mean no change, non-null values represent
@@ -38,30 +38,31 @@ import org.rhq.core.domain.configuration.Configuration;
  * Configuration updates are limited to only changing values for existing
  * properties. The Configuration must still reflect the types configuration
  * definition. Also, updates must be judicious as config values can also
- * be updated by users. 
- * 
+ * be updated by users.
+ *
  * @author Lukas Krejci
  */
 public class ResourceUpgradeReport implements Serializable {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     private String newResourceKey;
     private String newName;
-
-    // version changes are handled differently.    
-    //    private String newVersion;
-
+    // version changes are typically handled differently, but in certain cases may be done here.
+    private String newVersion;
+    private String newDescription;
     // Plugin configuration changes must still conform to the configuration definition.
     private Configuration newPluginConfiguration;
 
     // Is resource config update useful?  Wouldn't resource config change discovery handle this?
     //    private Configuration newResourceConfiguration;
 
-    private String newDescription;
+    // In some cases assume the plugin knows best, and let it force upgrade of what we call "generic" resource
+    // properties (name, description).  If set to true by the plugin code the server will obey,
+    // regardless of the value of SystemSetting.ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE.
+    private boolean forceGenericPropertyUpgrade = false;
 
     public ResourceUpgradeReport() {
-
     }
 
     public String getNewResourceKey() {
@@ -80,13 +81,14 @@ public class ResourceUpgradeReport implements Serializable {
         this.newName = newName;
     }
 
-    //    public String getNewVersion() {
-    //        return newVersion;
-    //    }
-    //
-    //    public void setNewVersion(String newVersion) {
-    //        this.newVersion = newVersion;
-    //    }
+    public String getNewVersion() {
+        return newVersion;
+    }
+
+    public void setNewVersion(String newVersion) {
+        this.newVersion = newVersion;
+    }
+
     //
     //    public Configuration getNewResourceConfiguration() {
     //        return newResourceConfiguration;
@@ -109,18 +111,38 @@ public class ResourceUpgradeReport implements Serializable {
     }
 
     /**
-     * See class javadoc for restrictions. 
+     * See class javadoc for restrictions.
      */
     public void setNewPluginConfiguration(Configuration newPluginConfiguration) {
         this.newPluginConfiguration = newPluginConfiguration;
     }
 
-    public boolean hasSomethingToUpgrade() {
-        return newResourceKey != null || newName != null || newDescription != null || newPluginConfiguration != null;
+    public boolean isForceGenericPropertyUpgrade() {
+        return forceGenericPropertyUpgrade;
     }
 
-    public String toString() {
-        return "ResourceUpgradeReport[newResourceKey = '" + newResourceKey + "', newName = '" + newName
-            + "', newDescription = '" + newDescription + "']";
+    /**
+     * In some cases assume the plugin knows best.  Set true (with care) to force upgrade of what we call "generic"
+     * resource properties (name, description).  If set to true by the plugin code the server will obey,
+     * regardless of the value of SystemSetting.ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE, which is false by default
+     * in order to protect hand-edited resource names.
+     *
+     * @param forceGenericPropertyUpgrade
+     */
+    public void setForceGenericPropertyUpgrade(boolean forceGenericPropertyUpgrade) {
+        this.forceGenericPropertyUpgrade = forceGenericPropertyUpgrade;
     }
+
+    public boolean hasSomethingToUpgrade() {
+        return newResourceKey != null || newName != null || newVersion != null || newDescription != null
+            || newPluginConfiguration != null;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceUpgradeReport [newResourceKey=" + newResourceKey + ", newName=" + newName + ", newVersion="
+            + newVersion + ", newDescription=" + newDescription + ", newPluginConfiguration=" + newPluginConfiguration
+            + ", forceGenericPropertyUpgrade=" + forceGenericPropertyUpgrade + "]";
+    }
+
 }

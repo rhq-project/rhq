@@ -1981,7 +1981,7 @@
 
     <service name="ManagedServerDeployment"
              class="DeploymentComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedSubsystemDiscovery"
              createDeletePolicy="neither"
              supportsMissingAvailabilityType="true"
              description="Deployed package on a managed server. Go to server groups to manipulate it">
@@ -9042,7 +9042,7 @@
 
   <service name="Deployment"
            class="DeploymentComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            createDeletePolicy="both"
            supportsMissingAvailabilityType="true"
            creationDataType="content">
@@ -9104,7 +9104,7 @@
 
   <service name="Subdeployment"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedSubsystemDiscovery"
            description="Runtime resources associated with a child deployment packaged inside another deployment; for example a war packaged inside an ear.">
 
     <runs-inside>
@@ -9170,7 +9170,7 @@
 
   <service name="Datasources Runtime"
            class="DatasourceComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by data sources included in this deployment."
            singleton="true">
 
@@ -9186,7 +9186,7 @@
 
     <service name="XA Datasource Runtime"
              class="DatasourceComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="A JDBC XA data-source configuration">
 
       <plugin-configuration>
@@ -9307,7 +9307,7 @@
 
     <service name="Datasource Runtime"
              class="DatasourceComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="A JDBC data-source configuration">
 
       <runs-inside>
@@ -9422,7 +9422,7 @@
 
   <service name="Messaging Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by messaging resources included in this deployment."
            singleton="true">
 
@@ -9438,7 +9438,7 @@
 
     <service name="HornetQ Server Runtime"
              class="BaseComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="A HornetQ server instance."
              createDeletePolicy="both">
 
@@ -9703,7 +9703,7 @@
 
       <service name="JMS Queue Runtime"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Defines a JMS queue.">
 
         <plugin-configuration>
@@ -9901,7 +9901,7 @@
 
       <service name="JMS Topic Runtime"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Defines a JMS queue.">
 
         <plugin-configuration>
@@ -10022,7 +10022,7 @@
 
   <service name="EJB3 Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by EJBs components included in this deployment."
            singleton="true">
 
@@ -10038,7 +10038,7 @@
 
     <service name="Message Driven Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10084,7 +10084,7 @@
 
     <service name="Singleton Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Singleton bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10125,7 +10125,7 @@
 
     <service name="Stateless Session Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Stateless session bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10171,7 +10171,7 @@
 
     <service name="Entity Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Entity bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10197,7 +10197,7 @@
 
     <service name="Stateful Session Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Stateful session bean component included in the deployment.">
 
       <plugin-configuration>
@@ -10221,7 +10221,7 @@
 
   <service name="Webservices Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="Runtime resources exposed by web service components in the deployment."
            singleton="true">
 
@@ -10237,7 +10237,7 @@
 
     <service name="Endpoint Runtime"
              class="BaseComponent"
-             discovery="SubsystemDiscovery"
+             discovery="VersionedRuntimeDiscovery"
              description="Webservice endpoint.">
 
       <plugin-configuration>
@@ -10266,7 +10266,7 @@
 
   <service name="JPA Runtime"
            class="BaseComponent"
-           discovery="SubsystemDiscovery"
+           discovery="VersionedRuntimeDiscovery"
            description="The configuration of the JPA subsystem."
            singleton="true">
 
@@ -10281,8 +10281,8 @@
     </plugin-configuration>
 
     <service name="Hibernate Persistence Unit"
-             class="BaseComponent"
-             discovery="SubsystemDiscovery"
+             class="HibernatePersistenceUnitComponent"
+             discovery="VersionedRuntimeDiscovery"
              description="Runtime information about JPA use in the deployment."
              singleton="true">
 
@@ -10305,6 +10305,46 @@
       <operation name="subsystem:summary" description="Log the statistics.">
         <results>
           <c:simple-property name="operationResult" description="Log the statistics."/>
+        </results>
+      </operation>
+
+      <operation name="viewQueries" description="View statistical information about queries executed by Hibernate">
+        <parameters>
+          <c:simple-property name="batchSize" required="true" type="integer" default="10"
+                             description="Sets the Query Cache resources read batch size. Defaults to 10.">
+            <c:constraint>
+              <c:integer-constraint minimum="1"/>
+            </c:constraint>
+          </c:simple-property>
+          <c:simple-property name="managementQueryTimeout" required="true" type="integer" default="60" units="seconds"
+                             description="In seconds. Sets the connection read timeout for queries sent to the server management interface. Defaults to 60 seconds.">
+            <c:constraint>
+              <c:integer-constraint minimum="1"/>
+            </c:constraint>
+          </c:simple-property>
+        </parameters>
+        <results>
+          <c:list-property name="queries">
+            <c:map-property name="query">
+              <c:simple-property name="query-name" description="Query name."/>
+              <c:simple-property name="query-execution-count" type="long"
+                                 description="Get number of times query has been executed."/>
+              <c:simple-property name="query-execution-row-count" type="long"
+                                 description="Get number of rows returned from executions of query."/>
+              <c:simple-property name="query-execution-min-time" type="long"
+                                 description="Get the minimum time in milliseconds of the query."/>
+              <c:simple-property name="query-execution-max-time" type="long"
+                                 description="Get the time in milliseconds of the query."/>
+              <c:simple-property name="query-execution-average-time" type="long"
+                                 description="Get the average time in milliseconds of the query."/>
+              <c:simple-property name="query-cache-hit-count" type="long"
+                                 description="Get the number of times query was retrieved from cache."/>
+              <c:simple-property name="query-cache-miss-count" type="long"
+                                 description="Get the number of times query was not found in cache."/>
+              <c:simple-property name="query-cache-put-count" type="long"
+                                 description="Get the number of times query was put in cache."/>
+            </c:map-property>
+          </c:list-property>
         </results>
       </operation>
 
@@ -10343,7 +10383,7 @@
 
       <service name="Entity Cache"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Statistics for a Hibernate Second Level Cache region."
                singleton="true">
 
@@ -10357,29 +10397,9 @@
         <metric property="put-count" description="Number of cacheable entities/collections put in the cache."/>
       </service>
 
-      <!--<service name="Query Cache"-->
-               <!--class="BaseComponent"-->
-               <!--discovery="QueryCacheDiscovery"-->
-               <!--description="Statistics for individual queries.">-->
-
-        <!--<plugin-configuration>-->
-          <!--<c:simple-property name="path" readOnly="true"/>-->
-        <!--</plugin-configuration>-->
-
-        <!--<metric property="query-cache-hit-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was retrieved from cache."/>-->
-        <!--<metric property="query-cache-miss-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was not found in cache."/>-->
-        <!--<metric property="query-cache-put-count" displayType="summary" measurementType="trendsup" description="Get the number of times query was put in cache."/>-->
-        <!--<metric property="query-execution-average-time" description="Get the average time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-count" displayType="summary" measurementType="trendsup" description="Get number of times query has been executed."/>-->
-        <!--<metric property="query-execution-max-time" description="Get the time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-min-time" description="Get the minimum time in milliseconds of the query."/>-->
-        <!--<metric property="query-execution-row-count" displayType="summary" measurementType="trendsup" description="Get number of rows returned from executions of query."/>-->
-        <!--<metric property="query-name" dataType="trait" description="Query name."/>-->
-      <!--</service>-->
-
       <service name="Entity"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Statistics for individual entities.">
 
         <plugin-configuration>
@@ -10396,7 +10416,7 @@
 
       <service name="Collection"
                class="BaseComponent"
-               discovery="SubsystemDiscovery"
+               discovery="VersionedRuntimeDiscovery"
                description="Statistics for individual collections.">
 
         <plugin-configuration>
@@ -13593,5 +13613,65 @@
       <c:simple-property name="value" required="false" type="string" readOnly="true" description="Custom defined config property value"/>
     </resource-configuration>
   </service>
+
+  <help >
+    <![CDATA[
+    <h3>Versioned Deployments (Since RHQ 4.12)</h3>
+    
+    This plugin supports Versioned Deployments.  A Deployment  (EAR, WAR, etc) can be a managed server deployment or
+    standalone deployment. This includes Versioned Subdeployments (WAR, EJB JAR inside an EAR, etc).  A Versioned
+    Deployment is one that incorporates a version into the artifact name.  For example, testapp-1.0.war.  By default
+    the plugin will strip the version from the artifact and create a resource named "testapp.war" with version "1.0".
+    The benefit to this approach is that when upgrading to testapp-2.0.war, for example, the logical "testapp.war"
+    resource remains in inventory and is reset to version "2.0".  In this way all historical data is maintained, and the
+    resource does not fall into a permanent "DOWN" state.  Without versioned deployments, after the upgrade there would
+    exist in inventory two resources: a permanently DOWN testapp-1.0.war resource as well as a new testapp-2.0.war
+    resource.
+
+    </p>
+    The version matching is designed to match "Maven-style" versions (see http://mojo.codehaus.org/versions-maven-plugin/version-rules.html).
+    The version stamp is delimited by a dash, and must minimally include a Major.Minor version.  This avoids confusion
+    with distinct but poorly named Deployments like app-1.war and app-2.war, or app1.war and app2.war.  In both of those
+    cases the version matcher would not match and all of the apps would be different resources.
+
+    <p/>
+    The default pattern is the following regular expression:<pre>^(.*?)-([0-9]+\\.[0-9].*)(\\..*)$</pre>
+
+    <p/>
+    There is a system property that can be set to alter the default behavior of the plugin.  Note that for the property
+    to have any effect it must be applied to every applicable RHQ Agent prior to its startup.  To disable versioned
+    Deployments and allow for version stamps to remain in the Deployment names set:
+    <pre>rhq.as7.VersionedSubsystemDiscovery.pattern=disable</pre>
+    To override the default pattern (not recommended) set:
+    <pre>rhq.as7.VersionedSubsystemDiscovery.pattern=YourPatternHere</pre>
+    Note that the custom regex pattern *must* capture three groups as does the default. Group1=name, Group2=version,
+    Group3=extension.  The single pattern is applied to all Deployments.
+
+    <h4>Upgrade Behavior</h4>
+    Earlier versions of RHQ may have Deployment resources in inventory that contain version stamps in their names.  This
+    plugin implements the ResourceUpgradeFacet, which will convert the existing resources on the first Agent startup
+    with the new updated plugin.  To avoid this the above system property must be set in advance.  Behavior can always
+    be changed.  If necessary update the system property as needed and, when desired, uninventory any
+    old resources that are no longer needed after the change.
+    
+    <h5>Multiple Versions of the Same Resource in Inventory</h5>
+    The new feature is designed for the use case where a single version of a given resource is in inventory under a
+    given parent.  When upgraded the logical resource is maintained and its version is updated.  For installations where
+    multiple versions already exist the resource upgrade may generate failures.  For example, if under some server I
+    have both app-1.0.war and app-2.0.war deployed, both will try to upgrade to the same logical resource: app.war.  To
+    avoid issues it is recommended to either, 1) disable this feature prior to upgrade or 2) uninventory resources leaving
+    only a single version of the resource.
+    
+    <h3>MISSING Resource Support (Since RHQ 4.12)</h3>
+    This plugin supports the MISSING Resource Policy feature introduced in RHQ 4.12.  Deployments and Domain Deployments
+    can be configured to be automatically uninventoried or ignored if they can no longer be found in the underlying
+    appication server.
+    
+    <h5>Interaction with Versioned Deployment Support</h5>
+    If utilizing versioned deployments as described above, it is recommended to leave the MISSING Policy as DOWN (the
+    default).  Otherwise, while updating versions it is possible during the update window to have the resource removed
+    or ignored. 
+    ]]>
+  </help>
 
 </plugin>

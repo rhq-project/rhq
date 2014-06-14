@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -64,6 +65,9 @@ public class WebRuntimeDiscoveryComponentTest {
     private ResourceDiscoveryContext discoveryContext;
 
     @Mock
+    private ResourceContext parentResourceContext;
+
+    @Mock
     private BaseComponent parentResourceComponent;
 
     @Mock
@@ -83,6 +87,7 @@ public class WebRuntimeDiscoveryComponentTest {
         discoveryComponent = new WebRuntimeDiscoveryComponent();
         MockitoAnnotations.initMocks(this);
         when(discoveryContext.getParentResourceComponent()).thenReturn(parentResourceComponent);
+        when(discoveryContext.getParentResourceContext()).thenReturn(parentResourceContext);
         when(parentResourceComponent.getASConnection()).thenReturn(asConnection);
         when(discoveryContext.getDefaultPluginConfiguration()).thenReturn(createDefaultPluginConfig());
         when(asConnection.execute(any(ReadResource.class))).thenReturn(createReadResourceResult());

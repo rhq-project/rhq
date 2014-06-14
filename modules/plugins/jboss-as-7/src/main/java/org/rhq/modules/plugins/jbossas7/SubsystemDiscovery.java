@@ -208,7 +208,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
      * @param confPath The subsystem that got fed into discovery. Directly return is not subsystem=infinispan
      * @return True if this subsystem should be skipped.
      */
-    private boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
+    protected boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
 
         // If this is not subsystem=infinispan, we should not skip it at all
         if (!"subsystem=infinispan".equals(confPath))

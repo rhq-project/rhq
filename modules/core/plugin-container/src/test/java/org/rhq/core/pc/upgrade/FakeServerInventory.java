@@ -209,6 +209,11 @@ public class FakeServerInventory {
                                 resp.setUpgradedResourceDescription(resource.getDescription());
                             }
 
+                            if (request.getNewVersion() != null) {
+                                resource.setVersion(request.getNewVersion());
+                                resp.setUpgradedResourceVersion(resource.getVersion());
+                            }
+
                             if (request.getNewName() != null) {
                                 resource.setName(request.getNewName());
                                 resp.setUpgradedResourceName(resource.getName());

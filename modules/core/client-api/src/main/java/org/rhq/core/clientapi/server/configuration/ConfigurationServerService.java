@@ -25,8 +25,6 @@ package org.rhq.core.clientapi.server.configuration;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.Property;
 
 /**
  * Interface that allows an agent to provide information about a resource's configuration.
@@ -70,5 +68,19 @@ public interface ConfigurationServerService {
     @Asynchronous(guaranteedDelivery = true)
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONFIG_UPDATE)
     void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration);
+
+    /**
+     * This is for when the agent needs to notify the server that a new Plugin configuration has been
+     * discovered on the agent side. This happens when resource discovery discovers a new version of a resource.
+     * The properties set by discovery are merged into the existing config, and need to be updated
+     * server-side.
+     *
+     * @param resourceId the resourceId to update
+     * @param resourceConfiguration the newly detected configuration
+     *
+     * @return The persisted plugin configuration
+     */
+    @LimitedConcurrency(CONCURRENCY_LIMIT_CONFIG_UPDATE)
+    Configuration persistUpdatedPluginConfiguration(int resourceId, Configuration pluginConfiguration);
 
 }

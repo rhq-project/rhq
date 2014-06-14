@@ -19,8 +19,10 @@
     <rhq.ant-bundle.serverplugin.path>${settings.localRepository}/org/rhq/rhq-serverplugin-ant-bundle/${project.version}/rhq-serverplugin-ant-bundle-${project.version}.jar</rhq.ant-bundle.serverplugin.path>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/${jboss.eap.version}</jboss.unzip.location>
-    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m
+      -Djava.security.manager
       -Djava.security.policy==${jboss.unzip.location}/security.policy
+      -Djboss.modules.policy-permissions=true
       -Drhq.ant-bundle.serverplugin.path=${rhq.ant-bundle.serverplugin.path}
       -Drunning.itests-2=true
     </jboss.vm.args>

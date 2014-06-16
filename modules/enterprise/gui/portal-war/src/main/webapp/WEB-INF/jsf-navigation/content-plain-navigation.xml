@@ -66,7 +66,7 @@
       <navigation-case>
          <from-action>#{CreateNewPackageUIBean.deployExisting}</from-action>
          <from-outcome>success</from-outcome>
-         <to-view-id>/portal/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
       </navigation-case>
 
    </navigation-rule>
@@ -84,13 +84,13 @@
       <navigation-case>
          <from-action>#{CreateNewPackageUIBean.deployExisting}</from-action>
          <from-outcome>success</from-outcome>
-         <to-view-id>/portal/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/resource/content/confirm-create-plain.xhtml</to-view-id>
       </navigation-case>
 
    </navigation-rule>
 
 
-   
+
    <navigation-rule>
       <from-view-id>/rhq/resource/content/history-plain.xhtml</from-view-id>
 
@@ -346,17 +346,17 @@
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/portal/rhq/content/contentProvider-view-map-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-view-map-plain.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/portal/rhq/content/contentProvider-edit-map-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-edit-map-plain.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
-         <to-view-id>/portal/rhq/content/contentProvider-add-map-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-add-map-plain.xhtml</to-view-id>
       </navigation-case>
 
    </navigation-rule>
@@ -367,12 +367,12 @@
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/portal/rhq/content/createContentProvider-edit-map-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider-edit-map-plain.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
-         <to-view-id>/portal/rhq/content/createContentProvider-add-map-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider-add-map-plain.xhtml</to-view-id>
       </navigation-case>
 
       <navigation-case>
@@ -383,7 +383,7 @@
 
       <navigation-case>
          <from-outcome>cancel</from-outcome>
-         <to-view-id>/portal/rhq/content/listContentProviders-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listContentProviders-plain.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
@@ -391,7 +391,7 @@
       <from-view-id>/rhq/content/createContentProvider-edit-map-plain.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/portal/rhq/content/createContentProvider-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider-plain.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
@@ -399,7 +399,7 @@
       <from-view-id>/rhq/content/createContentProvider-add-map-plain.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/portal/rhq/content/createContentProvider-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider-plain.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
@@ -407,7 +407,7 @@
       <from-view-id>/rhq/content/contentProvider-view-map-plain.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/portal/rhq/content/contentProvider-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
@@ -415,7 +415,7 @@
       <from-view-id>/rhq/content/contentProvider-edit-map-plain.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/portal/rhq/content/contentProvider-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
@@ -423,7 +423,7 @@
       <from-view-id>/rhq/content/contentProvider-add-map-plain.xhtml</from-view-id>
 
       <navigation-case>
-         <to-view-id>/portal/rhq/content/contentProvider-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/contentProvider-plain.xhtml</to-view-id>
       </navigation-case>
    </navigation-rule>
 
@@ -439,7 +439,7 @@
 
       <navigation-case>
          <from-outcome>cancel</from-outcome>
-         <to-view-id>/portal/rhq/content/listRepos-plain.xhtml</to-view-id>
+         <to-view-id>/rhq/content/listRepos-plain.xhtml</to-view-id>
       </navigation-case>
 
    </navigation-rule>
@@ -450,7 +450,7 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/portal/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/content/repoAssociations-plain.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 

@@ -252,8 +252,7 @@ public class TomcatServerOperationsDelegate {
 
     private ProcessExecution getRpmStart(Configuration pluginConfiguration) {
         ProcessExecution processExecution;
-        String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
-        String rpm = getTomcatServiceNum(catalinaHome);
+        String rpm = getTomcatServiceNum();
 
         if (isWindows()) {
             processExecution = new ProcessExecution("net");
@@ -342,7 +341,11 @@ public class TomcatServerOperationsDelegate {
         return processExecution;
     }
 
-    private static String getTomcatServiceNum(String catalinaHome) {
+    private String getTomcatServiceNum() {
+        String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
+        String serviceName = this.serverComponent.getServiceName();
+        if (serviceName != null)
+            return serviceName;
         String rpm = TomcatDiscoveryComponent.EWS_TOMCAT_8;
         if (TomcatDiscoveryComponent.isTomcat7(catalinaHome))
             rpm = TomcatDiscoveryComponent.EWS_TOMCAT_7;
@@ -355,8 +358,7 @@ public class TomcatServerOperationsDelegate {
 
     private ProcessExecution getRpmShutdown() {
         ProcessExecution processExecution;
-        String catalinaHome = this.serverComponent.getCatalinaHome().getPath();
-        String rpm = getTomcatServiceNum(catalinaHome);
+        String rpm = getTomcatServiceNum();
 
         if (isWindows()) {
             processExecution = new ProcessExecution("net");

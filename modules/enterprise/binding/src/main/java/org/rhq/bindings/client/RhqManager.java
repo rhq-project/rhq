@@ -98,7 +98,7 @@ public enum RhqManager {
     /**
      * @since 4.12
      */
-    ServerPluginManager(ServerPluginsRemote.class, "${ServerPluginManager}"), //
+    ServerPlugins(ServerPluginsRemote.class, "${ServerPlugins}"), //
     StorageNodeManager(StorageNodeManagerRemote.class, "${StorageNodeManager}"), //
     SubjectManager(SubjectManagerRemote.class, "${SubjectManager}"), //
     SupportManager(SupportManagerRemote.class, "${SupportManager}"), //

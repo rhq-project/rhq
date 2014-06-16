@@ -339,13 +339,11 @@ public class MenuBarView extends EnhancedVLayout {
              +"</a>"
              +"<ul class='dropdown-menu'>"
              + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"
-             + "<li class='divider'></li>" 
-             + "<li><a href='#' onclick='keycloak.accountManagement()' style='white-space: nowrap'>Manage Account</a></li>"
-             + "<li class='divider'></li>" 
-               +"<li>"
-                 +"<a href='#' onclick='keycloak.logout()' style='white-space: nowrap'>"
-//                 +"<a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a>"
-               +"</li>"
+             + "<li class='divider'></li>"  
+                 + (CoreGUI.isKeycloakEnabled() ? "<li><a href='#' onclick='keycloak.accountManagement()' style='white-space: nowrap'>Manage Account</a></li>"
+                                                + "<li class='divider'></li>"
+                                                + "<li><a href='#' onclick='keycloak.logout()' style='white-space: nowrap'>"+LOGOUT_VIEW_ID.getTitle()+"</a></li>" : 
+                                                ("<li><a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a></li>"))
              +"</ul>"
            +"</li>"
          +"</ul>"

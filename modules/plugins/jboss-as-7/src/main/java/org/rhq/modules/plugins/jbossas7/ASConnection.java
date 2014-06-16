@@ -42,6 +42,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -59,7 +60,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
-
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.util.StringUtil;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
@@ -196,8 +196,9 @@ public class ASConnection {
             // See ConnectionManagerCleaner implementation.
             cleanerExecutor.schedule(new ConnectionManagerCleaner(this), keepAliveTimeout / 2, TimeUnit.MILLISECONDS);
         }
-
-        HttpClientParams.setRedirecting(httpParams, false);
+        httpParams.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
+        httpParams.setIntParameter(ClientPNames.MAX_REDIRECTS, 2);
+//        HttpClientParams.setRedirecting(httpParams, false);
 
         if (credentials != null) {
             httpClient.getCredentialsProvider().setCredentials(
@@ -300,7 +301,7 @@ public class ASConnection {
 
             HttpResponse httpResponse = httpClient.execute(httpPost);
             StatusLine statusLine = httpResponse.getStatusLine();
-            if (isAuthorizationFailureResponse(statusLine)) {
+            if (isAuthorizationFailureResponse(statusLine)) { 
                 throw new InvalidPluginConfigurationException(
                     createErrorMessageForAuthorizationFailureResponse(statusLine));
             }

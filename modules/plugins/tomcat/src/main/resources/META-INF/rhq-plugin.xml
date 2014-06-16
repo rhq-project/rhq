@@ -135,6 +135,15 @@
                     <c:simple-property name="value" />
                 </c:map-property>
             </c:list-property>
+
+            <c:simple-property
+               name="serviceName"
+               displayName="Service name"
+               type="string"
+               required="false"
+               description="In case of multiple tomcat installations in the same box it is possible
+                            to do have several service files like tomcat1, tomcat2 etc.
+                            Put here the name you are using."/>
          </c:group>
 
          <c:group

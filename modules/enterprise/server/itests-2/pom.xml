@@ -105,7 +105,16 @@
                     <replacetoken>&lt;/security-domains></replacetoken>
                     <replacevalue><![CDATA[
                 <!-- FOR RHQ TESTING -->
-                <security-domain name="RHQDSSecurityDomain" cache-type="default">
+                <security-domain name="RHQDSSecurityDomainXa" cache-type="default">
+                    <authentication>
+                        <login-module code="ConfiguredIdentity" flag="required">
+                            <module-option name="userName" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="principal" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="password" value="${rhq.test.ds.password}"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="RHQDSSecurityDomainNoTx" cache-type="default">
                     <authentication>
                         <login-module code="ConfiguredIdentity" flag="required">
                             <module-option name="userName" value="${rhq.test.ds.user-name}"/>
@@ -146,10 +155,10 @@
                   </replacefilter>
 
                   <replacefilter>
-                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.2"></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.4"></replacetoken>
                     <replacevalue><![CDATA[
         <!-- FOR RHQ TESTING -->
-        <subsystem xmlns="urn:jboss:domain:messaging:1.3">
+        <subsystem xmlns="urn:jboss:domain:messaging:1.4">
             <hornetq-server>
                 <persistence-enabled>true</persistence-enabled>
                 <journal-file-size>102400</journal-file-size>
@@ -245,7 +254,7 @@
                 </jms-destinations>
             </hornetq-server>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:naming:1.2">]]></replacevalue>
+        <subsystem xmlns="urn:jboss:domain:naming:1.4">]]></replacevalue>
                   </replacefilter>
 
                   <replacefilter>
@@ -263,9 +272,9 @@
 
 
                   <replacefilter>
-                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.4"></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.5"></replacetoken>
                     <replacevalue><![CDATA[
-        <subsystem xmlns="urn:jboss:domain:infinispan:1.4">
+        <subsystem xmlns="urn:jboss:domain:infinispan:1.5">
             <!-- FOR RHQ TESTING -->
             <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
                 <local-cache name="rhqCache">
@@ -389,7 +398,7 @@
                         <max-pool-size>5</max-pool-size>
                     </pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainNoTx</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
@@ -415,7 +424,7 @@
                         <max-pool-size>50</max-pool-size>
                     </xa-pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainXa</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
@@ -465,7 +474,7 @@
                         <max-pool-size>5</max-pool-size>
                     </pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainNoTx</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
@@ -495,7 +504,7 @@
                         <no-tx-separate-pools>true</no-tx-separate-pools>
                     </xa-pool>
                     <security>
-                        <security-domain>RHQDSSecurityDomain</security-domain>
+                        <security-domain>RHQDSSecurityDomainXa</security-domain>
                     </security>
                     <validation>
                         <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />

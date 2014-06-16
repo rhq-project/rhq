@@ -20,6 +20,8 @@
 package org.rhq.coregui.client.inventory.common.detail.operation.schedule;
 
 import static org.rhq.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource.Field;
+import static org.rhq.coregui.client.util.message.Message.Option;
+import static org.rhq.coregui.client.util.message.Message.Severity;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -51,6 +53,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -300,6 +303,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         this.notesForm.setColWidths(FIRST_COLUMN_WIDTH, "50%", "140", "50%");
 
         this.notesForm.addItemChangedHandler(new ItemChangedHandler() {
+            @Override
             public void onItemChanged(ItemChangedEvent event) {
                 AbstractOperationScheduleDetailsView.this.onItemChanged();
             }
@@ -406,7 +410,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
             .isValid()) || !this.triggerEditor.validate()) {
             {
                 Message message = new Message(MSG.widget_recordEditor_warn_validation(this.getDataTypeName()),
-                    Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+                    Severity.Warning, EnumSet.of(Option.Transient));
                 CoreGUI.getMessageCenter().notify(message);
 
                 return;
@@ -497,9 +501,22 @@ public abstract class AbstractOperationScheduleDetailsView extends
                     switch (operationNameChangeContext) {
                     case INIT:
                     case RESET:
-                        if (getOperationExample() != null) {
-                            operationParameters = getOperationExample().getParameters().deepCopy(false);
-                            break;
+                        OperationHistory operationExample = getOperationExample();
+                        if (operationExample != null) {
+                            Configuration exampleParameters = operationExample.getParameters();
+                            if (exampleParameters == null) {
+                                Message message = new Message(
+                                    MSG.view_operationScheduleDetails_example_null_parameters(), Severity.Warning);
+                                CoreGUI.getMessageCenter().notify(message);
+                            } else if (!ConfigurationUtility.validateConfiguration(exampleParameters,
+                                parametersDefinition).isEmpty()) {
+                                Message message = new Message(
+                                    MSG.view_operationScheduleDetails_example_parameters_invalid(), Severity.Warning);
+                                CoreGUI.getMessageCenter().notify(message);
+                            } else {
+                                operationParameters = exampleParameters.deepCopy(false);
+                                break;
+                            }
                         }
                     default:
                         operationParameters = (defaultTemplate != null) ? defaultTemplate.createConfiguration()

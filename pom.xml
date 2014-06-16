@@ -172,6 +172,8 @@
     <jtds.version>1.2.2</jtds.version>
     <junit.version>4.10</junit.version>
 
+    <keycloak.version>1.0-beta-3-SNAPSHOT</keycloak.version>
+
     <liquibase-core.version>2.0.3</liquibase-core.version>
     <log4j.version>1.2.16</log4j.version>
 

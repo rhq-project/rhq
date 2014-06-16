@@ -189,6 +189,13 @@
     <scope>provided</scope> <!-- provided by AS7 -->
   </dependency>
 
+  <dependency>
+    <groupId>org.keycloak</groupId>
+    <artifactId>keycloak-core</artifactId>
+    <version>${keycloak.version}</version>
+    <scope>provided</scope>
+  </dependency>
+
       <!--================ Test Deps ================-->
 
       <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath

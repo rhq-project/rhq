@@ -25,9 +25,9 @@ package org.rhq.server.rhaccess;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -37,11 +37,14 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.redhat.gss.redhat_support_lib.api.API;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
-import org.rhq.enterprise.server.support.SupportManagerLocal;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class AttachmentsServlet extends HttpServlet {
@@ -49,9 +52,65 @@ public class AttachmentsServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private static final String SERVER_REPORT = "JBoss ON Server JDR Report";
-    private static final String RESOURCE_REPORT = "Resource JDR Report";
+    private static final String RESOURCE_REPORT = "EAP JDR Report";
 
+    private static final List<String> SUPPORTED_RESOURCE_TYPES = Arrays.asList("JBossAS7 Standalone Server",
+        "Managed Server");
     private final static Logger log = Logger.getLogger(AttachmentsServlet.class);
+
+    private String getResourceDetails(Resource r) {
+        return r.getName() + "[" + r.getResourceType().getName() + "] on " + r.getAgent().getName() + " [availability="
+            + r.getCurrentAvailability().getAvailabilityType() + "]";
+    }
+
+    private String getAvailableReports(int resourceId) {
+        ResourceCriteria rc = new ResourceCriteria();
+        rc.addFilterId(resourceId);
+        rc.fetchAgent(true);
+        rc.fetchResourceType(true);
+        rc.fetchChildResources(true);
+
+        PageList<Resource> resources = LookupUtil.getResourceManager().findResourcesByCriteria(
+            LookupUtil.getSubjectManager().getOverlord(), rc);
+        if (resources.size() > 0) {
+            StringBuilder options = new StringBuilder();
+            Resource r = resources.get(0);
+            String checked = "true";
+            if (!r.getCurrentAvailability().equals(AvailabilityType.UP)) {
+                checked = "false";
+            }
+            if (SUPPORTED_RESOURCE_TYPES.contains(r.getResourceType().getName())) {
+                options.append(RESOURCE_REPORT + "/" + resourceId + ": " + getResourceDetails(r) + "?checked="
+                    + checked + "\n");
+            }
+            for (Resource child : r.getChildResources()) {
+                if (SUPPORTED_RESOURCE_TYPES.contains(child.getResourceType().getName())) {
+                    checked = "true";
+                    if (!child.getCurrentAvailability().equals(AvailabilityType.UP)) {
+                        checked = "false";
+                    }
+                    options.append(RESOURCE_REPORT + "/" + child.getId() + ": " + getResourceDetails(child)
+                        + "?checked=" + checked + "\n");
+                }
+            }
+            return options.toString();
+
+        }
+
+        return null;
+    }
+
+    private boolean isAuthorized(HttpServletRequest request) {
+        String sessionId = request.getHeader("RHQ_SessionID");
+        if (sessionId != null) {
+            try {
+                return SessionManager.getInstance().getSubject(Integer.parseInt(sessionId)) != null;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
 
     /**
      *  we generate options (Available reports to attach) (each on new line, ?checked=true to enable auto-check for this option for user
@@ -61,14 +120,18 @@ public class AttachmentsServlet extends HttpServlet {
             StringBuilder options = new StringBuilder();
             String resourceId = request.getParameter("resourceId");
             if (resourceId != null) {
-                options.append(RESOURCE_REPORT + "/" + resourceId + "?checked=true\n");
+                if (!isAuthorized(request)) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                    return;
+                }
+                int resId = Integer.parseInt(resourceId);
+                options.append(getAvailableReports(resId));
             } else {
                 options.append(SERVER_REPORT + "?checked=true\n");
             }
             response.getWriter().write(options.toString());
-            log.info("resourceId" + request.getParameter("resourceId"));
         } catch (Throwable t) {
-            log.error(t);
+            log.error("Server Error", t);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server Error");
         }
     }
@@ -79,6 +142,10 @@ public class AttachmentsServlet extends HttpServlet {
      */
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
+            if (!isAuthorized(request)) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                return;
+            }
             StringBuffer sb = new StringBuffer();
             String line = null;
             try {
@@ -112,36 +179,44 @@ public class AttachmentsServlet extends HttpServlet {
             // check if we are authorized
             api.getProblems().diagnoseStr("test");
             if (SERVER_REPORT.equalsIgnoreCase(attachment)) {
-                String path = new JdrReportRunner().getReport();
-                api.getAttachments().add(caseNum, true, path, attachment);
+                String report = new JdrReportRunner().getReport();
+                api.getAttachments().add(caseNum, true, report, attachment);
                 log.info("File attached to URL " + api.getConfigHelper().getUrl());
                 try {
-                    new File(path).delete();
+                    new File(report).delete();
+                    log.debug("Report " + report + " deleted");
                 } catch (Exception e) {
                     log.error("Failed to delete JDR Report File", e);
                 }
             }
             if (attachment.startsWith(RESOURCE_REPORT)) {
-                String resourceId = attachment.replaceAll(".*/", "");
+                String resourceId = attachment.replaceAll(".*/", "").replaceAll("\\:.*", "").trim();
                 log.info("About to attach report for resourceId=" + resourceId);
                 int resId = Integer.parseInt(resourceId);
-                SupportManagerLocal supportMgr = LookupUtil.getSupportManager();
-                InputStream is = supportMgr.getSnapshotReportStream(LookupUtil.getSubjectManager().getOverlord(),
-                    resId, "jdr", null);
-                File tmp = File.createTempFile("jdr", "tmp");
-                FileOutputStream fos = new FileOutputStream(tmp);
-                IOUtils.copy(is, fos);
-                fos.close();
-                log.info("Obtained JDR report written to " + tmp.getAbsolutePath());
-                //api.getAttachments().add(caseNum, true, tmp.getAbsolutePath(), attachment);
+                String report = new ResourceJdrReportRunner(resId).getReport();
+                if (report != null) {
+                    api.getAttachments().add(caseNum, true, report, attachment);
+                    try {
+                        new File(report).delete();
+                        log.debug("Report " + report + " deleted");
+                    } catch (Exception e) {
+                        log.error("Failed to delete JDR Report File", e);
+                    }
+                } else {
+                    throw new Exception("Failed to attach JDR Report for resourceId=" + resId + " no data returned");
+                }
             }
+        } catch (JdrReportFailedException e) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            log.error("Failed to create attachment", e);
         } catch (Throwable t) {
-            log.error(t);
+
             if (t.getLocalizedMessage().contains("401")) {
                 log.error("Unauthorized");
                 response.sendError(HttpServletResponse.SC_CONFLICT, "Unauthorized");
             } else {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server Error");
+                log.error("Failed to create attachment", t);
             }
         }
     }

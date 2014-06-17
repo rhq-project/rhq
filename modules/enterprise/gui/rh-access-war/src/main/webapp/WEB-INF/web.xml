@@ -10,10 +10,18 @@
 	</welcome-file-list>
 	<servlet>
 		<servlet-name>attachments</servlet-name>
-		<servlet-class>org.rhq.server.rhaccess.Attachments</servlet-class>
+		<servlet-class>org.rhq.server.rhaccess.AttachmentsServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>attachments</servlet-name>
 		<url-pattern>/attachments</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>config</servlet-name>
+		<servlet-class>org.rhq.server.rhaccess.ConfigServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>config</servlet-name>
+		<url-pattern>/configuration</url-pattern>
 	</servlet-mapping>
 </web-app>

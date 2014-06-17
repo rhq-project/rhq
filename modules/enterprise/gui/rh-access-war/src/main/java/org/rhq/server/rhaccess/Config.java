@@ -44,20 +44,32 @@ public class Config {
     }
 
     public String getProxyUser() {
-        return null;
+        return settings.get(SystemSetting.HTTP_PROXY_SERVER_USERNAME);
     }
 
     public String getProxyPassword() {
-        return null;
+        return settings.get(SystemSetting.HTTP_PROXY_SERVER_PASSWORD);
     }
 
     public URL getProxyURL() {
-        return null;
+        try {
+            String url = settings.get(SystemSetting.HTTP_PROXY_SERVER_HOST);
+            if (url == null) {
+                return null;
+            }
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            log.error("Unable to parse PROXY_SERVER_HOST setting to URL", e);
+            return null;
+        }
     }
 
     public int getProxyPort() {
-        return 0;
-
+        String port = settings.get(SystemSetting.HTTP_PROXY_SERVER_PORT);
+        if (port == null) {
+            port = "0";
+        }
+        return Integer.parseInt(port);
     }
 
     public int getSessionTimeout() {

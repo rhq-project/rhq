@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Timeout;
@@ -76,6 +78,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
 @Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemote {
     private final String SQL_VACUUM = "VACUUM ANALYZE {0}";
 
@@ -120,6 +123,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private SystemInfoManagerLocal systemInfoManager;
 
     private SystemSettings cachedSystemSettings = null;
+    private SystemSettings cachedObfuscatedSystemSettings = null;
 
     @Override
     public void scheduleConfigCacheReloader() {
@@ -225,12 +229,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @Override
     public SystemSettings getUnmaskedSystemSettings(boolean includePrivateSettings) {
-        if (cachedSystemSettings == null) {
-            loadSystemConfigurationCache();
-        }
+        SystemSettings ret = getCachedSettings();
 
-        return includePrivateSettings ? new SystemSettings(cachedSystemSettings) :
-            removePrivateSettings(cachedSystemSettings);
+        return includePrivateSettings ? ret : removePrivateSettings(ret);
     }
 
     @Override
@@ -245,16 +246,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @Override
     public SystemSettings getObfuscatedSystemSettings(boolean includePrivateSettings) {
-        SystemSettings settings = getUnmaskedSystemSettings(includePrivateSettings);
+        SystemSettings ret = getCachedObfuscatedSettings();
 
-        for(Map.Entry<SystemSetting, String> entry : settings.entrySet()) {
-            String value = entry.getValue();
-            if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
-                entry.setValue(PicketBoxObfuscator.encode(value));
-            }
-        }
-
-        return settings;
+        return includePrivateSettings ? ret : removePrivateSettings(ret);
     }
 
     @Override
@@ -297,6 +291,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             existingConfigMap.put(config.getPropertyKey(), config);
         }
 
+        boolean changed = false;
+
+        SystemConfiguration lastUpdateTime = existingConfigMap
+            .get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.getInternalName());
+
         // verify each new setting and persist them to the database
         // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
         for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
@@ -309,10 +308,16 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             }
 
             SystemConfiguration existingConfig = existingConfigMap.get(prop.getInternalName());
-            if (existingConfig == null) {
+            if (e.getKey() == SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME) {
+                //we don't let the user persist their own last system config update time
+                //in any manner
+                lastUpdateTime = existingConfig;
+            } else if (existingConfig == null) {
                 value = transformSystemConfigurationPropertyToDb(prop, value, null);
                 existingConfig = new SystemConfiguration(prop.getInternalName(), value);
                 entityManager.persist(existingConfig);
+                changed = true;
+                existingConfigMap.put(existingConfig.getPropertyKey(), existingConfig);
             } else {
                 //make sure we compare the new value with a database-agnostic value
                 //it is important to compare in the database-agnostic format instead
@@ -349,15 +354,28 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
                     existingConfig.setPropertyValue(value);
                     entityManager.merge(existingConfig);
+                    changed = true;
                 }
             }
         }
 
-        //let the cache be reloaded once it's needed.
-        //we can't assume that the caller provided the full set of properties we
-        //have in the database, so let's just make sure we reinit the cache
-        //from there...
-        cachedSystemSettings = null;
+        if (changed) {
+            if (lastUpdateTime == null) {
+                lastUpdateTime = new SystemConfiguration(
+                    SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.getInternalName(),
+                    Long.toString(System.currentTimeMillis()));
+                lastUpdateTime.setFreadOnly(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.isReadOnly());
+                entityManager.persist(lastUpdateTime);
+            } else {
+                lastUpdateTime.setPropertyValue(Long.toString(System.currentTimeMillis()));
+
+                entityManager.merge(lastUpdateTime);
+            }
+
+            existingConfigMap.put(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME.getInternalName(), lastUpdateTime);
+
+            fillCache(existingConfigMap.values());
+        }
     }
 
     private static boolean isEmpty(String string) {
@@ -435,37 +453,12 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @Override
     @SuppressWarnings("unchecked")
-    public void loadSystemConfigurationCache() {
+    public synchronized void loadSystemConfigurationCache() {
         // After this is done, the cachedSystemSettings contains the latest config.
         List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
             .getResultList();
 
-        SystemSettings settings = new SystemSettings();
-
-        for (SystemConfiguration config : configs) {
-            SystemSetting prop = SystemSetting.getByInternalName(config.getPropertyKey());
-            if (prop == null) {
-                LOG.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
-                    + "].");
-                continue;
-            }
-
-            if (config.getPropertyValue() == null) {
-                // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
-                // if there isn't even a persisted default, just use an empty string.
-                String defaultValue = config.getDefaultPropertyValue();
-                defaultValue = transformSystemConfigurationPropertyFromDb(prop, defaultValue, true);
-                settings.put(prop, (defaultValue != null) ? defaultValue : "");
-            } else {
-                String value = config.getPropertyValue();
-                value = transformSystemConfigurationPropertyFromDb(prop, value, true);
-                settings.put(prop, value);
-            }
-        }
-
-        settings.setDriftPlugins(getDriftServerPlugins());
-
-        cachedSystemSettings = settings;
+        fillCache(configs);
     }
 
     @Override
@@ -513,7 +506,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             } else if (RHQConstants.LDAPJAASProvider.equals(value)) {
                 return Boolean.toString(true);
             } else {
-                return value;
+                return value == null ? "" : value;
             }
         case USE_SSL_FOR_LDAP:
             if (RHQConstants.LDAP_PROTOCOL_SECURED.equals(value)) {
@@ -529,15 +522,27 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 } else if ("1".equals(value)) {
                     return Boolean.TRUE.toString();
                 } else {
-                    return value;
+                    return value == null ? Boolean.FALSE.toString() : value;
                 }
             case PASSWORD:
                 if (unobfuscate && value != null && value.trim().length() > 0) {
                     return PicketBoxObfuscator.decode(value);
                 } else {
-                    return value;
+                    return value == null ? "" : value;
                 }
             default:
+                if (value == null) {
+                    switch (prop.getType()) {
+                    case DOUBLE:
+                    case FLOAT:
+                    case INTEGER:
+                    case LONG:
+                        value = "0";
+                        break;
+                    default:
+                        value = "";
+                    }
+                }
                 return value;
             }
         }
@@ -888,5 +893,63 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Override
     public void dumpSystemInfo(Subject subject) {
         systemInfoManager.dumpToLog(subject);
+    }
+
+    private synchronized SystemSettings getCachedSettings() {
+        if (cachedSystemSettings == null) {
+            loadSystemConfigurationCache();
+        }
+
+        return new SystemSettings(cachedSystemSettings);
+    }
+
+    private synchronized SystemSettings getCachedObfuscatedSettings() {
+        if (cachedSystemSettings == null) {
+            loadSystemConfigurationCache();
+        }
+
+        return new SystemSettings(cachedObfuscatedSystemSettings);
+    }
+
+    private synchronized void fillCache(Collection<SystemConfiguration> configs) {
+        SystemSettings settings = new SystemSettings();
+
+        for (SystemConfiguration config : configs) {
+            SystemSetting prop = SystemSetting.getByInternalName(config.getPropertyKey());
+            if (prop == null) {
+                LOG.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
+                    + "].");
+                continue;
+            }
+
+            if (config.getPropertyValue() == null) {
+                // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
+                // if there isn't even a persisted default, just use an empty string.
+                String defaultValue = config.getDefaultPropertyValue();
+                defaultValue = transformSystemConfigurationPropertyFromDb(prop, defaultValue, true);
+                settings.put(prop, defaultValue);
+            } else {
+                String value = config.getPropertyValue();
+                value = transformSystemConfigurationPropertyFromDb(prop, value, true);
+                settings.put(prop, value);
+            }
+        }
+
+        settings.setDriftPlugins(getDriftServerPlugins());
+
+        //only update the caches if the settings were actually changed
+        if (cachedSystemSettings == null ||
+            !cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME).equals(
+                settings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME))) {
+            cachedSystemSettings = settings;
+
+            cachedObfuscatedSystemSettings = new SystemSettings(settings);
+            for (Map.Entry<SystemSetting, String> entry : cachedObfuscatedSystemSettings.entrySet()) {
+                String value = entry.getValue();
+                if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
+                    entry.setValue(PicketBoxObfuscator.encode(value));
+                }
+            }
+        }
     }
 }

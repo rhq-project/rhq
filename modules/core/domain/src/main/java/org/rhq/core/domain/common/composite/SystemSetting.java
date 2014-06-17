@@ -196,7 +196,13 @@ public enum SystemSetting {
 
     HTTP_PROXY_SERVER_USERNAME("HTTP_PROXY_SERVER_USERNAME", PropertySimpleType.STRING, false, false, true),
 
-    HTTP_PROXY_SERVER_PASSWORD("HTTP_PROXY_SERVER_PASSWORD", PropertySimpleType.PASSWORD, false, false, true)
+    HTTP_PROXY_SERVER_PASSWORD("HTTP_PROXY_SERVER_PASSWORD", PropertySimpleType.PASSWORD, false, false, true),
+
+    /**
+     * This is a bit magical, because the system itself updates it if any other property gets updated even though
+     * this setting itself is readonly.
+     */
+    LAST_SYSTEM_CONFIG_UPDATE_TIME("LAST_SYSCONFIG_UPDATE_TIME", PropertySimpleType.LONG, true, false, false)
 
     ;
 

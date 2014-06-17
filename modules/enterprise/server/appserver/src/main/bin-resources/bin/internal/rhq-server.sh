@@ -347,9 +347,9 @@ fi
 # ----------------------------------------------------------------------
 # Do this only during first start of AS
 # ----------------------------------------------------------------------
-if [ -d $JBOSS_BASE_DIR/data ]; then
+#if [ -d $JBOSS_BASE_DIR/data ]; then
   RHQ_SERVER_JAVA_OPTS="$RHQ_SERVER_JAVA_OPTS -Dkeycloak.import=${RHQ_SERVER_HOME}/modules/org/rhq/server-startup/main/deployments/rhq.ear/coregui.war/WEB-INF/rhq-realm.json"
-fi
+#fi
 
 if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
    _JBOSS_DEBUG_LOGGING="-Djboss.boot.server.log.level=DEBUG -Djboss.boot.server.log.console.level=DEBUG"

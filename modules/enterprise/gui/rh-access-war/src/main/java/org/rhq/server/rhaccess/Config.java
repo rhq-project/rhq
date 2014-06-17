@@ -23,10 +23,26 @@
 
 package org.rhq.server.rhaccess;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+
+import org.apache.log4j.Logger;
+
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class Config {
 
+    private final static Logger log = Logger.getLogger(Config.class);
+
+    private final SystemSettings settings;
+
+    public Config() {
+        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+        settings = systemManager.getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
+    }
     /**
      * return same value as defined in WEB-INF/support.html
      * @return version of rh-access-plugin being sent to RHA
@@ -44,19 +60,32 @@ public class Config {
     }
 
     public String getProxyUser() {
-        return null;
+        return settings.get(SystemSetting.PROXY_SERVER_USERNAME);
     }
 
     public String getProxyPassword() {
-        return null;
+        return settings.get(SystemSetting.PROXY_SERVER_PASSWORD);
     }
 
     public URL getProxyURL() {
-        return null;
+        try {
+            String url = settings.get(SystemSetting.PROXY_SERVER_HOST);
+            if (url == null) {
+                return null;
+            }
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            log.error("Unable to parse PROXY_SERVER_HOST setting to URL", e);
+            return null;
+        }
     }
 
     public int getProxyPort() {
-        return 0;
+        String port = settings.get(SystemSetting.PROXY_SERVER_PORT);
+        if (port == null) {
+            port = "0";
+        }
+        return Integer.parseInt(port);
 
     }
 

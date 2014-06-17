@@ -17,7 +17,17 @@
 		<div id="rha-content" ui-view></div>
 	</div>
 	<script>
-		strata.setRedhatClientID('redhat-access-plugin-jon-1.0.4');
+	// retrieve our version (something like redhat-access-plugin-jon-X.X.X)
+	$.ajax({
+      dataType : 'json',
+      contentType : 'application/json',
+      url : "configuration",
+      type : "GET",
+      method : "GET",
+      success : function(resp) {
+        strata.setRedhatClientID(resp.userAgent);
+      }
+    });
 	</script>
 </body>
 </html>

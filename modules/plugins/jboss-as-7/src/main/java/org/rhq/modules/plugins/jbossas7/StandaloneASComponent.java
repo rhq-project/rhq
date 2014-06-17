@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -43,8 +45,12 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.support.SnapshotReportRequest;
+import org.rhq.core.pluginapi.support.SnapshotReportResults;
+import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.modules.plugins.jbossas7.helper.AdditionalJavaOpts;
+import org.rhq.modules.plugins.jbossas7.helper.JdrReportRunner;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -58,7 +64,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
-        implements MeasurementFacet, OperationFacet {
+ implements
+    MeasurementFacet, OperationFacet, SupportFacet {
 
     private final Log log = LogFactory.getLog(StandaloneASComponent.class);
 
@@ -302,6 +309,18 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         } catch (Exception e) {
             log.error("Unable to update configuration file with additional JAVA_OPTS set via RHQ.", e);
         }
+    }
+
+    @Override
+    public SnapshotReportResults getSnapshotReport(SnapshotReportRequest request) throws Exception {
+        if (AvailabilityType.UP.equals(getAvailability())) {
+            if ("jdr".equals(request.getName())) {
+                InputStream is = new JdrReportRunner(getServerAddress(), getASConnection()).getReport();
+                return new SnapshotReportResults(is);
+            }
+            return null;
+        }
+        throw new Exception("Cannot obtain report, resource is not UP");
     }
 }
 

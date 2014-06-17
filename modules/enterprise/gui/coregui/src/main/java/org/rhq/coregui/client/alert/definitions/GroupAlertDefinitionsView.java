@@ -125,27 +125,26 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
-            Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
+            int id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
             alertDefIds[i++] = id;
         }
 
-        GWTServiceLookup.getGroupAlertDefinitionService().enableGroupAlertDefinitions(alertDefIds,
-            new AsyncCallback<Integer>() {
-                @Override
-                public void onSuccess(Integer result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_alert_definitions_enable_success(String.valueOf(result)), Severity.Info));
-                    GroupAlertDefinitionsView.this.refresh();
-                }
+        GWTServiceLookup.getAlertDefinitionService().enableAlertDefinitions(alertDefIds, new AsyncCallback<Integer>() {
+            @Override
+            public void onSuccess(Integer result) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_alert_definitions_enable_success(String.valueOf(result)), Severity.Info));
+                GroupAlertDefinitionsView.this.refresh();
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_enable_failure(), caught);
-                }
-            });
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_enable_failure(), caught);
+            }
+        });
     }
 
     @Override
@@ -154,26 +153,25 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
-            Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
+            int id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
             alertDefIds[i++] = id;
         }
-        GWTServiceLookup.getGroupAlertDefinitionService().disableGroupAlertDefinitions(alertDefIds,
-            new AsyncCallback<Integer>() {
-                @Override
-                public void onSuccess(Integer result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_alert_definitions_disable_success(String.valueOf(result)), Severity.Info));
-                    GroupAlertDefinitionsView.this.refresh();
-                }
+        GWTServiceLookup.getAlertDefinitionService().disableAlertDefinitions(alertDefIds, new AsyncCallback<Integer>() {
+            @Override
+            public void onSuccess(Integer result) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_alert_definitions_disable_success(String.valueOf(result)), Severity.Info));
+                GroupAlertDefinitionsView.this.refresh();
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_disable_failure(), caught);
-                }
-            });
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_disable_failure(), caught);
+            }
+        });
     }
 
     @Override
@@ -182,26 +180,25 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
             return;
         }
 
-        Integer[] alertDefIds = new Integer[selection.length];
+        int[] alertDefIds = new int[selection.length];
         int i = 0;
         for (ListGridRecord record : selection) {
-            Integer id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
+            int id = record.getAttributeAsInt(AbstractAlertDefinitionsDataSource.FIELD_ID);
             alertDefIds[i++] = id;
         }
-        GWTServiceLookup.getGroupAlertDefinitionService().removeGroupAlertDefinitions(alertDefIds,
-            new AsyncCallback<Integer>() {
-                @Override
-                public void onSuccess(Integer result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_alert_definitions_delete_success(String.valueOf(result)), Severity.Info));
-                    GroupAlertDefinitionsView.this.refresh();
-                }
+        GWTServiceLookup.getAlertDefinitionService().removeAlertDefinitions(alertDefIds, new AsyncCallback<Integer>() {
+            @Override
+            public void onSuccess(Integer result) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_alert_definitions_delete_success(String.valueOf(result)), Severity.Info));
+                GroupAlertDefinitionsView.this.refresh();
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_delete_failure(), caught);
-                }
-            });
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_delete_failure(), caught);
+            }
+        });
     }
 
     @Override

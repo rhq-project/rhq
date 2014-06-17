@@ -51,34 +51,4 @@ public class AlertTemplateGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw getExceptionToThrowToClient(t);
         }
     }
-
-    @Override
-    public void enableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException {
-        try {
-            alertTemplateManager.enableAlertTemplates(getSessionSubject(), alertDefinitionIds);
-            return;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public void disableAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException {
-        try {
-            alertTemplateManager.disableAlertTemplates(getSessionSubject(), alertDefinitionIds);
-            return;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public void removeAlertTemplates(Integer[] alertDefinitionIds) throws RuntimeException {
-        try {
-            alertTemplateManager.removeAlertTemplates(getSessionSubject(), alertDefinitionIds);
-            return;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
 }

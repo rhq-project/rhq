@@ -136,4 +136,32 @@ public interface AlertDefinitionManagerLocal extends AlertDefinitionManagerRemot
     AlertDefinition updateAlertDefinitionInternal(Subject subject, int alertDefinitionId,
         AlertDefinition alertDefinition, boolean resetMatching, boolean checkPerms, boolean finalizeNotifications)
         throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
+
+    /**
+     * INTERNAL-USE-ONLY!  Use {@link AlertDefinitionManagerRemote#enableAlertDefinitions(Subject, int[])} if you
+     * aren't sure you should use this method.
+     * <p/>
+     * Enable the specified resource alert definitions. No permission checking is performed and it is assumed that the
+     * alert definitions are resource-level.
+     */
+    int enableResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds);
+
+    /**
+     * INTERNAL-USE-ONLY!  Use {@link AlertDefinitionManagerRemote#disableAlertDefinitions(Subject, int[])} if you
+     * aren't sure you should use this method.
+     * <p/>
+     * Disable the specified resource alert definitions. No permission checking is performed and it is assumed that the
+     * alert definitions are resource-level.
+     */
+    int disableResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds);
+
+    /**
+     * INTERNAL-USE-ONLY!  Use {@link AlertDefinitionManagerRemote#removeAlertDefinitions(Subject, int[])} if you
+     * aren't sure you should use this method.
+     * <p/>
+     * Delete the specified resource alert definitions. No permission checking is performed and it is assumed that the
+     * alert definitions are resource-level.
+     */
+    int removeResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds);
+
 }

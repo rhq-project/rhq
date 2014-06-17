@@ -53,8 +53,10 @@ import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
@@ -77,23 +79,31 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
 
     @EJB
-    //@IgnoreDependency
+    private AlertTemplateManagerLocal alertTemplateManager;
+
+    @EJB
+    private GroupAlertDefinitionManagerLocal groupAlertDefintionManager;
+
+    @EJB
     private AlertManagerLocal alertManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
 
     @EJB
-    //@IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
         if (alertDefinition.getResourceType() != null) { // an alert template
-            return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+            return true; // anyone can view templates
         } else if (alertDefinition.getGroup() != null) { // a groupAlertDefinition
             return authorizationManager.canViewGroup(subject, alertDefinition.getGroup().getId());
         } else { // an alert definition
@@ -325,26 +335,165 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @Override
     public int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
+        if (null == alertDefinitionIds || alertDefinitionIds.length == 0) {
+            return 0;
+        }
+
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterIds(ArrayUtils.wrapInArray(alertDefinitionIds));
+        criteria.addFilterDeleted(false);
+        criteria.clearPaging();
+        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
+
+        if (defs.isEmpty()) {
+            return 0;
+        }
+
         int modifiedCount = 0;
-        boolean isResourceLevel = false;
 
-        for (int alertDefId : alertDefinitionIds) {
+        List<Integer> resourceDefIds = new ArrayList(defs.size());
+        Boolean hasManageSettings = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+
+        for (AlertDefinition ad : defs) {
+            if (null != ad.getResourceType()) {
+                if (hasManageSettings) {
+                    // these can be big requests, do 1 per transaction
+                    alertTemplateManager.removeAlertTemplates(subject, new Integer[] { ad.getId() });
+                    ++modifiedCount;
+                }
+            } else if (null != ad.getGroup()) {
+                // these can be big requests, do 1 per transaction
+                groupAlertDefintionManager.removeGroupAlertDefinitions(subject, new Integer[] { ad.getId() });
+                ++modifiedCount;
+
+            } else {
+                resourceDefIds.add(ad.getId());
+            }
+        }
+
+        if (!resourceDefIds.isEmpty()) {
+            alertDefinitionManager.removeResourceAlertDefinitions(subject, ArrayUtils.unwrapCollection(resourceDefIds));
+            modifiedCount += resourceDefIds.size();
+        }
+
+        return modifiedCount;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
+        if (null == alertDefinitionIds || alertDefinitionIds.length == 0) {
+            return 0;
+        }
+
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterIds(ArrayUtils.wrapInArray(alertDefinitionIds));
+        criteria.addFilterEnabled(false);
+        criteria.addFilterDeleted(false);
+        criteria.clearPaging();
+        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
+
+        if (defs.isEmpty()) {
+            return 0;
+        }
+
+        int modifiedCount = 0;
+
+        List<Integer> resourceDefIds = new ArrayList(defs.size());
+        Boolean hasManageSettings = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+
+        for (AlertDefinition ad : defs) {
+            if (null != ad.getResourceType()) {
+                if (hasManageSettings) {
+                    // these can be big requests, do 1 per transaction
+                    alertTemplateManager.enableAlertTemplates(subject, new Integer[] { ad.getId() });
+                    ++modifiedCount;
+                }
+            } else if (null != ad.getGroup()) {
+                // these can be big requests, do 1 per transaction
+                groupAlertDefintionManager.enableGroupAlertDefinitions(subject, new Integer[] { ad.getId() });
+                ++modifiedCount;
+
+            } else {
+                resourceDefIds.add(ad.getId());
+            }
+        }
+
+        if (!resourceDefIds.isEmpty()) {
+            alertDefinitionManager.enableResourceAlertDefinitions(subject, ArrayUtils.unwrapCollection(resourceDefIds));
+            modifiedCount += resourceDefIds.size();
+        }
+
+        return modifiedCount;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
+        if (null == alertDefinitionIds || alertDefinitionIds.length == 0) {
+            return 0;
+        }
+
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterIds(ArrayUtils.wrapInArray(alertDefinitionIds));
+        criteria.addFilterEnabled(true);
+        criteria.addFilterDeleted(false);
+        criteria.clearPaging();
+        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(subject, criteria);
+
+        if (defs.isEmpty()) {
+            return 0;
+        }
+
+        int modifiedCount = 0;
+
+        List<Integer> resourceDefIds = new ArrayList(defs.size());
+        Boolean hasManageSettings = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+
+        for (AlertDefinition ad : defs) {
+            if (null != ad.getResourceType()) {
+                if (hasManageSettings) {
+                    // these can be big requests, do 1 per transaction
+                    alertTemplateManager.disableAlertTemplates(subject, new Integer[] { ad.getId() });
+                    ++modifiedCount;
+                }
+            } else if (null != ad.getGroup()) {
+                // these can be big requests, do 1 per transaction
+                groupAlertDefintionManager.disableGroupAlertDefinitions(subject, new Integer[] { ad.getId() });
+                ++modifiedCount;
+
+            } else {
+                resourceDefIds.add(ad.getId());
+            }
+        }
+
+        if (!resourceDefIds.isEmpty()) {
+            alertDefinitionManager
+                .disableResourceAlertDefinitions(subject, ArrayUtils.unwrapCollection(resourceDefIds));
+            modifiedCount += resourceDefIds.size();
+        }
+
+        return modifiedCount;
+    }
+
+    @Override
+    public int enableResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds) {
+
+        int modifiedCount = 0;
+
+        for (int alertDefId : resourceAlertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
+            if (null == alertDefinition) {
+                continue;
+            }
 
-            // TODO GH: Can be more efficient
-            if (alertDefinition != null && checkPermission(subject, alertDefinition)) {
-                alertDefinition.setDeleted(true);
+            // only enable an alert if it's not currently enabled
+            if (!alertDefinition.getEnabled()) {
+                alertDefinition.setEnabled(true);
                 modifiedCount++;
 
-                // alertTemplates and groupAlertDefinitions do not need to update the cache
-                isResourceLevel = (null != alertDefinition.getResource());
-                if (isResourceLevel) {
-                    notifyAlertConditionCacheManager(subject, "removeAlertDefinitions", alertDefinition,
-                        AlertDefinitionEvent.DELETED);
-                }
-                if (alertDefinition.getGroup() != null) {
-                    alertDefinition.setGroup(null); // break bonds so corresponding ResourceGroup can be purged
-                }
+                notifyAlertConditionCacheManager(subject, "enableResourceAlertDefinitions", alertDefinition,
+                    AlertDefinitionEvent.ENABLED);
             }
         }
 
@@ -352,26 +501,47 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     }
 
     @Override
-    public int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
+    public int disableResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds) {
+
         int modifiedCount = 0;
-        boolean isResourceLevel = false;
-        for (int alertDefId : alertDefinitionIds) {
+
+        for (int alertDefId : resourceAlertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
+            if (null == alertDefinition) {
+                continue;
+            }
 
-            // TODO GH: Can be more efficient
-            if (checkPermission(subject, alertDefinition)) {
-                // only enable an alert if it's not currently enabled
-                if (alertDefinition.getEnabled() == false) {
-                    alertDefinition.setEnabled(true);
-                    modifiedCount++;
+            // only disable an alert if it's not currently disabled
+            if (alertDefinition.getEnabled()) {
+                alertDefinition.setEnabled(false);
+                modifiedCount++;
 
-                    // alertTemplates and groupAlertDefinitions do not need to update the cache
-                    isResourceLevel = (null != alertDefinition.getResource());
-                    if (isResourceLevel) {
-                        notifyAlertConditionCacheManager(subject, "enableAlertDefinitions", alertDefinition,
-                            AlertDefinitionEvent.ENABLED);
-                    }
-                }
+                notifyAlertConditionCacheManager(subject, "disableResourceAlertDefinitions", alertDefinition,
+                    AlertDefinitionEvent.DISABLED);
+            }
+        }
+
+        return modifiedCount;
+    }
+
+    @Override
+    public int removeResourceAlertDefinitions(Subject subject, int[] resourceAlertDefinitionIds) {
+
+        int modifiedCount = 0;
+
+        for (int alertDefId : resourceAlertDefinitionIds) {
+            AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
+            if (null == alertDefinition) {
+                continue;
+            }
+
+            // only remove an alert if it's not currently deleted
+            if (!alertDefinition.getDeleted()) {
+                alertDefinition.setDeleted(true);
+                modifiedCount++;
+
+                notifyAlertConditionCacheManager(subject, "removeResourceAlertDefinitions", alertDefinition,
+                    AlertDefinitionEvent.DELETED);
             }
         }
 
@@ -412,33 +582,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         query.setParameter("alertDefinitionId", definitionId);
         List<Integer> resultIds = query.getResultList();
         return (resultIds.size() == 1);
-    }
-
-    @Override
-    public int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
-        int modifiedCount = 0;
-        boolean isResourceLevel;
-        for (int alertDefId : alertDefinitionIds) {
-            AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
-
-            // TODO GH: Can be more efficient
-            if (checkPermission(subject, alertDefinition)) {
-                // only disable an alert if it's currently enabled
-                if (alertDefinition.getEnabled() == true) {
-                    alertDefinition.setEnabled(false);
-                    modifiedCount++;
-
-                    // alertTemplates and groupAlertDefinitions do not need to update the cache
-                    isResourceLevel = (null != alertDefinition.getResource());
-                    if (isResourceLevel) {
-                        notifyAlertConditionCacheManager(subject, "disableAlertDefinitions", alertDefinition,
-                            AlertDefinitionEvent.DISABLED);
-                    }
-                }
-            }
-        }
-
-        return modifiedCount;
     }
 
     @Override

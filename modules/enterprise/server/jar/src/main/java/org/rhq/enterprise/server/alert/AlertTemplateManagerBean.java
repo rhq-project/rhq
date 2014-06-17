@@ -207,34 +207,84 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void removeAlertTemplates(Subject user, Integer[] alertTemplateIds) {
-        Subject overlord = subjectManager.getOverlord();
-        for (Integer alertTemplateId : alertTemplateIds) {
-            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
+        if (null == alertTemplateIds || alertTemplateIds.length == 0) {
+            return;
+        }
 
-            alertDefinitionManager.removeAlertDefinitions(user, new int[] { alertTemplateId });
-            alertDefinitionManager.removeAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
+        for (Integer alertTemplateId : alertTemplateIds) {
+            AlertDefinition template = entityManager.find(AlertDefinition.class, alertTemplateId);
+            if (null == template || template.getDeleted()) {
+                continue;
+            }
+
+            // remove the template
+            template.setDeleted(true);
+
+            // remove the child resource-level defs
+            Subject overlord = subjectManager.getOverlord();
+            List<Integer> childDefinitionIds = getChildrenAlertDefinitionIds(user, alertTemplateId);
+            if (childDefinitionIds.isEmpty()) {
+                continue;
+            }
+            alertDefinitionManager.removeResourceAlertDefinitions(overlord,
+                ArrayUtils.unwrapCollection(childDefinitionIds));
+
+            // finally, detach protected alert defs
+            Query query = entityManager
+                .createNamedQuery(AlertDefinition.QUERY_UPDATE_DETACH_PROTECTED_BY_ALERT_TEMPLATE_ID);
+            query.setParameter("alertTemplateId", alertTemplateId);
+            int numDetached = query.executeUpdate();
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void enableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
-        Subject overlord = subjectManager.getOverlord();
-        for (Integer alertTemplateId : alertTemplateIds) {
-            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
+    public void enableAlertTemplates(Subject subject, Integer[] alertTemplateIds) {
+        if (null == alertTemplateIds || alertTemplateIds.length == 0) {
+            return;
+        }
 
-            alertDefinitionManager.enableAlertDefinitions(user, new int[] { alertTemplateId });
-            alertDefinitionManager.enableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
+        for (Integer alertTemplateId : alertTemplateIds) {
+            AlertDefinition template = entityManager.find(AlertDefinition.class, alertTemplateId);
+            if (null == template || template.getEnabled() || template.getDeleted()) {
+                continue;
+            }
+
+            // enable the template
+            template.setEnabled(true);
+
+            // enable the child resource-level defs
+            Subject overlord = subjectManager.getOverlord();
+            List<Integer> childDefinitionIds = getChildrenAlertDefinitionIds(overlord, alertTemplateId);
+            if (childDefinitionIds.isEmpty()) {
+                continue;
+            }
+            alertDefinitionManager.enableResourceAlertDefinitions(overlord,
+                ArrayUtils.unwrapCollection(childDefinitionIds));
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void disableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
-        Subject overlord = subjectManager.getOverlord();
-        for (Integer alertTemplateId : alertTemplateIds) {
-            List<Integer> alertDefinitions = getChildrenAlertDefinitionIds(user, alertTemplateId);
+    public void disableAlertTemplates(Subject subject, Integer[] alertTemplateIds) {
+        if (null == alertTemplateIds || alertTemplateIds.length == 0) {
+            return;
+        }
 
-            alertDefinitionManager.disableAlertDefinitions(user, new int[] { alertTemplateId });
-            alertDefinitionManager.disableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(alertDefinitions));
+        for (Integer alertTemplateId : alertTemplateIds) {
+            AlertDefinition template = entityManager.find(AlertDefinition.class, alertTemplateId);
+            if (null == template || !template.getEnabled() || template.getDeleted()) {
+                continue;
+            }
+
+            // disable the template
+            template.setEnabled(false);
+
+            // enable the child resource-level defs
+            Subject overlord = subjectManager.getOverlord();
+            List<Integer> childDefinitionIds = getChildrenAlertDefinitionIds(overlord, alertTemplateId);
+            if (childDefinitionIds.isEmpty()) {
+                continue;
+            }
+            alertDefinitionManager.disableAlertDefinitions(overlord, ArrayUtils.unwrapCollection(childDefinitionIds));
         }
     }
 

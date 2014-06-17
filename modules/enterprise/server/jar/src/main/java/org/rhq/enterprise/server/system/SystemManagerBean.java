@@ -453,7 +453,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @Override
     @SuppressWarnings("unchecked")
-    public synchronized void loadSystemConfigurationCache() {
+    public void loadSystemConfigurationCache() {
         // After this is done, the cachedSystemSettings contains the latest config.
         List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
             .getResultList();
@@ -898,7 +898,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return new SystemSettings(cachedObfuscatedSystemSettings);
     }
 
-    private synchronized void fillCache(Collection<SystemConfiguration> configs) {
+    private void fillCache(Collection<SystemConfiguration> configs) {
         SystemSettings settings = new SystemSettings();
 
         for (SystemConfiguration config : configs) {
@@ -924,17 +924,19 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         settings.setDriftPlugins(getDriftServerPlugins());
 
-        //only update the caches if the settings were actually changed
-        if (cachedSystemSettings == null ||
-            !cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME).equals(
-                settings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME))) {
-            cachedSystemSettings = settings;
+        synchronized(this) {
+            //only update the caches if the settings were actually changed
+            if (cachedSystemSettings == null ||
+                !cachedSystemSettings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME).equals(
+                    settings.get(SystemSetting.LAST_SYSTEM_CONFIG_UPDATE_TIME))) {
+                cachedSystemSettings = settings;
 
-            cachedObfuscatedSystemSettings = new SystemSettings(settings);
-            for (Map.Entry<SystemSetting, String> entry : cachedObfuscatedSystemSettings.entrySet()) {
-                String value = entry.getValue();
-                if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
-                    entry.setValue(PicketBoxObfuscator.encode(value));
+                cachedObfuscatedSystemSettings = new SystemSettings(settings);
+                for (Map.Entry<SystemSetting, String> entry : cachedObfuscatedSystemSettings.entrySet()) {
+                    String value = entry.getValue();
+                    if (value != null && entry.getKey().getType() == PropertySimpleType.PASSWORD) {
+                        entry.setValue(PicketBoxObfuscator.encode(value));
+                    }
                 }
             }
         }

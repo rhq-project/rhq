@@ -24,7 +24,10 @@
 package org.rhq.server.rhaccess;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,16 +37,21 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.redhat.gss.redhat_support_lib.api.API;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
-public class Attachments extends HttpServlet {
+import org.rhq.enterprise.server.support.SupportManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+
+public class AttachmentsServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
     private static final String SERVER_REPORT = "JBoss ON Server JDR Report";
+    private static final String RESOURCE_REPORT = "Resource JDR Report";
 
-    private final static Logger log = Logger.getLogger(Attachments.class);
+    private final static Logger log = Logger.getLogger(AttachmentsServlet.class);
 
     /**
      *  we generate options (Available reports to attach) (each on new line, ?checked=true to enable auto-check for this option for user
@@ -51,8 +59,14 @@ public class Attachments extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             StringBuilder options = new StringBuilder();
-            options.append(SERVER_REPORT + "?checked=true\n");
+            String resourceId = request.getParameter("resourceId");
+            if (resourceId != null) {
+                options.append(RESOURCE_REPORT + "/" + resourceId + "?checked=true\n");
+            } else {
+                options.append(SERVER_REPORT + "?checked=true\n");
+            }
             response.getWriter().write(options.toString());
+            log.info("resourceId" + request.getParameter("resourceId"));
         } catch (Throwable t) {
             log.error(t);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server Error");
@@ -101,6 +115,25 @@ public class Attachments extends HttpServlet {
                 String path = new JdrReportRunner().getReport();
                 api.getAttachments().add(caseNum, true, path, attachment);
                 log.info("File attached to URL " + api.getConfigHelper().getUrl());
+                try {
+                    new File(path).delete();
+                } catch (Exception e) {
+                    log.error("Failed to delete JDR Report File", e);
+                }
+            }
+            if (attachment.startsWith(RESOURCE_REPORT)) {
+                String resourceId = attachment.replaceAll(".*/", "");
+                log.info("About to attach report for resourceId=" + resourceId);
+                int resId = Integer.parseInt(resourceId);
+                SupportManagerLocal supportMgr = LookupUtil.getSupportManager();
+                InputStream is = supportMgr.getSnapshotReportStream(LookupUtil.getSubjectManager().getOverlord(),
+                    resId, "jdr", null);
+                File tmp = File.createTempFile("jdr", "tmp");
+                FileOutputStream fos = new FileOutputStream(tmp);
+                IOUtils.copy(is, fos);
+                fos.close();
+                log.info("Obtained JDR report written to " + tmp.getAbsolutePath());
+                //api.getAttachments().add(caseNum, true, tmp.getAbsolutePath(), attachment);
             }
         } catch (Throwable t) {
             log.error(t);

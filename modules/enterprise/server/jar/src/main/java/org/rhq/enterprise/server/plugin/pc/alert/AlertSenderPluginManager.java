@@ -31,7 +31,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
@@ -205,7 +205,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         ServerPluginContext ctx = getServerPluginContext(env);
         PluginKey key = ctx.getPluginEnvironment().getPluginKey();
 
-        ServerPluginsLocal pluginsMgr = LookupUtil.getServerPlugins();
+        ServerPluginManagerLocal pluginsMgr = LookupUtil.getServerPluginManager();
         ServerPlugin plugin = pluginsMgr.getServerPlugin(key);
         plugin = pluginsMgr.getServerPluginRelationships(plugin);
 

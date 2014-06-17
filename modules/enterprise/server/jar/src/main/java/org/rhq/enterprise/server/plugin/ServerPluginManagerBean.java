@@ -81,16 +81,16 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-public class ServerPluginsBean implements ServerPluginsLocal, ServerPluginsRemote {
+public class ServerPluginManagerBean implements ServerPluginManagerLocal, ServerPluginManagerRemote {
 
-    private final Log log = LogFactory.getLog(ServerPluginsBean.class);
+    private final Log log = LogFactory.getLog(ServerPluginManagerBean.class);
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource dataSource;
 
     @EJB
-    private ServerPluginsLocal serverPluginsBean; //self
+    private ServerPluginManagerLocal serverPluginsBean; //self
 
     @EJB
     private ServerManagerLocal serverManager;

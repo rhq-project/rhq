@@ -30,7 +30,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.richfaces.event.UploadEvent;
@@ -50,7 +50,7 @@ public class InstalledPluginsUIBean {
     public static final String MANAGED_BEAN_NAME = InstalledPluginsUIBean.class.getSimpleName();
 
     private PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-    private ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+    private ServerPluginManagerLocal serverPluginsBean = LookupUtil.getServerPluginManager();
 
     public InstalledPluginsUIBean() {
     }

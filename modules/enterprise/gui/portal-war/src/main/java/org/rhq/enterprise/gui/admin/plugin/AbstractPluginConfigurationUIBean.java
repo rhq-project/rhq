@@ -30,13 +30,13 @@ import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 public abstract class AbstractPluginConfigurationUIBean {
 
-    protected final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+    protected final ServerPluginManagerLocal serverPluginsBean = LookupUtil.getServerPluginManager();
     //    @Logger
     //    private Log log;
 

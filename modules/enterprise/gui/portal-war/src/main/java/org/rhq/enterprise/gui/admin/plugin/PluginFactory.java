@@ -23,7 +23,7 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -48,7 +48,7 @@ public class PluginFactory {
             return LookupUtil.getPluginManager().getPlugin(this.name);
         } else if (this.deployment == PluginDeploymentType.SERVER) {
             PluginKey pluginKey = new PluginKey(this.deployment, this.pluginType, this.name);
-            ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+            ServerPluginManagerLocal serverPluginsBean = LookupUtil.getServerPluginManager();
             ServerPlugin plugin = serverPluginsBean.getServerPlugin(pluginKey);
             return serverPluginsBean.getServerPluginRelationships(plugin);
         }

@@ -41,7 +41,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.plugin.ServerPluginsRemote;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -98,7 +98,7 @@ public enum RhqManager {
     /**
      * @since 4.12
      */
-    ServerPlugins(ServerPluginsRemote.class, "${ServerPlugins}"), //
+    ServerPluginManager(ServerPluginManagerRemote.class, "${ServerPluginManager}"), //
     StorageNodeManager(StorageNodeManagerRemote.class, "${StorageNodeManager}"), //
     SubjectManager(SubjectManagerRemote.class, "${SubjectManager}"), //
     SupportManager(SupportManagerRemote.class, "${SupportManager}"), //

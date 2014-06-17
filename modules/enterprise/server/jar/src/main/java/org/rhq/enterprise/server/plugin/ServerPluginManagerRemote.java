@@ -14,7 +14,7 @@ import org.rhq.enterprise.server.plugin.pc.ControlResults;
  * Remote management interface for server plugins.
  */
 @Remote
-public interface ServerPluginsRemote {
+public interface ServerPluginManagerRemote {
 
     /**
      * Recycles the master plugin container, essentially shutting down all server plugins

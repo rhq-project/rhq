@@ -1,13 +1,15 @@
 var attachmentsRequest = 'attachments';
 
 angular.module('RedhatAccess.JON', ['RedhatAccess.cases'])
-.controller('customCase', ['$scope', 'securityService', 'NEW_DEFAULTS', '$location', function($scope, securityService, NEW_DEFAULTS , $location) {
+.controller('customCase', ['$scope', 'securityService', 'NEW_DEFAULTS', '$location', '$http', function($scope, securityService, NEW_DEFAULTS , $location, $http) {
   NEW_DEFAULTS.product = "Red Hat JBoss Operations Network";
   NEW_DEFAULTS.version = "3.3.0";
   
+  var params = $location.search();
+  $http.defaults.headers.common['RHQ_SessionID'] = params.sid;
+  
   // handle support case for managed resource
-  if ($location.path().indexOf('/resource-case') >= 0) {
-    var params = $location.search();
+  if ($location.path().indexOf('/resource-case') >= 0) {    
     NEW_DEFAULTS.product = params.product;
     NEW_DEFAULTS.version = params.version;
     attachmentsRequest += '?resourceId='+params.resourceId;

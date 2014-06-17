@@ -116,6 +116,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     // This will be set to 'false' on the release branch.
     private static boolean enableTagsForUI = Boolean.valueOf(MSG.enable_tags());
 
+    private static boolean rhq = true;
+
+    public static boolean isRHQ() {
+        return rhq;
+    }
+
     public static boolean isTagsEnabledForUI() {
         return enableTagsForUI;
     }
@@ -289,6 +295,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                 @Override
                 public void onSuccess(ProductInfo result) {
                     productInfo = result;
+                    rhq = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
                     Window.setTitle(productInfo.getName());
                     buildCoreUI();
                 }

@@ -35,6 +35,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.coregui.client.BookmarkableView;
+import org.rhq.coregui.client.UserSessionManager;
 import org.rhq.coregui.client.ViewPath;
 import org.rhq.coregui.client.components.FullHTMLPane;
 import org.rhq.coregui.client.components.view.ViewName;
@@ -57,7 +58,7 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
     public static final ViewName PAGE_SEARCH = new ViewName("Search", "Search");
     public static final ViewName PAGE_MY_CASES = new ViewName("MyCases", "My Cases");
     public static final ViewName PAGE_NEW_CASE = new ViewName("NewCase", "Open Case");
-    public static final ViewName PAGE_RESOURCE_CASE = new ViewName("ResourceCase", "Open Case");
+    public static final ViewName PAGE_RESOURCE_CASE = new ViewName("ResourceCase", "Open Support Case");
 
     private int resourceId;
     private ResourceComposite resourceComposite;
@@ -65,19 +66,22 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
 
     @Override
     public void renderView(ViewPath viewPath) {
+
+        String sessionId = String.valueOf("?sid=" + UserSessionManager.getSessionSubject().getSessionId());
+
         if (viewPath.isEnd()) {
-            setContentsURL("/rha/support.html#/search");
+            setContentsURL("/rha/support.html#/search" + sessionId);
             return;
         }
         String viewId = viewPath.getCurrent().getPath();
         if (PAGE_SEARCH.getName().equals(viewId)) {
-            setContentsURL("/rha/support.html#/search");
+            setContentsURL("/rha/support.html#/search" + sessionId);
         }
         else if (PAGE_MY_CASES.getName().equals(viewId)) {
-            setContentsURL("/rha/support.html#/case/list");
+            setContentsURL("/rha/support.html#/case/list" + sessionId);
         }
         else if (PAGE_NEW_CASE.getName().equals(viewId)) {
-            setContentsURL("/rha/support.html#/case/new");
+            setContentsURL("/rha/support.html#/case/new" + sessionId);
         } else if (viewId.startsWith(PAGE_RESOURCE_CASE.getName())) {
             String resourceId = viewPath.getNext().getPath();
             try {
@@ -88,6 +92,7 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
             }
 
         }
+        markForRedraw();
     }
 
     protected void loadSelectedItem(final int resourceId, final ViewPath viewPath) {
@@ -156,12 +161,16 @@ public class RhAccessView extends FullHTMLPane implements BookmarkableView {
                     }
                     if ("EAP".equals(productName)) {
                         productName = "Red Hat JBoss Enterprise Application Platform";
+
                     }
-                    if (productVersion.endsWith(".GA")) {
-                        productVersion = productVersion.substring(0, productVersion.length() - 3);
+                    if ("Data Grid".equals(productName)) {
+                        productName = "Red Hat JBoss Data Grid";
                     }
+                    // we need to strip down .GA suffix, since it is not present in RHA
+                    productVersion = productVersion.replaceAll("\\.GA.*", "");
+                    String sessionId = String.valueOf("&sid=" + UserSessionManager.getSessionSubject().getSessionId());
                     setContentsURL("/rha/support.html#/resource-case/?resourceId=" + resourceId + "&product="
-                        + productName + "&version=" + productVersion);
+                        + productName + "&version=" + productVersion + sessionId);
                     markForRedraw();
                     Log.info("content url set " + productVersion + " " + productName);
                 }

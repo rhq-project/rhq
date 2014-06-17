@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -1026,6 +1027,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
+        c.addSortName(PageOrdering.ASC);
         bundles = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles);
         assertEquals(2, bundles.size());
@@ -1047,8 +1049,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         b = bundles.get(1);
         name = "two";
         assertNotNull(b);
-        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
-        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        assertTrue(b.getName() + " does not contain [" + name + "]", b.getName().contains(name));
+        assertTrue(b.getBundleType().getName() + " does not contain [" + name + "]", b.getBundleType().getName()
+            .contains(name));
 
         // return bundle "two" using all criteria and with all optional data
         c.addFilterId(b.getId());
@@ -1060,8 +1063,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
         b = bundles.get(0);
-        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
-        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        assertTrue(b.getName() + " does not contain [" + name + "]", b.getName().contains(name));
+        assertTrue(b.getBundleType().getName() + " does not contain [" + name + "]", b.getBundleType().getName()
+            .contains(name));
         assertNotNull(b.getBundleVersions());
         assertEquals(1, b.getBundleVersions().size());
         BundleVersion bv = b.getBundleVersions().get(0);
@@ -1076,7 +1080,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testFindBundlesByCriteriaPaging() throws Exception {
         Bundle b = null;
         for (int i = 0; i < 9; i++) {
-            createBundle("name" + (i + 1));
+            createBundle("name0" + (i + 1));
         }
         Bundle b10 = createBundle("name10");
 
@@ -1084,6 +1088,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         PageList<Bundle> bs;
 
         // return first 5
+        c.addSortName(PageOrdering.ASC); // without sorting we'll get no predictable ordering
         c.addFilterName(TEST_PREFIX);
         c.setPaging(0, 5);
         c.fetchBundleVersions(true);
@@ -1222,11 +1227,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = TESTS_ENABLED)
     public void testFindBundleVersionsByCriteriaPaging() throws Exception {
+        TreeMap<Integer, BundleVersion> createdBVs = new TreeMap<Integer, BundleVersion>();
         Bundle b1 = createBundle("one");
-        for (int i = 0; i < 59; i++) {
-            createBundleVersion(b1.getName(), "1." + String.format("%02d", i + 1), b1);
+        for (int i = 0; i <= 59; i++) {
+            BundleVersion bv = createBundleVersion(b1.getName(), "1." + String.format("%02d", i + 1), b1);
+            createdBVs.put(bv.getId(), bv);
         }
-        BundleVersion bv60 = createBundleVersion(b1.getName(), "1.60", b1);
 
         BundleVersionCriteria c = new BundleVersionCriteria();
         PageList<BundleVersion> bvs;
@@ -1241,14 +1247,20 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(10, bvs.size());
         assertFalse(bvs.get(0).equals(bvs.get(1)));
 
-        // return last 3
+        // return last 3, and make sure they match the last three - note that we sorted on ID so our TreeMap is sorted on ID too
         c.addFilterName(TEST_PREFIX);
         c.setPaging(19, 3);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         assertNotNull(bvs);
         assertEquals(3, bvs.size());
-        assertFalse(bvs.get(0).equals(bvs.get(1)));
-        assertEquals(bv60, bvs.get(2));
+        assertFalse(bvs.get(0).equals(bvs.get(1))); // just make sure there isn't a duplicate - stupid test, but whatever
+
+        assertEquals(bvs.get(2), createdBVs.lastEntry().getValue());
+        createdBVs.remove(createdBVs.lastEntry().getKey());
+        assertEquals(bvs.get(1), createdBVs.lastEntry().getValue());
+        createdBVs.remove(createdBVs.lastEntry().getKey());
+        assertEquals(bvs.get(0), createdBVs.lastEntry().getValue());
+        createdBVs.remove(createdBVs.lastEntry().getKey());
     }
 
     @Test(enabled = ENABLED)

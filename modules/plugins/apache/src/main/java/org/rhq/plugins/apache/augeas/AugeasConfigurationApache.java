@@ -53,8 +53,7 @@ import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
  */
 public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfiguration {
 
-    public static final String INCLUDE_DIRECTIVE = "Include";
-    private static final String INCLUDE_FILES_PATTERN = "^[\t ]*Include[\t ]+(.*)$";
+    private static final String INCLUDE_FILES_PATTERN = "^[\t ]*Include(?:Optional)?[\t ]+(.*)$";
     private static final String SERVER_ROOT_PATTERN = "^[\t ]*ServerRoot[\t ]+[\"]?([^\"\n]*)[\"]?$";
 
     private final Pattern includePattern = Pattern.compile(INCLUDE_FILES_PATTERN);

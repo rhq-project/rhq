@@ -114,12 +114,13 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
             parentNode.addIncludeNodes(includeNode, createdNodes);
 
         for (AugeasNode node : createdNodes) {
-            if (canContainNestedNodes(node.getLabel())) {
+            String label = node.getLabel();
+            if (canContainNestedNodes(label)) {
                 String labelName =
-                    node.getLabel() + ((node.getSeq() != 0) ? "[" + String.valueOf(node.getSeq()) + "]" : "");
+                    label + ((node.getSeq() != 0) ? "[" + String.valueOf(node.getSeq()) + "]" : "");
                 updateIncludes((ApacheAugeasNode) node, tree, fileName + File.separator + labelName, null);
             }
-            if (node.getLabel().equals("Include")) {
+            if (label.equals("Include") || label.equals("IncludeOptional")) {
                 String val = ag.get(node.getFullPath() + File.separator + "param");
                 if (includes.containsKey(val)) {
                     //include directive contains globNames

@@ -21,6 +21,8 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -51,6 +53,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
         implements MeasurementFacet, OperationFacet {
+
+    private final Log log = LogFactory.getLog(HostControllerComponent.class);
 
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";

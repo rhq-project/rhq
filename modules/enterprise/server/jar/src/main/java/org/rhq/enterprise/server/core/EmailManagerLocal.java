@@ -52,8 +52,10 @@ public interface EmailManagerLocal {
      * @param  conditionLogs     that conditionLogs that were met that caused the alert to trigger
      * @param  alertUrl          URL to the GUI page of the alert that was triggered
      *
+     * @param templatePath
      * @return alert email message (key=subject, value=body)
      */
     Map<String, String> getAlertEmailMessage(String resourceHierarchy, String resourceName, String alertName,
-        String priority, String timestamp, String conditionLogs, String alertUrl);
+                                             String priority, String timestamp, String conditionLogs, String alertUrl,
+                                             String templatePath);
 }

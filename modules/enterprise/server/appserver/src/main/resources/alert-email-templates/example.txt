@@ -1,0 +1,9 @@
+Subject: [ALERT] priority of [@@@PRIORITY@@@] for alert [@@@ALERT_NAME@@@] on resource [@@@RESOURCE_NAME@@@]
+
+
+Resource Name    : @@@RESOURCE_NAME@@@ (@@@FULL_RESOURCE_HIERARCHY@@@)
+Alert Name       : @@@ALERT_NAME@@@
+Alert Severity   : @@@PRIORITY@@@
+Alert Date/Time  : @@@TIMESTAMP@@@
+Conditions       : @@@CONDITIONS@@@
+Resource URL     : @@@ALERT_URL@@@

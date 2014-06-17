@@ -31,6 +31,7 @@
                 <c:regex-constraint expression=".+@[^@, ]+(,.+@[^,@ ]+)?"/>
             </c:constraint>
         </c:simple-property>
+      <c:simple-property name="template" required="false" type="string" description="Name of a template to use"/>
     </alert-configuration>
 
 </alert-plugin>

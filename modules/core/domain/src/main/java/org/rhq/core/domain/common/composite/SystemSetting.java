@@ -165,8 +165,13 @@ public enum SystemSetting {
     @Deprecated
     GUIDE_ENABLED("CAM_GUIDE_ENABLED", PropertySimpleType.STRING, true, false, true),
     @Deprecated
-    RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true)
+    RT_COLLECT_IP_ADDRS("CAM_RT_COLLECT_IP_ADDRS", PropertySimpleType.STRING, true, false, true),
 
+    /**
+     * This is a bit magical, because the system itself updates it if any other property gets updated even though
+     * this setting itself is readonly.
+     */
+    LAST_SYSTEM_CONFIG_UPDATE_TIME("LAST_SYSCONFIG_UPDATE_TIME", PropertySimpleType.LONG, true, false, false)
     ;
 
     private final String internalName;

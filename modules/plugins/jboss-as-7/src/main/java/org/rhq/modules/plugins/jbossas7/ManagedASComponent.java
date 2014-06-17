@@ -88,8 +88,14 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
                 getLog().warn(e.getMessage());
                 return AvailabilityType.DOWN;
             }
-            if (!result.isSuccess())
+
+            if (!result.isSuccess()) {
+                if (result.isTimedout()) {
+                    return AvailabilityType.UNKNOWN;
+                }
+
                 return AvailabilityType.DOWN;
+            }
 
             String msg = result.getResult().toString();
             if (msg.contains("STARTED"))

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -93,7 +94,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     static final String EXPRESSION = "_expr:";
     static final int EXPRESSION_SIZE = EXPRESSION.length();
     static final String EXPRESSION_VALUE_KEY = "EXPRESSION_VALUE";
-    static final int AVAIL_OP_TIMEOUT_SECONDS = 10 * 60;
+    static final int AVAIL_OP_TIMEOUT_SECONDS = 60;
 
     public static final String MANAGED_SERVER = "Managed Server";
 
@@ -151,7 +152,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     public AvailabilityType getAvailability() {
         ReadResource op = new ReadResource(address);
         Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
-        return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+        if (res != null && res.isSuccess()) {
+            return AvailabilityType.UP;
+        } else if (res != null && !res.isSuccess() && res.isTimedout()) {
+            return AvailabilityType.UNKNOWN;
+        }
+
+        return AvailabilityType.DOWN;
     }
 
     protected String getResourceDescription() {
@@ -856,27 +864,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
     }
 
     protected <T> T readAttribute(Address address, String name, Class<T> resultType) throws Exception {
-        Operation op = new ReadAttribute(address, name);
-        Result res = getASConnection().execute(op);
-        if (!res.isSuccess()) {
-            if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
-                throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
-                    + getAddress().getPath() + "] - response: " + res);
-            }
-            throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
-                + "] - response: " + res);
-        }
-        return (T) res.getResult();
+        return readAttribute(address, name, resultType, 10);
     }
 
     protected <T> T readAttribute(Address address, String name, Class<T> resultType, int timeoutSec) throws Exception {
         Operation op = new ReadAttribute(address, name);
         Result res = getASConnection().execute(op, timeoutSec);
         if (!res.isSuccess()) {
+            if (res.isTimedout()) {
+                throw new TimeoutException("Read attribute operation timed out");
+            }
+
             if (res.isRolledBack()) { // this means we've connected, authenticated, but still failed
                 throw new ResultFailedException("Failed to read attribute [" + name + "] of address ["
                     + getAddress().getPath() + "] - response: " + res);
             }
+
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
                 + "] - response: " + res);
         }

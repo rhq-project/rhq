@@ -88,6 +88,10 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         Operation op = new ReadAttribute(getAddress(), "enabled");
         Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
         if (!res.isSuccess()) {
+            if (res.isTimedout()) {
+                return AvailabilityType.UNKNOWN;
+            }
+
             if (res.getFailureDescription() != null && res.getFailureDescription().toLowerCase().contains("not found")) {
                 getLog().debug("Reporting MISSING resource: " + getPath());
                 return AvailabilityType.MISSING;

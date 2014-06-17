@@ -187,7 +187,15 @@ public enum SystemSetting {
      * This is a default password that can be used to connect to a remote SSH box.
      * Right now, it's used when remotely controlling/installing/uninstalling agents.
      */
-    REMOTE_SSH_PASSWORD_DEFAULT("REMOTE_SSH_PASSWORD_DEFAULT", PropertySimpleType.PASSWORD, false, false, true)
+    REMOTE_SSH_PASSWORD_DEFAULT("REMOTE_SSH_PASSWORD_DEFAULT", PropertySimpleType.PASSWORD, false, false, true),
+
+    PROXY_SERVER_HOST("PROXY_SERVER_HOST", PropertySimpleType.STRING, false, false, true),
+
+    PROXY_SERVER_PORT("PROXY_SERVER_PORT", PropertySimpleType.INTEGER, false, true, true),
+
+    PROXY_SERVER_USERNAME("PROXY_SERVER_USERNAME", PropertySimpleType.STRING, false, false, true),
+
+    PROXY_SERVER_PASSWORD("PROXY_SERVER_PASSWORD", PropertySimpleType.PASSWORD, false, false, true)
 
     ;
 

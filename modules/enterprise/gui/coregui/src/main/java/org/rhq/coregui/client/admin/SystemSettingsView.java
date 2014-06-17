@@ -311,6 +311,11 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
 
+        PropertyGroupDefinition proxyGroup = new PropertyGroupDefinition("proxy");
+        proxyGroup.setDisplayName(MSG.view_admin_systemSettings_group_proxy());
+        proxyGroup.setOrder(5);
+        proxyGroup.setDefaultHidden(false);
+
         for (SystemSetting prop : SystemSetting.values()) {
 
             //don't include the readonly properties in the configuration editor
@@ -581,7 +586,41 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
 
                 pd.setEnumeratedValues(options, false);
                 break;
+            /*
+             * Proxy Server Settings
+             */
+            case PROXY_SERVER_HOST:
+                pd.setDescription(MSG.view_admin_systemSettings_ProxyHost_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ProxyHost_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
+            case PROXY_SERVER_PORT:
+                pd.setDescription(MSG.view_admin_systemSettings_ProxyPort_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ProxyPort_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), Long.valueOf(65535)));
+                pd.setDefaultValue("0");
+                break;
+
+            case PROXY_SERVER_USERNAME:
+                pd.setDescription(MSG.view_admin_systemSettings_ProxyUsername_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ProxyUsername_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
+            case PROXY_SERVER_PASSWORD:
+                pd.setDescription(MSG.view_admin_systemSettings_ProxyPassword_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ProxyPassword_name());
+                pd.setPropertyGroupDefinition(proxyGroup);
+                pd.setDefaultValue(null);
+                break;
+
             }
+            
+
         }
 
         //

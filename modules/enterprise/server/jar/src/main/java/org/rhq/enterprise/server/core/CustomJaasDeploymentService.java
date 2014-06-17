@@ -50,6 +50,8 @@ import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
+import org.rhq.enterprise.server.core.jaas.KeycloakLoginModule;
+import org.rhq.enterprise.server.core.jaas.KeycloakLoginUtils;
 import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
 import org.rhq.enterprise.server.core.service.ManagementService;
 import org.rhq.enterprise.server.util.JMXUtil;
@@ -75,9 +77,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void installJaasModules() {
         try {
             LOG.info("Updating RHQ Server's JAAS login modules");
-            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
-                LookupUtil.getSubjectManager().getOverlord());
-            updateJaasModules(systemConfig);
+//            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+//                LookupUtil.getSubjectManager().getOverlord());
+//            updateJaasModules(systemConfig, false, false);
+            upgradeRhqUserSecurityDomainIfNeeded();
         } catch (Exception e) {
             LOG.fatal("Error deploying JAAS login modules", e);
             throw new RuntimeException(e);
@@ -92,22 +95,35 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
             String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
             boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
+            
+            value = systemConfig.getProperty(SystemSetting.KEYCLOAK_URL.getInternalName());
+            boolean isKeycloakAuthenticationEnabled = (value != null && !value.trim().isEmpty());
 
-            if (isLdapAuthenticationEnabled) {
-
+            if (isLdapAuthenticationEnabled || isKeycloakAuthenticationEnabled) {
                 ModelControllerClient mcc = null;
+                boolean ldapModulesPresent = true;
+                boolean keycloakModulesPresent = true;
                 try {
                     mcc = ManagementService.createClient();
                     final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
 
-                    boolean ldapModulesPresent = client.securityDomainHasLoginModule(RHQ_USER_SECURITY_DOMAIN,
-                        "org.rhq.enterprise.server.core.jaas.LdapLoginModule");
-
-
-                    if (!ldapModulesPresent) {
-                        LOG.info("Updating RHQ Server's JAAS login modules with LDAP support");
-                        updateJaasModules(systemConfig);
+                    if (isLdapAuthenticationEnabled) {
+                        ldapModulesPresent = client.securityDomainHasLoginModule(RHQ_USER_SECURITY_DOMAIN,
+                            "org.rhq.enterprise.server.core.jaas.LdapLoginModule");
+                        if (!ldapModulesPresent) {
+                            LOG.info("Updating RHQ Server's JAAS login modules with LDAP support");
+                        }
                     }
+                    if (isKeycloakAuthenticationEnabled) {
+                        keycloakModulesPresent = client.securityDomainHasLoginModule(RHQ_USER_SECURITY_DOMAIN,
+                            "org.rhq.enterprise.server.core.jaas.KeycloakLoginModule");
+                        if (!keycloakModulesPresent) {
+                            LOG.info("Updating RHQ Server's JAAS login modules with Keycloak support");
+                        }
+
+                    }
+                    updateJaasModules(systemConfig, isLdapAuthenticationEnabled && !keycloakModulesPresent,
+                        isKeycloakAuthenticationEnabled && !keycloakModulesPresent);
                 } finally {
                     MCCHelper.safeClose(mcc);
                 }
@@ -136,7 +152,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
      * @param systemConfig System configuration to read the LDAP settings from
      * @throws Exception
      */
-    private void updateJaasModules(Properties systemConfig) throws Exception {
+    private void updateJaasModules(Properties systemConfig, boolean installLdapModule, boolean installKeycloakModule)
+        throws Exception {
 
         ModelControllerClient mcc = null;
         try {
@@ -147,7 +164,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 LOG.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] already exists, it will be replaced.");
             }
 
-            List<LoginModuleRequest> loginModules = new ArrayList<LoginModuleRequest>(3);
+            List<LoginModuleRequest> loginModules = new ArrayList<LoginModuleRequest>(4);
 
             // Always register the RHQ user JDBC login module, this checks the principal against the RHQ DB
             LoginModuleRequest jdbcLoginModule = new LoginModuleRequest(JDBCLoginModule.class.getName(),
@@ -160,7 +177,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
             boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
 
-            if (isLdapAuthenticationEnabled) {
+            value = systemConfig.getProperty(SystemSetting.KEYCLOAK_URL.getInternalName());
+            boolean isKeycloakAuthenticationEnabled = (value != null && !value.trim().isEmpty());
+
+            if (installLdapModule && isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
                 LoginModuleRequest jdbcPrincipalCheckLoginModule = new LoginModuleRequest(
                     JDBCPrincipalCheckLoginModule.class.getName(),
@@ -189,6 +209,21 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 LoginModuleRequest ldapLoginModule = new LoginModuleRequest(LdapLoginModule.class.getName(),
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, ldapModuleOptionProperties);
                 loginModules.add(ldapLoginModule);
+            }
+            if (installKeycloakModule && isKeycloakAuthenticationEnabled) {
+                if (!installLdapModule && !isLdapAuthenticationEnabled && loginModules.size() == 1) {
+                    // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
+                    // add this only if not added in previous step
+                    LoginModuleRequest jdbcPrincipalCheckLoginModule = new LoginModuleRequest(
+                        JDBCPrincipalCheckLoginModule.class.getName(),
+                        AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, getJdbcOptions(systemConfig));
+                    loginModules.add(jdbcPrincipalCheckLoginModule);
+                }
+
+                // Enable the login module even if the LDAP properties have issues
+                LoginModuleRequest keycloakLoginModule = new LoginModuleRequest(KeycloakLoginModule.class.getName(),
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, getKeycloakOptions(systemConfig));
+                loginModules.add(keycloakLoginModule);
             }
 
             client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,
@@ -234,6 +269,17 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
         return configOptions;
     }
+    
+    private Map<String, String> getKeycloakOptions(Properties conf) throws Exception {
+        Map<String, String> configOptions = new HashMap<String, String>();
+        configOptions.put(SystemSetting.KEYCLOAK_URL.getInternalName(), conf.getProperty(SystemSetting.KEYCLOAK_URL.getInternalName()));
+        // todo: not hc
+        //bindPW = Obfuscator.decode(bindPW);
+        configOptions.put("client-id", KeycloakLoginUtils.APP_NAME);
+
+        return configOptions;
+    }
+
 
     private void validateLdapOptions(Map<String, String> options) throws NamingException {
         Properties env = new Properties();

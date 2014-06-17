@@ -194,6 +194,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         if (LoginView.isKeycloakEnabled()) {
             Log.warn("Keycloak is enabled");
             // todo: parse keycloak data
+//            name = keycloak.idToken.preferred_username
+//            String name = LoginView.getKeycloakUserName();
             new LoginView().login("rhqadmin", "rhqadmin");
         } else {
             Log.warn("Keycloak is disabled");

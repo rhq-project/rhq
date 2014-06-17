@@ -681,6 +681,10 @@ public class LoginView extends Canvas {
         return typeof($wnd.keycloak) != "undefined";
     }-*/;
     
+    public native static String getKeycloakUserName() /*-{
+        return $wnd.keycloak.idToken.preferred_username;
+    }-*/;
+    
     public native static boolean isKeycloakReady() /*-{
         return typeof($wnd.kcReady) != "undefined" && $wnd.kcReady;
     }-*/;

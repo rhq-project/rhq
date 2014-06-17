@@ -192,26 +192,4 @@ public class AuthenticateUserAction extends TilesAction {
 
         return url.toString();
     }
-
-    /**
-     * This returns <code>true</code> if the RHQ Server has been configured to allow for authentication via LDAP. <code>
-     * false</code> if only database authentication is available.
-     *
-     * @param  context
-     *
-     * @return <code>true</code> if LDAP authentication is allowed
-     *
-     * @throws Exception
-     */
-    public static boolean usingLDAPAuthentication(ServletContext context) throws Exception {
-        String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
-
-        if (provider == null) {
-            SystemSettings systemSettings = LookupUtil.getSystemManager().getUnmaskedSystemSettings(true);
-            provider = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
-            context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
-        }
-
-        return (provider != null) ? Boolean.valueOf(provider) : false;
-    }
 }

@@ -23,7 +23,6 @@
         <rhq.dev.data.dir>${rhq.rootDir}/rhq-data</rhq.dev.data.dir>
         <jgroups.initial.version>3.2.7.Final</jgroups.initial.version>
         <jgroups.patch.version>3.2.10.Final</jgroups.patch.version>
-        <keycloak.version>1.0-beta-3-SNAPSHOT</keycloak.version>
         <!--<keycloak.version>1.0-beta-1-SNAPSHOT</keycloak.version>-->
         <keycloak.unzip.location>${basedir}/target/keycloak-war-dist-all-${keycloak.version}</keycloak.unzip.location>
     </properties>

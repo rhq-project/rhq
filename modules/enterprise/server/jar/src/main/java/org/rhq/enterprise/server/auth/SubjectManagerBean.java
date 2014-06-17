@@ -42,14 +42,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.security.auth.login.LoginContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.crypto.CryptoUtil;
 import org.jboss.security.auth.callback.UsernamePasswordHandler;
-
+import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.IDToken;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -61,6 +63,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.server.PersistenceUtility;
@@ -74,6 +77,8 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
+import org.rhq.enterprise.server.core.jaas.KeycloakLoginUtils;
+import org.rhq.enterprise.server.core.jaas.KeycloakLoginUtils.Failure;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -567,6 +572,120 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
         return subject;
     }
+    
+    
+    /**This method is applied to Subject instances that may require Keycloak auth/authz processing.
+     * Called from both SLSB and SubjectGWTServiceImpl and:
+     * -if Subject passed in has Principal(not Keycloak account) then we immediately return Subject as no processing needed.
+     * -if Subject for Keycloak account
+     *
+     * @param subject Authenticated subject.
+     * @return same or new Subject returned from Keycloak processing.
+     * @throws LoginException
+     */
+    public Subject processSubjectForKeycloak(Subject subject, String subjectPassword) throws LoginException {
+        if (subject == null) {
+            return subject;
+        }
+
+        //if user has principal then bail as Keycloak processing not required
+        boolean userHasPrincipal = isUserWithPrincipal(subject.getName());
+        if (log.isDebugEnabled()) {
+            log.debug("Processing subject '" + subject.getName() + "' for Keycloak check, userHasPrincipal:"
+                + userHasPrincipal);
+        }
+
+        //if user has principal then return as non-ldap user
+        if (userHasPrincipal) {
+            return subject; //bail. No further checking required.
+        }
+        
+        //Start Keycloak check.
+        boolean isKeycloakAuthenticationEnabled = isKeycloakEnabled();
+        if (isKeycloakAuthenticationEnabled) {//we can proceed with Keycloak checking
+            //check that session is valid. RHQ auth has already occurred. Security check required to initiate following
+            Subject sessionSubject;
+            try {
+                sessionSubject = sessionManager.getSubject(subject.getSessionId());
+            } catch (SessionNotFoundException e) {
+                throw new LoginException("User session not valid. Login to proceed.");
+            } catch (SessionTimeoutException e) {
+                throw new LoginException("User session not valid. Login to proceed.");
+            }
+            if (!subject.getName().equals(sessionSubject.getName())) {
+                throw new LoginException("User session not valid. Login to proceed.");
+            }
+
+            //Subject.id == 0 then is registration or case insensitive check and subject update.
+            if (subject.getId() == 0) {
+                // locate first matching subject and attach.
+                SubjectCriteria subjectCriteria = new SubjectCriteria();
+                subjectCriteria.setCaseSensitive(false);
+                subjectCriteria.setStrict(true);
+                subjectCriteria.fetchRoles(false);
+                subjectCriteria.fetchConfiguration(false);
+                subjectCriteria.addFilterName(subject.getName());
+                PageList<Subject> subjectsLocated = findSubjectsByCriteria(getOverlord(), subjectCriteria);
+                //if subject variants located then take the first one with a principal otherwise do nothing
+                //To defend against the case where they create an account with the same name but not
+                //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
+                if ((!subjectsLocated.isEmpty()) && (!subjectsLocated.get(0).getName().equals(subject.getName()))) {//then case insensitive username matches found. Try to use instead.
+                    Subject ldapSubject = subjectsLocated.get(0);
+                    String msg = "Located existing ldap account with different case for [" + ldapSubject.getName()
+                        + "]. " + "Attempting to authenticate with that account instead.";
+                    if (log.isInfoEnabled()) {
+                        log.info(msg);
+                    }
+                    logout(subject.getSessionId().intValue());
+                    subject = login(ldapSubject.getName(), subjectPassword);
+                    Integer sessionId = subject.getSessionId();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId + "]");
+                    }
+                } else {//then this is a registration request. insert overlord registration and login
+                    //we've verified that this user has valid session, requires registration and that keycloak is configured.
+                    Subject superuser = getOverlord();
+
+                    // create the subject, but don't add a principal since Keycloak will handle authentication
+                    if (log.isDebugEnabled()) {
+                        log.debug("registering new Keycloak-authenticated subject [" + subject.getName() + "]");
+                    }
+                    createSubject(superuser, subject);
+                    subject.setFactive(true);
+
+                    // nuke the temporary session and establish a new
+                    // one for this subject.. must be done before pulling the
+                    // new subject in order to do it with his own credentials
+                    logout(subject.getSessionId().intValue());
+                    subject = login(subject.getName(), subjectPassword);
+
+                    AccessTokenResponse token = KeycloakLoginUtils.getToken(subject.getName());
+                    if (token == null) {
+                        throw new LoginException("No user token found.");
+                    }
+                    prepopulateKeycloakFields(subject, token);
+
+                    //                            todo: jk
+                    //                            if (systemManager.isLoginWithoutRolesEnabled()) {
+                    //                                if (log.isInfoEnabled()) {
+                    //                                    log.info("Letting in user [" + subject.getName() + "]  without any assigned roles.");
+                    //                                }
+                    //                            } else {
+                    //                                throw new LoginException(
+                    //                                    "You are authenticated for LDAP, but there are no preconfigured roles for you.");
+                    //                            }
+
+                    //insert empty configuration to start
+                    Configuration newUserConfig = new Configuration();
+                    //set flag on user so that we know registration is still required.
+                    PropertySimple simple = new PropertySimple("isNewUser", true);
+                    newUserConfig.put(simple);
+                    subject.setUserConfiguration(newUserConfig);
+                }
+            }
+        }
+        return subject;
+    }
 
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#logout(Subject)
@@ -895,6 +1014,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return ((groupFilter != null) && (groupFilter.trim().length() > 0))
             || ((groupMember != null) && (groupMember.trim().length() > 0));
     }
+    
+    private boolean isKeycloakEnabled() {
+        SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
+        String value = systemSettings.get(SystemSetting.KEYCLOAK_URL.getInternalName());
+        return value != null && !value.trim().isEmpty();
+    }
+    
+    private String getKeycloakUrl() {
+        SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
+        String value = systemSettings.get(SystemSetting.KEYCLOAK_URL.getInternalName());
+        return value;
+    }
 
     private void prepopulateLdapFields(Subject subject) {
         // Note: A schema defining the standard LDAP attributes can be found here:
@@ -921,6 +1052,78 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         subject.setDepartment(organizationalUnit);
 
         return;
+    }
+    
+    
+    private void prepopulateKeycloakFields(Subject subject, AccessTokenResponse token) throws LoginException {
+        IDToken idToken = KeycloakLoginUtils.extractIdToken(token.getIdToken());
+        if (idToken.getGivenName() != null) {
+            subject.setFirstName(idToken.getGivenName() + idToken.getMiddleName() == null ? "" : idToken
+                .getMiddleName());
+        } else if (idToken.getName() != null) {
+            subject.setFirstName(idToken.getName() + idToken.getMiddleName() == null ? "" : idToken.getMiddleName());
+        }
+        if (idToken.getFamilyName() != null) {
+            subject.setLastName(idToken.getFamilyName());
+        }
+        if (idToken.getPhoneNumber() != null) {
+            subject.setPhoneNumber(idToken.getPhoneNumber());
+        }
+        if (idToken.getEmail() != null) {
+            subject.setEmailAddress(idToken.getEmail());
+        }
+        List<RoleRepresentation> userRoles;
+        try {
+            userRoles = KeycloakLoginUtils.getUserRoles(token, subject.getName(), getKeycloakUrl());
+        } catch (Failure e) {
+            throw new LoginException("Unable to fetch subject roles from Keycloak server.");
+        }
+        List<String> rolesString = new ArrayList<String>(userRoles.size());
+        for (RoleRepresentation roleRep : userRoles) {
+            rolesString.add(roleRep.getName());
+        }
+        assignRhqRolesToKeycloakSubject(subject.getId(), rolesString);
+        if (log.isDebugEnabled()) {
+            log.debug("Updating Keycloak authorization data for user [" + subject.getName() + "] with Keycloak roles"
+                + rolesString + "...");
+        }
+    }
+    
+    // todo: refactor to KeycloakManager
+    private List<Role> findRolesByKeycloakRoleNames(List<String> keycloakRoleNames) {
+        //        if (keycloakRoleNames.isEmpty()) {
+        //            return Collections.<Role>emptyList();
+        //        }
+        //        TypedQuery<Role> query = entityManager.createNamedQuery(LdapGroup.FIND_BY_ROLES_GROUP_NAMES, Role.class);
+        //        query.setParameter("names", keycloakRoleNames);
+        //        return (List<Role>) query.getResultList();
+        if (keycloakRoleNames.isEmpty()) {
+            return Collections.<Role> emptyList();
+        }
+        TypedQuery<Role> query = entityManager.createNamedQuery(LdapGroup.QUERY_FIND_ALL, Role.class);
+        List<Role> roles = query.getResultList();
+        List<Role> rolesResult = new ArrayList<Role>();
+        for (Role role : roles) {
+            if (keycloakRoleNames.contains(role.getName())) {
+                rolesResult.add(role);
+            }
+        }
+        // add at least one, todo: remove!!!
+        if (rolesResult.isEmpty()) {
+            rolesResult.add(roles.get(0));
+        }
+        return rolesResult;
+    }
+
+    public void assignRhqRolesToKeycloakSubject(int subjectId, List<String> keycloakGroupNames) {
+        Subject sub = entityManager.find(Subject.class, subjectId);
+        List<Role> roles = findRolesByKeycloakRoleNames(keycloakGroupNames);
+        sub.getRoles().clear();
+        sub.getLdapRoles().clear();
+        for (Role role : roles) {
+            sub.addRole(role);
+            sub.addLdapRole(role);
+        }
     }
 
 }

@@ -29,6 +29,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.coregui.client.CoreGUI;
+import org.rhq.coregui.client.LoginView;
 import org.rhq.coregui.client.PermissionsLoadedListener;
 import org.rhq.coregui.client.PermissionsLoader;
 import org.rhq.coregui.client.UserSessionManager;
@@ -77,11 +78,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.HLayout;
 
 /**
  * @author Greg Hinkle
@@ -309,6 +306,7 @@ public class MenuBarView extends EnhancedVLayout {
         private String createBarContent() {
             Subject user = UserSessionManager.getSessionSubject();
             StringBuilder sb = new StringBuilder();
+            String username = CoreGUI.isKeycloakEnabled() ? LoginView.getKeycloakUserName() : user.getName();
             sb.append("<nav class='navbar navbar-default navbar-pf' role='navigation'>"
        +"<div class='navbar-header'>"
          +"<button type='button' class='navbar-toggle collapsed' data-toggle='collapse' data-target='.navbar-collapse-1'>"
@@ -335,7 +333,7 @@ public class MenuBarView extends EnhancedVLayout {
            +"<li class='dropdown'>"
              +"<a href='#' class='dropdown-toggle' data-toggle='dropdown'>"
                +"<span class='pficon pficon-user'></span>"
-                +user.getName()+" <b class='caret'></b>"
+                +username+" <b class='caret'></b>"
              +"</a>"
              +"<ul class='dropdown-menu'>"
              + "<li><a href='#Administration/Security/Users/"+user.getId()+"'>Account Details</a></li>"

@@ -82,8 +82,9 @@ public class BundleDestination implements Serializable {
     @Column(name = "DEPLOY_DIR", nullable = false)
     private String deployDir;
 
+    // keeping the DB column called the same to not need a DB upgrade set just for a rename
     @Column(name = "DEST_BASE_DIR_NAME", nullable = false)
-    private String destinationBaseDirectoryName;
+    private String destinationSpecificationName;
 
     @Column(name = "CTIME")
     private Long ctime = System.currentTimeMillis();
@@ -109,12 +110,12 @@ public class BundleDestination implements Serializable {
         // for JPA use
     }
 
-    public BundleDestination(Bundle bundle, String name, ResourceGroup group, String destinationBaseDirectoryName,
+    public BundleDestination(Bundle bundle, String name, ResourceGroup group, String destinationSpecificationName,
         String deployDir) {
         this.bundle = bundle;
         this.name = name;
         this.group = group;
-        this.destinationBaseDirectoryName = destinationBaseDirectoryName;
+        this.destinationSpecificationName = destinationSpecificationName;
         this.deployDir = deployDir;
     }
 
@@ -161,13 +162,42 @@ public class BundleDestination implements Serializable {
      *         will be deployed), it is the name of the destination location as defined in 
      *         the plugin descriptor for the type of resources where the bundle is to be deployed
      *         (i.e. it is the type of the compatible group associated with this destination).
+     *
+     * @deprecated since 4.12, superseded by {@link #getDestinationSpecificationName()} because there are more types
+     * of destination specifications than just the base directory now. The name of this getter/setter is therefore
+     * misleading.
      */
+    @Deprecated
     public String getDestinationBaseDirectoryName() {
-        return destinationBaseDirectoryName;
+        return destinationSpecificationName;
     }
 
+    /**
+     * @see #getDestinationBaseDirectoryName()
+     * @deprecated since 4.12, use {@link #setDestinationSpecificationName(String)} instead
+     */
+    @Deprecated
     public void setDestinationBaseDirectoryName(String destinationBaseDirectoryName) {
-        this.destinationBaseDirectoryName = destinationBaseDirectoryName;
+        this.destinationSpecificationName = destinationBaseDirectoryName;
+    }
+
+    /**
+     * All resource types that can be targets for bundle deployments define one or more
+     * destination specifications. These are given names in the type's plugin descriptor.
+     * This method returns the name of the destination specification where all bundles
+     * will be destined to be deployed on all resources found in the destination group.
+     *
+     * @return name of the destination specification
+     */
+    public String getDestinationSpecificationName() {
+        return destinationSpecificationName;
+    }
+
+    /**
+     * @see #getDestinationSpecificationName()
+     */
+    public void setDestinationSpecificationName(String destinationSpecificationName) {
+        this.destinationSpecificationName = destinationSpecificationName;
     }
 
     public long getCtime() {

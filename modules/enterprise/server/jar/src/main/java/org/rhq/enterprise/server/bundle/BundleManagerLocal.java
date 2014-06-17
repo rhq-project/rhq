@@ -35,6 +35,7 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -107,7 +108,9 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * @param bundleVersionDescription optional long description of the bundle version
      * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
+     * @deprecated this is only used in tests - no need to have this in the API
      */
+    @Deprecated
     BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
         int bundleTypeId, int[] bundleGroupIds, String bundleVersionName, String bundleVersionDescription,
         String version, String recipe) throws Exception;
@@ -126,9 +129,27 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * @param description optional long description of the bundle version
      * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
+     *
+     * @deprecated since 4.12, use one of the create(Initial)BundleVersionVia* methods
      */
+    @Deprecated
     BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description, String version,
         String recipe) throws Exception;
+
+    /**
+     * Used internally for transaction demarcation purposes.
+     *
+     * @param bundle
+     * @param name
+     * @param version
+     * @param description
+     * @param recipe
+     * @param configurationDefinition
+     * @return
+     * @throws Exception
+     */
+    BundleVersion createBundleVersionInternal(Bundle bundle, String name, String version, String description,
+        String recipe, ConfigurationDefinition configurationDefinition) throws Exception;
 
     /**
      * Not generally called. For use by Server Side Plugins when registering a Bundle Plugin.

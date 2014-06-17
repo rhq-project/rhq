@@ -2384,6 +2384,9 @@
             </schema-directSQL>
           </schemaSpec>
        
+            <schemaSpec version="2.150">
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEPLOY_DIR" nullable="true"/>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

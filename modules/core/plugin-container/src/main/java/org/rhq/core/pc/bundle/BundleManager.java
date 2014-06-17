@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +52,14 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -70,12 +79,14 @@ import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Manages the bundle subsystem, which allows bundles of content to be installed.
- *
+ * <p/>
  * <p>This is an agent service; its interface is made remotely accessible if this is deployed within the agent.</p>
  *
  * @author John Mazzitelli
@@ -97,11 +108,13 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private final InventoryManager im;
     private final MeasurementManager mm;
 
-    public BundleManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter, InventoryManager im, MeasurementManager mm) {
+    public BundleManager(PluginContainerConfiguration configuration, AgentServiceStreamRemoter streamRemoter,
+        InventoryManager im, MeasurementManager mm) {
         super(BundleAgentService.class, streamRemoter);
         this.configuration = configuration;
         LoggingThreadFactory threadFactory = new LoggingThreadFactory("BundleDeployment", true);
-        this.deployerThreadPool = Executors.newSingleThreadExecutor(threadFactory); // single-threaded so only one deployment at a time
+        this.deployerThreadPool = Executors
+            .newSingleThreadExecutor(threadFactory); // single-threaded so only one deployment at a time
         this.im = im;
         this.mm = mm;
     }
@@ -172,8 +185,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         auditDeployment(resourceDeployment, AUDIT_DEPLOYMENT_STARTED, bundleDeployment.getName(),
                             deploymentMessage);
 
-                        File absoluteDestDir = getAbsoluteDestinationDir(request.getBundleResourceDeployment());
-
                         BundleDeployRequest deployRequest = new BundleDeployRequest();
                         deployRequest.setBundleManagerProvider(BundleManager.this);
                         deployRequest.setResourceDeployment(resourceDeployment);
@@ -181,10 +192,23 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         deployRequest.setPackageVersionFiles(downloadedFiles);
                         deployRequest.setCleanDeployment(request.isCleanDeployment());
                         deployRequest.setRevert(request.isRevert());
-                        deployRequest.setAbsoluteDestinationDirectory(absoluteDestDir);
+
+                        File absoluteDestDir = getAbsoluteDestinationDir(request.getBundleResourceDeployment());
+                        if (absoluteDestDir != null) {
+                            deployRequest.setDestinationTarget(absoluteDestDir.toURI());
+                        } else {
+                            String connectionString = getConnectionString(resourceDeployment);
+                            if (connectionString != null) {
+                                deployRequest.setDestinationTarget(URI.create(connectionString));
+                            }
+
+                            deployRequest.setReferencedConfiguration(
+                                createReferencedConfigurationFromResource(resourceDeployment));
+                        }
 
                         // get the bundle facet object that will process the bundle and call it to start the deployment
-                        int facetMethodTimeout = 4 * 60 * 60 * 1000; // 4 hours is given to the bundle plugin to do its thing
+                        int facetMethodTimeout =
+                            4 * 60 * 60 * 1000; // 4 hours is given to the bundle plugin to do its thing
                         BundleFacet bundlePluginComponent = getBundleFacet(bundleHandlerResourceId, facetMethodTimeout);
                         BundleDeployResult result = bundlePluginComponent.deployBundle(deployRequest);
                         if (result.isSuccess()) {
@@ -195,7 +219,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         }
                     } catch (InterruptedException ie) {
                         log.error("Failed to complete bundle deployment due to interrupt", ie);
-                        completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, "Deployment interrupted");
+                        completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE,
+                            "Deployment interrupted");
                     } catch (Throwable t) {
                         log.error("Failed to complete bundle deployment", t);
                         completeDeployment(resourceDeployment, BundleDeploymentStatus.FAILURE, "Deployment failed: "
@@ -211,6 +236,162 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         return response;
+    }
+
+    private Configuration createReferencedConfigurationFromResource(BundleResourceDeployment resourceDeployment) {
+        ResourceContainer rc = im.getResourceContainer(resourceDeployment.getResource());
+
+        Set<ResourceTypeBundleConfiguration.BundleDestinationSpecification> specs = rc.getResource().getResourceType()
+            .getResourceTypeBundleConfiguration().getBundleDestinationSpecifications();
+
+        String specName = resourceDeployment.getBundleDeployment().getDestination()
+            .getDestinationSpecificationName();
+
+        for (ResourceTypeBundleConfiguration.BundleDestinationSpecification spec : specs) {
+            if (specName.equals(spec.getName())) {
+                ResourceTypeBundleConfiguration.BundleDestinationDefinition def =
+                    (ResourceTypeBundleConfiguration.BundleDestinationDefinition) spec;
+
+                Resource resource = rc.getResource();
+
+                Configuration transferred = new Configuration();
+
+                Configuration pluginConfiguration = resource.getPluginConfiguration();
+                Configuration resourceConfiguration = InventoryManager.getResourceConfiguration(resource);
+
+                for (ResourceTypeBundleConfiguration.BundleDestinationDefinition.ConfigRef refProp :
+                    def.getReferencedConfiguration()) {
+
+                    switch (refProp.getContext()) {
+                    case PLUGIN_CONFIGURATION:
+                        switch (refProp.getType()) {
+                        case LIST:
+                            PropertyList list = pluginConfiguration.getList(refProp.getName()).deepCopy(false);
+                            list.setName(refProp.getTargetName());
+
+                            transferred.put(list);
+                            break;
+                        case MAP:
+                            PropertyMap map = pluginConfiguration.getMap(refProp.getName()).deepCopy(false);
+                            map.setName(refProp.getTargetName());
+
+                            transferred.put(map);
+                            break;
+                        case SIMPLE:
+                            PropertySimple simple = pluginConfiguration.getSimple(refProp.getName()).deepCopy(false);
+                            simple.setName(refProp.getTargetName());
+
+                            transferred.put(simple);
+                            break;
+                        case FULL:
+                            for (Property p : pluginConfiguration.getProperties()) {
+                                Property copy = p.deepCopy(false);
+                                if (refProp.getTargetName() != null) {
+                                    copy.setName(refProp.getTargetName() + copy.getName());
+                                }
+                                transferred.put(copy);
+                            }
+                            break;
+                        }
+                        break;
+                    case RESOURCE_CONFIGURATION:
+                        switch (refProp.getType()) {
+                        case LIST:
+                            PropertyList list = resourceConfiguration.getList(refProp.getName()).deepCopy(false);
+                            list.setName(refProp.getTargetName());
+
+                            transferred.put(list);
+                            break;
+                        case MAP:
+                            PropertyMap map = resourceConfiguration.getMap(refProp.getName()).deepCopy(false);
+                            map.setName(refProp.getTargetName());
+
+                            transferred.put(map);
+                            break;
+                        case SIMPLE:
+                            PropertySimple simple = resourceConfiguration.getSimple(refProp.getName()).deepCopy(false);
+                            simple.setName(refProp.getTargetName());
+
+                            transferred.put(simple);
+                            break;
+                        case FULL:
+                            for (Property p : resourceConfiguration.getProperties()) {
+                                Property copy = p.deepCopy(false);
+                                if (refProp.getTargetName() != null) {
+                                    copy.setName(refProp.getTargetName() + copy.getName());
+                                }
+                                transferred.put(copy);
+                            }
+                            break;
+                        }
+                        break;
+                    case MEASUREMENT_TRAIT:
+                        if (refProp.getType() ==
+                            ResourceTypeBundleConfiguration.BundleDestinationDefinition.ConfigRef.Type.FULL) {
+                            Set<MeasurementScheduleRequest> schedules = rc.getMeasurementSchedule();
+                            for (MeasurementScheduleRequest schedule : schedules) {
+                                if (schedule.getDataType() != DataType.TRAIT) {
+                                    String value = mm.getTraitValue(rc, schedule.getName());
+                                    String name = schedule.getName();
+                                    if (refProp.getTargetName() != null) {
+                                        name = refProp.getTargetName() + name;
+                                    }
+                                    PropertySimple prop = new PropertySimple(name, value);
+                                    transferred.put(prop);
+                                }
+                            }
+                        } else {
+                            String value = mm.getTraitValue(rc, refProp.getName());
+                            PropertySimple simple = new PropertySimple(refProp.getTargetName(), value);
+
+                            transferred.put(simple);
+                        }
+                        break;
+                    }
+                }
+
+                return transferred;
+            }
+        }
+
+        return null;
+    }
+
+    private String getConnectionString(BundleResourceDeployment resourceDeployment) {
+        ResourceContainer rc = im.getResourceContainer(resourceDeployment.getResource());
+        BundleDestination dest = resourceDeployment.getBundleDeployment().getDestination();
+        ResourceType type = rc.getResource().getResourceType();
+        String specName = dest.getDestinationSpecificationName();
+        String relativeDeployDir = dest.getDeployDir();
+
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("deployDir", relativeDeployDir));
+
+        ConnectionStringAvailableProperties props = new ConnectionStringAvailableProperties(rc, mm, config);
+
+        for (ResourceTypeBundleConfiguration.BundleDestinationSpecification spec : type
+            .getResourceTypeBundleConfiguration().getBundleDestinationSpecifications()) {
+
+            if (specName.equals(spec.getName())) {
+                ResourceTypeBundleConfiguration.BundleDestinationDefinition def =
+                    (ResourceTypeBundleConfiguration.BundleDestinationDefinition) spec;
+
+                String rawConnectionString = def.getConnectionString();
+
+                if (rawConnectionString == null) {
+                    return null;
+                }
+
+                TokenReplacingReader trr = new TokenReplacingReader(new StringReader(rawConnectionString), props);
+                try {
+                    return StreamUtil.slurp(trr);
+                } finally {
+                    StreamUtil.safeClose(trr);
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -241,15 +422,26 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 + resourceDeployment.getResource() + "]";
             auditDeployment(resourceDeployment, AUDIT_PURGE_STARTED, bundleDeployment.getName(), deploymentMessage);
 
-            File absoluteDestDir = getAbsoluteDestinationDir(request.getLiveBundleResourceDeployment());
-
             org.rhq.core.pluginapi.bundle.BundlePurgeRequest purgeRequest = new org.rhq.core.pluginapi.bundle.BundlePurgeRequest();
             purgeRequest.setBundleManagerProvider(this);
             purgeRequest.setLiveResourceDeployment(resourceDeployment);
-            purgeRequest.setAbsoluteDestinationDirectory(absoluteDestDir);
+
+            File absoluteDestDir = getAbsoluteDestinationDir(request.getLiveBundleResourceDeployment());
+            if (absoluteDestDir != null) {
+                purgeRequest.setDestinationTarget(absoluteDestDir.toURI());
+            } else {
+                String connectionString = getConnectionString(request.getLiveBundleResourceDeployment());
+                if (connectionString != null) {
+                    purgeRequest.setDestinationTarget(URI.create(connectionString));
+                }
+
+                purgeRequest.setReferencedConfiguration(
+                    createReferencedConfigurationFromResource(request.getLiveBundleResourceDeployment()));
+            }
 
             // get the bundle facet object that will process the bundle and call it to start the purge
-            int facetMethodTimeout = 30 * 60 * 1000; // 30 minutes should be enough time for the bundle plugin to purge everything
+            int facetMethodTimeout =
+                30 * 60 * 1000; // 30 minutes should be enough time for the bundle plugin to purge everything
             BundleFacet bundlePluginComponent = getBundleFacet(bundleHandlerResourceId, facetMethodTimeout);
             BundlePurgeResult result = bundlePluginComponent.purgeBundle(purgeRequest);
             if (result.isSuccess()) {
@@ -274,8 +466,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * attachment defaults null <br/>
      *
      * @param bundleResourceDeployment not null
-     * @param action not null
-     * @param info not null
+     * @param action                   not null
+     * @param info                     not null
      * @param message
      */
     public void auditDeployment(BundleResourceDeployment bundleResourceDeployment, String action, String info,
@@ -324,7 +516,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         } catch (Exception e) {
             log.warn("Failed to clean up old downloaded bundle files in ["
                 + parent
-                + "]. You can ignore this but if the agent is asked to deploy a lot of bundles, the file system may fill up."
+                +
+                "]. You can ignore this but if the agent is asked to deploy a lot of bundles, the file system may fill up."
                 + " Cause: " + e);
         }
     }
@@ -333,8 +526,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * Downloads the bundle's files into the bundle plugin's tmp directory and returns that tmp directory.
      *
      * @param resourceDeployment access to deployment information, including what bundle files need to be downloaded
-     * @param downloadDir location where the bundle files should be downloaded
+     * @param downloadDir        location where the bundle files should be downloaded
+     *
      * @return map of the package versions to their files that were downloaded
+     *
      * @throws Exception
      */
     private Map<PackageVersion, File> downloadBundleFiles(BundleResourceDeployment resourceDeployment, File downloadDir)
@@ -393,8 +588,9 @@ public class BundleManager extends AgentService implements BundleAgentService, B
     private void completeDeployment(BundleResourceDeployment resourceDeployment, BundleDeploymentStatus status,
         String message) {
         getBundleServerService().setBundleDeploymentStatus(resourceDeployment.getId(), status);
-        BundleResourceDeploymentHistory.Status auditStatus = BundleDeploymentStatus.SUCCESS.equals(status) ? BundleResourceDeploymentHistory.Status.SUCCESS
-            : BundleResourceDeploymentHistory.Status.FAILURE;
+        BundleResourceDeploymentHistory.Status auditStatus =
+            BundleDeploymentStatus.SUCCESS.equals(status) ? BundleResourceDeploymentHistory.Status.SUCCESS
+                : BundleResourceDeploymentHistory.Status.FAILURE;
         auditDeployment(resourceDeployment, AUDIT_DEPLOYMENT_ENDED, resourceDeployment.getBundleDeployment().getName(),
             null, auditStatus, message, null);
     }
@@ -406,7 +602,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * If there is no known hash in the package version, this method returns normally.
      *
      * @param packageVersion contains the hash that is expected
-     * @param packageFile the local file whose hash is to be checked
+     * @param packageFile    the local file whose hash is to be checked
+     *
      * @throws Exception if the file does not match the hash or the file doesn't exist
      */
     private void verifyHash(PackageVersion packageVersion, File packageFile) throws Exception {
@@ -470,8 +667,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             }
         }
         if (bundleDestBaseDir == null) {
-            throw new IllegalArgumentException(
-                "The resource type doesn't support bundle destination base location named [" + destBaseDirName + "]");
+            return null;
         }
 
         // based on the type of destination base location, determine the root base directory
@@ -552,9 +748,10 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      * If the resource does not support that facet, an exception is thrown.
      * The resource must be in the STARTED (i.e. connected) state.
      *
-     * @param  resourceId identifies the resource that is to perform the bundle activities
-     * @param  timeout    if any facet method invocation thread has not completed after this many milliseconds, interrupt
-     *                    it; value must be positive
+     * @param resourceId identifies the resource that is to perform the bundle activities
+     * @param timeout    if any facet method invocation thread has not completed after this many milliseconds,
+     *                   interrupt
+     *                   it; value must be positive
      *
      * @return the resource's bundle facet interface
      *

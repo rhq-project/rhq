@@ -27,20 +27,17 @@ import org.rhq.core.util.updater.DeploymentProperties;
 
 /**
  * This class is general to all Bundle handling server side plugins.  It is returned by the SSP when parsing
- * a bundle's recipe and contains all of the information neded to create a bundle version.  
+ * a bundle's recipe and contains all of the information needed to create a bundle version.
  * 
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
 public class RecipeParseResults {
 
-    /** information about the bundle, including name, version and description */
     private DeploymentProperties bundleMetadata;
 
-    /** The configuration definition parsed out of, or expcitly provided by, the recipe */
     private ConfigurationDefinition configDef;
 
-    /** The set of bundle files that make up the bundle (version) as specified in the recipe commands */
     private Set<String> bundleFileNames;
 
     public RecipeParseResults(DeploymentProperties bundleMetadata, ConfigurationDefinition configDef,
@@ -50,6 +47,7 @@ public class RecipeParseResults {
         setBundleFiles(bundleFileNames);
     }
 
+    /** information about the bundle, including name, version and description */
     public DeploymentProperties getBundleMetadata() {
         return bundleMetadata;
     }
@@ -58,6 +56,7 @@ public class RecipeParseResults {
         this.bundleMetadata = bundleMetadata;
     }
 
+    /** The configuration definition parsed out of, or explicitly provided by, the recipe */
     public ConfigurationDefinition getConfigurationDefinition() {
         return configDef;
     }
@@ -67,6 +66,11 @@ public class RecipeParseResults {
         ConfigurationUtility.initializeDefaultTemplate(this.configDef);
     }
 
+    /**
+     * The set of bundle files that make up the bundle (version) as specified in the recipe commands
+     * As of RHQ 4.12.0 this can be null, which means that the bundle plugin is not able to deduce the
+     * set of required bundle files from the recipe alone.
+     */
     public Set<String> getBundleFileNames() {
         return bundleFileNames;
     }

@@ -106,6 +106,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     /**
      * EWS RPM Install path substrings used to identify EWS tomcat version
      */
+    public static final String EWS_TOMCAT_8 = "tomcat8";
     public static final String EWS_TOMCAT_7 = "tomcat7";
     public static final String EWS_TOMCAT_6 = "tomcat6";
     public static final String EWS_TOMCAT_5 = "tomcat5";
@@ -571,17 +572,40 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     public static boolean isEWSTomcat5(String catalinaHome) {
         return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_5));
     }
-
     public static boolean isEWSTomcat6(String catalinaHome) {
         return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_6));
+    }
+    public static boolean isEWSTomcat7(String catalinaHome) {
+        return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_7));
+    }
+    public static boolean isEWSTomcat8(String catalinaHome) {
+        return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_8));
     }
 
     public static boolean isRPMTomcat5(String catalinaHome) {
         return catalinaHome.endsWith(EWS_TOMCAT_5);
     }
-    
     public static boolean isRPMTomcat6(String catalinaHome) {
         return catalinaHome.endsWith(EWS_TOMCAT_6);
+    }
+    public static boolean isRPMTomcat7(String catalinaHome) {
+        return catalinaHome.endsWith(EWS_TOMCAT_7);
+    }
+    public static boolean isRPMTomcat8(String catalinaHome) {
+        return catalinaHome.endsWith(EWS_TOMCAT_8);
+    }
+    
+    public static boolean isTomcat5(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_5) || catalinaHome.contains("5.0"));
+    }
+    public static boolean isTomcat6(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_6) || catalinaHome.contains("6.0"));
+    }
+    public static boolean isTomcat7(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_7) || catalinaHome.contains("7.0"));
+    }
+    public static boolean isTomcat8(String catalinaHome) {
+        return (catalinaHome.endsWith(EWS_TOMCAT_8) || catalinaHome.contains("8.0"));
     }
     
     private void populateJMXConfiguration(Configuration configuration, String[] commandLine) {

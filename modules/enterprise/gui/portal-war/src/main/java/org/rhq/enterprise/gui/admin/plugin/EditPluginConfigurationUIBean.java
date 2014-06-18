@@ -30,7 +30,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 //@Scope(ScopeType.PAGE)
@@ -97,7 +97,7 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
 
     public String updatePlugin() {
         try {
-            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+            ServerPluginManagerLocal serverPlugins = LookupUtil.getServerPluginManager();
             Subject subject = EnterpriseFacesContextUtility.getSubject();
 
             ServerPlugin plugin = serverPlugins.updateServerPluginExceptContent(subject, getPlugin());

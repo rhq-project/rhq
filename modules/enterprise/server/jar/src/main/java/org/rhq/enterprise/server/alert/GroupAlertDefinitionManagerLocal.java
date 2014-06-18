@@ -37,10 +37,37 @@ public interface GroupAlertDefinitionManagerLocal {
     int createGroupAlertDefinitions(Subject subject, AlertDefinition alertDefinition, Integer resourceGroupId)
         throws InvalidAlertDefinitionException, AlertDefinitionCreationException;
 
+    /**
+     * INTERNAL-USE-ONLY No permission checking performed. Ids assumed to be group def ids.  Use
+     * {@link AlertDefinitionManagerRemote#removeAlertDefinitions(Subject, int[])} for full authz and
+     * handling of different levels of alert def types.
+     *
+     * @param subject
+     * @param groupAlertDefinitionIds
+     * @return
+     */
     int removeGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds);
 
+    /**
+     * INTERNAL-USE-ONLY No permission checking performed. Ids assumed to be group def ids.  Use
+     * {@link AlertDefinitionManagerRemote#enableAlertDefinitions(Subject, int[])} for full authz and
+     * handling of different levels of alert def types.
+     *
+     * @param subject
+     * @param groupAlertDefinitionIds
+     * @return
+     */
     int enableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds);
 
+    /**
+     * INTERNAL-USE-ONLY No permission checking performed. Ids assumed to be group def ids.  Use
+     * {@link AlertDefinitionManagerRemote#disableAlertDefinitions(Subject, int[])} for full authz and
+     * handling of different levels of alert def types.
+     *
+     * @param subject
+     * @param groupAlertDefinitionIds
+     * @return
+     */
     int disableGroupAlertDefinitions(Subject subject, Integer[] groupAlertDefinitionIds);
 
     /**

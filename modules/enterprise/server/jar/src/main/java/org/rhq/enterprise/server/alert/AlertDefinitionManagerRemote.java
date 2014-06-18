@@ -33,6 +33,11 @@ import org.rhq.core.domain.util.PageList;
 public interface AlertDefinitionManagerRemote {
 
     /**
+     * Get the alert definition with the given id. It may be a template, group or resource level alert definition.
+     * <p/>
+     * Requires VIEW permission for the group or resource on which the alert definition is defined. Templates are
+     * viewable by any user.
+     *
      * @param subject
      * @param alertDefinitionId
      * @return the alert definition or null
@@ -40,6 +45,13 @@ public interface AlertDefinitionManagerRemote {
     AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId);
 
     /**
+     * Get the alert definitions specified by the given criteria. The returned list may contain any combination
+     * of template, group or resource level alert definitions.
+     * definition.
+     * <p/>
+     * Requires VIEW permission for the group or resource on which the alert definition is defined. Templates are
+     * viewable by any user.
+     *
      * @param subject
      * @param criteria
      * @return not null
@@ -47,6 +59,12 @@ public interface AlertDefinitionManagerRemote {
     PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria);
 
     /**
+     * Enable the specified alert definitions. Currently enabled alert definitions are ignored, as are definitions for
+     * which the proper permission is not held.
+     * <p/>
+     * Requires MANAGE_ALERTS permission for the group or resource on which the alert definition is defined. REQUIRES
+     * MANAGE_SETTINGS for Templates.
+     *
      * @param subject
      * @param alertDefinitionIds
      * @return number of modified definitions
@@ -54,6 +72,12 @@ public interface AlertDefinitionManagerRemote {
     int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
     /**
+     * Disable the specified alert definitions. Currently disabled alert definitions are ignored, as are definitions for
+     * which the proper permission is not held.
+     * <p/>
+     * Requires MANAGE_ALERTS permission for the group or resource on which the alert definition is defined. REQUIRES
+     * MANAGE_SETTINGS for Templates.
+     *
      * @param subject
      * @param alertDefinitionIds
      * @return number of modified definitions
@@ -61,6 +85,12 @@ public interface AlertDefinitionManagerRemote {
     int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds);
 
     /**
+     * Remove the specified alert definitions. Currently deleted alert definitions are ignored, as are definitions for
+     * which the proper permission is not held.
+     * <p/>
+     * Requires MANAGE_ALERTS permission for the group or resource on which the alert definition is defined. REQUIRES
+     * MANAGE_SETTINGS for Templates.
+     *
      * @param subject
      * @param alertDefinitionIds
      * @return number of removed definitions

@@ -459,7 +459,7 @@ public class MasterServerPluginContainer {
      * @return names of "blacklisted" plugins that should not be started (i.e. loaded as a disabled plugin)
      */
     protected List<PluginKey> getDisabledPluginKeys() {
-        List<PluginKey> disabledPlugins = LookupUtil.getServerPlugins().getServerPluginKeysByEnabled(false);
+        List<PluginKey> disabledPlugins = LookupUtil.getServerPluginManager().getServerPluginKeysByEnabled(false);
         return disabledPlugins;
     }
 

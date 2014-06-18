@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  * @author John Mazzitelli
  */
 @Local
-public interface ServerPluginsLocal extends ServerPluginsRemote {
+public interface ServerPluginManagerLocal extends ServerPluginManagerRemote {
 
     /**
      * Returns a list of all the installed server plugins in the database

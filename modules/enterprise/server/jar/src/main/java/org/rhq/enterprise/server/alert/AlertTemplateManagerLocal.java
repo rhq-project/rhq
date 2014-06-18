@@ -41,10 +41,37 @@ public interface AlertTemplateManagerLocal {
     void updateAlertDefinitionsForResource(Subject user, Integer resourceId) throws AlertDefinitionCreationException,
         InvalidAlertDefinitionException;
 
+    /**
+     * This can update a lot of resource-level alert definitions.  It is recommended to operate on enable a single
+     * alert template in one call.
+     * <p>
+     * Requires MANAGE_SETTINGS
+     *
+     * @param user
+     * @param alertTemplateIds
+     */
     void removeAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
+    /**
+     * This can update a lot of resource-level alert definitions.  It is recommended to operate on a single
+     * alert template in one call.
+     * <p>
+     * Requires MANAGE_SETTINGS
+     *
+     * @param user
+     * @param alertTemplateIds
+     */
     void enableAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
+    /**
+     * This can update a lot of resource-level alert definitions.  It is recommended to operate on enable a single
+     * alert template in one call.
+     * <p>
+     * Requires MANAGE_SETTINGS
+     *
+     * @param user
+     * @param alertTemplateIds
+     */
     void disableAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
     AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertDefinition, boolean purgeInternals)

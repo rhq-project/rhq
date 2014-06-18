@@ -148,8 +148,8 @@ import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.plugin.ServerPluginsBean;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerBean;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
@@ -595,8 +595,8 @@ public final class LookupUtil {
         return lookupLocal(StatusManagerBean.class);
     }
 
-    public static ServerPluginsLocal getServerPlugins() {
-        return lookupLocal(ServerPluginsBean.class);
+    public static ServerPluginManagerLocal getServerPluginManager() {
+        return lookupLocal(ServerPluginManagerBean.class);
     }
 
     public static TagManagerLocal getTagManager() {

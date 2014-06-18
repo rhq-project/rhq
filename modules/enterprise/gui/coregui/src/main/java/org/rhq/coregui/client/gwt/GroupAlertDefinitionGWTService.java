@@ -37,10 +37,4 @@ public interface GroupAlertDefinitionGWTService extends RemoteService {
      */
     AlertDefinition updateGroupAlertDefinitions(AlertDefinition groupAlertDefinition, boolean purgeInternals)
         throws RuntimeException;
-
-    int enableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException;
-
-    int disableGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException;
-
-    int removeGroupAlertDefinitions(Integer[] groupAlertDefinitionIds) throws RuntimeException;
 }

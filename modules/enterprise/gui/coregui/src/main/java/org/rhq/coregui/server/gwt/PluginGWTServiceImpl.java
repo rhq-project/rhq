@@ -39,7 +39,7 @@ import org.rhq.core.domain.plugin.ServerPluginControlResults;
 import org.rhq.coregui.client.gwt.PluginGWTService;
 import org.rhq.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -54,7 +54,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     private final Log log = LogFactory.getLog(PluginGWTServiceImpl.class);
 
     private PluginManagerLocal pluginManager = LookupUtil.getPluginManager();
-    private ServerPluginsLocal serverPluginManager = LookupUtil.getServerPlugins();
+    private ServerPluginManagerLocal serverPluginManager = LookupUtil.getServerPluginManager();
     
 
     @Override
@@ -387,7 +387,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     public void updateServerPluginConfiguration(PluginKey serverPluginKey, Configuration config)
         throws RuntimeException {
         try {
-            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+            ServerPluginManagerLocal serverPlugins = LookupUtil.getServerPluginManager();
 
             // first load the full original plugin data
             ServerPlugin plugin = serverPlugins.getServerPlugin(serverPluginKey);
@@ -420,7 +420,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     public void updateServerPluginScheduledJobs(PluginKey serverPluginKey, Configuration jobsConfig)
         throws RuntimeException {
         try {
-            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+            ServerPluginManagerLocal serverPlugins = LookupUtil.getServerPluginManager();
 
             // first load the full original plugin data
             ServerPlugin plugin = serverPlugins.getServerPlugin(serverPluginKey);

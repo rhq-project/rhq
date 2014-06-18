@@ -81,12 +81,22 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " WHERE a.parentId = :alertTemplateId " //
         + "   AND a.deleted = false" //
         + "   AND a.readOnly = false"), //
+    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_DETACH_PROTECTED_BY_ALERT_TEMPLATE_ID, query = "" //
+        + "UPDATE AlertDefinition a " //
+        + "   SET a.parentId = 0, a.readOnly = false " //
+        + " WHERE a.parentId = :alertTemplateId " //
+        + "   AND a.readOnly = true"), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_GROUP_ALERT_DEFINITION_ID, query = "" //
         + "SELECT a.id " //
         + "  FROM AlertDefinition a " //
         + " WHERE a.groupAlertDefinition.id = :groupAlertDefinitionId " //
         + "   AND a.deleted = false" //
         + "   AND a.readOnly = false"),
+    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_DETACH_PROTECTED_BY_GROUP_ALERT_DEFINITION_ID, query = "" //
+        + "UPDATE AlertDefinition a " //
+        + "   SET a.groupAlertDefinition = null, a.readOnly = false " //
+        + " WHERE a.groupAlertDefinition.id = :groupAlertDefinitionId " //
+        + "   AND a.readOnly = true"), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_NEEDING_TEMPLATE_APPLICATION, query = "" //
         + "SELECT res.id " //
         + "  FROM Resource res " //
@@ -203,21 +213,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  FROM AlertDefinition ad " //
         + " WHERE ad.id = :alertDefinitionId " //
         + "   AND ad.resource IS NOT NULL "), //
-    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_DELETED, query = "" //
-        + "UPDATE AlertDefinition ad " //
-        + "   SET ad.deleted = TRUE " //
-        + " WHERE ad.id IN ( :groupAlertDefinitionIds ) " //
-        + "    OR ad.groupAlertDefinition.id IN ( :groupAlertDefinitionIds ) "), //
-    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_ENABLED, query = "" //
-        + "UPDATE AlertDefinition ad " //
-        + "   SET ad.enabled = TRUE " //
-        + " WHERE ad.id IN ( :groupAlertDefinitionIds ) " //
-        + "    OR ad.groupAlertDefinition.id IN ( :groupAlertDefinitionIds ) "), //
-    @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_DISABLED, query = "" //
-        + "UPDATE AlertDefinition ad " //
-        + "   SET ad.enabled = FALSE " //
-        + " WHERE ad.id IN ( :groupAlertDefinitionIds ) " //
-        + "    OR ad.groupAlertDefinition.id IN ( :groupAlertDefinitionIds ) "), //
     @NamedQuery(name = AlertDefinition.QUERY_UPDATE_SET_PARENTS_NULL, query = "" //
         + "UPDATE AlertDefinition ad " //
         + "   SET ad.groupAlertDefinition = NULL " //
@@ -258,11 +253,10 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_IS_GROUP_ALERT_DEFINITION = "AlertDefinition.isGroupAlertDefinition";
     public static final String QUERY_IS_RESOURCE_ALERT_DEFINITION = "AlertDefinition.isResourceAlertDefinition";
 
-    // group alert definitions
-    public static final String QUERY_UPDATE_SET_DELETED = "AlertDefinition.updateSetDeleted";
-    public static final String QUERY_UPDATE_SET_ENABLED = "AlertDefinition.updateSetEnabled";
-    public static final String QUERY_UPDATE_SET_DISABLED = "AlertDefinition.updateSetDisabled";
+    // group/template alert definitions
     public static final String QUERY_UPDATE_SET_PARENTS_NULL = "AlertDefinition.updateSetParentsNull";
+    public static final String QUERY_UPDATE_DETACH_PROTECTED_BY_GROUP_ALERT_DEFINITION_ID = "AlertDefinition.updateDetachProtectedGroupAlertDefs";
+    public static final String QUERY_UPDATE_DETACH_PROTECTED_BY_ALERT_TEMPLATE_ID = "AlertDefinition.updateDetachProtectedAlertTemplateDefs";
     public static final String QUERY_FIND_RESOURCE_IDS_NEEDING_GROUP_APPLICATION = "AlertDefinition.findResourceIdsNeedingGroupApplication";
 
     // for subsystem view
@@ -534,8 +528,7 @@ public class AlertDefinition implements Serializable {
                 alertDefinitions = new HashSet<AlertDefinition>(1);
                 alertDefinitions.add(this);
                 this.resource.setAlertDefinitions(alertDefinitions);
-            }
-            else {
+            } else {
                 alertDefinitions.add(this);
             }
         }

@@ -64,7 +64,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private Integer filterGroupAlertDefinitionGroupId; // requires overrides
     private Boolean filterReadOnly;
     private Boolean filterEnabled;
-    private Boolean filterDeleted = false; // find enabled definitions by default
+    private Boolean filterDeleted = false; // by default don't return deleted definitions
     private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
     private List<String> filterNotificationSenderNames;
 

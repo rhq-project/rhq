@@ -33,7 +33,7 @@ import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ControlDefinition;
@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.xmlschema.ControlDefinition;
 public class ServerPluginControlUIBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+    private final ServerPluginManagerLocal serverPluginsBean = LookupUtil.getServerPluginManager();
 
     //@In("plugin")
     private AbstractPlugin abstractPlugin;

@@ -33,7 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
@@ -478,7 +478,7 @@ public class ServerPluginManager {
      */
     protected ServerPlugin getPlugin(ServerPluginEnvironment pluginEnv) {
         // get the plugin data from the database
-        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        ServerPluginManagerLocal serverPluginsManager = LookupUtil.getServerPluginManager();
         ServerPlugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginKey());
         plugin = serverPluginsManager.getServerPluginRelationships(plugin);
         return plugin;

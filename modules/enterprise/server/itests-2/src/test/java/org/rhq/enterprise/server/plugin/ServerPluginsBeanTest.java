@@ -49,7 +49,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
     private static final String TEST_PLUGIN_NAME_PREFIX = "serverplugintest";
 
-    private ServerPluginsLocal serverPluginsBean;
+    private ServerPluginManagerLocal serverPluginsBean;
 
     @Override
     protected void beforeMethod() {
@@ -57,7 +57,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         pluginService = new TestGenericServerPluginService(getTempDir());
         prepareCustomServerPluginService(pluginService);
 
-        serverPluginsBean = LookupUtil.getServerPlugins();
+        serverPluginsBean = LookupUtil.getServerPluginManager();
     }
 
     @Override

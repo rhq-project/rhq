@@ -83,7 +83,11 @@ public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Dou
         alertConditionValue = providedValue;
 
         if (currentValue == null) {
-            return providedValue != null;
+            //the value is only when we received no values for the metric in question.
+            //hence this is called when the first measurement arrives at which point
+            //we should not alert - the alert condition merely transitions from an uninitialized state
+            //into normal mode of operation.
+            return false;
         } else if (currentValue.isNaN()) {
             return providedValue == null || !providedValue.isNaN();
         } else if (currentValue.isInfinite()) {

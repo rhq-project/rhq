@@ -132,21 +132,21 @@
   </difference>
 
   <difference>
-    <className>org/rhq/core/domain/resource/AlertDefinition</className>
+    <className>org/rhq/core/domain/alert/AlertDefinition</className>
     <differenceType>6011</differenceType><!-- removed constant field -->
     <field>QUERY_UPDATE_SET_DELETED</field>
     <justification>BZ1110434: Unused Query</justification>
   </difference>
 
   <difference>
-    <className>org/rhq/core/domain/resource/AlertDefinition</className>
+    <className>org/rhq/core/domain/alert/AlertDefinition</className>
     <differenceType>6011</differenceType><!-- removed constant field -->
     <field>QUERY_UPDATE_SET_DISABLED</field>
     <justification>BZ1110434: Unused Query</justification>
   </difference>
 
   <difference>
-    <className>org/rhq/core/domain/resource/AlertDefinition</className>
+    <className>org/rhq/core/domain/alert/AlertDefinition</className>
     <differenceType>6011</differenceType><!-- removed constant field -->
     <field>QUERY_UPDATE_SET_ENABLED</field>
     <justification>BZ1110434: Unused Query</justification>

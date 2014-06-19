@@ -238,4 +238,8 @@ public interface SubjectManagerLocal {
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
 
     Subject processSubjectForLdap(Subject subject, String subjectPassword) throws LoginException;
+    
+    Subject processSubjectForKeycloak(Subject subject, String subjectPassword) throws LoginException;
+    
+    void storeKeycloakToken(String username, String token);
 }

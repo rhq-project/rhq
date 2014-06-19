@@ -342,6 +342,8 @@ public class MenuBarView extends EnhancedVLayout {
                                                 + "<li class='divider'></li>"
                                                 + "<li><a href='#' onclick='keycloak.logout()' style='white-space: nowrap'>"+LOGOUT_VIEW_ID.getTitle()+"</a></li>" : 
                                                 ("<li><a href='#"+LOGOUT_VIEW_ID.getName()+"'>"+LOGOUT_VIEW_ID.getTitle()+"</a></li>"))
+              + "<li class='divider'></li>"
+              + "<li><a href='10.16.23.117:9990/console'>AS7 console (hc)</a></li>"
              +"</ul>"
            +"</li>"
          +"</ul>"

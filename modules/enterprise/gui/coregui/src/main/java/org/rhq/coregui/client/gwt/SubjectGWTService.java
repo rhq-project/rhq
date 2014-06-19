@@ -157,6 +157,24 @@ public interface SubjectGWTService extends RemoteService {
      * @param password the LDAP password
      */
     Subject processSubjectForLdap(Subject subjectToModify, String password) throws RuntimeException;
+    
+    
+    /**
+     * Checks the subject passed in for Keycloak processing, to optionally:
+     *   i) perform registration of new RHQ Keycloak user
+     *   ii) map keycloak roles-> RHQ roles
+     *
+     * @param subjectToModify the subject
+     * @param password the password
+     */
+    Subject processSubjectForKeycloak(Subject subjectToModify, String password) throws RuntimeException;
+    
+    
+    /**
+     * Checks the subject passed in for LDAP processing, to optionally:
+     *   i) perform registration of new RHQ LDAP user
+     *   ii) handles case insentive username matches.
+     *   iii) update ldap user->role ldap assignments
 
     /**
      * Checks that the user exists <b>and</b> has a {@link Principal} associated with it. This means that the user both
@@ -176,4 +194,7 @@ public interface SubjectGWTService extends RemoteService {
      * @return
      */
     Subject checkAuthentication(String username, String password) throws RuntimeException;
+    
+    
+    void storeKeycloakToken(String username, String token) throws RuntimeException;
 }

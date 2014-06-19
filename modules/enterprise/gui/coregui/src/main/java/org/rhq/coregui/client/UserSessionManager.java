@@ -259,47 +259,52 @@ public class UserSessionManager {
                                     new LoginView().showLoginDialog();
                                 return;
                             }
+                            
+                            AsyncCallback<Subject> processShubjectCallback = new AsyncCallback<Subject>() {
+                                public void onFailure(Throwable caught) {
+                                    // this means either: a) we mapped the username to a previously registered LDAP
+                                    // user but login via LDAP failed, or b) we were not able to map the username
+                                    // to any LDAP users, previously registered or not.
+                                    Log.debug("Failed to complete ldap processing for subject: "
+                                        + caught.getMessage());
+                                    //TODO: pass message to login dialog.
+                                    if (!LoginView.isKeycloakEnabled())
+                                        new LoginView().showLoginDialog();
+                                    return;
+                                }
 
-                            Log.trace("Proceeding with case insensitive login of ldap user '" + user + "'.");
-                            GWTServiceLookup.getSubjectService().processSubjectForLdap(subject, password,
-                                new AsyncCallback<Subject>() {
-                                    public void onFailure(Throwable caught) {
-                                        // this means either: a) we mapped the username to a previously registered LDAP
-                                        // user but login via LDAP failed, or b) we were not able to map the username
-                                        // to any LDAP users, previously registered or not.
-                                        Log.debug("Failed to complete ldap processing for subject: "
-                                            + caught.getMessage());
-                                        //TODO: pass message to login dialog.
-                                        if (!LoginView.isKeycloakEnabled())
-                                            new LoginView().showLoginDialog();
-                                        return;
+                                public void onSuccess(final Subject processedSubject) {
+                                    //Then found case insensitive and returned that logged in user
+                                    //Figure out of this is new user registration
+                                    boolean isNewUser = false;
+                                    if (processedSubject.getUserConfiguration() != null) {
+                                        isNewUser = Boolean.valueOf(processedSubject.getUserConfiguration()
+                                            .getSimpleValue("isNewUser", "false"));
                                     }
+                                    if (!isNewUser) {
+                                        // otherwise, we successfully logged in as an existing LDAP user case insensitively.
+                                        Log.trace("Logged in case insensitively as ldap user '"
+                                            + processedSubject.getName() + "'");
+                                        callback.onSuccess(processedSubject);
+                                    } else {// if account is still active assume new LDAP user registration.
+                                        Log.trace("Proceeding with registration for ldap user '" + user + "'.");
+                                        sessionState = State.IS_REGISTERING;
+                                        sessionSubject = processedSubject;
 
-                                    public void onSuccess(final Subject processedSubject) {
-                                        //Then found case insensitive and returned that logged in user
-                                        //Figure out of this is new user registration
-                                        boolean isNewUser = false;
-                                        if (processedSubject.getUserConfiguration() != null) {
-                                            isNewUser = Boolean.valueOf(processedSubject.getUserConfiguration()
-                                                .getSimpleValue("isNewUser", "false"));
-                                        }
-                                        if (!isNewUser) {
-                                            // otherwise, we successfully logged in as an existing LDAP user case insensitively.
-                                            Log.trace("Logged in case insensitively as ldap user '"
-                                                + processedSubject.getName() + "'");
-                                            callback.onSuccess(processedSubject);
-                                        } else {// if account is still active assume new LDAP user registration.
-                                            Log.trace("Proceeding with registration for ldap user '" + user + "'.");
-                                            sessionState = State.IS_REGISTERING;
-                                            sessionSubject = processedSubject;
-
-                                            new LoginView().showRegistrationDialog(subject.getName(),
-                                                String.valueOf(processedSubject.getSessionId()), password, callback);
-                                        }
-                                        return;
+                                        new LoginView().showRegistrationDialog(subject.getName(),
+                                            String.valueOf(processedSubject.getSessionId()), password, callback);
                                     }
+                                    return;
+                                }
+                            };
 
-                                });//end processSubjectForLdap call
+                            if (CoreGUI.isKeycloakEnabled()) {
+                                Log.trace("Proceeding with case insensitive login of Keycloak user '" + user + "'.");
+                                GWTServiceLookup.getSubjectService().processSubjectForKeycloak(subject, password, processShubjectCallback);
+                            } else {
+                                Log.trace("Proceeding with case insensitive login of ldap user '" + user + "'.");
+                                GWTServiceLookup.getSubjectService().processSubjectForLdap(subject, password, processShubjectCallback);
+                            }
                         } else {//else send through regular session check
                             SubjectCriteria criteria = new SubjectCriteria();
                             criteria.fetchConfiguration(true);
@@ -323,26 +328,33 @@ public class UserSessionManager {
                                         validSessionSubject.setSessionId(Integer.valueOf(sessionId));
 
                                         Log.trace("Completed session check for subject '" + validSessionSubject + "'.");
+                                        
+                                        AsyncCallback<Subject> processSubjectCallback = new AsyncCallback<Subject>() {
+                                            public void onFailure(Throwable caught) {
+                                                Log.warn("Errors occurred processing subject for LDAP."
+                                                    + caught.getMessage());
+                                                //TODO: pass informative message to Login UI.
+                                                callback.onSuccess(validSessionSubject);
+                                                return;
+                                            }
 
-                                        //initiate ldap check for ldap authz update(wrt roles) of subject with silent update
-                                        //as the subject.id > 0 then only group authorization updates will occur if ldap configured.
-                                        GWTServiceLookup.getSubjectService().processSubjectForLdap(validSessionSubject,
-                                            "", new AsyncCallback<Subject>() {
-                                                public void onFailure(Throwable caught) {
-                                                    Log.warn("Errors occurred processing subject for LDAP."
-                                                        + caught.getMessage());
-                                                    //TODO: pass informative message to Login UI.
-                                                    callback.onSuccess(validSessionSubject);
-                                                    return;
-                                                }
+                                            public void onSuccess(Subject result) {
+                                                Log.trace("Successfully processed subject '"
+                                                    + validSessionSubject.getName() + "' for LDAP.");
+                                                callback.onSuccess(validSessionSubject);
+                                                return;
+                                            }
+                                        };
 
-                                                public void onSuccess(Subject result) {
-                                                    Log.trace("Successfully processed subject '"
-                                                        + validSessionSubject.getName() + "' for LDAP.");
-                                                    callback.onSuccess(validSessionSubject);
-                                                    return;
-                                                }
-                                            });
+                                        if (CoreGUI.isKeycloakEnabled()) {
+                                            GWTServiceLookup.getSubjectService().processSubjectForKeycloak(
+                                                validSessionSubject, "", processSubjectCallback);
+                                        } else {
+                                            //initiate ldap check for ldap authz update(wrt roles) of subject with silent update
+                                            //as the subject.id > 0 then only group authorization updates will occur if ldap configured.
+                                            GWTServiceLookup.getSubjectService().processSubjectForLdap(
+                                                validSessionSubject, "", processSubjectCallback);
+                                        }
                                     }
                                 });
                         }//end of server side session check;

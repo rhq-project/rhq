@@ -133,6 +133,18 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
             throw getExceptionToThrowToClient(t);
         }
     }
+    
+    public Subject processSubjectForKeycloak(Subject subjectToModify, String password) throws RuntimeException {
+        //no permissions check as embedded in the SLSB call.
+        try {
+            Subject processedSubject = subjectManager.processSubjectForKeycloak(subjectToModify, password);
+            return SerialUtility.prepare(processedSubject, "SubjectManager.processSubjectForKeycloak");
+        } catch (LoginException le) {
+            throw new RuntimeException("LoginException: " + le.getMessage());
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
     public PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) throws RuntimeException {
         try {
@@ -155,6 +167,14 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
         try {
             return SerialUtility.prepare(subjectManager.checkAuthentication(username, password),
                 "SubjectManager.checkAuthentication");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    public void storeKeycloakToken(String username, String token) throws RuntimeException {
+        try {
+            subjectManager.storeKeycloakToken(username, token);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

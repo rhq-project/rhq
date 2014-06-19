@@ -52,6 +52,7 @@ import org.jboss.security.auth.callback.UsernamePasswordHandler;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.util.KeycloakUriBuilder;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -402,7 +403,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             // placeholder subject in here for now.
 
             boolean isLdapAuthenticationEnabled = isLdapAuthenticationEnabled();
-            if (isLdapAuthenticationEnabled) {
+            boolean isKeycloakAuthenticationEnabled = isKeycloakEnabled();
+            if (isLdapAuthenticationEnabled || isKeycloakAuthenticationEnabled) {
                 subject = new Subject();
                 subject.setId(0);
                 subject.setName(username);
@@ -1017,7 +1019,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     
     private boolean isKeycloakEnabled() {
         SystemSettings systemSettings = systemManager.getUnmaskedSystemSettings(true);
-        String value = systemSettings.get(SystemSetting.KEYCLOAK_URL.getInternalName());
+        String value = systemSettings.get(SystemSetting.KEYCLOAK_URL);
         return value != null && !value.trim().isEmpty();
     }
     
@@ -1124,6 +1126,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             sub.addRole(role);
             sub.addLdapRole(role);
         }
+    }
+    
+    @Override
+    public void storeKeycloakToken(String username, String token) {
+        KeycloakLoginUtils.putTokenString(username, token);
     }
 
 }

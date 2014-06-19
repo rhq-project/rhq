@@ -207,9 +207,9 @@ public class SessionAccessServlet extends HttpServlet {
                 keycloakUrl = settings.toMap().get(SystemSetting.KEYCLOAK_URL.name());
 
                 out.println("{");
-                out.println("  \"realm\": \"master\",");
+                out.println("  \"realm\": \"" + (keycloakUrl.contains(":7080") ? "rhq" : "master") + "\",");
                 out.println("  \"resource\": \"coregui\",");
-                out.println("  \"realm-public-key\": \"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrVrCuTtArbgaZzL1hvh0xtL5mc7o0NqPVnYXkLvgcwiC3BjLGw1tGEGoJaXDuSaRllobm53JBhjx33UNv+5z/UMG4kytBWxheNVKnL6GgqlNabMaFfPLPCF8kAgKnsi79NMo+n6KnSY8YeUmec/p2vjO2NjsSAVcWEQMVhJ31LwIDAQAB\",");
+                out.println("  \"realm-public-key\": \"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv5Mwgs/bNKMBuzFUWskpn3f8vqdT0eVpQUQwToCZLMAtr7MF0tOuV/9/3mrop50F73aH83U/wS6ZSiADOPiczhiKJiAZo8WLxX7O6mUGRDy5IjJiUYm0m2bZdnLOTvOapnk+ijFG/BlF8kCWGh5dhG2uqEhTi1KyrKWS0K88jC/UCSKNLvYhqQdEc7XAf9+DwoMIZDtChUhP83HX8jflZXKcO89x3I/GFucIZKPcjcaVdMvnDykkLlA6IKpFCWNjB/8s7KF5SSEk9BzDJu1dC/N13GJRb7EWL5mn47o2XxiJQtHbAN2p88TRND/j0KgDZU1sAccl1kIcH2djvUaJPwIDAQAB\",");
                 out.println("  \"auth-server-url\":" + (keycloakUrl == null ? "null" : "\"" + keycloakUrl + "\"") + ",");
                 out.println("  \"ssl-not-required\": true,");
                 out.println("  \"expose-token\": true,");

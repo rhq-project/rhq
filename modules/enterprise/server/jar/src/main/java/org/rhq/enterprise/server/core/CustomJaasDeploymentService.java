@@ -101,8 +101,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
             if (isLdapAuthenticationEnabled || isKeycloakAuthenticationEnabled) {
                 ModelControllerClient mcc = null;
-                boolean ldapModulesPresent = true;
-                boolean keycloakModulesPresent = true;
+                boolean ldapModulesPresent = isLdapAuthenticationEnabled;
+                boolean keycloakModulesPresent = isKeycloakAuthenticationEnabled;
                 try {
                     mcc = ManagementService.createClient();
                     final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
@@ -122,8 +122,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                         }
 
                     }
-                    updateJaasModules(systemConfig, isLdapAuthenticationEnabled && !keycloakModulesPresent,
-                        isKeycloakAuthenticationEnabled && !keycloakModulesPresent);
+                    if (isLdapAuthenticationEnabled != ldapModulesPresent
+                        || isKeycloakAuthenticationEnabled != keycloakModulesPresent) {
+                        updateJaasModules(systemConfig, isLdapAuthenticationEnabled, isKeycloakAuthenticationEnabled);
+                    }
                 } finally {
                     MCCHelper.safeClose(mcc);
                 }
@@ -171,16 +173,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, getJdbcOptions(systemConfig));
             loginModules.add(jdbcLoginModule);
 
-            // Optionally register two more login modules for LDAP support. The first ensures
-            // we don't have a DB principal (if we do then the JDBC login module is sufficient.
-            // The second performs the actual LDAP authorization.
-            String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
-            boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
-
-            value = systemConfig.getProperty(SystemSetting.KEYCLOAK_URL.getInternalName());
-            boolean isKeycloakAuthenticationEnabled = (value != null && !value.trim().isEmpty());
-
-            if (installLdapModule && isLdapAuthenticationEnabled) {
+            if (installLdapModule) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
                 LoginModuleRequest jdbcPrincipalCheckLoginModule = new LoginModuleRequest(
                     JDBCPrincipalCheckLoginModule.class.getName(),
@@ -210,15 +203,15 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, ldapModuleOptionProperties);
                 loginModules.add(ldapLoginModule);
             }
-            if (installKeycloakModule && isKeycloakAuthenticationEnabled) {
-                if (!installLdapModule && !isLdapAuthenticationEnabled && loginModules.size() == 1) {
-                    // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
-                    // add this only if not added in previous step
-                    LoginModuleRequest jdbcPrincipalCheckLoginModule = new LoginModuleRequest(
-                        JDBCPrincipalCheckLoginModule.class.getName(),
-                        AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, getJdbcOptions(systemConfig));
-                    loginModules.add(jdbcPrincipalCheckLoginModule);
-                }
+            if (installKeycloakModule) {
+//                if (!installLdapModule) {
+//                    // this is a "gatekeeper" that only allows us to go to Keycloak if there is no principal in the DB
+//                    // add this only if not added in previous step
+//                    LoginModuleRequest jdbcPrincipalCheckLoginModule = new LoginModuleRequest(
+//                        JDBCPrincipalCheckLoginModule.class.getName(),
+//                        AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, getJdbcOptions(systemConfig));
+//                    loginModules.add(jdbcPrincipalCheckLoginModule);
+//                }
 
                 // Enable the login module even if the LDAP properties have issues
                 LoginModuleRequest keycloakLoginModule = new LoginModuleRequest(KeycloakLoginModule.class.getName(),

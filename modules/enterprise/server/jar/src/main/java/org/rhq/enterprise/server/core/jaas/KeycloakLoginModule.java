@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.util.KeycloakUriBuilder;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -75,7 +76,7 @@ public class KeycloakLoginModule extends UsernamePasswordLoginModule {
      */
     @Override
     protected boolean validatePassword(String inputPassword, String expectedPassword) {
-        // Load our LDAP specific properties
+        // Load our Keycloak specific properties
         Properties env = getProperties();
         
         String keycloakServerUrl = env.getProperty(SystemSetting.KEYCLOAK_URL.getInternalName());
@@ -90,6 +91,14 @@ public class KeycloakLoginModule extends UsernamePasswordLoginModule {
 
         // Find the user that is calling us
         String username = getUsername();
+        
+        // todo: remove or use KeycloakLoginUtils.isLogged
+//        if ("something really unprobable".equals(inputPassword)) {
+//            if (KeycloakLoginUtils.getToken(username) != null
+//                || KeycloakLoginUtils.getTokenString(username) != null) {
+//                return true;
+//            }
+//        }
         
         try {
             AccessTokenResponse response = KeycloakLoginUtils.getToken(username, inputPassword, keycloakServerUrl);

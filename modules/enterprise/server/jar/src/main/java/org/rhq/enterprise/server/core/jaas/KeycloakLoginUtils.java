@@ -43,6 +43,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.services.util.HttpClientBuilder;
 import org.keycloak.util.JsonSerialization;
 import org.keycloak.util.KeycloakUriBuilder;
+import org.rhq.core.util.Base64;
 
 /**
  *
@@ -50,8 +51,10 @@ import org.keycloak.util.KeycloakUriBuilder;
  */
 public class KeycloakLoginUtils {
     private static final String REALM_NAME = "master";
+    private static final String REALM_RHQ_NAME = "rhq";
     public static final String APP_NAME = "coregui";
 //    private static final String APP_NAME = "rhq-login-module";
+    public static final String APP_PASSWORD = "password";
 
     private static class TypedList extends ArrayList<RoleRepresentation> {
     }
@@ -70,6 +73,7 @@ public class KeycloakLoginUtils {
 
     // todo: may be memory consuming - add some starvation (WeakHashMap?)
     private static Map<String, AccessTokenResponse> tokens = new HashMap<String, AccessTokenResponse>();
+    private static Map<String, String> tokenStrings = new HashMap<String, String>();
 
     public static AccessTokenResponse getToken(String username, String password, String keycloakServerUrl)
         throws IOException {
@@ -78,11 +82,16 @@ public class KeycloakLoginUtils {
 
         try {
             HttpPost post = new HttpPost(KeycloakUriBuilder.fromUri(keycloakServerUrl)
-                .path(ServiceUrlConstants.TOKEN_SERVICE_DIRECT_GRANT_PATH).build(REALM_NAME));
+                .path(ServiceUrlConstants.TOKEN_SERVICE_DIRECT_GRANT_PATH).build(getRealm(keycloakServerUrl)));
+            
+            String encoded = Base64.encode((APP_NAME + ":" + APP_PASSWORD).getBytes());
+            post.setHeader("Authorization", "Basic " + encoded);
+            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            
             List<NameValuePair> formparams = new ArrayList<NameValuePair>();
             formparams.add(new BasicNameValuePair("username", username));
             formparams.add(new BasicNameValuePair("password", password));
-            formparams.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, "rhq-login-module"));
+//            formparams.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, APP_NAME));
             UrlEncodedFormEntity form = new UrlEncodedFormEntity(formparams, "UTF-8");
             post.setEntity(form);
 
@@ -131,7 +140,7 @@ public class KeycloakLoginUtils {
         try {
             HttpGet get = new HttpGet(KeycloakUriBuilder.fromUri(keycloakServerUrl)
                 .path(ServiceUrlConstants.TOKEN_SERVICE_LOGOUT_PATH).queryParam("session_state", res.getSessionState())
-                .build(REALM_NAME));
+                .build(getRealm(keycloakServerUrl)));
             HttpResponse response = client.execute(get);
             HttpEntity entity = response.getEntity();
             if (entity == null) {
@@ -154,7 +163,7 @@ public class KeycloakLoginUtils {
 
         HttpClient client = new HttpClientBuilder().disableTrustManager().build();
         try {
-            HttpGet get = new HttpGet(keycloakServerUrl + "/auth/admin/realms/" + REALM_NAME + "/roles");
+            HttpGet get = new HttpGet(keycloakServerUrl + "/auth/admin/realms/" + getRealm(keycloakServerUrl) + "/roles");
             get.addHeader("Authorization", "Bearer " + res.getToken());
             try {
                 HttpResponse response = client.execute(get);
@@ -181,7 +190,7 @@ public class KeycloakLoginUtils {
 
         HttpClient client = new HttpClientBuilder().disableTrustManager().build();
         try {
-            HttpGet get = new HttpGet(keycloakServerUrl + "/auth/admin/realms/" + REALM_NAME + "/users/" + username
+            HttpGet get = new HttpGet(keycloakServerUrl + "/auth/admin/realms/" + getRealm(keycloakServerUrl) + "/users/" + username
                 + "/role-mappings/applications/" + APP_NAME + "/composite");
             get.addHeader("Authorization", "Bearer " + res.getToken());
             try {
@@ -203,11 +212,49 @@ public class KeycloakLoginUtils {
             client.getConnectionManager().shutdown();
         }
     }
+    
+    public static boolean isLoggedIn(String keycloakServerUrl, String username) {
+        if (username == null || username.trim().isEmpty() || getTokenString(username) == null) {
+            return false;
+        }
+        HttpClient client = new HttpClientBuilder().disableTrustManager().build();
+        try {
+            HttpGet get = new HttpGet(keycloakServerUrl + "/auth/realms/" + getRealm(keycloakServerUrl));
+            get.addHeader("Authorization", "Bearer " + getTokenString(username));
+            try {
+                HttpResponse response = client.execute(get);
+//                HttpEntity entity = response.getEntity();
+//                InputStream is = entity.getContent();
+                try {
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    return statusCode>= 200 && statusCode < 300;
+                } finally {
+//                    is.close();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } finally {
+            client.getConnectionManager().shutdown();
+        }
+        
+    }
         
     public static AccessTokenResponse getToken(String username) {
         return tokens.get(username);
     }
     
+    public static String getTokenString(String username) {
+        return tokenStrings.get(username);
+    }
+    
+    public static void putTokenString(String username, String tokenString) {
+        tokenStrings.put(username, tokenString);
+    }
+    
+    private static String getRealm(String keycloakServerUrl) {
+        return keycloakServerUrl.contains(":7080") ? REALM_RHQ_NAME : REALM_NAME;
+    }
     
     public static IDToken extractIdToken(String idToken) {
         if (idToken == null) return null;

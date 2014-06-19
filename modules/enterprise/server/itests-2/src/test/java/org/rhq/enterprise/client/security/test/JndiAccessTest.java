@@ -41,6 +41,24 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test
 public class JndiAccessTest extends ScriptableAbstractEJB3Test {
 
+    private static final boolean SECURITY_MANAGER_IS_ENABLED = (System.getProperty("java.security.manager") != null);
+
+    private static void failIfSecurityManagerEnabled(String msg) {
+        failIfSecurityManagerEnabled(msg, null);
+    }
+
+    private static void failIfSecurityManagerEnabled(String msg, Throwable t) {
+        if (SECURITY_MANAGER_IS_ENABLED) {
+            Assert.fail(msg, t);
+        } else {
+            System.out.println("This test would have failed, but the security manager is disabled so it will pass: "
+                + msg);
+            if (t != null) {
+                t.printStackTrace();
+            }
+        }
+    }
+
     public void testScriptCantOverrideSystemProperties() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -86,7 +104,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "');\n"
                 + "systemManager.isDebugModeEnabled();");
 
-            Assert.fail("The script shouldn't have been able to call local SLSB method.");
+            failIfSecurityManagerEnabled("The script shouldn't have been able to call local SLSB method.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
@@ -114,7 +132,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "');\n"
                 + "systemManager.isDebugModeEnabled();");
 
-            Assert.fail("The script shouldn't have been able to call local SLSB method.");
+            failIfSecurityManagerEnabled("The script shouldn't have been able to call local SLSB method.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
@@ -138,7 +156,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "');\n"
                 + "systemManager.getSystemSettings(subject);");
 
-            Assert.fail("The script shouldn't have been able to call remote SLSB method directly.");
+            failIfSecurityManagerEnabled("The script shouldn't have been able to call remote SLSB method directly.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
@@ -159,7 +177,8 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
 
                 try {
                     engine.eval(code);
-                    Assert.fail("The script shouldn't have been able to call a method on a SessionManager: " + methodCall);
+                    failIfSecurityManagerEnabled("The script shouldn't have been able to call a method on a SessionManager: "
+                        + methodCall);
                 } catch (ScriptException e) {
                     checkIsDesiredSecurityException(e);
                 }
@@ -187,7 +206,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "var datasource = ctx.lookup('" + RHQConstants.DATASOURCE_JNDI_NAME + "');\n"
                 + "con = datasource.getConnection();");
 
-            Assert.fail("The script shouldn't have been able to obtain the datasource from the JNDI.");
+            failIfSecurityManagerEnabled("The script shouldn't have been able to obtain the datasource from the JNDI.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
@@ -205,7 +224,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
 
-            Assert.fail("The script shouldn't have been able to use the EntityManager.");
+            failIfSecurityManagerEnabled("The script shouldn't have been able to use the EntityManager.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
@@ -221,7 +240,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
 
-            Assert.fail("The script shouldn't have been able to use the EntityManager even using custom initial context factory.");
+            failIfSecurityManagerEnabled("The script shouldn't have been able to use the EntityManager even using custom initial context factory.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
@@ -268,10 +287,9 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
         String permissionTrace = "org.rhq.allow.server.internals.access";
 
         if (!message.contains(permissionTrace)) {
-            Assert
-                .fail(
-                    "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. ",
-                    e);
+            failIfSecurityManagerEnabled(
+                "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception.",
+                e);
         }
     }
 

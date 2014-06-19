@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -57,6 +59,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
         implements MeasurementFacet, OperationFacet {
+
+    private final Log log = LogFactory.getLog(StandaloneASComponent.class);
 
     private static final String SERVER_CONFIG_TRAIT = "config-file";
     private static final String JAVA_OPTS_ADDITIONAL_PROP = "javaOptsAdditional";

@@ -83,13 +83,19 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
             Operation getStatus = new ReadAttribute(theAddress, "status");
             Result result;
             try {
-                result = getASConnection().execute(getStatus);
+                result = getASConnection().execute(getStatus, AVAIL_OP_TIMEOUT_SECONDS);
             } catch (Exception e) {
                 getLog().warn(e.getMessage());
                 return AvailabilityType.DOWN;
             }
-            if (!result.isSuccess())
+
+            if (!result.isSuccess()) {
+                if (result.isTimedout()) {
+                    return AvailabilityType.UNKNOWN;
+                }
+
                 return AvailabilityType.DOWN;
+            }
 
             String msg = result.getResult().toString();
             if (msg.contains("STARTED"))

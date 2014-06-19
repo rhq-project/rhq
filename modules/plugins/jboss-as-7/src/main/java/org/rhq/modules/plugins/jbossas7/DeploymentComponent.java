@@ -85,9 +85,14 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
     @Override
     public AvailabilityType getAvailability() {
-        Operation op = new ReadAttribute(getAddress(), "enabled");
-        Result res = getASConnection().execute(op);
+        Operation op = new ReadResource(getAddress());
+        Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
+
         if (!res.isSuccess()) {
+            if (res.isTimedout()) {
+                return AvailabilityType.UNKNOWN;
+            }
+
             if (res.getFailureDescription() != null && res.getFailureDescription().toLowerCase().contains("not found")) {
                 getLog().debug("Reporting MISSING resource: " + getPath());
                 return AvailabilityType.MISSING;
@@ -96,8 +101,15 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             return AvailabilityType.DOWN;
         }
 
-        if (res.getResult() == null || !(Boolean) (res.getResult()))
+        if (res.getResult() == null) {
             return AvailabilityType.DOWN;
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> results = (Map<String, Object>) res.getResult();
+        if (results.get("enabled") == null || !(Boolean) results.get("enabled")) {
+            return AvailabilityType.DOWN;
+        }
 
         return AvailabilityType.UP;
     }

@@ -34,7 +34,6 @@ import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
-import org.rhq.enterprise.communications.command.client.PersistentFifo;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
@@ -1191,9 +1190,15 @@ public class AgentConfiguration {
         long config_discovery_initial_delay = m_preferences.getLong(
             AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY,
             AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY);
+        long config_discovery_interval = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INTERVAL,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INTERVAL);
         long config_discovery_period = m_preferences.getLong(
             AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD,
             AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD);
+        long config_discovery_limit = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_LIMIT,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_LIMIT);
 
         // get event sender/report settings
         long event_sender_initial_delay = m_preferences.getLong(
@@ -1275,7 +1280,9 @@ public class AgentConfiguration {
         config.setContentDiscoveryInitialDelay(con_initial_delay);
         config.setContentDiscoveryPeriod(con_period);
         config.setConfigurationDiscoveryInitialDelay(config_discovery_initial_delay);
+        config.setConfigurationDiscoveryInterval(config_discovery_interval);
         config.setConfigurationDiscoveryPeriod(config_discovery_period);
+        config.setConfigurationDiscoveryLimit(config_discovery_limit);
         config.setEventSenderInitialDelay(event_sender_initial_delay);
         config.setEventSenderPeriod(event_sender_period);
         config.setEventReportMaxPerSource(event_report_max_per_src);

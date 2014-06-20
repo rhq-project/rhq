@@ -763,16 +763,47 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.plugins.configuration-discovery.interval-secs
+
+               Defines how often configuration discoveries are run. The value
+               is specified in seconds. If this value is 0 or less,
+               configuration discovery will be disabled. Configuration
+               discovery is performed to detect changes in a managed resource's
+               configuration settings.  Note that not every resource is
+               necessarily checked on each run.  See the other
+               configuration-discovery settings for more information. 
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.configuration-discovery.interval-secs" value="300"/>
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.agent.plugins.configuration-discovery.period-secs
 
-               Defines how often configuration discoveries are run. The value is
-               specified in seconds. If this value is 0 or less, configuration
-               discovery will be disabled. Configuration discovery is
-               performed to detect changes in a managed resource's
+               Defines the period of time following a configuration check
+               before the same resource is eligible for another configuration
+               check. The value is specified in seconds. If this value is 0 or
+               less, configuration discovery will be disabled. Configuration
+               discovery is performed to detect changes in a managed resource's
                configuration settings.
                -->
                <!--
                <entry key="rhq.agent.plugins.configuration-discovery.period-secs" value="3600"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.configuration-discovery.limit-secs
+
+               Defines the amount of time after which a configuration check
+               will stop and defer remaining work to the next discovery run.
+               The value is specified in seconds. This is not a timeout, the
+               check may exceed this time to finish work in progress but will
+               likely not exceed it by very much.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.configuration-discovery.period-secs" value="15"/>
                -->
 
                <!--

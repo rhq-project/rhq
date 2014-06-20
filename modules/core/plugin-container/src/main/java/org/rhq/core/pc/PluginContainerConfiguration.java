@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.pc.plugin.PluginFinder;
-import org.rhq.core.pc.plugin.RootPluginClassLoader;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 
 /**
@@ -52,9 +51,11 @@ public class PluginContainerConfiguration {
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
     private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
     private static final String START_MANAGEMENT_BEAN_PROP = PROP_PREFIX + "start-management-bean";
-    private static final String WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION = PROP_PREFIX + "wait-for-shutdown-service-termination";
+    private static final String WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION = PROP_PREFIX
+        + "wait-for-shutdown-service-termination";
     public static final boolean WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION_DEFAULT = true;
-    private static final String SHUTDOWN_SERVICE_TERMINATION_TIMEOUT = PROP_PREFIX + "shutdown-service-termination-timeout";
+    private static final String SHUTDOWN_SERVICE_TERMINATION_TIMEOUT = PROP_PREFIX
+        + "shutdown-service-termination-timeout";
     public static final long SHUTDOWN_SERVICE_TERMINATION_TIMEOUT_DEFAULT = 5 * 60L; // in seconds
 
     // The following configuration settings have hardcoded default values. These defaults are publicly
@@ -116,11 +117,16 @@ public class PluginContainerConfiguration {
 
     // Configuration -------
 
+    public static final long CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT = 300L; // in seconds
+    public static final long CONFIGURATION_DISCOVERY_INTERVAL_DEFAULT = 300L; // in seconds
+    public static final long CONFIGURATION_DISCOVERY_PERIOD_DEFAULT = 3600L; // in seconds
+    public static final long CONFIGURATION_DISCOVERY_LIMIT_DEFAULT = 15L; // in seconds
     private static final String CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX
         + "configuration-discovery-initial-delay";
-    public static final long CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT = 300L; // in seconds
+    private static final String CONFIGURATION_DISCOVERY_INTERVAL_PROP = PROP_PREFIX
+        + "configuration-discovery-interval";
     private static final String CONFIGURATION_DISCOVERY_PERIOD_PROP = PROP_PREFIX + "configuration-discovery-period";
-    public static final long CONFIGURATION_DISCOVERY_PERIOD_DEFAULT = 3600L; // in seconds
+    private static final String CONFIGURATION_DISCOVERY_LIMIT_PROP = PROP_PREFIX + "configuration-discovery-limit";
 
     // Operation ----------
 
@@ -382,7 +388,7 @@ public class PluginContainerConfiguration {
         if (val == null) {
             return true;
         } else {
-            return ((Boolean)val).booleanValue();
+            return ((Boolean) val).booleanValue();
         }
     }
 
@@ -612,7 +618,6 @@ public class PluginContainerConfiguration {
         return (delay == null) ? CHILD_RESOURCE_DISCOVERY_DELAY_DEFAULT : delay.longValue();
     }
 
-
     /**
      * Sets the length of time, in seconds, before the discovery of child resources on newly
      * committed resources begins.
@@ -775,6 +780,15 @@ public class PluginContainerConfiguration {
         configuration.put(CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP, delay);
     }
 
+    public long getConfigurationDiscoveryInterval() {
+        Long interval = (Long) configuration.get(CONFIGURATION_DISCOVERY_INTERVAL_PROP);
+        return (interval == null) ? CONFIGURATION_DISCOVERY_INTERVAL_DEFAULT : interval.longValue();
+    }
+
+    public void setConfigurationDiscoveryInterval(long interval) {
+        configuration.put(CONFIGURATION_DISCOVERY_INTERVAL_PROP, interval);
+    }
+
     public long getConfigurationDiscoveryPeriod() {
         Long period = (Long) configuration.get(CONFIGURATION_DISCOVERY_PERIOD_PROP);
         return (period == null) ? CONFIGURATION_DISCOVERY_PERIOD_DEFAULT : period.longValue();
@@ -782,6 +796,15 @@ public class PluginContainerConfiguration {
 
     public void setConfigurationDiscoveryPeriod(long period) {
         configuration.put(CONFIGURATION_DISCOVERY_PERIOD_PROP, period);
+    }
+
+    public long getConfigurationDiscoveryLimit() {
+        Long limit = (Long) configuration.get(CONFIGURATION_DISCOVERY_LIMIT_PROP);
+        return (limit == null) ? CONFIGURATION_DISCOVERY_LIMIT_DEFAULT : limit.longValue();
+    }
+
+    public void setConfigurationDiscoveryLimit(long limit) {
+        configuration.put(CONFIGURATION_DISCOVERY_LIMIT_PROP, limit);
     }
 
     /**

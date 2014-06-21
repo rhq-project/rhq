@@ -1,0 +1,2847 @@
+/*============================================================
+    "CoreGUI" theme programmatic settings
+============================================================*/
+/*RHQ Overrides*/
+
+body {
+
+    line-height: 1.66667;
+}
+.graphDateTimeRangeLabel {
+  font-size:12px;
+}
+
+.subtitle { font-weight:bolder; }
+.subtitle::before
+{
+content:"( ";
+}
+
+.subtitle::after
+{
+content:" )";
+}
+
+.portalLayout {
+  margin:5px 0;
+}
+.resourceSummary .HeaderLabel,
+.resourceSummary .subtitle {
+  margin-bottom:5px;
+}
+
+.HeaderLabel, .SectionHeader {
+    font-size: 24px;
+    color: rgb(51,51,51);
+    font-weight: 300;
+}
+
+a, a:link, a:visited {
+    text-decoration: none !important;
+}
+
+.overflowVisible {
+  overflow: visible !important;
+}
+
+.tableFilter {
+    background-color: #f6f6f6;
+  border-width: 1px 1px 0 1px;
+  border-style:solid;
+  border-color: #d1d1d1;
+  border-bottom: none;
+}
+
+.splitbar table {
+  position:relative;
+  left:-2px;
+}
+
+.spinner {
+    animation: 0.6s linear 0s normal none infinite rotation;
+    border-color: rgba(0, 0, 0, 0.75) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25);
+    border-radius: 100%;
+    border-style: solid;
+    border-width: 0px;
+    margin: 0;
+    visibility:hidden;
+  /*  position: relative;*/
+}
+
+.subtabbar * {
+    font-size:12px;
+}
+
+.subtabbar {
+  border-bottom:1px solid rgb(201,201,201);
+  padding:5px 0 0 21px;
+  margin-bottom:5px;
+}
+
+
+/* PatternFly Overrides */
+/* login page */
+#patternFlyLogin h2 {
+  font-size: 2.7em;
+  font-weight: 100;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+}
+
+#patternFlyLogin .details p {
+  padding-bottom: 6em;
+}
+
+#patternFlyLogin .rhqLabel {
+  bottom: 45%;
+  position: absolute;
+}
+
+#patternFlyLogin .caps {
+  background-image: url(img/caps.png);
+  background-position: right center;
+  background-repeat: no-repeat;
+}
+
+#patternFlyLogin #errorFeedback {
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  padding-bottom: 1em;
+  background-image: url(img/feedback-error-arrow-down.png);
+  position: absolute;
+  transition: opacity 0.33s ease-in-out;
+  -moz-transition: opacity 0.33s ease-in-out;
+  -webkit-transition: opacity 0.33s ease-in-out;
+  left: 35.7em;
+  top: -7.2em;
+  min-width: 35em;
+}
+
+#patternFlyLogin .showError {
+  opacity: 1;
+}
+
+#patternFlyLogin .hideError {
+  opacity: 0;
+}
+
+#patternFlyLogin #errorFeedback p {
+  background-image: url(img/feedback-error-sign.png);
+  padding: 0.90909090909091em 3.63636363636364em;
+  border-color: #b91415;
+  border-style: solid;
+  border-width: 1px 1px 0px 1px;
+  background-repeat: no-repeat;
+  background-position: 1.27272727272727em center;
+  font-size: 1.1em;
+  line-height: 1.4em;
+  color: #4d5258;
+  background-color: #f8e7e7;
+  margin-bottom: 0;
+}
+
+/* navbar customizations */
+.navbar-pf {
+  border-top: 3px solid #4e627a;
+  background-image: url(images/top-bar.png);
+}
+
+.navbar-logo {
+  height: 25px;
+}
+
+.navbar-pf .navbar-utility > li > a {
+  border-left: 1px solid #575f65;
+}
+
+.navbar-pf .navbar-header {
+  border-bottom: none !important;
+}
+.navbar-pf .navbar-primary {
+  background-image: -webkit-linear-gradient(top, #24323a 0%, #222e36 100%);
+  background-image: linear-gradient(to bottom, #24323a 0%, #222e36 100%);
+  border-bottom: 1px solid #a7abb4;
+  border-top: 1px solid #1b242a;
+}
+
+.navbar-pf .navbar-nav > .active > a,
+.navbar-pf .navbar-nav > .active > a:hover,
+.navbar-pf .navbar-nav > .active > a:focus {
+  border-top: 1px solid #575f65 !important;
+  background-image: none !important;
+  background-color: rgba(255,255,255,.1) !important;
+  border-bottom-color: rgba(255,255,255,.1);
+  color: #f6f6f6 !important;
+}
+
+.navbar-pf .navbar-primary > li {
+  border-right: 1px solid #0d0e0f;
+  border-top: 1px solid #1b242a;
+}
+
+.navbar-pf .navbar-utility > li > a {
+  color: #f6f6f6 !important;
+  line-height: 1;
+  text-shadow: none;
+  margin: 0px 0 0;
+  border-top: none;
+  cursor: pointer;
+}
+.navbar-pf .navbar-primary > li > a {
+  color: #f6f6f6 !important;
+  border-top: 1px solid #24323a;
+}
+
+
+.navbar-pf .navbar-nav > li > a:hover,
+.navbar-pf .navbar-nav > li > a:focus {
+  background-color: rgba(255,255,255,.1) !important;
+  background-image: none;
+  border-left-color: #575f65;
+  border-top-color: #575f65;
+  border-bottom-color: #575f65;
+  color: #f6f6f6 !important;
+  text-decoration: none !important;
+}
+
+.navbar-pf .navbar-nav > .open > a,
+.navbar-pf .navbar-nav > .open > a:hover,
+.navbar-pf .navbar-nav > .open > a:focus {
+  background-image: none !important;
+  background-color: rgba(255,255,255,.1) !important;
+}
+
+@media (max-width: 767px) {
+  .navbar-pf .navbar-nav .active .navbar-persistent,
+  .navbar-pf .navbar-nav .active .dropdown-menu,
+  .navbar-pf .navbar-nav .open .dropdown-menu {
+    background-image: linear-gradient(to bottom, #ffffff 0%, #F1F2F3 100%) !important;
+  }
+}
+.navbar-pf .navbar-brand {
+padding: 0;
+}
+
+/* navbar special buttons (main menuitem link + caret button for dropdown */
+
+.navbar-btn-group {
+  margin-top: 14px;
+  margin-bottom: 15px;
+}
+
+.navbar-btn-item {
+  padding: 10px 20px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  line-height: 1;
+  text-shadow: none;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #24323a;
+  color: #f6f6f6 !important;
+}
+.active a.navbar-btn-item {
+  background-image: none !important;
+  background-color: rgba(255,255,255,.1) !important;
+  border-top: 1px solid #575f65 !important;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  color: #f6f6f6 !important;
+}
+
+.open a.navbar-btn-item, .open a.navbar-btn-item:hover {
+  background-image: none !important;
+  background-color: rgba(255,255,255,.1) !important;
+  border-bottom-color: rgba(255,255,255,.1) !important;
+  border-top: 1px solid #575f65 !important;
+  color: #f6f6f6 !important;
+}
+
+.open a.nbi-link {
+  border-right: 1px solid #575f65 !important;
+}
+
+.open a.nbi-caret, .open a.nbi-caret:hover {
+  background-color: rgba(255,255,255,.15) !important;
+}
+
+
+a.navbar-btn-item:hover, a.navbar-btn-item:focus {
+  background: initial !important;
+  background-color: rgba(255,255,255,.15) !important;
+  border-bottom-color: #F1F2F3;
+  border-top-color: #575f65;
+  color: #f6f6f6 !important;
+  text-decoration: none !important;
+}
+
+.navbar-btn-item-hover a.navbar-btn-item {
+  border-top: 1px solid #575f65 !important;
+  background-color: rgba(255,255,255,.1);
+}
+.navbar-btn-item-hover a.nbi-link {
+  border-right: 1px solid #575f65 !important;
+}
+
+.navbar-btn-group > a {
+  color: #f6f6f6 !important;
+}
+
+.navbar-btn-item:visited {
+  color: #f6f6f6 !important;
+  text-decoration: none !important;
+}
+
+a.nbi-link {
+  padding-right: 7px;
+  border-right: 1px solid transparent !important;
+}
+
+.nbi-link:hover {
+}
+
+.nbi-caret {
+  padding-right: 7px;
+  padding-left: 3px;
+  cursor: pointer;
+}
+
+
+
+/*============================================================
+General
+============================================================*/
+
+body {
+    -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
+
+/*a:link {
+    color:#0060BF;
+    text-decoration:underline;
+}*/
+
+.pageBackground {
+    font-size:11px;
+    color:#333333;
+    background:#FAFAFA;
+}
+
+/* default text */
+.normal {}
+
+.defaultBorder {
+    border:1px solid #A7ABB4;
+}
+
+/* drag outline */
+.dragOutline {
+    border:1px solid #0060BF;
+}
+
+/* drop indicator */
+.dropBorder {
+    background-color:#808080;
+}
+
+
+/* hover canvas  */
+.canvasHover,
+.gridHover,
+.formHover {
+    font-size:11px;
+    color:#eee;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    background-color:#595959;
+    border:1px solid #808080;
+    border: 2px solid #999;
+    padding:5px;
+    opacity: 0.9;
+}
+
+/* group label */
+.groupLabel {
+     font-size:11px;
+    color:#333333;
+    padding-left:5px; padding-right:5px;
+}
+
+/*============================================================
+Button (also used as MenuButton base style)
+============================================================*/
+
+.button,
+.buttonOver,
+.buttonDown,
+.buttonDisabled,
+.buttonSelected,
+.buttonSelectedDown,
+.buttonSelectedOver,
+.buttonSelectedDisabled
+{
+background-color: #eeeeee;
+background-image: -webkit-linear-gradient(top, #fafafa 0%, #ededed 100%);
+background-image: linear-gradient(to bottom, #fafafa 0%, #ededed 100%);
+background-repeat: repeat-x;
+filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', endColorstr='#ffededed', GradientType=0);
+border-color: #b7b7b7;
+color: #4d5258;
+
+/*box-shadow:0 2px 3px rgba(0, 0, 0, 0.1);*/
+  margin-bottom: 0;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid #b7b7b7;
+
+  white-space: nowrap;
+  padding: 2px 6px;
+  font-size: 12px;
+  border-radius: 1px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.buttonOver {
+  color: #4d5258;
+  background-color: #dadada;
+  border-color: #989898;
+  /*
+    border-color: #534d4e;
+    background: #f3f3f3;
+    background-image: -moz-linear-gradient(top, #ffffff, #ebebeb);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#ebebeb));
+    outline: 0;
+    box-shadow: 0 0 3px #999;*/
+
+}
+
+.buttonDown {
+    background-color:#e7e7e7;
+    border-color: #534d4e #716e6e #716e6e #534d4e;
+    background-image: -moz-linear-gradient(top, #cccccc, #ffffff);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#cccccc), to(#ffffff));
+}
+
+.buttonDisabled {
+    color: #999999;
+    border-color: #C3C3C3;
+}
+
+.buttonSelected,
+.buttonSelectedDown,
+.buttonSelectedOver,
+.buttonSelectedDisabled {
+    border-color: #999;
+    background: #ddd;
+    background-image: -moz-linear-gradient(top, #cccccc, #ffffff);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#cccccc), to(#ffffff));
+}
+
+.buttonSelectedOver {
+    border-color: #548ACA;
+    background: #ddd;
+    background-image: -moz-linear-gradient(top, #cccccc, #ffffff);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#cccccc), to(#ffffff));
+}
+
+.buttonSelectedDisabled {
+    font-size:11px; color:#666666;
+}
+
+.headerButton,
+.headerButtonOver,
+.headerButtonDown,
+.headerButtonDisabled,
+.headerButtonSelected,
+.headerButtonSelectedDown,
+.headerButtonSelectedOver,
+.headerButtonSelectedDisabled {
+     font-size:12px;
+     background-color: #f6f6f6;
+    padding:2px 2px 2px 5px;
+    font-weight:600;
+    border-bottom: 1px solid rgb(209, 209, 209);
+    border-right: 1px solid rgb(209, 209, 209);
+     border-top: 2px solid transparent;
+}
+
+.headerButton img,
+.headerButtonOver img,
+.headerButtonDown img,
+.headerButtonDisabled img,
+.headerButtonSelected img,
+.headerButtonSelectedDown img,
+.headerButtonSelectedOver img,
+.headerButtonSelectedDisabled img  {
+   margin-left: 2px;
+    margin-top: 6px;
+}
+
+
+.headerButton, .headerButtonOver {
+background-image: -webkit-linear-gradient(top, #fafafa 0%, #ededed 100%);
+background-image: linear-gradient(to bottom, #fafafa 0%, #ededed 100%);
+background-repeat: repeat-x;
+filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', endColorstr='#ffededed', GradientType=0);
+}
+
+
+.headerButtonDown {
+    border-left:1px solid white;
+    border-top:1px solid white;
+    border-right:1px solid #808080;
+    border-bottom:1px solid #808080;
+    background:#d5d5d5;
+    background-image : -webkit-gradient(linear, left bottom, left top, color-stop(0.1, rgb(84,137,202)), color-stop(0.55, rgb(108,150,202)), color-stop(0.77, rgb(132,164,202)));
+    background-image : -moz-linear-gradient(center bottom, rgb(84,137,202) 10%, rgb(108,150,202) 55%, rgb(132,164,202) 77%);
+}
+
+.headerButtonDisabled {
+    color:#666666;
+
+    background:#C3C3C3;
+}
+
+.headerButtonSelected,
+.headerButtonSelectedDown,
+.headerButtonSelectedOver,
+.headerButtonSelectedDisabled {
+    color:#0099d3 !important;
+    border-top:2px solid rgb(0,153,211);
+    background-color: #f9f9f9;
+    background-image: -webkit-linear-gradient(top, #fafafa 0%, #ededed 100%);
+    background-image: linear-gradient(to bottom, #fafafa 0%, #ededed 100%);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffafafa', endColorstr='#ffededed', GradientType=0);
+}
+
+.headerButtonSelectedOver {
+}
+
+.headerButtonSelectedDisabled {
+    font-size:11px; color:#666666;
+}
+
+/* ImgButton */
+.imgButton,
+.imgButtonOver,
+.imgButtonSelected,
+.imgButtonSelectedDisabled,
+.imgButtonSelectedOver {
+     font-size:10px;
+}
+.imgButtonDown,
+.imgButtonSelectedDown {
+     font-size:10px;
+}
+.imgButtonDisabled {
+     font-size:10px; color:#666666;
+}
+
+/* StretchImgButton */
+.stretchImgButton,
+.stretchImgButtonSelected,
+.stretchImgButtonSelectedOver,
+.stretchImgButtonOver,
+.stretchImgButtonDown,
+.stretchImgButtonSelectedDown,
+.stretchImgButtonSelectedDisabled,
+.stretchImgButtonDisabled {
+     font-size:10px;
+}
+.stretchImgButtonSelectedDisabled,
+.stretchImgButtonDisabled {
+    color:#666666;
+}
+
+/*============================================================
+  Menus
+============================================================*/
+
+.menuTable {
+    border-top:1px solid #93A9C0;
+    border-bottom:1px solid #93A9C0;
+    border-left:1px solid #93A9C0;
+    border-right:1px solid #93A9C0;
+}
+.menu,
+.menuDark,
+.menuSelected,
+.menuSelectedDark,
+.menuOver,
+.menuOverDark,
+.menuSelectedOver,
+.menuSelectedOverDark,
+.menuDisabled,
+.treeMenuSelected,
+.treeMenuSelectedOver {
+    border-top:1px solid white;
+    border-bottom:1px solid white;
+     font-size:11px; background-color:white;
+}
+.menuOver,
+.menuOverDark,
+.menuSelectedOver,
+.menuSelectedOverDark {
+    color:white; background-color:#3E74B3;
+    border-top:1px solid #5E94D3;
+    border-bottom:1px solid #1E5493;
+}
+.treeMenuSelected {
+    background-color:#fff1a8;
+    border-top:1px solid #ffeb90;
+    border-bottom:1px solid #ffeb90;
+}
+
+.treeMenuSelectedOver {
+    color:white; background-color:#0A246A;
+    border-top:1px solid #0A246A;
+    border-bottom:1px solid #0A246A;
+}
+.menuDisabled {
+    color:#979797;
+    background-color:white;
+}
+
+
+.windowBackground,
+.dialogBackground { }
+
+.windowBody,
+.dialogBody,
+.promptBody {
+}
+
+.windowHeader,
+.windowHeaderHilite,
+.dialogHeader,
+.dialogHeaderHilite {
+}
+
+.windowHeaderHilite,
+.dialogHeaderHilite {
+}
+.windowHeaderText,
+.dialogHeaderText,
+.dialogStatusBarText {
+  font-size: 12px;
+    font-weight: 700;
+        padding-left:2px;
+}
+
+.windowStatusBar,
+.dialogStatusBar {
+    font-size:11px; color:black;
+    border-top: 1px solid #999999;
+    border-left: 1px solid #999999;
+    border-right: 1px solid #FFFFFF;
+    border-bottom: 1px solid #FFFFFF;
+}
+.windowStatusBar {
+     font-size:11px;
+}
+.modalMask {
+    background-color:black;
+}
+
+
+
+/*============================================================
+  Layout
+============================================================*/
+
+.layoutDropLine {
+    background-color:#DDDDFF;
+}
+.layoutPlaceHolder {
+    border:1px solid black;
+}
+
+.splitbar {
+    background-color:#FFFFFF;
+}
+.splitbarDown {
+	border:1px solid #C0C0C0;
+    background-color:#FFFFFF;
+}
+
+/*============================================================
+  TabSet and tab titles
+============================================================*/
+
+.tabSetContainer {
+    font-size:12px;
+    background-color:#FFFFFF;
+    border-width:1px 0;
+    border-color: #dddddd transparent #dddddd transparent;
+    border-style:solid;
+}
+
+.tabBarTop {
+    padding-top:2px;
+}
+
+.tabBarLeft {
+    padding-left:2px;
+}
+
+.tabBarRight {
+    padding-right:2px;
+}
+
+.tabBarBottom {
+    padding-bottom:2px;
+}
+
+.tab,
+.tabOver,
+.tabSelected,
+.tabSelectedOver,
+.tabDown,
+.tabSelectedDown,
+.tabSelectedDisabled,
+.tabDisabled {
+  font-size:11px;
+}
+.tabSelectedDisabled,
+.tabDisabled {
+    color:#666666;
+}
+
+.tabTitle,
+.tabTitleDown,
+.tabTitleOver,
+.tabTitleDisabled,
+.tabTitleSelected,
+.tabTitleSelectedDown,
+.tabTitleSelectedOver,
+.tabTitleSelectedDisabled,
+.vtabTitle,
+.vtabTitleSelected,
+.vtabTitleOver,
+.vtabTitleDown,
+.vtabTitleSelectedOver,
+.vtabTitleSelectedDown,
+.vtabTitleDisabled,
+.vtabTitleSelectedDisabled {
+    color: #29333c;
+    font-size:11px;
+    padding-bottom:4px;
+}
+.tabTitleOver,
+.vtabTitleOver {
+    color:#29333c;
+}
+
+.tabTitleSelected,
+.vtabTitleSelected {
+	color:#FFF;
+    padding-bottom:4px;
+}
+
+.tabTitleSelectedOver,
+.vtabTitleSelectedOver {
+	color:#353f46;
+    padding-bottom:4px;
+}
+
+.tabTitleDisabled,
+.tabTitleSelectedDisabled,
+.vtabTitleDisabled,
+.vtabTitleSelectedDisabled {
+    color: #AAAAAA;
+    padding-bottom:2px;
+}
+
+
+.SubTabButtonOver,
+.SubTabButton:hover {
+  border-color:#353f46;
+
+}
+
+.SubTabButtonSelected, .SubTabButton {
+  font-size:12px;
+  border-style:solid;
+  border-width:0 0 1px 0;
+  border-color:transparent;
+  color:#4d5258;
+  padding:0px 0px 0px 0px;
+}
+
+.SubTabButtonSelected {
+    color:#0099d3;
+    border-color:#0099d3;
+}
+
+/*============================================================
+  SectionStack
+============================================================*/
+
+.sectionStack {
+
+   border:1px solid rgb(208,208,208);
+   border-top:0px solid transparent;
+   background:none rgb(250, 250, 250);
+}
+
+/* SectionStack headers - css based */
+.sectionHeaderopened,
+.sectionHeaderclosed,
+.sectionHeaderDisabledopened,
+.sectionHeaderDisabledclosed {
+   /*PatternFly*/
+   background-image: linear-gradient(to bottom, #fafafa 0%, #ededed 100%);
+   background-repeat: repeat-x;
+   color: #4d5258;
+   font-weight:600;
+   border-width:1px 0 1px 0px;
+   border-style: solid;
+   border-color: rgb(207, 207, 207);
+   font-size:13px;
+   padding-left:3px;
+
+}
+
+.sectionHeaderopened,
+.sectionHeaderDisabledopened { }
+
+.sectionHeaderDisabledopened,
+.sectionHeaderDisabledclosed {
+	color:#c8c8c8;
+}
+
+/*============================================================
+  Forms
+============================================================*/
+
+/* general form styles */
+.formRow {}
+.formCell,
+.formCellFocused,
+.formCellDisabled,
+.nestedFormContainer,
+.nestedFormContainerFocused,
+.nestedFormContainerDisabled {
+    font-size:12px;
+}
+
+.formTitle,
+.formTitleFocused,
+.formTitleDisabled,
+.formCellError,
+.formTitleError,
+.formHint,
+.headerItem,
+.headerItemDisabled,
+.headerItemError,
+.staticTextItem,
+.staticTextItemDisabled,
+.staticTextItemError,
+.textItem,
+.textItemFocused,
+.textItemDisabled,
+.textItemError,
+.textItemHint,
+.selectItemControl,
+.selectItemControlError,
+.selectItemControlFocused,
+.selectItemText,
+.selectItemTextError,
+.selectItemTextDisabled,
+.selectItemTextFocused,
+.selectItemTextHint,
+.comboBoxItem,
+.comboBoxItemFocused,
+.comboBoxItemError,
+.comboBoxItemDisabled ,
+.comboBoxItemPendingText,
+.pickListCell,
+.pickListCellSelected,
+.pickListCellDisabled,
+.pickListCellDark,
+.pickListCellSelectedDark,
+.tallPickListCell,
+.tallPickListCellSelected,
+.tallPickListCellDisabled,
+.tallPickListCellDark,
+.tallPickListCellSelectedDark,
+.labelAnchor,
+.labelAnchorDisabled,
+.labelAnchorError,
+.labelAnchorFocused {
+     font-size:12px;
+}
+
+.formTitle,
+.formTitleFocused  {
+    color:#333333;
+}
+
+.formCellError,
+.formTitleError {
+    font-weight:bold; color:#204268;
+}
+.formHint {
+    color:#455668; padding:3px;
+}
+
+/* headerItem */
+.headerItem,
+.headerItemDisabled,
+.headerItemError {
+    font-size:14px; font-weight:bold; color:##333333;
+}
+
+/* text items */
+.textItem,
+.textItemFocused,
+.textItemDisabled,
+.textItemError,
+.textItemHint,
+.selectItemText,
+.selectItemTextError,
+.selectItemTextFocused,
+.selectItemTextDisabled,
+.selectItemTextHint,
+.comboBoxItemPendingText {
+    padding:1px;
+    border: 1px solid #bbb;
+}
+.textItemDisabled   {
+    color:#ACA899;
+}
+
+.textItemHint {
+    color:#666666;
+}
+
+.textItem {
+}
+
+.comboBoxItemPendingText {
+    color:#0066CC;
+}
+
+/* selectItem */
+.selectItemTextFocused {
+    color:black;
+    -moz-outline-offset:-1;
+    border:1px solid #5678ac;
+}
+
+.textItemFocused,
+.selectItemTextFocused {}
+
+.selectItemText,
+.selectItemTextError,
+.selectItemTextFocused,
+.selectItemTextDisabled {
+    border-right:0px none;
+}
+
+.selectItemPickerIcon,
+.selectItemPickerIconFocused,
+.selectItemPickerIconDisabled,
+.selectItemPickerIconError {
+    padding:0px;
+}
+
+.pickListMenuBody {
+    border:1px solid black;
+}
+
+.pickListCell,
+.pickListCellDark,
+.tallPickListCell,
+.tallPickListCellDark {
+}
+
+.pickListCellSelected,
+.pickListCellSelectedDark {
+}
+
+.tallPickListCellSelected,
+.tallPickListCellSelectedDark {
+}
+
+.pickListCellDisabled,
+.tallPickListCellDisabled {
+}
+
+/* checkbox and radioButton */
+.labelAnchor,
+.labelAnchorDisabled,
+.labelAnchorError,
+.labelAnchoFocused  {
+    text-decoration:none;
+}
+
+/* FilterBuilder */
+.bracketBorders {
+    border-left: 1px solid #808080;
+    border-top: 1px solid #808080;
+    border-bottom: 1px solid #808080;
+}
+
+/* ColorChooser */
+.colorChooserCell {
+    background-color:#EFEFEF;
+    border-left:1px solid #EFEFEF;
+    border-top:1px solid #EFEFEF;
+    border-right:1px solid #EFEFEF;
+    border-bottom:1px solid #EFEFEF;
+}
+.colorChooserCellOver {
+    background-color:#EFEFEF;
+    border-left:1px solid black;
+    border-top:1px solid black;
+    border-right:1px solid black;
+    border-bottom:1px solid black;
+}
+
+/*============================================================
+     DateChooser
+============================================================*/
+
+/* Defaults for all days and controls */
+.dateChooserButton,
+.dateChooserButtonOver,
+.dateChooserButtonDown,
+.dateChooserButtonDisabled,
+.dateChooserButtonSelected,
+.dateChooserButtonSelectedDown,
+.dateChooserButtonSelectedOver,
+.dateChooserButtonSelectedDisabled,
+.dateChooserWeekendButton,
+.dateChooserWeekendButtonOver,
+.dateChooserWeekendButtonDown,
+.dateChooserWeekendButtonDisabled,
+.dateChooserWeekendButtonSelected,
+.dateChooserWeekendButtonSelectedDown,
+.dateChooserWeekendButtonSelectedOver,
+.dateChooserWeekendButtonSelectedDisabled,
+.dateChooserBottomButton,
+.dateChooserBottomButtonOver,
+.dateChooserBottomButtonDown,
+.dateChooserBottomButtonSelected,
+.dateChooserBottomButtonSelectedOver,
+.dateChooserBottomButtonSelectedDown,
+.dateChooserNavButton,
+.dateChooserNavButtonOver,
+.dateChooserNavButtonDown,
+.dateChooserNavButtonSelected,
+.dateChooserNavButtonSelectedOver,
+.dateChooserNavButtonSelectedDown,
+.dateChooserWeekday,
+.dateChooserWeekdayOver,
+.dateChooserWeekdayDown,
+.dateChooserWeekdaySelected,
+.dateChooserWeekdaySelectedOver,
+.dateChooserWeekdaySelectedDown,
+.dateChooserWeekdayDisabled,
+.dateChooserWeekend,
+.dateChooserWeekendOver,
+.dateChooserWeekendDown,
+.dateChooserWeekendSelected,
+.dateChooserWeekendSelectedOver,
+.dateChooserWeekendSelectedDown,
+.dateChooserWeekendSelectedDisabled,
+.dateChooserWeekendDisabled {
+    font-size:11px;
+    background-color:#FFFFFF;
+    color:#868686;
+}
+
+/* year/month buttons */
+.dateChooserNavButton,
+.dateChooserNavButtonOver,
+.dateChooserNavButtonDown,
+.dateChooserNavButtonSelected,
+.dateChooserNavButtonSelectedOver,
+.dateChooserNavButtonSelectedDown {
+    padding:0px;
+    border-top:0px none;
+    border-bottom:1px solid #868686;
+}
+
+/* for all buttons, plus weekday headers (dateChooserButton) */
+.dateChooserButton,
+.dateChooserButtonOver,
+.dateChooserButtonDown,
+.dateChooserButtonSelected,
+.dateChooserButtonSelectedOver,
+.dateChooserButtonSelectedDown,
+.dateChooserWeekendButton,
+.dateChooserWeekendButtonOver,
+.dateChooserWeekendButtonDown,
+.dateChooserWeekendButtonSelected,
+.dateChooserWeekendButtonSelectedOver,
+.dateChooserWeekendButtonSelectedDown,
+.dateChooserNavButton,
+.dateChooserNavButtonOver,
+.dateChooserNavButtonDown,
+.dateChooserNavButtonSelected,
+.dateChooserNavButtonSelectedOver,
+.dateChooserNavButtonSelectedDown {
+    font-weight:bold;
+	color:#4C4C4C;
+}
+
+.dateChooserButtonOver,
+.dateChooserButtonDown {
+	cursor:pointer;
+	color:#467DCD;
+}
+
+.dateChooserWeekendButton,
+.dateChooserWeekendButtonOver,
+.dateChooserWeekendButtonDown,
+.dateChooserWeekendButtonSelected,
+.dateChooserWeekendButtonSelectedOver,
+.dateChooserWeekendButtonSelectedDown {
+    background-color:#fff1a8;
+}
+
+.dateChooserNavButton,
+.dateChooserNavButtonOver,
+.dateChooserNavButtonDown,
+.dateChooserNavButtonSelected,
+.dateChooserNavButtonSelectedOver,
+.dateChooserNavButtonSelectedDown {
+    cursor:pointer;
+    padding:2px;
+}
+
+.dateChooserNavButtonOver,
+.dateChooserNavButtonDown {
+    color:#467DCD;
+}
+
+/* Today, Cancel buttons */
+.dateChooserBottomButton,
+.dateChooserBottomButtonOver,
+.dateChooserBottomButtonDown {
+    cursor:pointer;
+    font-weight:bold;
+	color:#4C4C4C;
+    border-left:1px solid #ACB1B9;
+    border-top:1px solid #ACB1B9;
+}
+.dateChooserBottomButtonOver {
+    color:#467DCD;
+}
+
+
+/* weekday and weekend cells */
+.dateChooserWeekday,
+.dateChooserWeekdayOver,
+.dateChooserWeekdayDown,
+.dateChooserWeekdaySelected,
+.dateChooserWeekdaySelectedOver,
+.dateChooserWeekdaySelectedDown,
+.dateChooserWeekdayDisabled,
+.dateChooserWeekend,
+.dateChooserWeekendOver,
+.dateChooserWeekendDown,
+.dateChooserWeekendSelected,
+.dateChooserWeekendSelectedOver,
+.dateChooserWeekendSelectedDown,
+.dateChooserWeekendDisabled {
+    cursor:pointer;
+    color:black;
+    border:2px solid white;
+    background-color:white;
+}
+
+.dateChooserWeekdayDisabled,
+.dateChooserWeekendDisabled {
+	color:#C0C3CA;
+}
+
+.dateChooserWeekend,
+.dateChooserWeekendOver,
+.dateChooserWeekendSelected,
+.dateChooserWeekendSelectedDisabled,
+.dateChooserWeekendDisabled {
+    border:2px solid #fff1a8;
+    background-color:#fff1a8;
+}
+
+.dateChooserWeekdayOver,
+.dateChooserWeekendOver {
+	border:2px solid #ffeb90;
+}
+
+.dateChooserWeekdaySelected,
+.dateChooserWeekdaySelectedOver,
+.dateChooserWeekdayDown,
+.dateChooserWeekdaySelectedDown,
+.dateChooserWeekendSelected,
+.dateChooserWeekendSelectedDisabled,
+.dateChooserWeekendSelectedOver,
+.dateChooserWeekendDown,
+.dateChooserWeekendSelectedDown {
+	font-weight:bold;
+	color:#4C4C4C;
+    border:2px solid #ffdd2e;
+    background-color:#ffdd2e;
+}
+
+.dateChooserWeekdayDown,
+.dateChooserWeekendDown {
+	font-weight:normal;
+}
+
+/* year and month pop-up menus */
+.dateChooserYearMenu,
+.dateChooserMonthMenu {
+    background-color:#FFFFFF;
+}
+
+/*============================================================
+  Slider & Rangebar
+============================================================*/
+
+/* slider and rangebar labels */
+.sliderTitle,
+.sliderRange,
+.sliderValue,
+.rangebarTitle,
+.rangebarRange,
+.rangebarValue {
+     font-size:10px;
+}
+.sliderTitle,
+.rangebarTitle {
+    font-weight:bold;
+}
+.sliderRange,
+.rangebarRange {
+    color:gray;
+}
+
+/*============================================================
+  DetailViewer
+============================================================*/
+.detailBlock {
+    border-left:1px solid gray;
+    border-top:1px solid gray;
+}
+
+.detail,
+.detailLabel,
+.detailHeader {
+    border-right:1px solid gray;
+    border-bottom:1px solid gray;
+}
+
+.detail,
+.detailLabel,
+.detailHeader {
+    font-size:11px; background-color:white;
+}
+
+.detailLabel {
+    font-weight:bold;
+    background-color:#EEEEEE;
+    text-align:right;
+}
+
+.detailHeader {
+    font-size:14px; font-weight:bold;
+    background-color:#BBDAFA;
+}
+
+/*============================================================
+  ListGrid
+============================================================*/
+
+/*============================================================
+	ListGrid parts
+		styleName - listGrid
+		headerBarStyle - headerBar
+		bodyStyleName - gridBody
+============================================================*/
+
+.listGrid {
+/*    border: 1px solid #A7ABB4; */
+    background:none rgb(250, 250, 250);
+    border: 1px solid rgb(208, 208, 208);
+
+}
+.loadingDataMessage,
+.offlineMessage,
+.emptyMessage {
+     font-size:11px; padding:10px;
+}
+.gridDragTracker {
+     font-size:11px;
+    background-color:white;
+    padding:1px;
+    border:1px dotted blue;
+}
+.dragLine {
+    border-bottom:2px dotted #548ACA;
+}
+
+.listTable {}
+/* for filterEditor */
+.recordEditorCell {
+
+    font-size:11px; color:black;
+    background-color:#f4f4f4;
+}
+
+
+/*============================================================
+	ListGrid cells
+		listGrid.baseStyle
+============================================================*/
+
+/*------------------------------------------------------------
+		listGrid.baseStyle
+------------------------------------------------------------*/
+.cell,
+.cellDark,
+.cellOver,
+.cellOverDark,
+.cellSelected,
+.cellSelectedDark,
+.cellSelectedOver,
+.cellSelectedOverDark,
+.cellDisabled,
+.cellDisabledDark,
+.tallCell,
+.tallCellDark,
+.tallCellOver,
+.tallCellOverDark,
+.tallCellSelected,
+.tallCellSelectedDark,
+.tallCellSelectedOver,
+.tallCellSelectedOverDark,
+.tallCellDisabled,
+.tallCellDisabledDark,
+.groupSummaryCell,
+.groupSummaryCellDisabled,
+.gridSummaryCell,
+.gridSummaryCellDisabled,
+.recordSummaryCell,
+.recordSummaryCellDark,
+.recordSummaryCellOver,
+.recordSummaryCellOverDark,
+.recordSummaryCellSelected,
+.recordSummaryCellSelectedDark,
+.recordSummaryCellSelectedOver,
+.recordSummaryCellSelectedOverDark,
+.recordSummaryCellDisabled,
+.recordSummaryCellDisabledDark,
+.expansionCellCell,
+.expansionCellCellDark,
+.expansionCellCellOver,
+.expansionCellCellOverDark,
+.expansionCellCellSelected,
+.expansionCellCellSelectedDark,
+.expansionCellCellSelectedOver,
+.expansionCellCellSelectedOverDark,
+.expansionCellCellDisabled,
+.expansionCellCellDisabledDark,
+.specialCol,
+.specialColOver,
+.specialColSelected,
+.specialColSelectedOver,
+.specialColDisabled,
+.groupNode {
+	font-size:12px; text-overflow:ellipsis;
+    border-bottom:1px solid;
+    border-bottom-color: #e2e2e2;
+}
+
+.specialCol {
+	font-size:12px; text-overflow:ellipsis;
+	color:black;
+    background-color:#f7f7f7;
+}
+
+.tallCell,
+.tallCellDark,
+.tallCellOver,
+.tallCellOverDark,
+.tallCellSelected,
+.tallCellSelectedDark,
+.tallCellSelectedOver,
+.tallCellSelectedOverDark,
+.tallCellDisabled,
+.tallCellDisabledDark {
+
+ }
+.cellDark,
+.recordSummaryCell,
+.recordSummaryCellDark {
+    background-color:#f7f7f7;
+}
+.groupSummaryCell,
+.groupSummaryCellDisabled,
+.gridSummaryCell,
+.gridSummaryCellDisabled {
+    border-top:1px solid gray;
+    border-bottom:1px solid gray;
+    background-color:#ececec;
+}
+
+.gridSummaryCell,
+.gridSummaryCellDisabled {
+    border-top-width:0px;
+    border-bottom-width:0px;
+}
+
+.summaryRowBody {
+    background-color:#ececec;
+}
+
+.tallCellDark {
+	background-color:#f7f7f7;
+}
+.cellOver,
+.cellOverDark,
+.specialColOver,
+.recordSummaryCellOver,
+.recordSummaryCellOverDark {
+    background-color:#fff1a8;
+}
+
+.tallCellOver,
+.tallCellOverDark {
+  background-color: #d4edfa !important;
+}
+
+.cellSelected,
+.cellSelectedDark,
+.specialColSelected,
+.recordSummaryCellSelected,
+.recordSummaryCellSelectedDark {
+    background:#ffeb90;
+}
+.tallCellSelected,
+.tallCellSelectedDark {
+background: none repeat scroll 0 0 #0099d3 !important;
+color:#fff;
+}
+
+.tallCellSelected a,
+.tallCellSelectedOver a,
+.tallCellSelectedOverDark a,
+.tallCellSelectedDark a  {
+  color:#fff !important;
+}
+.cellSelectedOver,
+.cellSelectedOverDark,
+.specialColSelectedOver,
+.recordSummaryCellSelectedOver,
+.recordSummaryCellSelectedOverDark {
+    background:#ffeb90;
+}
+.tallCellSelectedOver,
+.tallCellSelectedOverDark {
+  background: none repeat scroll 0 0 #0099d3 !important;
+  color: #fff;
+}
+
+
+.groupSummaryCell,
+.groupSummaryCellDisabled,
+.gridSummaryCell,
+.gridSummaryCellDisabled {
+    font-weight:bold;
+}
+
+.cellDisabled,
+.cellDisabledDark,
+.specialColDisabled,
+.tallCellDisabled,
+.tallCellDisabledDark,
+.groupSummaryCellDisabled,
+.gridSummaryCellDisabled,
+.specialColDisabled,
+.recordSummaryCellDisabled,
+.recordSummaryCellDisabledDark {
+	color:#AAAAAA;
+	background-color:#FFFFFF;
+}
+
+.groupNode {
+    font-weight:bold;
+
+	color:#3764a3;
+    border-bottom: 1px solid #8299b8;
+}
+
+/*Tree styling*/
+/*------------------------------------------------------------
+		treeGrid.baseStyle
+------------------------------------------------------------*/
+.treeCell,
+.treeCellDark,
+.treeCellOver,
+.treeCellOverDark,
+.treeCellSelected,
+.treeCellSelectedDark,
+.treeCellSelectedOver,
+.treeCellSelectedOverDark,
+.treeCellDisabled,
+.treeCellDisabledDark,
+.treeTallCell,
+.treeTallCellDark,
+.treeTallCellOver,
+.treeTallCellOverDark,
+.treeTallCellSelected,
+.treeTallCellSelectedDark,
+.treeTallCellSelectedOver,
+.treeTallCellSelectedOverDark,
+.treeTallCellDisabled,
+.treeTallCellDisabledDark {
+	font-size:12px; text-overflow:ellipsis;
+	color:rgb(51,51,51);
+  background-color:rgb(250,250,250);
+  border-width:1px 0 1px 0;
+  border-color:transparent;
+  border-style:solid;
+}
+
+/*
+.treeTallCell,
+.treeTallCellDark,
+.treeTallCellOver,
+.treeTallCellOverDark,
+.treeTallCellSelected,
+.treeTallCellSelectedDark,
+.treeTallCellSelectedOver,
+.treeTallCellSelectedOverDark,
+.treeTallCellDisabled,
+.treeTallCellDisabledDark {  }
+*/
+
+.treeCellDark,
+.treeTallCellDark {
+	background-color:#f7f7f7;
+}
+.treeCellOver,
+.treeCellOverDark,
+.treeTallCellOver,
+.treeTallCellOverDark,
+.treeCell:hover,
+.treeTallCell:hover {
+  background-color: #d4edfa !important;
+  border-color: #1cace9;
+
+}
+
+.treeTallCellOver,
+.treeTallCellOverDark {
+	background-color:#ffeb90;
+}
+.treeCellSelected,
+.treeCellSelectedDark {
+background: none repeat scroll 0 0 #0099d3 !important;
+    border-color: #0076b7 !important;
+    color: #fff;
+}
+
+.treeCellSelectedOver,
+.treeCellSelectedOverDark {
+background: none repeat scroll 0 0 #0099d3 !important;
+    border-color: #0076b7 !important;
+    color: #fff;
+}
+
+
+.treeTallCellSelected,
+.treeTallCellSelectedDark {
+  background: none repeat scroll 0 0 #0099d3 !important;
+  border-color: #0076b7 !important;
+  color: #fff;
+
+}
+
+
+.treeTallCellSelectedOver,
+.treeTallCellSelectedOverDark {
+background: none repeat scroll 0 0 #0099d3 !important;
+  border-color: #0076b7 !important;
+  color: #fff;
+
+}
+
+
+.treeCellDisabled,
+.treeCellDisabledDark,
+.treeTallCellDisabled,
+.treeTallCellDisabledDark {
+	color:#AAAAAA;
+	background-color:#FFFFFF;
+}
+
+/* Field builders (Formula/Summary) */
+.sampleOutput {
+    border: 2px solid #D9D9D9;
+    padding: 3px;
+}
+
+/* Multi-sort - sort-index appearing next to sort-arrows in field headers */
+.sortNumeral {
+    font-size:7px;
+}
+
+
+/*============================================================
+	12) ToolStrip
+============================================================*/
+.toolStrip {
+/*    border: 1px solid #868686;
+    background: #f6f6f6;
+    -moz-linear-gradient(top, #ffffff, #efefef);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#efefef));*/
+}
+
+.toolStripLayoutDropLine {
+    background-color:#404040;
+}
+
+.toolbarButton,
+.toolbarButtonOver,
+.toolbarButtonDown,
+.toolbarButtonDisabled,
+.toolbarButtonSelected,
+.toolbarButtonSelectedDown,
+.toolbarButtonSelectedOver,
+.toolbarButtonSelectedDisabled {
+
+    font-size:11px;
+    padding:5px;
+    color:#000000;
+}
+
+.toolbarButton {
+}
+.toolbarButtonOver {
+    color:#0060BF;
+}
+.toolbarButtonDown {
+    color:#0060BF;
+}
+
+.toolbarButtonDisabled {
+    color:#CCCCCC;
+}
+.toolbarButtonSelected,
+.toolbarButtonSelectedDown,
+.toolbarButtonSelectedOver,
+.toolbarButtonSelectedDisabled {
+    font-size:11px;
+    font-weight:bold;
+    color:#0060BF;
+}
+.toolbarButtonSelectedOver {
+
+}
+.toolbarButtonSelectedDisabled {
+    font-size:11px;
+    color:#666666;
+}
+
+/*============================================================
+   12a) ToolStripGroup and IconButton
+==============================================================*/
+.toolStripGroup,
+.toolStripGroupOver,
+.toolStripGroupSelected,
+.toolStripGroupSelectedDisabled,
+.toolStripGroupSelectedOver,
+.toolStripGroupDown,
+.toolStripGroupSelectedDown,
+.toolStripGroupDisabled {
+    background:#000000 url(./images/shared/background.gif) repeat-x bottom left scroll;
+    border: 1px solid #868686;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -khtml-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+.toolStripGroupTitle,
+.toolStripGroupTitleOver,
+.toolStripGroupTitleSelected,
+.toolStripGroupTitleSelectedDisabled,
+.toolStripGroupTitleSelectedOver,
+.toolStripGroupTitleDown,
+.toolStripGroupTitleSelectedDown,
+.toolStripGroupTitleDisabled {
+    background: #DDDDDD;
+    border: 0;
+    color: #333;
+        font-size: 11px;
+    font-weight: bold;
+    padding: 3px;
+}
+
+.iconButton,
+.iconButtonOver,
+.iconButtonFocused,
+.iconButtonFocusedOver,
+.iconButtonDown,
+.iconButtonFocusedDown,
+.iconButtonSelected,
+.iconButtonSelectedFocused,
+.iconButtonSelectedDown,
+.iconButtonSelectedFocusedDown,
+.iconButtonSelectedOver,
+.iconButtonSelectedFocusedOver,
+.iconButtonDisabled,
+.iconButtonSelectedDisabled {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -khtml-border-radius: 3px;
+	color: #0000000;
+        font-size:11px;
+    padding: 4px;
+}
+
+.iconButtonOver,
+.iconButtonSelectedOver,
+.iconButtonFocusedOver,
+.iconButtonSelectedFocusedOver {
+    background: #D5D5D5;
+    background: -moz-linear-gradient(top, #cccccc 0%, #ffffff 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cccccc), color-stop(100%,#ffffff));
+    background: -webkit-linear-gradient(top, #cccccc 0%,#ffffff 100%);
+    background: -o-linear-gradient(top, #cccccc 0%,#ffffff 100%);
+    background: -ms-linear-gradient(top, #cccccc 0%,#ffffff 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', endColorstr='#ffffff',GradientType=0 );
+    background: linear-gradient(top, #cccccc 0%,#ffffff 100%);
+    border: 1px solid #868686;
+    color: #000000;
+}
+
+.iconButtonSelected,
+.iconButtonSelectedFocused,
+.iconButtonSelectedDown,
+.iconButtonSelectedFocusedDown,
+.iconButtonSelectedOver,
+.iconButtonSelectedFocusedOver {
+    background-color: pink;
+}
+
+.iconButtonDisabled {
+    color: #AAAAAA;
+}
+
+
+/*============================================================
+  Tools
+============================================================*/
+.resizeThumb {
+    background-color:#009999;
+}
+
+/*============================================================
+  TileGrid
+==============================================================*/
+
+.tileGrid {
+    border:1px solid #808080;
+}
+.tileValue,
+.tileValueDown,
+.tileValueSelected,
+.tileValueOver,
+.tileValueSelectedOver,
+.tileValueSelectedDown {
+    font-size: 8pt;
+    text-overflow:ellipsis;
+}
+
+.tileValueSelected {
+    color: black;
+}
+
+.tileValueSelectedOver {
+    color: black;
+}
+
+.simpleTile,
+.simpleTileOver,
+.simpleTileSelected,
+.simpleTileSelectedOver {
+    padding:3px
+}
+
+.simpleTile {
+    border:1px solid transparent;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    padding:3px;
+}
+.simpleTileOver {
+      padding:3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    border:3px solid #165fa7;
+    opacity: 0.9;
+}
+
+.simpleTileSelected {
+    border : 3px solid #ff7e14;
+    opacity: 0.9;
+      padding:3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.simpleTileSelectedOver {
+    border : 3px solid #ff7e14;
+      padding:3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+
+/*============================================================
+	15) Scrollbars
+============================================================*/
+.vScrollThumb {
+  background-image: -webkit-gradient(linear, 0% 50%, 100% 50%, color-stop(0%, #f5f5f5), color-stop(50%, #e9e8e8), color-stop(50%, #dad7d7), color-stop(82%, #cecaca), color-stop(100%, #c4c0c0));
+  background-image: -webkit-linear-gradient(left, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: -moz-linear-gradient(left, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: -o-linear-gradient(left, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: -ms-linear-gradient(left, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: linear-gradient(left, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=1, startColorstr='#f5f5f5', endColorstr='#c4c0c0');
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#f5f5f5', endColorstr='#c4c0c0')";
+  border: 1px solid #969696;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -o-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -khtml-border-radius: 2px;
+  border-radius: 2px;
+  -moz-box-shadow: inset -1px -1px 0 0 #dcdada, inset 0 1px 0 0 #ededed;
+  -webkit-box-shadow: inset -1px -1px 0 0 #dcdada, inset 0 1px 0 0 #ededed;
+  -o-box-shadow: inset -1px -1px 0 0 #dcdada, inset 0 1px 0 0 #ededed;
+  box-shadow: inset -1px -1px 0 0 #dcdada, inset 0 1px 0 0 #ededed;
+  margin-right: 1px;
+}
+
+/* line 2330, ../_internalSource/EnterpriseSeries/sass/_base.scss */
+.vScrollThumbOver {
+  background-image: -webkit-gradient(linear, 0% 50%, 100% 50%, color-stop(0%, #e3f4fc), color-stop(20%, #d5eefb), color-stop(50%, #d5eefb), color-stop(50%, #a7daf6), color-stop(80%, #a7daf6), color-stop(90%, #a4d5ef), color-stop(100%, #9ccae2));
+  background-image: -webkit-linear-gradient(left, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: -moz-linear-gradient(left, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: -o-linear-gradient(left, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: -ms-linear-gradient(left, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: linear-gradient(left, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=1, startColorstr='#e3f4fc', endColorstr='#9ccae2');
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#e3f4fc', endColorstr='#9ccae2')";
+  border: 1px solid #3c7daf;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -o-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -khtml-border-radius: 2px;
+  border-radius: 2px;
+  -moz-box-shadow: inset -1px -1px 0 0 #dcdee0, inset 1px 1px 0 0 white;
+  -webkit-box-shadow: inset -1px -1px 0 0 #dcdee0, inset 1px 1px 0 0 white;
+  -o-box-shadow: inset -1px -1px 0 0 #dcdee0, inset 1px 1px 0 0 white;
+  box-shadow: inset -1px -1px 0 0 #dcdee0, inset 1px 1px 0 0 white;
+  margin-right: 1px;
+}
+
+/* line 2339, ../_internalSource/EnterpriseSeries/sass/_base.scss */
+.hScrollThumb {
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f5f5f5), color-stop(50%, #e9e8e8), color-stop(50%, #dad7d7), color-stop(82%, #cecaca), color-stop(100%, #c4c0c0));
+  background-image: -webkit-linear-gradient(top, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: -moz-linear-gradient(top, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: -o-linear-gradient(top, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: -ms-linear-gradient(top, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  background-image: linear-gradient(top, #f5f5f5 0%, #e9e8e8 50%, #dad7d7 50%, #cecaca 82%, #c4c0c0 100%);
+  filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=0, startColorstr='#f5f5f5', endColorstr='#c4c0c0');
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#f5f5f5', endColorstr='#c4c0c0')";
+  border: 1px solid #969696;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -o-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -khtml-border-radius: 2px;
+  border-radius: 2px;
+  -moz-box-shadow: inset 1px -1px 0 0 #dcdada, inset 0 1px 0 1px #ededed;
+  -webkit-box-shadow: inset 1px -1px 0 0 #dcdada, inset 0 1px 0 1px #ededed;
+  -o-box-shadow: inset 1px -1px 0 0 #dcdada, inset 0 1px 0 1px #ededed;
+  box-shadow: inset 1px -1px 0 0 #dcdada, inset 0 1px 0 1px #ededed;
+  margin-bottom: 1px;
+}
+
+/* line 2348, ../_internalSource/EnterpriseSeries/sass/_base.scss */
+.hScrollThumbOver {
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #e3f4fc), color-stop(20%, #d5eefb), color-stop(50%, #d5eefb), color-stop(50%, #a7daf6), color-stop(80%, #a7daf6), color-stop(90%, #a4d5ef), color-stop(100%, #9ccae2));
+  background-image: -webkit-linear-gradient(top, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: -moz-linear-gradient(top, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: -o-linear-gradient(top, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: -ms-linear-gradient(top, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  background-image: linear-gradient(top, #e3f4fc 0%, #d5eefb 20%, #d5eefb 50%, #a7daf6 50%, #a7daf6 80%, #a4d5ef 90%, #9ccae2 100%);
+  filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=0, startColorstr='#e3f4fc', endColorstr='#9ccae2');
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#e3f4fc', endColorstr='#9ccae2')";
+  border: 1px solid #3c7daf;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -o-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -khtml-border-radius: 2px;
+  border-radius: 2px;
+  -moz-box-shadow: inset 1px -1px 0 0 #dcdee0, inset -1px 1px 0 0 white;
+  -webkit-box-shadow: inset 1px -1px 0 0 #dcdee0, inset -1px 1px 0 0 white;
+  -o-box-shadow: inset 1px -1px 0 0 #dcdee0, inset -1px 1px 0 0 white;
+  box-shadow: inset 1px -1px 0 0 #dcdee0, inset -1px 1px 0 0 white;
+  margin-bottom: 1px;
+}
+
+/*============================================================
+    Unused? Review & Remove
+============================================================*/
+.selectedText {
+    color:white; background-color:darkblue;
+}
+.disabled {
+     font-size:11px; color:#CCCCCC;
+}
+.pageHeader {
+     font-size:12px; font-weight:bold; color:darkblue
+}
+.printPageHeader {
+     font-size:14px; font-weight:bold; color:darkblue
+}
+.printCell {
+     font-size:10px;
+}
+
+/*IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+
+	Styles below this comment are not used by default in this skin
+
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII*/
+
+
+
+/*============================================================
+    TabSet CSS tabs
+		tabSet.simpleTabBaseStyle
+============================================================*/
+/* styles for simple css-styled tabs*/
+/* left */
+.tabButtonLeft,
+.tabButtonLeftOver,
+.tabButtonLeftSelected,
+.tabButtonLeftSelectedOver,
+.tabButtonLeftDown,
+.tabButtonLeftSelectedDown,
+.tabButtonLeftSelectedDisabled,
+.tabButtonLeftDisabled {
+    padding: 2px;
+    border: 1px solid #C0C3C7;
+    font-size-adjust:none;
+    font-stretch:normal;
+    font-style:normal;
+    font-variant:normal;
+    font-weight:normal;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    overflow: visible;
+}
+.tabButtonLeftOver,
+.tabButtonLeftSelected,
+.tabButtonLeftSelectedOver {
+    background: green;
+}
+
+.tabButtonLeftDown,
+.tabButtonLeftSelectedDown {
+    background: blue;
+}
+
+.tabButtonLeftSelectedDisabled,
+.tabButtonLeftDisabled {
+    background: yellow;
+}
+
+/* right */
+.tabButtonRight,
+.tabButtonRightOver,
+.tabButtonRightSelected,
+.tabButtonRightSelectedOver,
+.tabButtonRightDown,
+.tabButtonRightSelectedDown,
+.tabButtonRightSelectedDisabled,
+.tabButtonRightDisabled {
+    padding: 2px;
+    border: 1px solid #C0C3C7;
+    background: #e7e7e7;
+    background-image: -moz-linear-gradient(top, #ffffff, #efefef);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#efefef));
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    -x-system-font:none;
+        font-size:11px;
+    font-size-adjust:none;
+    font-stretch:normal;
+    font-style:normal;
+    font-variant:normal;
+    font-weight:normal;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    overflow: visible;
+}
+.tabButtonRightOver,
+.tabButtonRightSelected,
+.tabButtonRightSelectedOver {
+    background: #ffffff;
+}
+
+.tabButtonRightDown,
+.tabButtonRightSelectedDown {
+    background: #ddd;
+}
+
+.tabButtonRightSelectedDisabled,
+.tabButtonRightDisabled {
+    background: #ddd;
+}
+
+/* top */
+.tabButtonTop,
+.tabButtonTopOver,
+.tabButtonTopSelected,
+.tabButtonTopSelectedOver,
+.tabButtonTopDown,
+.tabButtonTopSelectedDown,
+.tabButtonTopSelectedDisabled,
+.tabButtonTopDisabled {
+    font-size:14px;
+    font-size-adjust:none;
+    font-stretch:normal;
+    font-style:normal;
+    font-variant:normal;
+    font-weight:normal;
+    padding: 5px 15px;
+    border-style:solid;
+    border-width:1px;
+    border-color:transparent;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    overflow: visible;
+}
+
+.resourceSummary {
+  pading:5px;
+}
+
+
+.resourceSummary img {
+  margin-top:5px;
+}
+
+.resourceDetail {
+  padding:0 10px 0 15px;
+}
+
+.resourceSummaryDetails {
+  margin-bottom:17px;
+}
+
+.resourceDetail .tabBarTop .tabButtonTop img,
+.resourceDetail .tabBarTop .tabButtonTopOver img,
+.resourceDetail .tabBarTop .tabButtonTopSelected img,
+.resourceDetail .tabBarTop .tabButtonTopSelectedOver img,
+.resourceDetail .tabBarTop .tabButtonTopDown img,
+.resourceDetail .tabBarTop .tabButtonTopSelectedDown img,
+.resourceDetail .tabBarTop .tabButtonTopSelectedDisabled img,
+.resourceDetail .tabBarTop .tabButtonTopDisabled img {
+  display:none;
+}
+
+
+
+
+.tabButtonTopOver,
+.tabButtonTopSelected,
+.tabButtonTopSelectedOver {
+    border-color:#e9e8e8 #e9e8e8 #fff #e9e8e8;
+}
+
+.tabButtonTopSelected {
+  border-color:#dddddd #dddddd #fff #dddddd;
+  color:#0099d3;
+}
+
+.tabButtonTopDown,
+.tabButtonTopSelectedDown {
+  border-color:#e9e8e8 #e9e8e8 #fff #e9e8e8;
+}
+
+.tabButtonTopSelectedDisabled,
+.tabButtonTopDisabled {
+color:rgb(128,128,128);
+}
+
+/* bottom */
+.tabButtonBottom,
+.tabButtonBottomOver,
+.tabButtonBottomSelected,
+.tabButtonBottomSelectedOver,
+.tabButtonBottomDown,
+.tabButtonBottomSelectedDown,
+.tabButtonBottomSelectedDisabled,
+.tabButtonBottomDisabled {
+    padding: 2px;
+    border: 1px solid #C0C3C7;
+    background: green;
+
+    font-size-adjust:none;
+    font-stretch:normal;
+    font-style:normal;
+    font-variant:normal;
+    font-weight:normal;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    overflow: visible;
+}
+.tabButtonBottomOver,
+.tabButtonBottomSelected,
+.tabButtonBottomSelectedOver {
+    background: red;
+}
+
+.tabButtonBottomDown,
+.tabButtonBottomSelectedDown {
+    background: blue;
+}
+
+.tabButtonBottomSelectedDisabled,
+.tabButtonBottomDisabled {
+    background: yellow;
+}
+
+
+/*IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+
+	Styles below this comment are used by optional modules only
+
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII*/
+
+
+
+/*============================================================
+	CubeGrid - Analytics Module only
+		cubeGrid.baseStyle - cubeCell
+		headerGrid.baseStyle - rowHeader
+		reportHeaderBar.button.baseStyle - rowHeader
+		reportHeaderBar.button.baseStyle - innerHeader/colHeader
+		reportHeaderBar.button.baseStyle - rowHeaderLabel
+		reportHeaderBar.button.baseStyle - colHeaderLabel
+============================================================*/
+.cubeGridBody {}
+.cubeCell {
+     font-size:11px; color:black; text-overflow:ellipsis;
+    background-color:#FFFFFF;
+    border-top:1px solid white; border-bottom:1px solid #828282;
+    border-left:1px solid white; border-right:1px solid #828282;
+}
+.cubeCellDark {
+     font-size:11px; color:black; text-overflow:ellipsis;
+    background-color:#EEEEEE;
+    border-top:1px solid #EEEEEE; border-bottom:1px solid #828282;
+    border-left:1px solid #EEEEEE; border-right:1px solid #828282;
+}
+.cubeCellDisabled {
+     font-size:11px; color:#666666; text-overflow:ellipsis;
+    background-color:#FFFFFF;
+    border-top:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    border-left:1px solid #FFFFFF; border-right:1px solid #FFFFFF;
+}
+
+/* partial styles */
+.cubeCellOver {
+    background-color:#B8D1EE;
+    border-top:1px solid #B8D1EE; border-bottom:1px solid #828282;
+}
+.cubeCellSelected {
+    background-color:#FFE781;
+    border-top:1px solid #FFE781; border-bottom:1px solid #828282;
+    border-left:1px solid #FFE781; border-right:1px solid #828282;
+}
+.cubeCellSelectedOver {
+    background-color:#B8D1EE;
+    border-top:1px solid #B8D1EE; border-bottom:1px solid #828282;
+    border-left:1px solid #B8D1EE; border-right:1px solid #828282;
+}
+
+/* row headers */
+.rowHeader {
+     font-size:11px; color:white;
+    background-color:#6682A0;
+    border-left:1px solid #FFFFFF; border-top:1px solid #FFFFFF;
+    border-right:1px solid #264260; border-bottom:1px solid #264260;
+    background-image:url("images/CubeGrid/rowHeader.gif");
+}
+.rowHeaderOver {
+     font-size:11px; color:white;
+    background-color:#6682A0;
+    border-left:1px solid #264260; border-top:1px solid #264260;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/rowHeaderOver.gif");
+}
+.rowHeaderDown {
+     font-size:11px; color:white;
+    background-color:#6682A0;
+    border-left:1px solid #264260; border-top:1px solid #264260;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/rowHeaderOver.gif");
+}
+.rowHeaderDisabled {
+     font-size:11px; color:#808080;
+    background-color:#6682A0;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+.rowHeaderSelected,
+.rowHeaderSelectedDown {
+     font-size:11px; color:white;
+    background-color:#3E74B3;
+    border-left:1px solid #00008B; border-top:1px solid #00008B;
+    border-right:1px solid #F0F8FF; border-bottom:1px solid #F0F8FF;
+    background-image:url("images/CubeGrid/rowHeaderSelected.gif");
+
+}
+.rowHeaderSelectedOver {
+     font-size:11px; color:white;
+    background-color:#3E74B3;
+    border-top:1px solid white; border-bottom:1px solid white;
+    border-left:1px solid white; border-right:1px solid white;
+    background-image:url("images/CubeGrid/rowHeaderSelectedOver.gif");
+}
+.rowHeaderSelectedDisabled {
+     font-size:11px; color:#808080;
+    background-color:#3E74B3;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+
+/* row label */
+.rowHeaderLabel {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#204B7A;
+    border-left:1px solid #FFFFFF; border-top:1px solid #FFFFFF;
+    border-right:1px solid #000B3A; border-bottom:1px solid #000B3A;
+    background-image:url("images/CubeGrid/rowHeaderLabel.gif");
+}
+.rowHeaderLabelOver {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#204B7A;
+    border-left:1px solid #000B3A; border-top:1px solid #000B3A;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/rowHeaderLabel.gif");
+}
+.rowHeaderLabelDown {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#204B7A;
+    border-left:1px solid #000B3A; border-top:1px solid #000B3A;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/rowHeaderLabelDown.gif");
+}
+.rowHeaderLabelDisabled {
+     font-size:11px; font-weight:bold; color:#808080;
+    background-color:#7D7D7D;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+.rowHeaderLabelSelected,
+.rowHeaderLabelSelectedDown {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-left:1px solid black; border-top:1px solid black;
+    border-right:1px solid #555555; border-bottom:1px solid #555555;
+    background-image:url("images/CubeGrid/rowHeaderDown.gif");
+}
+.rowHeaderLabelSelectedOver {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-top:1px solid white; border-bottom:1px solid white;
+    border-left:1px solid white; border-right:1px solid white;
+    background-image:url("images/CubeGrid/rowHeaderDown.gif");
+}
+.rowHeaderLabelSelectedDisabled	{
+     font-size:11px; font-weight:bold; color:#808080;
+    background-color:#7D7D7D;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+
+/* column headers */
+.colHeader {
+     font-size:11px; color:white;
+    background-color:#6682A0;
+    border-left:1px solid #FFFFFF; border-top:1px solid #FFFFFF;
+    border-right:1px solid #264260; border-bottom:1px solid #264260;
+    background-image:url("images/CubeGrid/colHeader.gif");
+}
+.colHeaderOver {
+     font-size:11px; color:white;
+    background-color:#6682A0;
+    border-left:1px solid #264260; border-top:1px solid #264260;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/colHeaderOver.gif");
+}
+.colHeaderDown {
+     font-size:11px; color:white;
+    background-color:#6682A0;
+    border-left:1px solid #264260; border-top:1px solid #264260;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/colHeader.gif");
+}
+.colHeaderDisabled {
+     font-size:11px; color:#808080;
+    background-color:#6682A0;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+.colHeaderSelected,
+.colHeaderSelectedDown {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-left:1px solid #00008B; border-top:1px solid #00008B;
+    border-right:1px solid #F0F8FF; border-bottom:1px solid #F0F8FF;
+    background-image:url("images/CubeGrid/colHeaderSelected.gif");
+}
+.colHeaderSelectedOver {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-top:1px solid white; border-bottom:1px solid white;
+    border-left:1px solid white; border-right:1px solid white;
+    background-image:url("images/CubeGrid/colHeaderSelectedOver.gif");
+}
+.colHeaderSelectedDisabled {
+     font-size:11px; font-weight:bold; color:#808080;
+    background-color:#3E74B3;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+
+/* column label */
+.colHeaderLabel {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#204B7A;
+    border-left:1px solid #FFFFFF; border-top:1px solid #FFFFFF;
+    border-right:1px solid #555555; border-bottom:1px solid #555555;
+    background-image:url("images/CubeGrid/colHeaderLabel.gif");
+}
+.colHeaderLabelOver {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#204B7A;
+    border-left:1px solid #000B3A; border-top:1px solid #000B3A;
+    border-right:1px solid #555555; border-bottom:1px solid #555555;
+    background-image:url("images/CubeGrid/colHeaderLabelDown.gif");
+}
+.colHeaderLabelDown {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#204B7A;
+    border-left:1px solid #000B3A; border-top:1px solid #000B3A;
+    border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF;
+    background-image:url("images/CubeGrid/colHeaderLabelDown.gif");
+}
+.colHeaderLabelDisabled {
+     font-size:11px; font-weight:bold; color:#808080;
+    background-color:#7D7D7D;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+.colHeaderLabelSelected,
+.colHeaderLabelSelectedDown {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-left:1px solid black; border-top:1px solid black;
+    border-right:1px solid #555555; border-bottom:1px solid #555555;
+    background-image:url("images/CubeGrid/colHeaderLabelDown.gif");
+}
+.colHeaderLabelSelectedOver {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-top:1px solid white; border-bottom:1px solid white;
+    border-right:1px solid #555555; border-bottom:1px solid #555555;
+    background-image:url("images/CubeGrid/colHeaderDown.gif");
+}
+.colHeaderLabelSelectedDisabled {
+     font-size:11px; font-weight:bold; color:#808080;
+    background-color:#7D7D7D;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+
+/* inner header */
+.innerHeader {
+     font-size:11px; color:black;
+    background-color:#CCCCCC;
+    border-left:1px solid white; border-top:1px solid white;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+    background-image:url("images/CubeGrid/innerHeader.gif");
+}
+.innerHeaderOver {
+     font-size:11px; color:black;
+    background-color:#CCCCCC;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid white; border-bottom:1px solid white;
+    background-image:url("images/CubeGrid/innerHeader.gif");
+}
+.innerHeaderDown {
+     font-size:11px; color:black;
+    background-color:#CCCCCC;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid white; border-bottom:1px solid white;
+    background-image:url("images/CubeGrid/innerHeader.gif");
+}
+.innerHeaderDisabled {
+     font-size:11px; color:#808080;
+    background-color:#CCCCCC;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+.innerHeaderSelected,
+.innerHeaderSelectedDown {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-left:1px solid #00008B; border-top:1px solid #00008B;
+    border-right:1px solid #F0F8FF; border-bottom:1px solid #F0F8FF;
+    background-image:url("images/CubeGrid/innerHeaderSelected.gif");
+}
+.innerHeaderSelectedOver {
+     font-size:11px; font-weight:bold; color:white;
+    background-color:#3E74B3;
+    border-top:1px solid white; border-bottom:1px solid white;
+    border-left:1px solid white; border-right:1px solid white;
+    background-image:url("images/CubeGrid/innerHeaderSelectedOver.gif");
+}
+.innerHeaderSelectedDisabled {
+     font-size:11px; color:#808080;
+    background-color:#CCCCCC;
+    border-left:1px solid #808080; border-top:1px solid #808080;
+    border-right:1px solid #808080; border-bottom:1px solid #808080;
+}
+
+
+
+/*============================================================
+	BarChart
+	internal, charting/visualization module only
+		styleName - chart
+		barStyle - chartBar
+		others are currently fixed
+============================================================*/
+
+.chart {
+    background-color:#CCCCCC;
+}
+.chartTitle {
+    color:black;
+    font-size:14px;
+    font-weight: bold;
+    text-align:center
+}
+.chartAxisTitle {
+    color:green;
+        font-weight: bold;
+    font-size:12px;
+}
+.chartValueTitle {
+    color:black;
+        font-size:10px;
+}
+.chartTotal {
+    color:black;
+    font-size:12px;
+    background-color:linen;
+}
+.chartBody {
+    border-left:1px solid black;
+    border-top:1px dashed blue;
+    border-right:1px solid black;
+    background-color:#DDDDDD
+}
+.chartBar1 {
+    background-color:red;
+    filter:"progid:dximagetransform.microsoft.gradient(gradientType=1, startColorStr=#990000, endColorStr=#FF0000)";
+}
+.chartBar2 {
+    background-color:blue;
+    filter:"progid:dximagetransform.microsoft.gradient(gradientType=1, startColorStr=#000099, endColorStr=#0000FF)";
+}
+.chartBar3 {
+    background-color:green;
+    filter:"progid:dximagetransform.microsoft.gradient(gradientType=1, startColorStr=#009900, endColorStr=#00FF00)";
+}
+
+
+/*============================================================
+	Printing
+        printHeader - general print style for header elements including:
+        - ListGrid header cells
+        - SectionStack headers
+============================================================*/
+.printHeader {
+    font-size:11px;
+    border:1px solid black;
+    font-weight:bold;
+}
+
+/*============================================================
+	Calendar
+
+============================================================*/
+.calendar,
+.calendarDisabled,
+.calendarWorkday,
+.calendarDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#ffffff;
+}
+
+.calendarDisabled {
+    background-color:gainsboro;
+}
+
+.calendarWorkday {
+    background-color:#ffffcc;
+}
+
+.calendarOver,
+.calendarOverDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#c0ffc0;
+}
+.calendarCellSelected {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#CCCCCC;
+}
+.labelColumn {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:gainsboro;
+}
+/* ----month---- */
+/* calMonthDayHeader and Body */
+
+.calMonthDayHeader,
+.calMonthDayHeaderDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color: gainsboro;
+}
+
+.calMonthDayHeaderOver,
+.calMonthDayHeaderOverDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color: #c0ffc0;
+}
+.calMonthDayBody,
+.calMonthDayBodyDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#ffffff;
+}
+.calMonthDayBodyOver,
+.calMonthDayBodyOverDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#c0ffc0;
+}
+
+.calMonthDayBodyDisabled,
+.calMonthDayBodyDisabledOver {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#E6E6E6;
+}
+/* calMonthOtherDayHeader and Body */
+
+.calMonthOtherDayHeader,
+.calMonthOtherDayHeaderDark {
+     font-size:11px;
+    color:#444444;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color: #aaaaaa;
+}
+.calMonthOtherDayHeaderOver,
+.calMonthOtherDayHeaderOverDark {
+     font-size:11px;
+    color:#444444;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color: #c0ffc0;
+}
+.calMonthOtherDayBody,
+.calMonthOtherDayBodyDark,
+.calMonthOtherDayBodyDisabled,
+.calMonthOtherDayBodyDisabledOver{
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#E6E6E6;
+}
+.calMonthOtherDayBodyOver,
+.calMonthOtherDayBodyOverDark {
+     font-size:11px;
+    color:black;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color:#c0ffc0;
+}
+/* calMonthOtherDayBlank */
+
+.calMonthOtherDayBlank,
+.calMonthOtherDayBlankDark,
+.calMonthOtherDayBlankOver,
+.calMonthOtherDayBlankOverDark {
+     font-size:11px;
+    color:#444444;
+    border-bottom:1px solid #a0a0a0; border-right:1px solid #a0a0a0;
+    background-color: #E6E6E6;
+}
+
+/* calMonthEventLink */
+
+a.calMonthEventLink:link {color:blue; text-decoration:none}
+a.calMonthEventLink:visited {color:blue; text-decoration:none}
+a.calMonthEventLink:hover {color:blue; text-decoration:underline}
+a.calMonthEventLink:active {color:blue; text-decoration:none}
+
+/* ----event window---- */
+
+.eventWindow {
+    font-size:9px;
+    background-color:#EBF4FF;
+    border: 1px solid #d0dff6;
+
+}
+
+.eventWindowHeader {
+
+    font-size: 9px;
+    color:#4C4C4C;
+    background-color:#d0dff6;
+
+}
+
+.eventWindowBody {
+     font-size: 9px;
+    color:black;
+    background-color:#EBF4FF;
+    padding: 3px;
+
+}
+
+.eventWindowResizer{
+    border-top:1px solid white;
+    border-bottom: 1px solid white;
+}
+
+/*============================================================
+	PropertySheet
+	internal, used by Visual SmartClient tools
+        propertySheet.autoChildDefaults.cellStyle - propSheetValue
+        propertySheet.autoChildDefaults.titleStyle - propSheetTitle
+        propertySheet.TextItemDefaults.textBoxStyle - propSheetField
+        propertySheet.SelectItemDefaults.controlStyle - propSheetSelectControl
+        propertySheet.ColorItemDefaults.textBoxStyle - propSheetField
+        propertySheet.HeaderItemDefaults.textBoxStyle - propSheetHeading
+        propertySheet.SectionHeaderItemDefaults.cellStyle - propSheetSectionItemCell
+============================================================*/
+
+.propSheetValue,
+.propSheetValueFocused,
+.propSheetDisabled {
+
+    font-size:11px;
+    border-bottom:1px solid #AAAAAA;
+    border-right:1px solid #AAAAAA;
+    padding:0px;
+    margin:0px;
+}
+.propSheetTitle,
+.propSheetTitleFocused,
+.propSheetTitleDisabled {
+
+    font-size:11px;
+    border-bottom:1px solid #AAAAAA;
+    border-right:1px solid #AAAAAA;
+    background-color:#DDDDDD;
+    padding-left:4px;
+    padding-right:4px;
+}
+.propSheetTitleError,
+.propSheetValueError {
+
+    font-size:11px; color:#204268;
+    background-color:#CFD9F2
+}
+.propSheetField,
+.propSheetFieldDisabled {
+
+    font-size:11px;
+    background-color:#FFFFFF;
+    border:0px;
+    padding:0px;
+    padding-left:4px;
+    padding-right:4px;
+    margin-top:3px;
+}
+.propSheetHeading,
+.propSheetHeadingDisabled {
+
+    font-size:11px;
+    font-weight:bold;
+    color:black;
+    background-color:#CCCCCC;
+    padding:4px;
+    border-bottom:1px solid #AAAAAA;
+}
+.propSheetSelectControl,
+.propSheetSelectControlFocused,
+.propSheetSelectControlDisabled {
+    padding-left:3px;
+    padding-right:3px;
+}
+
+.propSheetSectionItemCell,
+.propSheetSectionItemDisabled {
+}
+
+
+/* Styles for Finder cells */
+.finder,
+.finderSelected {
+
+    font-size:11px;
+    background-color:#F0F0F0;
+    border-bottom:1px solid white;
+}
+.finderSort,
+.finderSelectedSort {
+    font-size:11px; background-color:#DDDDDD;
+    border-bottom:1px solid white;
+}
+.finderDisabled {
+    font-size:11px; color:#666666;
+    background-color:#FFFFFF;
+    border-bottom:1px solid #FFFFFF;
+}
+.finderSelectedText {
+    color:white; background-color:black; margin:5px;
+}
+
+	/* header buttons */
+.finderButton {
+    font-size:11px; background-color:#DDDDDD;
+    border-left:1px solid white; border-top:1px solid white;
+    border-right:1px solid #CCCCCC; border-bottom:1px solid #CCCCCC;
+}
+.finderButtonDown,
+.finderButtonSelectedDown {
+    font-size:11px; color:white;
+    background-color:#999999;
+    border-left:1px solid #666666; border-top:1px solid #666666;
+    border-right:1px solid white; border-bottom:1px solid white;
+}
+.finderButtonSelectedDisabled,
+.finderButtonSelected {
+    font-size:11px; background-color:#999999;
+    border-left:1px solid #666666; border-top:1px solid #666666;
+    border-right:1px solid white; border-bottom:1px solid white;
+}
+.finderButtonDisabled {
+    font-size:11px; color:#666666;
+    background-color:#999999;
+    border-left:1px solid #CCCCCC; border-top:1px solid #CCCCCC;
+    border-right:1px solid #CCCCCC; border-bottom:1px solid #CCCCCC;
+}
+
+
+
+/* Styles for Explorer cells */
+.explorer,
+.explorerOver,
+.explorerSelected,
+.explorerSelectedOver,
+.explorerDark,
+.explorerOverDark,
+.explorerSelectedOverDark,
+.explorerSelectedDark,
+.explorerDisabled {
+    font-size:11px;
+}
+.explorerSelectedText {
+    background-color:darkblue; color:white; margin:5px;
+}
+.explorerButtonOver,
+.explorerButtonSelected,
+.explorerButtonSelectedOver,
+.explorerButton {
+    font-size:11px;
+    background-color:#CCCCCC;
+    border-left:2px solid white; border-top:2px solid white;
+    border-right:1px solid #999999; border-bottom:1px solid #999999;
+}
+.explorerButtonSelectedDown,
+.explorerButtonDown {
+    font-size:11px;
+    background-color:#CCCCCC;
+    border-left:2px solid #999999; border-top:2px solid #999999;
+    border-right:0px solid white; border-bottom:0px solid white;
+}
+.explorerButtonSelectedDisabled,
+.explorerButtonDisabled	{
+    font-size:11px; color:#666666;
+    background-color:#CCCCCC;
+    border-left:1px solid #CCCCCC; border-top:1px solid #CCCCCC;
+    border-right:1px solid #CCCCCC; border-bottom:1px solid #CCCCCC;
+}

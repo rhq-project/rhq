@@ -196,7 +196,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
 
         // set leftmost column and let the rest be equally divided
         dashboard.setColumnWidths("40%");
-        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
+        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "transparent"));
 
         //figure out which portlets to display and how
         Map<String, String> groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupComposite);
@@ -242,10 +242,10 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         return dashboard;
     }
 
-    /**Iterates list of new portlets and updates the dashboard reference with these new portlets. 
+    /**Iterates list of new portlets and updates the dashboard reference with these new portlets.
      * Attempts to fill the spaces around the remaining larger portlets if already installed, then alternates
      * adding to left and right columns. Assumes dashboard has only two columns.
-     * 
+     *
      * @param keyNameMap portlet key|name map
      * @param dashboard dasboard instance to update
      */

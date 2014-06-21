@@ -130,7 +130,7 @@ public class ResourceDetailView extends
 
     public ResourceDetailView(ResourceTreeView platformTree) {
         super(BASE_VIEW_PATH, createTitleBar(platformTree), createTabs());
-
+        addStyleName("resourceDetail");
         summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
         summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);
         summaryTimeline = summaryTab.getSubTabByName(Tab.Summary.SubTab.TIMELINE);
@@ -522,8 +522,10 @@ public class ResourceDetailView extends
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(resourceComposite.getResourcePermission()
+                    ResourceConfigurationHistoryListView view = new ResourceConfigurationHistoryListView(resourceComposite.getResourcePermission()
                         .isConfigureWrite(), resource.getId());
+                    view.setShowHeader(false);
+                    return view;
                 }
             });
         }

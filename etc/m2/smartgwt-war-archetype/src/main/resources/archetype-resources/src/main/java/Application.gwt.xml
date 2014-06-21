@@ -3,7 +3,7 @@
 #set( $symbol_escape = '\' )
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0//EN"
     "http://google-web-toolkit.googlecode.com/svn/releases/2.0/distro-source/core/src/gwt-module.dtd">
-    
+
 <module>
 
       <!-- Inherit the core GWT stuff. -->
@@ -13,7 +13,9 @@
       <inherits name='com.smartgwt.SmartGwt' />
       <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
-      <inherits name="com.smartclient.theme.graphite.Graphite"/>
+      <!-- inherits name="com.smartclient.theme.graphite.Graphite"/-->
+
+      <inherits "com.redhat.rhq.theme.patternfly"/>
 
       <!-- Limit builds to your preferred browser. -->
 
@@ -30,4 +32,3 @@
       <stylesheet src='Application.css' />
 
 </module>
-    

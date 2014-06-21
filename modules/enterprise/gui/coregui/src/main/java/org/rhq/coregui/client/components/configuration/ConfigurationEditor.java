@@ -441,13 +441,12 @@ public class ConfigurationEditor extends EnhancedVLayout {
         List<PropertyGroupDefinition> groupDefinitions = configurationDefinition.getGroupDefinitions();
 
         if (groupDefinitions.isEmpty() || groupDefinitions.size() == 1) {
-            // No or one prop groups, so we just need a single form for the non-grouped props 
+            // No or one prop groups, so we just need a single form for the non-grouped props
             // and another one if there is just one group
             List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
                 configurationDefinition.getNonGroupedProperties());
             if (!propertyDefinitions.isEmpty()) {
                 DynamicForm form = buildPropertiesForm(propertyDefinitions, configuration);
-                form.setBorder("1px solid #AAA");
                 form.validate();
                 layout.addMember(form);
             }
@@ -457,7 +456,6 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 DynamicForm groupForm = buildPropertiesForm(propertyDefinitions, configuration);
                 groupForm.setIsGroup(true);
                 groupForm.setGroupTitle(groupDefinitions.get(0).getDisplayName());
-                groupForm.setBorder("1px solid #AAA");
                 groupForm.validate();
                 layout.addMember(groupForm);
             }
@@ -602,7 +600,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         form.setNumCols(4);
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
-        
+
 
         List<FormItem> fields = new ArrayList<FormItem>();
         addHeaderItems(fields);
@@ -976,7 +974,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         listOfMapsGrids.put(propertyDefinitionList, summaryTable);
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
-        // [BZ 822173 - Table layout problem on configuration page.] 
+        // [BZ 822173 - Table layout problem on configuration page.]
         // setBodyOverflow(Overflow.VISIBLE) && setAutoFitFieldWidths(true) issue
         summaryTable.setBodyOverflow(VISIBLE);
         summaryTable.setOverflow(VISIBLE);

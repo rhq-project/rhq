@@ -217,7 +217,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     /**
      * If this returns true, then even if a {@link #getSearchSubsystem() search subsystem}
      * is defined by the table class, the search bar will not be shown.
-     * 
+     *
      * @return true if the search bar is to be hidden (default is false)
      */
     public boolean getHideSearchBar() {
@@ -243,7 +243,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     /**
      * Override Point:
      * Override this method to use a customized layout.
-     * 
+     *
      * @return the Layout for all of the Table contents
      * @see #configureTableContents(Layout)
      */
@@ -263,7 +263,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * - set to 100% width and height
      * - set to Overflow.AUTO
      * </pre>
-     *  
+     *
      * @param contents
      */
     protected void configureTableContents(Layout contents) {
@@ -284,7 +284,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * - sets to 100% width and height
      * </pre>
      * This is called from onInit() and guarantees grid not null.
-     * 
+     *
      * @param grid
      */
     protected void configureListGrid(ListGrid grid) {
@@ -303,7 +303,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         addMember(contents);
 
         filterForm = new TableFilter(this);
-
+        filterForm.setWidth100();
+        filterForm.addStyleName("tableFilter");
         // Table filters and search bar are currently mutually exclusive.
         if (getSearchSubsystem() == null) {
             configureTableFilters();
@@ -372,9 +373,9 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         return SelectionStyle.MULTIPLE;
     }
 
-    // Table is an InitializableView. This onDraw() waits until we're sure we're initialized and then 
+    // Table is an InitializableView. This onDraw() waits until we're sure we're initialized and then
     // lays down the canvas.  This gives subclasses a chance to perform initialization (including async calls)
-    // required to support the overrides (like configureTable()) they may have provided and that are called in 
+    // required to support the overrides (like configureTable()) they may have provided and that are called in
     // doOnDraw().
     @Override
     protected void onDraw() {
@@ -404,7 +405,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                         }
                     }
                 }
-            }.run(); // fire the timer immediately    
+            }.run(); // fire the timer immediately
         }
     }
 
@@ -898,7 +899,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * <pre>
      * setFields( false, fields );
      * </pre>
-     * 
+     *
      * @param fields the fields
      */
     public void setListGridFields(ListGridField... fields) {
@@ -909,7 +910,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * Wraps ListGrid.setFields(...) but takes care of "id" field display handling.
      *
      * @param forceIdField if true, and "id" is a defined field, then display it. If false, it is displayed
-     *        only in debug mode.  
+     *        only in debug mode.
      * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
@@ -1018,15 +1019,15 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     /**
      * Updates the list of table's associated actions <code>tableActions</code>.
      * It automatically updates the gui by calling <code>drawFooter()</code> provided the table has been initialized.
-     * 
+     *
      * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
      * when footer actions take place, typically a button click. It is up to the action to ensure the page
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
-     * 
+     *
      * @param title the title of a modified action
-     * @param valueMap the map containing the tuples with name of a select item and <code>actionValue</code> which is 
-     * then passed to <code>tableAction.executeAction()</code>; use the <code>LinkedHashMap</code> if you want to 
+     * @param valueMap the map containing the tuples with name of a select item and <code>actionValue</code> which is
+     * then passed to <code>tableAction.executeAction()</code>; use the <code>LinkedHashMap</code> if you want to
      * preserve the order of map items
      * @param tableAction the tableAction object (on this object the <code>executeAction()</code> is actually invoked)
      */
@@ -1088,10 +1089,10 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * times when you don't want the user to be able to press table action
      * buttons regardless of which rows are selected. This method let's
      * you set this override-disable flag.
-     * 
+     *
      * Note: this also effects the double-click handler - if this disable override
      * is on, the double-click handler is not called.
-     * 
+     *
      * @param disabled if true, all table action buttons will be disabled
      *                 if false, table action buttons will be enabled based on their predefined
      *                 selection enablement rule.
@@ -1194,7 +1195,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a
      * {@link Table} of results.
      *
-     * @author Joseph Marques 
+     * @author Joseph Marques
      */
     private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
 
@@ -1205,8 +1206,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         public TableFilter(Table<?> table) {
             super();
             setOverflow(Overflow.VISIBLE);
-            setAutoWidth();
-            setPadding(5);
+            setWidth100();
             this.table = table;
         }
 

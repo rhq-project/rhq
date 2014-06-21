@@ -38,3 +38,5 @@ gwt-tmp/
 *.DS_Store
 #these are created by the python script engine during the tests
 cachedir/
+
+*.rej

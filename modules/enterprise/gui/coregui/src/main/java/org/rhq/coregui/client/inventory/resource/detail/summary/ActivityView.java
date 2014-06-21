@@ -97,7 +97,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
 
                             isInitialized = true;
 
-                            // draw() may be done since onInit finishes asynchronously, if so redraw 
+                            // draw() may be done since onInit finishes asynchronously, if so redraw
                             if (isDrawn()) {
                                 markForRedraw();
                             }
@@ -117,7 +117,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         addMember(dashboardView);
 
         footer = new EnhancedToolStrip();
-        footer.setPadding(5);
+        //footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);
 
@@ -167,7 +167,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         // TODO, add real portlets
         // set leftmost column and let the rest be equally divided
         dashboard.setColumnWidths("40%");
-        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
+        dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "transparent"));
 
         //figure out which portlets to display and how
         HashMap<String, String> resKeyNameMap = DashboardView.processPortletNameMapForResource(resourceComposite);

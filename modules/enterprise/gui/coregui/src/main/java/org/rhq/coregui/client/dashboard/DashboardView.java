@@ -204,7 +204,7 @@ public class DashboardView extends EnhancedVLayout {
     }
 
     public void buildPortlets() {
-        this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
+        this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "transparent"));
 
         portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
 
@@ -356,7 +356,7 @@ public class DashboardView extends EnhancedVLayout {
         ColorButtonItem picker = new ColorButtonItem("colorButton", MSG.common_title_background());
         picker.setStartRow(false);
         picker.setEndRow(false);
-        picker.setCurrentColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
+        picker.setCurrentColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "transparent"));
         picker.setColorSelectedHandler(new ColorSelectedHandler() {
             @Override
             public void onColorSelected(ColorSelectedEvent event) {

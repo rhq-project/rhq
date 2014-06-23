@@ -76,8 +76,9 @@
          the jboss.eap.version is the version of the eap inside if the directory
          inside the zip is not the same as the name of the zip
          e.g. jboss-as-dist-7.2.0.Alpha1-redhat-4.zip unzips to jboss-eap-6.1
+         e.g. jboss-as-dist-7.4.0.Final-redhat-4.zip unzips to jboss-eap-6.3
     -->
-    <jboss.version>7.4.0.Final-redhat-SNAPSHOT</jboss.version>
+    <jboss.version>7.4.0.Final-redhat-4</jboss.version>
     <jboss.eap.version>jboss-eap-6.3</jboss.eap.version>
     <jboss.javaee6.spec.version>3.0.2.Final</jboss.javaee6.spec.version>
 
@@ -1685,6 +1686,15 @@
   </build>
 
   <repositories>
+
+    <repository>
+       <id>eap</id>
+       <name>EAP Repository</name>
+       <url>http://maven.repository.redhat.com/techpreview/eap6/6.3.0.Alpha/maven-repository/</url>
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
+    </repository>
 
 <!--
     <repository>

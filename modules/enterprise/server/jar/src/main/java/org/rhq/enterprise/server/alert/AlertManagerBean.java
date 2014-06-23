@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2014 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,8 @@ import org.hibernate.ejb.QueryImpl;
 import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -670,6 +672,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             if (alertNotifications != null && alertNotifications.size() > 0) {
                 AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
+                DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
 
                 for (AlertNotification alertNotification : alertNotifications) {
                     AlertNotificationLog notificationLog = null;
@@ -706,6 +709,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         }
                     }
 
+                    // make sure we don't exceed the max message length for the db vendor
+                    String message = dbType.getString(notificationLog.getMessage(),
+                        AlertNotificationLog.MESSAGE_MAX_LENGTH);
+                    if (null != message && !message.equals(notificationLog.getMessage())) {
+                        notificationLog = new AlertNotificationLog(notificationLog.getAlert(),
+                            notificationLog.getSender(), notificationLog.getResultState(), message);
+                    }
                     entityManager.persist(notificationLog);
                     alert.addAlertNotificatinLog(notificationLog);
                 }

@@ -290,7 +290,7 @@
     <rhq-jboss-as-dmr-client.version>${rhq.pom.version}-redhat-2</rhq-jboss-as-dmr-client.version>
     <rhq-jboss-as-common.version>${rhq.pom.version}</rhq-jboss-as-common.version>
     <rhq-common-parent.version>${rhq.pom.version}</rhq-common-parent.version>
-    <rhq-core-client-api.version>${rhq.pom.version}</rhq-core-client-api.version>
+    <rhq-core-client-api.version>${rhq.pom.version}-redhat-1</rhq-core-client-api.version>
     <rhq-core-comm-api.version>${rhq.pom.version}</rhq-core-comm-api.version>
     <rhq-core-dbutils.version>${rhq.pom.version}</rhq-core-dbutils.version>
     <rhq-core-domain.version>${rhq.pom.version}-redhat-2</rhq-core-domain.version>
@@ -318,7 +318,7 @@
     <rhq-rest.version>${rhq.pom.version}</rhq-rest.version>
     <rhq-enterprise-parent.version>${rhq.pom.version}</rhq-enterprise-parent.version>
     <rhq-remoting-cli.version>${rhq.pom.version}</rhq-remoting-cli.version>
-    <rhq-remoting-client-api.version>${rhq.pom.version}-redhat-1</rhq-remoting-client-api.version>
+    <rhq-remoting-client-api.version>${rhq.pom.version}-redhat-2</rhq-remoting-client-api.version>
     <remote-client-deps.version>${rhq.pom.version}</remote-client-deps.version>
     <rhq-remoting-parent.version>${rhq.pom.version}</rhq-remoting-parent.version>
     <rhq-scripting-api.version>${rhq.pom.version}</rhq-scripting-api.version>
@@ -389,7 +389,7 @@
     <jopr-jboss-as-plugin.version>${rhq.pom.version}</jopr-jboss-as-plugin.version>
     <jopr-jboss-cache-v3-plugin.version>${rhq.pom.version}</jopr-jboss-cache-v3-plugin.version>
     <jopr-jboss-cache-plugin.version>${rhq.pom.version}</jopr-jboss-cache-plugin.version>
-    <rhq-jmx-plugin.version>${rhq.pom.version}</rhq-jmx-plugin.version>
+    <rhq-jmx-plugin.version>${rhq.pom.version}-redhat-1</rhq-jmx-plugin.version>
     <rhq-kickstart-plugin.version>${rhq.pom.version}</rhq-kickstart-plugin.version>
     <modcluster-plugin.version>${rhq.pom.version}</modcluster-plugin.version>
     <rhq-mysql-plugin.version>${rhq.pom.version}</rhq-mysql-plugin.version>

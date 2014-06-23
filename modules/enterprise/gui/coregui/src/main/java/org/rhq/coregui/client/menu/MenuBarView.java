@@ -279,12 +279,9 @@ public class MenuBarView extends EnhancedVLayout {
         }
 
         private String createCspButtonContent() {
-            ProductInfo productInfo = CoreGUI.get().getProductInfo();
-            boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
-            if (!isRHQ) { // TODO disable for RHQ
+            if (CoreGUI.isRHQ()) {
                 return "";
             }
-
             MenuItem search = new MenuItem(RhAccessView.PAGE_SEARCH, RhAccessView.VIEW_ID);
             MenuItem newCase = new MenuItem(RhAccessView.PAGE_NEW_CASE, RhAccessView.VIEW_ID);
             MenuItem myCases = new MenuItem(RhAccessView.PAGE_MY_CASES, RhAccessView.VIEW_ID);

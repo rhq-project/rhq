@@ -51,7 +51,7 @@ public class OpenSupportCaseMenuItem extends MenuItem {
 
     public boolean isToBeIncluded() {
         if (CoreGUI.isRHQ()) {
-            //return false; TODO disable for RHQ !!
+            return false;
         }
         Resource resource = resourceComposite.getResource();
         if (resource.getResourceType().getPlugin().equals("JBossAS7")) {

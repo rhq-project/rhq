@@ -31,7 +31,6 @@ import java.util.List;
 
 import mazz.i18n.Logger;
 
-import org.rhq.core.db.ant.dbupgrade.SST_JavaTask;
 import org.rhq.core.db.builders.CreateSequenceExprBuilder;
 
 /**
@@ -117,7 +116,7 @@ public abstract class DatabaseType {
     }
 
     /**
-     * Given a genertic type, this will return an analogous type that is specific to this database.
+     * Given a generic type, this will return an analogous type that is specific to this database.
      *
      * @param  generic_type a generic type name
      *
@@ -284,6 +283,35 @@ public abstract class DatabaseType {
      */
     public Integer getInteger(Object number) {
         return (Integer) number;
+    }
+
+    /**
+     * Get the Long representation of the number type supplied by the db vendor for a long field value.
+     * The default implementation simply applies a cast to the passed in number and is appropriate for DB types
+     * that support a native long field type.  Other db types should override this method (like Oracle).
+     *
+     * @param number
+     * @return
+     */
+    public Long getLong(Object number) {
+        return (Long) number;
+    }
+
+    /**
+     * Different vendors have different rules regarding varchar/varchar2 string storage.  In particular, Oracle
+     * has a hard limit of 4000 bytes (not characters, bytes).  Make sure we trim to maxLength (in characters)
+     * while also meeting vendor-specific constraints.
+     *
+     * @param varchar  The String to be stored as a varchar/varchar2
+     * @param maxLength max length of the DB field, in characters.
+     * @return The string, safe for storage to the DB field
+     */
+    public String getString(String varchar, int maxLength) {
+        if (null == varchar || varchar.length() <= maxLength) {
+            return varchar;
+        }
+
+        return varchar.substring(0, maxLength);
     }
 
     /**

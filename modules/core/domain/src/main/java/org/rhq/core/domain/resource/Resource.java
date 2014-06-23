@@ -1212,7 +1212,9 @@ public class Resource implements Comparable<Resource>, Serializable {
             ancestry.append(parentAncestry);
         }
 
-        // protect against the *very* unlikely case that this value is too big for the db 
+        // protect against the *very* unlikely case that this value is too big for the db
+        // (jshaughn) this may not work for oracle's 4000 *byte* limit, but the chances are super-small
+        //            that this will be a problem.  If it ever is we'll have to check the byte count.
         if (ancestry.length() < 4000) {
             this.setAncestry(ancestry.toString());
         }

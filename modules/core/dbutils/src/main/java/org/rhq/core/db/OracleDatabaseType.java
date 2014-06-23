@@ -74,6 +74,43 @@ public abstract class OracleDatabaseType extends DatabaseType {
         return intField.intValue();
     }
 
+    /* (non-Javadoc)
+     * @see org.rhq.core.db.DatabaseType#getLong(java.lang.Object)
+     *
+     * Oracle stores long fields as Numbers and returns a BigDecimal.  It is assumed <code>number</code> is actually
+     * a long value, otherwise precision will be lost in this conversion.
+     */
+    @Override
+    public Long getLong(Object number) {
+        BigDecimal longField = (BigDecimal) number;
+        return longField.longValue();
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.db.DatabaseType#getString(java.lang.String, int)
+     *
+     * Oracle has a hard limit of 4000 bytes for varchar/varchar2 storage. Make sure the returned String
+     * is trimmed as needed to satisfy the constraint.
+     */
+    @Override
+    public String getString(String varchar, int maxLength) {
+        if ( null == varchar ) {
+            return null;
+        }
+
+        // First meet the character limit.
+        String result = super.getString(varchar, maxLength);
+
+        // Now, ensure we can store the resulting number of bytes by clipping off the last character until we reach
+        // an acceptable number of bytes. This is not super-efficient but hopefully won't happen all that often. We can't
+        // just convert to bytes and clip to 4000, because it could leave an incomplete multi-byte character at the end.
+        while (result.getBytes().length > 4000) {
+            result = result.substring(0, result.length() - 1);
+        }
+
+        return result;
+    }
+
     /**
      * For Oracle databases, the boolean parameter will actually be of type "int" with a value of 0 or 1.
      *

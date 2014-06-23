@@ -20,6 +20,7 @@
     <!-- Ports used by unit tests - can be overridden via profiles in settings.xml -->
     <rhq.comm.test.connectorBindPort>33333</rhq.comm.test.connectorBindPort>
     <rhq.comm.test.connector2BindPort>62621</rhq.comm.test.connector2BindPort>
+    <rhq.internal>false</rhq.internal>
   </properties>
 
   <dependencies>

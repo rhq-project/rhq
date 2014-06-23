@@ -51,6 +51,7 @@ import org.rhq.coregui.client.bundle.BundleTopView;
 import org.rhq.coregui.client.dashboard.DashboardsView;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.help.HelpView;
+import org.rhq.coregui.client.help.RhAccessView;
 import org.rhq.coregui.client.inventory.InventoryView;
 import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.coregui.client.inventory.groups.detail.ResourceGroupTopView;
@@ -114,6 +115,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     //spinder [BZ 731864] defining variable that can be set at build time to enable/disable TAG ui components.
     // This will be set to 'false' on the release branch.
     private static boolean enableTagsForUI = Boolean.valueOf(MSG.enable_tags());
+
+    private static boolean isRHQ = true;
+
+    public static boolean isRHQ() {
+        return isRHQ;
+    }
 
     public static boolean isTagsEnabledForUI() {
         return enableTagsForUI;
@@ -288,6 +295,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                 @Override
                 public void onSuccess(ProductInfo result) {
                     productInfo = result;
+                    isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
                     Window.setTitle(productInfo.getName());
                     buildCoreUI();
                 }
@@ -390,6 +398,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             canvas = new AlertHistoryView();
         } else if (viewName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
+        } else if (viewName.equals(RhAccessView.VIEW_ID.getName())) {
+            canvas = new RhAccessView();
         } else {
             canvas = null;
         }

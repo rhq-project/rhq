@@ -20,6 +20,8 @@
 package org.rhq.enterprise.communications.servlet;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -27,7 +29,10 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.jboss.logging.Logger;
 import org.jboss.remoting.transport.servlet.ServletServerInvokerMBean;
 
 /**
@@ -41,6 +46,56 @@ import org.jboss.remoting.transport.servlet.ServletServerInvokerMBean;
  */
 public class ServerInvokerServlet extends org.jboss.remoting.transport.servlet.web.ServerInvokerServlet {
     private static final long serialVersionUID = 1L;
+
+    private static Logger log = Logger.getLogger(ServerInvokerServlet.class);
+
+    private ServletConfig servletConfig;
+    private AtomicInteger evilLogMessageCount = new AtomicInteger(0);
+    private final AtomicBoolean alreadyInitialized = new AtomicBoolean(false);
+
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        // purposefully do not call init(config) - we can't have the superclass try to get
+        // the servletInvoker yet and risk getting that dreaded and evil log message!
+        super.init();
+        this.servletConfig = config;
+    }
+
+    @Override
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+        java.io.IOException {
+
+        // find the servlet invoker now - catch exceptions and avoid logging so we don't scare people
+        if (initServletInvokerNow()) {
+            super.processRequest(request, response);
+        } else {
+            // tell the client we can't process the request
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Server is not ready yet");
+        }
+    }
+
+    /**
+     * Performs the "real" init so the JBoss/Remoting superclass loads the servlet invoker.
+     * This returns true if we can keep going; false if an error occurred and we can't process the current request.
+     */
+    private boolean initServletInvokerNow() {
+        try {
+            synchronized (alreadyInitialized) {
+                if (!alreadyInitialized.get()) {
+                    super.init(this.servletConfig);
+                    alreadyInitialized.set(true);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            // only log a message (at debug level) if we see this lots of times, but only every 10th time
+            int msgCount = evilLogMessageCount.incrementAndGet();
+            if ((msgCount % 10 == 0) && (msgCount >= 100)) {
+                log.debug(e);
+            }
+            return false;
+        }
+    }
 
     /**
      * Returns the servlet server invoker. In our implementation, this always returns

@@ -41,9 +41,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.as.controller.client.ModelControllerClient;
-
 import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient.LoginModuleRequest;
@@ -230,6 +228,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         configOptions.put("BaseDN", conf.getProperty(RHQConstants.LDAPBaseDN));
         configOptions.put("BindDN", conf.getProperty(RHQConstants.LDAPBindDN));
         configOptions.put("BindPW", Obfuscator.encode(conf.getProperty(RHQConstants.LDAPBindPW)));
+        boolean followReferralsBoolean = Boolean.valueOf(conf.getProperty(SystemSetting.LDAP_FOLLOW_REFERRALS.getInternalName(),
+            "false"));
+        configOptions.put(Context.REFERRAL, followReferralsBoolean ? "follow" : "ignore");
 
         return configOptions;
     }

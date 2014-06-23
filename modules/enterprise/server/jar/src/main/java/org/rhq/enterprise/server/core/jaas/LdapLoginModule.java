@@ -37,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -268,9 +269,12 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
         }
 
         env.setProperty(Context.PROVIDER_URL, providerUrl);
-
-        // Follow referrals automatically
-        env.setProperty(Context.REFERRAL, "ignore");//BZ:582471- active directory query change
+        
+        // Follow referrals automatically if enabled
+        // BZ:582471  - active directory query change
+        // BZ:1082806 - Context referrals are hardcoded to "ignore" in LDAP configuration
+        String followReferrals = env.getProperty(Context.REFERRAL, "ignore");
+        env.setProperty(Context.REFERRAL, "follow".equals(followReferrals) ? "follow" : "ignore");
 
         return env;
     }

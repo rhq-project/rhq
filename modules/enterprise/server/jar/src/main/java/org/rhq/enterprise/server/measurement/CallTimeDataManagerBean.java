@@ -55,6 +55,7 @@ import org.rhq.core.domain.criteria.CallTimeDataCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -119,7 +120,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
+    public void addCallTimeData(@NotNull
+    Set<CallTimeData> callTimeDataSet) {
         if (callTimeDataSet.isEmpty()) {
             return;
         }
@@ -136,8 +138,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     }
 
-    public PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId, long beginTime,
-        long endTime, PageControl pageControl) {
+    public PageList<CallTimeDataComposite> findCallTimeDataRawForResource(Subject subject, int scheduleId,
+        long beginTime, long endTime, PageControl pageControl) {
         pageControl.initDefaultOrderingField("value.beginTime", PageOrdering.ASC);
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
         int resourceId = schedule.getResource().getId();
@@ -161,7 +163,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
         @SuppressWarnings("unchecked")
         List<CallTimeDataComposite> results = queryWithOrderBy.getResultList();
-        long count = (Long)queryCount.getSingleResult();
+        long count = (Long) queryCount.getSingleResult();
 
         return new PageList<CallTimeDataComposite>(results, (int) count, pageControl);
     }
@@ -350,8 +352,11 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 ps.setInt(3, callTimeData.getScheduleId());
                 Set<String> callDestinations = callTimeData.getValues().keySet();
                 for (String callDestination : callDestinations) {
-                    ps.setString(2, callDestination);
-                    ps.setString(4, callDestination);
+                    // make sure the destination string is safe for storage, clip as needed
+                    String safeCallDestination = dbType.getString(callDestination,
+                        CallTimeDataKey.DESTINATION_MAX_LENGTH);
+                    ps.setString(2, safeCallDestination);
+                    ps.setString(4, safeCallDestination);
                     ps.addBatch();
                 }
             }
@@ -427,7 +432,10 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                     ps.setDouble(4, callTimeDataValue.getMaximum());
                     ps.setDouble(5, callTimeDataValue.getTotal());
                     ps.setLong(6, callTimeDataValue.getCount());
-                    ps.setString(8, callDestination);
+                    // make sure the destination string is safe for storage, clip as needed
+                    String safeCallDestination = dbType.getString(callDestination,
+                        CallTimeDataKey.DESTINATION_MAX_LENGTH);
+                    ps.setString(8, safeCallDestination);
                     ps.addBatch();
                 }
             }
@@ -445,8 +453,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                 insertedRowCount += results[i] == -2 ? 1 : results[i]; // If Oracle returns -2, just count 1 row;
             }
 
-            notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet
-                .toArray(new CallTimeData[callTimeDataSet.size()]));
+            notifyAlertConditionCacheManager("insertCallTimeDataValues",
+                callTimeDataSet.toArray(new CallTimeData[callTimeDataSet.size()]));
 
             if (insertedRowCount > 0) {
                 MeasurementMonitor.getMBean().incrementCalltimeValuesInserted(insertedRowCount);

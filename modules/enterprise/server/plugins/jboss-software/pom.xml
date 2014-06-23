@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-client-api</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-client-api.version}</version>
             <scope>provided</scope>
         </dependency>
 

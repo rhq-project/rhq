@@ -157,7 +157,7 @@ to load. Cactus will still run without this JAR.     jdobies, Feb 16, 2007. -->
                                 <artifactItem>
                                     <groupId>${rhq.groupId}</groupId>
                                     <artifactId>rhq-jmx-plugin</artifactId>
-                                    <version>${rhq.version}</version>
+                                    <version>${rhq-jmx-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

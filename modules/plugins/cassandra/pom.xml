@@ -40,7 +40,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-jmx-plugin</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-jmx-plugin.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
@@ -89,7 +89,7 @@
                   <mkdir dir="target/testsetup/plugins" />
                   <copy toDir="target/testsetup/plugins" flatten="true">
                      <fileset dir="${settings.localRepository}/">
-                        <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                        <include name="org/rhq/rhq-jmx-plugin/${rhq-jmx-plugin.version}/rhq-jmx-plugin-${rhq-jmx-plugin.version}.jar" />
                      </fileset>
                      <fileset dir="${project.build.directory}" includes="${project.artifactId}-${project.version}.jar" />
                   </copy>

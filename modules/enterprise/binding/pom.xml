@@ -20,7 +20,7 @@
         <dependency>
            <groupId>${project.groupId}</groupId>
            <artifactId>rhq-scripting-api</artifactId>
-           <version>${project.version}</version>
+           <version>${rhq-scripting-api.version}</version>
         </dependency>
 
         <dependency>

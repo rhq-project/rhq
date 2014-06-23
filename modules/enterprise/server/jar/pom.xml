@@ -104,7 +104,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.parent.version}</version>
+      <version>${rhq-core-client-api.version}</version>
     </dependency>
 
     <dependency>

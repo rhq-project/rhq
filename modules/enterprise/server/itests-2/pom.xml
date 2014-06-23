@@ -701,7 +701,7 @@
         <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-client-api</artifactId>
-          <version>${project.version}</version>
+          <version>${rhq-core-client-api.version}</version>
           <type>test-jar</type>
           <scope>test</scope>
         </dependency>

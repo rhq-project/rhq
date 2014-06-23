@@ -45,7 +45,7 @@
 -->
                              <pathelement location="../jboss-as-7/target/rhq-jboss-as-7-plugin-${project.version}.jar" />
                               <!--<pathelement location="../jira/target/rhq-jira-plugin-${project.version}.jar" />-->
-                              <pathelement location="../jmx/target/rhq-jmx-plugin-${project.version}.jar" />
+                              <pathelement location="../jmx/target/rhq-jmx-plugin-${rhq-jmx-plugin.version}.jar" />
                               <pathelement location="../mysql/target/rhq-mysql-plugin-${project.version}.jar" />
                               <pathelement location="../netservices/target/rhq-netservices-plugin-${project.version}.jar" />
                               <!--<pathelement location="../onewire/target/rhq-onewire-plugin-${project.version}.jar" />-->

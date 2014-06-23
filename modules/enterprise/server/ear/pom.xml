@@ -385,7 +385,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-jmx-plugin</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${rhq-jmx-plugin.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

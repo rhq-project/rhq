@@ -18,6 +18,10 @@
       interfaces that do not necessarily have access to the full comm module
    </description>
 
+   <properties>
+      <rhq.internal>false</rhq.internal>
+   </properties>
+
    <profiles>
 
       <profile>

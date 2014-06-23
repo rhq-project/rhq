@@ -16,6 +16,10 @@
   <name>RHQ Client API</name>
   <description>Server and Client APIs for invoking operations on the RHQ plugin container</description>
 
+  <properties>
+      <rhq.internal>false</rhq.internal>
+  </properties>
+
   <dependencies>
 
     <dependency>

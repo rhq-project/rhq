@@ -71,9 +71,15 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
         } catch (Exception e) {
             if (e.getCause() instanceof SecurityException) {
                 throw new InvalidPluginConfigurationException("Failed to authenticate to managed JVM - "
-                        + "principal and/or credentials connection properties are not set correctly.");
+                    + "principal and/or credentials connection properties are not set correctly.");
             }
-            log.warn("Failed to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "].", e);
+            // don't litter agent log with a stack trace unless we're in debug
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "].", e);
+            } else {
+                log.warn("Failed to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "]: "
+                    + e.getMessage());
+            }
         }
     }
 
@@ -82,13 +88,19 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
         String connectionTypeDescriptorClassName = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
             .getStringValue();
         if (JMXDiscoveryComponent.PARENT_TYPE.equals(connectionTypeDescriptorClassName)) {
-            // Our parent is itself a JMX component, so just reuse its connection.
+            // Our parent is itself a JMX component, so just reuse its connection, if it has one.
             this.connection = ((JMXComponent) context.getParentResourceComponent()).getEmsConnection();
+            if (null == this.connection) {
+                throw new IllegalStateException("Could not access parent connection, parent may be down");
+            }
             this.connectionProvider = this.connection.getConnectionProvider();
         } else {
             this.connectionProvider = ConnectionProviderFactory.createConnectionProvider(pluginConfig,
                 this.context.getNativeProcess(), this.context.getTemporaryDirectory());
             this.connection = this.connectionProvider.connect();
+            if (null == this.connection) {
+                throw new IllegalStateException("Failed to create connection, resource may be down");
+            }
             this.connection.loadSynchronous(false);
         }
     }

@@ -11,6 +11,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-core-client-api</artifactId>
+  <version>4.9.0.JON320GA</version>
   <packaging>jar</packaging>
 
   <name>RHQ Client API</name>
@@ -39,14 +40,14 @@
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-core-comm-api</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-core-comm-api.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-common-drift</artifactId>
-      <version>${project.version}</version>
+      <version>${rhq-common-drift.version}</version>
       <scope>provided</scope>
     </dependency>
 

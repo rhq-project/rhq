@@ -132,7 +132,7 @@
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-jmx-plugin</artifactId>
-                <version>${project.version}</version>
+                <version>${rhq-jmx-plugin.version}</version>
                 <scope>provided</scope>
             </dependency>
 

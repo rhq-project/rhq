@@ -32,7 +32,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-jmx-plugin.version}</version>
          <scope>provided</scope>
       </dependency>
 
@@ -66,7 +66,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
+         <version>${rhq-core-client-api.version}</version>
          <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
       </dependency>
 
@@ -207,7 +207,7 @@
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${rhq-platform-plugin.version}/rhq-platform-plugin-${rhq-platform-plugin.version}.jar" />
                                     <include name="org/jboss/on/jopr-tomcat-plugin/${project.version}/jopr-tomcat-plugin-${project.version}.jar" />
-                                    <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-jmx-plugin/${rhq-jmx-plugin.version}/rhq-jmx-plugin-${rhq-jmx-plugin.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

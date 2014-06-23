@@ -540,13 +540,6 @@
     <profiles>
         <profile>
           <id>enable-rha</id>
-           <activation>
-              <property>
-                 <!-- we want this always active but activeByDefault doesn't work -->
-                 <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
-                 <name>java.home</name>
-              </property>
-           </activation>
             <dependencies>
               <dependency>
                 <groupId>${project.groupId}</groupId>

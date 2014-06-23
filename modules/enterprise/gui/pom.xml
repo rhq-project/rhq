@@ -41,9 +41,6 @@
     
     <profile>
       <id>enable-rha</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <modules>
         <module>portal-war</module>
         <module>remote-client-war</module>

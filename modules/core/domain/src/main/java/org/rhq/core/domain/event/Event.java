@@ -43,8 +43,6 @@ import javax.persistence.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.rhq.core.domain.resource.Resource;
-
 /**
  * A transpired event, pertaining to a particular {@link Resource}.
  *
@@ -94,6 +92,11 @@ public class Event implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_EVENT";
+
+    /**
+     * this is a character limit, when stored certain vendors may require the string be clipped to
+     * satisfy a byte limit (postgres can store the 4000 chars, oracle only 4000 bytes).
+     */
     public static final int DETAIL_MAX_LENGTH = 4000;
 
     public static final String DELETE_BY_RESOURCES = "Event.deleteByResources";
@@ -122,7 +125,7 @@ public class Event implements Serializable {
     @Enumerated(EnumType.STRING)
     private EventSeverity severity;
 
-    @Column(name = "DETAIL", length = 4000, nullable = false)
+    @Column(name = "DETAIL", length = DETAIL_MAX_LENGTH, nullable = false)
     private String detail;
 
     /** The event's type (i.e. the name of its {@link EventDefinition}). */

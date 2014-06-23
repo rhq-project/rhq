@@ -46,6 +46,7 @@
                 <module>jndi-access</module>
                 <!--<module>mod_cluster-plugin-test</module>-->
                 <module>rest-api</module>
+                <module>jmx-plugin</module>
             </modules>
         </profile>
 

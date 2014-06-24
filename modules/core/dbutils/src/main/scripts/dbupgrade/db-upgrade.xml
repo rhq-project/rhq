@@ -2385,7 +2385,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.151">
-              <schema-directSQL>
+              <schema-directSQL ignoreError="true">
                 <statement desc="Set the flag that determines whether to follow or not referrals in LDAP">
                   INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
                   VALUES (67, 'CAM_LDAP_FOLLOW_REFERRALS', 'false', 'false')

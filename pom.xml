@@ -313,7 +313,7 @@
     <rhq-enterprise-gui-parent.version>${rhq.pom.version}</rhq-enterprise-gui-parent.version>
     <rhq-portal.version>${rhq.pom.version}</rhq-portal.version>
     <rhq-remote-client-war.version>${rhq.pom.version}</rhq-remote-client-war.version>
-    <rhq-remoting-war.version>${rhq.pom.version}</rhq-remoting-war.version>
+    <rhq-remoting-war.version>${rhq.pom.version}-redhat-1</rhq-remoting-war.version>
     <rhq-rest-examples.version>${rhq.pom.version}</rhq-rest-examples.version>
     <rhq-rest.version>${rhq.pom.version}</rhq-rest.version>
     <rhq-enterprise-parent.version>${rhq.pom.version}</rhq-enterprise-parent.version>

@@ -21,6 +21,8 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -52,9 +54,12 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class HostControllerComponent<T extends ResourceComponent<?>> extends BaseServerComponent<T>
         implements MeasurementFacet, OperationFacet {
 
+    private final Log log = LogFactory.getLog(HostControllerComponent.class);
+
     private static final String DOMAIN_CONFIG_TRAIT = "domain-config-file";
     private static final String HOST_CONFIG_TRAIT = "host-config-file";
     private static final String DOMAIN_HOST_TRAIT = "domain-host-name";
+    private static final String DOMAIN_NAME_TRAIT = "domain-name";
     private static final String PROCESS_TYPE_DC = "Domain Controller";
 
     private boolean domainController; // determines whether this HC is also DC
@@ -85,6 +90,9 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
                 collectConfigTrait(report, request);
             } else if (requestName.equals(DOMAIN_HOST_TRAIT)) {
                 MeasurementDataTrait data = new MeasurementDataTrait(request, findASDomainHostName());
+                report.addData(data);
+            } else if (requestName.equals(DOMAIN_NAME_TRAIT)) {
+                MeasurementDataTrait data = new MeasurementDataTrait(request, readAttribute("name"));
                 report.addData(data);
             }
             else {

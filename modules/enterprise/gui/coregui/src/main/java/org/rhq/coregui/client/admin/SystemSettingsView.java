@@ -565,6 +565,13 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("");
                 break;
 
+            case LDAP_FOLLOW_REFERRALS:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPFollowReferrals_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPFollowReferrals_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
+                break;
+
             ///////////////////////////////////////////
             // Drift Server Configuration Properties //
             ///////////////////////////////////////////

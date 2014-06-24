@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -88,9 +89,11 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
-
-    final Log log = LogFactory.getLog(BaseServerComponent.class);
     private static final long MAX_PROCESS_WAIT_TIME = 3600000L;
+    protected static final long MAX_TIMEOUT_FAILURE_WAIT = 5 * 60 * 1000L;
+
+    private final Log log = LogFactory.getLog(BaseServerComponent.class);
+
     private ASConnection connection;
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
@@ -99,6 +102,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private String releaseVersion;
     private String aSHostName;
     private DocumentBuilderFactory docBuilderFactory;
+    private long lastManagementInterfaceReply = 0;
+
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -125,29 +130,44 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public AvailabilityType getAvailability() {
         AvailabilityType availabilityType;
         try {
-            readAttribute(getHostAddress(), "name");
-            availabilityType = UP;
-        }
-        catch (ResultFailedException e) {
-            log.warn("Domain host name seems to be changed, re-reading from  "+getServerPluginConfiguration().getHostConfigFile());
-            setASHostName(findASDomainHostName());
-            log.info("Detected domain host name ["+getASHostName()+"]");
             try {
-                readAttribute(getHostAddress(), "name");
+                readAttribute(getHostAddress(), "name", AVAIL_OP_TIMEOUT_SECONDS);
                 availabilityType = UP;
-            } catch (Exception ex) {
-                if (log.isDebugEnabled()) {
-                    log.debug(getResourceDescription() + ": exception while checking availability", e);
+                lastManagementInterfaceReply = new Date().getTime();
+            }catch (ResultFailedException e) {
+                log.warn("Domain host name seems to be changed, re-reading from  "
+                    + getServerPluginConfiguration().getHostConfigFile());
+                setASHostName(findASDomainHostName());
+                log.info("Detected domain host name [" + getASHostName() + "]");
+                try {
+                    readAttribute(getHostAddress(), "name");
+                    availabilityType = UP;
+                } catch (Exception ex) {
+                    throw ex;
                 }
-                availabilityType = DOWN;
+            } catch (Exception ex) {
+                   throw ex;
             }
-        }
-        catch (Exception e) {
+        } catch (TimeoutException e) {
+            long now = new Date().getTime();
+
+            if (now - lastManagementInterfaceReply > MAX_TIMEOUT_FAILURE_WAIT) {
+                availabilityType = DOWN;
+            } else {
+                ProcessInfo processInfo = context.getNativeProcess();
+                if (processInfo != null && processInfo.priorSnaphot().isRunning()) {
+                    availabilityType = previousAvailabilityType;
+                } else {
+                    availabilityType = DOWN;
+                }
+            }
+        } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug(getResourceDescription() + ": exception while checking availability", e);
             }
             availabilityType = DOWN;
         }
+
         if (availabilityType == DOWN) {
             releaseVersion = null;
         } else if (previousAvailabilityType != UP) {

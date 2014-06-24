@@ -1111,6 +1111,9 @@
     <metric property="domain-host-name" displayName="Domain Host Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host in domain this host controller is using"/>
 
+    <metric property="domain-name" displayName="Domain Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
+            description="The name of the managed domain this Host Controller belongs to."/>
+
     <event name="logEntry" description="an entry in a log file"/>
 
     <resource-configuration>
@@ -1124,6 +1127,7 @@
                       </c:list-property>
                   </c:group>
       -->
+      <c:simple-property name="name" displayName="Domain Name" required="true" description="Name of the managed domain. This value is same for all HostControllers in domain, but only DomainController resource is allowed to update it."/>
       <c:group name="children:system-property:name+" displayName="System-properties">
         <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
           <c:map-property name="*:name" displayName="Name" readOnly="true">

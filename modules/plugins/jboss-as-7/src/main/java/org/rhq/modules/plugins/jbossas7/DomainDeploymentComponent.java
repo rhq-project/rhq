@@ -56,9 +56,16 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
         // Domain deployments have no 'enabled' attribute
 
         Operation op = new ReadResource(getAddress());
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, AVAIL_OP_TIMEOUT_SECONDS);
         // this resource cannot be down, either UP = exists, or MISSING
-        return (res != null && res.isSuccess()) ? AvailabilityType.UP : AvailabilityType.MISSING;
+
+        if (res != null && res.isSuccess()) {
+            return AvailabilityType.UP;
+        } else if (res != null && !res.isSuccess() && res.isTimedout()) {
+            return AvailabilityType.UNKNOWN;
+        }
+
+        return AvailabilityType.MISSING;
     }
 
     private String getManagementNodeName() {

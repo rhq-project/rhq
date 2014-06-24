@@ -11,6 +11,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-remoting-war</artifactId>
+    <version>4.9.0.JON320GA</version>
     <packaging>war</packaging>
 
     <name>RHQ Remoting WAR</name>
@@ -21,7 +22,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-comm</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-enterprise-comm.version}</version>
             <scope>provided</scope> <!-- by rhq.ear -->
         </dependency>
 

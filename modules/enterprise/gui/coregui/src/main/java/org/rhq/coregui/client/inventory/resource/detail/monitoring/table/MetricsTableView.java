@@ -74,6 +74,8 @@ import org.rhq.coregui.client.util.BrowserUtility;
 import org.rhq.coregui.client.util.Log;
 import org.rhq.coregui.client.util.message.Message;
 
+import static org.rhq.coregui.client.inventory.resource.detail.monitoring.table.MetricsGridFieldName.*;
+
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.
  *
@@ -125,10 +127,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 addToDashboardButton.enable();
                 ListGridRecord selectedRecord = selectionEvent.getSelectedRecord();
                 if (null != selectedRecord) {
-                    //Log.debug("Selected Metric Label: "
-                    //    + selectedRecord.getAttribute(MetricsViewDataSource.FIELD_METRIC_LABEL));
                     selectedMetricDefinitionId = selectedRecord
-                        .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
+                        .getAttributeAsInt(METRIC_DEF_ID.getValue());
                 }
             }
         });
@@ -278,7 +278,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 @Override
                 public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
                     metricsTableView.expandedRows.add(recordExpandEvent.getRecord().getAttributeAsInt(
-                        MetricsViewDataSource.FIELD_METRIC_DEF_ID));
+                            METRIC_DEF_ID.getValue()));
                     refreshData();
                 }
 
@@ -287,7 +287,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 @Override
                 public void onRecordCollapse(RecordCollapseEvent recordCollapseEvent) {
                     metricsTableView.expandedRows.remove(recordCollapseEvent.getRecord().getAttributeAsInt(
-                        MetricsViewDataSource.FIELD_METRIC_DEF_ID));
+                            METRIC_DEF_ID.getValue()));
                     refresh();
                     new Timer() {
                         @Override
@@ -321,7 +321,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 ListGridRecord listGridRecord = getRecord(i);
                 if (null != listGridRecord) {
                     int metricDefinitionId = listGridRecord
-                        .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
+                        .getAttributeAsInt(METRIC_DEF_ID.getValue());
                     if (null != metricsTableView && null != expandedRows
                         && metricsTableView.expandedRows.contains(metricDefinitionId)) {
                         expandRecord(listGridRecord);
@@ -340,8 +340,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
          * If you expand a grid row then create a graph.
          */
         protected Canvas getExpansionComponent(final ListGridRecord record) {
-            final Integer definitionId = record.getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
-            final Integer resourceId = record.getAttributeAsInt(MetricsViewDataSource.FIELD_RESOURCE_ID);
+            final Integer definitionId = record.getAttributeAsInt(METRIC_DEF_ID.getValue());
+            final Integer resourceId = record.getAttributeAsInt(RESOURCE_ID.getValue());
             VLayout vLayout = new VLayout();
             vLayout.setPadding(5);
 

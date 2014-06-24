@@ -183,7 +183,7 @@
     <cassandra.version>1.2.9</cassandra.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.driver.version>1.0.2</cassandra.driver.version>
-    <cassandra.driver.netty.version>3.6.3.Final</cassandra.driver.netty.version>
+    <cassandra.driver.netty.version>3.6.9.Final</cassandra.driver.netty.version>
     <cassandra.snappy.version>1.0.4.1-rhq-p1</cassandra.snappy.version>
     <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
 

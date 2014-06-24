@@ -1111,6 +1111,9 @@
     <metric property="domain-host-name" displayName="Domain Host Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
             description="The name of the host in domain this host controller is using"/>
 
+    <metric property="domain-name" displayName="Domain Name"  dataType="trait" displayType="summary" defaultInterval="3600000"
+            description="The name of the managed domain this Host Controller belongs to."/>
+
     <event name="logEntry" description="an entry in a log file"/>
 
     <resource-configuration>

@@ -336,7 +336,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // create test ear by starting with rhq.ear and thinning it
         String projectVersion = System.getProperty("project.version");
         String rhqCoreClientApiVersion = System.getProperty("rhq-core-client-api.version");
+        if ((rhqCoreClientApiVersion == null) || rhqCoreClientApiVersion.trim().isEmpty()) {
+            rhqCoreClientApiVersion = projectVersion;
+        }
         String rhqPlatformPluginVersion = System.getProperty("rhq-platform-plugin.version");
+        if ((rhqPlatformPluginVersion == null) || rhqPlatformPluginVersion.trim().isEmpty()) {
+            rhqPlatformPluginVersion = projectVersion;
+        }
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
         earResolver.offline();

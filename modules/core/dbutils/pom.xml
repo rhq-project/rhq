@@ -12,7 +12,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-core-dbutils</artifactId>
-    <version>4.9.0.JON320GA</version>
+    <version>4.9.0.JON320GA-redhat-1</version>
     <packaging>jar</packaging>
     <name>RHQ Database Utilities</name>
     <description>Database schema setup, upgrade and other utilities</description>

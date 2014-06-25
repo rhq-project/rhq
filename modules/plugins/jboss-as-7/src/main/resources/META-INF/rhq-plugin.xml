@@ -1988,7 +1988,7 @@
              discovery="VersionedSubsystemDiscovery"
              createDeletePolicy="neither"
              supportsMissingAvailabilityType="true"
-             description="Deployed package on a managed server. Go to server groups to manipulate it">
+             description="Deployed package on a managed server. Go to corresponding DomainDeployment to manipulate it">
 
       <plugin-configuration>
         <c:simple-property name="path" default="deployment" readOnly="true"/>

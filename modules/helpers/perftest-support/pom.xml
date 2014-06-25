@@ -72,7 +72,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-dbutils</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-core-dbutils.version}</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>

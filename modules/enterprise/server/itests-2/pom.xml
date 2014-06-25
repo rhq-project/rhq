@@ -64,6 +64,8 @@
                 <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
                 <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <property name="jboss.conf.safe" location="${jboss.conf}.safe" />
+                <property name="rhq-platform-plugin.version" value="${rhq-platform-plugin.version}" />
+                <property name="rhq-core-client-api.version" value="${rhq-core-client-api.version}" />
                 <if>
                   <available file="${jboss.unzip.location}" />
                   <then>

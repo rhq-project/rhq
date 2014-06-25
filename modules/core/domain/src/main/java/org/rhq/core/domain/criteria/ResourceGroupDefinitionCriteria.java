@@ -40,6 +40,7 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
     private String filterDescription;
     private Boolean filterRecursive;
     private String filterExpression;
+    private NonBindingOverrideFilter filterUserDefinedOnly; // requires overrides - finds only user defined group definitions (excludes expressions provided by plugins)
 
     private boolean fetchManagedResourceGroups;
 
@@ -49,7 +50,7 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
     private PageOrdering sortExpression;
 
     public ResourceGroupDefinitionCriteria() {
-
+        filterOverrides.put("userDefinedOnly", "cannedExpression IS NULL");
     }    
 
     @Override
@@ -71,6 +72,11 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
 
     public void addFilterExpression(String filterExpression) {
         this.filterExpression = filterExpression;
+    }
+
+    public void addFilterUserDefinedOnly(boolean filterUserDefinedOnly) {
+        this.filterUserDefinedOnly = (filterUserDefinedOnly ? NonBindingOverrideFilter.ON
+            : NonBindingOverrideFilter.OFF);
     }
 
     public void fetchManagedResourceGroups(boolean fetchManagedResourceGroups) {

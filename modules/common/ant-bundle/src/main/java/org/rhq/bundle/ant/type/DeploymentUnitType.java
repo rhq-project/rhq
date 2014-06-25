@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -74,6 +75,8 @@ public class DeploymentUnitType extends AbstractBundleType {
     private Map<URL, Boolean> urlArchivesExploded = new HashMap<URL, Boolean>();
     private Map<File, String> localArchiveNames = new LinkedHashMap<File, String>();
 
+    private Set<Object> notDeployed = new HashSet<Object>();
+
     private SystemServiceType systemService;
     private Pattern ignorePattern;
     private String preinstallTarget;
@@ -109,7 +112,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             DestinationComplianceMode complianceToUse = DestinationComplianceMode.instanceOrDefault(this.compliance);
 
             File deployDir = getProject().getDeployDir();
-            TemplateEngine templateEngine = createTemplateEngine(getProject().getUserProperties());
+            TemplateEngine templateEngine = createTemplateEngine(getProject().getProperties());
             int deploymentId = getProject().getDeploymentId();
             DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
                 getProject().getBundleVersion(), getProject().getBundleDescription(), complianceToUse);
@@ -188,6 +191,9 @@ public class DeploymentUnitType extends AbstractBundleType {
             Map<File, Pattern> allArchiveReplacePatterns = new HashMap<File, Pattern>(this.archiveReplacePatterns);
             Set<File> allRawFilesToReplace = new HashSet<File>(this.rawFilesToReplace);
             Map<File, Boolean> allArchivesExploded = new HashMap<File, Boolean>(this.archivesExploded);
+
+            removeNotDeployedFiles(allArchives, allFiles, allArchiveReplacePatterns, allRawFilesToReplace, allArchivesExploded);
+
             downloadFilesFromUrlEndpoints(allArchives, allFiles, allArchiveReplacePatterns, allRawFilesToReplace,
                 allArchivesExploded);
 
@@ -269,6 +275,51 @@ public class DeploymentUnitType extends AbstractBundleType {
             }
         }
         return;
+    }
+
+    private void removeNotDeployedFiles(Map<File, File> allArchives, Map<File, File> allFiles,
+        Map<File, Pattern> allArchiveReplacePatterns, Set<File> allRawFilesToReplace,
+        Map<File, Boolean> allArchivesExploded) {
+
+        Iterator<Map.Entry<File, File>> it = allArchives.entrySet().iterator();
+        while (it.hasNext()) {
+            File key = it.next().getKey();
+            if (notDeployed.contains(key)) {
+                it.remove();
+            }
+        }
+
+        it = allFiles.entrySet().iterator();
+        while (it.hasNext()) {
+            File key = it.next().getKey();
+            if (notDeployed.contains(key)) {
+                it.remove();
+            }
+        }
+
+        Iterator<Map.Entry<File, Pattern>> it2 = allArchiveReplacePatterns.entrySet().iterator();
+        while (it2.hasNext()) {
+            File key = it2.next().getKey();
+            if (notDeployed.contains(key)) {
+                it.remove();
+            }
+        }
+
+        Iterator<Map.Entry<File, Boolean>> it3 = allArchivesExploded.entrySet().iterator();
+        while (it3.hasNext()) {
+            File key = it3.next().getKey();
+            if (notDeployed.contains(key)) {
+                it.remove();
+            }
+        }
+
+        Iterator<File> it4 = allRawFilesToReplace.iterator();
+        while (it4.hasNext()) {
+            File key = it4.next();
+            if (notDeployed.contains(key)) {
+                it.remove();
+            }
+        }
     }
 
     /**
@@ -540,6 +591,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(FileType file) {
+        if (!file.isDeploy()) {
+            notDeployed.add(file.getSource());
+        }
+
         File destFile = file.getDestinationFile();
         if (destFile == null) {
             File destDir = file.getDestinationDir();
@@ -553,6 +608,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(UrlFileType file) {
+        if (!file.isDeploy()) {
+            notDeployed.add(file.getSource());
+        }
+
         File destFile = file.getDestinationFile();
         if (destFile == null) {
             File destDir = file.getDestinationDir();
@@ -565,6 +624,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(ArchiveType archive) {
+        if (!archive.isDeploy()) {
+            notDeployed.add(archive.getSource());
+        }
+
         this.archives.put(archive.getSource(), archive.getDestinationDir());
         this.localArchiveNames.put(archive.getSource(), archive.getName());
         Pattern replacePattern = archive.getReplacePattern();
@@ -576,6 +639,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     }
 
     public void addConfigured(UrlArchiveType archive) {
+        if (!archive.isDeploy()) {
+            notDeployed.add(archive.getSource());
+        }
+
         this.urlArchives.put(archive.getSource(), archive.getDestinationDir());
         Pattern replacePattern = archive.getReplacePattern();
         if (replacePattern != null) {
@@ -593,12 +660,10 @@ public class DeploymentUnitType extends AbstractBundleType {
     private TemplateEngine createTemplateEngine(Hashtable<String, String> properties) {
         TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
-        // add tags to Template Engine tokens
+        // add properties to Template Engine tokens
         if (properties != null) {
-            for (String s : properties.keySet()) {
-                if (s.startsWith(DeployPropertyNames.DEPLOY_TAG_PREFIX)) {
-                    templateEngine.getTokens().put(s, properties.get(s));
-                }
+            for (Map.Entry<String, String> e : properties.entrySet()) {
+                templateEngine.getTokens().put(e.getKey(), e.getValue());
             }
         }
 

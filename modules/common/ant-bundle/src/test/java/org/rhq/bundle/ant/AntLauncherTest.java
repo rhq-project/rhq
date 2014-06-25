@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -698,6 +699,39 @@ public class AntLauncherTest {
 
     public void testUrlFilesAndArchives() throws Exception {
         testUrlFilesAndArchives(true, "test-bundle-url.xml");
+    }
+
+    public void testNotDeployedFiles() throws Exception {
+        FileUtil.purge(DEPLOY_DIR, true);
+
+        AntLauncher ant = new AntLauncher(true);
+        Properties inputProps = createInputProperties(null);
+        List<BuildListener> buildListeners = createBuildListeners();
+
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("ant-properties/deploy.xml"), inputProps,
+            buildListeners);
+
+        assert project != null;
+        Set<String> bundleFiles = project.getBundleFileNames();
+        assert bundleFiles != null;
+        assert bundleFiles.size() == 2 : bundleFiles;
+        assert bundleFiles.contains("deployed.file") : bundleFiles;
+        assert bundleFiles.contains("in-bundle.properties") : bundleFiles;
+
+        assert new File(DEPLOY_DIR, "deployed.file").exists() : "deployed.file missing";
+        assert !new File(DEPLOY_DIR, "in-bundle.properties")
+            .exists() : "in-bundle.properties deployed but shouldn't have";
+    }
+
+    public void testAntPropertiesUsedForTokenReplacement() throws Exception {
+        testNotDeployedFiles();
+
+        Properties props = readPropsFile(new File(DEPLOY_DIR, "deployed.file"));
+
+        assert "user provided value".equals(props.getProperty("user.provided")) : "user.provided";
+        assert "bundle provided value".equals(props.getProperty("bundle.provided")) : "bundle.provided";
+        assert "a".equals(props.get("a.from.properties.file")) : "a.from.properties.file";
+        assert "b".equals(props.get("b.from.properties.file")) : "b.from.properties.file";
     }
 
     private void testUrlFilesAndArchives(boolean validate, String recipeFile) throws Exception {

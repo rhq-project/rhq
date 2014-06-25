@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<project name="property-demo" default="main"
+         xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="Property loading demo" version="1.0">
+
+        <rhq:input-property name="user.provided" description="This is provided by the user." required="false"
+                            defaultValue = "user provided value"/>
+
+        <property name="bundle.provided" value="bundle provided value"/>
+        <property file="in-bundle.properties"/>
+
+        <rhq:deployment-unit name="sample-deployment-unit" compliance="full">
+            <rhq:file name="in-bundle.properties" deploy="false"/>
+            <rhq:file name="deployed.file" replace="true" />
+        </rhq:deployment-unit>
+    </rhq:bundle>
+
+    <target name="main"/>
+</project>

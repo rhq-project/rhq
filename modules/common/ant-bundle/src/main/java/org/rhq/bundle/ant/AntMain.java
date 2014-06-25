@@ -742,12 +742,12 @@ public class AntMain implements org.apache.tools.ant.launch.AntMain {
             while (e.hasMoreElements()) {
                 String arg = (String) e.nextElement();
                 String value = (String) definedProps.get(arg);
-                project.setUserProperty(arg, value);
+                project.setProperty(arg, value);
             }
 
-            project.setUserProperty(MagicNames.ANT_FILE,
+            project.setProperty(MagicNames.ANT_FILE,
                                     buildFile.getAbsolutePath());
-            project.setUserProperty(MagicNames.ANT_FILE_TYPE,
+            project.setProperty(MagicNames.ANT_FILE_TYPE,
                                     MagicNames.ANT_FILE_TYPE_FILE);
 
             project.setKeepGoingMode(keepGoingMode);

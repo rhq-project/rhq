@@ -34,6 +34,7 @@ import org.apache.tools.ant.BuildException;
 public abstract class AbstractFileType extends AbstractBundleType {
     private String name;
     private File source;
+    private boolean deploy = true;
 
     // TODO: We currently do not call this method. Do we want to or should we just let the Deployer utility handle
     //       validation of specified files?
@@ -65,4 +66,15 @@ public abstract class AbstractFileType extends AbstractBundleType {
         this.source = getProject().resolveFile(name);
     }
 
+    public void setSource(File source) {
+        this.source = source;
+    }
+
+    public boolean isDeploy() {
+        return deploy;
+    }
+
+    public void setDeploy(boolean deploy) {
+        this.deploy = deploy;
+    }
 }

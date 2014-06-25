@@ -20,6 +20,11 @@ package org.rhq.bundle.ant.task;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.TaskContainer;
+import org.apache.tools.ant.taskdefs.Property;
+import org.apache.tools.ant.taskdefs.PropertyHelperTask;
+
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.bundle.ant.DeploymentPhase;
 import org.rhq.bundle.ant.type.DeploymentUnitType;
@@ -37,12 +42,13 @@ import java.util.Map;
  *
  * @author Ian Springer
  */
-public class BundleTask extends AbstractBundleTask {        
+public class BundleTask extends AbstractBundleTask {
     private String name;
     private String version;
     private String description;
     private Map<String, DeploymentUnitType> deploymentUnits = new HashMap<String, DeploymentUnitType>();
-    
+    private List<Property> properties = new ArrayList<Property>();
+
     @Override
     public void maybeConfigure() throws BuildException {
         // The below call will init the attribute fields.
@@ -72,7 +78,11 @@ public class BundleTask extends AbstractBundleTask {
      * @throws BuildException if an error occurs
      */
     @Override
-    public void execute() throws BuildException {        
+    public void execute() throws BuildException {
+        for(Property p : properties) {
+            p.execute();
+        }
+
         Hashtable projectProps = getProject().getProperties();
 
         // Make sure the requires System properties are defined and valid.
@@ -188,6 +198,11 @@ public class BundleTask extends AbstractBundleTask {
 
     public void addConfigured(InputPropertyType inputProperty) {
         inputProperty.init();        
+    }
+
+    public void addConfigured(Property property) {
+        property.init();
+        properties.add(property);
     }
 
     public void add(DeploymentUnitType deployment) {

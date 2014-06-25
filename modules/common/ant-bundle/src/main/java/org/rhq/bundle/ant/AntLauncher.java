@@ -188,12 +188,12 @@ public class AntLauncher {
             for (Map.Entry<Object, Object> property : buildProperties.entrySet()) {
                 // On the assumption that these properties will be slurped in via Properties.load we
                 // need to escape backslashes to have them treated as literals
-                project.setUserProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
+                project.setProperty(property.getKey().toString(), property.getValue().toString().replace("\\",
                     "\\\\"));
             }
         }
-        project.setUserProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
-        project.setUserProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
+        project.setProperty(MagicNames.ANT_FILE, buildFile.getAbsolutePath());
+        project.setProperty(MagicNames.ANT_FILE_TYPE, MagicNames.ANT_FILE_TYPE_FILE);
 
         project.setCoreLoader(classLoader);
         project.init();

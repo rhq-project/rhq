@@ -12,6 +12,7 @@
 
     <groupId>org.rhq</groupId>
     <artifactId>rhq-core-dbutils</artifactId>
+    <version>4.9.0.JON320GA</version>
     <packaging>jar</packaging>
     <name>RHQ Database Utilities</name>
     <description>Database schema setup, upgrade and other utilities</description>
@@ -201,7 +202,7 @@
                           <dependency>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>rhq-cassandra-schema</artifactId>
-                            <version>${project.version}</version>
+                            <version>${rhq-cassandra-schema.version}</version>
                           </dependency>
                           <dependency>
                             <groupId>org.codehaus.groovy</groupId>

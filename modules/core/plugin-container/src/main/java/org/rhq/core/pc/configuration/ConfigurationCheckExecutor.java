@@ -18,6 +18,9 @@
  */
 package org.rhq.core.pc.configuration;
 
+import gnu.trove.map.hash.TIntLongHashMap;
+import gnu.trove.set.hash.TIntHashSet;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -65,6 +68,8 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
  * checker).  Each run now has a time limit, 15s by default.  We check as many eligible roots as possible until we're
  * done or exceed the time limit.  It's not a timeout per se, we finish the root and then check our time. This means
  * an on-demand update should not have to wait more than about 20s and the agent chunks work, spreading out the checks.
+ * If we are in the middle of processing a root when we run out of time, we pick up where we left off on the next run
+ * (by ignoring the root's descendants that have already been checked).
 
  * @author Greg Hinkle
  * @author Jay Shaughnessy
@@ -77,25 +82,33 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
 
     private ConfigurationServerService configurationServerService;
 
-    private long checkInterval;
+    private long checkPeriod;
     private long timeLimit;
 
     /**
      * Map of resourceId to lastCheckTime.  This will include only config checking "root" resources; platform and
      * top-level server resources
      */
-    private HashMap<Integer, Long> rootCheckTimeMap = new HashMap<Integer, Long>();
+    private TIntLongHashMap rootCheckTimeMap = new TIntLongHashMap();
+    /**
+     * Set of resourceIds already checked for the root currently being checked.  If we can't finish the root in the
+     * current run we use this to avoid duplicating checks.  The root's id will be added to the set  (regardless of
+     * whether it supports a config check) if the processing is stopped due to time.  This ensures we can know
+     * which root the set refers to.
+     */
+    private TIntHashSet rootMemberCheckedSet = new TIntHashSet();
 
     /**
      * @param configurationServerService
-     * @param checkInterval In seconds. The amount of time after a resource is checked before it again becomes eligible for a check.
-     * @param timeLimit  In seconds. The executor checks one "root" resource at a time.  After completing a root it checks to see if the total runtime
-     * has surpassed this time limit.  If so it defers the next root to the next run of the executor.
+     * @param checkPeriod In seconds. The amount of time after a resource is checked before it again becomes eligible
+     * for a check.
+     * @param timeLimit  In seconds. After each checked resource the executor checks its elapsed runtime. If the limit
+     * is exceeded it defers more checks to the run of the executor.
      */
-    public ConfigurationCheckExecutor(ConfigurationServerService configurationServerService, long checkInterval,
+    public ConfigurationCheckExecutor(ConfigurationServerService configurationServerService, long checkPeriod,
         long timeLimit) {
         this.configurationServerService = configurationServerService;
-        this.checkInterval = checkInterval;
+        this.checkPeriod = checkPeriod;
         this.timeLimit = timeLimit;
     }
 
@@ -109,49 +122,80 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         List<Resource> eligibleRoots = getEligibleRoots(platform);
 
         if (eligibleRoots.isEmpty()) {
-            log.debug("Skipping configuration update check, no eligible roots.");
+            //TODO: MAKE DEBUG
+            log.info("Skipping configuration update check, no eligible roots.");
             return null;
         }
 
-        log.info("Starting configuration update check on [" + eligibleRoots.size() + "] roots...");
+        log.info("Starting configuration update check on [" + eligibleRoots.size() + "] eligible roots...");
         CountTime totalCountTime = new CountTime();
         long start = System.currentTimeMillis();
-        long elapsedSeconds = 0;
+        long stopTime = start + (timeLimit * 1000);
+        long wallTime = 0L;
         int rootsChecked = 0;
 
         // check as many roots as possible until we either finish or exceed the allotted time.
         for (Resource root : eligibleRoots) {
-            // TODO change to debug
-            log.info("Configuration update check begin for root resource [" + root.getName() + "]");
-            CountTime countTime = checkConfigurations(inventoryManager, root);
-            // TODO change to debug
-            log.info("Configuration update check   end for root resource [" + root.getName() + "]" + countTime);
+            // See if this root check was in progress when the last run completed
+            if (rootMemberCheckedSet.contains(root.getId())) {
+                // TODO change to debug
+                log.info("Configuration update check continuing for root resource [" + root.getName() + "]");
+            } else {
+                // TODO change to debug
+                log.info("Configuration update check  beginning for root resource [" + root.getName() + "]");
+                if (!rootMemberCheckedSet.isEmpty()) {
+                    // It looks we had checking in progress but it was apparently for a root that no longer exists.
+                    rootMemberCheckedSet.clear();
+                    // TODO change to debug
+                    log.info("Clearing in-progress work, previous root no longer exists.");
+                }
+            }
+
+            CountTime countTime = new CountTime();
+            boolean completed = checkConfigurations(inventoryManager, root, countTime, stopTime);
             ++rootsChecked;
             totalCountTime.add(countTime);
-            long now = System.currentTimeMillis();
-            elapsedSeconds = (now - start) / 1000;
-            rootCheckTimeMap.put(root.getId(), Long.valueOf(now));
 
-            if (elapsedSeconds >= timeLimit) {
-                // TODO: CHANGE TO DEBUG
+            long now = System.currentTimeMillis();
+            wallTime = (now - start);
+
+            if (completed) {
+                // set the checked time so this root will not again be eligible for a while
+                rootCheckTimeMap.put(root.getId(), Long.valueOf(now));
+
+                // clear our rootMember tracking in preparation of processing another root
+                rootMemberCheckedSet.clear();
+
+                // TODO change to debug
+                log.info("Configuration update check  completed for root resource [" + root.getName() + "] "
+                    + ((null != countTime) ? countTime : ""));
+
+            } else {
+                // add the root to the member set to mark this root as in-progress
+                rootMemberCheckedSet.add(root.getId());
+
+                // TODO change to debug
+                log.info("Configuration update check  stopped, time limit [" + timeLimit
+                    + "] hit while processing root resource [" + root.getName() + "]"
+                    + ((null != countTime) ? countTime : ""));
                 log.info("Stopping after [" + rootsChecked + "] of [" + eligibleRoots.size()
-                    + "] because elapsed time [" + elapsedSeconds + "] >= time limit [" + timeLimit + "]");
+                    + "] because elapsed time [" + wallTime + "ms] >= time limit [" + timeLimit + "s]");
+
+                // stop checks for this run
                 break;
             }
         }
 
         log.info("Configuration update check complete. Checked [" + rootsChecked + "] of [" + eligibleRoots.size()
-            + "] eligible roots in [" + elapsedSeconds + "]s wall time. " + totalCountTime);
+            + "] eligible roots in [" + wallTime + "ms (" + wallTime / 1000 + "s)] wall time. " + totalCountTime);
 
         return null;
     }
 
     /**
-     * return a list of root resources that have not been checked within the last checkInterval period ordered
-     * by least recently checked to most recently checked.
-     *
      * @param platform
-     * @return
+     * @return a list of root resources that have not been checked within the last checkInterval period. Returned in
+     * a predictable order given a two-level sort of lastCheckTime ASC, resourceId ASC.
      */
     private List<Resource> getEligibleRoots(Resource platform) {
         // the list of possible roots contains the platform and top level servers
@@ -171,7 +215,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         HashMap<Integer, Long> tempRootCheckTimeMap = new HashMap<Integer, Long>();
         for (Resource r : possibleRoots) {
             Long lastCheckTime = rootCheckTimeMap.get(r.getId());
-            if (null == lastCheckTime || lastCheckTime <= now - (checkInterval * 1000)) {
+            if (null == lastCheckTime || lastCheckTime <= now - (checkPeriod * 1000)) {
                 result.add(r);
             }
             tempRootCheckTimeMap.put(Integer.valueOf(r.getId()),
@@ -180,99 +224,105 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         rootCheckTimeMap.clear();
         rootCheckTimeMap.putAll(tempRootCheckTimeMap);
 
-        // sort the eligible roots such that the least recently checked are done first
+        // sort the eligible roots such that the least recently checked are done first, using resId as a tie breaker.
         Collections.sort(result, new Comparator<Resource>() {
             public int compare(Resource o1, Resource o2) {
-                return rootCheckTimeMap.get(o1.getId()).compareTo(rootCheckTimeMap.get(o2.getId()));
+                int i = Long.compare(rootCheckTimeMap.get(o1.getId()), rootCheckTimeMap.get(o2.getId()));
+                return (0 != i) ? i : Integer.compare(o1.getId(), o2.getId());
             }
         });
 
         return result;
     }
 
-    public CountTime checkConfigurations(InventoryManager inventoryManager, Resource resource) {
-        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resource.getId());
-        ConfigurationFacet resourceComponent = null;
-        ResourceType resourceType = resource.getResourceType();
+    public boolean checkConfigurations(InventoryManager inventoryManager, Resource resource, CountTime countTime,
+        long stopTime) {
 
-        CountTime countTime = new CountTime();
-        boolean debugEnabled = log.isDebugEnabled();
+        // if we've used up our allotted time, just stop
+        if (System.currentTimeMillis() > stopTime) {
+            return false;
+        }
 
-        if (resourceContainer != null && resourceContainer.getAvailability() != null
-            && resourceContainer.getAvailability().getAvailabilityType() == AvailabilityType.UP) {
+        // if we've already checked this resource then just check the children
+        if (!rootMemberCheckedSet.contains(resource.getId())) {
 
-            if (resourceContainer.supportsFacet(ConfigurationFacet.class)) {
-                try {
-                    resourceComponent = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
-                        FacetLockType.NONE, CONFIGURATION_CHECK_TIMEOUT, true, false, true);
-                } catch (PluginContainerException e) {
-                    // Expecting when the resource does not support configuration management
-                    // Should never happen after above check
+            ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resource.getId());
+            ConfigurationFacet resourceComponent = null;
+            ResourceType resourceType = resource.getResourceType();
+
+            boolean debugEnabled = log.isDebugEnabled();
+
+            if (resourceContainer != null && resourceContainer.getAvailability() != null
+                && resourceContainer.getAvailability().getAvailabilityType() == AvailabilityType.UP) {
+
+                if (resourceContainer.supportsFacet(ConfigurationFacet.class)) {
+                    try {
+                        resourceComponent = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
+                            FacetLockType.NONE, CONFIGURATION_CHECK_TIMEOUT, true, false, true);
+                    } catch (PluginContainerException e) {
+                        // Expecting when the resource does not support configuration management
+                        // Should never happen after above check
+                    }
                 }
-            }
 
-            if (resourceComponent != null) {
-                // Only report availability for committed resources; don't bother with new, ignored or deleted resources.
-                if (resource.getInventoryStatus() == InventoryStatus.COMMITTED
-                    && resourceType.getResourceConfigurationDefinition() != null) {
+                if (resourceComponent != null) {
+                    // Only report availability for committed resources; don't bother with new, ignored or deleted resources.
+                    if (resource.getInventoryStatus() == InventoryStatus.COMMITTED
+                        && resourceType.getResourceConfigurationDefinition() != null) {
 
-                    long t1 = System.currentTimeMillis();
+                        long t1 = System.currentTimeMillis();
 
-                    if (debugEnabled) {
-                        log.debug("Checking for updated Resource configuration for " + resource + "...");
-                    }
-
-                    try {
-                        Configuration liveConfiguration = resourceComponent.loadResourceConfiguration();
-
-                        if (liveConfiguration != null) {
-                            ConfigurationDefinition configurationDefinition = resourceType
-                                .getResourceConfigurationDefinition();
-
-                            // Normalize and validate the config.
-                            ConfigurationUtility.normalizeConfiguration(liveConfiguration, configurationDefinition,
-                                true, true);
-                            List<String> errorMessages = ConfigurationUtility.validateConfiguration(liveConfiguration,
-                                configurationDefinition);
-                            for (String errorMessage : errorMessages) {
-                                log.warn("Plugin Error: Invalid " + resourceType.getName()
-                                    + " resource configuration returned by " + resourceType.getPlugin() + " plugin - "
-                                    + errorMessage);
-                            }
-
-                            Configuration original = getResourceConfiguration(inventoryManager, resource);
-
-                            if (original == null) {
-                                original = loadConfigurationFromFile(inventoryManager, resource.getId());
-                            }
-
-                            if (!liveConfiguration.equals(original)) {
-                                if (debugEnabled) {
-                                    log.debug("New configuration version detected on resource: " + resource);
-                                }
-                                this.configurationServerService.persistUpdatedResourceConfiguration(resource.getId(),
-                                    liveConfiguration);
-                                //                                resource.setResourceConfiguration(liveConfiguration);
-                                boolean persisted = persistConfigurationToFile(inventoryManager, resource.getId(),
-                                    liveConfiguration, log);
-                                if (persisted) {
-                                    resource.setResourceConfiguration(null);
-                                }
-                            }
+                        if (debugEnabled) {
+                            log.debug("Checking for updated Resource configuration for " + resource + "...");
                         }
-                    } catch (Throwable t) {
-                        log.warn("An error occurred while checking for an updated Resource configuration for "
-                            + resource + ".", t);
-                    }
 
-                    long now = System.currentTimeMillis();
-                    countTime.add(1, (now - t1));
+                        try {
+                            Configuration liveConfiguration = resourceComponent.loadResourceConfiguration();
 
-                    // Give the agent some time to breathe
-                    try {
-                        Thread.sleep(750);
-                    } catch (InterruptedException e) {
-                        ; // We don't care
+                            if (liveConfiguration != null) {
+                                ConfigurationDefinition configurationDefinition = resourceType
+                                    .getResourceConfigurationDefinition();
+
+                                // Normalize and validate the config.
+                                ConfigurationUtility.normalizeConfiguration(liveConfiguration, configurationDefinition,
+                                    true, true);
+                                List<String> errorMessages = ConfigurationUtility.validateConfiguration(
+                                    liveConfiguration, configurationDefinition);
+                                for (String errorMessage : errorMessages) {
+                                    log.warn("Plugin Error: Invalid " + resourceType.getName()
+                                        + " resource configuration returned by " + resourceType.getPlugin()
+                                        + " plugin - " + errorMessage);
+                                }
+
+                                Configuration original = getResourceConfiguration(inventoryManager, resource);
+
+                                if (original == null) {
+                                    original = loadConfigurationFromFile(inventoryManager, resource.getId());
+                                }
+
+                                if (!liveConfiguration.equals(original)) {
+                                    if (debugEnabled) {
+                                        log.debug("New configuration version detected on resource: " + resource);
+                                    }
+                                    this.configurationServerService.persistUpdatedResourceConfiguration(
+                                        resource.getId(), liveConfiguration);
+                                    boolean persisted = persistConfigurationToFile(inventoryManager, resource.getId(),
+                                        liveConfiguration, log);
+                                    if (persisted) {
+                                        resource.setResourceConfiguration(null);
+                                    }
+                                }
+                            }
+                        } catch (Throwable t) {
+                            log.warn("An error occurred while checking for an updated Resource configuration for "
+                                + resource + ".", t);
+                        } finally {
+                            // regardless of whether it passes or fails, consider it checked.
+                            rootMemberCheckedSet.add(resource.getId());
+                        }
+
+                        long now = System.currentTimeMillis();
+                        countTime.add(1, (now - t1));
                     }
                 }
             }
@@ -287,15 +337,16 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                 }
 
                 try {
-                    CountTime inner = checkConfigurations(inventoryManager, child);
-                    countTime.add(inner.count, inner.time);
+                    if (!checkConfigurations(inventoryManager, child, countTime, stopTime)) {
+                        return false;
+                    }
                 } catch (Exception e) {
                     log.error("Failed to check Resource configuration for " + child + ".", e);
                 }
             }
         }
 
-        return countTime;
+        return true;
     }
 
     static public Configuration getResourceConfiguration(InventoryManager inventoryManager, Resource resource) {

@@ -118,9 +118,9 @@ public class PluginContainerConfiguration {
     // Configuration -------
 
     public static final long CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT = 300L; // in seconds
-    public static final long CONFIGURATION_DISCOVERY_INTERVAL_DEFAULT = 300L; // in seconds
+    public static final long CONFIGURATION_DISCOVERY_INTERVAL_DEFAULT = 120L; // in seconds
     public static final long CONFIGURATION_DISCOVERY_PERIOD_DEFAULT = 3600L; // in seconds
-    public static final long CONFIGURATION_DISCOVERY_LIMIT_DEFAULT = 15L; // in seconds
+    public static final long CONFIGURATION_DISCOVERY_LIMIT_DEFAULT = 10L; // in seconds
     private static final String CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX
         + "configuration-discovery-initial-delay";
     private static final String CONFIGURATION_DISCOVERY_INTERVAL_PROP = PROP_PREFIX

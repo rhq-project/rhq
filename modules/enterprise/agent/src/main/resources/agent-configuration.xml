@@ -774,7 +774,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                configuration-discovery settings for more information. 
                -->
                <!--
-               <entry key="rhq.agent.plugins.configuration-discovery.interval-secs" value="300"/>
+               <entry key="rhq.agent.plugins.configuration-discovery.interval-secs" value="120"/>
                -->
 
                <!--
@@ -803,7 +803,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                likely not exceed it by very much.
                -->
                <!--
-               <entry key="rhq.agent.plugins.configuration-discovery.period-secs" value="15"/>
+               <entry key="rhq.agent.plugins.configuration-discovery.limit-secs" value="10"/>
                -->
 
                <!--

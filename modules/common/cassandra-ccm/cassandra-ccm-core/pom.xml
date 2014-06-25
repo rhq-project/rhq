@@ -104,7 +104,7 @@
           <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
-            <version>3.6.6.Final</version>
+            <version>${cassandra.driver.netty.version}</version>
           </dependency>
           <dependency>
             <groupId>org.apache.cassandra</groupId>
@@ -160,7 +160,7 @@
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
                 <!-- see https://issues.apache.org/jira/browse/CASSANDRA-5955 -->
                 <delete file="${cassandra.dir}/lib/netty-3.5.9.Final.jar"/>
-                <copy file="${settings.localRepository}/io/netty/netty/3.6.6.Final/netty-3.6.6.Final.jar"
+                <copy file="${settings.localRepository}/io/netty/netty/${cassandra.driver.netty.version}/netty-${cassandra.driver.netty.version}.jar"
                       todir="${cassandra.dir}/lib"/>
 
                 <property name="lz4.dir" value="${project.build.outputDirectory}/lz4"/>

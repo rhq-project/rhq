@@ -88,8 +88,8 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <antlr.version>2.7.7</antlr.version>
     <apache.httpcomponents.version>4.2.5</apache.httpcomponents.version>
-    <arquillian.version>1.0.4.Final</arquillian.version>
-    <arquillian.jboss.container.version>${jboss.version}</arquillian.jboss.container.version>
+    <arquillian.version>1.0.4.Final</arquillian.version> <!-- as of 6/25/2014 the latest version publically available is 1.1.4.Final, but we can't compile with that yet -->
+    <arquillian.jboss.container.version>7.2.0.Final</arquillian.jboss.container.version> <!-- as of 6/25/2014 this is the latest version publically available -->
     <augeas.version>0.9.0-4</augeas.version>
     <augeas.classifier>el5</augeas.classifier>
     <augeas.zip.version>0.9.0-4</augeas.zip.version>

@@ -26,12 +26,6 @@
             <version>${cobber4j.version}</version>
             <scope>provided</scope> <!-- will go inside the plugin /lib directory -->
         </dependency>
-
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>jboss-ejb3-all</artifactId>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

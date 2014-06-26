@@ -47,7 +47,7 @@
 
       <echo>*** Populating lib dir...</echo>
       <copy file="${settings.localRepository}/commons-logging/commons-logging/${commons-logging.version}/commons-logging-${commons-logging.version}.jar" tofile="${lib.home}/commons-logging-${commons-logging.version}.jar" verbose="true" />
-      <copy file="${settings.localRepository}/gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" tofile="${lib.home}/getopt-${getopt.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/gnu/getopt/java-getopt/${getopt.version}/java-getopt-${getopt.version}.jar" tofile="${lib.home}/java-getopt-${getopt.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/i18nlog/i18nlog/${i18nlog.version}/i18nlog-${i18nlog.version}.jar" tofile="${lib.home}/i18nlog-${i18nlog.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jline/jline/${jline.version}/jline-${jline.version}.jar" tofile="${lib.home}/jline-${jline.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" tofile="${lib.home}/log4j-${log4j.version}.jar" verbose="true" />

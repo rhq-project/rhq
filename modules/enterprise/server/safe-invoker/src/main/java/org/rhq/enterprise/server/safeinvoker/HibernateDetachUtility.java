@@ -47,10 +47,10 @@ import org.hibernate.proxy.HibernateProxy;
 /**
  * This is a single static utility that is used to process any object just prior to sending it over the wire
  * to remote clients (like GWT clients or remote web service clients).
- * 
+ *
  * Essentially this utility scrubs the object of all Hibernate proxies, cleaning it such that it
  * can be serialized over the wire successfully.
- *  
+ *
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -211,11 +211,11 @@ public class HibernateDetachUtility {
         Object checkedObject = checkedObjectMap.get(valueIdentity);
 
         if (null == checkedObject) {
-            // if we have not yet encountered an object with this hash, store it in our map and start scrubbing            
+            // if we have not yet encountered an object with this hash, store it in our map and start scrubbing
             checkedObjectMap.put(valueIdentity, value);
 
         } else if (value == checkedObject) {
-            // if we have scrubbed this already, no more work to be done            
+            // if we have scrubbed this already, no more work to be done
             return;
 
         } else {
@@ -229,12 +229,12 @@ public class HibernateDetachUtility {
             List<Object> collisionObjects = checkedObjectCollisionMap.get(valueIdentity);
 
             if (null == collisionObjects) {
-                // if this is the 2nd occurrence for this hash, create a new map entry                
+                // if this is the 2nd occurrence for this hash, create a new map entry
                 collisionObjects = new ArrayList<Object>(1);
                 checkedObjectCollisionMap.put(valueIdentity, collisionObjects);
 
             } else {
-                // if we have scrubbed this already, no more work to be done                
+                // if we have scrubbed this already, no more work to be done
                 for (Object collisionObject : collisionObjects) {
                     if (value == collisionObject) {
                         alreadyDetached = true;
@@ -330,7 +330,7 @@ public class HibernateDetachUtility {
                 Object replaceKey = replaceObject(originalKey);
                 Object replaceValue = replaceObject(originalKeyValue);
 
-                // if either original key or original value was a hibernate proxy object, we have to 
+                // if either original key or original value was a hibernate proxy object, we have to
                 // remove it from the original map, and remember the replacement objects for later
                 if (replaceKey != null || replaceValue != null) {
                     Object newKey = (replaceKey != null) ? replaceKey : originalKey;
@@ -409,14 +409,14 @@ public class HibernateDetachUtility {
 
                 Object replacement = null;
                 String assistClassName = fieldValue.getClass().getName();
-                if (assistClassName.contains("javassist") || assistClassName.contains("EnhancerByCGLIB")) {
+                if (assistClassName.contains("jvst") || assistClassName.contains("EnhancerByCGLIB")) {
 
                     Class assistClass = fieldValue.getClass();
                     try {
                         Method m = assistClass.getMethod("writeReplace");
                         replacement = m.invoke(fieldValue);
 
-                        String assistNameDelimiter = assistClassName.contains("javassist") ? "_$$_" : "$$";
+                        String assistNameDelimiter = assistClassName.contains("jvst") ? "_$$_" : "$$";
 
                         assistClassName = assistClassName.substring(0, assistClassName.indexOf(assistNameDelimiter));
                         if (replacement != null && !replacement.getClass().getName().contains("hibernate")) {
@@ -459,7 +459,7 @@ public class HibernateDetachUtility {
                             if (!idField.isAccessible()) {
                                 idField.setAccessible(true);
                             }
-                            idField.set(replacement, (Integer) ((HibernateProxy) fieldValue)
+                            idField.set(replacement, ((HibernateProxy) fieldValue)
                                 .getHibernateLazyInitializer().getIdentifier());
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -520,7 +520,7 @@ public class HibernateDetachUtility {
         Object replacement = null;
 
         if (object instanceof HibernateProxy) {
-            if (object.getClass().getName().contains("javassist")) {
+            if (object.getClass().getName().contains("jvst")) {
                 Class assistClass = object.getClass();
                 try {
                     Method m = assistClass.getMethod("writeReplace");

@@ -22,8 +22,7 @@ import java.util.Map;
 
 import javax.management.ObjectName;
 
-import org.jboss.mx.util.ObjectNameFactory;
-
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics;
 import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
 
@@ -95,7 +94,7 @@ public interface ServiceContainerMetricsMBean {
      * {@link #getNumberSuccessfulCommandsReceived() successful commands received}.
      *
      * @return average execute time for all successful commands.
-     * 
+     *
      * @see CommandProcessorMetrics#getAverageExecutionTime()
      */
     long getAverageExecutionTimeReceived();
@@ -103,7 +102,7 @@ public interface ServiceContainerMetricsMBean {
     /**
      * Returns a map of individual command types/pojo invocations and their metrics such
      * as number of times invoked, min/max/avg execution times.
-     * 
+     *
      * @return calltime data
      *
      * @see CommandProcessorMetrics#getCallTimeDataReceived()

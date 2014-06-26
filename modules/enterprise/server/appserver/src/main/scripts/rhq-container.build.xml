@@ -353,17 +353,6 @@
 </module>
 ]]></echo>
 
-        <echo>Updating JGroups module component for EAP to ${jgroups.patch.version}</echo>
-        <!-- Remove the unpatched version -->
-        <delete file="${jboss.home}/modules/system/layers/base/org/jgroups/main/jgroups-${jgroups.initial.version}.jar" />
-        <delete file="${jboss.home}/modules/system/layers/base/org/jgroups/main/jgroups-${jgroups.initial.version}.jar.index" />
-        <!-- Update the module metadata to the patched version -->
-        <replace file="${jboss.home}/modules/system/layers/base/org/jgroups/main/module.xml"
-        token="jgroups-${jgroups.initial.version}.jar" value="jgroups-${jgroups.patch.version}.jar"/>
-        <!-- Copy in patched version -->
-        <copy file="${settings.localRepository}/org/jgroups/jgroups/${jgroups.patch.version}/jgroups-${jgroups.patch.version}.jar"
-            toDir="${jboss.home}/modules/system/layers/base/org/jgroups/main" verbose="true"/>
-
         <echo>Generate SSL key for RHQ server - 128-bit key that expires in 20 years</echo>
         <property name="jboss.conf.dir" location="${jboss.home}/standalone/configuration" />
         <available file="${jboss.conf.dir}/rhq.keystore" type="file" property="rhq.keystore.exists" />

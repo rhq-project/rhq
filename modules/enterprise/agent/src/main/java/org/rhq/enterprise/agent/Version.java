@@ -120,7 +120,24 @@ public class Version {
         Properties props = getVersionProperties();
         String name = props.getProperty(PROP_PRODUCT_NAME);
         String version = props.getProperty(PROP_PRODUCT_VERSION);
-        return "" + name + " " + version;
+
+        //Conditionally check for and apply update/patch version details
+        String updatePortion = getUpdateVersion();
+        if (updatePortion == null) {
+            updatePortion = "";
+        }
+
+        //Ex. GA[RHQ 4.9.0.JON320GA [734bd56] or Update 02[RHQ 4.9.0.JON320GA Update 02 [734bd56]]
+        if (updatePortion.trim().length() == 0){
+             return "" + name + " " + version;
+        } else {
+          String[] versionElements = version.split(" ");
+          if (versionElements.length==2){
+                return "" + name + " " + versionElements[0] + " " + updatePortion + " " + versionElements[1];
+          }else{
+                return "" + name + " " + version + " " + updatePortion;
+          }
+        }
     }
 
     /**
@@ -237,5 +254,10 @@ public class Version {
         }
 
         return ret_date;
+    }
+
+    // Update property which records update/patch version: Ex. update-1, cp1, etc.
+    public static String getUpdateVersion() {
+        return "";
     }
 }

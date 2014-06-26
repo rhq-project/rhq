@@ -221,6 +221,7 @@ public class CoreServer implements CoreServerMBean {
             productInfo.setUrl(props.getProperty("url"));
             productInfo.setVersion(props.getProperty("version"));
             productInfo.setSupportedAgentBuilds(props.getProperty("supportedAgentBuilds"));
+            productInfo.setVersionUpdate("");
 
             HashMap<String, String> helpViewContent = new HashMap<String, String>();
 

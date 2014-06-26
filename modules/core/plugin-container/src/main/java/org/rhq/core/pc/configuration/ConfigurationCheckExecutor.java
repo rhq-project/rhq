@@ -65,9 +65,9 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
  * Each run then starts operating on eligible roots, one at a time.  A root is eligible if it hasn't been checked for
  * rhq.agent.plugins.configuration-discovery.period-secs (this prop was somewhat re-purposed but in the end is sort
  * of the same.  it specifies the interval between checks, but not necessarily the interval between executions of the
- * checker).  Each run now has a time limit, 15s by default.  We check as many eligible roots as possible until we're
+ * checker).  Each run now has a time limit, 10s by default.  We check as many eligible roots as possible until we're
  * done or exceed the time limit.  It's not a timeout per se, we finish the root and then check our time. This means
- * an on-demand update should not have to wait more than about 20s and the agent chunks work, spreading out the checks.
+ * an on-demand update should not have to wait more than about 10s and the agent chunks work, spreading out the checks.
  * If we are in the middle of processing a root when we run out of time, we pick up where we left off on the next run
  * (by ignoring the root's descendants that have already been checked).
 
@@ -122,12 +122,14 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         List<Resource> eligibleRoots = getEligibleRoots(platform);
 
         if (eligibleRoots.isEmpty()) {
-            //TODO: MAKE DEBUG
-            log.info("Skipping configuration update check, no eligible roots.");
+            log.debug("Skipping configuration update check, no eligible roots.");
             return null;
         }
 
-        log.info("Starting configuration update check on [" + eligibleRoots.size() + "] eligible roots...");
+        if (log.isDebugEnabled()) {
+            log.debug("Starting configuration update check on [" + eligibleRoots.size() + "] eligible roots...");
+        }
+
         CountTime totalCountTime = new CountTime();
         long start = System.currentTimeMillis();
         long stopTime = start + (timeLimit * 1000);
@@ -138,16 +140,17 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         for (Resource root : eligibleRoots) {
             // See if this root check was in progress when the last run completed
             if (rootMemberCheckedSet.contains(root.getId())) {
-                // TODO change to debug
-                log.info("Configuration update check continuing for root resource [" + root.getName() + "]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Configuration update check continuing for root resource [" + root.getName() + "]");
+                }
             } else {
-                // TODO change to debug
-                log.info("Configuration update check  beginning for root resource [" + root.getName() + "]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Configuration update check  beginning for root resource [" + root.getName() + "]");
+                }
                 if (!rootMemberCheckedSet.isEmpty()) {
                     // It looks we had checking in progress but it was apparently for a root that no longer exists.
                     rootMemberCheckedSet.clear();
-                    // TODO change to debug
-                    log.info("Clearing in-progress work, previous root no longer exists.");
+                    log.debug("Clearing in-progress work, previous root no longer exists.");
                 }
             }
 
@@ -166,28 +169,31 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
                 // clear our rootMember tracking in preparation of processing another root
                 rootMemberCheckedSet.clear();
 
-                // TODO change to debug
-                log.info("Configuration update check  completed for root resource [" + root.getName() + "] "
-                    + ((null != countTime) ? countTime : ""));
-
+                if (log.isDebugEnabled()) {
+                    log.debug("Configuration update check  completed for root resource [" + root.getName() + "] "
+                        + ((null != countTime) ? countTime : ""));
+                }
             } else {
                 // add the root to the member set to mark this root as in-progress
                 rootMemberCheckedSet.add(root.getId());
 
-                // TODO change to debug
-                log.info("Configuration update check  stopped, time limit [" + timeLimit
-                    + "] hit while processing root resource [" + root.getName() + "]"
-                    + ((null != countTime) ? countTime : ""));
-                log.info("Stopping after [" + rootsChecked + "] of [" + eligibleRoots.size()
-                    + "] because elapsed time [" + wallTime + "ms] >= time limit [" + timeLimit + "s]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Configuration update check  stopped, time limit [" + timeLimit
+                        + "] hit while processing root resource [" + root.getName() + "]"
+                        + ((null != countTime) ? countTime : ""));
+                    log.debug("Stopping after [" + rootsChecked + "] of [" + eligibleRoots.size()
+                        + "] because elapsed time [" + wallTime + "ms] >= time limit [" + timeLimit + "s]");
+                }
 
                 // stop checks for this run
                 break;
             }
         }
 
-        log.info("Configuration update check complete. Checked [" + rootsChecked + "] of [" + eligibleRoots.size()
-            + "] eligible roots in [" + wallTime + "ms (" + wallTime / 1000 + "s)] wall time. " + totalCountTime);
+        if (log.isDebugEnabled()) {
+            log.debug("Configuration update check complete. Checked [" + rootsChecked + "] of [" + eligibleRoots.size()
+                + "] eligible roots in [" + wallTime + "ms (" + wallTime / 1000 + "s)] wall time. " + totalCountTime);
+        }
 
         return null;
     }
@@ -331,8 +337,9 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             boolean isPlatform = null == resource.getParentResource();
             for (Resource child : inventoryManager.getContainerChildren(resource, resourceContainer)) {
                 if (isPlatform && (ResourceCategory.SERVER == child.getResourceType().getCategory())) {
-                    // TODO CHANGE TO DEBUG
-                    log.info("Not Recursing on platform child (top-level-server [" + child.getName() + "])");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Not Recursing on platform child (top-level-server [" + child.getName() + "])");
+                    }
                     continue;
                 }
 

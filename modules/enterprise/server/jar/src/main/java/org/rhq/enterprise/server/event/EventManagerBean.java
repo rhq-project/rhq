@@ -178,12 +178,15 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                         ps.setString(paramIndex++, eventSource.getLocation());
                         ps.setLong(paramIndex++, event.getTimestamp());
                         ps.setString(paramIndex++, event.getSeverity().toString());
-                        ps.setString(paramIndex++, event.getDetail());
+                        String detail = dbType.getString(event.getDetail(), Event.DETAIL_MAX_LENGTH);
+                        ps.setString(paramIndex++, detail);
                         ps.addBatch();
                     }
 
-                    notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[eventData
-                        .size()]));
+                    // We may have trimmed the event detail for storage reasons, but for alerting use the
+                    // full, potentially larger detail string.
+                    notifyAlertConditionCacheManager("addEventData", eventSource,
+                        eventData.toArray(new Event[eventData.size()]));
                 }
                 ps.executeBatch();
             } finally {
@@ -337,7 +340,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         q.setParameter("resourceId", resourceId);
         q.setParameter("start", startDate);
         q.setParameter("end", endDate);
-        List<Object[]> rawResults = (List<Object[]>) q.getResultList();
+        List<Object[]> rawResults = q.getResultList();
         for (Object[] rawResult : rawResults) {
             EventSeverity severity = (EventSeverity) rawResult[0];
             long count = (Long) rawResult[1];
@@ -354,7 +357,7 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
         q.setParameter("groupId", groupId);
         q.setParameter("start", startDate);
         q.setParameter("end", endDate);
-        List<Object[]> rawResults = (List<Object[]>) q.getResultList();
+        List<Object[]> rawResults = q.getResultList();
         for (Object[] rawResult : rawResults) {
             EventSeverity severity = (EventSeverity) rawResult[0];
             long count = (Long) rawResult[1];
@@ -456,14 +459,14 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
 
     public PageList<EventComposite> findEventCompositesByCriteria(Subject subject, EventCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        
+
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.event.composite.EventComposite( " //
             + "   event.detail," //
             + "   event.source.resource.id," //
             + "   event.source.resource.name," //
-            + "   event.source.resource.ancestry," //            
-            + "   event.source.resource.resourceType.id," //            
+            + "   event.source.resource.ancestry," //
+            + "   event.source.resource.resourceType.id," //
             + "   event.id," //
             + "   event.severity," //
             + "   event.source.location," //
@@ -475,8 +478,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 "source.resource", subject.getId());
         }
 
-//        log.info(generator.getParameterReplacedQuery(false));
-//        log.info(generator.getParameterReplacedQuery(true));
+        //        log.info(generator.getParameterReplacedQuery(false));
+        //        log.info(generator.getParameterReplacedQuery(true));
 
         CriteriaQueryRunner<EventComposite> queryRunner = new CriteriaQueryRunner<EventComposite>(criteria, generator,
             entityManager);

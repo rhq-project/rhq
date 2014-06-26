@@ -60,7 +60,7 @@ import org.rhq.core.domain.alert.Alert;
     query = "DELETE AlertNotificationLog anl " //
         + "   WHERE anl.id IN ( SELECT an.id " //
         + "                       FROM Alert a " //
-        + "                       JOIN a.alertNotificationLogs an" // 
+        + "                       JOIN a.alertNotificationLogs an" //
         + "                      WHERE a.id IN ( :alertIds ) )"),
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
     query = "DELETE AlertNotificationLog anl " //
@@ -102,6 +102,12 @@ public class AlertNotificationLog implements Serializable {
 
     public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_NOTIF_LOG";
 
+    /**
+     * this is a character limit, when stored certain vendors may require the string be clipped to
+     * satisfy a byte limit (postgres can store the 4000 chars, oracle only 4000 bytes).
+     */
+    public static final int MESSAGE_MAX_LENGTH = 4000;
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
     @Id
@@ -119,14 +125,22 @@ public class AlertNotificationLog implements Serializable {
     @Enumerated(EnumType.STRING)
     private ResultState resultState;
 
-    @Column(name = "MESSAGE")
+    @Column(name = "MESSAGE", length = MESSAGE_MAX_LENGTH)
     private String message;
 
+    /**
+     * This is insufficient for certain db vendors as it handles only character limit, not necessarily the
+     * 4000 byte limit on oracle.
+     *
+     * @deprecated the message should be trimmed sufficiently by the caller to meet any db vendor specific
+     * byte limits.
+     */
+    @Deprecated
     @PrePersist
     @PreUpdate
     public void trimMessage() {
-        if (message != null && message.length() > 4000) {
-            message = message.substring(0, 4000);
+        if (message != null && message.length() > MESSAGE_MAX_LENGTH) {
+            message = message.substring(0, MESSAGE_MAX_LENGTH);
         }
     }
 

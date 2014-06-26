@@ -530,8 +530,8 @@
                   <c:simple-property
                      name="configFile"
                      type="string"
-                     description="The location of the context.xml resource or file Note: Does not exist in Tomcat 7 (return type changed to URL)" 
-                     required="false" />
+                     readOnly="true"
+                     description="The location of the context.xml resource or file Note: Does not exist in Tomcat 7 (return type changed to URL)" />
                   <c:simple-property
                      name="crossContext"
                      type="boolean"

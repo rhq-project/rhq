@@ -1326,7 +1326,7 @@
         <c:simple-property name="path" default="deployment" readOnly="true"/>
       </plugin-configuration>
 
-      <operation name="promote" displayName="Assign to Server-Group" description="Assigns this deployment to one or all server group(s)">
+      <operation name="promote" displayName="Assign to Server-Group" description="Deprecated: Use server-group property found in resource configuration instead">
         <parameters>
           <c:simple-property name="server-group" required="true" description="Server group to assign to" type="string">
             <c:property-options>

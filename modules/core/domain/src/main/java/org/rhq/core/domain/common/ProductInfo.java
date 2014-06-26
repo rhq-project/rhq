@@ -37,6 +37,7 @@ public class ProductInfo implements Serializable {
     private String salesEmail;
     private String supportEmail;
     private String version;
+    private String versionUpdate;
     private String buildNumber;
     private String supportedAgentBuilds;
     private String helpDocRoot;
@@ -104,6 +105,14 @@ public class ProductInfo implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getVersionUpdate() {
+        return versionUpdate;
+    }
+
+    public void setVersionUpdate(String versionUpdate) {
+        this.versionUpdate = versionUpdate;
     }
 
     public String getBuildNumber() {

@@ -116,7 +116,14 @@ public class Version {
         Properties props = getVersionProperties();
         String name = props.getProperty(PROP_PRODUCT_NAME);
         String version = props.getProperty(PROP_PRODUCT_VERSION);
-        return name + ' ' + version;
+        //Conditionally check for and apply update/patch version details
+        String updatePortion = getUpdateVersion();
+        if (updatePortion == null) {
+            updatePortion = "";
+        }
+
+        //Ex. GA[RHQ Enterprise Remote CLI 4.9.0.JON320GA] or Update 01[RHQ Enterprise Remote CLI 4.9.0.JON320GA Update 01]
+        return name + ' ' + version + (updatePortion.trim().length() == 0 ? "" : " " + updatePortion);
     }
 
     /**
@@ -130,7 +137,16 @@ public class Version {
         String version = props.getProperty(PROP_PRODUCT_VERSION);
         String buildNum = props.getProperty(PROP_BUILD_NUMBER);
         String buildDate = props.getProperty(PROP_BUILD_DATE);
-        return name + ' ' + version + " (" + buildNum + ") " + buildDate;
+
+        //Conditionally check for and apply update/patch version details
+        String updatePortion = getUpdateVersion();
+        if (updatePortion == null) {
+            updatePortion = "";
+        }
+
+        //Ex. GA[RHQ Enterprise Remote CLI 4.9.0.JON320GA (dcb8b6f:734bd56)] or Update 01[RHQ Enterprise Remote CLI 4.9.0.JON320GA Update 01 (dcb8b6f:734bd56)]
+        return name + ' ' + version + (updatePortion.trim().length() == 0 ? "" : " " + updatePortion) + " (" + buildNum
+            + ") " + buildDate;
     }
 
     /**
@@ -226,5 +242,10 @@ public class Version {
             str.append(entry.getKey().toString() + '=' + entry.getValue().toString() + '\n');
         }
         return str.toString();
+    }
+
+    // Update property which records update/patch version: Ex. update-1, cp1, etc.
+    public static String getUpdateVersion() {
+        return "";
     }
 }

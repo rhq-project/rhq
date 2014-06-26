@@ -233,8 +233,9 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
         // sort the eligible roots such that the least recently checked are done first, using resId as a tie breaker.
         Collections.sort(result, new Comparator<Resource>() {
             public int compare(Resource o1, Resource o2) {
-                int i = Long.compare(rootCheckTimeMap.get(o1.getId()), rootCheckTimeMap.get(o2.getId()));
-                return (0 != i) ? i : Integer.compare(o1.getId(), o2.getId());
+                int i = Long.valueOf(rootCheckTimeMap.get(o1.getId())).compareTo(
+                    Long.valueOf(rootCheckTimeMap.get(o2.getId())));
+                return (0 != i) ? i : Integer.valueOf(o1.getId()).compareTo(Integer.valueOf(o2.getId()));
             }
         });
 
